@@ -12,7 +12,7 @@ const createValueNode = (data?: CssNode[]): Value => ({
   children: new List<CssNode>().fromArray(data ?? []),
 });
 
-const createInitialValueNode = (): Value => ({
+const createInitialNode = (): Value => ({
   type: "Value",
   children: new List<CssNode>().appendData({
     type: "Identifier",
@@ -25,7 +25,7 @@ const getValueList = (value: CssNode): CssNode[] => {
   return children ?? [value];
 };
 
-const splitBySlash = (list: List<CssNode>) => {
+const splitBySlash = (list: List<CssNode> | CssNode[]) => {
   const lists: Array<undefined | CssNode[]> = [[]];
   for (const node of list) {
     if (node.type === "Operator" && node.value === "/") {
@@ -76,7 +76,10 @@ const parseUnordered = (syntaxes: string[], value: CssNode) => {
     }
     lastCursor = nextCursor;
   }
-  return syntaxes.map((syntax) => matched.get(syntax));
+  return [
+    ...syntaxes.map((syntax) => matched.get(syntax)),
+    createValueNode(unprocessedNodes),
+  ];
 };
 
 /**
@@ -102,9 +105,9 @@ const expandBorder = function* (property: string, value: CssNode) {
         ["<line-width>", "<line-style>", "<color>"],
         value
       );
-      yield [`${property}-width`, width ?? createInitialValueNode()] as const;
-      yield [`${property}-style`, style ?? createInitialValueNode()] as const;
-      yield [`${property}-color`, color ?? createInitialValueNode()] as const;
+      yield [`${property}-width`, width ?? createInitialNode()] as const;
+      yield [`${property}-style`, style ?? createInitialNode()] as const;
+      yield [`${property}-color`, color ?? createInitialNode()] as const;
       break;
     }
     default:
@@ -251,9 +254,9 @@ const expandBorderImage = function* (property: string, value: CssNode) {
     ],
     value
   );
-  let slice = createInitialValueNode();
-  let width = createInitialValueNode();
-  let outset = createInitialValueNode();
+  let slice = createInitialNode();
+  let width = createInitialNode();
+  let outset = createInitialNode();
   if (config) {
     const [sliceNodes, widthNodes, outsetNodes] = splitBySlash(config.children);
     if (sliceNodes && sliceNodes.length > 0) {
@@ -266,11 +269,11 @@ const expandBorderImage = function* (property: string, value: CssNode) {
       outset = createValueNode(outsetNodes);
     }
   }
-  yield ["border-image-source", source ?? createInitialValueNode()] as const;
+  yield ["border-image-source", source ?? createInitialNode()] as const;
   yield ["border-image-slice", slice] as const;
   yield ["border-image-width", width] as const;
   yield ["border-image-outset", outset] as const;
-  yield ["border-image-repeat", repeat ?? createInitialValueNode()] as const;
+  yield ["border-image-repeat", repeat ?? createInitialNode()] as const;
 };
 
 const expandGap = function* (property: string, value: CssNode) {
@@ -317,6 +320,95 @@ const expandPlace = function* (property: string, value: CssNode) {
       yield [property, value] as const;
   }
 };
+/**
+ *
+ * font =
+ *   [ <'font-style'> || <font-variant-css2> || <'font-weight'> || <font-width-css3> ]?
+ *   <'font-size'> [ / <'line-height'> ]? <'font-family'>
+ *
+ * text-decoration =
+ *   <'text-decoration-line'> ||
+ *   <'text-decoration-style'> ||
+ *   <'text-decoration-color'>
+ *
+ * text-emphasis =
+ *   <'text-emphasis-style'> ||
+ *   <'text-emphasis-color'>
+ */
+const expandText = function* (property: string, value: CssNode) {
+  switch (property) {
+    case "font": {
+      // const [before, after] = splitBySlash(getValueList(value));
+      const [fontStyle, fontVariant, fontWeight, fontWidth, config] =
+        parseUnordered(
+          [
+            "<'font-style'>",
+            // <font-variant-css2> is unsupported by csstree
+            "[ normal | small-caps ]",
+            "<'font-weight'>",
+            // <font-width-css3> is unsupported by csstree
+            "[ normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded ]",
+          ],
+          value
+        );
+      let fontSize: CssNode = createInitialNode();
+      let lineHeight: CssNode = createInitialNode();
+      let fontFamily: CssNode = createInitialNode();
+      if (config) {
+        if (
+          lexer.match("<'font-size'> / <'line-height'> <'font-family'>", config)
+            .matched
+        ) {
+          const [fontSizeNode, _slashNode, lineHeightNode, ...fontFamilyNodes] =
+            getValueList(config);
+          fontSize = fontSizeNode;
+          lineHeight = lineHeightNode;
+          fontFamily = createValueNode(fontFamilyNodes);
+        } else {
+          const [fontSizeNode, ...fontFamilyNodes] = getValueList(config);
+          fontSize = fontSizeNode;
+          fontFamily = createValueNode(fontFamilyNodes);
+        }
+      }
+      yield ["font-style", fontStyle ?? createInitialNode()] as const;
+      yield ["font-variant", fontVariant ?? createInitialNode()] as const;
+      yield ["font-weight", fontWeight ?? createInitialNode()] as const;
+      yield ["font-width", fontWidth ?? createInitialNode()] as const;
+      yield ["font-size", fontSize] as const;
+      yield ["line-height", lineHeight] as const;
+      yield ["font-family", fontFamily] as const;
+      break;
+    }
+
+    case "text-decoration": {
+      const [line, style, color] = parseUnordered(
+        [
+          "<'text-decoration-line'>",
+          "<'text-decoration-style'>",
+          "<'text-decoration-color'>",
+        ],
+        value
+      );
+      yield ["text-decoration-line", line ?? createInitialNode()] as const;
+      yield ["text-decoration-style", style ?? createInitialNode()] as const;
+      yield ["text-decoration-color", color ?? createInitialNode()] as const;
+      break;
+    }
+
+    case "text-emphasis": {
+      const [style, color] = parseUnordered(
+        ["<'text-emphasis-style'>", "<'text-emphasis-color'>"],
+        value
+      );
+      yield ["text-emphasis-style", style ?? createInitialNode()] as const;
+      yield ["text-emphasis-color", color ?? createInitialNode()] as const;
+      break;
+    }
+
+    default:
+      yield [property, value] as const;
+  }
+};
 
 const parseValue = function* (property: string, value: string) {
   try {
@@ -353,7 +445,11 @@ export const expandShorthands = (
                 const generator = expandPlace(property, value);
 
                 for (const [property, value] of generator) {
-                  longhands.push([property, generate(value)]);
+                  const generator = expandText(property, value);
+
+                  for (const [property, value] of generator) {
+                    longhands.push([property, generate(value)]);
+                  }
                 }
               }
             }

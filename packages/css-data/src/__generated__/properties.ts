@@ -7,8 +7,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.61281794,
-    appliesTo: "allElements",
+    types: [],
   },
   MozOsxFontSmoothing: {
     unitGroups: [],
@@ -17,8 +16,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   accentColor: {
     unitGroups: [],
@@ -27,8 +25,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00030097,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   alignContent: {
     unitGroups: [],
@@ -37,8 +34,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.2430101,
-    appliesTo: "multilineFlexContainers",
+    types: [],
   },
   alignItems: {
     unitGroups: [],
@@ -47,8 +43,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.71654912,
-    appliesTo: "flexContainersGridContainers",
+    types: [],
   },
   alignSelf: {
     unitGroups: [],
@@ -57,8 +52,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.43732689,
-    appliesTo: "flexItemsGridItemsAndAbsolutelyPositionedBoxes",
+    types: [],
   },
   alignTracks: {
     unitGroups: [],
@@ -67,8 +61,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "gridContainersWithMasonryLayoutInTheirBlockAxis",
+    types: [],
   },
   animationComposition: {
     unitGroups: [],
@@ -77,8 +70,7 @@ export const properties = {
       type: "keyword",
       value: "replace",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["single-animation-composition"],
   },
   animationDelay: {
     unitGroups: ["time"],
@@ -88,8 +80,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    popularity: 0.27086537,
-    appliesTo: "allElementsAndPseudos",
+    types: ["time"],
   },
   animationDirection: {
     unitGroups: [],
@@ -98,8 +89,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.11739459,
-    appliesTo: "allElementsAndPseudos",
+    types: [],
   },
   animationDuration: {
     unitGroups: ["time"],
@@ -109,8 +99,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    popularity: 0.4062731,
-    appliesTo: "allElementsAndPseudos",
+    types: ["time"],
   },
   animationFillMode: {
     unitGroups: [],
@@ -119,8 +108,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.2785038,
-    appliesTo: "allElementsAndPseudos",
+    types: [],
   },
   animationIterationCount: {
     unitGroups: ["number"],
@@ -130,8 +118,7 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    popularity: 0.21759716,
-    appliesTo: "allElementsAndPseudos",
+    types: ["number"],
   },
   animationName: {
     unitGroups: [],
@@ -140,8 +127,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.40320939,
-    appliesTo: "allElementsAndPseudos",
+    types: ["custom-ident", "string"],
   },
   animationPlayState: {
     unitGroups: [],
@@ -150,8 +136,7 @@ export const properties = {
       type: "keyword",
       value: "running",
     },
-    popularity: 0.07996997,
-    appliesTo: "allElementsAndPseudos",
+    types: [],
   },
   animationTimingFunction: {
     unitGroups: [],
@@ -160,8 +145,7 @@ export const properties = {
       type: "keyword",
       value: "ease",
     },
-    popularity: 0.41317969,
-    appliesTo: "allElementsAndPseudos",
+    types: [],
   },
   animationTimeline: {
     unitGroups: [],
@@ -170,8 +154,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 4e-8,
-    appliesTo: "allElements",
+    types: ["custom-ident", "string"],
   },
   appearance: {
     unitGroups: [],
@@ -180,8 +163,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.24468974,
-    appliesTo: "allElements",
+    types: [],
   },
   aspectRatio: {
     unitGroups: ["number"],
@@ -190,8 +172,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.07243677,
-    appliesTo: "allElementsExceptInlineBoxesAndInternalRubyOrTableBoxes",
+    types: ["number"],
   },
   backdropFilter: {
     unitGroups: [],
@@ -200,8 +181,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.0728427,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["url"],
   },
   backfaceVisibility: {
     unitGroups: [],
@@ -210,8 +190,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    popularity: 0.19792557,
-    appliesTo: "transformableElements",
+    types: [],
   },
   backgroundAttachment: {
     unitGroups: [],
@@ -220,8 +199,7 @@ export const properties = {
       type: "keyword",
       value: "scroll",
     },
-    popularity: 0.08164946,
-    appliesTo: "allElements",
+    types: [],
   },
   backgroundBlendMode: {
     unitGroups: [],
@@ -230,8 +208,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.01578865,
-    appliesTo: "allElementsSVGContainerGraphicsAndGraphicsReferencingElements",
+    types: [],
   },
   backgroundClip: {
     unitGroups: [],
@@ -240,8 +217,7 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
-    popularity: 0.36203159,
-    appliesTo: "allElements",
+    types: [],
   },
   backgroundColor: {
     unitGroups: [],
@@ -250,8 +226,7 @@ export const properties = {
       type: "keyword",
       value: "transparent",
     },
-    popularity: 0.89693959,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   backgroundImage: {
     unitGroups: [],
@@ -260,8 +235,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.78519153,
-    appliesTo: "allElements",
+    types: ["url"],
   },
   backgroundOrigin: {
     unitGroups: [],
@@ -270,8 +244,7 @@ export const properties = {
       type: "keyword",
       value: "padding-box",
     },
-    popularity: 0.0847006,
-    appliesTo: "allElements",
+    types: [],
   },
   backgroundPosition: {
     unitGroups: ["length", "percentage"],
@@ -291,8 +264,7 @@ export const properties = {
         },
       ],
     },
-    popularity: 0.76724967,
-    appliesTo: "allElements",
+    types: ["length", "percentage"],
   },
   backgroundPositionX: {
     unitGroups: ["length", "percentage"],
@@ -302,8 +274,7 @@ export const properties = {
       unit: "%",
       value: 0,
     },
-    popularity: 0.08951679,
-    appliesTo: "allElements",
+    types: ["length", "percentage"],
   },
   backgroundPositionY: {
     unitGroups: ["length", "percentage"],
@@ -313,8 +284,7 @@ export const properties = {
       unit: "%",
       value: 0,
     },
-    popularity: 0.06759137,
-    appliesTo: "allElements",
+    types: ["length", "percentage"],
   },
   backgroundRepeat: {
     unitGroups: [],
@@ -323,8 +293,7 @@ export const properties = {
       type: "keyword",
       value: "repeat",
     },
-    popularity: 0.72870191,
-    appliesTo: "allElements",
+    types: [],
   },
   backgroundSize: {
     unitGroups: ["length", "percentage"],
@@ -333,8 +302,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.73157126,
-    appliesTo: "allElements",
+    types: ["length", "percentage"],
   },
   blockOverflow: {
     unitGroups: [],
@@ -343,8 +311,7 @@ export const properties = {
       type: "keyword",
       value: "clip",
     },
-    popularity: 0,
-    appliesTo: "blockContainers",
+    types: ["string"],
   },
   blockSize: {
     unitGroups: ["length", "percentage"],
@@ -353,8 +320,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00226404,
-    appliesTo: "sameAsWidthAndHeight",
+    types: ["length", "percentage"],
   },
   borderBlockColor: {
     unitGroups: [],
@@ -363,8 +329,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.00012849,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderBlockStyle: {
     unitGroups: [],
@@ -373,8 +338,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.0003145,
-    appliesTo: "allElements",
+    types: [],
   },
   borderBlockWidth: {
     unitGroups: ["length"],
@@ -383,8 +347,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.0003078,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderBlockEndColor: {
     unitGroups: [],
@@ -393,8 +356,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.00172099,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderBlockEndStyle: {
     unitGroups: [],
@@ -403,8 +365,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00169793,
-    appliesTo: "allElements",
+    types: [],
   },
   borderBlockEndWidth: {
     unitGroups: ["length"],
@@ -413,8 +374,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.00170225,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderBlockStartColor: {
     unitGroups: [],
@@ -423,8 +383,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.00170188,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderBlockStartStyle: {
     unitGroups: [],
@@ -433,8 +392,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00168772,
-    appliesTo: "allElements",
+    types: [],
   },
   borderBlockStartWidth: {
     unitGroups: ["length"],
@@ -443,8 +401,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.00169412,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderBottomColor: {
     unitGroups: [],
@@ -453,8 +410,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.42283564,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderBottomLeftRadius: {
     unitGroups: ["length", "percentage"],
@@ -464,8 +420,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.51220741,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderBottomRightRadius: {
     unitGroups: ["length", "percentage"],
@@ -475,8 +430,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.49744373,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderBottomStyle: {
     unitGroups: [],
@@ -485,8 +439,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.17956288,
-    appliesTo: "allElements",
+    types: [],
   },
   borderBottomWidth: {
     unitGroups: ["length"],
@@ -495,8 +448,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.24668981,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderCollapse: {
     unitGroups: [],
@@ -505,8 +457,7 @@ export const properties = {
       type: "keyword",
       value: "separate",
     },
-    popularity: 0.47856821,
-    appliesTo: "tableElements",
+    types: [],
   },
   borderEndEndRadius: {
     unitGroups: ["length", "percentage"],
@@ -516,8 +467,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00029065,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderEndStartRadius: {
     unitGroups: ["length", "percentage"],
@@ -527,8 +477,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.0003058,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderImageOutset: {
     unitGroups: ["length", "number"],
@@ -538,8 +487,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    popularity: 0.00458637,
-    appliesTo: "allElementsExceptTableElementsWhenCollapse",
+    types: ["length", "number"],
   },
   borderImageRepeat: {
     unitGroups: [],
@@ -548,8 +496,7 @@ export const properties = {
       type: "keyword",
       value: "stretch",
     },
-    popularity: 0.00685817,
-    appliesTo: "allElementsExceptTableElementsWhenCollapse",
+    types: [],
   },
   borderImageSlice: {
     unitGroups: ["number", "percentage"],
@@ -559,8 +506,7 @@ export const properties = {
       unit: "%",
       value: 100,
     },
-    popularity: 0.0093669,
-    appliesTo: "allElementsExceptTableElementsWhenCollapse",
+    types: ["number", "percentage"],
   },
   borderImageSource: {
     unitGroups: [],
@@ -569,8 +515,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00991835,
-    appliesTo: "allElementsExceptTableElementsWhenCollapse",
+    types: ["url"],
   },
   borderImageWidth: {
     unitGroups: ["length", "percentage", "number"],
@@ -580,8 +525,7 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    popularity: 0.0072772,
-    appliesTo: "allElementsExceptTableElementsWhenCollapse",
+    types: ["length", "percentage", "number"],
   },
   borderInlineColor: {
     unitGroups: [],
@@ -590,8 +534,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.00007844,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderInlineStyle: {
     unitGroups: [],
@@ -600,8 +543,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00031147,
-    appliesTo: "allElements",
+    types: [],
   },
   borderInlineWidth: {
     unitGroups: ["length"],
@@ -610,8 +552,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.0002956,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderInlineEndColor: {
     unitGroups: [],
@@ -620,8 +561,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.00196849,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderInlineEndStyle: {
     unitGroups: [],
@@ -630,8 +570,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00171907,
-    appliesTo: "allElements",
+    types: [],
   },
   borderInlineEndWidth: {
     unitGroups: ["length"],
@@ -640,8 +579,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.0051498,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderInlineStartColor: {
     unitGroups: [],
@@ -650,8 +588,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.00196928,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderInlineStartStyle: {
     unitGroups: [],
@@ -660,8 +597,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00177637,
-    appliesTo: "allElements",
+    types: [],
   },
   borderInlineStartWidth: {
     unitGroups: ["length"],
@@ -670,8 +606,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.00438625,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderLeftColor: {
     unitGroups: [],
@@ -680,8 +615,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.30754028,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderLeftStyle: {
     unitGroups: [],
@@ -690,8 +624,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.06120178,
-    appliesTo: "allElements",
+    types: [],
   },
   borderLeftWidth: {
     unitGroups: ["length"],
@@ -700,8 +633,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.17181793,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderRightColor: {
     unitGroups: [],
@@ -710,8 +642,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.29336595,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderRightStyle: {
     unitGroups: [],
@@ -720,8 +651,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.06714237,
-    appliesTo: "allElements",
+    types: [],
   },
   borderRightWidth: {
     unitGroups: ["length"],
@@ -730,8 +660,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.17940634,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   borderSpacing: {
     unitGroups: ["length"],
@@ -741,8 +670,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.37217618,
-    appliesTo: "tableElements",
+    types: ["length"],
   },
   borderStartEndRadius: {
     unitGroups: ["length", "percentage"],
@@ -752,8 +680,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00029494,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderStartStartRadius: {
     unitGroups: ["length", "percentage"],
@@ -763,8 +690,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00028405,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderTopColor: {
     unitGroups: [],
@@ -773,8 +699,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.43342948,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   borderTopLeftRadius: {
     unitGroups: ["length", "percentage"],
@@ -784,8 +709,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.50859807,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderTopRightRadius: {
     unitGroups: ["length", "percentage"],
@@ -795,8 +719,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.50073217,
-    appliesTo: "allElementsUAsNotRequiredWhenCollapse",
+    types: ["length", "percentage"],
   },
   borderTopStyle: {
     unitGroups: [],
@@ -805,8 +728,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.16269446,
-    appliesTo: "allElements",
+    types: [],
   },
   borderTopWidth: {
     unitGroups: ["length"],
@@ -815,8 +737,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.21953437,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   bottom: {
     unitGroups: ["length", "percentage"],
@@ -825,8 +746,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.8243869,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   boxDecorationBreak: {
     unitGroups: [],
@@ -835,8 +755,7 @@ export const properties = {
       type: "keyword",
       value: "slice",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   boxShadow: {
     unitGroups: ["length"],
@@ -845,8 +764,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.81259285,
-    appliesTo: "allElements",
+    types: ["length", "hex-color"],
   },
   boxSizing: {
     unitGroups: [],
@@ -855,8 +773,7 @@ export const properties = {
       type: "keyword",
       value: "content-box",
     },
-    popularity: 0.86402206,
-    appliesTo: "allElementsAcceptingWidthOrHeight",
+    types: [],
   },
   breakAfter: {
     unitGroups: [],
@@ -865,8 +782,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00365105,
-    appliesTo: "blockLevelElements",
+    types: [],
   },
   breakBefore: {
     unitGroups: [],
@@ -875,8 +791,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00341796,
-    appliesTo: "blockLevelElements",
+    types: [],
   },
   breakInside: {
     unitGroups: [],
@@ -885,8 +800,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.02782348,
-    appliesTo: "blockLevelElements",
+    types: [],
   },
   captionSide: {
     unitGroups: [],
@@ -895,8 +809,7 @@ export const properties = {
       type: "keyword",
       value: "top",
     },
-    popularity: 0.04083929,
-    appliesTo: "tableCaptionElements",
+    types: [],
   },
   caretColor: {
     unitGroups: [],
@@ -905,8 +818,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.05410129,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   caretShape: {
     unitGroups: [],
@@ -915,8 +827,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "elementsThatAcceptInput",
+    types: [],
   },
   clear: {
     unitGroups: [],
@@ -925,8 +836,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.7016813,
-    appliesTo: "blockLevelElements",
+    types: [],
   },
   clip: {
     unitGroups: [],
@@ -935,8 +845,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.48810561,
-    appliesTo: "absolutelyPositionedElements",
+    types: [],
   },
   clipPath: {
     unitGroups: [],
@@ -945,8 +854,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.20754263,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["url"],
   },
   color: {
     unitGroups: [],
@@ -955,8 +863,7 @@ export const properties = {
       type: "keyword",
       value: "black",
     },
-    popularity: 0.90791486,
-    appliesTo: "allElementsAndText",
+    types: ["hex-color"],
   },
   colorScheme: {
     unitGroups: [],
@@ -965,8 +872,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.03358925,
-    appliesTo: "allElementsAndText",
+    types: ["custom-ident"],
   },
   columnCount: {
     unitGroups: ["number"],
@@ -975,8 +881,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.07098549,
-    appliesTo: "blockContainersExceptTableWrappers",
+    types: ["integer"],
   },
   columnFill: {
     unitGroups: [],
@@ -985,8 +890,7 @@ export const properties = {
       type: "keyword",
       value: "balance",
     },
-    popularity: 0.01738207,
-    appliesTo: "multicolElements",
+    types: [],
   },
   columnGap: {
     unitGroups: ["length", "percentage"],
@@ -996,8 +900,7 @@ export const properties = {
       value: 0,
       unit: "px",
     },
-    popularity: 0.09282422,
-    appliesTo: "multiColumnElementsFlexContainersGridContainers",
+    types: ["length", "percentage"],
   },
   columnRuleColor: {
     unitGroups: [],
@@ -1006,8 +909,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.01356616,
-    appliesTo: "multicolElements",
+    types: ["hex-color"],
   },
   columnRuleStyle: {
     unitGroups: [],
@@ -1016,8 +918,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.0131392,
-    appliesTo: "multicolElements",
+    types: [],
   },
   columnRuleWidth: {
     unitGroups: ["length"],
@@ -1026,8 +927,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.00328701,
-    appliesTo: "multicolElements",
+    types: ["length"],
   },
   columnSpan: {
     unitGroups: [],
@@ -1036,8 +936,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00654278,
-    appliesTo: "inFlowBlockLevelElements",
+    types: [],
   },
   columnWidth: {
     unitGroups: ["length"],
@@ -1046,8 +945,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.03188644,
-    appliesTo: "blockContainersExceptTableWrappers",
+    types: ["length"],
   },
   contain: {
     unitGroups: [],
@@ -1056,8 +954,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.17189203,
-    appliesTo: "allElements",
+    types: [],
   },
   containIntrinsicBlockSize: {
     unitGroups: ["length"],
@@ -1066,8 +963,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
+    types: ["length"],
   },
   containIntrinsicHeight: {
     unitGroups: ["length"],
@@ -1076,8 +972,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
+    types: ["length"],
   },
   containIntrinsicInlineSize: {
     unitGroups: ["length"],
@@ -1086,8 +981,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
+    types: ["length"],
   },
   containIntrinsicWidth: {
     unitGroups: ["length"],
@@ -1096,8 +990,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
+    types: ["length"],
   },
   containerName: {
     unitGroups: [],
@@ -1106,8 +999,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["custom-ident"],
   },
   containerType: {
     unitGroups: [],
@@ -1116,8 +1008,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   content: {
     unitGroups: [],
@@ -1126,8 +1017,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.81447258,
-    appliesTo: "allElementsTreeAbidingPseudoElementsPageMarginBoxes",
+    types: ["url", "string"],
   },
   contentVisibility: {
     unitGroups: [],
@@ -1136,8 +1026,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    popularity: 0.04199404,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
+    types: [],
   },
   counterIncrement: {
     unitGroups: ["number"],
@@ -1146,8 +1035,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.07472144,
-    appliesTo: "allElements",
+    types: ["custom-ident", "integer"],
   },
   counterReset: {
     unitGroups: ["number"],
@@ -1156,8 +1044,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.06641074,
-    appliesTo: "allElements",
+    types: ["custom-ident", "integer"],
   },
   counterSet: {
     unitGroups: ["number"],
@@ -1166,8 +1053,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00016346,
-    appliesTo: "allElements",
+    types: ["custom-ident", "integer"],
   },
   cursor: {
     unitGroups: [],
@@ -1176,8 +1062,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.85037255,
-    appliesTo: "allElements",
+    types: ["url", "x", "y"],
   },
   direction: {
     unitGroups: [],
@@ -1186,8 +1071,7 @@ export const properties = {
       type: "keyword",
       value: "ltr",
     },
-    popularity: 0.40017516,
-    appliesTo: "allElements",
+    types: [],
   },
   display: {
     unitGroups: [],
@@ -1196,8 +1080,7 @@ export const properties = {
       type: "keyword",
       value: "inline",
     },
-    popularity: 0.93157435,
-    appliesTo: "allElements",
+    types: [],
   },
   emptyCells: {
     unitGroups: [],
@@ -1206,8 +1089,7 @@ export const properties = {
       type: "keyword",
       value: "show",
     },
-    popularity: 0.03153899,
-    appliesTo: "tableCellElements",
+    types: [],
   },
   filter: {
     unitGroups: [],
@@ -1216,8 +1098,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.32058162,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["url"],
   },
   flexBasis: {
     unitGroups: ["length", "percentage"],
@@ -1226,8 +1107,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.3070072,
-    appliesTo: "flexItemsAndInFlowPseudos",
+    types: ["length", "percentage"],
   },
   flexDirection: {
     unitGroups: [],
@@ -1236,8 +1116,7 @@ export const properties = {
       type: "keyword",
       value: "row",
     },
-    popularity: 0.65789154,
-    appliesTo: "flexContainers",
+    types: [],
   },
   flexGrow: {
     unitGroups: ["number"],
@@ -1247,8 +1126,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    popularity: 0.50511311,
-    appliesTo: "flexItemsAndInFlowPseudos",
+    types: ["number"],
   },
   flexShrink: {
     unitGroups: ["number"],
@@ -1258,8 +1136,7 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    popularity: 0.4809155,
-    appliesTo: "flexItemsAndInFlowPseudos",
+    types: ["number"],
   },
   flexWrap: {
     unitGroups: [],
@@ -1268,8 +1145,7 @@ export const properties = {
       type: "keyword",
       value: "nowrap",
     },
-    popularity: 0.58959861,
-    appliesTo: "flexContainers",
+    types: [],
   },
   float: {
     unitGroups: [],
@@ -1278,8 +1154,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.8383589,
-    appliesTo: "allElementsNoEffectIfDisplayNone",
+    types: [],
   },
   fontFamily: {
     unitGroups: [],
@@ -1288,8 +1163,7 @@ export const properties = {
       type: "keyword",
       value: "inherit",
     },
-    popularity: 0.88101351,
-    appliesTo: "allElements",
+    types: ["string", "custom-ident"],
   },
   fontFeatureSettings: {
     unitGroups: ["number"],
@@ -1298,8 +1172,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.12538368,
-    appliesTo: "allElements",
+    types: ["string", "integer"],
   },
   fontKerning: {
     unitGroups: [],
@@ -1308,8 +1181,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.01160796,
-    appliesTo: "allElements",
+    types: [],
   },
   fontLanguageOverride: {
     unitGroups: [],
@@ -1318,8 +1190,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["string"],
   },
   fontOpticalSizing: {
     unitGroups: [],
@@ -1328,8 +1199,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0006232,
-    appliesTo: "allElements",
+    types: [],
   },
   fontPalette: {
     unitGroups: [],
@@ -1338,8 +1208,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "allElementsAndText",
+    types: ["palette-identifier"],
   },
   fontVariationSettings: {
     unitGroups: ["number"],
@@ -1348,8 +1217,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.00471835,
-    appliesTo: "allElements",
+    types: ["string", "number"],
   },
   fontSize: {
     unitGroups: ["length", "percentage"],
@@ -1358,8 +1226,7 @@ export const properties = {
       type: "keyword",
       value: "inherit",
     },
-    popularity: 0.90325346,
-    appliesTo: "allElements",
+    types: ["length", "percentage"],
   },
   fontSizeAdjust: {
     unitGroups: ["number"],
@@ -1368,8 +1235,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.000003,
-    appliesTo: "allElements",
+    types: ["number"],
   },
   fontStretch: {
     unitGroups: ["percentage"],
@@ -1378,8 +1244,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.12741738,
-    appliesTo: "allElements",
+    types: ["percentage"],
   },
   fontStyle: {
     unitGroups: ["angle"],
@@ -1388,8 +1253,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.7961795,
-    appliesTo: "allElements",
+    types: ["angle"],
   },
   fontSynthesis: {
     unitGroups: [],
@@ -1407,8 +1271,7 @@ export const properties = {
         },
       ],
     },
-    popularity: 0.00686166,
-    appliesTo: "allElements",
+    types: [],
   },
   fontVariant: {
     unitGroups: [],
@@ -1417,8 +1280,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.30968418,
-    appliesTo: "allElements",
+    types: [],
   },
   fontVariantAlternates: {
     unitGroups: [],
@@ -1427,8 +1289,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   fontVariantCaps: {
     unitGroups: [],
@@ -1437,8 +1298,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.00514777,
-    appliesTo: "allElements",
+    types: [],
   },
   fontVariantEastAsian: {
     unitGroups: [],
@@ -1447,8 +1307,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.00328361,
-    appliesTo: "allElements",
+    types: [],
   },
   fontVariantEmoji: {
     unitGroups: [],
@@ -1457,8 +1316,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "allElementsAndText",
+    types: [],
   },
   fontVariantLigatures: {
     unitGroups: [],
@@ -1467,8 +1325,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.05055055,
-    appliesTo: "allElements",
+    types: [],
   },
   fontVariantNumeric: {
     unitGroups: [],
@@ -1477,8 +1334,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.01816086,
-    appliesTo: "allElements",
+    types: [],
   },
   fontVariantPosition: {
     unitGroups: [],
@@ -1487,8 +1343,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   fontWeight: {
     unitGroups: ["number"],
@@ -1497,8 +1352,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.88598106,
-    appliesTo: "allElements",
+    types: ["number"],
   },
   forcedColorAdjust: {
     unitGroups: [],
@@ -1507,8 +1361,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.02245871,
-    appliesTo: "allElementsAndText",
+    types: [],
   },
   gridAutoColumns: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1517,8 +1370,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.01226638,
-    appliesTo: "gridContainers",
+    types: ["length", "percentage", "flex"],
   },
   gridAutoFlow: {
     unitGroups: [],
@@ -1527,8 +1379,7 @@ export const properties = {
       type: "keyword",
       value: "row",
     },
-    popularity: 0.03982344,
-    appliesTo: "gridContainers",
+    types: [],
   },
   gridAutoRows: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1537,8 +1388,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.02839547,
-    appliesTo: "gridContainers",
+    types: ["length", "percentage", "flex"],
   },
   gridColumnEnd: {
     unitGroups: ["number"],
@@ -1547,8 +1397,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.01848874,
-    appliesTo: "gridItemsAndBoxesWithinGridContainer",
+    types: ["custom-ident", "integer"],
   },
   gridColumnStart: {
     unitGroups: ["number"],
@@ -1557,8 +1406,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.02019688,
-    appliesTo: "gridItemsAndBoxesWithinGridContainer",
+    types: ["custom-ident", "integer"],
   },
   gridRowEnd: {
     unitGroups: ["number"],
@@ -1567,8 +1415,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00961681,
-    appliesTo: "gridItemsAndBoxesWithinGridContainer",
+    types: ["custom-ident", "integer"],
   },
   gridRowStart: {
     unitGroups: ["number"],
@@ -1577,8 +1424,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.01281513,
-    appliesTo: "gridItemsAndBoxesWithinGridContainer",
+    types: ["custom-ident", "integer"],
   },
   gridTemplateAreas: {
     unitGroups: [],
@@ -1587,8 +1433,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.05496001,
-    appliesTo: "gridContainers",
+    types: ["string"],
   },
   gridTemplateColumns: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1597,8 +1442,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.17745181,
-    appliesTo: "gridContainers",
+    types: ["custom-ident", "length", "percentage", "flex"],
   },
   gridTemplateRows: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1607,8 +1451,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.07489386,
-    appliesTo: "gridContainers",
+    types: ["custom-ident", "length", "percentage", "flex"],
   },
   hangingPunctuation: {
     unitGroups: [],
@@ -1617,8 +1460,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   height: {
     unitGroups: ["length", "percentage"],
@@ -1627,8 +1469,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.93056784,
-    appliesTo: "allElementsButNonReplacedAndTableColumns",
+    types: ["length", "percentage"],
   },
   hyphenateCharacter: {
     unitGroups: [],
@@ -1637,8 +1478,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["string"],
   },
   hyphenateLimitChars: {
     unitGroups: ["number"],
@@ -1647,8 +1487,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["integer"],
   },
   hyphens: {
     unitGroups: [],
@@ -1657,8 +1496,7 @@ export const properties = {
       type: "keyword",
       value: "manual",
     },
-    popularity: 0.10122444,
-    appliesTo: "allElements",
+    types: [],
   },
   imageOrientation: {
     unitGroups: ["angle"],
@@ -1667,8 +1505,7 @@ export const properties = {
       type: "keyword",
       value: "from-image",
     },
-    popularity: 0.00207108,
-    appliesTo: "allElements",
+    types: ["angle"],
   },
   imageRendering: {
     unitGroups: [],
@@ -1677,8 +1514,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.11112647,
-    appliesTo: "allElements",
+    types: [],
   },
   imageResolution: {
     unitGroups: ["resolution"],
@@ -1688,8 +1524,7 @@ export const properties = {
       unit: "dppx",
       value: 1,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["resolution"],
   },
   initialLetter: {
     unitGroups: ["number"],
@@ -1698,8 +1533,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "firstLetterPseudoElementsAndInlineLevelFirstChildren",
+    types: ["number", "integer"],
   },
   initialLetterAlign: {
     unitGroups: [],
@@ -1708,8 +1542,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "firstLetterPseudoElementsAndInlineLevelFirstChildren",
+    types: [],
   },
   inlineSize: {
     unitGroups: ["length", "percentage"],
@@ -1718,8 +1551,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00381706,
-    appliesTo: "sameAsWidthAndHeight",
+    types: ["length", "percentage"],
   },
   inputSecurity: {
     unitGroups: [],
@@ -1728,8 +1560,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "sensitiveTextInputs",
+    types: [],
   },
   insetBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1738,8 +1569,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00031067,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   insetBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -1748,8 +1578,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00036346,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   insetInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -1758,8 +1587,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00419961,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   insetInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -1768,8 +1596,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00379395,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   isolation: {
     unitGroups: [],
@@ -1778,8 +1605,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.01962288,
-    appliesTo: "allElementsSVGContainerGraphicsAndGraphicsReferencingElements",
+    types: [],
   },
   justifyContent: {
     unitGroups: [],
@@ -1788,8 +1614,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.72371,
-    appliesTo: "flexContainers",
+    types: [],
   },
   justifyItems: {
     unitGroups: [],
@@ -1798,8 +1623,7 @@ export const properties = {
       type: "keyword",
       value: "legacy",
     },
-    popularity: 0.05716411,
-    appliesTo: "flexContainersGridContainers",
+    types: [],
   },
   justifySelf: {
     unitGroups: [],
@@ -1808,8 +1632,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.06147513,
-    appliesTo: "blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems",
+    types: [],
   },
   justifyTracks: {
     unitGroups: [],
@@ -1818,8 +1641,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0,
-    appliesTo: "gridContainersWithMasonryLayoutInTheirInlineAxis",
+    types: [],
   },
   left: {
     unitGroups: ["length", "percentage"],
@@ -1828,8 +1650,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.90948372,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   letterSpacing: {
     unitGroups: ["length"],
@@ -1838,8 +1659,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.64325492,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   lineBreak: {
     unitGroups: [],
@@ -1848,8 +1668,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.03790035,
-    appliesTo: "allElements",
+    types: [],
   },
   lineClamp: {
     unitGroups: ["number"],
@@ -1858,8 +1677,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "blockContainersExceptMultiColumnContainers",
+    types: ["integer"],
   },
   lineHeight: {
     unitGroups: ["number", "length", "percentage"],
@@ -1868,8 +1686,7 @@ export const properties = {
       type: "keyword",
       value: "inherit",
     },
-    popularity: 0.87354969,
-    appliesTo: "allElements",
+    types: ["number", "length", "percentage"],
   },
   lineHeightStep: {
     unitGroups: ["length"],
@@ -1879,8 +1696,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "blockContainers",
+    types: ["length"],
   },
   listStyleImage: {
     unitGroups: [],
@@ -1889,8 +1705,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.05896406,
-    appliesTo: "listItems",
+    types: ["url"],
   },
   listStylePosition: {
     unitGroups: [],
@@ -1899,8 +1714,7 @@ export const properties = {
       type: "keyword",
       value: "outside",
     },
-    popularity: 0.10836703,
-    appliesTo: "listItems",
+    types: [],
   },
   listStyleType: {
     unitGroups: [],
@@ -1909,8 +1723,7 @@ export const properties = {
       type: "keyword",
       value: "disc",
     },
-    popularity: 0.50305363,
-    appliesTo: "listItems",
+    types: ["custom-ident", "string"],
   },
   marginBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1920,8 +1733,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.06678285,
-    appliesTo: "sameAsMargin",
+    types: ["length", "percentage"],
   },
   marginBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -1931,8 +1743,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.06603158,
-    appliesTo: "sameAsMargin",
+    types: ["length", "percentage"],
   },
   marginBottom: {
     unitGroups: ["length", "percentage"],
@@ -1942,8 +1753,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.84497162,
-    appliesTo: "allElementsExceptTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   marginInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -1953,8 +1763,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.02346878,
-    appliesTo: "sameAsMargin",
+    types: ["length", "percentage"],
   },
   marginInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -1964,8 +1773,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.03660688,
-    appliesTo: "sameAsMargin",
+    types: ["length", "percentage"],
   },
   marginLeft: {
     unitGroups: ["length", "percentage"],
@@ -1975,8 +1783,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.84846503,
-    appliesTo: "allElementsExceptTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   marginRight: {
     unitGroups: ["length", "percentage"],
@@ -1986,8 +1793,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.83485199,
-    appliesTo: "allElementsExceptTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   marginTop: {
     unitGroups: ["length", "percentage"],
@@ -1997,8 +1803,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.90536837,
-    appliesTo: "allElementsExceptTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   marginTrim: {
     unitGroups: [],
@@ -2007,8 +1812,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "blockContainersAndMultiColumnContainers",
+    types: [],
   },
   maskBorderMode: {
     unitGroups: [],
@@ -2017,8 +1821,7 @@ export const properties = {
       type: "keyword",
       value: "alpha",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: [],
   },
   maskBorderOutset: {
     unitGroups: ["length", "number"],
@@ -2028,8 +1831,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["length", "number"],
   },
   maskBorderRepeat: {
     unitGroups: [],
@@ -2038,8 +1840,7 @@ export const properties = {
       type: "keyword",
       value: "stretch",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: [],
   },
   maskBorderSlice: {
     unitGroups: ["number", "percentage"],
@@ -2049,8 +1850,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["number", "percentage"],
   },
   maskBorderSource: {
     unitGroups: [],
@@ -2059,8 +1859,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["url"],
   },
   maskBorderWidth: {
     unitGroups: ["length", "percentage", "number"],
@@ -2069,8 +1868,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["length", "percentage", "number"],
   },
   maskClip: {
     unitGroups: [],
@@ -2079,8 +1877,7 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: [],
   },
   maskComposite: {
     unitGroups: [],
@@ -2089,8 +1886,7 @@ export const properties = {
       type: "keyword",
       value: "add",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: [],
   },
   maskImage: {
     unitGroups: [],
@@ -2099,8 +1895,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["url"],
   },
   maskMode: {
     unitGroups: [],
@@ -2109,8 +1904,7 @@ export const properties = {
       type: "keyword",
       value: "match-source",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: [],
   },
   maskOrigin: {
     unitGroups: [],
@@ -2119,8 +1913,7 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: [],
   },
   maskPosition: {
     unitGroups: ["length", "percentage"],
@@ -2129,8 +1922,7 @@ export const properties = {
       type: "keyword",
       value: "center",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["length", "percentage"],
   },
   maskRepeat: {
     unitGroups: [],
@@ -2139,8 +1931,7 @@ export const properties = {
       type: "keyword",
       value: "repeat",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: [],
   },
   maskSize: {
     unitGroups: ["length", "percentage"],
@@ -2149,8 +1940,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "allElementsSVGContainerElements",
+    types: ["length", "percentage"],
   },
   maskType: {
     unitGroups: [],
@@ -2159,8 +1949,7 @@ export const properties = {
       type: "keyword",
       value: "luminance",
     },
-    popularity: 0.00355107,
-    appliesTo: "maskElements",
+    types: [],
   },
   masonryAutoFlow: {
     unitGroups: [],
@@ -2169,8 +1958,7 @@ export const properties = {
       type: "keyword",
       value: "pack",
     },
-    popularity: 0,
-    appliesTo: "gridContainersWithMasonryLayout",
+    types: [],
   },
   mathDepth: {
     unitGroups: ["number"],
@@ -2180,8 +1968,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    popularity: 3e-8,
-    appliesTo: "allElements",
+    types: ["integer"],
   },
   mathShift: {
     unitGroups: [],
@@ -2190,8 +1977,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 3e-8,
-    appliesTo: "allElements",
+    types: [],
   },
   mathStyle: {
     unitGroups: [],
@@ -2200,8 +1986,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 3e-8,
-    appliesTo: "allElements",
+    types: [],
   },
   maxBlockSize: {
     unitGroups: ["length", "percentage"],
@@ -2210,8 +1995,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00064707,
-    appliesTo: "sameAsWidthAndHeight",
+    types: ["length", "percentage"],
   },
   maxHeight: {
     unitGroups: ["length", "percentage"],
@@ -2220,8 +2004,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.72769912,
-    appliesTo: "allElementsButNonReplacedAndTableColumns",
+    types: ["length", "percentage"],
   },
   maxInlineSize: {
     unitGroups: ["length", "percentage"],
@@ -2230,8 +2013,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00062504,
-    appliesTo: "sameAsWidthAndHeight",
+    types: ["length", "percentage"],
   },
   maxLines: {
     unitGroups: ["number"],
@@ -2240,8 +2022,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "blockContainersExceptMultiColumnContainers",
+    types: ["integer"],
   },
   maxWidth: {
     unitGroups: ["length", "percentage"],
@@ -2250,8 +2031,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.83290711,
-    appliesTo: "allElementsButNonReplacedAndTableRows",
+    types: ["length", "percentage"],
   },
   minBlockSize: {
     unitGroups: ["length", "percentage"],
@@ -2261,8 +2041,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00192722,
-    appliesTo: "sameAsWidthAndHeight",
+    types: ["length", "percentage"],
   },
   minHeight: {
     unitGroups: ["length", "percentage"],
@@ -2271,8 +2050,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.80088013,
-    appliesTo: "allElementsButNonReplacedAndTableColumns",
+    types: ["length", "percentage"],
   },
   minInlineSize: {
     unitGroups: ["length", "percentage"],
@@ -2282,8 +2060,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00357429,
-    appliesTo: "sameAsWidthAndHeight",
+    types: ["length", "percentage"],
   },
   minWidth: {
     unitGroups: ["length", "percentage"],
@@ -2292,8 +2069,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.77790217,
-    appliesTo: "allElementsButNonReplacedAndTableRows",
+    types: ["length", "percentage"],
   },
   mixBlendMode: {
     unitGroups: [],
@@ -2302,8 +2078,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.05430564,
-    appliesTo: "allElements",
+    types: [],
   },
   objectFit: {
     unitGroups: [],
@@ -2312,8 +2087,7 @@ export const properties = {
       type: "keyword",
       value: "fill",
     },
-    popularity: 0.38359477,
-    appliesTo: "replacedElements",
+    types: [],
   },
   objectPosition: {
     unitGroups: ["length", "percentage"],
@@ -2333,8 +2107,7 @@ export const properties = {
         },
       ],
     },
-    popularity: 0.08374319,
-    appliesTo: "replacedElements",
+    types: ["length", "percentage"],
   },
   offsetAnchor: {
     unitGroups: ["length", "percentage"],
@@ -2343,8 +2116,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 6e-8,
-    appliesTo: "transformableElements",
+    types: ["length", "percentage"],
   },
   offsetDistance: {
     unitGroups: ["length", "percentage"],
@@ -2354,8 +2126,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.0007637,
-    appliesTo: "transformableElements",
+    types: ["length", "percentage"],
   },
   offsetPath: {
     unitGroups: [],
@@ -2364,8 +2135,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.0008741,
-    appliesTo: "transformableElements",
+    types: ["url"],
   },
   offsetPosition: {
     unitGroups: ["length", "percentage"],
@@ -2374,8 +2144,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 3e-8,
-    appliesTo: "transformableElements",
+    types: ["length", "percentage"],
   },
   offsetRotate: {
     unitGroups: ["angle"],
@@ -2384,8 +2153,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00073039,
-    appliesTo: "transformableElements",
+    types: ["angle"],
   },
   opacity: {
     unitGroups: ["number", "percentage"],
@@ -2395,8 +2163,7 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    popularity: 0.87714344,
-    appliesTo: "allElements",
+    types: ["number", "percentage"],
   },
   order: {
     unitGroups: ["number"],
@@ -2406,8 +2173,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    popularity: 0.28274872,
-    appliesTo: "flexItemsGridItemsAbsolutelyPositionedContainerChildren",
+    types: ["integer"],
   },
   orphans: {
     unitGroups: ["number"],
@@ -2417,8 +2183,7 @@ export const properties = {
       unit: "number",
       value: 2,
     },
-    popularity: 0.03717837,
-    appliesTo: "blockContainerElements",
+    types: ["integer"],
   },
   outlineColor: {
     unitGroups: [],
@@ -2427,8 +2192,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.09538741,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   outlineOffset: {
     unitGroups: ["length"],
@@ -2438,8 +2202,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.35495556,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   outlineStyle: {
     unitGroups: [],
@@ -2448,8 +2211,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.22264732,
-    appliesTo: "allElements",
+    types: [],
   },
   outlineWidth: {
     unitGroups: ["length"],
@@ -2458,8 +2220,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    popularity: 0.23008945,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   overflow: {
     unitGroups: [],
@@ -2468,8 +2229,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    popularity: 0.87464713,
-    appliesTo: "blockContainersFlexContainersGridContainers",
+    types: [],
   },
   overflowAnchor: {
     unitGroups: [],
@@ -2478,8 +2238,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.05039229,
-    appliesTo: "allElements",
+    types: [],
   },
   overflowBlock: {
     unitGroups: [],
@@ -2488,8 +2247,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "blockContainersFlexContainersGridContainers",
+    types: [],
   },
   overflowClipMargin: {
     unitGroups: ["length"],
@@ -2499,8 +2257,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.0001932,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   overflowInline: {
     unitGroups: [],
@@ -2509,8 +2266,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "blockContainersFlexContainersGridContainers",
+    types: [],
   },
   overflowWrap: {
     unitGroups: [],
@@ -2519,8 +2275,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.2917187,
-    appliesTo: "nonReplacedInlineElements",
+    types: [],
   },
   overflowX: {
     unitGroups: [],
@@ -2529,8 +2284,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    popularity: 0.6419296,
-    appliesTo: "blockContainersFlexContainersGridContainers",
+    types: [],
   },
   overflowY: {
     unitGroups: [],
@@ -2539,8 +2293,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    popularity: 0.66040666,
-    appliesTo: "blockContainersFlexContainersGridContainers",
+    types: [],
   },
   overscrollBehavior: {
     unitGroups: [],
@@ -2549,8 +2302,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "nonReplacedBlockAndInlineBlockElements",
+    types: [],
   },
   overscrollBehaviorBlock: {
     unitGroups: [],
@@ -2559,8 +2311,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0002038,
-    appliesTo: "nonReplacedBlockAndInlineBlockElements",
+    types: [],
   },
   overscrollBehaviorInline: {
     unitGroups: [],
@@ -2569,8 +2320,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0003654,
-    appliesTo: "nonReplacedBlockAndInlineBlockElements",
+    types: [],
   },
   overscrollBehaviorX: {
     unitGroups: [],
@@ -2579,8 +2329,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "nonReplacedBlockAndInlineBlockElements",
+    types: [],
   },
   overscrollBehaviorY: {
     unitGroups: [],
@@ -2589,8 +2338,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "nonReplacedBlockAndInlineBlockElements",
+    types: [],
   },
   paddingBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -2600,8 +2348,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00269343,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   paddingBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -2611,8 +2358,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00281718,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   paddingBottom: {
     unitGroups: ["length", "percentage"],
@@ -2622,8 +2368,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.80249482,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   paddingInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -2633,8 +2378,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.02914235,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   paddingInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -2644,8 +2388,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.03734959,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   paddingLeft: {
     unitGroups: ["length", "percentage"],
@@ -2655,8 +2398,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.81912414,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   paddingRight: {
     unitGroups: ["length", "percentage"],
@@ -2666,8 +2408,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.80336339,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   paddingTop: {
     unitGroups: ["length", "percentage"],
@@ -2677,8 +2418,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.82360295,
-    appliesTo: "allElementsExceptInternalTableDisplayTypes",
+    types: ["length", "percentage"],
   },
   page: {
     unitGroups: [],
@@ -2687,8 +2427,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00131264,
-    appliesTo: "blockElementsInNormalFlow",
+    types: ["custom-ident"],
   },
   pageBreakAfter: {
     unitGroups: [],
@@ -2697,8 +2436,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.04793594,
-    appliesTo: "blockElementsInNormalFlow",
+    types: [],
   },
   pageBreakBefore: {
     unitGroups: [],
@@ -2707,8 +2445,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0173306,
-    appliesTo: "blockElementsInNormalFlow",
+    types: [],
   },
   pageBreakInside: {
     unitGroups: [],
@@ -2717,8 +2454,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0636772,
-    appliesTo: "blockElementsInNormalFlow",
+    types: [],
   },
   paintOrder: {
     unitGroups: [],
@@ -2727,8 +2463,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.0013931,
-    appliesTo: "textElements",
+    types: [],
   },
   perspective: {
     unitGroups: ["length"],
@@ -2737,8 +2472,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.11208199,
-    appliesTo: "transformableElements",
+    types: ["length"],
   },
   perspectiveOrigin: {
     unitGroups: ["length", "percentage"],
@@ -2758,8 +2492,7 @@ export const properties = {
         },
       ],
     },
-    popularity: 0.03597136,
-    appliesTo: "transformableElements",
+    types: ["length", "percentage"],
   },
   pointerEvents: {
     unitGroups: [],
@@ -2768,8 +2501,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.65656971,
-    appliesTo: "allElements",
+    types: [],
   },
   position: {
     unitGroups: [],
@@ -2778,8 +2510,7 @@ export const properties = {
       type: "keyword",
       value: "static",
     },
-    popularity: 0.92435004,
-    appliesTo: "allElements",
+    types: [],
   },
   printColorAdjust: {
     unitGroups: [],
@@ -2788,8 +2519,7 @@ export const properties = {
       type: "keyword",
       value: "economy",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   quotes: {
     unitGroups: [],
@@ -2798,8 +2528,7 @@ export const properties = {
       type: "keyword",
       value: "dependsOnUserAgent",
     },
-    popularity: 0.08095164,
-    appliesTo: "allElements",
+    types: ["string"],
   },
   resize: {
     unitGroups: [],
@@ -2808,8 +2537,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.20814477,
-    appliesTo: "elementsWithOverflowNotVisibleAndReplacedElements",
+    types: [],
   },
   right: {
     unitGroups: ["length", "percentage"],
@@ -2818,8 +2546,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.83840245,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   rotate: {
     unitGroups: ["angle", "number"],
@@ -2828,8 +2555,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 4e-8,
-    appliesTo: "transformableElements",
+    types: ["angle", "number"],
   },
   rowGap: {
     unitGroups: ["length", "percentage"],
@@ -2839,8 +2565,7 @@ export const properties = {
       value: 0,
       unit: "px",
     },
-    popularity: 0.01955862,
-    appliesTo: "multiColumnElementsFlexContainersGridContainers",
+    types: ["length", "percentage"],
   },
   rubyAlign: {
     unitGroups: [],
@@ -2849,8 +2574,7 @@ export const properties = {
       type: "keyword",
       value: "space-around",
     },
-    popularity: 0,
-    appliesTo: "rubyBasesAnnotationsBaseAnnotationContainers",
+    types: [],
   },
   rubyMerge: {
     unitGroups: [],
@@ -2859,8 +2583,7 @@ export const properties = {
       type: "keyword",
       value: "separate",
     },
-    popularity: 0,
-    appliesTo: "rubyAnnotationsContainers",
+    types: [],
   },
   rubyPosition: {
     unitGroups: [],
@@ -2869,8 +2592,7 @@ export const properties = {
       type: "keyword",
       value: "alternate",
     },
-    popularity: 0.00156034,
-    appliesTo: "rubyAnnotationsContainers",
+    types: [],
   },
   scale: {
     unitGroups: ["number"],
@@ -2879,8 +2601,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 2e-7,
-    appliesTo: "transformableElements",
+    types: ["number"],
   },
   scrollbarColor: {
     unitGroups: [],
@@ -2889,8 +2610,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0,
-    appliesTo: "scrollingBoxes",
+    types: ["hex-color"],
   },
   scrollbarGutter: {
     unitGroups: [],
@@ -2899,8 +2619,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00128847,
-    appliesTo: "scrollingBoxes",
+    types: [],
   },
   scrollbarWidth: {
     unitGroups: [],
@@ -2909,8 +2628,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.000001,
-    appliesTo: "scrollingBoxes",
+    types: [],
   },
   scrollBehavior: {
     unitGroups: [],
@@ -2919,8 +2637,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.06855196,
-    appliesTo: "scrollingBoxes",
+    types: [],
   },
   scrollMarginBlockStart: {
     unitGroups: ["length"],
@@ -2930,8 +2647,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollMarginBlockEnd: {
     unitGroups: ["length"],
@@ -2941,8 +2657,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollMarginBottom: {
     unitGroups: ["length"],
@@ -2952,8 +2667,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollMarginInlineStart: {
     unitGroups: ["length"],
@@ -2963,8 +2677,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollMarginInlineEnd: {
     unitGroups: ["length"],
@@ -2974,8 +2687,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollMarginLeft: {
     unitGroups: ["length"],
@@ -2985,8 +2697,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollMarginRight: {
     unitGroups: ["length"],
@@ -2996,8 +2707,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollMarginTop: {
     unitGroups: ["length"],
@@ -3007,8 +2717,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   scrollPaddingBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -3017,8 +2726,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0003318,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollPaddingBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -3027,8 +2735,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00033098,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollPaddingBottom: {
     unitGroups: ["length", "percentage"],
@@ -3037,8 +2744,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00046042,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollPaddingInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -3047,8 +2753,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00034054,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollPaddingInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -3057,8 +2762,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00033178,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollPaddingLeft: {
     unitGroups: ["length", "percentage"],
@@ -3067,8 +2771,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00318274,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollPaddingRight: {
     unitGroups: ["length", "percentage"],
@@ -3077,8 +2780,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00046376,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollPaddingTop: {
     unitGroups: ["length", "percentage"],
@@ -3087,8 +2789,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0199363,
-    appliesTo: "scrollContainers",
+    types: ["length", "percentage"],
   },
   scrollSnapAlign: {
     unitGroups: [],
@@ -3097,8 +2798,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.05990673,
-    appliesTo: "allElements",
+    types: [],
   },
   scrollSnapStop: {
     unitGroups: [],
@@ -3107,8 +2807,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.0074871,
-    appliesTo: "allElements",
+    types: [],
   },
   scrollSnapType: {
     unitGroups: [],
@@ -3117,8 +2816,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.05778112,
-    appliesTo: "allElements",
+    types: [],
   },
   scrollTimelineAxis: {
     unitGroups: [],
@@ -3127,8 +2825,7 @@ export const properties = {
       type: "keyword",
       value: "block",
     },
-    popularity: 0,
-    appliesTo: "scrollContainers",
+    types: [],
   },
   scrollTimelineName: {
     unitGroups: [],
@@ -3137,8 +2834,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "scrollContainers",
+    types: ["custom-ident"],
   },
   shapeImageThreshold: {
     unitGroups: ["number", "percentage"],
@@ -3148,8 +2844,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    popularity: 0.00579108,
-    appliesTo: "floats",
+    types: ["number", "percentage"],
   },
   shapeMargin: {
     unitGroups: ["length", "percentage"],
@@ -3159,8 +2854,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.00212267,
-    appliesTo: "floats",
+    types: ["length", "percentage"],
   },
   shapeOutside: {
     unitGroups: [],
@@ -3169,8 +2863,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00236383,
-    appliesTo: "floats",
+    types: ["url"],
   },
   tabSize: {
     unitGroups: ["number", "length"],
@@ -3180,8 +2873,7 @@ export const properties = {
       unit: "number",
       value: 8,
     },
-    popularity: 0.03065152,
-    appliesTo: "blockContainers",
+    types: ["integer", "length"],
   },
   tableLayout: {
     unitGroups: [],
@@ -3190,8 +2882,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.20669832,
-    appliesTo: "tableElements",
+    types: [],
   },
   textAlign: {
     unitGroups: [],
@@ -3200,8 +2891,7 @@ export const properties = {
       type: "keyword",
       value: "start",
     },
-    popularity: 0.89287477,
-    appliesTo: "blockContainers",
+    types: [],
   },
   textAlignLast: {
     unitGroups: [],
@@ -3210,8 +2900,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.02339794,
-    appliesTo: "blockContainers",
+    types: [],
   },
   textCombineUpright: {
     unitGroups: ["number"],
@@ -3220,8 +2909,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.00187072,
-    appliesTo: "nonReplacedInlineElements",
+    types: ["integer"],
   },
   textDecorationColor: {
     unitGroups: [],
@@ -3230,8 +2918,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0.05079903,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   textDecorationLine: {
     unitGroups: [],
@@ -3240,8 +2927,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.03656271,
-    appliesTo: "allElements",
+    types: [],
   },
   textDecorationSkip: {
     unitGroups: [],
@@ -3250,8 +2936,7 @@ export const properties = {
       type: "keyword",
       value: "objects",
     },
-    popularity: 0.054238,
-    appliesTo: "allElements",
+    types: [],
   },
   textDecorationSkipInk: {
     unitGroups: [],
@@ -3260,8 +2945,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.01645826,
-    appliesTo: "allElements",
+    types: [],
   },
   textDecorationStyle: {
     unitGroups: [],
@@ -3270,8 +2954,7 @@ export const properties = {
       type: "keyword",
       value: "solid",
     },
-    popularity: 0.02111189,
-    appliesTo: "allElements",
+    types: [],
   },
   textDecorationThickness: {
     unitGroups: ["length", "percentage"],
@@ -3280,8 +2963,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00728976,
-    appliesTo: "allElements",
+    types: ["length", "percentage"],
   },
   textEmphasisColor: {
     unitGroups: [],
@@ -3290,8 +2972,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["hex-color"],
   },
   textEmphasisPosition: {
     unitGroups: [],
@@ -3309,8 +2990,7 @@ export const properties = {
         },
       ],
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: [],
   },
   textEmphasisStyle: {
     unitGroups: [],
@@ -3319,8 +2999,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["string"],
   },
   textIndent: {
     unitGroups: ["length", "percentage"],
@@ -3330,8 +3009,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    popularity: 0.37633903,
-    appliesTo: "blockContainers",
+    types: ["length", "percentage"],
   },
   textJustify: {
     unitGroups: [],
@@ -3340,8 +3018,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 8e-7,
-    appliesTo: "inlineLevelAndTableCellElements",
+    types: [],
   },
   textOrientation: {
     unitGroups: [],
@@ -3350,8 +3027,7 @@ export const properties = {
       type: "keyword",
       value: "mixed",
     },
-    popularity: 0.00286298,
-    appliesTo: "allElementsExceptTableRowGroupsRowsColumnGroupsAndColumns",
+    types: [],
   },
   textOverflow: {
     unitGroups: [],
@@ -3360,8 +3036,7 @@ export const properties = {
       type: "keyword",
       value: "clip",
     },
-    popularity: 0.65272517,
-    appliesTo: "blockContainerElements",
+    types: ["string"],
   },
   textRendering: {
     unitGroups: [],
@@ -3370,8 +3045,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.3619822,
-    appliesTo: "textElements",
+    types: [],
   },
   textShadow: {
     unitGroups: ["length"],
@@ -3380,8 +3054,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.49899917,
-    appliesTo: "allElements",
+    types: ["length", "hex-color"],
   },
   textSizeAdjust: {
     unitGroups: ["percentage"],
@@ -3390,8 +3063,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.13611964,
-    appliesTo: "allElements",
+    types: ["percentage"],
   },
   textTransform: {
     unitGroups: [],
@@ -3400,8 +3072,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.73056963,
-    appliesTo: "allElements",
+    types: [],
   },
   textUnderlineOffset: {
     unitGroups: ["length", "percentage"],
@@ -3410,8 +3081,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.00558599,
-    appliesTo: "allElements",
+    types: ["length", "percentage"],
   },
   textUnderlinePosition: {
     unitGroups: [],
@@ -3420,8 +3090,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.0070495,
-    appliesTo: "allElements",
+    types: [],
   },
   top: {
     unitGroups: ["length", "percentage"],
@@ -3430,8 +3099,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.91426675,
-    appliesTo: "positionedElements",
+    types: ["length", "percentage"],
   },
   touchAction: {
     unitGroups: [],
@@ -3440,9 +3108,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.37581741,
-    appliesTo:
-      "allElementsExceptNonReplacedInlineElementsTableRowsColumnsRowColumnGroups",
+    types: [],
   },
   transform: {
     unitGroups: [],
@@ -3451,8 +3117,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0.82452786,
-    appliesTo: "transformableElements",
+    types: [],
   },
   transformBox: {
     unitGroups: [],
@@ -3461,8 +3126,7 @@ export const properties = {
       type: "keyword",
       value: "view-box",
     },
-    popularity: 0.00167776,
-    appliesTo: "transformableElements",
+    types: [],
   },
   transformOrigin: {
     unitGroups: ["length", "percentage"],
@@ -3487,8 +3151,7 @@ export const properties = {
         },
       ],
     },
-    popularity: 0.54179205,
-    appliesTo: "transformableElements",
+    types: ["length", "percentage"],
   },
   transformStyle: {
     unitGroups: [],
@@ -3497,8 +3160,7 @@ export const properties = {
       type: "keyword",
       value: "flat",
     },
-    popularity: 0.11068509,
-    appliesTo: "transformableElements",
+    types: [],
   },
   transition: {
     unitGroups: ["time"],
@@ -3526,8 +3188,7 @@ export const properties = {
         },
       ],
     },
-    popularity: 0.78355592,
-    appliesTo: "allElementsAndPseudos",
+    types: ["custom-ident", "time"],
   },
   transitionDelay: {
     unitGroups: ["time"],
@@ -3537,8 +3198,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    popularity: 0.26633596,
-    appliesTo: "allElementsAndPseudos",
+    types: ["time"],
   },
   transitionDuration: {
     unitGroups: ["time"],
@@ -3548,8 +3208,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    popularity: 0.27645681,
-    appliesTo: "allElementsAndPseudos",
+    types: ["time"],
   },
   transitionProperty: {
     unitGroups: [],
@@ -3558,8 +3217,7 @@ export const properties = {
       type: "keyword",
       value: "all",
     },
-    popularity: 0.28626935,
-    appliesTo: "allElementsAndPseudos",
+    types: ["custom-ident"],
   },
   transitionTimingFunction: {
     unitGroups: [],
@@ -3568,8 +3226,7 @@ export const properties = {
       type: "keyword",
       value: "ease",
     },
-    popularity: 0.28535681,
-    appliesTo: "allElementsAndPseudos",
+    types: [],
   },
   translate: {
     unitGroups: ["length", "percentage"],
@@ -3578,8 +3235,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 9e-8,
-    appliesTo: "transformableElements",
+    types: ["length", "percentage"],
   },
   unicodeBidi: {
     unitGroups: [],
@@ -3588,8 +3244,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.13633243,
-    appliesTo: "allElementsSomeValuesNoEffectOnNonInlineElements",
+    types: [],
   },
   userSelect: {
     unitGroups: [],
@@ -3598,8 +3253,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.55451382,
-    appliesTo: "allElements",
+    types: [],
   },
   verticalAlign: {
     unitGroups: ["percentage", "length"],
@@ -3608,8 +3262,7 @@ export const properties = {
       type: "keyword",
       value: "baseline",
     },
-    popularity: 0.84531302,
-    appliesTo: "inlineLevelAndTableCellElements",
+    types: ["percentage", "length"],
   },
   viewTransitionName: {
     unitGroups: [],
@@ -3618,8 +3271,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    popularity: 0,
-    appliesTo: "allElements",
+    types: ["custom-ident"],
   },
   visibility: {
     unitGroups: [],
@@ -3628,8 +3280,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    popularity: 0.76715746,
-    appliesTo: "allElements",
+    types: [],
   },
   whiteSpace: {
     unitGroups: [],
@@ -3638,8 +3289,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.80711821,
-    appliesTo: "allElements",
+    types: [],
   },
   widows: {
     unitGroups: ["number"],
@@ -3649,8 +3299,7 @@ export const properties = {
       unit: "number",
       value: 2,
     },
-    popularity: 0.03635817,
-    appliesTo: "blockContainerElements",
+    types: ["integer"],
   },
   width: {
     unitGroups: ["length", "percentage"],
@@ -3659,8 +3308,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.93671487,
-    appliesTo: "allElementsButNonReplacedAndTableRows",
+    types: ["length", "percentage"],
   },
   willChange: {
     unitGroups: [],
@@ -3669,8 +3317,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.28251419,
-    appliesTo: "allElements",
+    types: ["custom-ident"],
   },
   wordBreak: {
     unitGroups: [],
@@ -3679,8 +3326,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.51074263,
-    appliesTo: "allElements",
+    types: [],
   },
   wordSpacing: {
     unitGroups: ["length"],
@@ -3689,8 +3335,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.15650671,
-    appliesTo: "allElements",
+    types: ["length"],
   },
   wordWrap: {
     unitGroups: [],
@@ -3699,8 +3344,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    popularity: 0.55291577,
-    appliesTo: "nonReplacedInlineElements",
+    types: [],
   },
   writingMode: {
     unitGroups: [],
@@ -3709,8 +3353,7 @@ export const properties = {
       type: "keyword",
       value: "horizontal-tb",
     },
-    popularity: 0.00947773,
-    appliesTo: "allElementsExceptTableRowColumnGroupsTableRowsColumns",
+    types: [],
   },
   zIndex: {
     unitGroups: ["number"],
@@ -3719,7 +3362,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.85875694,
-    appliesTo: "positionedElements",
+    types: ["integer"],
   },
 } as const;

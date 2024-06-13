@@ -78,6 +78,8 @@ const $clearText = () => {
     // recompute selection to get new splitted nodes
     const newSelection = $getSelection();
     if ($isRangeSelection(newSelection)) {
+      // update both nodes and selection
+      newSelection.format = 0;
       for (const node of selection.getNodes()) {
         if ($isTextNode(node)) {
           node.setFormat(0);

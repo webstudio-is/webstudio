@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import type { StoryFn, Meta } from "@storybook/react";
@@ -48,7 +48,6 @@ const instances: Instances = new Map([
 
 export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
   const state = useStore($textToolbar);
-  const ref = useRef<null | HTMLDivElement>(null);
 
   useEffect(subscribeCommands, []);
 
@@ -116,7 +115,6 @@ export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
         }}
       >
         <TextEditor
-          rootRef={ref}
           rootInstanceSelector={["1"]}
           instances={instances}
           contentEditable={<ContentEditable />}
