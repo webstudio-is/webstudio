@@ -40,10 +40,12 @@ const IconButtonsWrapper = styled(Flex, {
   top: 0,
   bottom: 0,
   paddingRight: sharedPaddingRight,
+  display: "none",
 });
 
 const FakeIconButtonsWrapper = styled(Flex, {
   paddingLeft: theme.spacing[5],
+  display: "none",
 });
 
 /**
@@ -66,6 +68,13 @@ const ItemButton = styled("button", {
   position: "relative",
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
+    [`& ${FakeIconButtonsWrapper}`]: {
+      display: "flex",
+    },
+    [`~ ${IconButtonsWrapper}`]: {
+      display: "flex",
+    },
+
     "&:after": {
       borderRadius: theme.borderRadius[3],
       outline: `2px solid ${theme.colors.borderFocus}`,
@@ -110,12 +119,18 @@ type Props = ComponentProps<typeof ItemButton> & {
 const ItemWrapper = styled("div", {
   position: "relative",
   width: "100%",
-  "&:hover, &[data-active=true]": {
+  "&:hover, &:focus-within, &[data-active=true]": {
     [`& ${ItemButton}`]: {
       backgroundColor: theme.colors.backgroundHover,
       [`&[data-draggable=true] ${DragHandleIconStyled}`]: {
         visibility: "visible",
       },
+    },
+    [`& ${IconButtonsWrapper}`]: {
+      display: "flex",
+    },
+    [`& ${FakeIconButtonsWrapper}`]: {
+      display: "flex",
     },
   },
 });
