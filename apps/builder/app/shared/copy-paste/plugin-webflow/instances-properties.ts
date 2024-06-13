@@ -198,7 +198,7 @@ const mapComponentAndProperties = (
     }
   }
 
-  component satisfies never;
+  (component) satisfies never;
 };
 
 const addAttributes = (
