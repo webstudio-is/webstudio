@@ -87,7 +87,7 @@ const parse = (clipboardData: string) => {
 
   if (unsupportedNodeTypes.length !== 0) {
     const message = `Skipping unsupported nodes: ${unsupportedNodeTypes.join(", ")}`;
-    toast(message);
+    toast.info(message);
     console.info(message);
   }
 
