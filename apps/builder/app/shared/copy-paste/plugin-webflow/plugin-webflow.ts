@@ -11,9 +11,10 @@ import {
   $selectedPage,
 } from "../../nano-states";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { WfData, WfNode, WfStyle } from "./schema";
+import { WfData, WfNode, WfStyle, wfNodeTypes } from "./schema";
 import { addInstanceAndProperties } from "./instances-properties";
 import { addStyles } from "./styles";
+import { toast } from "@webstudio-is/design-system";
 
 export const mimeType = "application/json";
 
@@ -63,16 +64,41 @@ const toWebstudioFragment = async (wfData: WfData) => {
 };
 
 const parse = (clipboardData: string) => {
+  let data;
   try {
-    const data = JSON.parse(clipboardData);
-    const result = WfData.safeParse(data);
-    if (result.success) {
-      return result.data;
-    }
-    throw result.error.message;
-  } catch (error) {
-    console.error(error);
+    data = JSON.parse(clipboardData);
+  } catch {
+    return;
   }
+
+  if (data.type !== "@webflow/XscpData") {
+    return;
+  }
+
+  const unsupportedNodeTypes: Array<string> = data.payload.nodes
+    .filter((node: { type: string }) => {
+      return (
+        node.type !== undefined &&
+        wfNodeTypes.includes(node.type as (typeof wfNodeTypes)[number]) ===
+          false
+      );
+    })
+    .map((node: { type: string }) => node.type);
+
+  if (unsupportedNodeTypes.length !== 0) {
+    const message = `Skipping unsupported nodes: ${unsupportedNodeTypes.join(", ")}`;
+    toast.info(message);
+    console.info(message);
+  }
+
+  const result = WfData.safeParse(data);
+
+  if (result.success) {
+    return result.data;
+  }
+
+  toast.error(result.error.message);
+  console.error(result.error.message);
 };
 
 export const onPaste = async (clipboardData: string) => {

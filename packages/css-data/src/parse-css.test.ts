@@ -73,19 +73,6 @@ describe("Parse CSS", () => {
     `);
   });
 
-  test("parses unsupported shorthand values", () => {
-    expect(parseCss(`.test { padding: 4px }`).test?.[0]).toMatchInlineSnapshot(`
-      {
-        "property": "padding",
-        "value": {
-          "type": "unit",
-          "unit": "px",
-          "value": 4,
-        },
-      }
-    `);
-  });
-
   test("parse state", () => {
     expect(parseCss(`a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
       {
@@ -199,7 +186,7 @@ describe("Parse CSS", () => {
   test("parse multiple rules, remove overwritten properties", () => {
     const css = `
       h1 {
-        margin: 0.67em 0;
+        margin-bottom: 5px;
         font-size: 2em;
       }
       h1 {
@@ -216,24 +203,6 @@ describe("Parse CSS", () => {
     expect(parseCss(css)).toMatchInlineSnapshot(`
       {
         "h1": [
-          {
-            "property": "margin",
-            "value": {
-              "type": "tuple",
-              "value": [
-                {
-                  "type": "unit",
-                  "unit": "em",
-                  "value": 0.67,
-                },
-                {
-                  "type": "unit",
-                  "unit": "number",
-                  "value": 0,
-                },
-              ],
-            },
-          },
           {
             "property": "marginBottom",
             "value": {
@@ -271,6 +240,103 @@ describe("Parse CSS", () => {
               "type": "unit",
               "unit": "px",
               "value": 44,
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("parse shorthand", () => {
+    expect(parseCss(`a { border: 1px solid red }`)).toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "borderTopWidth",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 1,
+            },
+          },
+          {
+            "property": "borderRightWidth",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 1,
+            },
+          },
+          {
+            "property": "borderBottomWidth",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 1,
+            },
+          },
+          {
+            "property": "borderLeftWidth",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 1,
+            },
+          },
+          {
+            "property": "borderTopStyle",
+            "value": {
+              "type": "keyword",
+              "value": "solid",
+            },
+          },
+          {
+            "property": "borderRightStyle",
+            "value": {
+              "type": "keyword",
+              "value": "solid",
+            },
+          },
+          {
+            "property": "borderBottomStyle",
+            "value": {
+              "type": "keyword",
+              "value": "solid",
+            },
+          },
+          {
+            "property": "borderLeftStyle",
+            "value": {
+              "type": "keyword",
+              "value": "solid",
+            },
+          },
+          {
+            "property": "borderTopColor",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+          {
+            "property": "borderRightColor",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+          {
+            "property": "borderBottomColor",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+          {
+            "property": "borderLeftColor",
+            "value": {
+              "type": "keyword",
+              "value": "red",
             },
           },
         ],

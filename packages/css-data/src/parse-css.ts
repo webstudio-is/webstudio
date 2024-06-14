@@ -1,14 +1,11 @@
 import * as csstree from "css-tree";
-import {
-  StyleValue,
-  type Style as S,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
+import { expandShorthands } from "./shorthands";
 
 type Selector = string;
 
@@ -19,13 +16,13 @@ type Longhand = keyof typeof toLonghand;
 const parseCssValue = (
   property: Longhand | StyleProperty,
   value: string
-): S => {
+): Map<StyleProperty, StyleValue> => {
   const unwrap = toLonghand[property as Longhand];
 
   if (typeof unwrap === "function") {
     const longhands = unwrap(value);
 
-    return Object.fromEntries(
+    return new Map(
       Object.entries(longhands).map(([property, value]) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore @todo remove this ignore: property is a `keyof typeof longhands` which is a key in parsers but TS can't infer the link
@@ -54,12 +51,18 @@ const parseCssValue = (
           parseCssValueLonghand(property as StyleProperty, value),
         ];
       })
-    );
+    ) as Map<StyleProperty, StyleValue>;
   }
 
-  return {
-    [property]: parseCssValueLonghand(property as StyleProperty, value),
-  };
+  const expanded = new Map(expandShorthands([[property, value]]));
+  const final = new Map();
+  for (const [property, value] of expanded) {
+    final.set(
+      property,
+      parseCssValueLonghand(property as StyleProperty, value)
+    );
+  }
+  return final;
 };
 
 const cssTreeTryParse = (input: string) => {
@@ -118,39 +121,39 @@ export const parseCss = (css: string) => {
         stringValue
       );
 
-      (Object.entries(parsedCss) as [StyleProperty, StyleValue][]).forEach(
-        ([property, value]) => {
-          try {
-            StyleValue.parse(value);
-            property = camelCase(property) as StyleProperty;
-            selectors.forEach((selector, index) => {
-              let declarations = styles[selector];
-              if (declarations === undefined) {
-                declarations = styles[selector] = [];
-              }
-              const styleDecl: EmbedTemplateStyleDecl = { property, value };
-              const statesArray = states.get(selector) ?? [];
-              if (statesArray[index]) {
-                styleDecl.state = statesArray[index];
-              }
+      for (const [property, value] of parsedCss) {
+        try {
+          StyleValue.parse(value);
+          selectors.forEach((selector, index) => {
+            let declarations = styles[selector];
+            if (declarations === undefined) {
+              declarations = styles[selector] = [];
+            }
+            const styleDecl: EmbedTemplateStyleDecl = {
+              property: camelCase(property) as StyleProperty,
+              value,
+            };
+            const statesArray = states.get(selector) ?? [];
+            if (statesArray[index]) {
+              styleDecl.state = statesArray[index];
+            }
 
-              // Checks if there is already a prorperty that is exactly the same and will be overwritten,
-              // so we may as well remove it from the data.
-              const existingIndex = declarations.findIndex(
-                (decl) =>
-                  decl.property === styleDecl.property &&
-                  decl.state === styleDecl.state
-              );
-              if (existingIndex !== -1) {
-                declarations.splice(existingIndex, 1);
-              }
-              declarations.push(styleDecl);
-            });
-          } catch (error) {
-            console.error("Bad CSS declaration", error, parsedCss);
-          }
+            // Checks if there is already a prorperty that is exactly the same and will be overwritten,
+            // so we may as well remove it from the data.
+            const existingIndex = declarations.findIndex(
+              (decl) =>
+                decl.property === styleDecl.property &&
+                decl.state === styleDecl.state
+            );
+            if (existingIndex !== -1) {
+              declarations.splice(existingIndex, 1);
+            }
+            declarations.push(styleDecl);
+          });
+        } catch (error) {
+          console.error("Bad CSS declaration", error, parsedCss);
         }
-      );
+      }
     }
   });
 

@@ -982,6 +982,205 @@ test("CodeBlock", async () => {
   ]);
 });
 
+test("RichText", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "58c7368a-83e4-a9c2-e1c9-7244f0473095",
+          type: "RichText",
+          tag: "div",
+          classes: [],
+          children: [
+            "363e1f05-6da0-65bc-baeb-2a4d6eec67ba",
+            "2bf568d0-971f-5925-e6dd-0dd1cc2bc521",
+          ],
+        },
+        {
+          _id: "363e1f05-6da0-65bc-baeb-2a4d6eec67ba",
+          type: "Heading",
+          tag: "h1",
+          classes: [],
+          children: ["6fe8587d-c2d7-b346-cdef-9e29bb6efd50"],
+        },
+        {
+          _id: "6fe8587d-c2d7-b346-cdef-9e29bb6efd50",
+          text: true,
+          v: "Heading 1",
+        },
+        {
+          _id: "2bf568d0-971f-5925-e6dd-0dd1cc2bc521",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: [
+            "2a2d8880-03e0-ee0a-cec1-416751acb3e5",
+            "14d2b6a0-e2f6-94dd-b593-9d546eee84bf",
+            "e9ce86ec-be82-769e-82fb-247480c8d6ba",
+            "6c795406-de48-6d53-7d1c-d0ec4756e9d9",
+            "528588c5-3733-e1c3-136a-baaf24fcba33",
+            "95183c77-8fe7-d0ea-9685-b930608dc373",
+            "0f25b98b-6549-5d4e-5e11-7e56558b21e1",
+          ],
+        },
+        {
+          _id: "2a2d8880-03e0-ee0a-cec1-416751acb3e5",
+          text: true,
+          v: "Lorem ",
+        },
+        {
+          _id: "14d2b6a0-e2f6-94dd-b593-9d546eee84bf",
+          type: "Link",
+          tag: "a",
+          classes: [],
+          children: ["67af720f-cc2b-567e-d3df-05feef3870ce"],
+          data: {
+            button: false,
+            block: "",
+            link: {
+              url: "http://google.com",
+            },
+          },
+        },
+        {
+          _id: "67af720f-cc2b-567e-d3df-05feef3870ce",
+          type: "Emphasized",
+          tag: "em",
+          classes: [],
+          children: ["db8be0af-8c03-0785-3b84-f9ae7f4418f5"],
+        },
+        {
+          _id: "db8be0af-8c03-0785-3b84-f9ae7f4418f5",
+          text: true,
+          v: "ipsum",
+        },
+        {
+          _id: "e9ce86ec-be82-769e-82fb-247480c8d6ba",
+          text: true,
+          v: " dolor sit ",
+        },
+        {
+          _id: "528588c5-3733-e1c3-136a-baaf24fcba33",
+          text: true,
+          v: ", ",
+        },
+        {
+          _id: "95183c77-8fe7-d0ea-9685-b930608dc373",
+          type: "Strong",
+          tag: "strong",
+          classes: [],
+          children: ["e5bbc823-9dad-bfb7-d448-2e4d9af0be84"],
+        },
+        {
+          _id: "e5bbc823-9dad-bfb7-d448-2e4d9af0be84",
+          text: true,
+          v: "consectetur",
+        },
+        {
+          _id: "0f25b98b-6549-5d4e-5e11-7e56558b21e1",
+          text: true,
+          v: " ",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.any(String),
+      type: "instance",
+      component: "Heading",
+      children: [
+        {
+          type: "text",
+          value: "Heading 1",
+        },
+      ],
+    },
+    {
+      id: expect.any(String),
+      type: "instance",
+      component: "Italic",
+      children: [
+        {
+          type: "text",
+          value: "ipsum",
+        },
+      ],
+    },
+    {
+      id: expect.any(String),
+      type: "instance",
+      component: "Link",
+      children: [
+        {
+          type: "id",
+          value: expect.any(String),
+        },
+      ],
+    },
+    {
+      id: expect.any(String),
+      type: "instance",
+      component: "Bold",
+      children: [
+        {
+          type: "text",
+          value: "consectetur",
+        },
+      ],
+    },
+    {
+      id: expect.any(String),
+      type: "instance",
+      component: "Paragraph",
+      children: [
+        {
+          type: "text",
+          value: "Lorem ",
+        },
+        {
+          type: "id",
+          value: expect.any(String),
+        },
+        {
+          type: "text",
+          value: " dolor sit ",
+        },
+        {
+          type: "text",
+          value: ", ",
+        },
+        {
+          type: "id",
+          value: expect.any(String),
+        },
+        {
+          type: "text",
+          value: " ",
+        },
+      ],
+    },
+    {
+      id: expect.any(String),
+      type: "instance",
+      component: "Box",
+      children: [
+        {
+          type: "id",
+          value: expect.any(String),
+        },
+        {
+          type: "id",
+          value: expect.any(String),
+        },
+      ],
+    },
+  ]);
+});
+
 describe("Custom attributes", () => {
   test("Basic", async () => {
     const fragment = await toWebstudioFragment({
@@ -1073,7 +1272,8 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
-          margin: 0.67em 0;
+          margin-right: 0;
+          margin-left: 0;
           margin-bottom: 10px;
           font-weight: bold;
           margin-top: 20px;
@@ -1156,7 +1356,9 @@ describe("Styles", () => {
       "@media all {
         a {
           background-color: rgba(0, 0, 0, 0);
-          outline: 0
+          outline-width: 0;
+          outline-style: initial;
+          outline-color: initial
         }
         button {
           text-align: center

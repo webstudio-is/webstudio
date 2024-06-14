@@ -15,7 +15,7 @@ export const gradientNames = [
   "repeating-linear-gradient",
   "repeating-radial-gradient",
 ];
-
+// @todo rewrite to return a Map
 export const parseBackground = (
   background: string
 ): {
