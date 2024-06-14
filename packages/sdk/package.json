@@ -7,9 +7,14 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./testing": {
+      "webstudio": "./src/testing.ts"
+    }
   },
   "files": [
     "lib/*",
@@ -36,6 +41,7 @@
     "@jest/globals": "^29.7.0",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "nanoid": "^5.0.1",
     "strip-indent": "^4.0.0"
   }
 }
