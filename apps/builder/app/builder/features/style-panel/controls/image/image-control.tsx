@@ -92,10 +92,10 @@ export const ImageControl = ({
         title="Images"
         content={
           <ImageManager
-            onChange={(asset) => {
+            onChange={(assetId) => {
               setValue({
                 type: "image",
-                value: { type: "asset", value: asset.id },
+                value: { type: "asset", value: assetId },
               });
             }}
           />

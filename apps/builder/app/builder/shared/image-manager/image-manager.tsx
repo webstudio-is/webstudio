@@ -23,7 +23,7 @@ const useLogic = ({
   onChange,
   accept,
 }: {
-  onChange?: (asset: ImageAsset) => void;
+  onChange?: (assetId: ImageAsset["id"]) => void;
   accept?: string;
 }) => {
   const { assetContainers } = useAssets("image");
@@ -39,7 +39,7 @@ const useLogic = ({
           assetContainer.status === "uploaded" &&
           assetContainer.asset.type === "image"
         ) {
-          onChange?.(assetContainer.asset);
+          onChange?.(assetContainer.asset.id);
         }
         return;
       }
@@ -85,7 +85,7 @@ const useLogic = ({
 };
 
 type ImageManagerProps = {
-  onChange?: (asset: ImageAsset) => void;
+  onChange?: (assetId: ImageAsset["id"]) => void;
   /** acceptable file types in the `<imput accept>` attribute format */
   accept?: string;
 };
@@ -114,12 +114,8 @@ export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
             onDelete={handleDelete}
             onSelect={handleSelect}
             onChange={(assetContainer) => {
-              // @todo we probably should not allow select uploading images too
-              if (
-                assetContainer.status === "uploaded" &&
-                assetContainer.asset.type === "image"
-              ) {
-                onChange?.(assetContainer.asset);
+              if (assetContainer.asset.type === "image") {
+                onChange?.(assetContainer.asset.id);
               }
             }}
             state={index === selectedIndex ? "selected" : undefined}

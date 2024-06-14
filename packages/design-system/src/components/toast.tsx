@@ -1,5 +1,5 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
-import toast, { resolveValue, useToaster } from "react-hot-toast/headless";
+import hotToast, { resolveValue, useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { Box } from "./box";
@@ -91,13 +91,10 @@ const StyledToast = styled(ToastPrimitive.Root, {
   },
 });
 
-const StyledTitle = styled(ToastPrimitive.Title, {
-  marginBottom: theme.spacing[3],
-});
-
 export const Toaster = () => {
   const { toasts, handlers } = useToaster();
   const { startPause, endPause } = handlers;
+
   return (
     <ToastPrimitive.ToastProvider>
       {toasts.map((toastData) => (
@@ -109,23 +106,25 @@ export const Toaster = () => {
           onClick={() => {
             // To give a way to dismiss the infinite toast
             if (toastData.duration === Number.POSITIVE_INFINITY) {
-              toast.dismiss(toastData.id);
+              hotToast.dismiss(toastData.id);
             }
           }}
         >
-          <Box
-            css={{
-              svg: {
-                width: theme.spacing[11],
-                height: theme.spacing[11],
-              },
-            }}
-          >
-            {toastData.type === "blank" && <InfoCircleIcon />}
-          </Box>
-          <StyledTitle>
+          {toastData.type === "blank" && (
+            <Box
+              css={{
+                svg: {
+                  width: theme.spacing[11],
+                  height: theme.spacing[11],
+                },
+              }}
+            >
+              <InfoCircleIcon />
+            </Box>
+          )}
+          <ToastPrimitive.Title>
             {resolveValue(toastData.message, toastData)}
-          </StyledTitle>
+          </ToastPrimitive.Title>
         </StyledToast>
       ))}
       <StyledViewport />
@@ -133,4 +132,9 @@ export const Toaster = () => {
   );
 };
 
-export { toast };
+export const toast = {
+  info: hotToast,
+  error: hotToast.error,
+  success: hotToast.success,
+  warn: hotToast.custom,
+};

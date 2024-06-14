@@ -64,7 +64,7 @@ export type ControlProps<Control> = {
   propName: string;
   computedValue: unknown;
   deletable: boolean;
-  onChange: (value: PropValue, asset?: Asset) => void;
+  onChange: (value: PropValue) => void;
   onDelete: () => void;
   autoFocus?: boolean;
 };

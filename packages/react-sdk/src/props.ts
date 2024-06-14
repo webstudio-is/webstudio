@@ -2,6 +2,7 @@ import {
   type Prop,
   type Assets,
   type Pages,
+  type ImageAsset,
   getPagePath,
   findPageByIdOrPath,
 } from "@webstudio-is/sdk";
@@ -10,29 +11,74 @@ export const normalizeProps = ({
   props,
   assetBaseUrl,
   assets,
+  uploadingImageAssets,
   pages,
+  source,
 }: {
   props: Prop[];
   assetBaseUrl: string;
   assets: Assets;
+  uploadingImageAssets: ImageAsset[];
   pages: Pages;
+  source: "canvas" | "prebuild";
 }) => {
   const newProps: Prop[] = [];
   for (const prop of props) {
     if (prop.type === "asset") {
       const assetId = prop.value;
-      const asset = assets.get(assetId);
+      const asset =
+        assets.get(assetId) ??
+        uploadingImageAssets.find((asset) => asset.id === assetId);
+
       if (asset === undefined) {
         continue;
       }
-      newProps.push({
+
+      const propBase = {
         id: prop.id,
         name: prop.name,
         required: prop.required,
         instanceId: prop.instanceId,
+      };
+
+      if (prop.name === "width" && asset.type === "image") {
+        newProps.push({
+          ...propBase,
+          type: "number",
+          value: asset.meta.width,
+        });
+
+        continue;
+      }
+
+      if (prop.name === "height" && asset.type === "image") {
+        newProps.push({
+          ...propBase,
+          type: "number",
+          value: asset.meta.height,
+        });
+        continue;
+      }
+
+      newProps.push({
+        ...propBase,
         type: "string",
         value: `${assetBaseUrl}${asset.name}`,
       });
+
+      if (source === "canvas") {
+        // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state (we don't know asset src during uploading)
+        // see Image component in sdk-components-react
+        newProps.push({
+          id: `${prop.instanceId}-${asset.id}-assetId`,
+          name: "$webstudio$canvasOnly$assetId",
+          required: false,
+          instanceId: prop.instanceId,
+          type: "string",
+          value: asset.id,
+        });
+      }
+
       continue;
     }
 
