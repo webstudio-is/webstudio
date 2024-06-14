@@ -12,6 +12,7 @@ const createTransformer = () => ({
 
     const result = transformSync(content, {
       loader,
+      jsx: "automatic",
       format: "esm",
       target: "es2022",
       // Sourcemaps are necessary for inline snapshots to work
