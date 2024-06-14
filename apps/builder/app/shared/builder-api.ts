@@ -1,12 +1,14 @@
 import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { toast } from "@webstudio-is/design-system";
+import { uploadAssets } from "~/builder/shared/assets/use-assets";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
 const _builderApi = {
   isInitialized: () => true,
   toast,
+  uploadAssets,
 };
 
 declare global {
