@@ -108,9 +108,7 @@ export const WfElementNode = z.union([
 
 export type WfElementNode = z.infer<typeof WfElementNode>;
 
-wfNodeTypes.forEach((nodeType) => {
-  nodeType satisfies WfElementNode["type"];
-});
+[...wfNodeTypes] as const satisfies WfElementNode["type"][];
 
 export const WfNode = z.union([WfElementNode, WfTextNode]);
 export type WfNode = z.infer<typeof WfNode>;
