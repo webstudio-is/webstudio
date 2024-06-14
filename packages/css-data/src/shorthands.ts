@@ -12,29 +12,59 @@ const createValueNode = (data?: CssNode[]): Value => ({
   children: new List<CssNode>().fromArray(data ?? []),
 });
 
-const createInitialNode = (): Value => ({
+const createNumber = (value: string): Value => ({
+  type: "Value",
+  children: new List<CssNode>().appendData({
+    type: "Number",
+    value,
+  }),
+});
+
+const createDimension = (value: string, unit: string): Value => ({
+  type: "Value",
+  children: new List<CssNode>().appendData({
+    type: "Dimension",
+    value,
+    unit,
+  }),
+});
+
+const createIdentifier = (name: string): Value => ({
   type: "Value",
   children: new List<CssNode>().appendData({
     type: "Identifier",
-    name: "initial",
+    name,
   }),
 });
+
+const createInitialNode = () => createIdentifier("initial");
 
 const getValueList = (value: CssNode): CssNode[] => {
   const children = "children" in value ? value.children?.toArray() : undefined;
   return children ?? [value];
 };
 
-const splitBySlash = (list: List<CssNode> | CssNode[]) => {
+const splitByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
   const lists: Array<undefined | CssNode[]> = [[]];
   for (const node of list) {
-    if (node.type === "Operator" && node.value === "/") {
+    if (node.type === "Operator" && node.value === operator) {
       lists.push([]);
     } else {
       lists.at(-1)?.push(node);
     }
   }
   return lists;
+};
+
+const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
+  const joined: CssNode[] = [];
+  for (const node of list) {
+    if (joined.length > 0) {
+      joined.push({ type: "Operator", value: operator });
+    }
+    joined.push(node);
+  }
+  return joined;
 };
 
 /**
@@ -181,11 +211,7 @@ const expandEdges = function* (property: string, value: CssNode) {
  * border-radius = <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
  *
  */
-const expandBorderRadius = function* (property: string, value: CssNode) {
-  if (property !== "border-radius") {
-    yield [property, value] as const;
-    return;
-  }
+const expandBorderRadius = function* (value: CssNode) {
   const firstRadius = [];
   const secondRadius = [];
   let hasSecondRadius = false;
@@ -241,11 +267,7 @@ const expandBorderRadius = function* (property: string, value: CssNode) {
  * <border-image-repeat> = [ stretch | repeat | round | space ]{1,2}
  *
  */
-const expandBorderImage = function* (property: string, value: CssNode) {
-  if (property !== "border-image") {
-    yield [property, value] as const;
-    return;
-  }
+const expandBorderImage = function* (value: CssNode) {
   const [source, config, repeat] = parseUnordered(
     [
       "<'border-image-source'>",
@@ -258,7 +280,10 @@ const expandBorderImage = function* (property: string, value: CssNode) {
   let width = createInitialNode();
   let outset = createInitialNode();
   if (config) {
-    const [sliceNodes, widthNodes, outsetNodes] = splitBySlash(config.children);
+    const [sliceNodes, widthNodes, outsetNodes] = splitByOperator(
+      config.children,
+      "/"
+    );
     if (sliceNodes && sliceNodes.length > 0) {
       slice = createValueNode(sliceNodes);
     }
@@ -274,26 +299,6 @@ const expandBorderImage = function* (property: string, value: CssNode) {
   yield ["border-image-width", width] as const;
   yield ["border-image-outset", outset] as const;
   yield ["border-image-repeat", repeat ?? createInitialNode()] as const;
-};
-
-const expandGap = function* (property: string, value: CssNode) {
-  switch (property) {
-    case "gap":
-    case "grid-gap": {
-      const [rowGap, columnGap] = getValueList(value);
-      yield ["row-gap", rowGap] as const;
-      yield ["column-gap", columnGap ?? rowGap] as const;
-      break;
-    }
-    case "grid-row-gap":
-      yield ["row-gap", value] as const;
-      break;
-    case "grid-column-gap":
-      yield ["column-gap", value] as const;
-      break;
-    default:
-      yield [property, value] as const;
-  }
 };
 
 /**
@@ -346,9 +351,9 @@ const expandFont = function* (value: CssNode) {
 };
 
 const expandFlex = function* (value: CssNode) {
-  const zero = createValueNode([{ type: "Number", value: "0" }]);
-  const one = createValueNode([{ type: "Number", value: "1" }]);
-  const auto = createValueNode([{ type: "Identifier", name: "auto" }]);
+  const zero = createNumber("0");
+  const one = createNumber("1");
+  const auto = createIdentifier("auto");
   let grow: undefined | Value;
   let shrink: undefined | Value;
   let basis: undefined | Value;
@@ -369,7 +374,101 @@ const expandFlex = function* (value: CssNode) {
   yield ["flex-basis", basis ?? zero] as const;
 };
 
-const expandShorthandsAst = function* (property: string, value: CssNode) {
+/**
+ *
+ * animation = <single-animation>#
+ *
+ * <single-animation> =
+ *   <time [0s,∞]> ||
+ *   <easing-function> ||
+ *   <time> ||
+ *   <single-animation-iteration-count> ||
+ *   <single-animation-direction> ||
+ *   <single-animation-fill-mode> ||
+ *   <single-animation-play-state> ||
+ *   [ none | <keyframes-name> ]
+ *
+ */
+const expandAnimation = function* (value: CssNode) {
+  const durations: CssNode[] = [];
+  const timings: CssNode[] = [];
+  const delays: CssNode[] = [];
+  const iterationCounts: CssNode[] = [];
+  const directions: CssNode[] = [];
+  const fillModes: CssNode[] = [];
+  const playStates: CssNode[] = [];
+  const names: CssNode[] = [];
+  for (const animationNodes of splitByOperator(getValueList(value), ",")) {
+    const [
+      duration,
+      timing,
+      delay,
+      iterationCount,
+      direction,
+      fillMode,
+      playState,
+      name,
+    ] = parseUnordered(
+      [
+        "<time [0s,∞]>",
+        "<easing-function>",
+        "<time>",
+        "<single-animation-iteration-count>",
+        "<single-animation-direction>",
+        "<single-animation-fill-mode>",
+        "<single-animation-play-state>",
+        "[ none | <keyframes-name> ]",
+      ],
+      createValueNode(animationNodes)
+    );
+    durations.push(duration ?? createDimension("0", "s"));
+    timings.push(timing ?? createIdentifier("ease"));
+    delays.push(delay ?? createDimension("0", "s"));
+    iterationCounts.push(iterationCount ?? createNumber("1"));
+    directions.push(direction ?? createIdentifier("normal"));
+    fillModes.push(fillMode ?? createIdentifier("none"));
+    playStates.push(playState ?? createIdentifier("running"));
+    names.push(name ?? createIdentifier("none"));
+  }
+  yield [
+    "animation-duration",
+    createValueNode(joinByOperator(durations, ",")),
+  ] as const;
+  yield [
+    "animation-timing-function",
+    createValueNode(joinByOperator(timings, ",")),
+  ] as const;
+  yield [
+    "animation-delay",
+    createValueNode(joinByOperator(delays, ",")),
+  ] as const;
+  yield [
+    "animation-iteration-count",
+    createValueNode(joinByOperator(iterationCounts, ",")),
+  ] as const;
+  yield [
+    "animation-direction",
+    createValueNode(joinByOperator(directions, ",")),
+  ] as const;
+  yield [
+    "animation-fill-mode",
+    createValueNode(joinByOperator(fillModes, ",")),
+  ] as const;
+  yield [
+    "animation-play-state",
+    createValueNode(joinByOperator(playStates, ",")),
+  ] as const;
+  yield [
+    "animation-name",
+    createValueNode(joinByOperator(names, ",")),
+  ] as const;
+  // reset with animation shorthand but cannot be set with it
+  yield ["animation-timeline", createIdentifier("auto")] as const;
+  yield ["animation-range-start", createIdentifier("normal")] as const;
+  yield ["animation-range-end", createIdentifier("normal")] as const;
+};
+
+const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
       yield* expandFont(value);
@@ -399,6 +498,30 @@ const expandShorthandsAst = function* (property: string, value: CssNode) {
       yield ["text-emphasis-color", color ?? createInitialNode()] as const;
       break;
     }
+
+    case "border-radius":
+      yield* expandBorderRadius(value);
+      break;
+
+    case "border-image":
+      yield* expandBorderImage(value);
+      break;
+
+    case "gap":
+    case "grid-gap": {
+      const [rowGap, columnGap] = getValueList(value);
+      yield ["row-gap", rowGap] as const;
+      yield ["column-gap", columnGap ?? rowGap] as const;
+      break;
+    }
+
+    case "grid-row-gap":
+      yield ["row-gap", value] as const;
+      break;
+
+    case "grid-column-gap":
+      yield ["column-gap", value] as const;
+      break;
 
     case "flex":
       yield* expandFlex(value);
@@ -475,6 +598,10 @@ const expandShorthandsAst = function* (property: string, value: CssNode) {
       break;
     }
 
+    case "animation":
+      yield* expandAnimation(value);
+      break;
+
     default:
       yield [property, value] as const;
   }
@@ -503,22 +630,10 @@ export const expandShorthands = (
         const generator = expandEdges(property, value);
 
         for (const [property, value] of generator) {
-          const generator = expandBorderRadius(property, value);
+          const generator = expandShorthand(property, value);
 
           for (const [property, value] of generator) {
-            const generator = expandBorderImage(property, value);
-
-            for (const [property, value] of generator) {
-              const generator = expandGap(property, value);
-
-              for (const [property, value] of generator) {
-                const generator = expandShorthandsAst(property, value);
-
-                for (const [property, value] of generator) {
-                  longhands.push([property, generate(value)]);
-                }
-              }
-            }
+            longhands.push([property, generate(value)]);
           }
         }
       }

@@ -527,7 +527,43 @@ test("expand list-style", () => {
   ]);
 });
 
-test.todo("animation");
+test("expand animation", () => {
+  expect(
+    expandShorthands([
+      ["animation", `3s ease-in 1s 2 reverse both paused slidein`],
+    ])
+  ).toEqual([
+    ["animation-duration", "3s"],
+    ["animation-timing-function", "ease-in"],
+    ["animation-delay", "1s"],
+    ["animation-iteration-count", "2"],
+    ["animation-direction", "reverse"],
+    ["animation-fill-mode", "both"],
+    ["animation-play-state", "paused"],
+    ["animation-name", "slidein"],
+    ["animation-timeline", "auto"],
+    ["animation-range-start", "normal"],
+    ["animation-range-end", "normal"],
+  ]);
+  expect(
+    expandShorthands([
+      ["animation", `3s linear slidein, 3s ease-out 5s slideout`],
+    ])
+  ).toEqual([
+    ["animation-duration", "3s,3s"],
+    ["animation-timing-function", "linear,ease-out"],
+    ["animation-delay", "0s,5s"],
+    ["animation-iteration-count", "1,1"],
+    ["animation-direction", "normal,normal"],
+    ["animation-fill-mode", "none,none"],
+    ["animation-play-state", "running,running"],
+    ["animation-name", "slidein,slideout"],
+    ["animation-timeline", "auto"],
+    ["animation-range-start", "normal"],
+    ["animation-range-end", "normal"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
