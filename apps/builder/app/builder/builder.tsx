@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
@@ -271,6 +277,7 @@ const $loadingState = computed(
       ],
       ["canvasIframeState", canvasIframeState === "ready"],
     ]);
+
     const readyCount = Array.from(readyStates.values()).filter(Boolean).length;
     const progress = Math.round((readyCount / readyStates.size) * 100);
     const state = readyCount === readyStates.size ? "ready" : "loading";
@@ -430,7 +437,13 @@ export const Builder = ({
   const navigatorLayout = useNavigatorLayout();
   const dataLoadingState = useStore($dataLoadingState);
 
-  const loadingState = useStore($loadingState);
+  const dynamicLoadingState = useStore($loadingState);
+  const loadingStateRef = useRef(dynamicLoadingState);
+  const loadingState = loadingStateRef.current;
+  if (loadingState.state !== "ready") {
+    // We need to stop updating it once it's ready in case in the future it changes again.
+    loadingStateRef.current = dynamicLoadingState;
+  }
 
   const canvasUrl = getBuildUrl({
     project,
