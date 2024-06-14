@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import type { ReactNode } from "react";
 import type { Instances } from "./schema/instances";
 
@@ -18,12 +17,14 @@ const traverseJsx = (
 };
 
 export const renderJsx = (root: JSX.Element) => {
+  let lastId = -1;
   const instances: Instances = new Map();
   const ids = new Map<unknown, string>();
   const getId = (key: unknown) => {
     let id = ids.get(key);
     if (id === undefined) {
-      id = nanoid();
+      lastId += 1;
+      id = lastId.toString();
       ids.set(key, id);
     }
     return id;
@@ -57,10 +58,7 @@ export const $: Record<string, Component> = new Proxy(
   {},
   {
     get(_target, prop) {
-      const component: Component = (props) => {
-        props["ws:id"] = props["ws:id"] ?? nanoid();
-        return undefined;
-      };
+      const component: Component = () => undefined;
       component.displayName = prop as string;
       return component;
     },

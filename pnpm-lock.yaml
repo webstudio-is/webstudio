@@ -1789,9 +1789,6 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      nanoid:
-        specifier: ^5.0.1
-        version: 5.0.1
       strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
