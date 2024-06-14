@@ -435,6 +435,46 @@ const expandShorthandsAst = function* (property: string, value: CssNode) {
       break;
     }
 
+    case "columns": {
+      const [width, count] = parseUnordered(
+        ["<'column-width'>", "<'column-count'>"],
+        value
+      );
+      yield ["column-width", width ?? createInitialNode()] as const;
+      yield ["column-count", count ?? createInitialNode()] as const;
+      break;
+    }
+
+    case "column-rule": {
+      const [width, style, color] = parseUnordered(
+        [
+          "<'column-rule-width'>",
+          "<'column-rule-style'>",
+          "<'column-rule-color'>",
+        ],
+        value
+      );
+      yield ["column-rule-width", width ?? createInitialNode()] as const;
+      yield ["column-rule-style", style ?? createInitialNode()] as const;
+      yield ["column-rule-color", color ?? createInitialNode()] as const;
+      break;
+    }
+
+    case "list-style": {
+      const [position, image, type] = parseUnordered(
+        [
+          "<'list-style-position'>",
+          "<'list-style-image'>",
+          "<'list-style-type'>",
+        ],
+        value
+      );
+      yield ["list-style-position", position ?? createInitialNode()] as const;
+      yield ["list-style-image", image ?? createInitialNode()] as const;
+      yield ["list-style-type", type ?? createInitialNode()] as const;
+      break;
+    }
+
     default:
       yield [property, value] as const;
   }
