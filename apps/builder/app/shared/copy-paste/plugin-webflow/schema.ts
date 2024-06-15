@@ -121,7 +121,16 @@ export const WfStyle = z.object({
   fake: z.boolean().optional(),
   comb: z.string().optional(),
   namespace: z.string().optional(),
-  variants: z.object({}).optional(),
+  variants: z
+    .object({
+      large: z.object({ styleLess: z.string() }).optional(),
+      medium: z.object({ styleLess: z.string() }).optional(),
+      small: z.object({ styleLess: z.string() }).optional(),
+      tiny: z.object({ styleLess: z.string() }).optional(),
+      xl: z.object({ styleLess: z.string() }).optional(),
+      xxl: z.object({ styleLess: z.string() }).optional(),
+    })
+    .optional(),
   children: z.array(z.string()).optional(),
   createdBy: z.string().optional(),
   origin: z.null().optional(),

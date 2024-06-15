@@ -1,8 +1,12 @@
 import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   computeInstancesConstraints,
+  findAvailableDataSources,
   findClosestDroppableTarget,
+  insertInstanceChildrenMutable,
   insertTemplateData,
+  insertWebstudioFragmentCopy,
+  updateWebstudioData,
 } from "../../instance-utils";
 import {
   $instances,
@@ -70,7 +74,7 @@ const parse = (clipboardData: string) => {
   } catch {
     return;
   }
-
+  console.log(data);
   if (data.type !== "@webflow/XscpData") {
     return;
   }
@@ -110,31 +114,56 @@ export const onPaste = async (clipboardData: string) => {
     return false;
   }
   const fragment = await toWebstudioFragment(wfData);
+
   const selectedPage = $selectedPage.get();
-  if (fragment.instances.length === 0 || selectedPage === undefined) {
+  if (fragment === undefined || selectedPage === undefined) {
     return false;
   }
   const metas = $registeredComponentMetas.get();
   const newInstances = new Map(
     fragment.instances.map((instance) => [instance.id, instance])
   );
-  const rootInstanceIds = fragment.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
+
   // paste to the root if nothing is selected
   const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
+
+  const rootInstanceIds = fragment.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+
   const dropTarget = findClosestDroppableTarget(
     metas,
     $instances.get(),
     instanceSelector,
     computeInstancesConstraints(metas, newInstances, rootInstanceIds)
   );
+
   if (dropTarget === undefined) {
     return false;
   }
-  insertTemplateData(fragment, dropTarget);
+
+  updateWebstudioData((data) => {
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableDataSources: findAvailableDataSources(
+        data.dataSources,
+        data.instances,
+        instanceSelector
+      ),
+    });
+    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+    if (newRootInstanceId === undefined) {
+      return;
+    }
+    const children: Instance["children"] = [
+      { type: "id", value: newRootInstanceId },
+    ];
+    insertInstanceChildrenMutable(data, children, dropTarget);
+  });
+
   return true;
 };
 

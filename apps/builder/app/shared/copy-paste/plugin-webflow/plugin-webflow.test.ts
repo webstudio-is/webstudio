@@ -1,20 +1,18 @@
-import { test, expect, describe } from "@jest/globals";
+import { test, expect, describe, beforeEach } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
 import { $breakpoints } from "../../nano-states";
 import {
   type StyleRule,
   createRegularStyleSheet,
 } from "@webstudio-is/css-engine";
-import type { WebstudioFragment } from "@webstudio-is/sdk";
+import { initialBreakpoints, type WebstudioFragment } from "@webstudio-is/sdk";
 
 const { toWebstudioFragment } = __testing__;
-
-$breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
 
 const toCss = (fragment: WebstudioFragment) => {
   const sheet = createRegularStyleSheet();
 
-  for (const breakpoint of fragment.breakpoints) {
+  for (const breakpoint of $breakpoints.get().values()) {
     sheet.addMediaRule(breakpoint.id, breakpoint);
   }
   const rulesMap = new Map<string, StyleRule>();
@@ -23,7 +21,8 @@ const toCss = (fragment: WebstudioFragment) => {
       (source) => source.id === style.styleSourceId
     );
     const name = token && "name" in token ? token.name : "Local";
-    let styleRule = rulesMap.get(name);
+    const key = name + style.breakpointId;
+    let styleRule = rulesMap.get(key);
     if (styleRule === undefined) {
       styleRule = sheet.addStyleRule(
         {
@@ -32,13 +31,24 @@ const toCss = (fragment: WebstudioFragment) => {
         },
         name
       );
-      rulesMap.set(name, styleRule);
+      rulesMap.set(key, styleRule);
       continue;
     }
     styleRule.styleMap.set(style.property, style.value);
   }
   return sheet.cssText;
 };
+
+beforeEach(() => {
+  $breakpoints.set(
+    new Map(
+      initialBreakpoints.map((breakpoint, index) => [
+        String(index),
+        { ...breakpoint, id: String(index) },
+      ])
+    )
+  );
+});
 
 test("Heading", async () => {
   const fragment = await toWebstudioFragment({
@@ -1369,4 +1379,70 @@ describe("Styles", () => {
       }"
     `);
   });
+});
+
+test.only("Breakpoints", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "c06c94aa-e2cd-fa7a-d8f8-574b474a20fa",
+          type: "Block",
+          tag: "div",
+          classes: ["81fbefba-d2de-9cc2-81bf-3a929d4eb219"],
+          children: [],
+        },
+      ],
+      styles: [
+        {
+          _id: "81fbefba-d2de-9cc2-81bf-3a929d4eb219",
+          fake: false,
+          type: "class",
+          name: "Div Block 2",
+          namespace: "",
+          comb: "",
+          styleLess: "background- color: hsla(191, 100.00%, 50.00%, 1.00);",
+          variants: {
+            large: {
+              styleLess: "background-color: hsla(150, 100.00%, 50.00%, 1.00);",
+            },
+            xl: {
+              styleLess: "background-color: hsla(69, 100.00%, 50.00%, 1.00);",
+            },
+            xxl: {
+              styleLess: "background-color: hsla(14, 100.00%, 50.00%, 1.00);",
+            },
+            medium: {
+              styleLess: "background-color: hsla(256, 100.00%, 50.00%, 1.00);",
+            },
+            small: {
+              styleLess: "background-color: hsla(308, 100.00%, 50.00%, 1.00);",
+            },
+            tiny: {
+              styleLess: "background-color: hsla(359, 100.00%, 50.00%, 1.00);",
+            },
+          },
+        },
+      ],
+    },
+  });
+  console.log(111, toCss(fragment), fragment);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+"@media all and (max-width: 991px) {
+  Div Block 2 {
+    background-color: rgba(68, 0, 255, 1)
+  }
+}
+@media all and (max-width: 767px) {
+  Div Block 2 {
+    background-color: rgba(255, 0, 221, 1)
+  }
+}
+@media all and (max-width: 479px) {
+  Div Block 2 {
+    background-color: rgba(255, 0, 4, 1)
+  }
+}"
+`);
 });
