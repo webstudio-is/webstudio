@@ -81,6 +81,14 @@ const addBreakpoints = (
   breakpoints: Breakpoints,
   fragment: WebstudioFragment
 ) => {
+  const add = (newBreakpoint: Breakpoint) => {
+    const breakpoint = fragment.breakpoints.find((breakpoint) => {
+      return equalMedia(breakpoint, newBreakpoint);
+    });
+    if (breakpoint === undefined) {
+      fragment.breakpoints.push(newBreakpoint);
+    }
+  };
   // Creates a map of wf breakpoint name to ws breakpoint config:
   const wfBreakpointNameToId: BreakpointsByWfName = new Map();
   for (const [wfBreakpointName, wfBreakpoint] of wfBreakpoints) {
@@ -90,7 +98,7 @@ const addBreakpoints = (
       );
       if (baseBreakpoint) {
         wfBreakpointNameToId.set(wfBreakpointName, baseBreakpoint);
-        fragment.breakpoints.push(baseBreakpoint);
+        add(baseBreakpoint);
       }
       continue;
     }
@@ -98,7 +106,7 @@ const addBreakpoints = (
     const wsBreakpoint = findWsBreakpoint(wfBreakpoint, breakpoints);
     if (wsBreakpoint) {
       wfBreakpointNameToId.set(wfBreakpointName, wsBreakpoint);
-      fragment.breakpoints.push(wsBreakpoint);
+      add(wsBreakpoint);
       continue;
     }
     const newBreakpoint: Breakpoint = {
@@ -112,7 +120,7 @@ const addBreakpoints = (
       }),
     };
 
-    fragment.breakpoints.push(newBreakpoint);
+    add(newBreakpoint);
     wfBreakpointNameToId.set(wfBreakpointName, newBreakpoint);
   }
   return wfBreakpointNameToId;
