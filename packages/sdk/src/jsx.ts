@@ -75,7 +75,7 @@ export const renderJsx = (root: JSX.Element) => {
   };
   traverseJsx(root, (element, children) => {
     const instanceId = element.props?.["ws:id"] ?? getId(element);
-    for (let [name, value] of Object.entries({ ...element.props })) {
+    for (const [name, value] of Object.entries({ ...element.props })) {
       if (name === "ws:id" || name === "children") {
         continue;
       }
