@@ -6,13 +6,13 @@ import {
   createRegularStyleSheet,
 } from "@webstudio-is/css-engine";
 import { initialBreakpoints, type WebstudioFragment } from "@webstudio-is/sdk";
+import { nanoid } from "nanoid";
 
 const { toWebstudioFragment } = __testing__;
 
 const toCss = (fragment: WebstudioFragment) => {
   const sheet = createRegularStyleSheet();
-
-  for (const breakpoint of $breakpoints.get().values()) {
+  for (const breakpoint of fragment.breakpoints) {
     sheet.addMediaRule(breakpoint.id, breakpoint);
   }
   const rulesMap = new Map<string, StyleRule>();
@@ -42,10 +42,10 @@ const toCss = (fragment: WebstudioFragment) => {
 beforeEach(() => {
   $breakpoints.set(
     new Map(
-      initialBreakpoints.map((breakpoint, index) => [
-        String(index),
-        { ...breakpoint, id: String(index) },
-      ])
+      initialBreakpoints.map((breakpoint) => {
+        const id = nanoid();
+        return [id, { ...breakpoint, id }];
+      })
     )
   );
 });
@@ -1381,7 +1381,7 @@ describe("Styles", () => {
   });
 });
 
-test.only("Breakpoints", async () => {
+test("Breakpoints", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -1402,7 +1402,7 @@ test.only("Breakpoints", async () => {
           name: "Div Block 2",
           namespace: "",
           comb: "",
-          styleLess: "background- color: hsla(191, 100.00%, 50.00%, 1.00);",
+          styleLess: "background-color: hsla(191, 100.00%, 50.00%, 1.00);",
           variants: {
             large: {
               styleLess: "background-color: hsla(150, 100.00%, 50.00%, 1.00);",
@@ -1427,22 +1427,42 @@ test.only("Breakpoints", async () => {
       ],
     },
   });
-  console.log(111, toCss(fragment), fragment);
+
   expect(toCss(fragment)).toMatchInlineSnapshot(`
-"@media all and (max-width: 991px) {
-  Div Block 2 {
-    background-color: rgba(68, 0, 255, 1)
-  }
-}
-@media all and (max-width: 767px) {
-  Div Block 2 {
-    background-color: rgba(255, 0, 221, 1)
-  }
-}
-@media all and (max-width: 479px) {
-  Div Block 2 {
-    background-color: rgba(255, 0, 4, 1)
-  }
-}"
-`);
+    "@media all {
+      Div Block 2 {
+        background-color: rgba(0, 208, 255, 1)
+      }
+    }
+    @media all and (max-width: 991px) {
+      Div Block 2 {
+        background-color: rgba(68, 0, 255, 1)
+      }
+    }
+    @media all and (max-width: 767px) {
+      Div Block 2 {
+        background-color: rgba(255, 0, 221, 1)
+      }
+    }
+    @media all and (max-width: 479px) {
+      Div Block 2 {
+        background-color: rgba(255, 0, 4, 1)
+      }
+    }
+    @media all and (min-width: 1280px) {
+      Div Block 2 {
+        background-color: rgba(0, 255, 128, 1)
+      }
+    }
+    @media all and (min-width: 1440px) {
+      Div Block 2 {
+        background-color: rgba(217, 255, 0, 1)
+      }
+    }
+    @media all and (min-width: 1920px) {
+      Div Block 2 {
+        background-color: rgba(255, 60, 0, 1)
+      }
+    }"
+  `);
 });

@@ -74,7 +74,7 @@ const parse = (clipboardData: string) => {
   } catch {
     return;
   }
-  console.log(data);
+
   if (data.type !== "@webflow/XscpData") {
     return;
   }

@@ -1,4 +1,5 @@
 import type {
+  Breakpoint,
   Breakpoints,
   Instance,
   WebstudioFragment,
@@ -44,25 +45,20 @@ const findWsBreakpoint = (
   });
 };
 
-const addNodeStyles = ({
-  name,
-  variants,
-  instanceId,
-  fragment,
-}: {
-  name: string;
-  variants: Map<WfBreakpointName, string | Array<EmbedTemplateStyleDecl>>;
-  instanceId: Instance["id"];
-  fragment: WebstudioFragment;
-}) => {
+type UnparsedVariants = Map<
+  WfBreakpointName,
+  string | Array<EmbedTemplateStyleDecl>
+>;
+
+// Variants value can be wf styleLess string which is a styles block
+// or it can be an array of EmbedTemplateStyleDecl.
+// If its an array, convert it to ws style decl.
+const toParsedVariants = (variants: UnparsedVariants) => {
   const parsedVariants = new Map<
     WfBreakpointName,
     Array<EmbedTemplateStyleDecl>
   >();
 
-  // variants value can be styleLess string which is a css rule styles block
-  // or it can be an array of EmbedTemplateStyleDecl
-  // if its an array, convert it to ws style decl.
   for (const [breakpointName, styles] of variants) {
     if (typeof styles === "string") {
       try {
@@ -76,28 +72,66 @@ const addNodeStyles = ({
     parsedVariants.set(breakpointName, styles);
   }
 
-  // Creates a map of wf breakpoint name to ws breakpoint id:
-  // { "xxl" => "1123456", ... }
-  const wfBreakpointNameToId = new Map();
+  return parsedVariants;
+};
+
+type BreakpointsByWfName = Map<WfBreakpointName, Breakpoint>;
+
+const addBreakpoints = (
+  breakpoints: Breakpoints,
+  fragment: WebstudioFragment
+) => {
+  // Creates a map of wf breakpoint name to ws breakpoint config:
+  const wfBreakpointNameToId: BreakpointsByWfName = new Map();
   for (const [wfBreakpointName, wfBreakpoint] of wfBreakpoints) {
     if (wfBreakpointName === "base") {
-      const baseBreakpoint = Array.from($breakpoints.get().values()).find(
+      const baseBreakpoint = Array.from(breakpoints.values()).find(
         isBaseBreakpoint
       );
       if (baseBreakpoint) {
-        wfBreakpointNameToId.set(wfBreakpointName, baseBreakpoint.id);
+        wfBreakpointNameToId.set(wfBreakpointName, baseBreakpoint);
+        fragment.breakpoints.push(baseBreakpoint);
       }
       continue;
     }
 
-    const wsBreakpoint = findWsBreakpoint(wfBreakpoint, $breakpoints.get());
+    const wsBreakpoint = findWsBreakpoint(wfBreakpoint, breakpoints);
     if (wsBreakpoint) {
-      wfBreakpointNameToId.set(wfBreakpointName, wsBreakpoint.id);
+      wfBreakpointNameToId.set(wfBreakpointName, wsBreakpoint);
+      fragment.breakpoints.push(wsBreakpoint);
       continue;
     }
-    // @todo Here create a webstudio breakpoint if it doesn't exist
-    wfBreakpointNameToId.set(wfBreakpointName, "new");
+    const newBreakpoint: Breakpoint = {
+      id: nanoid(),
+      label: wfBreakpointName,
+      ...(wfBreakpoint.minWidth !== undefined && {
+        minWidth: wfBreakpoint.minWidth,
+      }),
+      ...(wfBreakpoint.maxWidth !== undefined && {
+        maxWidth: wfBreakpoint.maxWidth,
+      }),
+    };
+
+    fragment.breakpoints.push(newBreakpoint);
+    wfBreakpointNameToId.set(wfBreakpointName, newBreakpoint);
   }
+  return wfBreakpointNameToId;
+};
+
+const addNodeStyles = ({
+  name,
+  variants,
+  instanceId,
+  fragment,
+  breakpointsByName,
+}: {
+  name: string;
+  variants: UnparsedVariants;
+  instanceId: Instance["id"];
+  fragment: WebstudioFragment;
+  breakpointsByName: BreakpointsByWfName;
+}) => {
+  const parsedVariants = toParsedVariants(variants);
 
   const styleSourceId = nanoid();
   fragment.styleSources.push({
@@ -115,25 +149,17 @@ const addNodeStyles = ({
   }
   styleSourceSelection.values.push(styleSourceId);
 
-  console.log(222, parsedVariants);
-
   for (const [breakpointName, styles] of parsedVariants) {
-    const breakpointId = wfBreakpointNameToId.get(breakpointName);
-
-    if (breakpointId === undefined) {
-      console.error(`No breakpoint id found for ${breakpointName} `);
-      continue;
-    }
-    // @todo handle breakpointId "new" case
-    if (breakpointId === "new") {
-      console.error(`Implement adding a new breakpoint`);
+    const breakpoint = breakpointsByName.get(breakpointName);
+    if (breakpoint === undefined) {
+      console.error(`No breakpoint found for ${breakpointName}`);
       continue;
     }
 
     for (const style of styles) {
       fragment.styles.push({
         styleSourceId,
-        breakpointId,
+        breakpointId: breakpoint.id,
         property: style.property,
         value: style.value,
         state: style.state,
@@ -209,6 +235,8 @@ export const addStyles = async (
       continue;
     }
 
+    const breakpointsByName = addBreakpoints($breakpoints.get(), fragment);
+
     mapComponentAndPresetStyles(wfNode).forEach((name) => {
       const styles = presets[
         name as keyof typeof presets
@@ -219,6 +247,7 @@ export const addStyles = async (
           variants: new Map([["base", styles]]),
           instanceId,
           fragment,
+          breakpointsByName,
         });
       }
     });
@@ -254,6 +283,7 @@ export const addStyles = async (
         variants,
         instanceId,
         fragment,
+        breakpointsByName,
       });
     }
   }
