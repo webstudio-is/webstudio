@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
-import { toast } from "@webstudio-is/design-system";
+import { Box, Grid, toast, Text } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
 import type {
@@ -12,11 +12,23 @@ import type {
   UploadingAssetContainer,
 } from "./types";
 import type { ActionData } from "~/builder/shared/assets";
-import { $assets, $authToken, $project } from "~/shared/nano-states";
-import { atom, computed } from "nanostores";
+import {
+  $assets,
+  $authToken,
+  $project,
+  $uploadingFilesDataStore,
+  type UploadingFileData,
+} from "~/shared/nano-states";
+import { computed } from "nanostores";
 import { serverSyncStore } from "~/shared/sync";
-import type { Simplify } from "type-fest";
-import { extractImageNameAndMimeTypeFromUrl } from "./image-formats";
+
+import {
+  getFileName,
+  getMimeType,
+  getSha256Hash,
+  getSha256HashOfFile,
+} from "./asset-utils";
+import { Image } from "../image-manager/image";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   serverSyncStore.createTransaction([$assets], (assets) => {
@@ -32,48 +44,36 @@ const setAsset = (asset: Asset) => {
   });
 };
 
-type UploadingFileData = Simplify<
-  {
-    // common props
-    assetId: string;
-    type: AssetType;
-    objectURL: string;
-  } & (
-    | {
-        source: "file";
-        file: File;
-      }
-    | {
-        source: "url";
-        url: URL;
-      }
-  )
->;
-
-const getFilesData = (
+const getFilesData = async (
   type: AssetType,
   files: File[],
   urls: URL[]
-): UploadingFileData[] => {
-  return [
-    ...files.map((file) => ({
+): Promise<UploadingFileData[]> => {
+  const filesData: UploadingFileData[] = [];
+  for (const file of files) {
+    const assetId = await getSha256HashOfFile(file);
+    filesData.push({
       source: "file" as const,
-      assetId: crypto.randomUUID(),
+      assetId: assetId,
       type,
       file,
       objectURL: URL.createObjectURL(file),
-    })),
-    ...urls.map((url) => ({
-      source: "url" as const,
-      assetId: crypto.randomUUID(),
-      type,
-      url,
-      objectURL: url.href,
-    })),
-  ];
-};
+    });
+  }
 
-const $uploadingFilesDataStore = atom<UploadingFileData[]>([]);
+  for (const url of urls) {
+    const assetId = await getSha256Hash(url.href);
+    filesData.push({
+      source: "url" as const,
+      assetId,
+      type,
+      url: url.href,
+      objectURL: url.href,
+    });
+  }
+
+  return filesData;
+};
 
 const addUploadingFilesData = (filesData: UploadingFileData[]) => {
   const uploadingFilesData = $uploadingFilesDataStore.get();
@@ -96,12 +96,13 @@ const $assetContainers = computed(
       const name =
         uploadingFile.source === "file"
           ? uploadingFile.file.name
-          : uploadingFile.url.href;
+          : uploadingFile.url;
 
-      const format =
+      const format = getMimeType(
         uploadingFile.source === "file"
-          ? uploadingFile.file.type.split("/")[1]
-          : extractImageNameAndMimeTypeFromUrl(uploadingFile.url)[0];
+          ? uploadingFile.file
+          : new URL(uploadingFile.url)
+      ).split("/")[1];
 
       uploadingContainers.push({
         status: "uploading",
@@ -109,9 +110,7 @@ const $assetContainers = computed(
         asset: {
           id: uploadingFile.assetId,
           type: uploadingFile.type,
-
           format,
-
           name: name,
           description: name,
         },
@@ -155,15 +154,8 @@ const uploadAsset = async ({
   onError: (error: string) => void;
 }) => {
   try {
-    const mimeType =
-      fileOrUrl instanceof File
-        ? fileOrUrl.type
-        : extractImageNameAndMimeTypeFromUrl(fileOrUrl)[0];
-
-    const fileName =
-      fileOrUrl instanceof File
-        ? fileOrUrl.name
-        : extractImageNameAndMimeTypeFromUrl(fileOrUrl)[1];
+    const mimeType = getMimeType(fileOrUrl);
+    const fileName = getFileName(fileOrUrl);
 
     const metaFormData = new FormData();
     metaFormData.append("projectId", projectId);
@@ -171,12 +163,15 @@ const uploadAsset = async ({
     // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
     // should be removed after fix
     metaFormData.append("filename", sanitizeS3Key(fileName));
+
     const metaResponse = await fetch(restAssetsPath({ authToken }), {
       method: "POST",
       body: metaFormData,
     });
+
     const metaData: { name: string } | { errors: string } =
       await metaResponse.json();
+
     if ("errors" in metaData) {
       throw Error(metaData.errors);
     }
@@ -202,9 +197,11 @@ const uploadAsset = async ({
     );
 
     const uploadData: UploadData = await uploadResponse.json();
+
     if ("errors" in uploadData) {
       throw Error(uploadData.errors);
     }
+
     onCompleted(uploadData);
   } catch (error) {
     if (error instanceof Error) {
@@ -232,6 +229,46 @@ const handleAfterSubmit = (assetId: string, data: UploadData) => {
   setAsset({ ...uploadedAsset, id: assetId });
 };
 
+const ToastMessage = ({
+  assetId,
+  objectURL,
+  children,
+  title,
+}: {
+  assetId: string;
+  objectURL: string;
+  children: string;
+  title: string;
+}) => {
+  return (
+    <Grid
+      css={{
+        gridTemplateColumns: "20% 1fr",
+      }}
+      gap={2}
+    >
+      <Image
+        alt={children}
+        objectURL={objectURL}
+        name={""}
+        assetId={assetId}
+        width={64}
+      />
+      <Grid>
+        <Text variant={"titles"}>{title}</Text>
+        <Box
+          css={{
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          {children}
+        </Box>
+      </Grid>
+    </Grid>
+  );
+};
+
 export const uploadAssets = async (
   type: AssetType,
   files: File[],
@@ -243,17 +280,33 @@ export const uploadAssets = async (
     return;
   }
 
-  const filesData = getFilesData(type, files, urls);
+  const filesData = await getFilesData(type, files, urls);
 
   addUploadingFilesData(filesData);
 
   for (const fileData of filesData) {
     const assetId = fileData.assetId;
 
+    if ($assets.get().has(assetId)) {
+      toast.warn(
+        <ToastMessage
+          title="Info"
+          assetId={assetId}
+          objectURL={fileData.objectURL}
+        >
+          Asset is already exists
+        </ToastMessage>
+      );
+
+      deleteUploadingFileData(assetId);
+      continue;
+    }
+
     await uploadAsset({
       authToken,
       projectId,
-      fileOrUrl: fileData.source === "file" ? fileData.file : fileData.url,
+      fileOrUrl:
+        fileData.source === "file" ? fileData.file : new URL(fileData.url),
       onCompleted: (data) => {
         URL.revokeObjectURL(fileData.objectURL);
         deleteUploadingFileData(assetId);
@@ -262,7 +315,15 @@ export const uploadAssets = async (
       onError: (error) => {
         deleteAssets([assetId]);
         deleteUploadingFileData(assetId);
-        toast.error(error);
+        toast.error(
+          <ToastMessage
+            title="Error"
+            assetId={assetId}
+            objectURL={fileData.objectURL}
+          >
+            {error}
+          </ToastMessage>
+        );
       },
     });
   }

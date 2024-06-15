@@ -248,6 +248,7 @@ export const getImageAttributes = (props: {
     }
   | undefined => {
   const width = getInt(props.width);
+
   const quality = Math.max(
     Math.min(getInt(props.quality) ?? DEFAULT_QUALITY, 100),
     0

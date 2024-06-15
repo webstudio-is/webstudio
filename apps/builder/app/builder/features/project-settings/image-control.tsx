@@ -12,8 +12,8 @@ export const ImageControl = (props: {
       title="Images"
       content={
         <ImageManager
-          onChange={(asset) => {
-            props.onAssetIdChange(asset.id);
+          onChange={(assetId) => {
+            props.onAssetIdChange(assetId);
           }}
         />
       }

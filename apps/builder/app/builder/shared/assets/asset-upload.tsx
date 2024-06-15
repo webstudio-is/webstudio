@@ -10,7 +10,7 @@ import {
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { uploadAssets } from "./use-assets";
 import { $authPermit } from "~/shared/nano-states";
-import { imageMimeTypes } from "./image-formats";
+import { imageMimeTypes } from "./asset-utils";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 

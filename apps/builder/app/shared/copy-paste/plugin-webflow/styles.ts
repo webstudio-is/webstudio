@@ -1,11 +1,13 @@
 import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
-import type { WfNode, WfStyle } from "./schema";
+import type { WfElementNode, WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import { parseCss } from "@webstudio-is/css-data";
 // @todo this should be moved
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
+import { toast } from "@webstudio-is/design-system";
+import { kebabCase } from "change-case";
 
 const addNodeStyles = (
   name: string,
@@ -46,9 +48,55 @@ const addNodeStyles = (
       state: style.state,
     });
     if (style.value.type === "invalid") {
-      console.error("Invalid style value", style);
+      const error = `Invalid style value: "${kebabCase(style.property)}: ${style.value.value}"`;
+      toast.error(error);
+      console.error(error);
     }
   }
+};
+
+const mapComponentAndPresetStyles = (wfNode: WfElementNode) => {
+  const component = wfNode.type;
+  const presetStyles = [wfNode.tag];
+
+  switch (component) {
+    case "Link": {
+      const data = wfNode.data;
+      if (data.button) {
+        presetStyles.push("w-button");
+      }
+      if (data.block === "inline") {
+        presetStyles.push("w-inline-block");
+      }
+      return presetStyles;
+    }
+    case "CodeBlock": {
+      presetStyles.push("w-code-block");
+      return presetStyles;
+    }
+    case "HtmlEmbed": {
+      presetStyles.push("w-embed");
+      return presetStyles;
+    }
+    //case "Form": {
+    //  presetStyles.push("w-form");
+    //  return presetStyles;
+    //}
+    case "BlockContainer": {
+      presetStyles.push("w-container");
+      return presetStyles;
+    }
+    case "Row": {
+      presetStyles.push("w-row");
+      return presetStyles;
+    }
+    case "Column": {
+      presetStyles.push("w-col");
+      return presetStyles;
+    }
+  }
+
+  return presetStyles;
 };
 
 export const addStyles = async (
@@ -69,15 +117,23 @@ export const addStyles = async (
       continue;
     }
 
-    const styles = presets[
-      wfNode.tag as keyof typeof presets
-    ] as Array<EmbedTemplateStyleDecl>;
-    if (styles) {
-      addNodeStyles(wfNode.tag, styles, instanceId, fragment);
-    }
+    mapComponentAndPresetStyles(wfNode).forEach((name) => {
+      const styles = presets[
+        name as keyof typeof presets
+      ] as Array<EmbedTemplateStyleDecl>;
+      if (styles) {
+        addNodeStyles(name, styles, instanceId, fragment);
+      }
+    });
+
     const instance = fragment.instances.find(
       (instance) => instance.id === instanceId
     );
+
+    if (instance === undefined) {
+      console.error(`No instance found for ${instanceId}`);
+      continue;
+    }
 
     for (const classId of wfNode.classes) {
       const style = wfStyles.get(classId);

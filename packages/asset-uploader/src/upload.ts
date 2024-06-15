@@ -78,6 +78,7 @@ export const createUploadName = async (
    * "SELECT id FROM "Project" where id=? FOR UPDATE;" is shareable between sqlite and postgres.
    **/
   const name = getUniqueFilename(sanitizeS3Key(filename));
+
   await prisma.file.create({
     data: {
       name,

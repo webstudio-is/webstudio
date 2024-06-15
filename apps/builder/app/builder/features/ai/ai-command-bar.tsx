@@ -97,7 +97,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   } = useMediaRecorder({
     onError: (error) => {
       if (error instanceof DOMException && error.name === "NotAllowedError") {
-        toast("Please enable your microphone.");
+        toast.info("Please enable your microphone.");
         return;
       }
       if (error instanceof Error) {
@@ -123,7 +123,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
         handleAiRequest(newValue);
       } catch (error) {
         if (error instanceof RateLimitException) {
-          toast(
+          toast.info(
             `Temporary AI rate limit reached. Please wait ${formatDistance(
               Date.now(),
               new Date(error.meta.reset),
@@ -231,7 +231,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
       }
 
       if (error instanceof RateLimitException) {
-        toast(
+        toast.info(
           `Temporary AI rate limit reached. Please wait ${formatDistance(
             Date.now(),
             new Date(error.meta.reset),

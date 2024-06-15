@@ -62,6 +62,7 @@ import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { computed } from "nanostores";
 import { $dataLoadingState } from "~/shared/nano-states/builder";
+import { initBuilderApi } from "~/shared/builder-api";
 
 registerContainers();
 
@@ -354,6 +355,8 @@ export const Builder = ({
   userPlanFeatures,
   authTokenPermissions,
 }: BuilderProps) => {
+  useMount(initBuilderApi);
+
   useMount(() => {
     // additional data stores
     $project.set(project);

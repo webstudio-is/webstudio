@@ -35,6 +35,20 @@ test("normalize asset prop into string", () => {
           type: "asset",
           value: "asset1",
         },
+        {
+          id: "prop-w",
+          instanceId: "instance1",
+          name: "width",
+          type: "asset",
+          value: "asset1",
+        },
+        {
+          id: "prop-h",
+          instanceId: "instance1",
+          name: "height",
+          type: "asset",
+          value: "asset1",
+        },
       ],
       assetBaseUrl: "/assets/",
       assets: new Map([
@@ -45,7 +59,7 @@ test("normalize asset prop into string", () => {
             type: "image",
             name: "my-asset.jpg",
             format: "jpg",
-            meta: { width: 0, height: 0 },
+            meta: { width: 101, height: 303 },
             projectId: "",
             size: 0,
             description: "",
@@ -53,7 +67,9 @@ test("normalize asset prop into string", () => {
           },
         ],
       ]),
+      uploadingImageAssets: [],
       pages: pagesBase,
+      source: "prebuild",
     })
   ).toEqual([
     {
@@ -62,6 +78,104 @@ test("normalize asset prop into string", () => {
       name: "src",
       type: "string",
       value: "/assets/my-asset.jpg",
+    },
+    {
+      id: "prop-w",
+      instanceId: "instance1",
+      name: "width",
+      required: undefined,
+      type: "number",
+      value: 101,
+    },
+    {
+      id: "prop-h",
+      instanceId: "instance1",
+      name: "height",
+      required: undefined,
+      type: "number",
+      value: 303,
+    },
+  ]);
+});
+
+test("normalize asset prop into string and pass assetId on the canvas", () => {
+  expect(
+    normalizeProps({
+      props: [
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          name: "src",
+          type: "asset",
+          value: "asset1",
+        },
+        {
+          id: "prop-w",
+          instanceId: "instance1",
+          name: "width",
+          type: "asset",
+          value: "asset1",
+        },
+        {
+          id: "prop-h",
+          instanceId: "instance1",
+          name: "height",
+          type: "asset",
+          value: "asset1",
+        },
+      ],
+      assetBaseUrl: "/assets/",
+      assets: new Map([
+        [
+          "asset1",
+          {
+            id: "asset1",
+            type: "image",
+            name: "my-asset.jpg",
+            format: "jpg",
+            meta: { width: 101, height: 303 },
+            projectId: "",
+            size: 0,
+            description: "",
+            createdAt: "",
+          },
+        ],
+      ]),
+      uploadingImageAssets: [],
+      pages: pagesBase,
+      source: "canvas",
+    })
+  ).toEqual([
+    {
+      id: "prop1",
+      instanceId: "instance1",
+      name: "src",
+      type: "string",
+      value: "/assets/my-asset.jpg",
+    },
+    {
+      id: "instance1-asset1-assetId",
+      instanceId: "instance1",
+      name: "$webstudio$canvasOnly$assetId",
+      required: false,
+      type: "string",
+      value: "asset1",
+    },
+    {
+      id: "prop-w",
+      instanceId: "instance1",
+      name: "width",
+      required: undefined,
+      type: "number",
+      value: 101,
+    },
+    {
+      id: "prop-h",
+      instanceId: "instance1",
+      name: "height",
+      required: undefined,
+      type: "number",
+      value: 303,
     },
   ]);
 });
@@ -80,6 +194,7 @@ test("normalize page prop with path into string", () => {
       ],
       assetBaseUrl: "",
       assets: new Map(),
+      uploadingImageAssets: [],
       pages: {
         ...pagesBase,
         pages: [
@@ -95,6 +210,7 @@ test("normalize page prop with path into string", () => {
         ],
         folders: [],
       },
+      source: "prebuild",
     })
   ).toEqual([
     {
@@ -131,6 +247,7 @@ test("normalize page prop with path and hash into string", () => {
     ],
     assetBaseUrl: "",
     assets: new Map(),
+    uploadingImageAssets: [],
     pages: {
       ...pagesBase,
       pages: [
@@ -159,6 +276,7 @@ test("normalize page prop with path and hash into string", () => {
         },
       ],
     },
+    source: "prebuild",
   });
   expect(result).toEqual([
     {

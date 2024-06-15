@@ -54,9 +54,7 @@ export const SelectAsset = ({ prop, onChange, onDelete, accept }: Props) => {
         title="Images"
         content={
           <ImageManager
-            onChange={(asset) =>
-              onChange({ type: "asset", value: asset.id }, asset)
-            }
+            onChange={(assetId) => onChange({ type: "asset", value: assetId })}
             accept={accept}
           />
         }

@@ -487,17 +487,90 @@ test("expand flex-flow", () => {
   ]);
 });
 
-test.todo("animation");
+test("expand columns", () => {
+  expect(expandShorthands([["columns", "4 20px"]])).toEqual([
+    ["column-width", "20px"],
+    ["column-count", "4"],
+  ]);
+  expect(expandShorthands([["columns", "4"]])).toEqual([
+    ["column-width", "initial"],
+    ["column-count", "4"],
+  ]);
+  expect(expandShorthands([["columns", "20px"]])).toEqual([
+    ["column-width", "20px"],
+    ["column-count", "initial"],
+  ]);
+});
+
+test("expand column-rule", () => {
+  expect(expandShorthands([["column-rule", "thick inset blue"]])).toEqual([
+    ["column-rule-width", "thick"],
+    ["column-rule-style", "inset"],
+    ["column-rule-color", "blue"],
+  ]);
+});
+
+test("expand list-style", () => {
+  expect(
+    expandShorthands([
+      ["list-style", `lower-roman url("img/shape.png") outside`],
+    ])
+  ).toEqual([
+    ["list-style-position", "outside"],
+    ["list-style-image", "url(img/shape.png)"],
+    ["list-style-type", "lower-roman"],
+  ]);
+  expect(expandShorthands([["list-style", `square`]])).toEqual([
+    ["list-style-position", "initial"],
+    ["list-style-image", "initial"],
+    ["list-style-type", "square"],
+  ]);
+});
+
+test("expand animation", () => {
+  expect(
+    expandShorthands([
+      ["animation", `3s ease-in 1s 2 reverse both paused slidein`],
+    ])
+  ).toEqual([
+    ["animation-duration", "3s"],
+    ["animation-timing-function", "ease-in"],
+    ["animation-delay", "1s"],
+    ["animation-iteration-count", "2"],
+    ["animation-direction", "reverse"],
+    ["animation-fill-mode", "both"],
+    ["animation-play-state", "paused"],
+    ["animation-name", "slidein"],
+    ["animation-timeline", "auto"],
+    ["animation-range-start", "normal"],
+    ["animation-range-end", "normal"],
+  ]);
+  expect(
+    expandShorthands([
+      ["animation", `3s linear slidein, 3s ease-out 5s slideout`],
+    ])
+  ).toEqual([
+    ["animation-duration", "3s,3s"],
+    ["animation-timing-function", "linear,ease-out"],
+    ["animation-delay", "0s,5s"],
+    ["animation-iteration-count", "1,1"],
+    ["animation-direction", "normal,normal"],
+    ["animation-fill-mode", "none,none"],
+    ["animation-play-state", "running,running"],
+    ["animation-name", "slidein,slideout"],
+    ["animation-timeline", "auto"],
+    ["animation-range-start", "normal"],
+    ["animation-range-end", "normal"],
+  ]);
+});
+
 test.todo("container");
-test.todo("columns");
-test.todo("column-rule");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
 test.todo("grid-area");
 test.todo("grid-column");
 test.todo("grid-row");
 test.todo("grid-template");
-test.todo("list-style");
 test.todo("mask");
 test.todo("mask-border");
 test.todo("offset");

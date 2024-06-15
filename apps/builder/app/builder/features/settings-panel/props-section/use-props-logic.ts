@@ -287,6 +287,14 @@ export const usePropsLogic = ({
     );
   };
 
+  const handleDeleteByPropName = (propName: string) => {
+    const prop = props.find((prop) => prop.name === propName);
+
+    if (prop) {
+      deleteProp(prop.id);
+    }
+  };
+
   const handleDelete = (prop: Prop) => {
     deleteProp(prop.id);
   };
@@ -296,6 +304,7 @@ export const usePropsLogic = ({
     handleChange,
     handleDelete,
     handleChangeByPropName,
+    handleDeleteByPropName,
     meta,
     /** Similar to Initial, but displayed as a separate group in UI etc.
      * Currentrly used only for the ID prop. */

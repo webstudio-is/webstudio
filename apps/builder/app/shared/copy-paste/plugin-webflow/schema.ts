@@ -18,6 +18,33 @@ const WfTextNode = z.object({
   text: z.boolean(),
 });
 
+export const wfNodeTypes = [
+  "Heading",
+  "Block",
+  "List",
+  "ListItem",
+  "Link",
+  "Paragraph",
+  "Blockquote",
+  "RichText",
+  "Strong",
+  "Emphasized",
+  "Superscript",
+  "Subscript",
+  "Section",
+  "BlockContainer",
+  "Layout",
+  "Cell",
+  "VFlex",
+  "HFlex",
+  "Grid",
+  "Row",
+  "Column",
+  "CodeBlock",
+  "HtmlEmbed",
+  "Image",
+] as const;
+
 export const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
@@ -29,6 +56,8 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["Link"]),
     data: WfNodeData.extend({
+      block: z.enum(["inline", "block", ""]).optional(),
+      button: z.boolean().optional(),
       link: z.object({
         url: z.string(),
         target: z.string().optional(),
@@ -76,7 +105,10 @@ export const WfElementNode = z.union([
     }),
   }),
 ]);
+
 export type WfElementNode = z.infer<typeof WfElementNode>;
+
+[...wfNodeTypes] as const satisfies WfElementNode["type"][];
 
 export const WfNode = z.union([WfElementNode, WfTextNode]);
 export type WfNode = z.infer<typeof WfNode>;

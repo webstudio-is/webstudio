@@ -219,7 +219,7 @@ const parse = (clipboardData: string, options?: Options) => {
   return data;
 };
 
-export const onPaste = (clipboardData: string) => {
+export const onPaste = async (clipboardData: string) => {
   const data = parse(clipboardData);
   const selectedPage = $selectedPage.get();
   if (data === undefined || selectedPage === undefined) {
