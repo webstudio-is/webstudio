@@ -259,12 +259,10 @@ const $loadingState = computed(
     canvasIframeState,
     isPreviewMode
   ) => {
-    type State =
-      | "dataLoadingState"
-      | "selectedInstanceRenderState"
-      | "canvasIframeState";
-
-    const readyStates = new Map<State, boolean>([
+    const readyStates = new Map<
+      "dataLoadingState" | "selectedInstanceRenderState" | "canvasIframeState",
+      boolean
+    >([
       ["dataLoadingState", dataLoadingState === "loaded"],
       [
         "selectedInstanceRenderState",
@@ -272,9 +270,11 @@ const $loadingState = computed(
       ],
       ["canvasIframeState", canvasIframeState === "ready"],
     ]);
+
     const readyCount = Array.from(readyStates.values()).filter(Boolean).length;
     const progress = Math.round((readyCount / readyStates.size) * 100);
-    const state = readyCount === readyStates.size ? "ready" : "loading";
+    const state: "ready" | "loading" =
+      readyCount === readyStates.size ? "ready" : "loading";
 
     return { state, progress, readyStates };
   }
@@ -432,8 +432,18 @@ export const Builder = ({
 
   const navigatorLayout = useNavigatorLayout();
   const dataLoadingState = useStore($dataLoadingState);
+  const [loadingState, setLoadingState] = useState(() => $loadingState.get());
 
-  const loadingState = useStore($loadingState);
+  useEffect(() => {
+    const unsubscribe = $loadingState.subscribe((loadingState) => {
+      setLoadingState(loadingState);
+      // We need to stop updating it once it's ready in case in the future it changes again.
+      if (loadingState.state === "ready") {
+        unsubscribe();
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const canvasUrl = getBuildUrl({
     project,
