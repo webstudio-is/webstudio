@@ -468,6 +468,63 @@ const expandAnimation = function* (value: CssNode) {
   yield ["animation-range-end", createIdentifier("normal")] as const;
 };
 
+/**
+ *
+ * transition = <single-transition>#
+ *
+ * <single-transition> =
+ *   [ none | <single-transition-property> ] ||
+ *   <time> ||
+ *   <easing-function> ||
+ *   <time>
+ *
+ */
+const expandTransition = function* (value: CssNode) {
+  const properties: CssNode[] = [];
+  const durations: CssNode[] = [];
+  const easings: CssNode[] = [];
+  const delays: CssNode[] = [];
+  const behaviors: CssNode[] = [];
+  for (const animationNodes of splitByOperator(getValueList(value), ",")) {
+    const [property, duration, easing, delay, behavior] = parseUnordered(
+      [
+        "[ none | <single-transition-property> ]",
+        "<time>",
+        "<easing-function>",
+        "<time>",
+        // <transition-behavior-value> is not supported by csstree
+        "normal | allow-discrete",
+      ],
+      createValueNode(animationNodes)
+    );
+    properties.push(property ?? createIdentifier("all"));
+    durations.push(duration ?? createDimension("0", "s"));
+    easings.push(easing ?? createIdentifier("ease"));
+    delays.push(delay ?? createDimension("0", "s"));
+    behaviors.push(behavior ?? createIdentifier("normal"));
+  }
+  yield [
+    "transition-property",
+    createValueNode(joinByOperator(properties, ",")),
+  ] as const;
+  yield [
+    "transition-duration",
+    createValueNode(joinByOperator(durations, ",")),
+  ] as const;
+  yield [
+    "transition-timing-function",
+    createValueNode(joinByOperator(easings, ",")),
+  ] as const;
+  yield [
+    "transition-delay",
+    createValueNode(joinByOperator(delays, ",")),
+  ] as const;
+  yield [
+    "transition-behavior",
+    createValueNode(joinByOperator(behaviors, ",")),
+  ] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -600,6 +657,10 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "animation":
       yield* expandAnimation(value);
+      break;
+
+    case "transition":
+      yield* expandTransition(value);
       break;
 
     default:
