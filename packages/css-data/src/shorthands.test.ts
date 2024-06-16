@@ -594,6 +594,83 @@ test("expand transition", () => {
   ]);
 });
 
+test("expand mask", () => {
+  expect(expandShorthands([["mask", `none`]])).toEqual([
+    ["mask-image", "none"],
+    ["mask-position", "0% 0%"],
+    ["mask-size", "auto"],
+    ["mask-repeat", "repeat"],
+    ["mask-origin", "border-box"],
+    ["mask-clip", "border-box"],
+    ["mask-composite", "add"],
+    ["mask-mode", "match-source"],
+  ]);
+  expect(expandShorthands([["mask", `url(mask.png)`]])).toEqual([
+    ["mask-image", "url(mask.png)"],
+    ["mask-position", "0% 0%"],
+    ["mask-size", "auto"],
+    ["mask-repeat", "repeat"],
+    ["mask-origin", "border-box"],
+    ["mask-clip", "border-box"],
+    ["mask-composite", "add"],
+    ["mask-mode", "match-source"],
+  ]);
+  expect(
+    expandShorthands([["mask", `url(masks.svg#star) 0 0/50px 50px`]])
+  ).toEqual([
+    ["mask-image", "url(masks.svg#star)"],
+    ["mask-position", "0 0"],
+    ["mask-size", "50px 50px"],
+    ["mask-repeat", "repeat"],
+    ["mask-origin", "border-box"],
+    ["mask-clip", "border-box"],
+    ["mask-composite", "add"],
+    ["mask-mode", "match-source"],
+  ]);
+  expect(
+    expandShorthands([
+      [
+        "mask",
+        `url(masks.svg#star) left / 16px repeat-y, url(masks.svg#circle) right / 16px repeat-y`,
+      ],
+    ])
+  ).toEqual([
+    ["mask-image", "url(masks.svg#star),url(masks.svg#circle)"],
+    ["mask-position", "left,right"],
+    ["mask-size", "16px,16px"],
+    ["mask-repeat", "repeat-y,repeat-y"],
+    ["mask-origin", "border-box,border-box"],
+    ["mask-clip", "border-box,border-box"],
+    ["mask-composite", "add,add"],
+    ["mask-mode", "match-source,match-source"],
+  ]);
+});
+
+test("expand mask-border", () => {
+  expect(
+    expandShorthands([["mask-border", `url("border-mask.png") 25`]])
+  ).toEqual([
+    ["mask-border-source", "url(border-mask.png)"],
+    ["mask-border-slice", "25"],
+    ["mask-border-width", "initial"],
+    ["mask-border-outset", "initial"],
+    ["mask-border-repeat", "initial"],
+    ["mask-border-mode", "initial"],
+  ]);
+  expect(
+    expandShorthands([
+      ["mask-border", `url("border-mask.png") 25 / 35px / 12px space alpha`],
+    ])
+  ).toEqual([
+    ["mask-border-source", "url(border-mask.png)"],
+    ["mask-border-slice", "25"],
+    ["mask-border-width", "35px"],
+    ["mask-border-outset", "12px"],
+    ["mask-border-repeat", "space"],
+    ["mask-border-mode", "alpha"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
@@ -601,8 +678,6 @@ test.todo("grid-area");
 test.todo("grid-column");
 test.todo("grid-row");
 test.todo("grid-template");
-test.todo("mask");
-test.todo("mask-border");
 test.todo("offset");
 test.todo("scroll-margin");
 test.todo("scroll-padding");
