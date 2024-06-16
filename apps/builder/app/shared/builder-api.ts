@@ -1,12 +1,21 @@
 import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { toast } from "@webstudio-is/design-system";
+import { uploadAssets } from "~/builder/shared/assets/use-assets";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
 const _builderApi = {
   isInitialized: () => true,
   toast,
+  uploadImages: async (srcs: string[]) => {
+    const urlToIds = await uploadAssets(
+      "image",
+      srcs.map((src) => new URL(src))
+    );
+
+    return new Map([...urlToIds.entries()].map(([url, id]) => [url.href, id]));
+  },
 };
 
 declare global {

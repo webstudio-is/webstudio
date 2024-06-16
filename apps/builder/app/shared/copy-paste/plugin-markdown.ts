@@ -20,6 +20,7 @@ import {
   $selectedPage,
 } from "../nano-states";
 import { isBaseBreakpoint } from "../breakpoints";
+import { denormalizeSrcProps } from "./asset-upload";
 
 const micromarkOptions = {
   extensions: [gfm()],
@@ -220,11 +221,15 @@ const parse = (clipboardData: string, options?: Options) => {
 };
 
 export const onPaste = async (clipboardData: string) => {
-  const data = parse(clipboardData);
+  let data = parse(clipboardData);
+
   const selectedPage = $selectedPage.get();
   if (data === undefined || selectedPage === undefined) {
     return false;
   }
+
+  data = await denormalizeSrcProps(data);
+
   const metas = $registeredComponentMetas.get();
   const newInstances = new Map(
     data.instances.map((instance) => [instance.id, instance])

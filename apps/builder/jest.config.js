@@ -6,7 +6,7 @@ import baseConfig from "@webstudio-is/jest-config";
  */
 export default {
   ...baseConfig,
-  testMatch: ["<rootDir>/app/**/*.test.ts"],
+  testMatch: ["<rootDir>/app/**/*.test.(ts|tsx)"],
   moduleNameMapper: {
     "^~/(.*)$": "<rootDir>/app/$1",
   },
