@@ -34,6 +34,11 @@ export const extractSrcProps = (
   return srcProps;
 };
 
+/**
+ *
+ * Similar to normalizeProps, where asset properties are replaced with values,
+ * here we replace the image src string property with the asset.
+ */
 export const denormalizeSrcProps = async (
   data: WebstudioFragment,
   uploadImages = builderApi.uploadImages,
