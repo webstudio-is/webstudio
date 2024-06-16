@@ -45,7 +45,7 @@ const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
 
   if (currentProjectId !== projectId) {
     toast.error("Project has been changed, files will not be uploaded");
-    // Can cause data corrupiton
+    // Can cause data corruption
     return;
   }
 
@@ -315,7 +315,7 @@ const processUpload = async (
             assetId={assetId}
             objectURL={fileData.objectURL}
           >
-            Asset is already exists
+            Asset already exists
           </ToastMessage>
         );
 
@@ -400,14 +400,13 @@ export async function uploadAssets(
           assetId={fileData.assetId}
           objectURL={fileData.objectURL}
         >
-          Asset is already being uploaded
+          Asset already exists
         </ToastMessage>
       );
     }
   }
 
   const uniqFilesData = [...uniqFilesDataMap.values()];
-  // Now exclude and warn duplicates if exists in assets or uploading files
 
   addUploadingFilesData(uniqFilesData);
 
