@@ -432,7 +432,7 @@ export const Builder = ({
 
   const navigatorLayout = useNavigatorLayout();
   const dataLoadingState = useStore($dataLoadingState);
-  const [loadingState, setLoadingState] = useState($loadingState.get());
+  const [loadingState, setLoadingState] = useState(() => $loadingState.get());
 
   useEffect(() => {
     const unsubscribe = $loadingState.subscribe((loadingState) => {
