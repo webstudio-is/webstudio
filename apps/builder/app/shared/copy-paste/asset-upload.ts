@@ -7,7 +7,7 @@ type StringProp = Extract<
   { type: "string" }
 >;
 
-export const extractSrcProps = (
+const extractSrcProps = (
   data: WebstudioFragment
 ): [propId: string, href: string][] => {
   const imageComponentsSet = new Set(
@@ -42,7 +42,7 @@ export const extractSrcProps = (
 export const denormalizeSrcProps = async (
   data: WebstudioFragment,
   uploadImages = builderApi.uploadImages,
-  generateId = nanoid
+  generateId: (instanceId: string, propName: string) => string = () => nanoid()
 ): Promise<WebstudioFragment> => {
   const srcProps = extractSrcProps(data);
 
@@ -71,14 +71,14 @@ export const denormalizeSrcProps = async (
             value: assetId,
           },
           {
-            id: generateId(),
+            id: generateId(prop.instanceId, "width"),
             name: "width",
             instanceId: prop.instanceId,
             type: "asset",
             value: assetId,
           },
           {
-            id: generateId(),
+            id: generateId(prop.instanceId, "height"),
             name: "height",
             instanceId: prop.instanceId,
             type: "asset",
