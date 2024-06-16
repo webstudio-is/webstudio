@@ -22,6 +22,8 @@ export const action = async (
     if (request.method === "POST" && request.body !== null) {
       let body = request.body;
 
+      await new Promise((r) => setTimeout(r, 3000));
+
       const contentType = request.headers.get("Content-Type");
 
       if (contentType?.includes("application/json")) {

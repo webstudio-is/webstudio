@@ -1,14 +1,15 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { builderApi } from "../builder-api";
+import { nanoid } from "nanoid";
 
 type StringProp = Extract<
   WebstudioFragment["props"][number],
   { type: "string" }
 >;
 
-export const denormalizeSrcProps = async (
+export const extractSrcProps = (
   data: WebstudioFragment
-): Promise<WebstudioFragment> => {
+): [propId: string, href: string][] => {
   const imageComponentsSet = new Set(
     data.instances
       .filter(
@@ -25,12 +26,22 @@ export const denormalizeSrcProps = async (
         prop.name === "src" &&
         imageComponentsSet.has(prop.instanceId)
     )
-    .map((prop) => [prop.id, new URL(prop.value)] as const);
+    .map(
+      (prop) =>
+        [prop.id, new URL(prop.value).href] as [propId: string, href: string]
+    );
 
-  const assetUrlToIds = await builderApi.uploadAssets(
-    "image",
-    srcProps.map(([, value]) => value)
-  );
+  return srcProps;
+};
+
+export const denormalizeSrcProps = async (
+  data: WebstudioFragment,
+  uploadImages = builderApi.uploadImages,
+  generateId = nanoid
+): Promise<WebstudioFragment> => {
+  const srcProps = extractSrcProps(data);
+
+  const assetUrlToIds = await uploadImages(srcProps.map(([, value]) => value));
 
   const srcPropIdToAssetId = new Map(
     srcProps.map(([id, url]) => [id, assetUrlToIds.get(url)] as const)
@@ -38,24 +49,43 @@ export const denormalizeSrcProps = async (
 
   const result = { ...data };
 
-  result.props = result.props.map((prop) => {
-    if (prop.type === "string" && prop.name === "src") {
-      const assetId = srcPropIdToAssetId.get(prop.id);
+  result.props = result.props
+    .map((prop) => {
+      if (prop.type === "string" && prop.name === "src") {
+        const assetId = srcPropIdToAssetId.get(prop.id);
 
-      if (assetId === undefined) {
-        return prop;
+        if (assetId === undefined) {
+          return prop;
+        }
+
+        // @todo: add width and height props
+        const assetWithSizeProps: WebstudioFragment["props"] = [
+          {
+            ...prop,
+            type: "asset",
+            value: assetId,
+          },
+          {
+            id: generateId(),
+            name: "width",
+            instanceId: prop.instanceId,
+            type: "asset",
+            value: assetId,
+          },
+          {
+            id: generateId(),
+            name: "height",
+            instanceId: prop.instanceId,
+            type: "asset",
+            value: assetId,
+          },
+        ];
+        return assetWithSizeProps;
       }
 
-      // @todo: add width and height props
-      return {
-        ...prop,
-        type: "asset",
-        value: assetId,
-      };
-    }
-
-    return prop;
-  });
+      return prop;
+    })
+    .flat();
 
   return result;
 };

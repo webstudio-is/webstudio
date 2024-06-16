@@ -8,7 +8,14 @@ const apiWindowNamespace = "__webstudio__$__builderApi";
 const _builderApi = {
   isInitialized: () => true,
   toast,
-  uploadAssets,
+  uploadImages: async (srcs: string[]) => {
+    const urlToIds = await uploadAssets(
+      "image",
+      srcs.map((src) => new URL(src))
+    );
+
+    return new Map([...urlToIds.entries()].map(([url, id]) => [url.href, id]));
+  },
 };
 
 declare global {
