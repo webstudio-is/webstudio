@@ -9,8 +9,21 @@ const mapComponentAndProperties = (
   const props: Array<Prop> = [];
   const component = wfNode.type;
 
+  const addTagProp = () => {
+    props.push({
+      type: "string",
+      id: nanoid(),
+      instanceId,
+      name: "tag",
+      value: wfNode.tag,
+    });
+  };
+
   switch (component) {
-    case "Heading":
+    case "Heading": {
+      addTagProp();
+      return { component, props };
+    }
     case "List":
     case "ListItem":
     case "Paragraph":
@@ -20,6 +33,7 @@ const mapComponentAndProperties = (
       return { component, props };
     }
     case "Block": {
+      addTagProp();
       const component = wfNode.data?.text ? "Text" : "Box";
       return { component, props };
     }
@@ -48,10 +62,12 @@ const mapComponentAndProperties = (
     }
     case "Section": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "RichText": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "Strong": {
@@ -64,34 +80,42 @@ const mapComponentAndProperties = (
     }
     case "BlockContainer": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "Layout": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "Cell": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "VFlex": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "HFlex": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "Grid": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "Row": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "Column": {
       const component = "Box";
+      addTagProp();
       return { component, props };
     }
     case "CodeBlock": {
@@ -201,21 +225,11 @@ const mapComponentAndProperties = (
   (component) satisfies never;
 };
 
-const addAttributes = (
+const addCustomAttributes = (
   wfNode: WfElementNode,
   instanceId: Instance["id"],
   props: Array<Prop>
 ) => {
-  if ("tag" in wfNode) {
-    props.push({
-      type: "string",
-      id: nanoid(),
-      instanceId,
-      name: "tag",
-      value: wfNode.tag,
-    });
-  }
-
   if (wfNode.data?.xattr) {
     for (const attribute of wfNode.data.xattr) {
       props.push({
@@ -277,7 +291,7 @@ export const addInstanceAndProperties = (
     children,
   });
   added.set(wfNode._id, instanceId);
-  addAttributes(wfNode, instanceId, props);
+  addCustomAttributes(wfNode, instanceId, props);
   fragment.props.push(...props);
 
   return instanceId;

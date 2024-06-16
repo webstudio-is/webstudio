@@ -154,13 +154,6 @@ test("Link Block, Button, Text Link", async () => {
       name: "target",
       value: "_blank",
     },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      value: "a",
-    },
   ]);
 });
 
@@ -279,15 +272,6 @@ test("Paragraph", async () => {
       ],
     },
   ]);
-  expect(fragment.props).toEqual([
-    {
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      type: "string",
-      value: "p",
-    },
-  ]);
 });
 
 test("Text", async () => {
@@ -372,15 +356,6 @@ test("Blockquote", async () => {
           value: "Block Quote",
         },
       ],
-    },
-  ]);
-  expect(fragment.props).toEqual([
-    {
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      type: "string",
-      value: "blockquote",
     },
   ]);
 });
@@ -877,13 +852,6 @@ test("Image", async () => {
       name: "src",
       value: expect.not.stringMatching("src"),
     },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      value: "img",
-    },
   ]);
 });
 
@@ -927,13 +895,6 @@ test("HtmlEmbed", async () => {
       instanceId: expect.any(String),
       name: "clientOnly",
       value: true,
-    },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      value: "div",
     },
   ]);
 });
@@ -981,13 +942,6 @@ test("CodeBlock", async () => {
       instanceId: expect.any(String),
       name: "code",
       value: "test",
-    },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      value: "div",
     },
   ]);
 });
