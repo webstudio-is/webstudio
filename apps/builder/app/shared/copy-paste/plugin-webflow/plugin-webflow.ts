@@ -145,6 +145,7 @@ export const onPaste = async (clipboardData: string) => {
   }
 
   updateWebstudioData((data) => {
+    fragment.instances.reverse();
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
@@ -154,13 +155,20 @@ export const onPaste = async (clipboardData: string) => {
         instanceSelector
       ),
     });
-    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const children: Instance["children"] = [
-      { type: "id", value: newRootInstanceId },
-    ];
+    console.log(newInstanceIds, fragment);
+    const children = fragment.children
+      .map((child) => {
+        if (child.type !== "id") {
+          return;
+        }
+        return {
+          type: "id",
+          value: newInstanceIds.get(child.value),
+        };
+      })
+      .filter(Boolean);
+
+    console.log(children);
     insertInstanceChildrenMutable(data, children, dropTarget);
   });
 
