@@ -7,6 +7,7 @@ const mapComponentAndProperties = (
   instanceId: Instance["id"]
 ) => {
   const props: Array<Prop> = [];
+  const children: Instance["children"] = [];
   const component = wfNode.type;
 
   const addTagProp = () => {
@@ -22,7 +23,7 @@ const mapComponentAndProperties = (
   switch (component) {
     case "Heading": {
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "List":
     case "ListItem":
@@ -30,12 +31,12 @@ const mapComponentAndProperties = (
     case "Superscript":
     case "Subscript":
     case "Blockquote": {
-      return { component, props };
+      return { component, props, children };
     }
     case "Block": {
       addTagProp();
       const component = wfNode.data?.text ? "Text" : "Box";
-      return { component, props };
+      return { component, props, children };
     }
     case "Link": {
       const data = wfNode.data;
@@ -58,65 +59,65 @@ const mapComponentAndProperties = (
           value: data.link.target,
         });
       }
-      return { component, props };
+      return { component, props, children };
     }
     case "Section": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "RichText": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "Strong": {
       const component = "Bold";
-      return { component, props };
+      return { component, props, children };
     }
     case "Emphasized": {
       const component = "Italic";
-      return { component, props };
+      return { component, props, children };
     }
     case "BlockContainer": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "Layout": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "Cell": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "VFlex": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "HFlex": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "Grid": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "Row": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "Column": {
       const component = "Box";
       addTagProp();
-      return { component, props };
+      return { component, props, children };
     }
     case "CodeBlock": {
       const component = "CodeText";
@@ -141,7 +142,7 @@ const mapComponentAndProperties = (
           value: data.code,
         });
       }
-      return { component, props };
+      return { component, props, children };
     }
     case "HtmlEmbed": {
       props.push({
@@ -159,7 +160,7 @@ const mapComponentAndProperties = (
         value: true,
       });
 
-      return { component, props };
+      return { component, props, children };
     }
     case "Image": {
       const data = wfNode.data;
@@ -218,7 +219,21 @@ const mapComponentAndProperties = (
           value: data.attr.src,
         });
       }
-      return { component, props };
+      return { component, props, children };
+    }
+    case "FormButton": {
+      const data = wfNode.data;
+      const component = "Button";
+      return {
+        component,
+        props,
+        children: [
+          {
+            type: "text" as const,
+            value: data.attr.value,
+          },
+        ],
+      };
     }
   }
 
@@ -282,17 +297,17 @@ export const addInstanceAndProperties = (
     }
   }
 
-  const { component, props } = mapComponentAndProperties(wfNode, instanceId);
+  const meta = mapComponentAndProperties(wfNode, instanceId);
 
   fragment.instances.push({
     id: instanceId,
     type: "instance",
-    component,
-    children,
+    component: meta.component,
+    children: [...meta.children, ...children],
   });
   added.set(wfNode._id, instanceId);
-  addCustomAttributes(wfNode, instanceId, props);
-  fragment.props.push(...props);
+  addCustomAttributes(wfNode, instanceId, meta.props);
+  fragment.props.push(...meta.props);
 
   return instanceId;
 };

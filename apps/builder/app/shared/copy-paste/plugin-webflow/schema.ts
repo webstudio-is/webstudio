@@ -43,6 +43,7 @@ export const wfNodeTypes = [
   "CodeBlock",
   "HtmlEmbed",
   "Image",
+  "FormButton",
 ] as const;
 
 export const WfElementNode = z.union([
@@ -91,7 +92,6 @@ export const WfElementNode = z.union([
     type: z.enum(["HtmlEmbed"]),
     v: z.string(),
   }),
-
   WfBaseNode.extend({
     type: z.enum(["Image"]),
     data: WfNodeData.extend({
@@ -104,11 +104,22 @@ export const WfElementNode = z.union([
       }),
     }),
   }),
+  WfBaseNode.extend({
+    type: z.enum(["FormButton"]),
+    data: WfNodeData.extend({
+      attr: z.object({
+        value: z.string(),
+      }),
+    }),
+  }),
 ]);
 
 export type WfElementNode = z.infer<typeof WfElementNode>;
 
 [...wfNodeTypes] as const satisfies WfElementNode["type"][];
+
+//@todo verify the other way around too
+//(typeof WfElementNode)["type"] satisfies typeof wfNodeTypes[number]
 
 export const WfNode = z.union([WfElementNode, WfTextNode]);
 export type WfNode = z.infer<typeof WfNode>;

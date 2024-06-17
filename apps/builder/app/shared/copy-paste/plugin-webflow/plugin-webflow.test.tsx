@@ -7,8 +7,11 @@ import {
 } from "@webstudio-is/css-engine";
 import { initialBreakpoints, type WebstudioFragment } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
+import { $, renderJsx } from "@webstudio-is/sdk/testing";
 
 const { toWebstudioFragment } = __testing__;
+
+const anyMatcher = expect.any(String) as unknown as string;
 
 const toCss = (fragment: WebstudioFragment) => {
   const sheet = createRegularStyleSheet();
@@ -1143,6 +1146,34 @@ test("RichText", async () => {
       ],
     },
   ]);
+});
+
+test("FormButton", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "b7d4b56c-77eb-a79d-4b73-7802d6c5f74a",
+          type: "FormButton",
+          tag: "input",
+          classes: [],
+          children: [],
+          data: {
+            attr: {
+              value: "Submit",
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  const { instances } = renderJsx(
+    <$.Button ws:id={anyMatcher}>Submit</$.Button>
+  );
+  expect(fragment.instances).toEqual(Array.from(instances.values()));
 });
 
 describe("Custom attributes", () => {
