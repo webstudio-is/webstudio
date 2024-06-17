@@ -715,7 +715,7 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield ["column-gap", value] as const;
       break;
 
-    case "grid-area":
+    case "grid-area": {
       const [rowStart, columnStart, rowEnd, columnEnd] = splitByOperator(
         value,
         "/"
@@ -728,6 +728,7 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield ["grid-row-end", rowEnd ?? createIdentifier("auto")] as const;
       yield ["grid-column-end", columnEnd ?? createIdentifier("auto")] as const;
       break;
+    }
 
     case "grid-row": {
       const [start, end] = splitByOperator(value, "/");
