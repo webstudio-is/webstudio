@@ -16,6 +16,14 @@ export const setDifference = <Item>(current: Set<Item>, other: Set<Item>) => {
   return result;
 };
 
+export const setUnion = <Item>(current: Set<Item>, other: Set<Item>) => {
+  const result = new Set<Item>(current);
+  for (const item of other) {
+    result.add(item);
+  }
+  return result;
+};
+
 export const mapGroupBy = <Item, Key>(
   array: Item[] | IterableIterator<Item>,
   getKey: (item: Item) => Key

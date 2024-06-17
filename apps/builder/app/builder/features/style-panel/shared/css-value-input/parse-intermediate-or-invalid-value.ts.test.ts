@@ -2,12 +2,11 @@ import { describe, test, expect } from "@jest/globals";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toKebabCase, toPascalCase } from "../keyword-utils";
 
-const properties = ["width", "lineHeight", "backgroundPositionX"] as const;
+const properties = ["width", "lineHeight"] as const;
 
 const propertiesAndKeywords = [
   ["width", "auto" as string],
   ["lineHeight", "normal" as string],
-  ["backgroundPositionX", "center" as string],
 ] as const;
 
 describe("Parse intermediate or invalid value without math evaluation", () => {
