@@ -101,13 +101,20 @@ export const TransitionContent = ({
       (item): item is UnitValue | KeywordValue => item != null
     );
     const newLayer: TupleValue = { type: "tuple", value };
+    const layers = parseTransition(toValue(newLayer));
+    if (layers.type === "invalid") {
+      setIntermediateValue({
+        type: "invalid",
+        value: toValue(newLayer),
+      });
+      return;
+    }
 
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),
     });
-
-    onEditLayer(index, { type: "layers", value: [newLayer] }, options);
+    onEditLayer(index, layers, options);
   };
 
   return (
