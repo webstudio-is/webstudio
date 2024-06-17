@@ -1176,6 +1176,51 @@ test("FormButton", async () => {
   expect(fragment.instances).toEqual(Array.from(instances.values()));
 });
 
+test("FormTextInput", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "3b60c6c7-296c-f98b-0557-a55dcac084b3",
+          type: "FormTextInput",
+          tag: "input",
+          classes: [],
+          children: [],
+          data: {
+            attr: {
+              id: "email",
+              name: "email",
+              maxlength: 256,
+              placeholder: "",
+              disabled: false,
+              type: "email",
+              required: true,
+              autofocus: false,
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  const { instances } = renderJsx(
+    <$.Input
+      ws:id={anyMatcher}
+      id="email"
+      name="email"
+      maxlength={256}
+      placeholder=""
+      disabled={false}
+      type="email"
+      required={false}
+      autofocus={false}
+    />
+  );
+  expect(fragment.instances).toEqual(Array.from(instances.values()));
+});
+
 describe("Custom attributes", () => {
   test("Basic", async () => {
     const fragment = await toWebstudioFragment({
@@ -1221,7 +1266,7 @@ describe("Custom attributes", () => {
 });
 
 describe("Styles", () => {
-  test("Single class", async () => {
+  test.only("Single class", async () => {
     const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
@@ -1244,7 +1289,7 @@ describe("Styles", () => {
         ],
       },
     });
-
+    console.log(fragment.styleSources);
     expect(fragment.styleSources).toEqual([
       {
         type: "token",

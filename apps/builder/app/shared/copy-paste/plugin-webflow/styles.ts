@@ -192,6 +192,12 @@ const mapComponentAndPresetStyles = (
   const presetStyles: Array<keyof WfStylePresets> = [];
 
   switch (component) {
+    case "Heading": {
+      if (wfNode.tag in stylePresets) {
+        presetStyles.push(wfNode.tag as keyof typeof stylePresets);
+      }
+      return presetStyles;
+    }
     case "Link": {
       const data = wfNode.data;
       presetStyles.push("a");

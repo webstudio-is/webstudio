@@ -235,6 +235,29 @@ const mapComponentAndProperties = (
         ],
       };
     }
+    case "FormTextInput": {
+      const data = wfNode.data;
+      const component = "Input";
+      let name: keyof typeof data.attr;
+      for (name in data.attr) {
+        const value = data.attr[name];
+        const type = typeof value;
+        if (type === "string" || type === "number" || type === "boolean") {
+          props.push({
+            type: typeof value,
+            id: nanoid(),
+            instanceId,
+            name,
+            value,
+          });
+        }
+      }
+      return {
+        component,
+        props,
+        children,
+      };
+    }
   }
 
   (component) satisfies never;

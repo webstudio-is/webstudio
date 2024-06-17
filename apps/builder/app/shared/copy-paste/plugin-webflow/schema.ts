@@ -44,6 +44,7 @@ export const wfNodeTypes = [
   "HtmlEmbed",
   "Image",
   "FormButton",
+  "FormTextInput",
 ] as const;
 
 export const WfElementNode = z.union([
@@ -109,6 +110,21 @@ export const WfElementNode = z.union([
     data: WfNodeData.extend({
       attr: z.object({
         value: z.string(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormTextInput"]),
+    data: WfNodeData.extend({
+      attr: z.object({
+        id: z.string(),
+        name: z.string(),
+        maxlength: z.number(),
+        placeholder: z.string(),
+        disabled: z.boolean(),
+        type: z.string(),
+        required: z.boolean(),
+        autofocus: z.boolean(),
       }),
     }),
   }),
