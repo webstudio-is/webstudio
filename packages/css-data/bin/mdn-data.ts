@@ -224,10 +224,30 @@ const walkSyntax = (
 
 type FilteredProperties = { [property in Property]: Value };
 
+const experimentalProperties = [
+  "appearance",
+  "aspect-ratio",
+  // not standard and not implemented without prefix
+  // @todo get rid once the issue with types in radix sdk is resolved
+  "line-clamp",
+  // used in normalize
+  "text-size-adjust",
+];
+
+const unsupportedProperties = [
+  "all",
+  "-webkit-line-clamp",
+  "--*",
+  // @todo for now webstudio supports only white-space
+  // need to figure out how to make it future proof
+  "white-space-collapse",
+  "text-wrap",
+  "text-wrap-mode",
+  "text-wrap-style",
+];
+
 const animatableProperties: string[] = [];
 const filteredProperties: FilteredProperties = (() => {
-  // A list of properties we don't want to show
-  const ignoreProperties = ["all", "-webkit-line-clamp", "--*"];
   let property: Property;
   const result = {} as FilteredProperties;
 
@@ -250,35 +270,36 @@ const filteredProperties: FilteredProperties = (() => {
   */
 
   const supportedComplexProperties: Record<string, string> = {
+    // @todo remove support for transition shorthand
     transition: "all 0s ease 0s",
   };
 
   for (property in properties) {
     const config = properties[property];
-    const isSupportedStatus =
-      config.status === "standard" || config.status === "experimental";
 
     if (property in supportedComplexProperties) {
       config.initial = supportedComplexProperties[property];
     }
 
-    if (
-      property.charAt(0) !== "-" &&
+    const isSupportedProperty =
+      // make sure the property standard and described in mdn
+      (config.status === "standard" && "mdn_url" in config) ||
+      experimentalProperties.includes(property);
+    const isShorthandProperty = Array.isArray(config.initial);
+    const isAnimatableProperty =
+      property.startsWith("-") === false &&
       config.animationType !== "discrete" &&
-      config.animationType !== "notAnimatable"
-    ) {
-      animatableProperties.push(property);
-    }
+      config.animationType !== "notAnimatable";
 
-    if (
-      isSupportedStatus === false ||
-      // Skipping the complex values, since we want to use the expanded once.
-      Array.isArray(config.initial) ||
-      ignoreProperties.includes(property) === true
-    ) {
+    if (unsupportedProperties.includes(property) || isShorthandProperty) {
       continue;
     }
-    result[property as Property] = config;
+    if (isSupportedProperty) {
+      if (isAnimatableProperty) {
+        animatableProperties.push(property);
+      }
+      result[property as Property] = config;
+    }
   }
   return result;
 })();
