@@ -139,7 +139,8 @@ export const AssetsShell = ({
               return false;
             });
 
-          uploadAssets(type, files, droppedUrls);
+          uploadAssets(type, files);
+          uploadAssets(type, droppedUrls);
         },
       })
     );

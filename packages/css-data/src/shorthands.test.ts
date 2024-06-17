@@ -564,6 +564,113 @@ test("expand animation", () => {
   ]);
 });
 
+test("expand transition", () => {
+  expect(
+    expandShorthands([["transition", `margin-right 4s, color 1s`]])
+  ).toEqual([
+    ["transition-property", "margin-right,color"],
+    ["transition-duration", "4s,1s"],
+    ["transition-timing-function", "ease,ease"],
+    ["transition-delay", "4s,1s"],
+    ["transition-behavior", "normal,normal"],
+  ]);
+  expect(
+    expandShorthands([["transition", `margin-right 4s ease-in-out 1s`]])
+  ).toEqual([
+    ["transition-property", "margin-right"],
+    ["transition-duration", "4s"],
+    ["transition-timing-function", "ease-in-out"],
+    ["transition-delay", "4s"],
+    ["transition-behavior", "normal"],
+  ]);
+  expect(
+    expandShorthands([["transition", `display 4s allow-discrete`]])
+  ).toEqual([
+    ["transition-property", "display"],
+    ["transition-duration", "4s"],
+    ["transition-timing-function", "ease"],
+    ["transition-delay", "4s"],
+    ["transition-behavior", "allow-discrete"],
+  ]);
+});
+
+test("expand mask", () => {
+  expect(expandShorthands([["mask", `none`]])).toEqual([
+    ["mask-image", "none"],
+    ["mask-position", "0% 0%"],
+    ["mask-size", "auto"],
+    ["mask-repeat", "repeat"],
+    ["mask-origin", "border-box"],
+    ["mask-clip", "border-box"],
+    ["mask-composite", "add"],
+    ["mask-mode", "match-source"],
+  ]);
+  expect(expandShorthands([["mask", `url(mask.png)`]])).toEqual([
+    ["mask-image", "url(mask.png)"],
+    ["mask-position", "0% 0%"],
+    ["mask-size", "auto"],
+    ["mask-repeat", "repeat"],
+    ["mask-origin", "border-box"],
+    ["mask-clip", "border-box"],
+    ["mask-composite", "add"],
+    ["mask-mode", "match-source"],
+  ]);
+  expect(
+    expandShorthands([["mask", `url(masks.svg#star) 0 0/50px 50px`]])
+  ).toEqual([
+    ["mask-image", "url(masks.svg#star)"],
+    ["mask-position", "0 0"],
+    ["mask-size", "50px 50px"],
+    ["mask-repeat", "repeat"],
+    ["mask-origin", "border-box"],
+    ["mask-clip", "border-box"],
+    ["mask-composite", "add"],
+    ["mask-mode", "match-source"],
+  ]);
+  expect(
+    expandShorthands([
+      [
+        "mask",
+        `url(masks.svg#star) left / 16px repeat-y, url(masks.svg#circle) right / 16px repeat-y`,
+      ],
+    ])
+  ).toEqual([
+    ["mask-image", "url(masks.svg#star),url(masks.svg#circle)"],
+    ["mask-position", "left,right"],
+    ["mask-size", "16px,16px"],
+    ["mask-repeat", "repeat-y,repeat-y"],
+    ["mask-origin", "border-box,border-box"],
+    ["mask-clip", "border-box,border-box"],
+    ["mask-composite", "add,add"],
+    ["mask-mode", "match-source,match-source"],
+  ]);
+});
+
+test("expand mask-border", () => {
+  expect(
+    expandShorthands([["mask-border", `url("border-mask.png") 25`]])
+  ).toEqual([
+    ["mask-border-source", "url(border-mask.png)"],
+    ["mask-border-slice", "25"],
+    ["mask-border-width", "initial"],
+    ["mask-border-outset", "initial"],
+    ["mask-border-repeat", "initial"],
+    ["mask-border-mode", "initial"],
+  ]);
+  expect(
+    expandShorthands([
+      ["mask-border", `url("border-mask.png") 25 / 35px / 12px space alpha`],
+    ])
+  ).toEqual([
+    ["mask-border-source", "url(border-mask.png)"],
+    ["mask-border-slice", "25"],
+    ["mask-border-width", "35px"],
+    ["mask-border-outset", "12px"],
+    ["mask-border-repeat", "space"],
+    ["mask-border-mode", "alpha"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
@@ -571,13 +678,10 @@ test.todo("grid-area");
 test.todo("grid-column");
 test.todo("grid-row");
 test.todo("grid-template");
-test.todo("mask");
-test.todo("mask-border");
 test.todo("offset");
 test.todo("scroll-margin");
 test.todo("scroll-padding");
 test.todo("scroll-timeline");
-test.todo("transition");
 
 test.todo("font-synthesis - only shorthand is supported in webstudio");
 test.todo(

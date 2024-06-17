@@ -39,7 +39,7 @@ import {
   $selectedPageDefaultSystem,
   mergeSystem,
 } from "./variables";
-import { getMimeType } from "~/builder/shared/assets/asset-utils";
+import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
@@ -262,30 +262,9 @@ export const $propValuesByInstanceSelector = computed(
     // ignore asset and page props when params is not provided
     if (params && pages) {
       const uploadingImageAssets = uploadingFilesDataStore
-        .map((fileData) => {
-          const format = getMimeType(
-            fileData.source === "file" ? fileData.file : new URL(fileData.url)
-          ).split("/")[1];
-
-          const uploadingAsset: ImageAsset = {
-            id: fileData.assetId,
-            name: fileData.objectURL,
-            format,
-            type: "image",
-            description: "",
-            createdAt: "",
-            projectId: "",
-            size: 0,
-
-            meta: {
-              width: Number.NaN,
-              height: Number.NaN,
-            },
-          };
-
-          return uploadingAsset;
-        })
-        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
+        .map(uploadingFileDataToAsset)
+        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
+        .filter((asset): asset is ImageAsset => asset.type === "image");
 
       // use whole props list to let access hash props from other pages and instances
       propsList = normalizeProps({

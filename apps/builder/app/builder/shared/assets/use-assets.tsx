@@ -27,8 +27,10 @@ import {
   getMimeType,
   getSha256Hash,
   getSha256HashOfFile,
+  uploadingFileDataToAsset,
 } from "./asset-utils";
 import { Image } from "../image-manager/image";
+import invariant from "tiny-invariant";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   serverSyncStore.createTransaction([$assets], (assets) => {
@@ -38,7 +40,27 @@ export const deleteAssets = (assetIds: Asset["id"][]) => {
   });
 };
 
-const setAsset = (asset: Asset) => {
+const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
+  const currentProjectId = $project.get()?.id;
+
+  if (currentProjectId !== projectId) {
+    toast.error("Project has been changed, files will not be uploaded");
+    // Can cause data corruption
+    return;
+  }
+
+  deleteAssets(assetIds);
+};
+
+const safeSetAsset = (asset: Asset, projectId: string) => {
+  const currentProjectId = $project.get()?.id;
+
+  if (currentProjectId !== projectId) {
+    toast.error("Project has been changed, files will not be uploaded");
+    // Can cause data corrupiton
+    return;
+  }
+
   serverSyncStore.createTransaction([$assets], (assets) => {
     assets.set(asset.id, asset);
   });
@@ -46,29 +68,29 @@ const setAsset = (asset: Asset) => {
 
 const getFilesData = async (
   type: AssetType,
-  files: File[],
-  urls: URL[]
+  filesOrUrls: File[] | URL[]
 ): Promise<UploadingFileData[]> => {
   const filesData: UploadingFileData[] = [];
-  for (const file of files) {
-    const assetId = await getSha256HashOfFile(file);
-    filesData.push({
-      source: "file" as const,
-      assetId: assetId,
-      type,
-      file,
-      objectURL: URL.createObjectURL(file),
-    });
-  }
+  for (const fileOrUrl of filesOrUrls) {
+    if (fileOrUrl instanceof File) {
+      const assetId = await getSha256HashOfFile(fileOrUrl);
+      filesData.push({
+        source: "file" as const,
+        assetId: assetId,
+        type,
+        file: fileOrUrl,
+        objectURL: URL.createObjectURL(fileOrUrl),
+      });
+      continue;
+    }
 
-  for (const url of urls) {
-    const assetId = await getSha256Hash(url.href);
+    const assetId = await getSha256Hash(fileOrUrl.href);
     filesData.push({
       source: "url" as const,
       assetId,
       type,
-      url: url.href,
-      objectURL: url.href,
+      url: fileOrUrl.href,
+      objectURL: fileOrUrl.href,
     });
   }
 
@@ -93,27 +115,10 @@ const $assetContainers = computed(
     const uploadingContainers: UploadingAssetContainer[] = [];
 
     for (const uploadingFile of uploadingFilesData) {
-      const name =
-        uploadingFile.source === "file"
-          ? uploadingFile.file.name
-          : uploadingFile.url;
-
-      const format = getMimeType(
-        uploadingFile.source === "file"
-          ? uploadingFile.file
-          : new URL(uploadingFile.url)
-      ).split("/")[1];
-
       uploadingContainers.push({
         status: "uploading",
         objectURL: uploadingFile.objectURL,
-        asset: {
-          id: uploadingFile.assetId,
-          type: uploadingFile.type,
-          format,
-          name: name,
-          description: name,
-        },
+        asset: uploadingFileDataToAsset(uploadingFile),
       });
     }
 
@@ -210,7 +215,11 @@ const uploadAsset = async ({
   }
 };
 
-const handleAfterSubmit = (assetId: string, data: UploadData) => {
+const handleAfterSubmit = (
+  assetId: string,
+  data: UploadData,
+  projectId: string
+) => {
   warnOnce(
     data.uploadedAssets?.length !== 1,
     "Expected exactly 1 uploaded asset"
@@ -221,12 +230,12 @@ const handleAfterSubmit = (assetId: string, data: UploadData) => {
   if (uploadedAsset === undefined) {
     warnOnce(true, "An uploaded asset is undefined");
     toast.error("Could not upload an asset");
-    deleteAssets([assetId]);
+    safeDeleteAssets([assetId], projectId);
     return;
   }
 
   // update store with new asset and set current id
-  setAsset({ ...uploadedAsset, id: assetId });
+  safeSetAsset({ ...uploadedAsset, id: assetId }, projectId);
 };
 
 const ToastMessage = ({
@@ -269,65 +278,164 @@ const ToastMessage = ({
   );
 };
 
-export const uploadAssets = async (
-  type: AssetType,
-  files: File[],
-  urls: URL[] = []
+const processingQueue: [
+  filesData: UploadingFileData[],
+  projectId: string,
+  authToken: string | undefined,
+][] = [];
+
+const processUpload = async (
+  filesData: UploadingFileData[],
+  projectId: string,
+  authToken: string | undefined
 ) => {
-  const projectId = $project.get()?.id;
-  const authToken = $authToken.get();
-  if (projectId === undefined) {
+  processingQueue.push([filesData, projectId, authToken]);
+
+  if (processingQueue.length > 1) {
     return;
   }
 
-  const filesData = await getFilesData(type, files, urls);
+  while (processingQueue.length > 0) {
+    const [filesData, projectId, authToken] = processingQueue.shift()!;
 
-  addUploadingFilesData(filesData);
-
-  for (const fileData of filesData) {
-    const assetId = fileData.assetId;
-
-    if ($assets.get().has(assetId)) {
-      toast.warn(
-        <ToastMessage
-          title="Info"
-          assetId={assetId}
-          objectURL={fileData.objectURL}
-        >
-          Asset is already exists
-        </ToastMessage>
-      );
-
-      deleteUploadingFileData(assetId);
+    const currentProjectId = $project.get()?.id;
+    if (currentProjectId !== projectId) {
+      toast.error("Project has been changed, files will not be uploaded");
+      // Can cause data corrupiton
       continue;
     }
 
-    await uploadAsset({
-      authToken,
-      projectId,
-      fileOrUrl:
-        fileData.source === "file" ? fileData.file : new URL(fileData.url),
-      onCompleted: (data) => {
-        URL.revokeObjectURL(fileData.objectURL);
-        deleteUploadingFileData(assetId);
-        handleAfterSubmit(assetId, data);
-      },
-      onError: (error) => {
-        deleteAssets([assetId]);
-        deleteUploadingFileData(assetId);
-        toast.error(
+    for (const fileData of filesData) {
+      const assetId = fileData.assetId;
+
+      if ($assets.get().has(assetId)) {
+        toast.warn(
           <ToastMessage
-            title="Error"
+            title="Info"
             assetId={assetId}
             objectURL={fileData.objectURL}
           >
-            {error}
+            Asset already exists
           </ToastMessage>
         );
-      },
-    });
+
+        deleteUploadingFileData(assetId);
+        continue;
+      }
+
+      await uploadAsset({
+        authToken,
+        projectId,
+        fileOrUrl:
+          fileData.source === "file" ? fileData.file : new URL(fileData.url),
+        onCompleted: (data) => {
+          URL.revokeObjectURL(fileData.objectURL);
+          deleteUploadingFileData(assetId);
+          handleAfterSubmit(assetId, data, projectId);
+        },
+        onError: (error) => {
+          deleteUploadingFileData(assetId);
+          toast.error(
+            <ToastMessage
+              title="Error"
+              assetId={assetId}
+              objectURL={fileData.objectURL}
+            >
+              {error}
+            </ToastMessage>
+          );
+
+          safeDeleteAssets([assetId], projectId);
+        },
+      });
+    }
   }
 };
+
+export async function uploadAssets(
+  type: AssetType,
+  files: File[]
+): Promise<Map<File, string>>;
+
+export async function uploadAssets(
+  type: AssetType,
+  urls: URL[]
+): Promise<Map<URL, string>>;
+
+/**
+ * returns a list of asset ids that are being uploaded
+ */
+// eslint-disable-next-line func-style
+export async function uploadAssets(
+  type: AssetType,
+  filesOrUrls: File[] | URL[]
+): Promise<Map<URL | File, string>> {
+  const projectId = $project.get()?.id;
+  const authToken = $authToken.get();
+  if (projectId === undefined) {
+    return new Map();
+  }
+
+  const filesData = await getFilesData(type, filesOrUrls);
+
+  // Filter out duplicates inside filesData
+  const uniqFilesDataMap = new Map(
+    filesData.map((fileData) => [fileData.assetId, fileData])
+  );
+
+  // Filter out duplicates existing in assets or uploading files
+  const existingIds = [
+    ...$assets.get().keys(),
+    ...$uploadingFilesDataStore.get().map((fileData) => fileData.assetId),
+  ];
+
+  for (const existingAssetId of existingIds) {
+    if (uniqFilesDataMap.has(existingAssetId)) {
+      const fileData = uniqFilesDataMap.get(existingAssetId)!;
+      uniqFilesDataMap.delete(existingAssetId);
+
+      toast.warn(
+        <ToastMessage
+          title="Warning"
+          assetId={fileData.assetId}
+          objectURL={fileData.objectURL}
+        >
+          Asset already exists
+        </ToastMessage>
+      );
+    }
+  }
+
+  const uniqFilesData = [...uniqFilesDataMap.values()];
+
+  addUploadingFilesData(uniqFilesData);
+
+  processUpload(uniqFilesData, projectId, authToken);
+
+  const res = new Map();
+
+  for (let i = 0; i < filesData.length; ++i) {
+    const fileOrUrl = filesOrUrls[i];
+    const fileData = filesData[i];
+
+    invariant(
+      fileOrUrl instanceof URL ||
+        (fileOrUrl instanceof File &&
+          fileData.source === "file" &&
+          fileData.file === fileOrUrl)
+    );
+    invariant(
+      fileOrUrl instanceof File ||
+        (fileOrUrl instanceof URL &&
+          fileData.source === "url" &&
+          fileData.url === fileOrUrl.href)
+    );
+
+    res.set(filesOrUrls[i], filesData[i].assetId);
+  }
+
+  return res;
+}
 
 const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
   return assetContainers.filter((assetContainer) => {

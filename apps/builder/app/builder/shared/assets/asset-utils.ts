@@ -1,4 +1,6 @@
+import type { Asset, FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
+import type { UploadingFileData } from "~/shared/nano-states";
 
 const extensionToMime = new Map([
   [".gif", "image/gif"],
@@ -90,4 +92,51 @@ export const getFileName = (file: File | URL) => {
   }
 
   return extractImageNameAndMimeTypeFromUrl(file)[1];
+};
+
+export const uploadingFileDataToAsset = (
+  fileData: UploadingFileData
+): Asset => {
+  const mimeType = getMimeType(
+    fileData.source === "file" ? fileData.file : new URL(fileData.url)
+  );
+  const format = mimeType.split("/")[1];
+
+  if (mimeType.startsWith("image/")) {
+    const asset: ImageAsset = {
+      id: fileData.assetId,
+      name: fileData.objectURL,
+      format,
+      type: "image",
+      description: "",
+      createdAt: "",
+      projectId: "",
+      size: 0,
+
+      meta: {
+        width: Number.NaN,
+        height: Number.NaN,
+      },
+    };
+
+    return asset;
+  }
+
+  const asset: FontAsset = {
+    id: fileData.assetId,
+    name: fileData.objectURL,
+    format: "woff2",
+    type: "font",
+    description: "",
+    createdAt: "",
+    projectId: "",
+    size: 0,
+    meta: {
+      family: "system",
+      style: "normal",
+      weight: 400,
+    },
+  };
+
+  return asset;
 };

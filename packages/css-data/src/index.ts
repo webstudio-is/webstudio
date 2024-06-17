@@ -16,6 +16,7 @@ export * from "./property-parsers/index";
 // shorthand property parsers
 export * from "./parse-css-value";
 export * from "./parse-css";
+export * from "./shorthands";
 
 export { parseTailwindToWebstudio } from "./tailwind-parser/parse";
 

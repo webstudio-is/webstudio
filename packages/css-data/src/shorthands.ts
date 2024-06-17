@@ -116,6 +116,9 @@ const parseUnordered = (syntaxes: string[], value: CssNode) => {
  *
  * border = <line-width> || <line-style> || <color>
  *
+ * should also reset border-image but would bloat
+ * resulting data for very rare usecase
+ *
  */
 const expandBorder = function* (property: string, value: CssNode) {
   switch (property) {
@@ -309,7 +312,6 @@ const expandBorderImage = function* (value: CssNode) {
  *
  */
 const expandFont = function* (value: CssNode) {
-  // const [before, after] = splitBySlash(getValueList(value));
   const [fontStyle, fontVariant, fontWeight, fontWidth, config] =
     parseUnordered(
       [
@@ -468,6 +470,199 @@ const expandAnimation = function* (value: CssNode) {
   yield ["animation-range-end", createIdentifier("normal")] as const;
 };
 
+/**
+ *
+ * transition = <single-transition>#
+ *
+ * <single-transition> =
+ *   [ none | <single-transition-property> ] ||
+ *   <time> ||
+ *   <easing-function> ||
+ *   <time>
+ *
+ */
+const expandTransition = function* (value: CssNode) {
+  const properties: CssNode[] = [];
+  const durations: CssNode[] = [];
+  const easings: CssNode[] = [];
+  const delays: CssNode[] = [];
+  const behaviors: CssNode[] = [];
+  for (const animationNodes of splitByOperator(getValueList(value), ",")) {
+    const [property, duration, easing, delay, behavior] = parseUnordered(
+      [
+        "[ none | <single-transition-property> ]",
+        "<time>",
+        "<easing-function>",
+        "<time>",
+        // <transition-behavior-value> is not supported by csstree
+        "normal | allow-discrete",
+      ],
+      createValueNode(animationNodes)
+    );
+    properties.push(property ?? createIdentifier("all"));
+    durations.push(duration ?? createDimension("0", "s"));
+    easings.push(easing ?? createIdentifier("ease"));
+    delays.push(delay ?? createDimension("0", "s"));
+    behaviors.push(behavior ?? createIdentifier("normal"));
+  }
+  yield [
+    "transition-property",
+    createValueNode(joinByOperator(properties, ",")),
+  ] as const;
+  yield [
+    "transition-duration",
+    createValueNode(joinByOperator(durations, ",")),
+  ] as const;
+  yield [
+    "transition-timing-function",
+    createValueNode(joinByOperator(easings, ",")),
+  ] as const;
+  yield [
+    "transition-delay",
+    createValueNode(joinByOperator(delays, ",")),
+  ] as const;
+  yield [
+    "transition-behavior",
+    createValueNode(joinByOperator(behaviors, ",")),
+  ] as const;
+};
+
+/**
+ *
+ * mask = <mask-layer>#
+ *
+ * <mask-layer> =
+ *   <mask-reference> ||
+ *   <position> [ / <bg-size> ]? ||
+ *   <repeat-style> ||
+ *   <geometry-box> ||
+ *   [ <geometry-box> | no-clip ] ||
+ *   <compositing-operator> ||
+ *   <masking-mode>
+ *
+ * should also reset mask-border but would bloat
+ * resulting data for very rare usecase
+ *
+ */
+const expandMask = function* (value: CssNode) {
+  const references: CssNode[] = [];
+  const positions: CssNode[] = [];
+  const bgSizes: CssNode[] = [];
+  const repeatStyles: CssNode[] = [];
+  const origins: CssNode[] = [];
+  const clips: CssNode[] = [];
+  const compositionOperators: CssNode[] = [];
+  const modes: CssNode[] = [];
+  for (const animationNodes of splitByOperator(getValueList(value), ",")) {
+    const [
+      reference,
+      positionAndSize,
+      repeatStyle,
+      origin,
+      clip,
+      compositingOperator,
+      mode,
+    ] = parseUnordered(
+      [
+        "<mask-reference>",
+        "<position> [ / <bg-size> ]?",
+        "<repeat-style>",
+        "<geometry-box>",
+        "[ <geometry-box> | no-clip ]",
+        "<compositing-operator>",
+        "<masking-mode>",
+      ],
+      createValueNode(animationNodes)
+    );
+    references.push(reference ?? createIdentifier("none"));
+    let position = createValueNode([
+      { type: "Dimension", value: "0", unit: "%" },
+      { type: "Dimension", value: "0", unit: "%" },
+    ]);
+    let bgSize = createIdentifier("auto");
+    if (positionAndSize) {
+      const [positionNodes, bgSizeNodes] = splitByOperator(
+        getValueList(positionAndSize),
+        "/"
+      );
+      position = createValueNode(positionNodes);
+      bgSize = bgSizeNodes ? createValueNode(bgSizeNodes) : position;
+    }
+    positions.push(position);
+    bgSizes.push(bgSize);
+    repeatStyles.push(repeatStyle ?? createIdentifier("repeat"));
+    origins.push(origin ?? createIdentifier("border-box"));
+    clips.push(clip ?? origin ?? createIdentifier("border-box"));
+    compositionOperators.push(compositingOperator ?? createIdentifier("add"));
+    modes.push(mode ?? createIdentifier("match-source"));
+  }
+  yield [
+    "mask-image",
+    createValueNode(joinByOperator(references, ",")),
+  ] as const;
+  yield [
+    "mask-position",
+    createValueNode(joinByOperator(positions, ",")),
+  ] as const;
+  yield ["mask-size", createValueNode(joinByOperator(bgSizes, ","))] as const;
+  yield [
+    "mask-repeat",
+    createValueNode(joinByOperator(repeatStyles, ",")),
+  ] as const;
+  yield ["mask-origin", createValueNode(joinByOperator(origins, ","))] as const;
+  yield ["mask-clip", createValueNode(joinByOperator(clips, ","))] as const;
+  yield [
+    "mask-composite",
+    createValueNode(joinByOperator(compositionOperators, ",")),
+  ] as const;
+  yield ["mask-mode", createValueNode(joinByOperator(modes, ","))] as const;
+};
+
+/**
+ *
+ * mask-border =
+ *   <'mask-border-source'> ||
+ *   <'mask-border-slice'> [ / <'mask-border-width'>? [ / <'mask-border-outset'> ]? ]? ||
+ *   <'mask-border-repeat'> ||
+ *   <'mask-border-mode'>
+ *
+ */
+const expandMaskBorder = function* (value: CssNode) {
+  const [source, config, repeat, mode] = parseUnordered(
+    [
+      "<'mask-border-source'>",
+      "<'mask-border-slice'> [ / <'mask-border-width'>? [ / <'mask-border-outset'> ]? ]?",
+      "<'mask-border-repeat'>",
+      "<'mask-border-mode'>",
+    ],
+    value
+  );
+  let slice: undefined | CssNode;
+  let width: undefined | CssNode;
+  let outset: undefined | CssNode;
+  if (config) {
+    const [sliceNodes, widthNodes, outsetNodes] = splitByOperator(
+      config.children,
+      "/"
+    );
+    if (sliceNodes && sliceNodes.length > 0) {
+      slice = createValueNode(sliceNodes);
+    }
+    if (widthNodes && widthNodes.length > 0) {
+      width = createValueNode(widthNodes);
+    }
+    if (outsetNodes && outsetNodes.length > 0) {
+      outset = createValueNode(outsetNodes);
+    }
+  }
+  yield ["mask-border-source", source ?? createInitialNode()] as const;
+  yield ["mask-border-slice", slice ?? createInitialNode()] as const;
+  yield ["mask-border-width", width ?? createInitialNode()] as const;
+  yield ["mask-border-outset", outset ?? createInitialNode()] as const;
+  yield ["mask-border-repeat", repeat ?? createInitialNode()] as const;
+  yield ["mask-border-mode", mode ?? createInitialNode()] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -505,6 +700,14 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "border-image":
       yield* expandBorderImage(value);
+      break;
+
+    case "mask":
+      yield* expandMask(value);
+      break;
+
+    case "mask-border":
+      yield* expandMaskBorder(value);
       break;
 
     case "gap":
@@ -600,6 +803,10 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "animation":
       yield* expandAnimation(value);
+      break;
+
+    case "transition":
+      yield* expandTransition(value);
       break;
 
     default:
