@@ -3085,4 +3085,31 @@ describe("insert webstudio fragment copy", () => {
       },
     ]);
   });
+
+  test("insert instances with multiple roots", () => {
+    const data = getWebstudioDataStub();
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        // body1
+        //   box1
+        // body2
+        //   box2
+        // explicily define box first and then body
+        // to check first instance is not used as root
+        instances: [
+          createInstance("box1", "Box", []),
+          createInstance("body1", "Body", [{ type: "id", value: "box1" }]),
+          createInstance("body2", "Body", [{ type: "id", value: "box2" }]),
+          createInstance("box2", "Box", []),
+        ],
+        resources: [],
+        dataSources: [],
+      },
+      availableDataSources: new Set(),
+    });
+    expect(data.instances.size).toEqual(4);
+    expect(newInstanceIds.size).toEqual(4);
+  });
 });
