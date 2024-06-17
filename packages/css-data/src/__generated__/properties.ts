@@ -54,24 +54,6 @@ export const properties = {
     },
     types: [],
   },
-  alignTracks: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    types: [],
-  },
-  animationComposition: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "replace",
-    },
-    types: ["single-animation-composition"],
-  },
   animationDelay: {
     unitGroups: ["time"],
     inherited: false,
@@ -146,15 +128,6 @@ export const properties = {
       value: "ease",
     },
     types: [],
-  },
-  animationTimeline: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: ["custom-ident", "string"],
   },
   appearance: {
     unitGroups: [],
@@ -266,26 +239,6 @@ export const properties = {
     },
     types: ["length", "percentage"],
   },
-  backgroundPositionX: {
-    unitGroups: ["length", "percentage"],
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "%",
-      value: 0,
-    },
-    types: ["length", "percentage"],
-  },
-  backgroundPositionY: {
-    unitGroups: ["length", "percentage"],
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "%",
-      value: 0,
-    },
-    types: ["length", "percentage"],
-  },
   backgroundRepeat: {
     unitGroups: [],
     inherited: false,
@@ -303,15 +256,6 @@ export const properties = {
       value: "auto",
     },
     types: ["length", "percentage"],
-  },
-  blockOverflow: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "clip",
-    },
-    types: ["string"],
   },
   blockSize: {
     unitGroups: ["length", "percentage"],
@@ -820,15 +764,6 @@ export const properties = {
     },
     types: ["hex-color"],
   },
-  caretShape: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
-  },
   clear: {
     unitGroups: [],
     inherited: false,
@@ -1091,6 +1026,15 @@ export const properties = {
     },
     types: [],
   },
+  fieldSizing: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "fixed",
+    },
+    types: [],
+  },
   filter: {
     unitGroups: [],
     inherited: false,
@@ -1201,15 +1145,6 @@ export const properties = {
     },
     types: [],
   },
-  fontPalette: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    types: ["palette-identifier"],
-  },
   fontVariationSettings: {
     unitGroups: ["number"],
     inherited: true,
@@ -1269,7 +1204,42 @@ export const properties = {
           type: "keyword",
           value: "style",
         },
+        {
+          type: "keyword",
+          value: "small-caps",
+        },
+        {
+          type: "keyword",
+          value: "position",
+        },
       ],
+    },
+    types: [],
+  },
+  fontSynthesisSmallCaps: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    types: [],
+  },
+  fontSynthesisStyle: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    types: [],
+  },
+  fontSynthesisWeight: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
     },
     types: [],
   },
@@ -1301,15 +1271,6 @@ export const properties = {
     types: [],
   },
   fontVariantEastAsian: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    types: [],
-  },
-  fontVariantEmoji: {
     unitGroups: [],
     inherited: true,
     initial: {
@@ -1353,15 +1314,6 @@ export const properties = {
       value: "normal",
     },
     types: ["number"],
-  },
-  forcedColorAdjust: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
   },
   gridAutoColumns: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1516,34 +1468,6 @@ export const properties = {
     },
     types: [],
   },
-  imageResolution: {
-    unitGroups: ["resolution"],
-    inherited: true,
-    initial: {
-      type: "unit",
-      unit: "dppx",
-      value: 1,
-    },
-    types: ["resolution"],
-  },
-  initialLetter: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    types: ["number", "integer"],
-  },
-  initialLetterAlign: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
-  },
   inlineSize: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -1552,15 +1476,6 @@ export const properties = {
       value: "auto",
     },
     types: ["length", "percentage"],
-  },
-  inputSecurity: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
   },
   insetBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1634,15 +1549,6 @@ export const properties = {
     },
     types: [],
   },
-  justifyTracks: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    types: [],
-  },
   left: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -1687,16 +1593,6 @@ export const properties = {
       value: "inherit",
     },
     types: ["number", "length", "percentage"],
-  },
-  lineHeightStep: {
-    unitGroups: ["length"],
-    inherited: true,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    types: ["length"],
   },
   listStyleImage: {
     unitGroups: [],
@@ -1805,15 +1701,6 @@ export const properties = {
     },
     types: ["length", "percentage"],
   },
-  marginTrim: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: [],
-  },
   maskBorderMode: {
     unitGroups: [],
     inherited: false,
@@ -1919,8 +1806,19 @@ export const properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "keyword",
-      value: "center",
+      type: "tuple",
+      value: [
+        {
+          type: "unit",
+          unit: "%",
+          value: 0,
+        },
+        {
+          type: "unit",
+          unit: "%",
+          value: 0,
+        },
+      ],
     },
     types: ["length", "percentage"],
   },
@@ -1948,15 +1846,6 @@ export const properties = {
     initial: {
       type: "keyword",
       value: "luminance",
-    },
-    types: [],
-  },
-  masonryAutoFlow: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "pack",
     },
     types: [],
   },
@@ -2014,15 +1903,6 @@ export const properties = {
       value: "none",
     },
     types: ["length", "percentage"],
-  },
-  maxLines: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["integer"],
   },
   maxWidth: {
     unitGroups: ["length", "percentage"],
@@ -2109,15 +1989,6 @@ export const properties = {
     },
     types: ["length", "percentage"],
   },
-  offsetAnchor: {
-    unitGroups: ["length", "percentage"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: ["length", "percentage"],
-  },
   offsetDistance: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -2135,16 +2006,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
-  },
-  offsetPosition: {
-    unitGroups: ["length", "percentage"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: ["length", "percentage"],
+    types: ["offset-path", "coord-box"],
   },
   offsetRotate: {
     unitGroups: ["angle"],
@@ -2190,7 +2052,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentColor",
+      value: "auto",
     },
     types: ["hex-color"],
   },
@@ -2228,43 +2090,6 @@ export const properties = {
     initial: {
       type: "keyword",
       value: "visible",
-    },
-    types: [],
-  },
-  overflowAnchor: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
-  },
-  overflowBlock: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
-  },
-  overflowClipMargin: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    types: ["length"],
-  },
-  overflowInline: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
     },
     types: [],
   },
@@ -2567,33 +2392,6 @@ export const properties = {
     },
     types: ["length", "percentage"],
   },
-  rubyAlign: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "space-around",
-    },
-    types: [],
-  },
-  rubyMerge: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "separate",
-    },
-    types: [],
-  },
-  rubyPosition: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "alternate",
-    },
-    types: [],
-  },
   scale: {
     unitGroups: ["number"],
     inherited: false,
@@ -2818,24 +2616,6 @@ export const properties = {
     },
     types: [],
   },
-  scrollTimelineAxis: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "block",
-    },
-    types: [],
-  },
-  scrollTimelineName: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["custom-ident"],
-  },
   shapeImageThreshold: {
     unitGroups: ["number", "percentage"],
     inherited: false,
@@ -2929,15 +2709,6 @@ export const properties = {
     },
     types: [],
   },
-  textDecorationSkip: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "objects",
-    },
-    types: [],
-  },
   textDecorationSkipInk: {
     unitGroups: [],
     inherited: true,
@@ -2967,7 +2738,7 @@ export const properties = {
   },
   textEmphasisColor: {
     unitGroups: [],
-    inherited: false,
+    inherited: true,
     initial: {
       type: "keyword",
       value: "currentColor",
@@ -2976,7 +2747,7 @@ export const properties = {
   },
   textEmphasisPosition: {
     unitGroups: [],
-    inherited: false,
+    inherited: true,
     initial: {
       type: "tuple",
       value: [
@@ -2994,7 +2765,7 @@ export const properties = {
   },
   textEmphasisStyle: {
     unitGroups: [],
-    inherited: false,
+    inherited: true,
     initial: {
       type: "keyword",
       value: "none",
@@ -3264,15 +3035,6 @@ export const properties = {
     },
     types: ["percentage", "length"],
   },
-  viewTransitionName: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["custom-ident"],
-  },
   visibility: {
     unitGroups: [],
     inherited: true,
@@ -3363,5 +3125,14 @@ export const properties = {
       value: "auto",
     },
     types: ["integer"],
+  },
+  zoom: {
+    unitGroups: ["number", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    types: ["number", "percentage"],
   },
 } as const;
