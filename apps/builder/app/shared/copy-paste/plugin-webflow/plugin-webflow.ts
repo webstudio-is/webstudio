@@ -4,7 +4,6 @@ import {
   findAvailableDataSources,
   findClosestDroppableTarget,
   insertInstanceChildrenMutable,
-  insertTemplateData,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "../../instance-utils";
@@ -18,7 +17,9 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { WfData, WfNode, WfStyle, wfNodeTypes } from "./schema";
 import { addInstanceAndProperties } from "./instances-properties";
 import { addStyles } from "./styles";
-import { toast } from "@webstudio-is/design-system";
+import { builderApi } from "~/shared/builder-api";
+
+const { toast } = builderApi;
 
 export const mimeType = "application/json";
 
