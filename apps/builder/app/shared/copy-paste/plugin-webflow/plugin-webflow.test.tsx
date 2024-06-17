@@ -1289,7 +1289,7 @@ describe("Styles", () => {
         ],
       },
     });
-    console.log(fragment.styleSources);
+
     expect(fragment.styleSources).toEqual([
       {
         type: "token",

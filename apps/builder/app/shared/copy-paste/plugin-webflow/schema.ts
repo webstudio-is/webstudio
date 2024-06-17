@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+const Attr = z.object({ id: z.string() }).partial();
+
 const WfNodeData = z.object({
+  attr: Attr,
   xattr: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
 });
 
@@ -10,6 +13,7 @@ const WfBaseNode = z.object({
   children: z.array(z.string()),
   classes: z.array(z.string()),
   data: WfNodeData.optional(),
+  attr: Attr.optional(),
 });
 
 const WfTextNode = z.object({
@@ -58,6 +62,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["Link"]),
     data: WfNodeData.extend({
+      attr: Attr,
       block: z.enum(["inline", "block", ""]).optional(),
       button: z.boolean().optional(),
       link: z.object({
@@ -85,6 +90,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["CodeBlock"]),
     data: WfNodeData.extend({
+      attr: Attr,
       language: z.string().optional(),
       code: z.string(),
     }),
@@ -96,7 +102,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["Image"]),
     data: WfNodeData.extend({
-      attr: z.object({
+      attr: Attr.extend({
         alt: z.string(),
         loading: z.enum(["lazy", "eager", "auto"]),
         src: z.string(),
@@ -108,7 +114,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["FormButton"]),
     data: WfNodeData.extend({
-      attr: z.object({
+      attr: Attr.extend({
         value: z.string(),
       }),
     }),
@@ -116,7 +122,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["FormTextInput"]),
     data: WfNodeData.extend({
-      attr: z.object({
+      attr: Attr.extend({
         id: z.string(),
         name: z.string(),
         maxlength: z.number(),
