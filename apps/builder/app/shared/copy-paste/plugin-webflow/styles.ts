@@ -14,6 +14,7 @@ import { toast } from "@webstudio-is/design-system";
 import { kebabCase } from "change-case";
 import { equalMedia } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
+import type { Styles as WfStylePresets } from "./__generated__/style-presets";
 
 type WfBreakpoint = { minWidth?: number; maxWidth?: number };
 
@@ -181,9 +182,16 @@ const addNodeStyles = ({
   }
 };
 
-const mapComponentAndPresetStyles = (wfNode: WfElementNode) => {
+const mapComponentAndPresetStyles = (
+  wfNode: WfElementNode,
+  stylePresets: WfStylePresets
+) => {
   const component = wfNode.type;
-  const presetStyles = [wfNode.tag];
+  const presetStyles: Array<keyof WfStylePresets> = [];
+
+  if (wfNode.tag in stylePresets) {
+    presetStyles.push(wfNode.tag as keyof WfStylePresets);
+  }
 
   switch (component) {
     case "Link": {
@@ -231,7 +239,9 @@ export const addStyles = async (
   added: Map<WfNode["_id"], Instance["id"]>,
   fragment: WebstudioFragment
 ) => {
-  const { default: presets } = await import("./__generated__/style-presets");
+  const { styles: stylePresets } = await import(
+    "./__generated__/style-presets"
+  );
 
   for (const wfNode of wfNodes.values()) {
     if ("text" in wfNode) {
@@ -245,19 +255,16 @@ export const addStyles = async (
 
     const breakpointsByName = addBreakpoints($breakpoints.get(), fragment);
 
-    mapComponentAndPresetStyles(wfNode).forEach((name) => {
-      const styles = presets[
-        name as keyof typeof presets
-      ] as Array<EmbedTemplateStyleDecl>;
-      if (styles) {
-        addNodeStyles({
-          name,
-          variants: new Map([["base", styles]]),
-          instanceId,
-          fragment,
-          breakpointsByName,
-        });
-      }
+    mapComponentAndPresetStyles(wfNode, stylePresets).forEach((name) => {
+      addNodeStyles({
+        name,
+        variants: new Map([
+          ["base", stylePresets[name] as Array<EmbedTemplateStyleDecl>],
+        ]),
+        instanceId,
+        fragment,
+        breakpointsByName,
+      });
     });
 
     const instance = fragment.instances.find(
