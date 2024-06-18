@@ -47,7 +47,7 @@ const mapComponentAndProperties = (
     }
   };
 
-  if (wfNode.data?.attr.id) {
+  if (wfNode.data?.attr?.id) {
     addProp("id", wfNode.data.attr.id);
   }
 
@@ -65,7 +65,6 @@ const mapComponentAndProperties = (
       return { component, props, children };
     }
     case "Block": {
-      addProp("tag", wfNode.tag);
       const component = wfNode.data?.text ? "Text" : "Box";
       return { component, props, children };
     }
@@ -84,7 +83,6 @@ const mapComponentAndProperties = (
     }
     case "RichText": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "Strong": {
@@ -97,42 +95,34 @@ const mapComponentAndProperties = (
     }
     case "BlockContainer": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "Layout": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "Cell": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "VFlex": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "HFlex": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "Grid": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "Row": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "Column": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
       return { component, props, children };
     }
     case "CodeBlock": {

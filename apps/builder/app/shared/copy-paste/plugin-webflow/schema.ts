@@ -3,7 +3,7 @@ import { z } from "zod";
 const Attr = z.object({ id: z.string() }).partial();
 
 const WfNodeData = z.object({
-  attr: Attr,
+  attr: Attr.optional(),
   xattr: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
 });
 
@@ -55,14 +55,17 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
-    data: WfNodeData.extend({ text: z.boolean().optional() }).optional(),
+    data: WfNodeData.extend({
+      attr: Attr.optional(),
+      text: z.boolean().optional(),
+    }).optional(),
   }),
   WfBaseNode.extend({ type: z.enum(["List"]) }),
   WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
   WfBaseNode.extend({
     type: z.enum(["Link"]),
     data: WfNodeData.extend({
-      attr: Attr,
+      attr: Attr.optional(),
       block: z.enum(["inline", "block", ""]).optional(),
       button: z.boolean().optional(),
       link: z.object({
@@ -90,7 +93,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["CodeBlock"]),
     data: WfNodeData.extend({
-      attr: Attr,
+      attr: Attr.optional(),
       language: z.string().optional(),
       code: z.string(),
     }),

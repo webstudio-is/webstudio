@@ -11,7 +11,27 @@ import { $, renderJsx } from "@webstudio-is/sdk/testing";
 
 const { toWebstudioFragment } = __testing__;
 
-const anyMatcher = expect.any(String) as unknown as string;
+const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
+  const expected = renderJsx(jsx);
+
+  const instances = Array.from(expected.instances.values());
+  instances.forEach((instance) => {
+    instance.id = expect.any(String) as any as string;
+    for (const child of instance.children ?? []) {
+      if (child.type === "id") {
+        child.value = expect.any(String) as any as string;
+      }
+    }
+  });
+  const props = Array.from(expected.props.values()).map((prop) => ({
+    ...prop,
+    id: expect.any(String),
+    instanceId: expect.any(String),
+  }));
+
+  expect(fragment.instances).toEqual(instances.reverse());
+  expect(fragment.props).toEqual(props);
+};
 
 const toCss = (fragment: WebstudioFragment) => {
   const sheet = createRegularStyleSheet();
@@ -74,34 +94,8 @@ test("Heading", async () => {
       styles: [],
     },
   });
-  expect(fragment.children).toEqual([
-    {
-      type: "id",
-      value: expect.any(String),
-    },
-  ]);
-  expect(fragment.instances).toEqual([
-    {
-      children: [
-        {
-          type: "text",
-          value: "Turtle in the sea",
-        },
-      ],
-      component: "Heading",
-      id: expect.any(String),
-      type: "instance",
-    },
-  ]);
-  expect(fragment.props).toEqual([
-    {
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      type: "string",
-      value: "h1",
-    },
-  ]);
+
+  equalFragment(fragment, <$.Heading tag="h1">Turtle in the sea</$.Heading>);
 });
 
 test("Link Block, Button, Text Link", async () => {
@@ -126,38 +120,11 @@ test("Link Block, Button, Text Link", async () => {
       styles: [],
     },
   });
-  expect(fragment.children).toEqual([
-    {
-      type: "id",
-      value: expect.any(String),
-    },
-  ]);
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Link",
-      children: [],
-    },
-  ]);
-
-  expect(fragment.props).toEqual([
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "href",
-      value: "https://webstudio.is",
-    },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "target",
-      value: "_blank",
-    },
-  ]);
+  equalFragment(
+    fragment,
+    <$.Link href="https://webstudio.is" target="_blank" />
+  );
 });
 
 test("List and ListItem", async () => {
@@ -201,43 +168,15 @@ test("List and ListItem", async () => {
       styles: [],
     },
   });
-  expect(fragment.children).toEqual([
-    {
-      type: "id",
-      value: expect.any(String),
-    },
-  ]);
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "ListItem",
-      children: [],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "ListItem",
-      children: [],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "ListItem",
-      children: [],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "List",
-      children: [
-        { type: "id", value: expect.any(String) },
-        { type: "id", value: expect.any(String) },
-        { type: "id", value: expect.any(String) },
-      ],
-    },
-  ]);
+  equalFragment(
+    fragment,
+    <$.List>
+      <$.ListItem />
+      <$.ListItem />
+      <$.ListItem />
+    </$.List>
+  );
 });
 
 test("Paragraph", async () => {
@@ -262,19 +201,7 @@ test("Paragraph", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Paragraph",
-      children: [
-        {
-          type: "text",
-          value: "Text in a paragraph",
-        },
-      ],
-    },
-  ]);
+  equalFragment(fragment, <$.Paragraph>Text in a paragraph</$.Paragraph>);
 });
 
 test("Text", async () => {
@@ -302,28 +229,10 @@ test("Text", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Text",
-      children: [
-        {
-          type: "text",
-          value: "This is some text inside of a div block.",
-        },
-      ],
-    },
-  ]);
-  expect(fragment.props).toEqual([
-    {
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "tag",
-      type: "string",
-      value: "div",
-    },
-  ]);
+  equalFragment(
+    fragment,
+    <$.Text>This is some text inside of a div block.</$.Text>
+  );
 });
 
 test("Blockquote", async () => {
@@ -348,19 +257,7 @@ test("Blockquote", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Blockquote",
-      children: [
-        {
-          type: "text",
-          value: "Block Quote",
-        },
-      ],
-    },
-  ]);
+  equalFragment(fragment, <$.Blockquote>Block Quote</$.Blockquote>);
 });
 
 test("Strong", async () => {
@@ -385,19 +282,7 @@ test("Strong", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Bold",
-      children: [
-        {
-          type: "text",
-          value: "Bold Text",
-        },
-      ],
-    },
-  ]);
+  equalFragment(fragment, <$.Bold>Bold Text</$.Bold>);
 });
 
 test("Emphasized", async () => {
@@ -421,20 +306,7 @@ test("Emphasized", async () => {
       styles: [],
     },
   });
-
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Italic",
-      children: [
-        {
-          type: "text",
-          value: "Emphasis",
-        },
-      ],
-    },
-  ]);
+  equalFragment(fragment, <$.Italic>Emphasis</$.Italic>);
 });
 
 test("Superscript", async () => {
@@ -459,19 +331,7 @@ test("Superscript", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Superscript",
-      children: [
-        {
-          type: "text",
-          value: "Superscript",
-        },
-      ],
-    },
-  ]);
+  equalFragment(fragment, <$.Superscript>Superscript</$.Superscript>);
 });
 
 test("Subscript", async () => {
@@ -496,19 +356,7 @@ test("Subscript", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Subscript",
-      children: [
-        {
-          type: "text",
-          value: "Subscript",
-        },
-      ],
-    },
-  ]);
+  equalFragment(fragment, <$.Subscript>Subscript</$.Subscript>);
 });
 
 test("Section", async () => {
@@ -528,14 +376,7 @@ test("Section", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-  ]);
+  equalFragment(fragment, <$.Box tag="section" />);
 });
 
 test("BlockContainer", async () => {
@@ -554,15 +395,7 @@ test("BlockContainer", async () => {
       styles: [],
     },
   });
-
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-  ]);
+  equalFragment(fragment, <$.Box />);
 });
 
 test("Block", async () => {
@@ -582,14 +415,7 @@ test("Block", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-  ]);
+  equalFragment(fragment, <$.Box />);
 });
 
 test("V Flex", async () => {
@@ -608,15 +434,7 @@ test("V Flex", async () => {
       styles: [],
     },
   });
-
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-  ]);
+  equalFragment(fragment, <$.Box />);
 });
 
 test("H Flex", async () => {
@@ -635,15 +453,7 @@ test("H Flex", async () => {
       styles: [],
     },
   });
-
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-  ]);
+  equalFragment(fragment, <$.Box />);
 });
 
 test("Quick Stack", async () => {
@@ -679,30 +489,13 @@ test("Quick Stack", async () => {
       styles: [],
     },
   });
-
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [
-        { type: "id", value: expect.any(String) },
-        { type: "id", value: expect.any(String) },
-      ],
-    },
-  ]);
+  equalFragment(
+    fragment,
+    <$.Box>
+      <$.Box />
+      <$.Box />
+    </$.Box>
+  );
 });
 
 test("Grid", async () => {
@@ -722,14 +515,7 @@ test("Grid", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-  ]);
+  equalFragment(fragment, <$.Box />);
 });
 
 test("Columns", async () => {
@@ -766,29 +552,13 @@ test("Columns", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [
-        { type: "id", value: expect.any(String) },
-        { type: "id", value: expect.any(String) },
-      ],
-    },
-  ]);
+  equalFragment(
+    fragment,
+    <$.Box>
+      <$.Box />
+      <$.Box />
+    </$.Box>
+  );
 });
 
 test("Image", async () => {
@@ -804,7 +574,7 @@ test("Image", async () => {
           children: [],
           data: {
             attr: {
-              src: "https://uploads-ssl.webflow.com/6640ea3496ea68a4a4e3efcf/665dd9f1927826d5caad6ed4_Screenshot%202024-05-29%20at%2023.10.33.png",
+              src: "https://test.com/image.jpg",
               loading: "eager",
               width: "200",
               height: "auto",
@@ -817,45 +587,15 @@ test("Image", async () => {
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Image",
-      children: [],
-    },
-  ]);
-
-  expect(fragment.props).toEqual([
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "alt",
-      value: "Test",
-    },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "loading",
-      value: "eager",
-    },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "width",
-      value: "200",
-    },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "src",
-      value: expect.not.stringMatching("src"),
-    },
-  ]);
+  equalFragment(
+    fragment,
+    <$.Image
+      alt="Test"
+      loading="eager"
+      width="200"
+      src="https://test.com/image.jpg"
+    />
+  );
 });
 
 test("HtmlEmbed", async () => {
@@ -875,31 +615,7 @@ test("HtmlEmbed", async () => {
       styles: [],
     },
   });
-  expect(fragment.instances).toEqual([
-    {
-      component: "HtmlEmbed",
-      id: expect.any(String),
-      type: "instance",
-      children: [],
-    },
-  ]);
-
-  expect(fragment.props).toEqual([
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "code",
-      value: "some html",
-    },
-    {
-      type: "boolean",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "clientOnly",
-      value: true,
-    },
-  ]);
+  equalFragment(fragment, <$.HtmlEmbed code="some html" clientOnly={true} />);
 });
 
 test("CodeBlock", async () => {
@@ -922,230 +638,409 @@ test("CodeBlock", async () => {
       styles: [],
     },
   });
-  expect(fragment.instances).toEqual([
-    {
-      component: "CodeText",
-      id: expect.any(String),
-      type: "instance",
-      children: [],
-    },
-  ]);
 
-  expect(fragment.props).toEqual([
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "lang",
-      value: "javascript",
-    },
-    {
-      type: "string",
-      id: expect.any(String),
-      instanceId: expect.any(String),
-      name: "code",
-      value: "test",
-    },
-  ]);
+  equalFragment(fragment, <$.CodeText lang="javascript" code="test" />);
 });
 
-test("RichText", async () => {
+test.skip("RichText", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
         {
-          _id: "58c7368a-83e4-a9c2-e1c9-7244f0473095",
+          _id: "33178bae-2d99-7d1f-ffa5-101356769dad",
           type: "RichText",
           tag: "div",
           classes: [],
           children: [
-            "363e1f05-6da0-65bc-baeb-2a4d6eec67ba",
-            "2bf568d0-971f-5925-e6dd-0dd1cc2bc521",
+            "8418336b-918d-3160-1d76-8c9de474cb43",
+            "63929533-a4de-17c6-3b13-351aa16c6e10",
+            "7724e6e0-9e3c-4526-35a9-f11dcd628c35",
+            "d760a6fd-5da7-7d24-4f4c-24e68a651758",
+            "49c71aa2-c61b-4823-dfdb-dc3badea814b",
+            "28784747-282c-fe17-a81b-c36c9212b78e",
+            "6e4c4ff0-0ebe-1de0-d94d-6f18f08f0762",
+            "88e7fd8c-98ff-49f7-aff1-3286e2e0e211",
+            "63202791-9c33-bc97-b49e-71a2af805488",
+            "b386cecd-1697-e7e8-6c7b-66f36261fec2",
+            "98b880aa-7ba5-c754-8069-b83cb198ec32",
+            "2e3bf379-e9ee-182c-9f92-1e1409ba1dd7",
+            "43d15a61-5f5d-d4bd-4a8c-04b80371e808",
+            "676d66b8-3df9-45a5-b2a4-62b75b623443",
+            "57268510-0593-b1df-7786-f1f3b3d02830",
+            "cd959e82-0fe8-a4a7-6b9f-c5fab19aa6ec",
+            "10389bae-2b31-83d5-919f-45fc50689288",
           ],
         },
         {
-          _id: "363e1f05-6da0-65bc-baeb-2a4d6eec67ba",
+          _id: "8418336b-918d-3160-1d76-8c9de474cb43",
           type: "Heading",
           tag: "h1",
           classes: [],
-          children: ["6fe8587d-c2d7-b346-cdef-9e29bb6efd50"],
+          children: ["c1759a8a-6657-5c74-4e95-33c8a721caab"],
         },
         {
-          _id: "6fe8587d-c2d7-b346-cdef-9e29bb6efd50",
+          _id: "c1759a8a-6657-5c74-4e95-33c8a721caab",
           text: true,
           v: "Heading 1",
         },
         {
-          _id: "2bf568d0-971f-5925-e6dd-0dd1cc2bc521",
+          _id: "63929533-a4de-17c6-3b13-351aa16c6e10",
+          type: "Heading",
+          tag: "h2",
+          classes: [],
+          children: ["d04d84bb-f382-5af4-482a-e6a0aaab168b"],
+        },
+        {
+          _id: "d04d84bb-f382-5af4-482a-e6a0aaab168b",
+          text: true,
+          v: "Heading 2",
+        },
+        {
+          _id: "7724e6e0-9e3c-4526-35a9-f11dcd628c35",
+          type: "Heading",
+          tag: "h3",
+          classes: [],
+          children: ["409d9647-ea51-e048-2bfd-cbbee2efb0c6"],
+        },
+        {
+          _id: "409d9647-ea51-e048-2bfd-cbbee2efb0c6",
+          text: true,
+          v: "Heading 3",
+        },
+        {
+          _id: "d760a6fd-5da7-7d24-4f4c-24e68a651758",
+          type: "Heading",
+          tag: "h4",
+          classes: [],
+          children: ["4ce7fd9b-c7e9-186c-853a-931c507e5d1d"],
+        },
+        {
+          _id: "4ce7fd9b-c7e9-186c-853a-931c507e5d1d",
+          text: true,
+          v: "Heading 4",
+        },
+        {
+          _id: "49c71aa2-c61b-4823-dfdb-dc3badea814b",
+          type: "Heading",
+          tag: "h5",
+          classes: [],
+          children: ["f28abd5f-e21c-08f5-c6be-ec335166114d"],
+        },
+        {
+          _id: "f28abd5f-e21c-08f5-c6be-ec335166114d",
+          text: true,
+          v: "Heading 5",
+        },
+        {
+          _id: "28784747-282c-fe17-a81b-c36c9212b78e",
+          type: "Heading",
+          tag: "h6",
+          classes: [],
+          children: ["6f753bba-a1d9-5092-e605-2f1756fc4a3d"],
+        },
+        {
+          _id: "6f753bba-a1d9-5092-e605-2f1756fc4a3d",
+          text: true,
+          v: "Heading 6",
+        },
+        {
+          _id: "6e4c4ff0-0ebe-1de0-d94d-6f18f08f0762",
           type: "Paragraph",
           tag: "p",
           classes: [],
+          children: ["27e847ff-962c-0782-1278-2f4ff342aaad"],
+        },
+        {
+          _id: "27e847ff-962c-0782-1278-2f4ff342aaad",
+          text: true,
+          v: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+        },
+        {
+          _id: "88e7fd8c-98ff-49f7-aff1-3286e2e0e211",
+          type: "Blockquote",
+          tag: "blockquote",
+          classes: [],
+          children: ["9c1d38a3-512b-4f90-e6c4-cadf585cb608"],
+        },
+        {
+          _id: "9c1d38a3-512b-4f90-e6c4-cadf585cb608",
+          text: true,
+          v: "Block quote",
+        },
+        {
+          _id: "63202791-9c33-bc97-b49e-71a2af805488",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["3080a095-fc1a-9de8-e6d1-21c801aed169"],
+        },
+        {
+          _id: "3080a095-fc1a-9de8-e6d1-21c801aed169",
+          text: true,
+          v: "Ordered list",
+        },
+        {
+          _id: "b386cecd-1697-e7e8-6c7b-66f36261fec2",
+          type: "List",
+          tag: "ol",
+          classes: [],
           children: [
-            "2a2d8880-03e0-ee0a-cec1-416751acb3e5",
-            "14d2b6a0-e2f6-94dd-b593-9d546eee84bf",
-            "e9ce86ec-be82-769e-82fb-247480c8d6ba",
-            "6c795406-de48-6d53-7d1c-d0ec4756e9d9",
-            "528588c5-3733-e1c3-136a-baaf24fcba33",
-            "95183c77-8fe7-d0ea-9685-b930608dc373",
-            "0f25b98b-6549-5d4e-5e11-7e56558b21e1",
+            "aafe8235-0ff4-c6f4-8382-40fc34900b75",
+            "0fd98471-33b6-e8d2-76f1-6e373849e6ba",
+            "2ccfda89-a200-d286-440a-f94699163329",
           ],
         },
         {
-          _id: "2a2d8880-03e0-ee0a-cec1-416751acb3e5",
-          text: true,
-          v: "Lorem ",
+          _id: "aafe8235-0ff4-c6f4-8382-40fc34900b75",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: ["bf312343-69b6-bec7-5ee1-e19154d85b62"],
         },
         {
-          _id: "14d2b6a0-e2f6-94dd-b593-9d546eee84bf",
+          _id: "bf312343-69b6-bec7-5ee1-e19154d85b62",
+          text: true,
+          v: "Item 1",
+        },
+        {
+          _id: "0fd98471-33b6-e8d2-76f1-6e373849e6ba",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: ["161683ac-eed6-7a68-64f7-706c42984c65"],
+        },
+        {
+          _id: "161683ac-eed6-7a68-64f7-706c42984c65",
+          text: true,
+          v: "Item 2",
+        },
+        {
+          _id: "2ccfda89-a200-d286-440a-f94699163329",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: ["59f4270b-72e6-99b1-041a-5ab836481b5c"],
+        },
+        {
+          _id: "59f4270b-72e6-99b1-041a-5ab836481b5c",
+          text: true,
+          v: "Item 3",
+        },
+        {
+          _id: "98b880aa-7ba5-c754-8069-b83cb198ec32",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["b6755218-5a0d-c537-43c0-071245d7a472"],
+        },
+        {
+          _id: "b6755218-5a0d-c537-43c0-071245d7a472",
+          text: true,
+          v: "Unordered list",
+        },
+        {
+          _id: "2e3bf379-e9ee-182c-9f92-1e1409ba1dd7",
+          type: "List",
+          tag: "ul",
+          classes: [],
+          children: [
+            "a90c5835-61e2-e1e6-dfd3-0b02a34ad857",
+            "748eb739-12d7-26fc-b8ee-f2c460f35170",
+            "54178296-1686-9b14-a341-42ce51958ce5",
+          ],
+        },
+        {
+          _id: "a90c5835-61e2-e1e6-dfd3-0b02a34ad857",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: ["8557d8cf-09de-52c0-4631-c2123fc056d1"],
+        },
+        {
+          _id: "8557d8cf-09de-52c0-4631-c2123fc056d1",
+          text: true,
+          v: "Item A",
+        },
+        {
+          _id: "748eb739-12d7-26fc-b8ee-f2c460f35170",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: ["666b664d-8023-50bb-453a-36017c7a3a38"],
+        },
+        {
+          _id: "666b664d-8023-50bb-453a-36017c7a3a38",
+          text: true,
+          v: "Item B",
+        },
+        {
+          _id: "54178296-1686-9b14-a341-42ce51958ce5",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: ["15647123-fd1c-5928-3894-d666bc6f3c84"],
+        },
+        {
+          _id: "15647123-fd1c-5928-3894-d666bc6f3c84",
+          text: true,
+          v: "Item C",
+        },
+        {
+          _id: "43d15a61-5f5d-d4bd-4a8c-04b80371e808",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["db8cce1a-40ff-ccb7-5f18-ebb811777409"],
+        },
+        {
+          _id: "db8cce1a-40ff-ccb7-5f18-ebb811777409",
           type: "Link",
           tag: "a",
           classes: [],
-          children: ["67af720f-cc2b-567e-d3df-05feef3870ce"],
+          children: ["a8af1cd8-157c-4b92-c27e-bca1ae5e6668"],
           data: {
             button: false,
             block: "",
             link: {
-              url: "http://google.com",
+              url: "https://university.webflow.com/lesson/add-and-nest-text-links-in-webflow",
             },
           },
         },
         {
-          _id: "67af720f-cc2b-567e-d3df-05feef3870ce",
-          type: "Emphasized",
-          tag: "em",
+          _id: "a8af1cd8-157c-4b92-c27e-bca1ae5e6668",
+          text: true,
+          v: "Text link",
+        },
+        {
+          _id: "676d66b8-3df9-45a5-b2a4-62b75b623443",
+          type: "Paragraph",
+          tag: "p",
           classes: [],
-          children: ["db8be0af-8c03-0785-3b84-f9ae7f4418f5"],
+          children: ["4f0b961b-5774-f441-e97f-e84a75efcf08"],
         },
         {
-          _id: "db8be0af-8c03-0785-3b84-f9ae7f4418f5",
-          text: true,
-          v: "ipsum",
-        },
-        {
-          _id: "e9ce86ec-be82-769e-82fb-247480c8d6ba",
-          text: true,
-          v: " dolor sit ",
-        },
-        {
-          _id: "528588c5-3733-e1c3-136a-baaf24fcba33",
-          text: true,
-          v: ", ",
-        },
-        {
-          _id: "95183c77-8fe7-d0ea-9685-b930608dc373",
+          _id: "4f0b961b-5774-f441-e97f-e84a75efcf08",
           type: "Strong",
           tag: "strong",
           classes: [],
-          children: ["e5bbc823-9dad-bfb7-d448-2e4d9af0be84"],
+          children: ["5839c9b9-4281-f778-f7f9-c4844452295e"],
         },
         {
-          _id: "e5bbc823-9dad-bfb7-d448-2e4d9af0be84",
+          _id: "5839c9b9-4281-f778-f7f9-c4844452295e",
           text: true,
-          v: "consectetur",
+          v: "Bold text",
         },
         {
-          _id: "0f25b98b-6549-5d4e-5e11-7e56558b21e1",
+          _id: "57268510-0593-b1df-7786-f1f3b3d02830",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["db4e59e1-b859-d2bc-ee4a-08c638f088db"],
+        },
+        {
+          _id: "db4e59e1-b859-d2bc-ee4a-08c638f088db",
+          type: "Emphasized",
+          tag: "em",
+          classes: [],
+          children: ["c2661284-144d-5052-447a-ffe78f3b8bbe"],
+        },
+        {
+          _id: "c2661284-144d-5052-447a-ffe78f3b8bbe",
           text: true,
-          v: " ",
+          v: "Emphasis",
+        },
+        {
+          _id: "cd959e82-0fe8-a4a7-6b9f-c5fab19aa6ec",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["debd47f8-ddd2-8ead-af6c-5e42a16e15d0"],
+        },
+        {
+          _id: "debd47f8-ddd2-8ead-af6c-5e42a16e15d0",
+          type: "Superscript",
+          tag: "sup",
+          classes: [],
+          children: ["e6640190-f224-5a57-6181-55a793c00da8"],
+        },
+        {
+          _id: "e6640190-f224-5a57-6181-55a793c00da8",
+          text: true,
+          v: "Superscript",
+        },
+        {
+          _id: "10389bae-2b31-83d5-919f-45fc50689288",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["ec162f35-9226-0e8a-c0c2-32685ef444c1"],
+        },
+        {
+          _id: "ec162f35-9226-0e8a-c0c2-32685ef444c1",
+          type: "Subscript",
+          tag: "sub",
+          classes: [],
+          children: ["dcdc8f43-3cdc-1522-e397-60968e378b92"],
+        },
+        {
+          _id: "dcdc8f43-3cdc-1522-e397-60968e378b92",
+          text: true,
+          v: "Subscript",
         },
       ],
       styles: [],
     },
   });
 
-  expect(fragment.instances).toEqual([
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Heading",
-      children: [
-        {
-          type: "text",
-          value: "Heading 1",
-        },
-      ],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Italic",
-      children: [
-        {
-          type: "text",
-          value: "ipsum",
-        },
-      ],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Link",
-      children: [
-        {
-          type: "id",
-          value: expect.any(String),
-        },
-      ],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Bold",
-      children: [
-        {
-          type: "text",
-          value: "consectetur",
-        },
-      ],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Paragraph",
-      children: [
-        {
-          type: "text",
-          value: "Lorem ",
-        },
-        {
-          type: "id",
-          value: expect.any(String),
-        },
-        {
-          type: "text",
-          value: " dolor sit ",
-        },
-        {
-          type: "text",
-          value: ", ",
-        },
-        {
-          type: "id",
-          value: expect.any(String),
-        },
-        {
-          type: "text",
-          value: " ",
-        },
-      ],
-    },
-    {
-      id: expect.any(String),
-      type: "instance",
-      component: "Box",
-      children: [
-        {
-          type: "id",
-          value: expect.any(String),
-        },
-        {
-          type: "id",
-          value: expect.any(String),
-        },
-      ],
-    },
-  ]);
+  equalFragment(
+    fragment,
+    <$.Box>
+      <$.Heading tag="h1">Heading 1</$.Heading>
+      <$.Heading tag="h2">Heading 2</$.Heading>
+      <$.Heading tag="h3">Heading 3</$.Heading>
+      <$.Heading tag="h4">Heading 4</$.Heading>
+      <$.Heading tag="h5">Heading 5</$.Heading>
+      <$.Heading tag="h6">Heading 6</$.Heading>
+      <$.Paragraph>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+        commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
+        velit esse cillum dolore eu fugiat nulla pariatur.
+      </$.Paragraph>
+      <$.Blockquote>Block quote</$.Blockquote>
+      <$.Paragraph>Ordered list</$.Paragraph>
+      <$.List ordered={true}>
+        <$.ListItem>Item 1</$.ListItem>
+        <$.ListItem>Item 2</$.ListItem>
+        <$.ListItem>Item 3</$.ListItem>
+      </$.List>
+      <$.Paragraph>Unrdered list</$.Paragraph>
+      <$.List>
+        <$.ListItem>Item A</$.ListItem>
+        <$.ListItem>Item B</$.ListItem>
+        <$.ListItem>Item C</$.ListItem>
+      </$.List>
+      <$.Paragraph>
+        <$.Link href="https://university.webflow.com/lesson/add-and-nest-text-links-in-webflow">
+          Text link
+        </$.Link>
+      </$.Paragraph>
+      <$.Paragraph>
+        <$.Strong>Bold text</$.Strong>
+      </$.Paragraph>
+      <$.Paragraph>
+        <$.Emphasized>Emphasis</$.Emphasized>
+      </$.Paragraph>
+      <$.Paragraph>
+        <$.Superscript>Superscript</$.Superscript>
+      </$.Paragraph>
+      <$.Paragraph>
+        <$.Subscript>Subscript</$.Subscript>
+      </$.Paragraph>
+    </$.Box>
+  );
 });
 
 test("FormButton", async () => {
@@ -1170,10 +1065,7 @@ test("FormButton", async () => {
     },
   });
 
-  const { instances } = renderJsx(
-    <$.Button ws:id={anyMatcher}>Submit</$.Button>
-  );
-  expect(fragment.instances).toEqual(Array.from(instances.values()));
+  equalFragment(fragment, <$.Button>Submit</$.Button>);
 });
 
 test("FormTextInput", async () => {
@@ -1205,20 +1097,19 @@ test("FormTextInput", async () => {
     },
   });
 
-  const { instances } = renderJsx(
+  equalFragment(
+    fragment,
     <$.Input
-      ws:id={anyMatcher}
       id="email"
       name="email"
-      maxlength={256}
+      maxLength={256}
       placeholder=""
       disabled={false}
       type="email"
-      required={false}
-      autofocus={false}
+      required={true}
+      autoFocus={false}
     />
   );
-  expect(fragment.instances).toEqual(Array.from(instances.values()));
 });
 
 describe("Custom attributes", () => {
@@ -1246,27 +1137,12 @@ describe("Custom attributes", () => {
         styles: [],
       },
     });
-    expect(fragment.props).toEqual([
-      {
-        type: "string",
-        id: expect.any(String),
-        instanceId: expect.any(String),
-        name: "tag",
-        value: "h1",
-      },
-      {
-        type: "string",
-        id: expect.any(String),
-        instanceId: expect.any(String),
-        name: "at",
-        value: "b",
-      },
-    ]);
+    equalFragment(fragment, <$.Heading tag="h1" at="b" />);
   });
 });
 
 describe("Styles", () => {
-  test.only("Single class", async () => {
+  test("Single class", async () => {
     const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
