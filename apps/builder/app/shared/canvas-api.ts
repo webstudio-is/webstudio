@@ -36,9 +36,15 @@ const getIframeApi = () => {
   } else {
     // Find first iframe with the API
     for (let i = 0; i < window.frames.length; ++i) {
-      const frame = window.frames[i];
-      if (frame && frame[apiWindowNamespace]) {
-        return frame[apiWindowNamespace];
+      try {
+        const frame = window.frames[i];
+        if (frame && frame[apiWindowNamespace]) {
+          return frame[apiWindowNamespace];
+        }
+      } catch {
+        // Certain extensions, such as Zotero, inject iframes into the page
+        // These iframes can be inaccessible and may cause access errors
+        // Therefore, we should skip processing them
       }
     }
 
