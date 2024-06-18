@@ -316,7 +316,7 @@ export const action = async ({
 };
 
 const Outlet = () => {
-  const { system, resources } = useLoaderData<typeof loader>();
+  const { system, resources, url } = useLoaderData<typeof loader>();
   return (
     <ReactSdkContext.Provider
       value={{
@@ -326,7 +326,8 @@ const Outlet = () => {
         resources,
       }}
     >
-      <Page system={system} />
+      {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
+      <Page key={url} system={system} />
     </ReactSdkContext.Provider>
   );
 };
