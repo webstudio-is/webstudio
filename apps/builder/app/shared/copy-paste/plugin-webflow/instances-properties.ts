@@ -199,7 +199,7 @@ const mapComponentAndProperties = (
     case "FormBlockLabel": {
       const data = wfNode.data;
       const component = "Label";
-      addProp("for", data.attr.for);
+      addProp("htmlFor", data.attr.for);
       return {
         component,
         props,

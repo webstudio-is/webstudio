@@ -1139,7 +1139,7 @@ test("FormBlockLabel", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Label for="email">Email Address</$.Label>);
+  equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
 });
 
 describe("Custom attributes", () => {
