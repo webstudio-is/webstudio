@@ -158,6 +158,17 @@ const borderColor = (value: string): Styles => [
   },
 ];
 
+const overflow = (value: string): Styles => [
+  {
+    property: "overflowX",
+    value: { type: "keyword", value },
+  },
+  {
+    property: "overflowY",
+    value: { type: "keyword", value },
+  },
+];
+
 const appearance = (value: string): Styles[number] => ({
   property: "appearance",
   value: { type: "keyword", value },
@@ -459,10 +470,7 @@ export const hr: Styles = [
     value: { type: "keyword", value: "auto" },
   },
   // firefox only
-  {
-    property: "overflow",
-    value: { type: "keyword", value: "hidden" },
-  },
+  ...overflow("hidden"),
   /* This is not really per spec but all browsers define it */
   display("block"),
 ];
@@ -569,10 +577,7 @@ export const select: Styles = [
   cursor("default"),
   boxSizing("border-box"),
   userSelect("none"),
-  {
-    property: "overflow",
-    value: { type: "keyword", value: "clip" },
-  },
+  ...overflow("clip"),
   verticalAlign("baseline"),
   appearance("auto"),
 ];

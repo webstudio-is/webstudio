@@ -82,7 +82,11 @@ export const overflow = (
   value: "hidden" | "visible" | "scroll" | "auto"
 ): EmbedTemplateStyleDecl[] => [
   {
-    property: "overflow",
+    property: "overflowX",
+    value: { type: "keyword", value },
+  },
+  {
+    property: "overflowY",
     value: { type: "keyword", value },
   },
 ];
@@ -603,13 +607,7 @@ export const lineClamp = (
   lineClampValue: StringEnumToNumeric<keyof typeof theme.lineClamp>
 ): EmbedTemplateStyleDecl[] => {
   return [
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "hidden",
-      },
-    },
+    ...overflow("hidden"),
     {
       property: "display",
 

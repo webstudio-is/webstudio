@@ -892,6 +892,13 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield* expandTransition(value);
       break;
 
+    case "overflow": {
+      const [x, y] = getValueList(value);
+      yield ["overflow-x", x] as const;
+      yield ["overflow-y", y ?? x] as const;
+      break;
+    }
+
     default:
       yield [property, value] as const;
   }

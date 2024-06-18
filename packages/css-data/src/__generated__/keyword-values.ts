@@ -3874,16 +3874,6 @@ export const keywordValues = {
     "unset",
   ],
   outlineWidth: ["thin", "medium", "thick", "initial", "inherit", "unset"],
-  overflow: [
-    "visible",
-    "hidden",
-    "clip",
-    "scroll",
-    "auto",
-    "initial",
-    "inherit",
-    "unset",
-  ],
   overflowWrap: [
     "normal",
     "break-word",
