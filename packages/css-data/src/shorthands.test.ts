@@ -386,7 +386,7 @@ test("expand font", () => {
     ])
   ).toEqual([
     ["font-style", "italic"],
-    ["font-variant", "small-caps"],
+    ["font-variant-caps", "small-caps"],
     ["font-weight", "bold"],
     ["font-width", "ultra-condensed"],
     ["font-size", "1.2em"],
@@ -397,12 +397,67 @@ test("expand font", () => {
     expandShorthands([["font", `1.2em/2 "Fira Sans", sans-serif`]])
   ).toEqual([
     ["font-style", "initial"],
-    ["font-variant", "initial"],
+    ["font-variant-caps", "initial"],
     ["font-weight", "initial"],
     ["font-width", "initial"],
     ["font-size", "1.2em"],
     ["line-height", "2"],
     ["font-family", '"Fira Sans",sans-serif'],
+  ]);
+});
+
+test("expand font-synthesis", () => {
+  expect(expandShorthands([["font-synthesis", `none`]])).toEqual([
+    ["font-synthesis-weight", "none"],
+    ["font-synthesis-style", "none"],
+    ["font-synthesis-small-caps", "none"],
+    ["font-synthesis-position", "none"],
+  ]);
+  expect(expandShorthands([["font-synthesis", `style`]])).toEqual([
+    ["font-synthesis-weight", "none"],
+    ["font-synthesis-style", "auto"],
+    ["font-synthesis-small-caps", "none"],
+    ["font-synthesis-position", "none"],
+  ]);
+  expect(
+    expandShorthands([["font-synthesis", `style small-caps weight position`]])
+  ).toEqual([
+    ["font-synthesis-weight", "auto"],
+    ["font-synthesis-style", "auto"],
+    ["font-synthesis-small-caps", "auto"],
+    ["font-synthesis-position", "auto"],
+  ]);
+});
+
+test("expand font-variant", () => {
+  expect(expandShorthands([["font-variant", `normal`]])).toEqual([
+    ["font-variant-ligatures", "normal"],
+    ["font-variant-caps", "normal"],
+    ["font-variant-alternates", "normal"],
+    ["font-variant-numeric", "normal"],
+    ["font-variant-east-asian", "normal"],
+    ["font-variant-position", "normal"],
+    ["font-variant-emoji", "normal"],
+  ]);
+  expect(expandShorthands([["font-variant", `none`]])).toEqual([
+    ["font-variant-ligatures", "none"],
+    ["font-variant-caps", "normal"],
+    ["font-variant-alternates", "normal"],
+    ["font-variant-numeric", "normal"],
+    ["font-variant-east-asian", "normal"],
+    ["font-variant-position", "normal"],
+    ["font-variant-emoji", "normal"],
+  ]);
+  expect(
+    expandShorthands([["font-variant", `common-ligatures small-caps`]])
+  ).toEqual([
+    ["font-variant-ligatures", "common-ligatures"],
+    ["font-variant-caps", "small-caps"],
+    ["font-variant-alternates", "normal"],
+    ["font-variant-numeric", "normal"],
+    ["font-variant-east-asian", "normal"],
+    ["font-variant-position", "normal"],
+    ["font-variant-emoji", "normal"],
   ]);
 });
 
@@ -732,10 +787,6 @@ test.todo("scroll-margin");
 test.todo("scroll-padding");
 test.todo("scroll-timeline");
 
-test.todo("font-synthesis - only shorthand is supported in webstudio");
-test.todo(
-  "font-variant - both shorthand and longhands are supported in webstudio"
-);
 test.todo("white-space - not a shorthand in webflow");
 test.todo("text-wrap - not a shorthand in webflow");
 

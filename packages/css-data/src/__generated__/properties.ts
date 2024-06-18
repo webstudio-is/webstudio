@@ -1190,32 +1190,6 @@ export const properties = {
     },
     types: ["angle"],
   },
-  fontSynthesis: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "tuple",
-      value: [
-        {
-          type: "keyword",
-          value: "weight",
-        },
-        {
-          type: "keyword",
-          value: "style",
-        },
-        {
-          type: "keyword",
-          value: "small-caps",
-        },
-        {
-          type: "keyword",
-          value: "position",
-        },
-      ],
-    },
-    types: [],
-  },
   fontSynthesisSmallCaps: {
     unitGroups: [],
     inherited: true,
@@ -1240,15 +1214,6 @@ export const properties = {
     initial: {
       type: "keyword",
       value: "auto",
-    },
-    types: [],
-  },
-  fontVariant: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "normal",
     },
     types: [],
   },

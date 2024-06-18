@@ -338,12 +338,69 @@ const expandFont = function* (value: CssNode) {
     }
   }
   yield ["font-style", fontStyle ?? createInitialNode()] as const;
-  yield ["font-variant", fontVariant ?? createInitialNode()] as const;
+  yield ["font-variant-caps", fontVariant ?? createInitialNode()] as const;
   yield ["font-weight", fontWeight ?? createInitialNode()] as const;
   yield ["font-width", fontWidth ?? createInitialNode()] as const;
   yield ["font-size", fontSize] as const;
   yield ["line-height", lineHeight] as const;
   yield ["font-family", fontFamily] as const;
+};
+
+/**
+ *
+ * font-synthesis = none | [ weight || style || small-caps || position ]
+ *
+ */
+const expandFontSynthesis = function* (value: CssNode) {
+  const [weight, style, smallCaps, position] = parseUnordered(
+    ["weight", "style", "small-caps", "position"],
+    value
+  );
+  const auto = createIdentifier("auto");
+  const none = createIdentifier("none");
+  yield ["font-synthesis-weight", weight ? auto : none] as const;
+  yield ["font-synthesis-style", style ? auto : none] as const;
+  yield ["font-synthesis-small-caps", smallCaps ? auto : none] as const;
+  yield ["font-synthesis-position", position ? auto : none] as const;
+};
+
+/**
+ *
+ * font-variant =
+ *   normal |
+ *   none |
+ *   [
+ *     [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ] ||
+ *     [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] ||
+ *     [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ] ||
+ *     [ <east-asian-variant-values> || <east-asian-width-values> || ruby ] ||
+ *     [ sub | super ] ||
+ *     [ text | emoji | unicode ]
+ *   ]
+ *
+ */
+const expandFontVariant = function* (value: CssNode) {
+  const [ligatures, caps, alternates, numeric, eastAsian, position, emoji] =
+    parseUnordered(
+      [
+        "[ normal | none | <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]",
+        "[ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ]",
+        "[ stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) ]",
+        "[ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]",
+        "[ <east-asian-variant-values> || <east-asian-width-values> || ruby ]",
+        "[ sub | super ]",
+        "[ text | emoji | unicode ]",
+      ],
+      value
+    );
+  const normal = createIdentifier("normal");
+  yield ["font-variant-ligatures", ligatures ?? normal] as const;
+  yield ["font-variant-caps", caps ?? normal] as const;
+  yield ["font-variant-alternates", alternates ?? normal] as const;
+  yield ["font-variant-numeric", numeric ?? normal] as const;
+  yield ["font-variant-east-asian", eastAsian ?? normal] as const;
+  yield ["font-variant-position", position ?? normal] as const;
+  yield ["font-variant-emoji", emoji ?? normal] as const;
 };
 
 const expandFlex = function* (value: CssNode) {
@@ -656,6 +713,14 @@ const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
       yield* expandFont(value);
+      break;
+
+    case "font-synthesis":
+      yield* expandFontSynthesis(value);
+      break;
+
+    case "font-variant":
+      yield* expandFontVariant(value);
       break;
 
     case "text-decoration": {
