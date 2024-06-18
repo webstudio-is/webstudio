@@ -44,8 +44,9 @@ const getValueList = (value: CssNode): CssNode[] => {
   return children ?? [value];
 };
 
-const splitByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
-  const lists: Array<undefined | CssNode[]> = [[]];
+const splitByOperator = (node: CssNode, operator: string) => {
+  const list = getValueList(node);
+  const lists: Array<CssNode[]> = [[]];
   for (const node of list) {
     if (node.type === "Operator" && node.value === operator) {
       lists.push([]);
@@ -53,7 +54,12 @@ const splitByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
       lists.at(-1)?.push(node);
     }
   }
-  return lists;
+  return lists.map((list) => {
+    if (list.length === 0) {
+      return;
+    }
+    return createValueNode(list);
+  });
 };
 
 const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
@@ -279,28 +285,16 @@ const expandBorderImage = function* (value: CssNode) {
     ],
     value
   );
-  let slice = createInitialNode();
-  let width = createInitialNode();
-  let outset = createInitialNode();
+  let slice: undefined | CssNode;
+  let width: undefined | CssNode;
+  let outset: undefined | CssNode;
   if (config) {
-    const [sliceNodes, widthNodes, outsetNodes] = splitByOperator(
-      config.children,
-      "/"
-    );
-    if (sliceNodes && sliceNodes.length > 0) {
-      slice = createValueNode(sliceNodes);
-    }
-    if (widthNodes && widthNodes.length > 0) {
-      width = createValueNode(widthNodes);
-    }
-    if (outsetNodes && outsetNodes.length > 0) {
-      outset = createValueNode(outsetNodes);
-    }
+    [slice, width, outset] = splitByOperator(config, "/");
   }
   yield ["border-image-source", source ?? createInitialNode()] as const;
-  yield ["border-image-slice", slice] as const;
-  yield ["border-image-width", width] as const;
-  yield ["border-image-outset", outset] as const;
+  yield ["border-image-slice", slice ?? createInitialNode()] as const;
+  yield ["border-image-width", width ?? createInitialNode()] as const;
+  yield ["border-image-outset", outset ?? createInitialNode()] as const;
   yield ["border-image-repeat", repeat ?? createInitialNode()] as const;
 };
 
@@ -400,7 +394,10 @@ const expandAnimation = function* (value: CssNode) {
   const fillModes: CssNode[] = [];
   const playStates: CssNode[] = [];
   const names: CssNode[] = [];
-  for (const animationNodes of splitByOperator(getValueList(value), ",")) {
+  for (const animation of splitByOperator(value, ",")) {
+    if (animation === undefined) {
+      continue;
+    }
     const [
       duration,
       timing,
@@ -421,7 +418,7 @@ const expandAnimation = function* (value: CssNode) {
         "<single-animation-play-state>",
         "[ none | <keyframes-name> ]",
       ],
-      createValueNode(animationNodes)
+      animation
     );
     durations.push(duration ?? createDimension("0", "s"));
     timings.push(timing ?? createIdentifier("ease"));
@@ -487,7 +484,10 @@ const expandTransition = function* (value: CssNode) {
   const easings: CssNode[] = [];
   const delays: CssNode[] = [];
   const behaviors: CssNode[] = [];
-  for (const animationNodes of splitByOperator(getValueList(value), ",")) {
+  for (const transition of splitByOperator(value, ",")) {
+    if (transition === undefined) {
+      continue;
+    }
     const [property, duration, easing, delay, behavior] = parseUnordered(
       [
         "[ none | <single-transition-property> ]",
@@ -497,7 +497,7 @@ const expandTransition = function* (value: CssNode) {
         // <transition-behavior-value> is not supported by csstree
         "normal | allow-discrete",
       ],
-      createValueNode(animationNodes)
+      transition
     );
     properties.push(property ?? createIdentifier("all"));
     durations.push(duration ?? createDimension("0", "s"));
@@ -553,7 +553,10 @@ const expandMask = function* (value: CssNode) {
   const clips: CssNode[] = [];
   const compositionOperators: CssNode[] = [];
   const modes: CssNode[] = [];
-  for (const animationNodes of splitByOperator(getValueList(value), ",")) {
+  for (const mask of splitByOperator(value, ",")) {
+    if (mask === undefined) {
+      continue;
+    }
     const [
       reference,
       positionAndSize,
@@ -572,24 +575,22 @@ const expandMask = function* (value: CssNode) {
         "<compositing-operator>",
         "<masking-mode>",
       ],
-      createValueNode(animationNodes)
+      mask
     );
     references.push(reference ?? createIdentifier("none"));
-    let position = createValueNode([
-      { type: "Dimension", value: "0", unit: "%" },
-      { type: "Dimension", value: "0", unit: "%" },
-    ]);
-    let bgSize = createIdentifier("auto");
+    let position: undefined | CssNode;
+    let bgSize: undefined | CssNode;
     if (positionAndSize) {
-      const [positionNodes, bgSizeNodes] = splitByOperator(
-        getValueList(positionAndSize),
-        "/"
-      );
-      position = createValueNode(positionNodes);
-      bgSize = bgSizeNodes ? createValueNode(bgSizeNodes) : position;
+      [position, bgSize] = splitByOperator(positionAndSize, "/");
     }
-    positions.push(position);
-    bgSizes.push(bgSize);
+    positions.push(
+      position ??
+        createValueNode([
+          { type: "Dimension", value: "0", unit: "%" },
+          { type: "Dimension", value: "0", unit: "%" },
+        ])
+    );
+    bgSizes.push(bgSize ?? createIdentifier("auto"));
     repeatStyles.push(repeatStyle ?? createIdentifier("repeat"));
     origins.push(origin ?? createIdentifier("border-box"));
     clips.push(clip ?? origin ?? createIdentifier("border-box"));
@@ -641,19 +642,7 @@ const expandMaskBorder = function* (value: CssNode) {
   let width: undefined | CssNode;
   let outset: undefined | CssNode;
   if (config) {
-    const [sliceNodes, widthNodes, outsetNodes] = splitByOperator(
-      config.children,
-      "/"
-    );
-    if (sliceNodes && sliceNodes.length > 0) {
-      slice = createValueNode(sliceNodes);
-    }
-    if (widthNodes && widthNodes.length > 0) {
-      width = createValueNode(widthNodes);
-    }
-    if (outsetNodes && outsetNodes.length > 0) {
-      outset = createValueNode(outsetNodes);
-    }
+    [slice, width, outset] = splitByOperator(config, "/");
   }
   yield ["mask-border-source", source ?? createInitialNode()] as const;
   yield ["mask-border-slice", slice ?? createInitialNode()] as const;
@@ -725,6 +714,35 @@ const expandShorthand = function* (property: string, value: CssNode) {
     case "grid-column-gap":
       yield ["column-gap", value] as const;
       break;
+
+    case "grid-area": {
+      const [rowStart, columnStart, rowEnd, columnEnd] = splitByOperator(
+        value,
+        "/"
+      );
+      yield ["grid-row-start", rowStart ?? createIdentifier("auto")] as const;
+      yield [
+        "grid-column-start",
+        columnStart ?? createIdentifier("auto"),
+      ] as const;
+      yield ["grid-row-end", rowEnd ?? createIdentifier("auto")] as const;
+      yield ["grid-column-end", columnEnd ?? createIdentifier("auto")] as const;
+      break;
+    }
+
+    case "grid-row": {
+      const [start, end] = splitByOperator(value, "/");
+      yield ["grid-row-start", start ?? createIdentifier("auto")] as const;
+      yield ["grid-row-end", end ?? createIdentifier("auto")] as const;
+      break;
+    }
+
+    case "grid-column": {
+      const [start, end] = splitByOperator(value, "/");
+      yield ["grid-column-start", start ?? createIdentifier("auto")] as const;
+      yield ["grid-column-end", end ?? createIdentifier("auto")] as const;
+      break;
+    }
 
     case "flex":
       yield* expandFlex(value);

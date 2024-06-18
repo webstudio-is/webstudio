@@ -671,12 +671,61 @@ test("expand mask-border", () => {
   ]);
 });
 
+test("expand grid-area", () => {
+  expect(expandShorthands([["grid-area", "a / b / c / d"]])).toEqual([
+    ["grid-row-start", "a"],
+    ["grid-column-start", "b"],
+    ["grid-row-end", "c"],
+    ["grid-column-end", "d"],
+  ]);
+  expect(expandShorthands([["grid-area", "a / b / c"]])).toEqual([
+    ["grid-row-start", "a"],
+    ["grid-column-start", "b"],
+    ["grid-row-end", "c"],
+    ["grid-column-end", "auto"],
+  ]);
+  expect(expandShorthands([["grid-area", "a / b"]])).toEqual([
+    ["grid-row-start", "a"],
+    ["grid-column-start", "b"],
+    ["grid-row-end", "auto"],
+    ["grid-column-end", "auto"],
+  ]);
+  expect(expandShorthands([["grid-area", "a"]])).toEqual([
+    ["grid-row-start", "a"],
+    ["grid-column-start", "auto"],
+    ["grid-row-end", "auto"],
+    ["grid-column-end", "auto"],
+  ]);
+});
+
+test("expand grid-row and grid-column", () => {
+  expect(
+    expandShorthands([
+      ["grid-row", "1"],
+      ["grid-column", "1"],
+    ])
+  ).toEqual([
+    ["grid-row-start", "1"],
+    ["grid-row-end", "auto"],
+    ["grid-column-start", "1"],
+    ["grid-column-end", "auto"],
+  ]);
+  expect(
+    expandShorthands([
+      ["grid-row", "1 / 2"],
+      ["grid-column", "3 / 4"],
+    ])
+  ).toEqual([
+    ["grid-row-start", "1"],
+    ["grid-row-end", "2"],
+    ["grid-column-start", "3"],
+    ["grid-column-end", "4"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
-test.todo("grid-area");
-test.todo("grid-column");
-test.todo("grid-row");
 test.todo("grid-template");
 test.todo("offset");
 test.todo("scroll-margin");
