@@ -16,10 +16,10 @@ const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
 
   const instances = Array.from(expected.instances.values());
   instances.forEach((instance) => {
-    instance.id = expect.any(String) as any as string;
+    instance.id = expect.any(String) as unknown as string;
     for (const child of instance.children ?? []) {
       if (child.type === "id") {
-        child.value = expect.any(String) as any as string;
+        child.value = expect.any(String) as unknown as string;
       }
     }
   });
