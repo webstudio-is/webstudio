@@ -91,7 +91,7 @@ const parse = (clipboardData: string) => {
     .map((node: { type: string }) => node.type);
 
   if (unsupportedNodeTypes.length !== 0) {
-    const message = `Skipping unsupported nodes: ${unsupportedNodeTypes.join(", ")}`;
+    const message = `Skipping unsupported elements: ${unsupportedNodeTypes.join(", ")}`;
     toast.info(message);
     console.info(message);
   }

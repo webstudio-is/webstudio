@@ -196,6 +196,16 @@ const mapComponentAndProperties = (
         children,
       };
     }
+    case "FormBlockLabel": {
+      const data = wfNode.data;
+      const component = "Label";
+      addProp("for", data.attr.for);
+      return {
+        component,
+        props,
+        children,
+      };
+    }
   }
 
   (component) satisfies never;

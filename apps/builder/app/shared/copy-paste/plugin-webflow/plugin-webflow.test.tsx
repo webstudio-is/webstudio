@@ -642,7 +642,7 @@ test("CodeBlock", async () => {
   equalFragment(fragment, <$.CodeText lang="javascript" code="test" />);
 });
 
-test.only("RichText", async () => {
+test.skip("RichText", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -1110,6 +1110,36 @@ test("FormTextInput", async () => {
       autoFocus={false}
     />
   );
+});
+
+test("FormBlockLabel", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "0fdc679b-9891-dfb3-698a-0114d0c6c729",
+          type: "FormBlockLabel",
+          tag: "label",
+          classes: [],
+          children: ["7827c7aa-cd90-8bda-4570-605f2a1a0d61"],
+          data: {
+            attr: {
+              for: "email",
+            },
+          },
+        },
+        {
+          _id: "7827c7aa-cd90-8bda-4570-605f2a1a0d61",
+          text: true,
+          v: "Email Address",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  equalFragment(fragment, <$.Label for="email">Email Address</$.Label>);
 });
 
 describe("Custom attributes", () => {

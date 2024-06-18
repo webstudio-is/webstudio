@@ -49,6 +49,7 @@ export const wfNodeTypes = [
   "Image",
   "FormButton",
   "FormTextInput",
+  "FormBlockLabel",
 ] as const;
 
 export const WfElementNode = z.union([
@@ -134,6 +135,14 @@ export const WfElementNode = z.union([
         type: z.string(),
         required: z.boolean(),
         autofocus: z.boolean(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormBlockLabel"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        for: z.string().optional(),
       }),
     }),
   }),
