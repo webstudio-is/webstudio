@@ -642,7 +642,7 @@ test("CodeBlock", async () => {
   equalFragment(fragment, <$.CodeText lang="javascript" code="test" />);
 });
 
-test.skip("RichText", async () => {
+test.only("RichText", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -1031,7 +1031,7 @@ test.skip("RichText", async () => {
         <$.Strong>Bold text</$.Strong>
       </$.Paragraph>
       <$.Paragraph>
-        <$.Emphasized>Emphasis</$.Emphasized>
+        <$.Italic>Emphasis</$.Italic>
       </$.Paragraph>
       <$.Paragraph>
         <$.Superscript>Superscript</$.Superscript>
