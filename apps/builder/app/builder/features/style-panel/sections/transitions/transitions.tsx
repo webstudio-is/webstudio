@@ -1,39 +1,85 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import {
+  KeywordValue,
+  type LayerValueItem,
+  type LayersValue,
+  type StyleProperty,
+  type TupleValue,
+} from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
-  Tooltip,
   Text,
+  Tooltip,
 } from "@webstudio-is/design-system";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { getDots } from "../../shared/collapsible-section";
-import { getStyleSource } from "../../shared/style-info";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
-import { addLayer } from "../../style-layer-utils";
-import { parseTransition } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 import { TransitionContent } from "./transition-content";
+import {
+  initialTransition,
+  getTransitionProperties,
+  deleteTransitionProperty,
+  addTransitionLayer,
+  deleteTransitionLayer,
+  transitionProperties,
+  editTransitionLayer,
+  swapTransitionLayers,
+} from "./transition-utils";
 
-export const properties = ["transition"] satisfies Array<StyleProperty>;
-
-const property: StyleProperty = properties[0];
 const label = "Transitions";
-const initialTransition = "opacity 200ms ease";
+export const properties = Array.from(
+  transitionProperties
+) satisfies Array<StyleProperty>;
+
+const isValidTransitionValue = (
+  value: LayerValueItem
+): value is KeywordValue => {
+  return value.type === "keyword" || value.type === "unit";
+};
 
 export const Section = (props: SectionProps) => {
-  const { currentStyle, deleteProperty } = props;
+  const { currentStyle, createBatchUpdate } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const value = currentStyle[property]?.value;
-  const sectionStyleSource =
-    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
-      ? undefined
-      : getStyleSource(currentStyle[property]);
+  const individualLayers = getTransitionProperties(currentStyle);
+  const layers = useMemo(() => {
+    const layers: LayersValue = { type: "layers", value: [] };
+    const {
+      transitionProperty,
+      transitionDuration,
+      transitionDelay,
+      transitionTimingFunction,
+    } = individualLayers;
+
+    // transition-property is a mandatory property
+    for (const [index] of transitionProperty.value.entries()) {
+      const property = transitionProperty.value[index];
+      const duration = transitionDuration.value[index];
+      const timingFunction = transitionTimingFunction.value[index];
+      const delay = transitionDelay.value[index];
+
+      if (
+        isValidTransitionValue(property) === true &&
+        isValidTransitionValue(duration) === true &&
+        isValidTransitionValue(timingFunction) === true &&
+        isValidTransitionValue(delay) === true
+      ) {
+        const layer: TupleValue = {
+          type: "tuple",
+          value: [property, duration, timingFunction, delay],
+        };
+        layers.value.push(layer);
+      }
+    }
+
+    return layers;
+  }, [individualLayers]);
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
@@ -51,7 +97,7 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, [property])}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <Tooltip
               content={
@@ -63,15 +109,12 @@ export const Section = (props: SectionProps) => {
               <SectionTitleButton
                 disabled={isStyleInLocalState === false}
                 prefix={<PlusIcon />}
-                onClick={() => {
-                  addLayer(
-                    property,
-                    parseTransition(initialTransition),
-                    currentStyle,
-                    props.createBatchUpdate
-                  );
-                  setIsOpen(true);
-                }}
+                onClick={() =>
+                  addTransitionLayer({
+                    createBatchUpdate,
+                    layers: individualLayers,
+                  })
+                }
               />
             </Tooltip>
           }
@@ -81,23 +124,42 @@ export const Section = (props: SectionProps) => {
             style={currentStyle}
             description="Animate the transition between states on this instance."
             properties={properties}
-            label={
-              <SectionTitleLabel color={sectionStyleSource}>
-                {label}
-              </SectionTitleLabel>
+            label={<SectionTitleLabel>{label}</SectionTitleLabel>}
+            onReset={() =>
+              deleteTransitionProperty({
+                createBatchUpdate,
+              })
             }
-            onReset={() => deleteProperty(property)}
           />
         </SectionTitle>
       }
     >
-      {value?.type === "layers" && value.value.length > 0 && (
+      {layers.value.length > 0 && (
         <LayersList
           {...props}
-          property={property}
-          value={value}
+          property={properties[0]}
+          value={layers}
           label={label}
-          deleteProperty={deleteProperty}
+          deleteProperty={() =>
+            deleteTransitionProperty({
+              createBatchUpdate,
+            })
+          }
+          deleteLayer={(index) =>
+            deleteTransitionLayer({
+              index,
+              createBatchUpdate,
+              layers: individualLayers,
+            })
+          }
+          swapLayers={(oldIndex, newIndex) =>
+            swapTransitionLayers({
+              oldIndex,
+              newIndex,
+              createBatchUpdate,
+              layers: individualLayers,
+            })
+          }
           renderContent={(layerProps) => {
             if (layerProps.layer.type !== "tuple") {
               return <></>;
@@ -107,6 +169,15 @@ export const Section = (props: SectionProps) => {
               <TransitionContent
                 {...layerProps}
                 layer={layerProps.layer}
+                onEditLayer={(index, layer, options) =>
+                  editTransitionLayer({
+                    index,
+                    layer,
+                    options,
+                    createBatchUpdate,
+                    layers: individualLayers,
+                  })
+                }
                 tooltip={
                   <Tooltip
                     variant="wrapped"

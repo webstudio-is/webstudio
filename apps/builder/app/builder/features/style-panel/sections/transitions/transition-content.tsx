@@ -32,6 +32,12 @@ import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
 import { CssValueInputContainer } from "../../shared/css-value-input";
+import {
+  defaultTransitionProperty,
+  defaultTransitionDuration,
+  defaultTransitionTimingFunction,
+  defaultTransitionDelay,
+} from "./transition-utils";
 
 type TransitionContentProps = {
   index: number;
@@ -122,8 +128,7 @@ export const TransitionContent = ({
         }}
       >
         <TransitionProperty
-          /* Browser defaults for transition-property - all */
-          property={property ?? { type: "keyword" as const, value: "all" }}
+          property={property ?? defaultTransitionProperty}
           onPropertySelection={handlePropertyUpdate}
         />
 
@@ -150,14 +155,13 @@ export const TransitionContent = ({
           key={"transitionDuration"}
           property={"transitionDuration"}
           styleSource="local"
-          /* Browser default for transition-duration */
-          value={duration ?? { type: "unit", value: 0, unit: "ms" }}
+          value={duration ?? defaultTransitionDuration}
           keywords={[]}
           deleteProperty={() => {
             handlePropertyUpdate({ duration });
           }}
           setValue={(value, options) => {
-            if (value === undefined) {
+            if (value === undefined || value.type !== "unit") {
               return;
             }
             handlePropertyUpdate({ duration: value }, options);
@@ -186,12 +190,11 @@ export const TransitionContent = ({
           property={"transitionDelay"}
           key={"transitionDelay"}
           styleSource="local"
-          /* Browser default for transition-delay */
-          value={delay ?? { type: "unit", value: 0, unit: "ms" }}
+          value={delay ?? defaultTransitionDelay}
           keywords={[]}
           deleteProperty={() => handlePropertyUpdate({ delay })}
           setValue={(value, options) => {
-            if (value === undefined) {
+            if (value === undefined || value.type !== "unit") {
               return;
             }
             handlePropertyUpdate({ delay: value }, options);
@@ -199,8 +202,7 @@ export const TransitionContent = ({
         />
 
         <TransitionTiming
-          /* Browser defaults for transition-property - ease */
-          timing={timing ?? { type: "keyword", value: "ease" }}
+          timing={timing ?? defaultTransitionTimingFunction}
           onTimingSelection={handlePropertyUpdate}
         />
       </Grid>

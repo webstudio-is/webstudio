@@ -25,6 +25,7 @@ export const sections = new Map<
     Section: (props: SectionProps) => ReactNode;
   }
 >([
+  ["transitions", transitions],
   ["layout", layout],
   ["flexChild", flexChild],
   ["listItem", listItem],
@@ -38,7 +39,6 @@ export const sections = new Map<
   ["boxShadows", boxShadows],
   ["filter", filter],
   ["backdropFilters", backdropFilter],
-  ["transitions", transitions],
   ["outline", outline],
   ["advanced", advanced],
 ]);
