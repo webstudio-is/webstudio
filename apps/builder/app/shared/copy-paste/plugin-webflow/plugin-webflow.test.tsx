@@ -1068,19 +1068,9 @@ test.skip("Form", async () => {
           classes: [],
           children: [],
           data: {
-            Source: {
-              tag: "Default form",
-              val: {},
-            },
-            form: {
-              type: "form",
-              name: "Email Form",
-            },
             attr: {
               id: "email-form",
               name: "email-form",
-              redirect: "",
-              "data-redirect": "",
               action: "",
               method: "get",
             },

@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
 import type { Instance, Prop, WebstudioFragment } from "@webstudio-is/sdk";
 import type { WfElementNode, WfNode } from "./schema";
-import { getComponentTemplateData } from "~/shared/instance-utils";
 
 const toFragment = (
   wfNode: WfElementNode,
