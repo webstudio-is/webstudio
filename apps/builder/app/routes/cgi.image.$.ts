@@ -5,21 +5,15 @@ import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import env from "~/env/env.server";
 import { getImageNameAndType } from "~/builder/shared/assets/asset-utils";
 import { z } from "zod";
+import { createImageLoader } from "@webstudio-is/image";
 
 const ImageParams = z.object({
   width: z.string().transform((value) => Math.round(parseFloat(value))),
   height: z.optional(
     z.string().transform((value) => Math.round(parseFloat(value)))
   ),
-  fit: z.optional(
-    z.union([
-      z.literal("scale-down"),
-      z.literal("contain"),
-      z.literal("cover"),
-      z.literal("crop"),
-      z.literal("pad"),
-    ])
-  ),
+  fit: z.optional(z.literal("pad")),
+  background: z.optional(z.string()),
 
   quality: z.string().transform((value) => Math.round(parseFloat(value))),
 
@@ -32,23 +26,20 @@ const ImageParams = z.object({
     z.literal("png"),
     z.literal("raw"),
   ]),
-
-  // For testing purposes
-  sleep: z
-    .optional(z.string())
-    .transform((value) => (value ? Math.round(parseFloat(value)) : undefined)),
 });
+
+const decodePathFragment = (fragment: string) => {
+  return decodeURIComponent(fragment);
+};
 
 // this route used as proxy for images to cloudflare endpoint
 // https://developers.cloudflare.com/fundamentals/get-started/reference/cdn-cgi-endpoint/
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const { name } = params;
-  if (name === undefined) {
-    throw Error("Name is undefined");
-  }
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const basePath = `/cgi/image/`;
 
   const url = new URL(request.url);
+  const name = decodePathFragment(url.pathname.slice(basePath.length));
 
   // The code should be +- same as here https://github.com/webstudio-is/webstudio-saas/blob/6c9a3bfb67cf5a221c20666de34bd20dc14bd558/packages/assets-proxy/src/image-transform.ts#L68
   const rawParameters: Record<string, string> = {
@@ -69,18 +60,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     rawParameters.fit = fit;
   }
 
-  const sleep = url.searchParams.get("sleep");
-
-  if (sleep != null) {
-    rawParameters.sleep = sleep;
-  }
-
   const imageParameters = ImageParams.parse(rawParameters);
-
-  // For testing purposes
-  if (imageParameters.sleep !== undefined) {
-    await new Promise((resolve) => setTimeout(resolve, imageParameters.sleep));
-  }
 
   // Allow direct image access, and from the same origin
   const refererRawUrl = request.headers.get("referer");
@@ -92,19 +72,37 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   if (env.RESIZE_ORIGIN !== undefined) {
-    const assetUrl = `${name}`;
-    // @todo add secret ti avoid exploiting our server
-    const imageUrl = `${env.RESIZE_ORIGIN}/cgi/image/${assetUrl}?${url.searchParams}`;
+    const imageLoader = createImageLoader({
+      imageBaseUrl: `${env.RESIZE_ORIGIN}/cgi/image/`,
+    });
 
-    const response = await fetch(imageUrl, {
+    const imgHref = imageLoader({
+      src: name,
+      ...imageParameters,
+      format: "auto",
+    });
+
+    const imgUrl = new URL(imgHref);
+    imgUrl.search = url.search;
+
+    const response = await fetch(imgUrl.href, {
       headers: {
         accept: request.headers.get("accept") ?? "",
         "accept-encoding": request.headers.get("accept-encoding") ?? "",
       },
     });
-    response.headers.set("Access-Control-Allow-Origin", url.origin);
 
-    return response;
+    const responseWHeaders = new Response(response.body, response);
+
+    if (false === responseWHeaders.ok) {
+      console.error(
+        `Request to Image url ${imgUrl.href} responded with status = ${responseWHeaders.status}`
+      );
+    }
+
+    responseWHeaders.headers.set("Access-Control-Allow-Origin", url.origin);
+
+    return responseWHeaders;
   }
 
   if (env.FILE_UPLOAD_PATH === undefined) {

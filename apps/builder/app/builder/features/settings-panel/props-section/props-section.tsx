@@ -70,7 +70,12 @@ const renderProperty = (
     },
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
-      if (component === "Image" && propName === "src") {
+
+      if (
+        component === "Image" &&
+        propName === "src" &&
+        propValue.type === "asset"
+      ) {
         logic.handleChangeByPropName("width", propValue);
         logic.handleChangeByPropName("height", propValue);
       }
