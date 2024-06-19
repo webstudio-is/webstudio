@@ -1,13 +1,25 @@
 import { nanoid } from "nanoid";
 import type { Instance, Prop, WebstudioFragment } from "@webstudio-is/sdk";
 import type { WfElementNode, WfNode } from "./schema";
+import { getComponentTemplateData } from "~/shared/instance-utils";
 
-const mapComponentAndProperties = (
+const toFragment = (
   wfNode: WfElementNode,
-  instanceId: Instance["id"]
-) => {
-  const props: Array<Prop> = [];
-  const children: Instance["children"] = [];
+  instanceId: Instance["id"],
+  wfNodes: Map<WfNode["_id"], WfNode>
+): WebstudioFragment | undefined => {
+  const fragment: WebstudioFragment = {
+    children: [],
+    instances: [],
+    props: [],
+    dataSources: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
+  };
   const component = wfNode.type;
 
   const addProp = (
@@ -18,7 +30,7 @@ const mapComponentAndProperties = (
     const prop = { id: nanoid(), instanceId };
 
     if (type === "string" && typeof value === "string") {
-      props.push({
+      fragment.props.push({
         ...prop,
         type,
         name,
@@ -27,7 +39,7 @@ const mapComponentAndProperties = (
       return;
     }
     if (type === "number" && typeof value === "number") {
-      props.push({
+      fragment.props.push({
         ...prop,
         type,
         name,
@@ -37,7 +49,7 @@ const mapComponentAndProperties = (
     }
 
     if (type === "boolean" && typeof value === "boolean") {
-      props.push({
+      fragment.props.push({
         ...prop,
         type,
         name,
@@ -45,6 +57,17 @@ const mapComponentAndProperties = (
       });
       return;
     }
+  };
+  const addInstance = (
+    component: Instance["component"],
+    children: Instance["children"] = []
+  ) => {
+    fragment.instances.push({
+      id: instanceId,
+      type: "instance",
+      component,
+      children,
+    });
   };
 
   if (wfNode.data?.attr?.id) {
@@ -54,7 +77,8 @@ const mapComponentAndProperties = (
   switch (component) {
     case "Heading": {
       addProp("tag", wfNode.tag);
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "List":
     case "ListItem":
@@ -62,80 +86,96 @@ const mapComponentAndProperties = (
     case "Superscript":
     case "Subscript":
     case "Blockquote": {
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Block": {
       const component = wfNode.data?.text ? "Text" : "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Link": {
       const data = wfNode.data;
 
       addProp("href", data.link.url);
       addProp("target", data.link.target);
-
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Section": {
       const component = "Box";
       addProp("tag", wfNode.tag);
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "RichText": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Strong": {
       const component = "Bold";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Emphasized": {
       const component = "Italic";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "BlockContainer": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Layout": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Cell": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "VFlex": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "HFlex": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Grid": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Row": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Column": {
       const component = "Box";
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "CodeBlock": {
       const component = "CodeText";
       const data = wfNode.data;
       addProp("lang", data.language);
       addProp("code", data.code);
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "HtmlEmbed": {
       addProp("code", wfNode.v);
       addProp("clientOnly", true, "boolean");
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
     }
     case "Image": {
       const data = wfNode.data;
@@ -164,21 +204,30 @@ const mapComponentAndProperties = (
       if (data.attr.src) {
         addProp("src", data.attr.src);
       }
-      return { component, props, children };
+      addInstance(component);
+      return fragment;
+    }
+    case "FormWrapper": {
+      return;
+    }
+    case "FormForm": {
+      return;
+    }
+    case "FormSuccessMessage":
+    case "FormErrorMessage": {
+      // @todo For now we are not copying these nodes
+      return;
     }
     case "FormButton": {
-      const data = wfNode.data;
       const component = "Button";
-      return {
-        component,
-        props,
-        children: [
-          {
-            type: "text" as const,
-            value: data.attr.value,
-          },
-        ],
-      };
+      const data = wfNode.data;
+      addInstance(component, [
+        {
+          type: "text" as const,
+          value: data.attr.value,
+        },
+      ]);
+      return fragment;
     }
     case "FormTextInput": {
       const data = wfNode.data;
@@ -190,21 +239,15 @@ const mapComponentAndProperties = (
       addProp("type", data.attr.type);
       addProp("required", data.attr.required, "boolean");
       addProp("autoFocus", data.attr.autofocus, "boolean");
-      return {
-        component,
-        props,
-        children,
-      };
+      addInstance(component);
+      return fragment;
     }
     case "FormBlockLabel": {
       const data = wfNode.data;
       const component = "Label";
       addProp("htmlFor", data.attr.for);
-      return {
-        component,
-        props,
-        children,
-      };
+      addInstance(component);
+      return fragment;
     }
   }
 
@@ -235,7 +278,7 @@ export const addInstanceAndProperties = (
   wfNodes: Map<WfNode["_id"], WfNode>,
   fragment: WebstudioFragment
 ) => {
-  if (added.get(wfNode._id) || "text" in wfNode || "type" in wfNode === false) {
+  if (added.has(wfNode._id) || "text" in wfNode || "type" in wfNode === false) {
     return;
   }
   const children: Instance["children"] = [];
@@ -268,17 +311,23 @@ export const addInstanceAndProperties = (
     }
   }
 
-  const meta = mapComponentAndProperties(wfNode, instanceId);
+  const nextFragment = toFragment(wfNode, instanceId, wfNodes);
 
-  fragment.instances.push({
-    id: instanceId,
-    type: "instance",
-    component: meta.component,
-    children: [...meta.children, ...children],
-  });
+  if (nextFragment === undefined) {
+    return;
+  }
+
+  fragment.instances.push(...nextFragment.instances);
+  fragment.props.push(...nextFragment.props);
+  const instance = fragment.instances.find(
+    (instance) => instance.id === instanceId
+  );
+  if (instance === undefined) {
+    return;
+  }
+  instance.children.push(...children);
   added.set(wfNode._id, instanceId);
-  addCustomAttributes(wfNode, instanceId, meta.props);
-  fragment.props.push(...meta.props);
+  addCustomAttributes(wfNode, instanceId, fragment.props);
 
   return instanceId;
 };

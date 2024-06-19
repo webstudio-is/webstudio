@@ -47,6 +47,10 @@ export const wfNodeTypes = [
   "CodeBlock",
   "HtmlEmbed",
   "Image",
+  "FormWrapper",
+  "FormForm",
+  "FormSuccessMessage",
+  "FormErrorMessage",
   "FormButton",
   "FormTextInput",
   "FormBlockLabel",
@@ -115,6 +119,19 @@ export const WfElementNode = z.union([
       }),
     }),
   }),
+  WfBaseNode.extend({ type: z.enum(["FormWrapper"]) }),
+  WfBaseNode.extend({
+    type: z.enum(["FormForm"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        action: z.string(),
+        method: z.string(),
+        name: z.string(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({ type: z.enum(["FormSuccessMessage"]) }),
+  WfBaseNode.extend({ type: z.enum(["FormErrorMessage"]) }),
   WfBaseNode.extend({
     type: z.enum(["FormButton"]),
     data: WfNodeData.extend({

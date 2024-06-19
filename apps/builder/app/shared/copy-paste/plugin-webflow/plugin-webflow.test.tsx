@@ -1,19 +1,18 @@
 import { test, expect, describe, beforeEach } from "@jest/globals";
-import { __testing__ } from "./plugin-webflow";
-import { $breakpoints } from "../../nano-states";
+import { nanoid } from "nanoid";
 import {
   type StyleRule,
   createRegularStyleSheet,
 } from "@webstudio-is/css-engine";
 import { initialBreakpoints, type WebstudioFragment } from "@webstudio-is/sdk";
-import { nanoid } from "nanoid";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { __testing__ } from "./plugin-webflow";
+import { $breakpoints } from "../../nano-states";
 
 const { toWebstudioFragment } = __testing__;
 
 const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
   const expected = renderJsx(jsx);
-
   const instances = Array.from(expected.instances.values());
   instances.forEach((instance) => {
     instance.id = expect.any(String) as unknown as string;
@@ -63,6 +62,9 @@ const toCss = (fragment: WebstudioFragment) => {
 };
 
 beforeEach(() => {
+  //const defaultMetasMap = new Map(Object.entries(defaultMetas));
+  //$registeredComponentMetas.set(defaultMetasMap);
+
   $breakpoints.set(
     new Map(
       initialBreakpoints.map((breakpoint) => {
@@ -1041,6 +1043,93 @@ test.skip("RichText", async () => {
       </$.Paragraph>
     </$.Box>
   );
+});
+
+test.skip("Form", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "cb7caecb-747f-ea0d-1ad0-d962ce6f6819",
+          type: "FormWrapper",
+          tag: "div",
+          classes: [],
+          children: [
+            "4c292af5-ab16-50d0-de23-33cb0e7fd83f",
+            "8eb3dae9-92ef-cede-d09c-0a80fba93cdc",
+            "f98a4aee-e48e-26cd-ba0e-b9aa85d266a4",
+          ],
+        },
+        {
+          _id: "4c292af5-ab16-50d0-de23-33cb0e7fd83f",
+          type: "FormForm",
+          tag: "form",
+          classes: [],
+          children: [],
+          data: {
+            Source: {
+              tag: "Default form",
+              val: {},
+            },
+            form: {
+              type: "form",
+              name: "Email Form",
+            },
+            attr: {
+              id: "email-form",
+              name: "email-form",
+              redirect: "",
+              "data-redirect": "",
+              action: "",
+              method: "get",
+            },
+          },
+        },
+        {
+          _id: "8eb3dae9-92ef-cede-d09c-0a80fba93cdc",
+          type: "FormSuccessMessage",
+          tag: "div",
+          classes: [],
+          children: ["c727b9b2-2b5f-c724-8493-b59beaf12f6c"],
+        },
+        {
+          _id: "c727b9b2-2b5f-c724-8493-b59beaf12f6c",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: ["fc940c56-4827-c152-730f-b44139dfb9a9"],
+        },
+        {
+          _id: "fc940c56-4827-c152-730f-b44139dfb9a9",
+          text: true,
+          v: "Thank you! Your submission has been received!",
+        },
+        {
+          _id: "f98a4aee-e48e-26cd-ba0e-b9aa85d266a4",
+          type: "FormErrorMessage",
+          tag: "div",
+          classes: [],
+          children: ["2d222da2-8eeb-6ce9-bed6-417505facebe"],
+        },
+        {
+          _id: "2d222da2-8eeb-6ce9-bed6-417505facebe",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: ["72ea74da-d1cd-e2ee-9095-247011ee6f6a"],
+        },
+        {
+          _id: "72ea74da-d1cd-e2ee-9095-247011ee6f6a",
+          text: true,
+          v: "Oops! Something went wrong while submitting the form.",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  equalFragment(fragment, <$.Button>Submit</$.Button>);
 });
 
 test("FormButton", async () => {
