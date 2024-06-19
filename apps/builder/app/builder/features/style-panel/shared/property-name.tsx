@@ -212,7 +212,7 @@ export const TooltipContent = ({
   );
 
   return (
-    <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+    <Flex direction="column" gap="2">
       <Text variant="titles">{title ?? humanizeString(properties[0])}</Text>
       <ScrollArea>
         <Text
@@ -327,6 +327,7 @@ export const PropertyTooltip = ({
       open={isOpen}
       onOpenChange={handleIsOpen}
       side={side}
+      css={{ width: theme.spacing[28], maxWidth: theme.spacing[28] }}
       // prevent closing tooltip on content click
       onPointerDown={(event) => event.preventDefault()}
       triggerProps={{
