@@ -109,23 +109,6 @@ export const metaDialog: WsComponentMeta = {
     {
       type: "instance",
       component: "Dialog",
-      variables: {
-        dialogOpen: { initialValue: false },
-      },
-      props: [
-        {
-          type: "expression",
-          name: "open",
-          code: "dialogOpen",
-        },
-        {
-          name: "onOpenChange",
-          type: "action",
-          value: [
-            { type: "execute", args: ["open"], code: `dialogOpen = open` },
-          ],
-        },
-      ],
       children: [
         {
           type: "instance",
@@ -295,7 +278,7 @@ export const metaDialog: WsComponentMeta = {
 
 export const propsMetaDialog: WsComponentPropsMeta = {
   props: propsDialog,
-  initialProps: ["open"],
+  initialProps: [],
 };
 
 export const propsMetaDialogTrigger: WsComponentPropsMeta = {

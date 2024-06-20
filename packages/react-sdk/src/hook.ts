@@ -15,6 +15,11 @@ export type HookContext = {
     propName: Prop["name"],
     value: unknown
   ) => void;
+  setMemoryProp: (
+    instanceId: readonly Instance["id"][],
+    propName: Prop["name"],
+    value: unknown
+  ) => void;
 };
 
 export type InstancePath = Instance[];
@@ -24,6 +29,7 @@ type NavigatorEvent = {
    * List of instances from selected to the root
    */
   instancePath: InstancePath;
+  instanceSelector: readonly Instance["id"][];
 };
 
 export type Hook = {
@@ -49,4 +55,17 @@ export const getClosestInstance = (
       return instance;
     }
   }
+};
+
+export const getInstanceSelectorById = (
+  instanceSelector: readonly Instance["id"][],
+  instanceId: Instance["id"]
+) => {
+  const index = instanceSelector.findIndex(
+    (selector) => selector === instanceId
+  );
+  if (index === -1) {
+    return [];
+  }
+  return instanceSelector.slice(index);
 };
