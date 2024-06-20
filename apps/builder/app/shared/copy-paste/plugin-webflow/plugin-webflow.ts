@@ -18,6 +18,7 @@ import { WfData, WfNode, WfStyle, wfNodeTypes } from "./schema";
 import { addInstanceAndProperties } from "./instances-properties";
 import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";
+import { denormalizeSrcProps } from "../asset-upload";
 
 const { toast } = builderApi;
 
@@ -118,12 +119,14 @@ export const onPaste = async (clipboardData: string) => {
   if (wfData === undefined) {
     return false;
   }
-  const fragment = await toWebstudioFragment(wfData);
-
+  let fragment = await toWebstudioFragment(wfData);
   const selectedPage = $selectedPage.get();
   if (fragment === undefined || selectedPage === undefined) {
     return false;
   }
+
+  fragment = await denormalizeSrcProps(fragment);
+
   const metas = $registeredComponentMetas.get();
   const newInstances = new Map(
     fragment.instances.map((instance) => [instance.id, instance])

@@ -14,7 +14,7 @@ import {
   $styles,
 } from "./nano-states";
 
-type BuilderData = WebstudioData & {
+export type BuilderData = WebstudioData & {
   marketplaceProduct: undefined | MarketplaceProduct;
 };
 

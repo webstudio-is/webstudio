@@ -172,23 +172,6 @@ const expandLogical = function* (getProperty: GetProperty, value: CssNode) {
 
 const expandEdges = function* (property: string, value: CssNode) {
   switch (property) {
-    case "margin":
-    case "padding":
-      yield* expandBox((edge) => `${property}-${edge}`, value);
-      break;
-    case "margin-inline":
-    case "padding-inline":
-    case "margin-block":
-    case "padding-block":
-      yield* expandLogical((edge) => `${property}-${edge}`, value);
-      break;
-    case "inset":
-      yield* expandBox((edge) => edge, value);
-      break;
-    case "inset-inline":
-    case "inset-block":
-      yield* expandLogical((edge) => `${property}-${edge}`, value);
-      break;
     case "border-width":
     case "border-style":
     case "border-color": {
@@ -338,12 +321,69 @@ const expandFont = function* (value: CssNode) {
     }
   }
   yield ["font-style", fontStyle ?? createInitialNode()] as const;
-  yield ["font-variant", fontVariant ?? createInitialNode()] as const;
+  yield ["font-variant-caps", fontVariant ?? createInitialNode()] as const;
   yield ["font-weight", fontWeight ?? createInitialNode()] as const;
   yield ["font-width", fontWidth ?? createInitialNode()] as const;
   yield ["font-size", fontSize] as const;
   yield ["line-height", lineHeight] as const;
   yield ["font-family", fontFamily] as const;
+};
+
+/**
+ *
+ * font-synthesis = none | [ weight || style || small-caps || position ]
+ *
+ */
+const expandFontSynthesis = function* (value: CssNode) {
+  const [weight, style, smallCaps, position] = parseUnordered(
+    ["weight", "style", "small-caps", "position"],
+    value
+  );
+  const auto = createIdentifier("auto");
+  const none = createIdentifier("none");
+  yield ["font-synthesis-weight", weight ? auto : none] as const;
+  yield ["font-synthesis-style", style ? auto : none] as const;
+  yield ["font-synthesis-small-caps", smallCaps ? auto : none] as const;
+  yield ["font-synthesis-position", position ? auto : none] as const;
+};
+
+/**
+ *
+ * font-variant =
+ *   normal |
+ *   none |
+ *   [
+ *     [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ] ||
+ *     [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] ||
+ *     [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ] ||
+ *     [ <east-asian-variant-values> || <east-asian-width-values> || ruby ] ||
+ *     [ sub | super ] ||
+ *     [ text | emoji | unicode ]
+ *   ]
+ *
+ */
+const expandFontVariant = function* (value: CssNode) {
+  const [ligatures, caps, alternates, numeric, eastAsian, position, emoji] =
+    parseUnordered(
+      [
+        "[ normal | none | <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]",
+        "[ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ]",
+        "[ stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) ]",
+        "[ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]",
+        "[ <east-asian-variant-values> || <east-asian-width-values> || ruby ]",
+        "[ sub | super ]",
+        "[ text | emoji | unicode ]",
+      ],
+      value
+    );
+  const normal = createIdentifier("normal");
+  yield ["font-variant-ligatures", ligatures ?? normal] as const;
+  yield ["font-variant-caps", caps ?? normal] as const;
+  yield ["font-variant-alternates", alternates ?? normal] as const;
+  yield ["font-variant-numeric", numeric ?? normal] as const;
+  yield ["font-variant-east-asian", eastAsian ?? normal] as const;
+  yield ["font-variant-position", position ?? normal] as const;
+  yield ["font-variant-emoji", emoji ?? normal] as const;
 };
 
 const expandFlex = function* (value: CssNode) {
@@ -652,10 +692,71 @@ const expandMaskBorder = function* (value: CssNode) {
   yield ["mask-border-mode", mode ?? createInitialNode()] as const;
 };
 
+/**
+ *
+ * offset = [
+ *   <'offset-position'>?
+ *   [ <'offset-path'> [ <'offset-distance'> || <'offset-rotate'> ]? ]?
+ * ]!
+ * [ / <'offset-anchor'> ]?
+ *
+ */
+const expandOffset = function* (value: CssNode) {
+  const [config, anchor] = splitByOperator(value, "/");
+  const [position, path, distance, rotate] = parseUnordered(
+    [
+      `<'offset-position'>`,
+      `<'offset-path'>`,
+      `<'offset-distance'>`,
+      `<'offset-rotate'>`,
+    ],
+    config ?? createIdentifier("none")
+  );
+  yield ["offset-position", position ?? createIdentifier("normal")] as const;
+  yield ["offset-path", path ?? createIdentifier("none")] as const;
+  yield ["offset-distance", distance ?? createNumber("0")] as const;
+  yield ["offset-rotate", rotate ?? createIdentifier("auto")] as const;
+  yield ["offset-anchor", anchor ?? createIdentifier("auto")] as const;
+};
+
+/**
+ *
+ * scroll-timeline = [ <'scroll-timeline-name'> <'scroll-timeline-axis'>? ]#
+ *
+ */
+const expandScrollTimeline = function* (value: CssNode) {
+  const list = splitByOperator(value, ",");
+  const names: CssNode[] = [];
+  const axises: CssNode[] = [];
+  for (const singleTimeline of list) {
+    const [name, axis] = getValueList(
+      singleTimeline ?? createIdentifier("none")
+    );
+    names.push(name);
+    axises.push(axis ?? createIdentifier("block"));
+  }
+  yield [
+    "scroll-timeline-name",
+    createValueNode(joinByOperator(names, ",")),
+  ] as const;
+  yield [
+    "scroll-timeline-axis",
+    createValueNode(joinByOperator(axises, ",")),
+  ] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
       yield* expandFont(value);
+      break;
+
+    case "font-synthesis":
+      yield* expandFontSynthesis(value);
+      break;
+
+    case "font-variant":
+      yield* expandFontVariant(value);
       break;
 
     case "text-decoration": {
@@ -697,6 +798,27 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "mask-border":
       yield* expandMaskBorder(value);
+      break;
+
+    case "margin":
+    case "padding":
+      yield* expandBox((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "margin-inline":
+    case "margin-block":
+    case "padding-inline":
+    case "padding-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "inset":
+      yield* expandBox((edge) => edge, value);
+      break;
+
+    case "inset-inline":
+    case "inset-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
       break;
 
     case "gap":
@@ -826,6 +948,33 @@ const expandShorthand = function* (property: string, value: CssNode) {
     case "transition":
       yield* expandTransition(value);
       break;
+
+    case "offset":
+      yield* expandOffset(value);
+      break;
+
+    case "scroll-timeline":
+      yield* expandScrollTimeline(value);
+      break;
+
+    case "scroll-margin":
+    case "scroll-padding":
+      yield* expandBox((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "scroll-margin-inline":
+    case "scroll-margin-block":
+    case "scroll-padding-inline":
+    case "scroll-padding-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "overflow": {
+      const [x, y] = getValueList(value);
+      yield ["overflow-x", x] as const;
+      yield ["overflow-y", y ?? x] as const;
+      break;
+    }
 
     default:
       yield [property, value] as const;

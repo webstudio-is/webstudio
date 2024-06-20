@@ -386,7 +386,7 @@ test("expand font", () => {
     ])
   ).toEqual([
     ["font-style", "italic"],
-    ["font-variant", "small-caps"],
+    ["font-variant-caps", "small-caps"],
     ["font-weight", "bold"],
     ["font-width", "ultra-condensed"],
     ["font-size", "1.2em"],
@@ -397,12 +397,67 @@ test("expand font", () => {
     expandShorthands([["font", `1.2em/2 "Fira Sans", sans-serif`]])
   ).toEqual([
     ["font-style", "initial"],
-    ["font-variant", "initial"],
+    ["font-variant-caps", "initial"],
     ["font-weight", "initial"],
     ["font-width", "initial"],
     ["font-size", "1.2em"],
     ["line-height", "2"],
     ["font-family", '"Fira Sans",sans-serif'],
+  ]);
+});
+
+test("expand font-synthesis", () => {
+  expect(expandShorthands([["font-synthesis", `none`]])).toEqual([
+    ["font-synthesis-weight", "none"],
+    ["font-synthesis-style", "none"],
+    ["font-synthesis-small-caps", "none"],
+    ["font-synthesis-position", "none"],
+  ]);
+  expect(expandShorthands([["font-synthesis", `style`]])).toEqual([
+    ["font-synthesis-weight", "none"],
+    ["font-synthesis-style", "auto"],
+    ["font-synthesis-small-caps", "none"],
+    ["font-synthesis-position", "none"],
+  ]);
+  expect(
+    expandShorthands([["font-synthesis", `style small-caps weight position`]])
+  ).toEqual([
+    ["font-synthesis-weight", "auto"],
+    ["font-synthesis-style", "auto"],
+    ["font-synthesis-small-caps", "auto"],
+    ["font-synthesis-position", "auto"],
+  ]);
+});
+
+test("expand font-variant", () => {
+  expect(expandShorthands([["font-variant", `normal`]])).toEqual([
+    ["font-variant-ligatures", "normal"],
+    ["font-variant-caps", "normal"],
+    ["font-variant-alternates", "normal"],
+    ["font-variant-numeric", "normal"],
+    ["font-variant-east-asian", "normal"],
+    ["font-variant-position", "normal"],
+    ["font-variant-emoji", "normal"],
+  ]);
+  expect(expandShorthands([["font-variant", `none`]])).toEqual([
+    ["font-variant-ligatures", "none"],
+    ["font-variant-caps", "normal"],
+    ["font-variant-alternates", "normal"],
+    ["font-variant-numeric", "normal"],
+    ["font-variant-east-asian", "normal"],
+    ["font-variant-position", "normal"],
+    ["font-variant-emoji", "normal"],
+  ]);
+  expect(
+    expandShorthands([["font-variant", `common-ligatures small-caps`]])
+  ).toEqual([
+    ["font-variant-ligatures", "common-ligatures"],
+    ["font-variant-caps", "small-caps"],
+    ["font-variant-alternates", "normal"],
+    ["font-variant-numeric", "normal"],
+    ["font-variant-east-asian", "normal"],
+    ["font-variant-position", "normal"],
+    ["font-variant-emoji", "normal"],
   ]);
 });
 
@@ -723,19 +778,104 @@ test("expand grid-row and grid-column", () => {
   ]);
 });
 
+test("expand overflow", () => {
+  expect(expandShorthands([["overflow", "hidden"]])).toEqual([
+    ["overflow-x", "hidden"],
+    ["overflow-y", "hidden"],
+  ]);
+  expect(expandShorthands([["overflow", "hidden auto"]])).toEqual([
+    ["overflow-x", "hidden"],
+    ["overflow-y", "auto"],
+  ]);
+});
+
+test("expand offset", () => {
+  expect(
+    expandShorthands([["offset", `path("M 100 100 L 300 100 L 200 300 z")`]])
+  ).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", 'path("M 100 100 L 300 100 L 200 300 z")'],
+    ["offset-distance", "0"],
+    ["offset-rotate", "auto"],
+    ["offset-anchor", "auto"],
+  ]);
+  expect(
+    expandShorthands([["offset", `url(arc.svg) 30deg / 50px 100px`]])
+  ).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", "url(arc.svg)"],
+    ["offset-distance", "0"],
+    ["offset-rotate", "30deg"],
+    ["offset-anchor", "50px 100px"],
+  ]);
+  expect(expandShorthands([["offset", `url(circle.svg) 40%`]])).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", "url(circle.svg)"],
+    ["offset-distance", "40%"],
+    ["offset-rotate", "auto"],
+    ["offset-anchor", "auto"],
+  ]);
+});
+
+test("expand scroll-timeline", () => {
+  expect(expandShorthands([["scroll-timeline", `none`]])).toEqual([
+    ["scroll-timeline-name", "none"],
+    ["scroll-timeline-axis", "block"],
+  ]);
+  expect(expandShorthands([["scroll-timeline", `none inline`]])).toEqual([
+    ["scroll-timeline-name", "none"],
+    ["scroll-timeline-axis", "inline"],
+  ]);
+  expect(
+    expandShorthands([["scroll-timeline", `--custom_name_for_timeline inline`]])
+  ).toEqual([
+    ["scroll-timeline-name", "--custom_name_for_timeline"],
+    ["scroll-timeline-axis", "inline"],
+  ]);
+  expect(
+    expandShorthands([["scroll-timeline", `none inline, --custom y`]])
+  ).toEqual([
+    ["scroll-timeline-name", "none,--custom"],
+    ["scroll-timeline-axis", "inline,y"],
+  ]);
+});
+
+test("expand scroll-margin/scroll-padding", () => {
+  expect(expandShorthands([["scroll-margin", "10px"]])).toEqual([
+    ["scroll-margin-top", "10px"],
+    ["scroll-margin-right", "10px"],
+    ["scroll-margin-bottom", "10px"],
+    ["scroll-margin-left", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-margin-block", "10px"]])).toEqual([
+    ["scroll-margin-block-start", "10px"],
+    ["scroll-margin-block-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-margin-inline", "10px"]])).toEqual([
+    ["scroll-margin-inline-start", "10px"],
+    ["scroll-margin-inline-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding", "10px"]])).toEqual([
+    ["scroll-padding-top", "10px"],
+    ["scroll-padding-right", "10px"],
+    ["scroll-padding-bottom", "10px"],
+    ["scroll-padding-left", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding-block", "10px"]])).toEqual([
+    ["scroll-padding-block-start", "10px"],
+    ["scroll-padding-block-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding-inline", "10px"]])).toEqual([
+    ["scroll-padding-inline-start", "10px"],
+    ["scroll-padding-inline-end", "10px"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
 test.todo("grid-template");
-test.todo("offset");
-test.todo("scroll-margin");
-test.todo("scroll-padding");
-test.todo("scroll-timeline");
 
-test.todo("font-synthesis - only shorthand is supported in webstudio");
-test.todo(
-  "font-variant - both shorthand and longhands are supported in webstudio"
-);
 test.todo("white-space - not a shorthand in webflow");
 test.todo("text-wrap - not a shorthand in webflow");
 
@@ -743,9 +883,6 @@ test.todo("all - can negatively affect build size");
 test.todo("background - not used in webflow");
 test.todo("background-position-x - we use shorthand");
 test.todo("background-position-y - we use shorthand");
-test.todo("overflow - used in webflow");
-test.todo("overflow-x - we use shorthand");
-test.todo("overflow-y - we use shorthand");
 test.todo("translate - are these directly mappable to transform");
 test.todo("rotate");
 test.todo("scale");

@@ -158,7 +158,9 @@ export const BuilderRoute = () => {
 
   return (
     <ClientOnly>
-      <Builder {...data} />
+      {/* Using a key here ensures that certain effects are re-executed inside the builder,
+      especially in cases like cloning a project */}
+      <Builder key={data.project.id} {...data} />
     </ClientOnly>
   );
 };

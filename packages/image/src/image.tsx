@@ -53,7 +53,7 @@ const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
   >
-  <rect width="600" height="600" />
+  <rect width="600" height="600" fill="hsla(0, 0%, 80%, 0.2)" />
   <path
     fill-rule="evenodd"
     clip-rule="evenodd"

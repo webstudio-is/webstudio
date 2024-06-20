@@ -235,9 +235,13 @@ const experimentalProperties = [
 ];
 
 const unsupportedProperties = [
-  "all",
   "-webkit-line-clamp",
   "--*",
+  // shorthand properties
+  "all",
+  "font-synthesis",
+  "font-variant",
+  "overflow",
   // @todo for now webstudio supports only white-space
   // need to figure out how to make it future proof
   "white-space-collapse",
