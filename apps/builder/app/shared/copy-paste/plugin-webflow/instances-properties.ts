@@ -209,24 +209,18 @@ const toFragment = (
       return fragment;
     }
     case "FormWrapper": {
-      const component = "Form";
+      const component = "Box";
       addInstance(component);
       return fragment;
     }
     case "FormForm": {
-      const component = "FormContent";
+      const component = "Box";
       addInstance(component);
       return fragment;
     }
+    case "FormErrorMessage":
     case "FormSuccessMessage": {
-      const component = "SuccessMessage";
-      addInstance(component);
-      return fragment;
-    }
-    case "FormErrorMessage": {
-      const component = "ErrorMessage";
-      addInstance(component);
-      return fragment;
+      return;
     }
     case "FormButton": {
       const component = "Button";
@@ -284,15 +278,30 @@ const addCustomAttributes = (
 
 export const addInstanceAndProperties = (
   wfNode: WfNode,
-  added: Map<WfNode["_id"], Instance["id"]>,
+  doneNodes: Map<WfNode["_id"], Instance["id"] | false>,
   wfNodes: Map<WfNode["_id"], WfNode>,
   fragment: WebstudioFragment
 ) => {
-  if (added.has(wfNode._id) || "text" in wfNode || "type" in wfNode === false) {
+  if (
+    doneNodes.has(wfNode._id) ||
+    "text" in wfNode ||
+    "type" in wfNode === false
+  ) {
     return;
   }
-  const children: Instance["children"] = [];
   const instanceId = nanoid();
+  const nextFragment = toFragment(wfNode, instanceId, wfNodes);
+
+  if (nextFragment === undefined) {
+    // Skip this node and its children.
+    doneNodes.set(wfNode._id, false);
+    for (const childId of wfNode.children) {
+      doneNodes.set(childId, false);
+    }
+    return;
+  }
+
+  const children: Instance["children"] = [];
   for (const wfChildId of wfNode.children) {
     const wfChildNode = wfNodes.get(wfChildId);
     if (wfChildNode === undefined) {
@@ -303,13 +312,13 @@ export const addInstanceAndProperties = (
         type: "text",
         value: wfChildNode.v,
       });
-      added.set(wfChildId, instanceId);
+      doneNodes.set(wfChildId, instanceId);
       continue;
     }
 
     const childInstanceId = addInstanceAndProperties(
       wfChildNode,
-      added,
+      doneNodes,
       wfNodes,
       fragment
     );
@@ -319,12 +328,6 @@ export const addInstanceAndProperties = (
         value: childInstanceId,
       });
     }
-  }
-
-  const nextFragment = toFragment(wfNode, instanceId, wfNodes);
-
-  if (nextFragment === undefined) {
-    return;
   }
 
   fragment.instances.push(...nextFragment.instances);
@@ -337,7 +340,7 @@ export const addInstanceAndProperties = (
     return;
   }
   instance.children.push(...children);
-  added.set(wfNode._id, instanceId);
+  doneNodes.set(wfNode._id, instanceId);
   addCustomAttributes(wfNode, instanceId, fragment.props);
 
   return instanceId;

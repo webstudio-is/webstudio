@@ -49,7 +49,8 @@ const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
     expectedProps.set(prop.id, prop);
   }
 
-  //console.dir(fragmentProps, { depth: null });
+  //console.dir(fragmentInstances, { depth: null });
+  //console.dir(expectedInstances, { depth: null });
   //console.dir(expected.props, { depth: null });
   expect(fragmentInstances).toEqual(expectedInstances);
   expect(fragmentProps).toEqual(expectedProps);
@@ -1090,14 +1091,6 @@ test("Form", async () => {
           tag: "form",
           classes: [],
           children: ["eeb469a5-8b03-8002-7dec-586856365387"],
-          data: {
-            attr: {
-              id: "email-form",
-              name: "email-form",
-              action: "",
-              method: "get",
-            },
-          },
         },
         {
           _id: "eeb469a5-8b03-8002-7dec-586856365387",
@@ -1163,8 +1156,8 @@ test("Form", async () => {
 
   equalFragment(
     fragment,
-    <$.Form>
-      <$.FormContent id="email-form">
+    <$.Box>
+      <$.Box>
         <$.Input
           id="name"
           name="name"
@@ -1175,14 +1168,8 @@ test("Form", async () => {
           required={false}
           autoFocus={false}
         />
-      </$.FormContent>
-      <$.SuccessMessage>
-        <$.Box>{"Thank you! Your submission has been received!"}</$.Box>
-      </$.SuccessMessage>
-      <$.ErrorMessage>
-        <$.Box>{"Oops! Something went wrong while submitting the form."}</$.Box>
-      </$.ErrorMessage>
-    </$.Form>
+      </$.Box>
+    </$.Box>
   );
 });
 

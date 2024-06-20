@@ -245,7 +245,7 @@ const mapComponentAndPresetStyles = (
 export const addStyles = async (
   wfNodes: Map<WfNode["_id"], WfNode>,
   wfStyles: Map<WfStyle["_id"], WfStyle>,
-  added: Map<WfNode["_id"], Instance["id"]>,
+  doneNodes: Map<WfNode["_id"], Instance["id"] | false>,
   fragment: WebstudioFragment
 ) => {
   const { styles: stylePresets } = await import(
@@ -256,7 +256,10 @@ export const addStyles = async (
     if ("text" in wfNode) {
       continue;
     }
-    const instanceId = added.get(wfNode._id);
+    const instanceId = doneNodes.get(wfNode._id);
+    if (instanceId === false) {
+      continue;
+    }
     if (instanceId === undefined) {
       console.error(`No instance id found for node ${wfNode._id}`);
       continue;

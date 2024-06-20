@@ -46,15 +46,16 @@ const toWebstudioFragment = async (wfData: WfData) => {
   const wfStyles = new Map<WfStyle["_id"], WfStyle>(
     wfData.payload.styles.map((style: WfStyle) => [style._id, style])
   );
-  const added = new Map<WfNode["_id"], Instance["id"]>();
+  // False value used to skip a node.
+  const doneNodes = new Map<WfNode["_id"], Instance["id"] | false>();
   for (const wfNode of wfNodes.values()) {
-    addInstanceAndProperties(wfNode, added, wfNodes, fragment);
+    addInstanceAndProperties(wfNode, doneNodes, wfNodes, fragment);
   }
-  await addStyles(wfNodes, wfStyles, added, fragment);
+  await addStyles(wfNodes, wfStyles, doneNodes, fragment);
   // First node should be always the root node in theory, if not
   // we need to find a node that is not a child of any other node.
   const rootWfNode = wfData.payload.nodes[0];
-  const rootInstanceId = added.get(rootWfNode._id);
+  const rootInstanceId = doneNodes.get(rootWfNode._id);
   if (rootInstanceId === undefined) {
     console.error(`No root instance id found for node ${rootWfNode._id}`);
     return fragment;
