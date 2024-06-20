@@ -211,25 +211,20 @@ const toFragment = (
     case "FormWrapper": {
       const component = "Form";
       addInstance(component);
-      //const fragment = getComponentTemplateData("Form");
-      //const formInstance = fragment.instances[0];
-      //formInstance.id = instanceId;
-      //const formContent = formInstance.children[0];
-      //formContent.children = [];
       return fragment;
     }
     case "FormForm": {
-      const component = "Box";
+      const component = "FormContent";
       addInstance(component);
       return fragment;
     }
     case "FormSuccessMessage": {
-      const component = "Box";
+      const component = "SuccessMessage";
       addInstance(component);
       return fragment;
     }
     case "FormErrorMessage": {
-      const component = "Box";
+      const component = "ErrorMessage";
       addInstance(component);
       return fragment;
     }

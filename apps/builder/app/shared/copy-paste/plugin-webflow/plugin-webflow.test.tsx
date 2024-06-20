@@ -1164,7 +1164,7 @@ test("Form", async () => {
   equalFragment(
     fragment,
     <$.Form>
-      <$.Box id="email-form">
+      <$.FormContent id="email-form">
         <$.Input
           id="name"
           name="name"
@@ -1175,13 +1175,13 @@ test("Form", async () => {
           required={false}
           autoFocus={false}
         />
-      </$.Box>
-      <$.Box>
+      </$.FormContent>
+      <$.SuccessMessage>
         <$.Box>{"Thank you! Your submission has been received!"}</$.Box>
-      </$.Box>
-      <$.Box>
+      </$.SuccessMessage>
+      <$.ErrorMessage>
         <$.Box>{"Oops! Something went wrong while submitting the form."}</$.Box>
-      </$.Box>
+      </$.ErrorMessage>
     </$.Form>
   );
 });
