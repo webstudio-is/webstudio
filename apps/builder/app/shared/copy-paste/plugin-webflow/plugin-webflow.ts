@@ -56,6 +56,9 @@ const toWebstudioFragment = async (wfData: WfData) => {
   // we need to find a node that is not a child of any other node.
   const rootWfNode = wfData.payload.nodes[0];
   const rootInstanceId = doneNodes.get(rootWfNode._id);
+  if (rootInstanceId === false) {
+    return fragment;
+  }
   if (rootInstanceId === undefined) {
     console.error(`No root instance id found for node ${rootWfNode._id}`);
     return fragment;
@@ -76,7 +79,7 @@ const parse = (clipboardData: string) => {
   } catch {
     return;
   }
-  console.log(data);
+
   if (data.type !== "@webflow/XscpData") {
     return;
   }
