@@ -6,29 +6,35 @@ import {
 } from "@webstudio-is/css-engine";
 import { initialBreakpoints, type WebstudioFragment } from "@webstudio-is/sdk";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import * as defaultMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import { __testing__ } from "./plugin-webflow";
-import { $breakpoints } from "../../nano-states";
+import { $breakpoints, $registeredComponentMetas } from "../../nano-states";
 
 const { toWebstudioFragment } = __testing__;
 
 const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
   const expected = renderJsx(jsx);
-  const instances = Array.from(expected.instances.values());
-  instances.forEach((instance) => {
+  const expectedInstances = new Map();
+  for (const instance of expected.instances.values()) {
     instance.id = expect.any(String) as unknown as string;
     for (const child of instance.children ?? []) {
       if (child.type === "id") {
         child.value = expect.any(String) as unknown as string;
       }
     }
-  });
+    expectedInstances.set(instance.id, instance);
+  }
   const props = Array.from(expected.props.values()).map((prop) => ({
     ...prop,
     id: expect.any(String),
     instanceId: expect.any(String),
   }));
-
-  expect(fragment.instances).toEqual(instances.reverse());
+  const fragmentInstances = new Map(
+    fragment.instances.map((instance) => [instance.id, instance])
+  );
+  //console.log(111, JSON.stringify(Object.fromEntries(map1), null, 2));
+  //console.log(222, JSON.stringify(Object.fromEntries(map2), null, 2));
+  expect(fragmentInstances).toEqual(expectedInstances);
   expect(fragment.props).toEqual(props);
 };
 
@@ -62,8 +68,8 @@ const toCss = (fragment: WebstudioFragment) => {
 };
 
 beforeEach(() => {
-  //const defaultMetasMap = new Map(Object.entries(defaultMetas));
-  //$registeredComponentMetas.set(defaultMetasMap);
+  const defaultMetasMap = new Map(Object.entries(defaultMetas));
+  $registeredComponentMetas.set(defaultMetasMap);
 
   $breakpoints.set(
     new Map(
@@ -1045,7 +1051,7 @@ test.skip("RichText", async () => {
   );
 });
 
-test.skip("Form", async () => {
+test("Form", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -1119,7 +1125,18 @@ test.skip("Form", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Button>Submit</$.Button>);
+  equalFragment(
+    fragment,
+    <$.Form>
+      <$.Box id="email-form"></$.Box>
+      <$.Box>
+        <$.Box>{"Thank you! Your submission has been received!"}</$.Box>
+      </$.Box>
+      <$.Box>
+        <$.Box>{"Oops! Something went wrong while submitting the form."}</$.Box>
+      </$.Box>
+    </$.Form>
+  );
 });
 
 test("FormButton", async () => {

@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import type { Instance, Prop, WebstudioFragment } from "@webstudio-is/sdk";
 import type { WfElementNode, WfNode } from "./schema";
+import { getComponentTemplateData } from "~/shared/instance-utils";
 
 const toFragment = (
   wfNode: WfElementNode,
@@ -57,6 +58,7 @@ const toFragment = (
       return;
     }
   };
+
   const addInstance = (
     component: Instance["component"],
     children: Instance["children"] = []
@@ -207,15 +209,29 @@ const toFragment = (
       return fragment;
     }
     case "FormWrapper": {
-      return;
+      const component = "Form";
+      addInstance(component);
+      //const fragment = getComponentTemplateData("Form");
+      //const formInstance = fragment.instances[0];
+      //formInstance.id = instanceId;
+      //const formContent = formInstance.children[0];
+      //formContent.children = [];
+      return fragment;
     }
     case "FormForm": {
-      return;
+      const component = "Box";
+      addInstance(component);
+      return fragment;
     }
-    case "FormSuccessMessage":
+    case "FormSuccessMessage": {
+      const component = "Box";
+      addInstance(component);
+      return fragment;
+    }
     case "FormErrorMessage": {
-      // @todo For now we are not copying these nodes
-      return;
+      const component = "Box";
+      addInstance(component);
+      return fragment;
     }
     case "FormButton": {
       const component = "Button";
@@ -321,6 +337,8 @@ export const addInstanceAndProperties = (
   const instance = fragment.instances.find(
     (instance) => instance.id === instanceId
   );
+  //  console.log("found instace", instance);
+  console.log("instance", instance, children, wfNode);
   if (instance === undefined) {
     return;
   }
@@ -328,5 +346,6 @@ export const addInstanceAndProperties = (
   added.set(wfNode._id, instanceId);
   addCustomAttributes(wfNode, instanceId, fragment.props);
 
+  //console.log("fragment", JSON.stringify(fragment, null, 2));
   return instanceId;
 };
