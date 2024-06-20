@@ -172,23 +172,6 @@ const expandLogical = function* (getProperty: GetProperty, value: CssNode) {
 
 const expandEdges = function* (property: string, value: CssNode) {
   switch (property) {
-    case "margin":
-    case "padding":
-      yield* expandBox((edge) => `${property}-${edge}`, value);
-      break;
-    case "margin-inline":
-    case "padding-inline":
-    case "margin-block":
-    case "padding-block":
-      yield* expandLogical((edge) => `${property}-${edge}`, value);
-      break;
-    case "inset":
-      yield* expandBox((edge) => edge, value);
-      break;
-    case "inset-inline":
-    case "inset-block":
-      yield* expandLogical((edge) => `${property}-${edge}`, value);
-      break;
     case "border-width":
     case "border-style":
     case "border-color": {
@@ -709,6 +692,59 @@ const expandMaskBorder = function* (value: CssNode) {
   yield ["mask-border-mode", mode ?? createInitialNode()] as const;
 };
 
+/**
+ *
+ * offset = [
+ *   <'offset-position'>?
+ *   [ <'offset-path'> [ <'offset-distance'> || <'offset-rotate'> ]? ]?
+ * ]!
+ * [ / <'offset-anchor'> ]?
+ *
+ */
+const expandOffset = function* (value: CssNode) {
+  const [config, anchor] = splitByOperator(value, "/");
+  const [position, path, distance, rotate] = parseUnordered(
+    [
+      `<'offset-position'>`,
+      `<'offset-path'>`,
+      `<'offset-distance'>`,
+      `<'offset-rotate'>`,
+    ],
+    config ?? createIdentifier("none")
+  );
+  yield ["offset-position", position ?? createIdentifier("normal")] as const;
+  yield ["offset-path", path ?? createIdentifier("none")] as const;
+  yield ["offset-distance", distance ?? createNumber("0")] as const;
+  yield ["offset-rotate", rotate ?? createIdentifier("auto")] as const;
+  yield ["offset-anchor", anchor ?? createIdentifier("auto")] as const;
+};
+
+/**
+ *
+ * scroll-timeline = [ <'scroll-timeline-name'> <'scroll-timeline-axis'>? ]#
+ *
+ */
+const expandScrollTimeline = function* (value: CssNode) {
+  const list = splitByOperator(value, ",");
+  const names: CssNode[] = [];
+  const axises: CssNode[] = [];
+  for (const singleTimeline of list) {
+    const [name, axis] = getValueList(
+      singleTimeline ?? createIdentifier("none")
+    );
+    names.push(name);
+    axises.push(axis ?? createIdentifier("block"));
+  }
+  yield [
+    "scroll-timeline-name",
+    createValueNode(joinByOperator(names, ",")),
+  ] as const;
+  yield [
+    "scroll-timeline-axis",
+    createValueNode(joinByOperator(axises, ",")),
+  ] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -762,6 +798,27 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "mask-border":
       yield* expandMaskBorder(value);
+      break;
+
+    case "margin":
+    case "padding":
+      yield* expandBox((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "margin-inline":
+    case "margin-block":
+    case "padding-inline":
+    case "padding-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "inset":
+      yield* expandBox((edge) => edge, value);
+      break;
+
+    case "inset-inline":
+    case "inset-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
       break;
 
     case "gap":
@@ -890,6 +947,26 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "transition":
       yield* expandTransition(value);
+      break;
+
+    case "offset":
+      yield* expandOffset(value);
+      break;
+
+    case "scroll-timeline":
+      yield* expandScrollTimeline(value);
+      break;
+
+    case "scroll-margin":
+    case "scroll-padding":
+      yield* expandBox((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "scroll-margin-inline":
+    case "scroll-margin-block":
+    case "scroll-padding-inline":
+    case "scroll-padding-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
       break;
 
     case "overflow": {

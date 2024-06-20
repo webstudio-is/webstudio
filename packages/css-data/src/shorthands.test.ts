@@ -789,14 +789,92 @@ test("expand overflow", () => {
   ]);
 });
 
+test("expand offset", () => {
+  expect(
+    expandShorthands([["offset", `path("M 100 100 L 300 100 L 200 300 z")`]])
+  ).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", 'path("M 100 100 L 300 100 L 200 300 z")'],
+    ["offset-distance", "0"],
+    ["offset-rotate", "auto"],
+    ["offset-anchor", "auto"],
+  ]);
+  expect(
+    expandShorthands([["offset", `url(arc.svg) 30deg / 50px 100px`]])
+  ).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", "url(arc.svg)"],
+    ["offset-distance", "0"],
+    ["offset-rotate", "30deg"],
+    ["offset-anchor", "50px 100px"],
+  ]);
+  expect(expandShorthands([["offset", `url(circle.svg) 40%`]])).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", "url(circle.svg)"],
+    ["offset-distance", "40%"],
+    ["offset-rotate", "auto"],
+    ["offset-anchor", "auto"],
+  ]);
+});
+
+test("expand scroll-timeline", () => {
+  expect(expandShorthands([["scroll-timeline", `none`]])).toEqual([
+    ["scroll-timeline-name", "none"],
+    ["scroll-timeline-axis", "block"],
+  ]);
+  expect(expandShorthands([["scroll-timeline", `none inline`]])).toEqual([
+    ["scroll-timeline-name", "none"],
+    ["scroll-timeline-axis", "inline"],
+  ]);
+  expect(
+    expandShorthands([["scroll-timeline", `--custom_name_for_timeline inline`]])
+  ).toEqual([
+    ["scroll-timeline-name", "--custom_name_for_timeline"],
+    ["scroll-timeline-axis", "inline"],
+  ]);
+  expect(
+    expandShorthands([["scroll-timeline", `none inline, --custom y`]])
+  ).toEqual([
+    ["scroll-timeline-name", "none,--custom"],
+    ["scroll-timeline-axis", "inline,y"],
+  ]);
+});
+
+test("expand scroll-margin/scroll-padding", () => {
+  expect(expandShorthands([["scroll-margin", "10px"]])).toEqual([
+    ["scroll-margin-top", "10px"],
+    ["scroll-margin-right", "10px"],
+    ["scroll-margin-bottom", "10px"],
+    ["scroll-margin-left", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-margin-block", "10px"]])).toEqual([
+    ["scroll-margin-block-start", "10px"],
+    ["scroll-margin-block-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-margin-inline", "10px"]])).toEqual([
+    ["scroll-margin-inline-start", "10px"],
+    ["scroll-margin-inline-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding", "10px"]])).toEqual([
+    ["scroll-padding-top", "10px"],
+    ["scroll-padding-right", "10px"],
+    ["scroll-padding-bottom", "10px"],
+    ["scroll-padding-left", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding-block", "10px"]])).toEqual([
+    ["scroll-padding-block-start", "10px"],
+    ["scroll-padding-block-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding-inline", "10px"]])).toEqual([
+    ["scroll-padding-inline-start", "10px"],
+    ["scroll-padding-inline-end", "10px"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
 test.todo("grid-template");
-test.todo("offset");
-test.todo("scroll-margin");
-test.todo("scroll-padding");
-test.todo("scroll-timeline");
 
 test.todo("white-space - not a shorthand in webflow");
 test.todo("text-wrap - not a shorthand in webflow");
