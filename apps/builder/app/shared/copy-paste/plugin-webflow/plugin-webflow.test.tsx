@@ -4,7 +4,11 @@ import {
   type StyleRule,
   createRegularStyleSheet,
 } from "@webstudio-is/css-engine";
-import { initialBreakpoints, type WebstudioFragment } from "@webstudio-is/sdk";
+import {
+  initialBreakpoints,
+  type WebstudioFragment,
+  type Instance,
+} from "@webstudio-is/sdk";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
 import * as defaultMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import { __testing__ } from "./plugin-webflow";
@@ -13,27 +17,33 @@ import { $breakpoints, $registeredComponentMetas } from "../../nano-states";
 const { toWebstudioFragment } = __testing__;
 
 const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
+  let instanceCounter = 0;
+  // Old instance id and new instance id.
+  const idMap = new Map<string, string>();
+  // Children are accumulated for a second pass
+  const children: Instance["children"] = [];
+
   const fragmentInstances = new Map(
-    fragment.instances.map((instance) => {
-      instance.id = expect.any(String) as unknown as string;
-      for (const child of instance.children ?? []) {
-        if (child.type === "id") {
-          child.value = expect.any(String) as unknown as string;
-        }
-      }
+    fragment.instances.reverse().map((instance: Instance) => {
+      idMap.set(instance.id, instanceCounter.toString());
+      instance.id = instanceCounter.toString();
+      instance.children.reverse();
+      instanceCounter++;
+      children.push(...instance.children);
       return [instance.id, instance];
     })
   );
+  // Replace child ids with counter-based instance ids.
+  for (const child of children) {
+    const value = idMap.get(child.value);
+    if (value) {
+      child.value = value;
+    }
+  }
 
   const expected = renderJsx(jsx);
   const expectedInstances = new Map();
   for (const instance of expected.instances.values()) {
-    instance.id = expect.any(String) as unknown as string;
-    for (const child of instance.children ?? []) {
-      if (child.type === "id") {
-        child.value = expect.any(String) as unknown as string;
-      }
-    }
     expectedInstances.set(instance.id, instance);
   }
   const fragmentProps = new Map();
@@ -49,9 +59,6 @@ const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
     expectedProps.set(prop.id, prop);
   }
 
-  //console.dir(fragmentInstances, { depth: null });
-  //console.dir(expectedInstances, { depth: null });
-  //console.dir(expected.props, { depth: null });
   expect(fragmentInstances).toEqual(expectedInstances);
   expect(fragmentProps).toEqual(expectedProps);
 };
