@@ -207,6 +207,9 @@ export const hooksDialog: Hook = {
             dialog.id
           );
           context.setMemoryProp(instanceSelector, "open", undefined);
+
+          // @todo This is to support outdated Dialog bindings
+          context.setPropVariable(dialog.id, "open", false);
         }
       }
     }
@@ -227,6 +230,9 @@ export const hooksDialog: Hook = {
           );
 
           context.setMemoryProp(instanceSelector, "open", true);
+
+          // @todo This is to support outdated Dialog bindings
+          context.setPropVariable(dialog.id, "open", true);
         }
       }
     }
