@@ -778,6 +778,17 @@ test("expand grid-row and grid-column", () => {
   ]);
 });
 
+test("expand overflow", () => {
+  expect(expandShorthands([["overflow", "hidden"]])).toEqual([
+    ["overflow-x", "hidden"],
+    ["overflow-y", "hidden"],
+  ]);
+  expect(expandShorthands([["overflow", "hidden auto"]])).toEqual([
+    ["overflow-x", "hidden"],
+    ["overflow-y", "auto"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
@@ -794,9 +805,6 @@ test.todo("all - can negatively affect build size");
 test.todo("background - not used in webflow");
 test.todo("background-position-x - we use shorthand");
 test.todo("background-position-y - we use shorthand");
-test.todo("overflow - used in webflow");
-test.todo("overflow-x - we use shorthand");
-test.todo("overflow-y - we use shorthand");
 test.todo("translate - are these directly mappable to transform");
 test.todo("rotate");
 test.todo("scale");

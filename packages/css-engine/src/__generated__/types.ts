@@ -219,7 +219,6 @@ export type Property =
   | "outlineOffset"
   | "outlineStyle"
   | "outlineWidth"
-  | "overflow"
   | "overflowWrap"
   | "overflowX"
   | "overflowY"

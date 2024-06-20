@@ -63,6 +63,8 @@ import { WebstudioIcon } from "@webstudio-is/icons";
 import { computed } from "nanostores";
 import { $dataLoadingState } from "~/shared/nano-states/builder";
 import { initBuilderApi } from "~/shared/builder-api";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 
 registerContainers();
 
@@ -380,6 +382,10 @@ export const Builder = ({
           authPermit,
           authToken,
         });
+        updateWebstudioData((data) => {
+          migrateWebstudioDataMutable(data);
+        });
+
         // render canvas only after all data is loaded
         // so builder is started listening for connect event
         // when canvas is rendered

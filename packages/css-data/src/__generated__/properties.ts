@@ -2049,15 +2049,6 @@ export const properties = {
     },
     types: ["length"],
   },
-  overflow: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "visible",
-    },
-    types: [],
-  },
   overflowWrap: {
     unitGroups: [],
     inherited: true,
