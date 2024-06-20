@@ -337,8 +337,7 @@ export const addInstanceAndProperties = (
   const instance = fragment.instances.find(
     (instance) => instance.id === instanceId
   );
-  //  console.log("found instace", instance);
-  console.log("instance", instance, children, wfNode);
+
   if (instance === undefined) {
     return;
   }
@@ -346,6 +345,5 @@ export const addInstanceAndProperties = (
   added.set(wfNode._id, instanceId);
   addCustomAttributes(wfNode, instanceId, fragment.props);
 
-  //console.log("fragment", JSON.stringify(fragment, null, 2));
   return instanceId;
 };

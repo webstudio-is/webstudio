@@ -13,6 +13,18 @@ import { $breakpoints, $registeredComponentMetas } from "../../nano-states";
 const { toWebstudioFragment } = __testing__;
 
 const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
+  const fragmentInstances = new Map(
+    fragment.instances.map((instance) => {
+      instance.id = expect.any(String) as unknown as string;
+      for (const child of instance.children ?? []) {
+        if (child.type === "id") {
+          child.value = expect.any(String) as unknown as string;
+        }
+      }
+      return [instance.id, instance];
+    })
+  );
+
   const expected = renderJsx(jsx);
   const expectedInstances = new Map();
   for (const instance of expected.instances.values()) {
@@ -24,18 +36,23 @@ const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
     }
     expectedInstances.set(instance.id, instance);
   }
-  const props = Array.from(expected.props.values()).map((prop) => ({
-    ...prop,
-    id: expect.any(String),
-    instanceId: expect.any(String),
-  }));
-  const fragmentInstances = new Map(
-    fragment.instances.map((instance) => [instance.id, instance])
-  );
-  //console.log(111, JSON.stringify(Object.fromEntries(map1), null, 2));
-  //console.log(222, JSON.stringify(Object.fromEntries(map2), null, 2));
+  const fragmentProps = new Map();
+  for (const prop of fragment.props) {
+    prop.id = expect.any(String) as unknown as string;
+    prop.instanceId = expect.any(String) as unknown as string;
+    fragmentProps.set(prop.id, prop);
+  }
+  const expectedProps = new Map();
+  for (const prop of expected.props.values()) {
+    prop.id = expect.any(String) as unknown as string;
+    prop.instanceId = expect.any(String) as unknown as string;
+    expectedProps.set(prop.id, prop);
+  }
+
+  //console.dir(fragmentProps, { depth: null });
+  //console.dir(expected.props, { depth: null });
   expect(fragmentInstances).toEqual(expectedInstances);
-  expect(fragment.props).toEqual(props);
+  expect(fragmentProps).toEqual(expectedProps);
 };
 
 const toCss = (fragment: WebstudioFragment) => {
@@ -1057,22 +1074,22 @@ test("Form", async () => {
     payload: {
       nodes: [
         {
-          _id: "cb7caecb-747f-ea0d-1ad0-d962ce6f6819",
+          _id: "f19c775e-a9ef-fd0c-2d16-aa53c69e9da4",
           type: "FormWrapper",
           tag: "div",
           classes: [],
           children: [
-            "4c292af5-ab16-50d0-de23-33cb0e7fd83f",
-            "8eb3dae9-92ef-cede-d09c-0a80fba93cdc",
-            "f98a4aee-e48e-26cd-ba0e-b9aa85d266a4",
+            "11c85957-89b5-e4f8-da11-f1acb4223a9f",
+            "492633d9-7425-ba09-036f-e43213b9875b",
+            "a0877638-7523-ac57-7ed9-19f5469e79d1",
           ],
         },
         {
-          _id: "4c292af5-ab16-50d0-de23-33cb0e7fd83f",
+          _id: "11c85957-89b5-e4f8-da11-f1acb4223a9f",
           type: "FormForm",
           tag: "form",
           classes: [],
-          children: [],
+          children: ["eeb469a5-8b03-8002-7dec-586856365387"],
           data: {
             attr: {
               id: "email-form",
@@ -1083,40 +1100,59 @@ test("Form", async () => {
           },
         },
         {
-          _id: "8eb3dae9-92ef-cede-d09c-0a80fba93cdc",
+          _id: "eeb469a5-8b03-8002-7dec-586856365387",
+          type: "FormTextInput",
+          tag: "input",
+          classes: [],
+          children: [],
+          data: {
+            attr: {
+              id: "name",
+              name: "name",
+              maxlength: 256,
+              placeholder: "",
+              disabled: false,
+              type: "text",
+              required: false,
+              autofocus: false,
+            },
+          },
+        },
+        {
+          _id: "492633d9-7425-ba09-036f-e43213b9875b",
           type: "FormSuccessMessage",
           tag: "div",
           classes: [],
-          children: ["c727b9b2-2b5f-c724-8493-b59beaf12f6c"],
+          children: ["442d7e86-2c77-961c-ab1b-431bd34abcf7"],
         },
         {
-          _id: "c727b9b2-2b5f-c724-8493-b59beaf12f6c",
+          _id: "442d7e86-2c77-961c-ab1b-431bd34abcf7",
           type: "Block",
           tag: "div",
           classes: [],
-          children: ["fc940c56-4827-c152-730f-b44139dfb9a9"],
+          children: ["875baf7f-6c98-b379-0cbe-59b5fdd2c112"],
         },
         {
-          _id: "fc940c56-4827-c152-730f-b44139dfb9a9",
+          _id: "875baf7f-6c98-b379-0cbe-59b5fdd2c112",
           text: true,
           v: "Thank you! Your submission has been received!",
         },
         {
-          _id: "f98a4aee-e48e-26cd-ba0e-b9aa85d266a4",
+          _id: "a0877638-7523-ac57-7ed9-19f5469e79d1",
           type: "FormErrorMessage",
           tag: "div",
           classes: [],
-          children: ["2d222da2-8eeb-6ce9-bed6-417505facebe"],
+          children: ["9eaf0a19-b2fa-7aef-4825-41f6319d790d"],
         },
         {
-          _id: "2d222da2-8eeb-6ce9-bed6-417505facebe",
+          _id: "9eaf0a19-b2fa-7aef-4825-41f6319d790d",
           type: "Block",
           tag: "div",
           classes: [],
-          children: ["72ea74da-d1cd-e2ee-9095-247011ee6f6a"],
+          children: ["a87685fe-24b2-31ff-e229-40c71f6155dd"],
         },
         {
-          _id: "72ea74da-d1cd-e2ee-9095-247011ee6f6a",
+          _id: "a87685fe-24b2-31ff-e229-40c71f6155dd",
           text: true,
           v: "Oops! Something went wrong while submitting the form.",
         },
@@ -1128,7 +1164,18 @@ test("Form", async () => {
   equalFragment(
     fragment,
     <$.Form>
-      <$.Box id="email-form"></$.Box>
+      <$.Box id="email-form">
+        <$.Input
+          id="name"
+          name="name"
+          maxLength={256}
+          placeholder=""
+          disabled={false}
+          type="text"
+          required={false}
+          autoFocus={false}
+        />
+      </$.Box>
       <$.Box>
         <$.Box>{"Thank you! Your submission has been received!"}</$.Box>
       </$.Box>
