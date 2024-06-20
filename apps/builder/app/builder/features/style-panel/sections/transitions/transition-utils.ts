@@ -1,5 +1,6 @@
 import type {
   KeywordValue,
+  LayerValueItem,
   LayersValue,
   TupleValue,
   UnitValue,
@@ -17,7 +18,7 @@ import {
 export const initialTransition = "opacity 200ms ease 0s";
 export const defaultTransitionProperty: KeywordValue = {
   type: "keyword",
-  value: "all",
+  value: "opacity",
 };
 export const defaultTransitionDuration: UnitValue = {
   type: "unit",
@@ -107,12 +108,12 @@ export const transitionProperties = [
   "transitionDuration",
 ] as const;
 
-type TransitionProperties = (typeof transitionProperties)[number];
+export type TransitionProperties = (typeof transitionProperties)[number];
 
 export const getTransitionProperties = (
   currentyStyle: StyleInfo
 ): Record<TransitionProperties, LayersValue> => {
-  const layers: Record<TransitionProperties, LayersValue> = {
+  const properties: Record<TransitionProperties, LayersValue> = {
     transitionProperty: { type: "layers", value: [] },
     transitionTimingFunction: { type: "layers", value: [] },
     transitionDelay: { type: "layers", value: [] },
@@ -121,14 +122,58 @@ export const getTransitionProperties = (
   for (const property of transitionProperties) {
     const value = currentyStyle[property];
     if (value !== undefined && value.value.type === "layers") {
-      layers[property] = value.value;
+      properties[property] = value.value;
+    }
+  }
+
+  return properties;
+};
+
+const isValidTransitionValue = (
+  value: LayerValueItem
+): value is KeywordValue => {
+  return value.type === "keyword" || value.type === "unit";
+};
+
+export const convertIndividualTransitionToLayers = (
+  properties: Record<TransitionProperties, LayersValue>
+) => {
+  const layers: { type: "layers"; value: Array<TupleValue> } = {
+    type: "layers",
+    value: [],
+  };
+  const {
+    transitionProperty,
+    transitionDuration,
+    transitionDelay,
+    transitionTimingFunction,
+  } = properties;
+
+  for (const [index] of transitionProperty.value.entries()) {
+    const property = transitionProperty.value[index];
+    const duration = transitionDuration.value[index];
+    const timingFunction = transitionTimingFunction.value[index];
+    const delay = transitionDelay.value[index];
+
+    if (
+      isValidTransitionValue(property) === true &&
+      isValidTransitionValue(duration) === true &&
+      isValidTransitionValue(timingFunction) === true &&
+      isValidTransitionValue(delay) === true
+    ) {
+      const layer: TupleValue = {
+        type: "tuple",
+        value: [property, duration, timingFunction, delay],
+        hidden: property.hidden ? true : false,
+      };
+      layers.value.push(layer);
     }
   }
 
   return layers;
 };
 
-export const deleteTransitionProperty = (props: {
+export const deleteTransitionProperties = (props: {
   createBatchUpdate: CreateBatchUpdate;
 }) => {
   const batch = props.createBatchUpdate();
@@ -138,11 +183,12 @@ export const deleteTransitionProperty = (props: {
   batch.publish();
 };
 
-export const addTransitionLayer = (props: {
+export const addDefaultTransitionLayer = (props: {
   createBatchUpdate: CreateBatchUpdate;
-  layers: Record<TransitionProperties, LayersValue>;
+  currentStyle: StyleInfo;
 }) => {
-  const { layers, createBatchUpdate } = props;
+  const { createBatchUpdate, currentStyle } = props;
+  const properties = getTransitionProperties(currentStyle);
   const { timing, property, delay, duration } = extractTransitionProperties(
     parseTransition(initialTransition).value[0] as TupleValue
   );
@@ -151,28 +197,28 @@ export const addTransitionLayer = (props: {
   if (property) {
     batch.setProperty("transitionProperty")({
       type: "layers",
-      value: [...layers.transitionProperty.value, property],
+      value: [...properties.transitionProperty.value, property],
     });
   }
 
   if (timing) {
     batch.setProperty("transitionTimingFunction")({
       type: "layers",
-      value: [...layers.transitionTimingFunction.value, timing],
+      value: [...properties.transitionTimingFunction.value, timing],
     });
   }
 
   if (duration) {
     batch.setProperty("transitionDuration")({
       type: "layers",
-      value: [...layers.transitionDuration.value, duration],
+      value: [...properties.transitionDuration.value, duration],
     });
   }
 
   if (delay) {
     batch.setProperty("transitionDelay")({
       type: "layers",
-      value: [...layers.transitionDelay.value, delay],
+      value: [...properties.transitionDelay.value, delay],
     });
   }
 
@@ -182,13 +228,14 @@ export const addTransitionLayer = (props: {
 export const deleteTransitionLayer = (props: {
   index: number;
   createBatchUpdate: CreateBatchUpdate;
-  layers: Record<TransitionProperties, LayersValue>;
+  currentStyle: StyleInfo;
 }) => {
-  const { index, createBatchUpdate, layers } = props;
+  const { index, createBatchUpdate, currentStyle } = props;
 
+  const properties = getTransitionProperties(currentStyle);
   const batch = createBatchUpdate();
   transitionProperties.forEach((property) => {
-    const value = layers[property].value;
+    const value = properties[property].value;
     batch.setProperty(property)({
       type: "layers",
       value: value.filter((_, i) => i !== index),
@@ -201,13 +248,15 @@ export const editTransitionLayer = (props: {
   index: number;
   layer: LayersValue;
   options: StyleUpdateOptions;
-  layers: Record<TransitionProperties, LayersValue>;
+  currentStyle: StyleInfo;
   createBatchUpdate: CreateBatchUpdate;
 }) => {
-  const { index, layers, layer, createBatchUpdate, options } = props;
+  const { index, layer, createBatchUpdate, options, currentStyle } = props;
   if (layer.value[0].type !== "tuple") {
     return;
   }
+  const properties = getTransitionProperties(currentStyle);
+
   const batch = createBatchUpdate();
 
   const {
@@ -221,7 +270,7 @@ export const editTransitionLayer = (props: {
     transitionDelay,
     transitionDuration,
     transitionTimingFunction,
-  } = layers;
+  } = properties;
 
   // transition-property can't be undefined
   if (property === undefined) {
@@ -263,19 +312,48 @@ export const swapTransitionLayers = (props: {
   oldIndex: number;
   newIndex: number;
   createBatchUpdate: CreateBatchUpdate;
-  layers: Record<TransitionProperties, LayersValue>;
+  currentStyle: StyleInfo;
 }) => {
-  const { oldIndex, newIndex, createBatchUpdate, layers } = props;
+  const { oldIndex, newIndex, createBatchUpdate, currentStyle } = props;
+  const properties = getTransitionProperties(currentStyle);
   const batch = createBatchUpdate();
 
   for (const property of transitionProperties) {
-    const layer = layers[property];
-    const newValue = [...layer.value];
-    newValue.splice(oldIndex, 1);
-    newValue.splice(newIndex, 0, layer.value[oldIndex]);
+    const layer = properties[property];
+    const layervalue = [...layer.value];
+    layervalue.splice(oldIndex, 1);
+    layervalue.splice(newIndex, 0, layer.value[oldIndex]);
     batch.setProperty(property)({
       ...layer,
-      value: newValue,
+      value: layervalue,
+    });
+  }
+
+  batch.publish();
+};
+
+export const hideTransitionLayer = (props: {
+  index: number;
+  createBatchUpdate: CreateBatchUpdate;
+  currentStyle: StyleInfo;
+}) => {
+  const { createBatchUpdate, index, currentStyle } = props;
+  const properties = getTransitionProperties(currentStyle);
+  const batch = createBatchUpdate();
+
+  for (const property of transitionProperties) {
+    const propertyLayer = properties[property];
+    batch.setProperty(property)({
+      type: "layers",
+      value: propertyLayer.value.map((layer, i) => {
+        if (layer.type !== "keyword" && layer.type !== "unit") {
+          return layer;
+        }
+
+        return i === index
+          ? { ...layer, hidden: layer.hidden ? false : true }
+          : layer;
+      }),
     });
   }
 

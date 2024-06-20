@@ -44,6 +44,7 @@ type LayerListProps = SectionProps & {
   deleteProperty: DeleteProperty;
   deleteLayer?: (index: number) => boolean | void;
   swapLayers?: (oldIndex: number, newIndex: number) => void;
+  hideLayer?: (index: number) => void;
   renderContent: (props: {
     index: number;
     layer: TupleValue | FunctionValue;
@@ -135,7 +136,9 @@ export const LayersList = (props: LayerListProps) => {
   };
 
   const handleHideLayer = (index: number) => {
-    return hideLayer(property, index, value, createBatchUpdate);
+    return props?.hideLayer
+      ? props.hideLayer(index)
+      : hideLayer(property, index, value, createBatchUpdate);
   };
 
   const onEditLayer = (

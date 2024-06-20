@@ -34,7 +34,6 @@ export const parseTransition = (
   }
 
   const cssAst = cssTryParseValue(tokenStream);
-
   if (cssAst === undefined) {
     return {
       type: "invalid",

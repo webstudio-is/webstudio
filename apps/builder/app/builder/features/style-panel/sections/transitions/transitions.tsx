@@ -1,12 +1,7 @@
-import {
-  KeywordValue,
-  type LayerValueItem,
-  type LayersValue,
-  type StyleProperty,
-  type TupleValue,
-} from "@webstudio-is/css-engine";
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
-import type { SectionProps } from "../shared/section";
+import type { StyleProperty } from "@webstudio-is/css-engine";
+import { useState, useMemo } from "react";
+import { useStore } from "@nanostores/react";
+import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import {
   SectionTitle,
   SectionTitleButton,
@@ -14,23 +9,25 @@ import {
   Text,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { useState, useMemo } from "react";
+
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import type { SectionProps } from "../shared/section";
 import { getDots } from "../../shared/collapsible-section";
-import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
 import { LayersList } from "../../style-layers-list";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
 import { TransitionContent } from "./transition-content";
 import {
   initialTransition,
   getTransitionProperties,
-  deleteTransitionProperty,
-  addTransitionLayer,
+  deleteTransitionProperties,
+  addDefaultTransitionLayer,
   deleteTransitionLayer,
   transitionProperties,
   editTransitionLayer,
   swapTransitionLayers,
+  hideTransitionLayer,
+  convertIndividualTransitionToLayers,
 } from "./transition-utils";
 
 const label = "Transitions";
@@ -38,48 +35,14 @@ export const properties = Array.from(
   transitionProperties
 ) satisfies Array<StyleProperty>;
 
-const isValidTransitionValue = (
-  value: LayerValueItem
-): value is KeywordValue => {
-  return value.type === "keyword" || value.type === "unit";
-};
-
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const individualLayers = getTransitionProperties(currentStyle);
-  const layers = useMemo(() => {
-    const layers: LayersValue = { type: "layers", value: [] };
-    const {
-      transitionProperty,
-      transitionDuration,
-      transitionDelay,
-      transitionTimingFunction,
-    } = individualLayers;
-
-    // transition-property is a mandatory property
-    for (const [index] of transitionProperty.value.entries()) {
-      const property = transitionProperty.value[index];
-      const duration = transitionDuration.value[index];
-      const timingFunction = transitionTimingFunction.value[index];
-      const delay = transitionDelay.value[index];
-
-      if (
-        isValidTransitionValue(property) === true &&
-        isValidTransitionValue(duration) === true &&
-        isValidTransitionValue(timingFunction) === true &&
-        isValidTransitionValue(delay) === true
-      ) {
-        const layer: TupleValue = {
-          type: "tuple",
-          value: [property, duration, timingFunction, delay],
-        };
-        layers.value.push(layer);
-      }
-    }
-
-    return layers;
-  }, [individualLayers]);
+  const transitionProperties = getTransitionProperties(currentStyle);
+  const layers = useMemo(
+    () => convertIndividualTransitionToLayers(transitionProperties),
+    [transitionProperties]
+  );
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
@@ -110,9 +73,9 @@ export const Section = (props: SectionProps) => {
                 disabled={isStyleInLocalState === false}
                 prefix={<PlusIcon />}
                 onClick={() =>
-                  addTransitionLayer({
+                  addDefaultTransitionLayer({
                     createBatchUpdate,
-                    layers: individualLayers,
+                    currentStyle,
                   })
                 }
               />
@@ -126,7 +89,7 @@ export const Section = (props: SectionProps) => {
             properties={properties}
             label={<SectionTitleLabel>{label}</SectionTitleLabel>}
             onReset={() =>
-              deleteTransitionProperty({
+              deleteTransitionProperties({
                 createBatchUpdate,
               })
             }
@@ -141,7 +104,7 @@ export const Section = (props: SectionProps) => {
           value={layers}
           label={label}
           deleteProperty={() =>
-            deleteTransitionProperty({
+            deleteTransitionProperties({
               createBatchUpdate,
             })
           }
@@ -149,7 +112,7 @@ export const Section = (props: SectionProps) => {
             deleteTransitionLayer({
               index,
               createBatchUpdate,
-              layers: individualLayers,
+              currentStyle,
             })
           }
           swapLayers={(oldIndex, newIndex) =>
@@ -157,9 +120,16 @@ export const Section = (props: SectionProps) => {
               oldIndex,
               newIndex,
               createBatchUpdate,
-              layers: individualLayers,
+              currentStyle,
             })
           }
+          hideLayer={(index) => {
+            hideTransitionLayer({
+              index,
+              createBatchUpdate,
+              currentStyle,
+            });
+          }}
           renderContent={(layerProps) => {
             if (layerProps.layer.type !== "tuple") {
               return <></>;
@@ -175,7 +145,7 @@ export const Section = (props: SectionProps) => {
                     layer,
                     options,
                     createBatchUpdate,
-                    layers: individualLayers,
+                    currentStyle,
                   })
                 }
                 tooltip={
