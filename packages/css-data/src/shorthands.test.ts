@@ -871,10 +871,77 @@ test("expand scroll-margin/scroll-padding", () => {
   ]);
 });
 
+test("expand grid-template", () => {
+  expect(expandShorthands([["grid-template", `none`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "none"],
+    ["grid-template-columns", "none"],
+  ]);
+  expect(expandShorthands([["grid-template", `100px 1fr / 50px 1fr`]])).toEqual(
+    [
+      ["grid-template-areas", "none"],
+      ["grid-template-rows", "100px 1fr"],
+      ["grid-template-columns", "50px 1fr"],
+    ]
+  );
+  expect(
+    expandShorthands([
+      [
+        "grid-template",
+        `
+        [header-top] "a a a" [header-bottom]
+        [main-top] "b b b" 1fr [main-bottom]
+        / auto 1fr auto
+        `,
+      ],
+    ])
+  ).toEqual([
+    ["grid-template-areas", `"a a a""b b b"`],
+    [
+      "grid-template-rows",
+      "[header-top][header-bottom][main-top]1fr[main-bottom]",
+    ],
+    ["grid-template-columns", "auto 1fr auto"],
+  ]);
+});
+
+test("expand grid", () => {
+  expect(expandShorthands([["grid", `none`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "none"],
+    ["grid-template-columns", "none"],
+    ["grid-auto-flow.", "row"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+  expect(expandShorthands([["grid", `100px 1fr / 50px 1fr`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "100px 1fr"],
+    ["grid-template-columns", "50px 1fr"],
+    ["grid-auto-flow.", "row"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+  expect(expandShorthands([["grid", `200px / auto-flow`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "200px"],
+    ["grid-template-columns", "none"],
+    ["grid-auto-flow.", "column"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+  expect(expandShorthands([["grid", `auto-flow dense / 30%`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "none"],
+    ["grid-template-columns", "30%"],
+    ["grid-auto-flow.", "row dense"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
-test.todo("grid");
-test.todo("grid-template");
 
 test.todo("white-space - not a shorthand in webflow");
 test.todo("text-wrap - not a shorthand in webflow");

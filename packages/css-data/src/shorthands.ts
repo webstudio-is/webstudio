@@ -745,6 +745,103 @@ const expandScrollTimeline = function* (value: CssNode) {
   ] as const;
 };
 
+/**
+ *
+ * grid-template =
+ *   none |
+ *   [ <'grid-template-rows'> / <'grid-template-columns'> ] |
+ *   [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?
+ *
+ */
+const expandGridTemplate = function* (value: CssNode) {
+  let rows = createIdentifier("none");
+  let columns = createIdentifier("none");
+  let areas = createIdentifier("none");
+  [rows = createIdentifier("none"), columns = createIdentifier("none")] =
+    splitByOperator(value, "/");
+  const rowsNodes: CssNode[] = [];
+  const areasNodes: CssNode[] = [];
+  for (const node of getValueList(rows)) {
+    if (node.type === "String") {
+      areasNodes.push(node);
+    } else {
+      rowsNodes.push(node);
+    }
+  }
+  if (areasNodes.length > 0) {
+    areas = createValueNode(areasNodes);
+    rows = createValueNode(rowsNodes);
+  }
+  yield ["grid-template-areas", areas] as const;
+  yield ["grid-template-rows", rows] as const;
+  yield ["grid-template-columns", columns] as const;
+};
+
+/**
+ *
+ * grid =
+ *   <'grid-template'> |
+ *   <'grid-template-rows'> / [ auto-flow && dense? ] <'grid-auto-columns'>? |
+ *   [ auto-flow && dense? ] <'grid-auto-rows'>? / <'grid-template-columns'>
+ *
+ */
+const expandGrid = function* (value: CssNode) {
+  const areas = createIdentifier("none");
+  let templateRows = createIdentifier("none");
+  let templateColumns = createIdentifier("none");
+  let autoFlow = createIdentifier("row");
+  let autoRows = createIdentifier("auto");
+  let autoColumns = createIdentifier("auto");
+  const [rows = createIdentifier("none"), columns = createIdentifier("none")] =
+    splitByOperator(value, "/");
+  if (lexer.match(`<'grid-template'>`, value).matched) {
+    yield* expandGridTemplate(value);
+    yield ["grid-auto-flow.", autoFlow] as const;
+    yield ["grid-auto-rows", autoRows] as const;
+    yield ["grid-auto-columns", autoColumns] as const;
+    return;
+  }
+  if (
+    lexer.match(`[ auto-flow && dense? ] <'grid-auto-rows'>?`, rows).matched
+  ) {
+    const [autoFlowKeyword, denseKeyword, config] = parseUnordered(
+      ["auto-flow", "dense", `<'grid-auto-rows'>?`],
+      rows
+    );
+    if (autoFlowKeyword) {
+      autoFlow = createIdentifier("row");
+      if (denseKeyword) {
+        autoFlow.children.appendList(denseKeyword.children);
+      }
+    }
+    autoRows = config ?? createIdentifier("auto");
+    templateColumns = columns;
+  }
+  if (
+    lexer.match(`[ auto-flow && dense? ] <'grid-auto-columns'>?`, columns)
+      .matched
+  ) {
+    const [autoFlowKeyword, denseKeyword, config] = parseUnordered(
+      ["auto-flow", "dense", `<'grid-auto-columns'>?`],
+      columns
+    );
+    if (autoFlowKeyword) {
+      autoFlow = createIdentifier("column");
+      if (denseKeyword) {
+        autoFlow.children.appendList(denseKeyword.children);
+      }
+    }
+    autoColumns = config ?? createIdentifier("auto");
+    templateRows = rows;
+  }
+  yield ["grid-template-areas", areas] as const;
+  yield ["grid-template-rows", templateRows] as const;
+  yield ["grid-template-columns", templateColumns] as const;
+  yield ["grid-auto-flow.", autoFlow] as const;
+  yield ["grid-auto-rows", autoRows] as const;
+  yield ["grid-auto-columns", autoColumns] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -865,6 +962,14 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield ["grid-column-end", end ?? createIdentifier("auto")] as const;
       break;
     }
+
+    case "grid-template":
+      yield* expandGridTemplate(value);
+      break;
+
+    case "grid":
+      yield* expandGrid(value);
+      break;
 
     case "flex":
       yield* expandFlex(value);
