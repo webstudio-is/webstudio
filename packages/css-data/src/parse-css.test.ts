@@ -361,6 +361,23 @@ describe("Parse CSS", () => {
     `);
   });
 
+  test("skip empty value", () => {
+    expect(parseCss(`a { color: ; background-color: red }`))
+      .toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "backgroundColor",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("parse child combinator", () => {
     expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });

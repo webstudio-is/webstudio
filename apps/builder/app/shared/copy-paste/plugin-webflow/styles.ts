@@ -176,7 +176,7 @@ const addNodeStyles = ({
         state: style.state,
       });
       if (style.value.type === "invalid") {
-        const error = `Invalid style value: "${kebabCase(style.property)}: ${style.value.value}"`;
+        const error = `Invalid style value: ${name} "${kebabCase(style.property)}: ${style.value.value}"`;
         toast.error(error);
         console.error(error);
       }

@@ -931,13 +931,6 @@ export const styles = {
       },
     },
     {
-      property: "fontFamily",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
       property: "marginTop",
       value: {
         type: "unit",
@@ -1166,13 +1159,6 @@ export const styles = {
       value: {
         type: "keyword",
         value: "inherit",
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "invalid",
-        value: "",
       },
     },
     {
@@ -1407,13 +1393,6 @@ export const styles = {
       },
     },
     {
-      property: "fontFamily",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
       property: "marginTop",
       value: {
         type: "unit",
@@ -1504,13 +1483,6 @@ export const styles = {
       },
     },
     {
-      property: "fontFamily",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
       property: "marginTop",
       value: {
         type: "unit",
@@ -1598,13 +1570,6 @@ export const styles = {
       value: {
         type: "keyword",
         value: "initial",
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "invalid",
-        value: "",
       },
     },
     {
@@ -3061,7 +3026,7 @@ export const styles = {
       property: "boxShadow",
       value: {
         type: "unparsed",
-        value: "0 0 0 1px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.1)",
+        value: "0 0 0 1px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.1)",
       },
     },
     {
@@ -8049,7 +8014,7 @@ export const styles = {
       property: "boxShadow",
       value: {
         type: "unparsed",
-        value: "0 0 3px rgba(51,51,51,.4)",
+        value: "0 0 3px rgba(51,51,51,0.4)",
       },
     },
   ],
@@ -8151,7 +8116,7 @@ export const styles = {
       property: "transitionDuration",
       value: {
         type: "unparsed",
-        value: ".1s,.1s",
+        value: "0.1s,0.1s",
       },
     },
     {
@@ -8165,7 +8130,7 @@ export const styles = {
       property: "transitionDelay",
       value: {
         type: "unparsed",
-        value: ".1s,.1s",
+        value: "0.1s,0.1s",
       },
     },
     {
