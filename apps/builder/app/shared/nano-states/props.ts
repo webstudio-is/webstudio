@@ -349,20 +349,6 @@ export const $propValuesByInstanceSelector = computed(
         propValues
       );
 
-      for (const [memoryKey, memoryValue] of memoryProps) {
-        const propsBySelector =
-          propValuesByInstanceSelector.get(memoryKey) ?? new Map();
-
-        for (const [memoryProp, memoryPropValue] of memoryValue) {
-          if (propsBySelector.has(memoryProp)) {
-            continue;
-          }
-          propsBySelector.set(memoryProp, memoryPropValue);
-        }
-
-        propValuesByInstanceSelector.set(memoryKey, propsBySelector);
-      }
-
       if (instance.component === collectionComponent) {
         const data = propValues.get("data");
         const itemVariableId = parameters.get("item");
@@ -395,7 +381,19 @@ export const $propValuesByInstanceSelector = computed(
         }
       }
     };
+
     traverseInstances([page.rootInstanceId]);
+
+    for (const [memoryKey, memoryValue] of memoryProps) {
+      const propsBySelector =
+        propValuesByInstanceSelector.get(memoryKey) ?? new Map();
+
+      for (const [memoryProp, memoryPropValue] of memoryValue) {
+        propsBySelector.set(memoryProp, memoryPropValue);
+      }
+
+      propValuesByInstanceSelector.set(memoryKey, propsBySelector);
+    }
 
     return propValuesByInstanceSelector;
   }
