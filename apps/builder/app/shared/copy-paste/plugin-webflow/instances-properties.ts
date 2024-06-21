@@ -305,6 +305,15 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+    case "FormSelect": {
+      const component = "Select";
+      const data = wfNode.data;
+      addProp("name", data.attr.name);
+      addProp("required", data.attr.required, "boolean");
+      addProp("multiple", data.attr.multiple, "boolean");
+      addInstance(component);
+      return fragment;
+    }
   }
 
   (component) satisfies never;

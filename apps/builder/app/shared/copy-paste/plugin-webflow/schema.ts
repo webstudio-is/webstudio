@@ -60,6 +60,7 @@ export const wfNodeTypes = [
   "FormInlineLabel",
   "FormRadioWrapper",
   "FormRadioInput",
+  "FormSelect",
 ] as const;
 
 export const WfElementNode = z.union([
@@ -209,6 +210,24 @@ export const WfElementNode = z.union([
         name: z.string(),
         required: z.boolean(),
         value: z.string(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormSelect"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        name: z.string(),
+        required: z.boolean(),
+        multiple: z.boolean(),
+      }),
+      form: z.object({
+        opts: z.array(
+          z.object({
+            t: z.string(),
+            v: z.string(),
+          })
+        ),
       }),
     }),
   }),
