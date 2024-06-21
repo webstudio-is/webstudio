@@ -389,7 +389,7 @@ export const $propValuesByInstanceSelector = computed(
         propValuesByInstanceSelector.get(memoryKey) ?? new Map();
 
       for (const [memoryProp, memoryPropValue] of memoryValue) {
-        propsBySelector.set(memoryProp, memoryPropValue);
+        propsBySelector.set(memoryProp, memoryPropValue.value);
       }
 
       propValuesByInstanceSelector.set(memoryKey, propsBySelector);

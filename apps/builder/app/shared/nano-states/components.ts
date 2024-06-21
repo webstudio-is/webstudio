@@ -49,6 +49,11 @@ const createHookContext = (): HookContext => {
     },
 
     setMemoryProp: (instanceSelector, propName, value) => {
+      if (instanceSelector.length === 0) {
+        console.error("instanceSelector is empty");
+        return;
+      }
+
       const props = $memoryProps.get();
 
       const newProps = props.get(JSON.stringify(instanceSelector)) ?? new Map();
