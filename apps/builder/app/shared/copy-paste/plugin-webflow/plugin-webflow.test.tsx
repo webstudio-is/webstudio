@@ -1466,6 +1466,69 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
   );
 });
 
+test("FormSelect", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "a68c34ca-e4c3-3dbc-0036-2554387bd7a4",
+          type: "FormSelect",
+          tag: "select",
+          classes: [],
+          children: [],
+          data: {
+            form: {
+              name: "Field 3",
+              opts: [
+                {
+                  t: "Select one...",
+                  v: "",
+                },
+                {
+                  t: "First choice",
+                  v: "First",
+                },
+                {
+                  t: "Second choice",
+                  v: "Second",
+                },
+                {
+                  t: "Third choice",
+                  v: "Third",
+                },
+              ],
+              type: "select",
+            },
+            attr: {
+              id: "field-3",
+              name: "field-3",
+              required: false,
+              multiple: false,
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Label ws:label="Radio Field">
+      <$.RadioButton
+        id="radio"
+        name="radio"
+        required={false}
+        defaultChecked={false}
+      />
+      <$.Text tag="span" ws:label="Radio Label">
+        Radio
+      </$.Text>
+    </$.Label>
+  );
+});
+
 describe("Custom attributes", () => {
   test("Basic", async () => {
     const fragment = await toWebstudioFragment({
