@@ -910,21 +910,21 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontSize",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
     {
-      property: "fontSize",
+      property: "lineHeight",
       value: {
         type: "keyword",
-        value: "inherit",
+        value: "initial",
       },
     },
     {
-      property: "lineHeight",
+      property: "fontFamily",
       value: {
         type: "keyword",
         value: "initial",
@@ -1148,17 +1148,17 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontSize",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
     {
-      property: "fontSize",
+      property: "fontFamily",
       value: {
         type: "keyword",
-        value: "inherit",
+        value: "initial",
       },
     },
     {
@@ -1372,21 +1372,21 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontSize",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
     {
-      property: "fontSize",
+      property: "lineHeight",
       value: {
         type: "keyword",
-        value: "inherit",
+        value: "initial",
       },
     },
     {
-      property: "lineHeight",
+      property: "fontFamily",
       value: {
         type: "keyword",
         value: "initial",
@@ -1462,21 +1462,21 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontSize",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
     {
-      property: "fontSize",
+      property: "lineHeight",
       value: {
         type: "keyword",
-        value: "inherit",
+        value: "initial",
       },
     },
     {
-      property: "lineHeight",
+      property: "fontFamily",
       value: {
         type: "keyword",
         value: "initial",
@@ -1552,21 +1552,21 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontSize",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
     {
-      property: "fontSize",
+      property: "lineHeight",
       value: {
         type: "keyword",
-        value: "inherit",
+        value: "initial",
       },
     },
     {
-      property: "lineHeight",
+      property: "fontFamily",
       value: {
         type: "keyword",
         value: "initial",
