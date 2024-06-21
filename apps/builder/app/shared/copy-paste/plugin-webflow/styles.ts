@@ -230,7 +230,8 @@ const mapComponentAndPresetStyles = (
       presetStyles.push("w-form");
       return presetStyles;
     }
-    case "FormTextInput": {
+    case "FormTextInput":
+    case "FormTextarea": {
       presetStyles.push("w-input");
       return presetStyles;
     }

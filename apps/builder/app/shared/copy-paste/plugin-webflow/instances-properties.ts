@@ -251,6 +251,17 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+    case "FormTextarea": {
+      const data = wfNode.data;
+      const component = "Textarea";
+      addProp("name", data.attr.name);
+      addProp("maxLength", data.attr.maxlength, "number");
+      addProp("placeholder", data.attr.placeholder);
+      addProp("required", data.attr.required, "boolean");
+      addProp("autoFocus", data.attr.autofocus, "boolean");
+      addInstance(component);
+      return fragment;
+    }
     case "FormBlockLabel": {
       const data = wfNode.data;
       const component = "Label";

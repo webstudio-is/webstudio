@@ -53,6 +53,7 @@ export const wfNodeTypes = [
   "FormErrorMessage",
   "FormButton",
   "FormTextInput",
+  "FormTextarea",
   "FormBlockLabel",
 ] as const;
 
@@ -150,6 +151,19 @@ export const WfElementNode = z.union([
         placeholder: z.string(),
         disabled: z.boolean(),
         type: z.string(),
+        required: z.boolean(),
+        autofocus: z.boolean(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormTextarea"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        id: z.string(),
+        name: z.string(),
+        maxlength: z.number(),
+        placeholder: z.string(),
         required: z.boolean(),
         autofocus: z.boolean(),
       }),

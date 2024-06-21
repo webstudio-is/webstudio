@@ -1272,6 +1272,46 @@ test("FormBlockLabel", async () => {
   equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
 });
 
+test("FormTextarea", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "ff81988e-1cc2-8c93-d264-d702d846c30a",
+          type: "FormTextarea",
+          tag: "textarea",
+          classes: [],
+          children: [],
+          data: {
+            attr: {
+              id: "field",
+              name: "field",
+              maxlength: 5000,
+              placeholder: "Example Text",
+              required: false,
+              autofocus: false,
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Textarea
+      id="field"
+      name="field"
+      maxLength={5000}
+      placeholder="Example Text"
+      required={false}
+      autoFocus={false}
+    />
+  );
+});
+
 describe("Custom attributes", () => {
   test("Basic", async () => {
     const fragment = await toWebstudioFragment({
