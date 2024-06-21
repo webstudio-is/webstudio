@@ -80,7 +80,14 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
-    case "List":
+    case "List": {
+      console.log(wfNode);
+      if (wfNode.tag === "ol") {
+        addProp("ordered", true, "boolean");
+      }
+      addInstance(component);
+      return fragment;
+    }
     case "ListItem":
     case "Paragraph":
     case "Superscript":
