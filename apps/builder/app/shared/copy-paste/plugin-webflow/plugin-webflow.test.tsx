@@ -1429,7 +1429,6 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
           classes: [],
           children: [],
           data: {
-            inputType: "default",
             attr: {
               type: "radio",
               name: "radio",
