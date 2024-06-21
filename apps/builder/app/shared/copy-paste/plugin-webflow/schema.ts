@@ -58,6 +58,8 @@ export const wfNodeTypes = [
   "FormCheckboxWrapper",
   "FormCheckboxInput",
   "FormInlineLabel",
+  "FormRadioWrapper",
+  "FormRadioInput",
 ] as const;
 
 export const WfElementNode = z.union([
@@ -195,6 +197,20 @@ export const WfElementNode = z.union([
   }),
   WfBaseNode.extend({
     type: z.enum(["FormInlineLabel"]),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormRadioWrapper"]),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormRadioInput"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        type: z.enum(["radio"]),
+        name: z.string(),
+        required: z.boolean(),
+        value: z.string(),
+      }),
+    }),
   }),
 ]);
 

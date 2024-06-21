@@ -291,6 +291,20 @@ const toFragment = (
       addInstance(component, [], "Checkbox Label");
       return fragment;
     }
+    case "FormRadioWrapper": {
+      const component = "Label";
+      addInstance(component, [], "Radio Field");
+      return fragment;
+    }
+    case "FormRadioInput": {
+      const component = "RadioButton";
+      const data = wfNode.data;
+      addProp("name", data.attr.name);
+      addProp("required", data.attr.required, "boolean");
+      addProp("value", data.attr.value);
+      addInstance(component);
+      return fragment;
+    }
   }
 
   (component) satisfies never;

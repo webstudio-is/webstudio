@@ -251,6 +251,14 @@ const mapComponentAndPresetStyles = (
       presetStyles.push("w-form-label");
       return presetStyles;
     }
+    case "FormRadioWrapper": {
+      presetStyles.push("w-radio");
+      return presetStyles;
+    }
+    case "FormRadioInput": {
+      presetStyles.push("w-radio-input");
+      return presetStyles;
+    }
   }
 
   return presetStyles;

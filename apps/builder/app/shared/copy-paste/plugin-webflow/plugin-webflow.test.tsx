@@ -1407,6 +1407,71 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
   );
 });
 
+test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "712915f3-84e7-6e7a-e1a1-050e12d3b401",
+          type: "FormRadioWrapper",
+          tag: "div",
+          classes: [],
+          children: [
+            "2ee7bcbb-e2ec-3c21-2cb0-c76171ff84e0",
+            "99874ce0-e582-a5ea-9934-f6e42266a80d",
+          ],
+        },
+        {
+          _id: "2ee7bcbb-e2ec-3c21-2cb0-c76171ff84e0",
+          type: "FormRadioInput",
+          tag: "input",
+          classes: [],
+          children: [],
+          data: {
+            inputType: "default",
+            attr: {
+              type: "radio",
+              name: "radio",
+              id: "radio",
+              value: "Radio",
+              required: false,
+            },
+          },
+        },
+        {
+          _id: "99874ce0-e582-a5ea-9934-f6e42266a80d",
+          type: "FormInlineLabel",
+          tag: "label",
+          classes: [],
+          children: ["9e6a0451-a55e-a063-9acc-ee22ed5eac94"],
+        },
+        {
+          _id: "9e6a0451-a55e-a063-9acc-ee22ed5eac94",
+          text: true,
+          v: "Radio",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Label ws:label="Radio Field">
+      <$.RadioButton
+        id="radio"
+        name="radio"
+        required={false}
+        defaultChecked={false}
+      />
+      <$.Text tag="span" ws:label="Radio Label">
+        Radio
+      </$.Text>
+    </$.Label>
+  );
+});
+
 describe("Custom attributes", () => {
   test("Basic", async () => {
     const fragment = await toWebstudioFragment({
