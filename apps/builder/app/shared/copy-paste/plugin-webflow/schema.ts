@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+const Attr = z.object({ id: z.string() }).partial();
+
 const WfNodeData = z.object({
+  attr: Attr.optional(),
   xattr: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
 });
 
@@ -10,6 +13,7 @@ const WfBaseNode = z.object({
   children: z.array(z.string()),
   classes: z.array(z.string()),
   data: WfNodeData.optional(),
+  attr: Attr.optional(),
 });
 
 const WfTextNode = z.object({
@@ -43,19 +47,36 @@ export const wfNodeTypes = [
   "CodeBlock",
   "HtmlEmbed",
   "Image",
+  "FormWrapper",
+  "FormForm",
+  "FormSuccessMessage",
+  "FormErrorMessage",
+  "FormButton",
+  "FormTextInput",
+  "FormTextarea",
+  "FormBlockLabel",
+  "FormCheckboxWrapper",
+  "FormCheckboxInput",
+  "FormInlineLabel",
+  "FormRadioWrapper",
+  "FormRadioInput",
 ] as const;
 
 export const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
-    data: WfNodeData.extend({ text: z.boolean().optional() }).optional(),
+    data: WfNodeData.extend({
+      attr: Attr.optional(),
+      text: z.boolean().optional(),
+    }).optional(),
   }),
   WfBaseNode.extend({ type: z.enum(["List"]) }),
   WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
   WfBaseNode.extend({
     type: z.enum(["Link"]),
     data: WfNodeData.extend({
+      attr: Attr.optional(),
       block: z.enum(["inline", "block", ""]).optional(),
       button: z.boolean().optional(),
       link: z.object({
@@ -83,6 +104,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["CodeBlock"]),
     data: WfNodeData.extend({
+      attr: Attr.optional(),
       language: z.string().optional(),
       code: z.string(),
     }),
@@ -91,11 +113,10 @@ export const WfElementNode = z.union([
     type: z.enum(["HtmlEmbed"]),
     v: z.string(),
   }),
-
   WfBaseNode.extend({
     type: z.enum(["Image"]),
     data: WfNodeData.extend({
-      attr: z.object({
+      attr: Attr.extend({
         alt: z.string(),
         loading: z.enum(["lazy", "eager", "auto"]),
         src: z.string(),
@@ -104,11 +125,101 @@ export const WfElementNode = z.union([
       }),
     }),
   }),
+  WfBaseNode.extend({ type: z.enum(["FormWrapper"]) }),
+  WfBaseNode.extend({
+    type: z.enum(["FormForm"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        action: z.string(),
+        method: z.string(),
+        name: z.string(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({ type: z.enum(["FormSuccessMessage"]) }),
+  WfBaseNode.extend({ type: z.enum(["FormErrorMessage"]) }),
+  WfBaseNode.extend({
+    type: z.enum(["FormButton"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        value: z.string(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormTextInput"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        name: z.string(),
+        maxlength: z.number(),
+        placeholder: z.string(),
+        disabled: z.boolean(),
+        type: z.string(),
+        required: z.boolean(),
+        autofocus: z.boolean(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormTextarea"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        name: z.string(),
+        maxlength: z.number(),
+        placeholder: z.string(),
+        required: z.boolean(),
+        autofocus: z.boolean(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormBlockLabel"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        for: z.string().optional(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormCheckboxWrapper"]),
+  }),
+
+  WfBaseNode.extend({
+    type: z.enum(["FormCheckboxInput"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        type: z.enum(["checkbox"]),
+        name: z.string(),
+        required: z.boolean(),
+        checked: z.boolean(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormInlineLabel"]),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormRadioWrapper"]),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormRadioInput"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        type: z.enum(["radio"]),
+        name: z.string(),
+        required: z.boolean(),
+        value: z.string(),
+      }),
+    }),
+  }),
 ]);
 
 export type WfElementNode = z.infer<typeof WfElementNode>;
 
 [...wfNodeTypes] as const satisfies WfElementNode["type"][];
+
+//@todo verify the other way around too
+//(typeof WfElementNode)["type"] satisfies typeof wfNodeTypes[number]
 
 export const WfNode = z.union([WfElementNode, WfTextNode]);
 export type WfNode = z.infer<typeof WfNode>;
@@ -121,7 +232,16 @@ export const WfStyle = z.object({
   fake: z.boolean().optional(),
   comb: z.string().optional(),
   namespace: z.string().optional(),
-  variants: z.object({}).optional(),
+  variants: z
+    .object({
+      large: z.object({ styleLess: z.string() }).optional(),
+      medium: z.object({ styleLess: z.string() }).optional(),
+      small: z.object({ styleLess: z.string() }).optional(),
+      tiny: z.object({ styleLess: z.string() }).optional(),
+      xl: z.object({ styleLess: z.string() }).optional(),
+      xxl: z.object({ styleLess: z.string() }).optional(),
+    })
+    .optional(),
   children: z.array(z.string()).optional(),
   createdBy: z.string().optional(),
   origin: z.null().optional(),

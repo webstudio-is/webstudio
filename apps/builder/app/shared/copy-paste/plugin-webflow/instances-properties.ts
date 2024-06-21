@@ -2,140 +2,188 @@ import { nanoid } from "nanoid";
 import type { Instance, Prop, WebstudioFragment } from "@webstudio-is/sdk";
 import type { WfElementNode, WfNode } from "./schema";
 
-const mapComponentAndProperties = (
+const toFragment = (
   wfNode: WfElementNode,
-  instanceId: Instance["id"]
-) => {
-  const props: Array<Prop> = [];
+  instanceId: Instance["id"],
+  wfNodes: Map<WfNode["_id"], WfNode>
+): WebstudioFragment | undefined => {
+  const fragment: WebstudioFragment = {
+    children: [],
+    instances: [],
+    props: [],
+    dataSources: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
+  };
   const component = wfNode.type;
 
+  const addProp = (
+    name: Prop["name"],
+    value: Prop["value"],
+    type: Prop["type"] = "string"
+  ) => {
+    const prop = { id: nanoid(), instanceId };
+
+    if (type === "string" && typeof value === "string") {
+      fragment.props.push({
+        ...prop,
+        type,
+        name,
+        value,
+      });
+      return;
+    }
+    if (type === "number" && typeof value === "number") {
+      fragment.props.push({
+        ...prop,
+        type,
+        name,
+        value,
+      });
+      return;
+    }
+
+    if (type === "boolean" && typeof value === "boolean") {
+      fragment.props.push({
+        ...prop,
+        type,
+        name,
+        value,
+      });
+      return;
+    }
+  };
+
+  const addInstance = (
+    component: Instance["component"],
+    children: Instance["children"] = [],
+    label?: string
+  ) => {
+    fragment.instances.push({
+      id: instanceId,
+      type: "instance",
+      component,
+      children,
+      ...(label ? { label } : undefined),
+    });
+  };
+
+  if (wfNode.data?.attr?.id) {
+    addProp("id", wfNode.data.attr.id);
+  }
+
   switch (component) {
-    case "Heading":
-    case "List":
+    case "Heading": {
+      addProp("tag", wfNode.tag);
+      addInstance(component);
+      return fragment;
+    }
+    case "List": {
+      if (wfNode.tag === "ol") {
+        addProp("ordered", true, "boolean");
+      }
+      addInstance(component);
+      return fragment;
+    }
     case "ListItem":
     case "Paragraph":
     case "Superscript":
     case "Subscript":
     case "Blockquote": {
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Block": {
       const component = wfNode.data?.text ? "Text" : "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Link": {
       const data = wfNode.data;
 
-      if (data.link.url) {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "href",
-          value: data.link.url,
-        });
-      }
-      if (data.link.target) {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "target",
-          value: data.link.target,
-        });
-      }
-      return { component, props };
+      addProp("href", data.link.url);
+      addProp("target", data.link.target);
+      addInstance(component);
+      return fragment;
     }
     case "Section": {
       const component = "Box";
-      return { component, props };
+      addProp("tag", wfNode.tag);
+      addInstance(component);
+      return fragment;
     }
     case "RichText": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Strong": {
       const component = "Bold";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Emphasized": {
       const component = "Italic";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "BlockContainer": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Layout": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Cell": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "VFlex": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "HFlex": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Grid": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Row": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "Column": {
       const component = "Box";
-      return { component, props };
+      addInstance(component);
+      return fragment;
     }
     case "CodeBlock": {
       const component = "CodeText";
       const data = wfNode.data;
-
-      if (data.language) {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "lang",
-          value: data.language,
-        });
-      }
-
-      if (data.code) {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "code",
-          value: data.code,
-        });
-      }
-      return { component, props };
+      addProp("lang", data.language);
+      addProp("code", data.code);
+      addInstance(component);
+      return fragment;
     }
     case "HtmlEmbed": {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "code",
-        value: wfNode.v,
-      });
-      props.push({
-        type: "boolean",
-        id: nanoid(),
-        instanceId,
-        name: "clientOnly",
-        value: true,
-      });
-
-      return { component, props };
+      addProp("code", wfNode.v);
+      addProp("clientOnly", true, "boolean");
+      addInstance(component);
+      return fragment;
     }
     case "Image": {
       const data = wfNode.data;
@@ -147,75 +195,126 @@ const mapComponentAndProperties = (
         // This is how they tell it to use alt="", which is our default anyways
         data.attr.alt !== "__wf_reserved_decorative"
       ) {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "alt",
-          value: data.attr.alt,
-        });
+        addProp("alt", data.attr.alt);
       }
 
       if (data.attr.loading === "eager" || data.attr.loading === "lazy") {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "loading",
-          value: data.attr.loading,
-        });
+        addProp("loading", data.attr.loading);
       }
 
       if (data.attr.width && data.attr.width !== "auto") {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "width",
-          value: data.attr.width,
-        });
+        addProp("width", data.attr.width);
       }
 
       if (data.attr.height && data.attr.height !== "auto") {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "height",
-          value: data.attr.height,
-        });
+        addProp("height", data.attr.height);
       }
       if (data.attr.src) {
-        props.push({
-          type: "string",
-          id: nanoid(),
-          instanceId,
-          name: "src",
-          value: data.attr.src,
-        });
+        addProp("src", data.attr.src);
       }
-      return { component, props };
+      addInstance(component);
+      return fragment;
+    }
+    case "FormWrapper": {
+      const component = "Box";
+      addInstance(component);
+      return fragment;
+    }
+    case "FormForm": {
+      const component = "Box";
+      addInstance(component);
+      return fragment;
+    }
+    case "FormErrorMessage":
+    case "FormSuccessMessage": {
+      return;
+    }
+    case "FormButton": {
+      const component = "Button";
+      const data = wfNode.data;
+      addInstance(component, [
+        {
+          type: "text" as const,
+          value: data.attr.value,
+        },
+      ]);
+      return fragment;
+    }
+    case "FormTextInput": {
+      const data = wfNode.data;
+      const component = "Input";
+      addProp("name", data.attr.name);
+      addProp("maxLength", data.attr.maxlength, "number");
+      addProp("placeholder", data.attr.placeholder);
+      addProp("disabled", data.attr.disabled, "boolean");
+      addProp("type", data.attr.type);
+      addProp("required", data.attr.required, "boolean");
+      addProp("autoFocus", data.attr.autofocus, "boolean");
+      addInstance(component);
+      return fragment;
+    }
+    case "FormTextarea": {
+      const data = wfNode.data;
+      const component = "Textarea";
+      addProp("name", data.attr.name);
+      addProp("maxLength", data.attr.maxlength, "number");
+      addProp("placeholder", data.attr.placeholder);
+      addProp("required", data.attr.required, "boolean");
+      addProp("autoFocus", data.attr.autofocus, "boolean");
+      addInstance(component);
+      return fragment;
+    }
+    case "FormBlockLabel": {
+      const data = wfNode.data;
+      const component = "Label";
+      addProp("htmlFor", data.attr.for);
+      addInstance(component);
+      return fragment;
+    }
+    case "FormCheckboxWrapper": {
+      const component = "Label";
+      addInstance(component, [], "Checkbox Field");
+      return fragment;
+    }
+    case "FormCheckboxInput": {
+      const component = "Checkbox";
+      const data = wfNode.data;
+      addProp("name", data.attr.name);
+      addProp("required", data.attr.required, "boolean");
+      addProp("defaultChecked", data.attr.checked, "boolean");
+      addInstance(component);
+      return fragment;
+    }
+    case "FormInlineLabel": {
+      const component = "Text";
+      addProp("tag", "span");
+      addInstance(component, [], "Label");
+      return fragment;
+    }
+    case "FormRadioWrapper": {
+      const component = "Label";
+      addInstance(component, [], "Radio Field");
+      return fragment;
+    }
+    case "FormRadioInput": {
+      const component = "RadioButton";
+      const data = wfNode.data;
+      addProp("name", data.attr.name);
+      addProp("required", data.attr.required, "boolean");
+      addProp("value", data.attr.value);
+      addInstance(component);
+      return fragment;
     }
   }
 
   (component) satisfies never;
 };
 
-const addAttributes = (
+const addCustomAttributes = (
   wfNode: WfElementNode,
   instanceId: Instance["id"],
   props: Array<Prop>
 ) => {
-  if ("tag" in wfNode) {
-    props.push({
-      type: "string",
-      id: nanoid(),
-      instanceId,
-      name: "tag",
-      value: wfNode.tag,
-    });
-  }
-
   if (wfNode.data?.xattr) {
     for (const attribute of wfNode.data.xattr) {
       props.push({
@@ -231,15 +330,30 @@ const addAttributes = (
 
 export const addInstanceAndProperties = (
   wfNode: WfNode,
-  added: Map<WfNode["_id"], Instance["id"]>,
+  doneNodes: Map<WfNode["_id"], Instance["id"] | false>,
   wfNodes: Map<WfNode["_id"], WfNode>,
   fragment: WebstudioFragment
 ) => {
-  if (added.get(wfNode._id) || "text" in wfNode || "type" in wfNode === false) {
+  if (
+    doneNodes.has(wfNode._id) ||
+    "text" in wfNode ||
+    "type" in wfNode === false
+  ) {
     return;
   }
-  const children: Instance["children"] = [];
   const instanceId = nanoid();
+  const nextFragment = toFragment(wfNode, instanceId, wfNodes);
+
+  if (nextFragment === undefined) {
+    // Skip this node and its children.
+    doneNodes.set(wfNode._id, false);
+    for (const childId of wfNode.children) {
+      doneNodes.set(childId, false);
+    }
+    return;
+  }
+
+  const children: Instance["children"] = [];
   for (const wfChildId of wfNode.children) {
     const wfChildNode = wfNodes.get(wfChildId);
     if (wfChildNode === undefined) {
@@ -250,13 +364,13 @@ export const addInstanceAndProperties = (
         type: "text",
         value: wfChildNode.v,
       });
-      added.set(wfChildId, instanceId);
+      doneNodes.set(wfChildId, instanceId);
       continue;
     }
 
     const childInstanceId = addInstanceAndProperties(
       wfChildNode,
-      added,
+      doneNodes,
       wfNodes,
       fragment
     );
@@ -268,17 +382,18 @@ export const addInstanceAndProperties = (
     }
   }
 
-  const { component, props } = mapComponentAndProperties(wfNode, instanceId);
+  fragment.instances.push(...nextFragment.instances);
+  fragment.props.push(...nextFragment.props);
+  const instance = fragment.instances.find(
+    (instance) => instance.id === instanceId
+  );
 
-  fragment.instances.push({
-    id: instanceId,
-    type: "instance",
-    component,
-    children,
-  });
-  added.set(wfNode._id, instanceId);
-  addAttributes(wfNode, instanceId, props);
-  fragment.props.push(...props);
+  if (instance === undefined) {
+    return;
+  }
+  instance.children.push(...children);
+  doneNodes.set(wfNode._id, instanceId);
+  addCustomAttributes(wfNode, instanceId, fragment.props);
 
   return instanceId;
 };

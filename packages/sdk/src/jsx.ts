@@ -76,7 +76,7 @@ export const renderJsx = (root: JSX.Element) => {
   traverseJsx(root, (element, children) => {
     const instanceId = element.props?.["ws:id"] ?? getId(element);
     for (const [name, value] of Object.entries({ ...element.props })) {
-      if (name === "ws:id" || name === "children") {
+      if (name === "ws:id" || name === "ws:label" || name === "children") {
         continue;
       }
       const propId = `${instanceId}:${name}`;
@@ -120,6 +120,9 @@ export const renderJsx = (root: JSX.Element) => {
       type: "instance",
       id: instanceId,
       component,
+      ...(element.props?.["ws:label"]
+        ? { label: element.props?.["ws:label"] }
+        : undefined),
       children: children.map((child) =>
         typeof child === "string"
           ? { type: "text", value: child }
