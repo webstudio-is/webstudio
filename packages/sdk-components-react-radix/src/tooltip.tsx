@@ -1,5 +1,9 @@
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
+import {
+  getClosestInstance,
+  getInstanceSelectorById,
+  type Hook,
+} from "@webstudio-is/react-sdk";
 
 import {
   forwardRef,
@@ -70,7 +74,11 @@ export const hooksTooltip: Hook = {
           `${namespace}:Tooltip`
         );
         if (tooltip) {
-          context.setPropVariable(tooltip.id, "open", false);
+          const instanceSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            tooltip.id
+          );
+          context.setMemoryProp(instanceSelector, "open", undefined);
         }
       }
     }
@@ -84,7 +92,11 @@ export const hooksTooltip: Hook = {
           `${namespace}:Tooltip`
         );
         if (tooltip) {
-          context.setPropVariable(tooltip.id, "open", true);
+          const instanceSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            tooltip.id
+          );
+          context.setMemoryProp(instanceSelector, "open", true);
         }
       }
     }
