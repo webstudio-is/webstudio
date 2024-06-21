@@ -81,7 +81,6 @@ const toFragment = (
       return fragment;
     }
     case "List": {
-      console.log(wfNode);
       if (wfNode.tag === "ol") {
         addProp("ordered", true, "boolean");
       }
