@@ -940,8 +940,39 @@ test("expand grid", () => {
   ]);
 });
 
-test.todo("container");
-test.todo("contain-intrinsic-size");
+test("expand container", () => {
+  expect(expandShorthands([["container", "my-layout"]])).toEqual([
+    ["container-name", "my-layout"],
+    ["container-type", "normal"],
+  ]);
+  expect(expandShorthands([["container", "my-layout / size"]])).toEqual([
+    ["container-name", "my-layout"],
+    ["container-type", "size"],
+  ]);
+});
+
+test("expand contain-intrinsic-size", () => {
+  expect(expandShorthands([["contain-intrinsic-size", "auto 300px"]])).toEqual([
+    ["contain-intrinsic-width", "auto 300px"],
+    ["contain-intrinsic-height", "auto 300px"],
+  ]);
+  expect(expandShorthands([["contain-intrinsic-size", "1000px"]])).toEqual([
+    ["contain-intrinsic-width", "1000px"],
+    ["contain-intrinsic-height", "1000px"],
+  ]);
+  expect(
+    expandShorthands([["contain-intrinsic-size", "1000px 1.5em"]])
+  ).toEqual([
+    ["contain-intrinsic-width", "1000px"],
+    ["contain-intrinsic-height", "1.5em"],
+  ]);
+  expect(
+    expandShorthands([["contain-intrinsic-size", "auto 300px auto 4rem"]])
+  ).toEqual([
+    ["contain-intrinsic-width", "auto 300px"],
+    ["contain-intrinsic-height", "auto 4rem"],
+  ]);
+});
 
 test.todo("white-space - not a shorthand in webflow");
 test.todo("text-wrap - not a shorthand in webflow");
