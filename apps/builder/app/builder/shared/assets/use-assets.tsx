@@ -396,7 +396,7 @@ export async function uploadAssets(
 
       toast.warn(
         <ToastMessage
-          title="Warning"
+          title="Info"
           assetId={fileData.assetId}
           objectURL={fileData.objectURL}
         >
