@@ -55,6 +55,9 @@ export const wfNodeTypes = [
   "FormTextInput",
   "FormTextarea",
   "FormBlockLabel",
+  "FormCheckboxWrapper",
+  "FormCheckboxInput",
+  "FormInlineLabel",
 ] as const;
 
 export const WfElementNode = z.union([
@@ -145,7 +148,6 @@ export const WfElementNode = z.union([
     type: z.enum(["FormTextInput"]),
     data: WfNodeData.extend({
       attr: Attr.extend({
-        id: z.string(),
         name: z.string(),
         maxlength: z.number(),
         placeholder: z.string(),
@@ -160,7 +162,6 @@ export const WfElementNode = z.union([
     type: z.enum(["FormTextarea"]),
     data: WfNodeData.extend({
       attr: Attr.extend({
-        id: z.string(),
         name: z.string(),
         maxlength: z.number(),
         placeholder: z.string(),
@@ -176,6 +177,24 @@ export const WfElementNode = z.union([
         for: z.string().optional(),
       }),
     }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormCheckboxWrapper"]),
+  }),
+
+  WfBaseNode.extend({
+    type: z.enum(["FormCheckboxInput"]),
+    data: WfNodeData.extend({
+      attr: Attr.extend({
+        type: z.enum(["checkbox"]),
+        name: z.string(),
+        required: z.boolean(),
+        checked: z.boolean(),
+      }),
+    }),
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["FormInlineLabel"]),
   }),
 ]);
 

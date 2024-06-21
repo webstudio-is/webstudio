@@ -51,7 +51,8 @@ const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
     expectedProps.set(prop.id, prop);
   }
   //console.dir(fragmentInstances, { depth: null });
-  // console.dir(expectedInstances, { depth: null });
+  //console.dir(expectedInstances, { depth: null });
+  //console.dir(expectedProps, { depth: null });
   expect(fragmentInstances).toEqual(expectedInstances);
   expect(fragmentProps).toEqual(expectedProps);
 };
@@ -1309,6 +1310,100 @@ test("FormTextarea", async () => {
       required={false}
       autoFocus={false}
     />
+  );
+});
+
+test("FormBlockLabel", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "0fdc679b-9891-dfb3-698a-0114d0c6c729",
+          type: "FormBlockLabel",
+          tag: "label",
+          classes: [],
+          children: ["7827c7aa-cd90-8bda-4570-605f2a1a0d61"],
+          data: {
+            attr: {
+              for: "email",
+            },
+          },
+        },
+        {
+          _id: "7827c7aa-cd90-8bda-4570-605f2a1a0d61",
+          text: true,
+          v: "Email Address",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
+});
+
+test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "4b49f914-6011-9030-5727-232bbddc7d56",
+          type: "FormCheckboxWrapper",
+          tag: "div",
+          classes: [],
+          children: [
+            "2e32acc8-7027-1741-1be1-cc72606b57cf",
+            "3f68e88d-5c03-698e-c4e2-a6ad6ff1a00c",
+          ],
+        },
+        {
+          _id: "2e32acc8-7027-1741-1be1-cc72606b57cf",
+          type: "FormCheckboxInput",
+          tag: "input",
+          classes: [],
+          children: [],
+          data: {
+            attr: {
+              type: "checkbox",
+              name: "checkbox",
+              id: "checkbox",
+              required: false,
+              checked: false,
+            },
+          },
+        },
+        {
+          _id: "3f68e88d-5c03-698e-c4e2-a6ad6ff1a00c",
+          type: "FormInlineLabel",
+          tag: "label",
+          classes: [],
+          children: ["18550f45-3a50-27d6-4524-b91a226ded60"],
+        },
+        {
+          _id: "18550f45-3a50-27d6-4524-b91a226ded60",
+          text: true,
+          v: "Checkbox",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Label ws:label="Checkbox Field">
+      <$.Checkbox
+        id="checkbox"
+        name="checkbox"
+        required={false}
+        defaultChecked={false}
+      />
+      <$.Text tag="span" ws:label="Checkbox Label">
+        Checkbox
+      </$.Text>
+    </$.Label>
   );
 });
 

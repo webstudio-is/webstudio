@@ -239,6 +239,18 @@ const mapComponentAndPresetStyles = (
       presetStyles.push("w-button");
       return presetStyles;
     }
+    case "FormCheckboxWrapper": {
+      presetStyles.push("w-checkbox");
+      return presetStyles;
+    }
+    case "FormCheckboxInput": {
+      presetStyles.push("w-checkbox-input");
+      return presetStyles;
+    }
+    case "FormInlineLabel": {
+      presetStyles.push("w-form-label");
+      return presetStyles;
+    }
   }
 
   return presetStyles;

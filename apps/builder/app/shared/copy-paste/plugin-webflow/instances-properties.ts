@@ -60,13 +60,15 @@ const toFragment = (
 
   const addInstance = (
     component: Instance["component"],
-    children: Instance["children"] = []
+    children: Instance["children"] = [],
+    label?: string
   ) => {
     fragment.instances.push({
       id: instanceId,
       type: "instance",
       component,
       children,
+      ...(label ? { label } : undefined),
     });
   };
 
@@ -267,6 +269,26 @@ const toFragment = (
       const component = "Label";
       addProp("htmlFor", data.attr.for);
       addInstance(component);
+      return fragment;
+    }
+    case "FormCheckboxWrapper": {
+      const component = "Label";
+      addInstance(component, [], "Checkbox Field");
+      return fragment;
+    }
+    case "FormCheckboxInput": {
+      const component = "Checkbox";
+      const data = wfNode.data;
+      addProp("name", data.attr.name);
+      addProp("required", data.attr.required, "boolean");
+      addProp("defaultChecked", data.attr.checked, "boolean");
+      addInstance(component);
+      return fragment;
+    }
+    case "FormInlineLabel": {
+      const component = "Text";
+      addProp("tag", "span");
+      addInstance(component, [], "Checkbox Label");
       return fragment;
     }
   }

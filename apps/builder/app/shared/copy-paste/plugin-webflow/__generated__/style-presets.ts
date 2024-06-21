@@ -793,7 +793,14 @@ export const styles = {
   ],
   pre: [
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "auto",
@@ -889,7 +896,7 @@ export const styles = {
       },
     },
     {
-      property: "fontVariant",
+      property: "fontVariantCaps",
       value: {
         type: "keyword",
         value: "initial",
@@ -963,7 +970,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "visible",
@@ -1127,7 +1141,7 @@ export const styles = {
       },
     },
     {
-      property: "fontVariant",
+      property: "fontVariantCaps",
       value: {
         type: "keyword",
         value: "initial",
@@ -1365,7 +1379,7 @@ export const styles = {
       },
     },
     {
-      property: "fontVariant",
+      property: "fontVariantCaps",
       value: {
         type: "keyword",
         value: "initial",
@@ -1455,7 +1469,7 @@ export const styles = {
       },
     },
     {
-      property: "fontVariant",
+      property: "fontVariantCaps",
       value: {
         type: "keyword",
         value: "initial",
@@ -1552,7 +1566,7 @@ export const styles = {
       },
     },
     {
-      property: "fontVariant",
+      property: "fontVariantCaps",
       value: {
         type: "keyword",
         value: "initial",
@@ -1626,7 +1640,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "auto",
@@ -2314,18 +2335,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -2659,10 +2736,52 @@ export const styles = {
       },
     },
     {
-      property: "fontVariant",
+      property: "fontVariantLigatures",
       value: {
         type: "keyword",
-        value: "inherit",
+        value: "normal",
+      },
+    },
+    {
+      property: "fontVariantCaps",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "fontVariantAlternates",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "fontVariantNumeric",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "fontVariantEastAsian",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "fontVariantPosition",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "fontVariantEmoji",
+      value: {
+        type: "invalid",
+        value: "normal",
       },
     },
     {
@@ -2888,10 +3007,40 @@ export const styles = {
       },
     },
     {
-      property: "transition",
+      property: "transitionProperty",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "transitionDuration",
+      value: {
+        type: "unit",
+        unit: "s",
+        value: 0,
+      },
+    },
+    {
+      property: "transitionTimingFunction",
+      value: {
+        type: "keyword",
+        value: "ease",
+      },
+    },
+    {
+      property: "transitionDelay",
+      value: {
+        type: "unit",
+        unit: "s",
+        value: 0,
+      },
+    },
+    {
+      property: "transitionBehavior",
       value: {
         type: "invalid",
-        value: "none",
+        value: "normal",
       },
     },
     {
@@ -2912,7 +3061,7 @@ export const styles = {
       property: "boxShadow",
       value: {
         type: "unparsed",
-        value: "0 0 0 1px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.1)",
+        value: "0 0 0 1px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.1)",
       },
     },
     {
@@ -3142,7 +3291,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "visible",
@@ -3587,18 +3743,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -4642,18 +4854,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -4788,7 +5056,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -5744,18 +6019,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -5809,18 +6140,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -6496,7 +6883,14 @@ export const styles = {
   ],
   "w-widget-twitter": [
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -7200,7 +7594,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -7394,7 +7795,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -7641,7 +8049,7 @@ export const styles = {
       property: "boxShadow",
       value: {
         type: "unparsed",
-        value: "0 0 3px rgba(51,51,51,0.4)",
+        value: "0 0 3px rgba(51,51,51,.4)",
       },
     },
   ],
@@ -7733,39 +8141,38 @@ export const styles = {
       },
     },
     {
-      property: "transition",
+      property: "transitionProperty",
       value: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "keyword",
-                value: "background-color",
-              },
-              {
-                type: "unit",
-                value: 0.1,
-                unit: "s",
-              },
-            ],
-          },
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "keyword",
-                value: "color",
-              },
-              {
-                type: "unit",
-                value: 0.1,
-                unit: "s",
-              },
-            ],
-          },
-        ],
+        type: "unparsed",
+        value: "background-color,color",
+      },
+    },
+    {
+      property: "transitionDuration",
+      value: {
+        type: "unparsed",
+        value: ".1s,.1s",
+      },
+    },
+    {
+      property: "transitionTimingFunction",
+      value: {
+        type: "unparsed",
+        value: "ease,ease",
+      },
+    },
+    {
+      property: "transitionDelay",
+      value: {
+        type: "unparsed",
+        value: ".1s,.1s",
+      },
+    },
+    {
+      property: "transitionBehavior",
+      value: {
+        type: "invalid",
+        value: "normal,normal",
       },
     },
     {
@@ -7957,7 +8364,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -8136,7 +8550,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -8364,7 +8785,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -9271,7 +9699,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "auto",
@@ -9295,7 +9730,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "auto",
@@ -9311,7 +9753,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -9623,7 +10072,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -9726,25 +10182,40 @@ export const styles = {
       },
     },
     {
-      property: "transition",
+      property: "transitionProperty",
       value: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "keyword",
-                value: "all",
-              },
-              {
-                type: "unit",
-                value: 0.3,
-                unit: "s",
-              },
-            ],
-          },
-        ],
+        type: "keyword",
+        value: "all",
+      },
+    },
+    {
+      property: "transitionDuration",
+      value: {
+        type: "unit",
+        unit: "s",
+        value: 0.3,
+      },
+    },
+    {
+      property: "transitionTimingFunction",
+      value: {
+        type: "keyword",
+        value: "ease",
+      },
+    },
+    {
+      property: "transitionDelay",
+      value: {
+        type: "unit",
+        unit: "s",
+        value: 0.3,
+      },
+    },
+    {
+      property: "transitionBehavior",
+      value: {
+        type: "invalid",
+        value: "normal",
       },
     },
     {
@@ -10104,7 +10575,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -10361,8 +10839,8 @@ export const styles = {
     {
       property: "animationTimeline",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "invalid",
+        value: "",
       },
     },
     {
@@ -10605,7 +11083,14 @@ export const styles = {
   ],
   "w-lightbox-noscroll": [
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -10649,18 +11134,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -10916,18 +11457,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -11187,7 +11784,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -11399,18 +12003,74 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
       },
       state: ":before",
     },
     {
-      property: "gridArea",
+      property: "gridRowStart",
       value: {
-        type: "unparsed",
-        value: "1/1/2/2",
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
       state: ":after",
     },
@@ -11599,7 +12259,14 @@ export const styles = {
       },
     },
     {
-      property: "overflow",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "overflowY",
       value: {
         type: "keyword",
         value: "hidden",
@@ -11718,6 +12385,652 @@ export const styles = {
       value: {
         type: "keyword",
         value: "grid",
+      },
+    },
+  ],
+  "w-checkbox": [
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+    },
+    {
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "table",
+      },
+      state: ":before",
+    },
+    {
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":after",
+    },
+    {
+      property: "clear",
+      value: {
+        type: "keyword",
+        value: "both",
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "table",
+      },
+      state: ":after",
+    },
+  ],
+  "w-checkbox-input": [
+    {
+      property: "float",
+      value: {
+        type: "keyword",
+        value: "left",
+      },
+    },
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -20,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+  ],
+  "w-checkbox-input--inputType-custom": [
+    {
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderTopLeftRadius",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+    },
+    {
+      property: "borderTopRightRadius",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+    },
+    {
+      property: "borderBottomRightRadius",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "backgroundImage",
+      value: {
+        type: "unparsed",
+        value:
+          "url(https://d3e54v103j8qbb.cloudfront.net/static/custom-checkbox-checkmark.589d534424.svg)",
+      },
+    },
+    {
+      property: "backgroundPosition",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "keyword",
+        value: "no-repeat",
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "keyword",
+        value: "cover",
+      },
+    },
+    {
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "boxShadow",
+      value: {
+        type: "unparsed",
+        value: "0 0 3px 1px #3898ec",
+      },
+    },
+  ],
+  "w--redirected-checked": [
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "backgroundImage",
+      value: {
+        type: "unparsed",
+        value:
+          "url(https://d3e54v103j8qbb.cloudfront.net/static/custom-checkbox-checkmark.589d534424.svg)",
+      },
+    },
+    {
+      property: "backgroundPosition",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "keyword",
+        value: "no-repeat",
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "keyword",
+        value: "cover",
+      },
+    },
+    {
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+  ],
+  "w--redirected-focus": [
+    {
+      property: "boxShadow",
+      value: {
+        type: "unparsed",
+        value: "0 0 3px 1px #3898ec",
+      },
+    },
+  ],
+  "w-form-formradioinput--inputType-custom": [
+    {
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      property: "borderTopLeftRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      property: "borderTopRightRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      property: "borderBottomRightRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      property: "boxShadow",
+      value: {
+        type: "unparsed",
+        value: "0 0 3px 1px #3898ec",
+      },
+    },
+    {
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
       },
     },
   ],
