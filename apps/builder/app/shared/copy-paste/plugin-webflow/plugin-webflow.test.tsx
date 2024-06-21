@@ -1400,7 +1400,7 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         required={false}
         defaultChecked={false}
       />
-      <$.Text tag="span" ws:label="Checkbox Label">
+      <$.Text tag="span" ws:label="Label">
         Checkbox
       </$.Text>
     </$.Label>
@@ -1458,13 +1458,8 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
   equalFragment(
     fragment,
     <$.Label ws:label="Radio Field">
-      <$.RadioButton
-        id="radio"
-        name="radio"
-        required={false}
-        defaultChecked={false}
-      />
-      <$.Text tag="span" ws:label="Radio Label">
+      <$.RadioButton id="radio" name="radio" required={false} value="Radio" />
+      <$.Text tag="span" ws:label="Label">
         Radio
       </$.Text>
     </$.Label>

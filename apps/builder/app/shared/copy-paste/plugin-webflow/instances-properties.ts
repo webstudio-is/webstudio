@@ -288,7 +288,7 @@ const toFragment = (
     case "FormInlineLabel": {
       const component = "Text";
       addProp("tag", "span");
-      addInstance(component, [], "Checkbox Label");
+      addInstance(component, [], "Label");
       return fragment;
     }
     case "FormRadioWrapper": {
