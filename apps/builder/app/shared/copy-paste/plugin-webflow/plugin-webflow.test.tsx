@@ -1479,7 +1479,6 @@ test("FormSelect", async () => {
           children: [],
           data: {
             form: {
-              name: "Field 3",
               opts: [
                 {
                   t: "Select one...",
@@ -1498,7 +1497,6 @@ test("FormSelect", async () => {
                   v: "Third",
                 },
               ],
-              type: "select",
             },
             attr: {
               id: "field-3",
@@ -1515,17 +1513,7 @@ test("FormSelect", async () => {
 
   equalFragment(
     fragment,
-    <$.Label ws:label="Radio Field">
-      <$.RadioButton
-        id="radio"
-        name="radio"
-        required={false}
-        defaultChecked={false}
-      />
-      <$.Text tag="span" ws:label="Radio Label">
-        Radio
-      </$.Text>
-    </$.Label>
+    <$.Input id="field-3" name="field-3" required={false} multiple={false} />
   );
 });
 
