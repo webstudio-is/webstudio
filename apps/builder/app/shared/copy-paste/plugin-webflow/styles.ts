@@ -191,16 +191,13 @@ const mapComponentAndPresetStyles = (
   const component = wfNode.type;
   const presetStyles: Array<keyof WfStylePresets> = [];
 
+  if (wfNode.tag in stylePresets) {
+    presetStyles.push(wfNode.tag as keyof typeof stylePresets);
+  }
+
   switch (component) {
-    case "Heading": {
-      if (wfNode.tag in stylePresets) {
-        presetStyles.push(wfNode.tag as keyof typeof stylePresets);
-      }
-      return presetStyles;
-    }
     case "Link": {
       const data = wfNode.data;
-      presetStyles.push("a");
       if (data.button) {
         presetStyles.push("w-button");
       }
@@ -229,10 +226,14 @@ const mapComponentAndPresetStyles = (
       presetStyles.push("w-col");
       return presetStyles;
     }
-    //case "Form": {
-    //  presetStyles.push("w-form");
-    //  return presetStyles;
-    //}
+    case "FormWrapper": {
+      presetStyles.push("w-form");
+      return presetStyles;
+    }
+    case "FormTextInput": {
+      presetStyles.push("w-input");
+      return presetStyles;
+    }
     case "FormButton": {
       presetStyles.push("w-button");
       return presetStyles;
