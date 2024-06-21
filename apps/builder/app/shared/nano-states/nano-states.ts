@@ -60,6 +60,9 @@ export const $dataSources = atom<DataSources>(new Map());
 export const $resources = atom(new Map<Resource["id"], Resource>());
 
 export const $props = atom<Props>(new Map());
+
+export const $memoryProps = atom<Map<string, Props>>(new Map());
+
 export const $propsIndex = computed($props, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
   for (const prop of props.values()) {

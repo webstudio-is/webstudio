@@ -2,6 +2,7 @@ import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import {
   getClosestInstance,
   getIndexWithinAncestorFromComponentProps,
+  getInstanceSelectorById,
   ReactSdkContext,
   type Hook,
 } from "@webstudio-is/react-sdk";
@@ -92,7 +93,12 @@ export const hooksNavigationMenu: Hook = {
         );
 
         if (menu) {
-          context.setPropVariable(menu.id, "value", "");
+          const menuSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            menu.id
+          );
+
+          context.setMemoryProp(menuSelector, "value", undefined);
         }
       }
     }
@@ -121,7 +127,12 @@ export const hooksNavigationMenu: Hook = {
           context.indexesWithinAncestors.get(menuItem.id)?.toString();
 
         if (contentValue) {
-          context.setPropVariable(menu.id, "value", contentValue);
+          const menuSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            menu.id
+          );
+
+          context.setMemoryProp(menuSelector, "value", contentValue);
         }
       }
     }

@@ -24,23 +24,7 @@ export const meta: WsComponentMeta = {
       type: "instance",
       component: "Dialog",
       label: "Sheet",
-      variables: {
-        sheetOpen: { initialValue: false },
-      },
-      props: [
-        {
-          type: "expression",
-          name: "open",
-          code: "sheetOpen",
-        },
-        {
-          name: "onOpenChange",
-          type: "action",
-          value: [
-            { type: "execute", args: ["open"], code: `sheetOpen = open` },
-          ],
-        },
-      ],
+      props: [],
       children: [
         {
           type: "instance",

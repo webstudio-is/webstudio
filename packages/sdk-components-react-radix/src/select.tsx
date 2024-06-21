@@ -4,6 +4,7 @@ import {
   type ComponentPropsWithoutRef,
   forwardRef,
   type RefAttributes,
+  useContext,
 } from "react";
 import {
   Root,
@@ -16,7 +17,12 @@ import {
   Portal,
   Viewport,
 } from "@radix-ui/react-select";
-import { type Hook, getClosestInstance } from "@webstudio-is/react-sdk";
+import {
+  type Hook,
+  getClosestInstance,
+  getInstanceSelectorById,
+  ReactSdkContext,
+} from "@webstudio-is/react-sdk";
 
 // wrap in forwardRef because Root is functional component without ref
 export const Select = forwardRef<
@@ -26,9 +32,21 @@ export const Select = forwardRef<
   return <Root {...props} />;
 });
 
-export const SelectTrigger: ForwardRefExoticComponent<
-  ComponentProps<typeof Trigger> & RefAttributes<HTMLButtonElement>
-> = Trigger;
+export const SelectTrigger = forwardRef<
+  HTMLButtonElement,
+  ComponentPropsWithoutRef<typeof Trigger>
+>((props, ref) => {
+  const { renderer } = useContext(ReactSdkContext);
+
+  const onPointerDown =
+    renderer === "canvas"
+      ? (event: React.PointerEvent) => {
+          event.preventDefault();
+        }
+      : undefined;
+
+  return <Trigger onPointerDown={onPointerDown} ref={ref} {...props} />;
+});
 
 export const SelectValue = forwardRef<
   HTMLDivElement,
@@ -83,7 +101,11 @@ export const hooksSelect: Hook = {
           `${namespace}:Select`
         );
         if (select) {
-          context.setPropVariable(select.id, "open", false);
+          const instanceSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            select.id
+          );
+          context.setMemoryProp(instanceSelector, "open", undefined);
         }
       }
     }
@@ -97,7 +119,11 @@ export const hooksSelect: Hook = {
           `${namespace}:Select`
         );
         if (select) {
-          context.setPropVariable(select.id, "open", true);
+          const instanceSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            select.id
+          );
+          context.setMemoryProp(instanceSelector, "open", true);
         }
       }
     }

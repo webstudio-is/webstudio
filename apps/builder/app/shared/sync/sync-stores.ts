@@ -40,6 +40,7 @@ import {
   $marketplaceProduct,
   $canvasIframeState,
   $uploadingFilesDataStore,
+  $memoryProps,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -122,6 +123,7 @@ export const registerContainers = () => {
   clientStores.set("selectedInstanceStates", $selectedInstanceStates);
   clientStores.set("canvasIframeState", $canvasIframeState);
   clientStores.set("uploadingFilesDataStore", $uploadingFilesDataStore);
+  clientStores.set("memoryProps", $memoryProps);
 
   for (const [name, store] of $synchronizedBreakpoints) {
     clientStores.set(name, store);
