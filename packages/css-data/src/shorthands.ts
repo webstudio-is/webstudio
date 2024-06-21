@@ -786,7 +786,7 @@ const expandGridTemplate = function* (value: CssNode) {
  *
  */
 const expandGrid = function* (value: CssNode) {
-  let areas = createIdentifier("none");
+  const areas = createIdentifier("none");
   let templateRows = createIdentifier("none");
   let templateColumns = createIdentifier("none");
   let autoFlow = createIdentifier("row");
@@ -804,30 +804,34 @@ const expandGrid = function* (value: CssNode) {
   if (
     lexer.match(`[ auto-flow && dense? ] <'grid-auto-rows'>?`, rows).matched
   ) {
-    let autoFlowKeyword, denseKeyword;
-    [autoFlowKeyword, denseKeyword, autoRows = createIdentifier("auto")] =
-      parseUnordered(["auto-flow", "dense", `<'grid-auto-rows'>?`], rows);
+    const [autoFlowKeyword, denseKeyword, config] = parseUnordered(
+      ["auto-flow", "dense", `<'grid-auto-rows'>?`],
+      rows
+    );
     if (autoFlowKeyword) {
       autoFlow = createIdentifier("row");
       if (denseKeyword) {
         autoFlow.children.appendList(denseKeyword.children);
       }
     }
+    autoRows = config ?? createIdentifier("auto");
     templateColumns = columns;
   }
   if (
     lexer.match(`[ auto-flow && dense? ] <'grid-auto-columns'>?`, columns)
       .matched
   ) {
-    let autoFlowKeyword, denseKeyword;
-    [autoFlowKeyword, denseKeyword, autoColumns = createIdentifier("auto")] =
-      parseUnordered(["auto-flow", "dense", `<'grid-auto-columns'>?`], columns);
+    const [autoFlowKeyword, denseKeyword, config] = parseUnordered(
+      ["auto-flow", "dense", `<'grid-auto-columns'>?`],
+      columns
+    );
     if (autoFlowKeyword) {
       autoFlow = createIdentifier("column");
       if (denseKeyword) {
         autoFlow.children.appendList(denseKeyword.children);
       }
     }
+    autoColumns = config ?? createIdentifier("auto");
     templateRows = rows;
   }
   yield ["grid-template-areas", areas] as const;
