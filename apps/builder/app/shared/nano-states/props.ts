@@ -29,6 +29,7 @@ import {
   $resources,
   $uploadingFilesDataStore,
   $memoryProps,
+  $isPreviewMode,
 } from "./nano-states";
 import { $selectedPage, $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
@@ -246,6 +247,7 @@ export const $propValuesByInstanceSelector = computed(
     $assets,
     $uploadingFilesDataStore,
     $memoryProps,
+    $isPreviewMode,
   ],
   (
     instances,
@@ -256,7 +258,8 @@ export const $propValuesByInstanceSelector = computed(
     pages,
     assets,
     uploadingFilesDataStore,
-    memoryProps
+    memoryProps,
+    isPreviewMode
   ) => {
     const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
@@ -384,15 +387,17 @@ export const $propValuesByInstanceSelector = computed(
 
     traverseInstances([page.rootInstanceId]);
 
-    for (const [memoryKey, memoryValue] of memoryProps) {
-      const propsBySelector =
-        propValuesByInstanceSelector.get(memoryKey) ?? new Map();
+    if (false === isPreviewMode) {
+      for (const [memoryKey, memoryValue] of memoryProps) {
+        const propsBySelector =
+          propValuesByInstanceSelector.get(memoryKey) ?? new Map();
 
-      for (const [memoryProp, memoryPropValue] of memoryValue) {
-        propsBySelector.set(memoryProp, memoryPropValue.value);
+        for (const [memoryProp, memoryPropValue] of memoryValue) {
+          propsBySelector.set(memoryProp, memoryPropValue.value);
+        }
+
+        propValuesByInstanceSelector.set(memoryKey, propsBySelector);
       }
-
-      propValuesByInstanceSelector.set(memoryKey, propsBySelector);
     }
 
     return propValuesByInstanceSelector;
