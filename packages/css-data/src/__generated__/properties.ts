@@ -891,42 +891,6 @@ export const properties = {
     },
     types: [],
   },
-  containIntrinsicBlockSize: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["length"],
-  },
-  containIntrinsicHeight: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["length"],
-  },
-  containIntrinsicInlineSize: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["length"],
-  },
-  containIntrinsicWidth: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["length"],
-  },
   containerName: {
     unitGroups: [],
     inherited: false,
@@ -1023,15 +987,6 @@ export const properties = {
     initial: {
       type: "keyword",
       value: "show",
-    },
-    types: [],
-  },
-  fieldSizing: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "fixed",
     },
     types: [],
   },
@@ -1189,33 +1144,6 @@ export const properties = {
       value: "normal",
     },
     types: ["angle"],
-  },
-  fontSynthesisSmallCaps: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
-  },
-  fontSynthesisStyle: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
-  },
-  fontSynthesisWeight: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    types: [],
   },
   fontVariantAlternates: {
     unitGroups: [],
@@ -1771,19 +1699,8 @@ export const properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "tuple",
-      value: [
-        {
-          type: "unit",
-          unit: "%",
-          value: 0,
-        },
-        {
-          type: "unit",
-          unit: "%",
-          value: 0,
-        },
-      ],
+      type: "keyword",
+      value: "center",
     },
     types: ["length", "percentage"],
   },
@@ -1971,7 +1888,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["offset-path", "coord-box"],
+    types: ["url"],
   },
   offsetRotate: {
     unitGroups: ["angle"],
@@ -2017,7 +1934,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "auto",
+      value: "currentColor",
     },
     types: ["hex-color"],
   },
@@ -2694,7 +2611,7 @@ export const properties = {
   },
   textEmphasisColor: {
     unitGroups: [],
-    inherited: true,
+    inherited: false,
     initial: {
       type: "keyword",
       value: "currentColor",
@@ -2703,7 +2620,7 @@ export const properties = {
   },
   textEmphasisPosition: {
     unitGroups: [],
-    inherited: true,
+    inherited: false,
     initial: {
       type: "tuple",
       value: [
@@ -2721,7 +2638,7 @@ export const properties = {
   },
   textEmphasisStyle: {
     unitGroups: [],
-    inherited: true,
+    inherited: false,
     initial: {
       type: "keyword",
       value: "none",
@@ -3081,14 +2998,5 @@ export const properties = {
       value: "auto",
     },
     types: ["integer"],
-  },
-  zoom: {
-    unitGroups: ["number", "percentage"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    types: ["number", "percentage"],
   },
 } as const;

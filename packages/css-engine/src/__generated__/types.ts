@@ -95,10 +95,6 @@ export type Property =
   | "columnSpan"
   | "columnWidth"
   | "contain"
-  | "containIntrinsicBlockSize"
-  | "containIntrinsicHeight"
-  | "containIntrinsicInlineSize"
-  | "containIntrinsicWidth"
   | "containerName"
   | "containerType"
   | "content"
@@ -110,7 +106,6 @@ export type Property =
   | "direction"
   | "display"
   | "emptyCells"
-  | "fieldSizing"
   | "filter"
   | "flexBasis"
   | "flexDirection"
@@ -128,9 +123,6 @@ export type Property =
   | "fontSizeAdjust"
   | "fontStretch"
   | "fontStyle"
-  | "fontSynthesisSmallCaps"
-  | "fontSynthesisStyle"
-  | "fontSynthesisWeight"
   | "fontVariantAlternates"
   | "fontVariantCaps"
   | "fontVariantEastAsian"
@@ -324,8 +316,7 @@ export type Property =
   | "wordSpacing"
   | "wordWrap"
   | "writingMode"
-  | "zIndex"
-  | "zoom";
+  | "zIndex";
 
 export type Unit =
   | "%"
