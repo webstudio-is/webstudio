@@ -112,9 +112,6 @@ const parse = (clipboardData: string) => {
 };
 
 export const onPaste = async (clipboardData: string) => {
-  if (isFeatureEnabled("pasteFromWebflow") === false) {
-    return false;
-  }
   const wfData = parse(clipboardData);
   if (wfData === undefined) {
     return false;
