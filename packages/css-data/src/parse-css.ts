@@ -57,6 +57,12 @@ const parseCssValue = (
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
   for (const [property, value] of expanded) {
+    let finalProperty = property as StyleProperty;
+    // Appearance is baseline since 2022 https://developer.mozilla.org/en-US/docs/Web/CSS/appearance
+    if (property === "-webkit-appearance") {
+      finalProperty = "appearance";
+    }
+
     if (value === "") {
       // Skip properties with empty values, e.g. `color:;`
       continue;
@@ -64,13 +70,11 @@ const parseCssValue = (
 
     // @todo https://github.com/webstudio-is/webstudio/issues/3399
     if (value.startsWith("var(")) {
-      final.set(property, { type: "keyword", value: "unset" });
+      final.set(finalProperty, { type: "keyword", value: "unset" });
       continue;
     }
-    final.set(
-      property,
-      parseCssValueLonghand(property as StyleProperty, value)
-    );
+
+    final.set(finalProperty, parseCssValueLonghand(finalProperty, value));
   }
   return final;
 };

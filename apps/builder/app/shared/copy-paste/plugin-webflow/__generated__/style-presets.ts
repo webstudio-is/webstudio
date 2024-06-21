@@ -1023,10 +1023,10 @@ export const styles = {
       },
     },
     {
-      property: "webkitAppearance",
+      property: "appearance",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "button",
       },
     },
     {
@@ -1342,10 +1342,10 @@ export const styles = {
       },
     },
     {
-      property: "webkitAppearance",
+      property: "appearance",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "button",
       },
     },
   ],
@@ -2613,10 +2613,10 @@ export const styles = {
       },
     },
     {
-      property: "webkitAppearance",
+      property: "appearance",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "button",
       },
     },
   ],

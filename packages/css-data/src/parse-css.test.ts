@@ -378,6 +378,23 @@ describe("Parse CSS", () => {
     `);
   });
 
+  test("unprefix -webkit-apearance", () => {
+    expect(parseCss(`a { -webkit-appearance: button; }`))
+      .toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "appearance",
+            "value": {
+              "type": "keyword",
+              "value": "button",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("parse child combinator", () => {
     expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });
