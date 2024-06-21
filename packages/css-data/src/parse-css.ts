@@ -57,6 +57,11 @@ const parseCssValue = (
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
   for (const [property, value] of expanded) {
+    // @todo https://github.com/webstudio-is/webstudio/issues/3399
+    if (value.startsWith("var(")) {
+      final.set(property, { type: "keyword", value: "unset" });
+      continue;
+    }
     final.set(
       property,
       parseCssValueLonghand(property as StyleProperty, value)

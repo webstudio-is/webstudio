@@ -344,6 +344,23 @@ describe("Parse CSS", () => {
     `);
   });
 
+  // @todo https://github.com/webstudio-is/webstudio/issues/3399
+  test("parse variable", () => {
+    expect(parseCss(`a { color: var(--color) }`)).toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "value": {
+              "type": "keyword",
+              "value": "unset",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("parse child combinator", () => {
     expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });
