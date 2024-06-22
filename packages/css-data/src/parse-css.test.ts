@@ -378,16 +378,33 @@ describe("Parse CSS", () => {
     `);
   });
 
-  test("unprefix -webkit-apearance", () => {
-    expect(parseCss(`a { -webkit-appearance: button; }`))
+  test("unprefix property that doesn't need a prefix", () => {
+    expect(parseCss(`a { -webkit-color: red; }`)).toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("keep prefix for property that needs one", () => {
+    // @todo parser is wrong here, it should be keyword horizontal
+    expect(parseCss(`a { -webkit-box-orient: horizontal; }`))
       .toMatchInlineSnapshot(`
       {
         "a": [
           {
-            "property": "appearance",
+            "property": "WebkitBoxOrient",
             "value": {
-              "type": "keyword",
-              "value": "button",
+              "type": "invalid",
+              "value": "",
             },
           },
         ],

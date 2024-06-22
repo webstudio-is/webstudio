@@ -7,6 +7,32 @@ import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
 import { expandShorthands } from "./shorthands";
 
+const prefixedProperties = [
+  "-webkit-box-orient",
+  "-webkit-line-clamp",
+  "-webkit-font-smoothing",
+  "-moz-osx-font-smoothing",
+  "-webkit-tap-highlight-color",
+  "-webkit-overflow-scrolling",
+];
+const prefixes = ["webkit", "moz", "ms", "o"];
+const prefixRegex = new RegExp(`^-(${prefixes.join("|")})-`);
+
+const unprefixProperty = (property: string) => {
+  if (prefixedProperties.includes(property)) {
+    return property;
+  }
+  return property.replace(prefixRegex, "");
+};
+
+const camelCaseProperty = (property: string) => {
+  let camelcased = camelCase(property);
+  if (property[0] === "-") {
+    camelcased = camelcased[0].toLocaleUpperCase() + camelcased.slice(1);
+  }
+  return camelcased;
+};
+
 type Selector = string;
 
 export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
@@ -31,7 +57,6 @@ const parseCssValue = (
         if (typeof valueParser === "function") {
           return [property, valueParser(value)];
         }
-
         if (Array.isArray(value)) {
           return [
             property,
@@ -57,12 +82,6 @@ const parseCssValue = (
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
   for (const [property, value] of expanded) {
-    let finalProperty = property as StyleProperty;
-    // Appearance is baseline since 2022 https://developer.mozilla.org/en-US/docs/Web/CSS/appearance
-    if (property === "-webkit-appearance") {
-      finalProperty = "appearance";
-    }
-
     if (value === "") {
       // Skip properties with empty values, e.g. `color:;`
       continue;
@@ -70,11 +89,11 @@ const parseCssValue = (
 
     // @todo https://github.com/webstudio-is/webstudio/issues/3399
     if (value.startsWith("var(")) {
-      final.set(finalProperty, { type: "keyword", value: "unset" });
+      final.set(property, { type: "keyword", value: "unset" });
       continue;
     }
 
-    final.set(finalProperty, parseCssValueLonghand(finalProperty, value));
+    final.set(property, parseCssValueLonghand(property, value));
   }
   return final;
 };
@@ -131,7 +150,7 @@ export const parseCss = (css: string) => {
       const stringValue = csstree.generate(node.value);
 
       const parsedCss = parseCssValue(
-        node.property as Longhand | StyleProperty,
+        unprefixProperty(node.property) as Longhand | StyleProperty,
         stringValue
       );
 
@@ -144,9 +163,12 @@ export const parseCss = (css: string) => {
               declarations = styles[selector] = [];
             }
             const styleDecl: EmbedTemplateStyleDecl = {
-              property: camelCase(property) as StyleProperty,
+              property: camelCaseProperty(
+                unprefixProperty(property)
+              ) as StyleProperty,
               value,
             };
+
             const statesArray = states.get(selector) ?? [];
             if (statesArray[index]) {
               styleDecl.state = statesArray[index];
