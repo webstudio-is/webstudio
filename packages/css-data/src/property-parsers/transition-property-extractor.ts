@@ -20,10 +20,8 @@ export type ExtractedTransitionProperties = {
 export const extractTransitionProperties = (
   transition: TupleValue
 ): ExtractedTransitionProperties => {
-  let property: KeywordValue | undefined = undefined;
-  let timing: KeywordValue | undefined = undefined;
-  let duration: UnitValue | undefined = undefined;
-  let delay: UnitValue | undefined = undefined;
+  let property: KeywordValue | undefined;
+  let timing: KeywordValue | undefined;
 
   const keywordValues: KeywordValue[] = [];
   const unitValues: UnitValue[] = [];
@@ -45,8 +43,8 @@ export const extractTransitionProperties = (
     timing = keywordValues[1] ?? undefined;
   }
 
-  duration = unitValues[0] ?? undefined;
-  delay = unitValues[1] ?? undefined;
+  const duration: UnitValue | undefined = unitValues[0] ?? undefined;
+  const delay: UnitValue | undefined = unitValues[1] ?? undefined;
 
   return {
     property,
