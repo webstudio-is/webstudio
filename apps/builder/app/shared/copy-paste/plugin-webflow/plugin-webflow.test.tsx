@@ -1690,6 +1690,40 @@ describe("Styles", () => {
       }"
     `);
   });
+
+  test("Webflow @variable syntax used by Relume (legacy?)", async () => {
+    const fragment = await toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "5f7ab979-89b3-c705-6ab9-35f77dfb209f",
+            type: "Block",
+            tag: "div",
+            classes: ["194e7d07-469d-6ffa-3925-1f51bdad7e44"],
+            children: [],
+          },
+        ],
+        styles: [
+          {
+            _id: "194e7d07-469d-6ffa-3925-1f51bdad7e44",
+            type: "class",
+            name: "block",
+            styleLess: "color: @var_relume-variable-color-neutral-1",
+            children: [],
+          },
+        ],
+      },
+    });
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        block {
+          color: unset
+        }
+      }"
+    `);
+  });
 });
 
 test("Breakpoints", async () => {
