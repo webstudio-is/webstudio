@@ -176,3 +176,63 @@ Map {
 }
 `);
 });
+
+test("generate component presets", () => {
+  const { cssText, atomicCssText, classesMap } = generateAllCss({
+    assets: new Map(),
+    instances: new Map(),
+    props: new Map(),
+    breakpoints: new Map(),
+    styleSourceSelections: new Map([]),
+    styles: new Map(),
+    componentMetas: new Map([
+      [
+        "Box",
+        {
+          type: "container",
+          icon: "",
+          presetStyle: {
+            div: [
+              {
+                property: "display",
+                value: { type: "keyword", value: "block" },
+              },
+            ],
+            a: [
+              {
+                property: "userSelect",
+                value: { type: "keyword", value: "none" },
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+    assetBaseUrl: "",
+  });
+  expect(cssText).toMatchInlineSnapshot(`
+"html {margin: 0; display: grid; min-height: 100%}
+@media all {
+  div:where([data-ws-component="Box"]) {
+    display: block
+  }
+  a:where([data-ws-component="Box"]) {
+    user-select: none
+  }
+}
+"
+`);
+  expect(atomicCssText).toMatchInlineSnapshot(`
+"html {margin: 0; display: grid; min-height: 100%}
+@media all {
+  div:where([data-ws-component="Box"]) {
+    display: block
+  }
+  a:where([data-ws-component="Box"]) {
+    user-select: none
+  }
+}
+"
+`);
+  expect(classesMap).toMatchInlineSnapshot(`Map {}`);
+});
