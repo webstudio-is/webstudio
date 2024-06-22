@@ -3,15 +3,7 @@
 export const styles = {
   html: [
     {
-      property: "webkitTextSizeAdjust",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "msTextSizeAdjust",
+      property: "textSizeAdjust",
       value: {
         type: "unit",
         unit: "%",
@@ -910,9 +902,9 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontStretch",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
@@ -1148,9 +1140,9 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontStretch",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
@@ -1372,9 +1364,9 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontStretch",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
@@ -1462,9 +1454,9 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontStretch",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
@@ -1552,9 +1544,9 @@ export const styles = {
       },
     },
     {
-      property: "fontWidth",
+      property: "fontStretch",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "initial",
       },
     },
@@ -2761,13 +2753,6 @@ export const styles = {
       value: {
         type: "keyword",
         value: "inherit",
-      },
-    },
-    {
-      property: "webkitTextDecoration",
-      value: {
-        type: "invalid",
-        value: "",
       },
     },
     {
@@ -7656,7 +7641,7 @@ export const styles = {
       },
     },
     {
-      property: "webkitTapHighlightColor",
+      property: "WebkitTapHighlightColor",
       value: {
         type: "rgb",
         alpha: 0,
@@ -7844,7 +7829,7 @@ export const styles = {
       },
     },
     {
-      property: "webkitTapHighlightColor",
+      property: "WebkitTapHighlightColor",
       value: {
         type: "rgb",
         alpha: 0,
@@ -8216,7 +8201,7 @@ export const styles = {
       },
     },
     {
-      property: "webkitTapHighlightColor",
+      property: "WebkitTapHighlightColor",
       value: {
         type: "rgb",
         alpha: 0,
@@ -8230,20 +8215,6 @@ export const styles = {
       value: {
         type: "invalid",
         value: "rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
       },
     },
     {
@@ -8402,7 +8373,7 @@ export const styles = {
       },
     },
     {
-      property: "webkitTapHighlightColor",
+      property: "WebkitTapHighlightColor",
       value: {
         type: "rgb",
         alpha: 0,
@@ -8416,20 +8387,6 @@ export const styles = {
       value: {
         type: "invalid",
         value: "rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
       },
     },
     {
@@ -9024,20 +8981,6 @@ export const styles = {
       },
     },
     {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
       property: "userSelect",
       value: {
         type: "keyword",
@@ -9484,21 +9427,14 @@ export const styles = {
       },
     },
     {
-      property: "webkitUserSelect",
+      property: "userSelect",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
       },
     },
     {
-      property: "mozUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitTapHighlightColor",
+      property: "WebkitTapHighlightColor",
       value: {
         type: "invalid",
         value: "",
@@ -9642,14 +9578,14 @@ export const styles = {
       },
     },
     {
-      property: "webkitTransform",
+      property: "transform",
       value: {
         type: "unparsed",
         value: "translate(0)",
       },
     },
     {
-      property: "webkitOverflowScrolling",
+      property: "WebkitOverflowScrolling",
       value: {
         type: "invalid",
         value: "",
@@ -9680,7 +9616,7 @@ export const styles = {
   ],
   "w-lightbox-container": [
     {
-      property: "webkitOverflowScrolling",
+      property: "WebkitOverflowScrolling",
       value: {
         type: "invalid",
         value: "",
@@ -10489,7 +10425,7 @@ export const styles = {
       },
     },
     {
-      property: "webkitTransform",
+      property: "transform",
       value: {
         type: "unparsed",
         value: "translate3d(0,0,0)",
@@ -11779,7 +11715,7 @@ export const styles = {
       },
     },
     {
-      property: "webkitTapHighlightColor",
+      property: "WebkitTapHighlightColor",
       value: {
         type: "rgb",
         alpha: 0,
@@ -11793,20 +11729,6 @@ export const styles = {
       value: {
         type: "invalid",
         value: "rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
       },
     },
     {
