@@ -1,4 +1,3 @@
-import { type StyleProperty } from "@webstudio-is/css-engine";
 import { useState, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
@@ -9,6 +8,7 @@ import {
   Text,
   Tooltip,
 } from "@webstudio-is/design-system";
+import { transitionProperties } from "@webstudio-is/css-data";
 
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
@@ -23,17 +23,16 @@ import {
   deleteTransitionProperties,
   addDefaultTransitionLayer,
   deleteTransitionLayer,
-  transitionProperties,
   editTransitionLayer,
   swapTransitionLayers,
   hideTransitionLayer,
   convertIndividualTransitionToLayers,
 } from "./transition-utils";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 
 const label = "Transitions";
-export const properties = Array.from(
-  transitionProperties
-) satisfies Array<StyleProperty>;
+export const properties =
+  transitionProperties as unknown as Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;

@@ -1,20 +1,48 @@
 import * as csstree from "css-tree";
 import type {
   InvalidValue,
+  KeywordValue,
+  LayerValueItem,
   LayersValue,
   TupleValue,
   TupleValueItem,
   Unit,
+  UnparsedValue,
+  UnitValue,
 } from "@webstudio-is/css-engine";
 import { animatableProperties } from "../";
 import { isTimingFunction } from "./transition-property-extractor";
 import { cssTryParseValue } from "../parse-css-value";
+import { kebabCase } from "change-case";
 
 type AnimatableProperty = (typeof animatableProperties)[number];
+
+export const transitionProperties = [
+  "transitionProperty",
+  "transitionTimingFunction",
+  "transitionDelay",
+  "transitionDuration",
+] as const;
+
 export const isAnimatableProperty = (
   property: string
 ): property is AnimatableProperty => {
+  if (property === "all") {
+    return true;
+  }
   return animatableProperties.some((item) => item === property);
+};
+
+export const isTransitionProperty = (
+  property: string
+): property is (typeof transitionProperties)[number] => {
+  return transitionProperties.some((item) => item === property);
+};
+
+export const isValidTransitionValue = (
+  value: LayerValueItem
+): value is KeywordValue | UnitValue => {
+  return value.type === "keyword" || value.type === "unit";
 };
 
 export const parseTransition = (
@@ -117,4 +145,47 @@ export const parseTransition = (
       value: transition,
     };
   }
+};
+
+export const parseTransitionLonghands = (
+  property: (typeof transitionProperties)[number],
+  input: string
+): LayersValue | InvalidValue | UnparsedValue => {
+  const cssAst = cssTryParseValue(input);
+  if (cssAst === undefined) {
+    return {
+      type: "invalid",
+      value: input,
+    };
+  }
+
+  const parsed = csstree.lexer.matchProperty(kebabCase(property), cssAst);
+  if (parsed.error) {
+    return {
+      type: "invalid",
+      value: input,
+    };
+  }
+
+  const layers: LayersValue = { type: "layers", value: [] };
+  csstree.walk(cssAst, (node) => {
+    if (node.type === "Identifier") {
+      if (
+        isAnimatableProperty(node.name) === true ||
+        isTimingFunction(node.name) === true
+      ) {
+        layers.value.push({ type: "keyword", value: node.name });
+      }
+    }
+
+    if (node.type === "Dimension") {
+      layers.value.push({
+        type: "unit",
+        value: Number(node.value),
+        unit: node.unit as Unit,
+      });
+    }
+  });
+
+  return layers.value.length > 0 ? layers : { type: "invalid", value: input };
 };

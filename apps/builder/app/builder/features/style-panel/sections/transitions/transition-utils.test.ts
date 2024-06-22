@@ -15,6 +15,8 @@ import {
   hideTransitionLayer,
   swapTransitionLayers,
 } from "./transition-utils";
+import type { TransitionProperties } from "./transition-utils";
+import type { LayersValue } from "@webstudio-is/css-engine";
 
 let styleInfo: StyleInfo = {};
 let published = false;
@@ -39,6 +41,47 @@ const createBatchUpdate: CreateBatchUpdate = () => ({
 });
 
 describe("transition-utils", () => {
+  test("convert individual transition properties into short-hand transition layers", () => {
+    const properties: Record<TransitionProperties, LayersValue> = {
+      transitionProperty: {
+        type: "layers",
+        value: [
+          { type: "keyword", value: "opacity" },
+          { type: "keyword", value: "width" },
+          { type: "keyword", value: "all" },
+          { type: "keyword", value: "height" },
+        ],
+      },
+      transitionDuration: {
+        type: "layers",
+        value: [
+          { type: "unit", value: 50, unit: "ms" },
+          { type: "unit", value: 0, unit: "ms" },
+        ],
+      },
+      transitionTimingFunction: {
+        type: "layers",
+        value: [
+          { type: "keyword", value: "ease" },
+          { type: "keyword", value: "ease-in-out" },
+          { type: "keyword", value: "cubic-bezier(0.25,1,0.5,1)" },
+        ],
+      },
+      transitionDelay: {
+        type: "layers",
+        value: [
+          { type: "unit", value: 100, unit: "ms" },
+          { type: "unit", value: 0, unit: "ms" },
+        ],
+      },
+    };
+
+    const layers = convertIndividualTransitionToLayers(properties);
+    expect(toValue(layers)).toMatchInlineSnapshot(
+      `"opacity 50ms ease 100ms, width 0ms ease-in-out 0ms, all 50ms cubic-bezier(0.25,1,0.5,1) 100ms, height 0ms ease 0ms"`
+    );
+  });
+
   test("add a layer to transition long hand proeprties", () => {
     addDefaultTransitionLayer({
       createBatchUpdate,
@@ -49,47 +92,7 @@ describe("transition-utils", () => {
     const layers = convertIndividualTransitionToLayers(properties);
 
     expect(published).toBe(true);
-    expect(properties.transitionProperty.value[0]).toMatchInlineSnapshot(`
-{
-  "type": "keyword",
-  "value": "opacity",
-}
-`);
-    expect(properties.transitionDelay.value[0]).toMatchInlineSnapshot(`
-{
-  "type": "unit",
-  "unit": "s",
-  "value": 0,
-}
-`);
-    expect(layers.value).toMatchInlineSnapshot(`
-[
-  {
-    "hidden": false,
-    "type": "tuple",
-    "value": [
-      {
-        "type": "keyword",
-        "value": "opacity",
-      },
-      {
-        "type": "unit",
-        "unit": "ms",
-        "value": 200,
-      },
-      {
-        "type": "keyword",
-        "value": "ease",
-      },
-      {
-        "type": "unit",
-        "unit": "s",
-        "value": 0,
-      },
-    ],
-  },
-]
-`);
+    expect(toValue(layers)).toMatchInlineSnapshot(`"opacity 200ms ease 0s"`);
   });
 
   test("update individual transition properties", () => {
@@ -125,37 +128,14 @@ describe("transition-utils", () => {
       getTransitionProperties(styleInfo)
     );
 
-    const layerStrings = layers.value.map((layer) => toValue(layer));
-
     expect(published).toBe(true);
     expect(layers.value.length).toBe(3);
-    expect(layerStrings[1]).toBe(`width 0ms ease 0ms`);
-    expect(layers.value[1]).toMatchInlineSnapshot(`
-{
-  "hidden": false,
-  "type": "tuple",
-  "value": [
-    {
-      "type": "keyword",
-      "value": "width",
-    },
-    {
-      "type": "unit",
-      "unit": "ms",
-      "value": 0,
-    },
-    {
-      "type": "keyword",
-      "value": "ease",
-    },
-    {
-      "type": "unit",
-      "unit": "ms",
-      "value": 0,
-    },
-  ],
-}
-`);
+    expect(toValue(layers.value[1])).toMatchInlineSnapshot(
+      `"width 0ms ease 0ms"`
+    );
+    expect(toValue(layers)).toMatchInlineSnapshot(
+      `"opacity 200ms ease 0s, width 0ms ease 0ms, opacity 200ms ease 0s"`
+    );
   });
 
   test("delete a layer from transition properties", () => {
@@ -203,16 +183,10 @@ describe("transition-utils", () => {
       getTransitionProperties(styleInfo)
     );
 
-    const layerStrings = layers.value.map((layer) => toValue(layer));
-
     expect(published).toBe(true);
-    expect(layerStrings.length).toBe(2);
-    expect(layerStrings).toMatchInlineSnapshot(`
-[
-  "opacity 200ms ease 0s",
-  "width 0ms ease-in-out 0ms",
-]
-`);
+    expect(toValue(layers)).toMatchInlineSnapshot(
+      `"opacity 200ms ease 0s, width 0ms ease-in-out 0ms"`
+    );
   });
 
   test("hide a layer from transition properties", () => {
@@ -237,36 +211,8 @@ describe("transition-utils", () => {
     );
 
     expect(published).toBe(true);
-    expect(layers.value[1]).toMatchInlineSnapshot(`
-{
-  "hidden": true,
-  "type": "tuple",
-  "value": [
-    {
-      "hidden": true,
-      "type": "keyword",
-      "value": "opacity",
-    },
-    {
-      "hidden": true,
-      "type": "unit",
-      "unit": "ms",
-      "value": 200,
-    },
-    {
-      "hidden": true,
-      "type": "keyword",
-      "value": "ease",
-    },
-    {
-      "hidden": true,
-      "type": "unit",
-      "unit": "s",
-      "value": 0,
-    },
-  ],
-}
-`);
+    expect(layers.value.length).toBe(2);
+    expect(toValue(layers)).toMatchInlineSnapshot(`"opacity 200ms ease 0s"`);
   });
 
   test("swap layer positions in transitions", () => {
@@ -300,15 +246,11 @@ describe("transition-utils", () => {
     const layers = convertIndividualTransitionToLayers(
       getTransitionProperties(styleInfo)
     );
-    const layerStrings = layers.value.map((layer) => toValue(layer));
 
     expect(published).toBe(true);
-    expect(layerStrings.length).toBe(2);
-    expect(layerStrings).toMatchInlineSnapshot(`
-[
-  "width 0ms ease-in-out 0ms",
-  "opacity 200ms ease 0s",
-]
-`);
+    expect(layers.value.length).toBe(2);
+    expect(toValue(layers)).toMatchInlineSnapshot(
+      `"width 0ms ease-in-out 0ms, opacity 200ms ease 0s"`
+    );
   });
 });

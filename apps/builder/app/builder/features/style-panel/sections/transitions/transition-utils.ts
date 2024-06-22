@@ -1,9 +1,8 @@
-import type {
-  KeywordValue,
-  LayerValueItem,
-  LayersValue,
-  TupleValue,
-  UnitValue,
+import {
+  type KeywordValue,
+  type LayersValue,
+  type TupleValue,
+  type UnitValue,
 } from "@webstudio-is/css-engine";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -12,7 +11,9 @@ import type {
 } from "../../shared/use-style-data";
 import {
   extractTransitionProperties,
+  isValidTransitionValue,
   parseTransition,
+  transitionProperties,
 } from "@webstudio-is/css-data";
 
 export const initialTransition = "opacity 200ms ease 0s";
@@ -101,13 +102,6 @@ export const findTimingFunctionFromValue = (
   );
 };
 
-export const transitionProperties = [
-  "transitionProperty",
-  "transitionTimingFunction",
-  "transitionDelay",
-  "transitionDuration",
-] as const;
-
 export type TransitionProperties = (typeof transitionProperties)[number];
 
 export const getTransitionProperties = (
@@ -130,10 +124,8 @@ export const getTransitionProperties = (
   return properties;
 };
 
-const isValidTransitionValue = (
-  value: LayerValueItem
-): value is KeywordValue => {
-  return value.type === "keyword" || value.type === "unit";
+const getValueOrRepeatLast = (arr: LayersValue["value"], index: number) => {
+  return arr[index % arr.length];
 };
 
 export const convertIndividualTransitionToLayers = (
@@ -143,6 +135,7 @@ export const convertIndividualTransitionToLayers = (
     type: "layers",
     value: [],
   };
+
   const {
     transitionProperty,
     transitionDuration,
@@ -150,17 +143,31 @@ export const convertIndividualTransitionToLayers = (
     transitionTimingFunction,
   } = properties;
 
-  for (const [index] of transitionProperty.value.entries()) {
-    const property = transitionProperty.value[index];
-    const duration = transitionDuration.value[index];
-    const timingFunction = transitionTimingFunction.value[index];
-    const delay = transitionDelay.value[index];
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function
+  // You may specify multiple easing, duration and delay values;
+  // each one will be applied to the corresponding property as specified by the transition-property property,
+  // which acts as a transition-property list. If there are fewer easing, duration and transition values specified than in the transition-property list,
+  // the user agent must calculate which value is used by repeating the list of values until there is one for each transition property.
+  // If there are more values, the list is truncated to the right size. In both cases, the CSS declaration stays valid.
+  // And so, we take the lenght of the transiton-property as the base length of the layers
+
+  for (let index = 0; index < transitionProperty.value.length; index++) {
+    const property = getValueOrRepeatLast(transitionProperty.value, index);
+    const duration =
+      getValueOrRepeatLast(transitionDuration.value, index) ??
+      defaultTransitionDuration;
+    const timingFunction =
+      getValueOrRepeatLast(transitionTimingFunction.value, index) ??
+      defaultTransitionTimingFunction;
+    const delay =
+      getValueOrRepeatLast(transitionDelay.value, index) ??
+      defaultTransitionDelay;
 
     if (
-      isValidTransitionValue(property) === true &&
-      isValidTransitionValue(duration) === true &&
-      isValidTransitionValue(timingFunction) === true &&
-      isValidTransitionValue(delay) === true
+      isValidTransitionValue(property) &&
+      isValidTransitionValue(duration) &&
+      isValidTransitionValue(timingFunction) &&
+      isValidTransitionValue(delay)
     ) {
       const layer: TupleValue = {
         type: "tuple",
