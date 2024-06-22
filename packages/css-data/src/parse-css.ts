@@ -7,6 +7,7 @@ import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
 import { expandShorthands } from "./shorthands";
 
+// @todo we don't parse correctly most of them if not all
 const prefixedProperties = [
   "-webkit-box-orient",
   "-webkit-line-clamp",
