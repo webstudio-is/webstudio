@@ -13,7 +13,6 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
 } from "../../nano-states";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { WfData, WfNode, WfStyle, wfNodeTypes } from "./schema";
 import { addInstanceAndProperties } from "./instances-properties";
 import { addStyles } from "./styles";
@@ -112,9 +111,6 @@ const parse = (clipboardData: string) => {
 };
 
 export const onPaste = async (clipboardData: string) => {
-  if (isFeatureEnabled("pasteFromWebflow") === false) {
-    return false;
-  }
   const wfData = parse(clipboardData);
   if (wfData === undefined) {
     return false;

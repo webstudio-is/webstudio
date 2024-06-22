@@ -48,6 +48,14 @@ const findWsBreakpoint = (
   });
 };
 
+// Apparently webflow supports this variable notation: `color: @var_relume-variable-color-neutral-1`
+// Until actual variables are supported, we need to replace it with "unset",
+// otherwise property will be skipped and that will result in an inherited value, which is more problematic.
+// @todo use CSS variables once this is done https://github.com/webstudio-is/webstudio/issues/3399
+const replaceAtVariables = (styles: string) => {
+  return styles.replace(/@var_[\w-]+/g, "unset");
+};
+
 type UnparsedVariants = Map<
   WfBreakpointName,
   string | Array<EmbedTemplateStyleDecl>
@@ -65,7 +73,8 @@ const toParsedVariants = (variants: UnparsedVariants) => {
   for (const [breakpointName, styles] of variants) {
     if (typeof styles === "string") {
       try {
-        const parsed = parseCss(`.styles {${styles}}`).styles ?? [];
+        const parsed =
+          parseCss(`.styles {${replaceAtVariables(styles)}}`).styles ?? [];
         parsedVariants.set(breakpointName, parsed);
       } catch (error) {
         console.error("Failed to parse style", error, breakpointName, styles);
@@ -176,7 +185,7 @@ const addNodeStyles = ({
         state: style.state,
       });
       if (style.value.type === "invalid") {
-        const error = `Invalid style value: "${kebabCase(style.property)}: ${style.value.value}"`;
+        const error = `Invalid style value: ${name} "${kebabCase(style.property)}: ${style.value.value}"`;
         toast.error(error);
         console.error(error);
       }

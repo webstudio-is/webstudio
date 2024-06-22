@@ -18,7 +18,7 @@ export const cssTryParseValue = (input: string) => {
     const ast = csstree.parse(input, { context: "value" });
     return ast;
   } catch {
-    return undefined;
+    return;
   }
 };
 

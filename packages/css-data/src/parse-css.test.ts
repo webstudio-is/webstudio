@@ -344,6 +344,81 @@ describe("Parse CSS", () => {
     `);
   });
 
+  // @todo https://github.com/webstudio-is/webstudio/issues/3399
+  test("parse variable", () => {
+    expect(parseCss(`a { color: var(--color) }`)).toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "value": {
+              "type": "keyword",
+              "value": "unset",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("parse empty value as unset", () => {
+    expect(parseCss(`a { color: ; background-color: red }`))
+      .toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "value": {
+              "type": "keyword",
+              "value": "unset",
+            },
+          },
+          {
+            "property": "backgroundColor",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("unprefix property that doesn't need a prefix", () => {
+    expect(parseCss(`a { -webkit-color: red; }`)).toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("keep prefix for property that needs one", () => {
+    // @todo parser is wrong here, it should be keyword horizontal
+    expect(parseCss(`a { -webkit-box-orient: horizontal; }`))
+      .toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "WebkitBoxOrient",
+            "value": {
+              "type": "invalid",
+              "value": "",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("parse child combinator", () => {
     expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });

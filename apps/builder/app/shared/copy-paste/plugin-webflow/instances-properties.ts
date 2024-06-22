@@ -305,6 +305,16 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+    case "FormSelect": {
+      // @todo https://github.com/webstudio-is/webstudio/issues/3601
+      const component = "Input";
+      const data = wfNode.data;
+      addProp("name", data.attr.name);
+      addProp("required", data.attr.required, "boolean");
+      addProp("multiple", data.attr.multiple, "boolean");
+      addInstance(component);
+      return fragment;
+    }
   }
 
   (component) satisfies never;
