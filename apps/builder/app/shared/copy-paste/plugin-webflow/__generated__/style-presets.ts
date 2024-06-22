@@ -923,6 +923,13 @@ export const styles = {
       },
     },
     {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "unset",
+      },
+    },
+    {
       property: "marginTop",
       value: {
         type: "unit",
@@ -1151,6 +1158,13 @@ export const styles = {
       value: {
         type: "keyword",
         value: "inherit",
+      },
+    },
+    {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "unset",
       },
     },
     {
@@ -1385,6 +1399,13 @@ export const styles = {
       },
     },
     {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "unset",
+      },
+    },
+    {
       property: "marginTop",
       value: {
         type: "unit",
@@ -1475,6 +1496,13 @@ export const styles = {
       },
     },
     {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "unset",
+      },
+    },
+    {
       property: "marginTop",
       value: {
         type: "unit",
@@ -1562,6 +1590,13 @@ export const styles = {
       value: {
         type: "keyword",
         value: "initial",
+      },
+    },
+    {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "unset",
       },
     },
     {

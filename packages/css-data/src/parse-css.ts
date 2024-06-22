@@ -84,7 +84,9 @@ const parseCssValue = (
   const final = new Map();
   for (const [property, value] of expanded) {
     if (value === "") {
-      // Skip properties with empty values, e.g. `color:;`
+      // Keep the browser behavior when property is defined with an empty value e.g. `color:;`
+      // It may override some existing value and effectively set it to "unset";
+      final.set(property, { type: "keyword", value: "unset" });
       continue;
     }
 

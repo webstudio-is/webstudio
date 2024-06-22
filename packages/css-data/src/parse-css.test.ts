@@ -361,11 +361,18 @@ describe("Parse CSS", () => {
     `);
   });
 
-  test("skip empty value", () => {
+  test("parse empty value as unset", () => {
     expect(parseCss(`a { color: ; background-color: red }`))
       .toMatchInlineSnapshot(`
       {
         "a": [
+          {
+            "property": "color",
+            "value": {
+              "type": "keyword",
+              "value": "unset",
+            },
+          },
           {
             "property": "backgroundColor",
             "value": {
