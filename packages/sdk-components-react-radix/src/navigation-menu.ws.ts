@@ -318,23 +318,7 @@ export const metaNavigationMenu: WsComponentMeta = {
     {
       type: "instance",
       component: "NavigationMenu",
-      variables: {
-        menuValue: { initialValue: "" },
-      },
-      props: [
-        { type: "expression", name: "value", code: "menuValue" },
-        {
-          name: "onValueChange",
-          type: "action",
-          value: [
-            {
-              type: "execute",
-              args: ["value"],
-              code: `menuValue = value`,
-            },
-          ],
-        },
-      ],
+      props: [],
       // relative
       // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
       styles: [tc.relative(), tc.maxW("max")].flat(),

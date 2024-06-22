@@ -70,7 +70,6 @@ const processSyncTasks = async (syncTasks: ScriptTask[]) => {
 
   patchDomEvents();
 
-  console.info("Start processing sync tasks");
   processing = true;
 
   while (syncTasksQueue.length > 0) {
@@ -81,7 +80,6 @@ const processSyncTasks = async (syncTasks: ScriptTask[]) => {
   executeDomEvents();
 
   processing = false;
-  console.info("Stop processing sync tasks");
 };
 
 // Inspiration https://ghinda.net/article/script-tags

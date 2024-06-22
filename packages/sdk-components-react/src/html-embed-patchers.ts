@@ -25,8 +25,6 @@ export const patchDomEvents = () => {
 
   domContentLoadedPatched = true;
 
-  console.info("Patching DOMContentLoaded event listener");
-
   const originalAddEventListener = document.addEventListener;
   const originalWindowAddEventListener = window.addEventListener;
 

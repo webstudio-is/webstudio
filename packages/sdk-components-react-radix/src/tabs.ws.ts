@@ -79,19 +79,7 @@ export const metaTabs: WsComponentMeta = {
     {
       type: "instance",
       component: "Tabs",
-      variables: {
-        tabsValue: { initialValue: "0" },
-      },
-      props: [
-        { type: "expression", name: "value", code: "tabsValue" },
-        {
-          name: "onValueChange",
-          type: "action",
-          value: [
-            { type: "execute", args: ["value"], code: `tabsValue = value` },
-          ],
-        },
-      ],
+      props: [{ type: "string", name: "defaultValue", value: "0" }],
       children: [
         {
           type: "instance",

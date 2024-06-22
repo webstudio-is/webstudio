@@ -32,7 +32,7 @@ import {
   $userPlanFeatures,
 } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { $authPermit, $publishedOrigin } from "~/shared/nano-states";
+import { $authPermit, $project, $publishedOrigin } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -97,6 +97,15 @@ const ChangeProjectDomain = ({
         if (projectData?.success === false) {
           setError(projectData.error);
           return;
+        }
+
+        const currenProject = $project.get();
+
+        if (currenProject?.id === projectData.project.id) {
+          $project.set({
+            ...currenProject,
+            domain: projectData.project.domain,
+          });
         }
 
         setDomain(projectData.project.domain);

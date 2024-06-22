@@ -172,23 +172,6 @@ const expandLogical = function* (getProperty: GetProperty, value: CssNode) {
 
 const expandEdges = function* (property: string, value: CssNode) {
   switch (property) {
-    case "margin":
-    case "padding":
-      yield* expandBox((edge) => `${property}-${edge}`, value);
-      break;
-    case "margin-inline":
-    case "padding-inline":
-    case "margin-block":
-    case "padding-block":
-      yield* expandLogical((edge) => `${property}-${edge}`, value);
-      break;
-    case "inset":
-      yield* expandBox((edge) => edge, value);
-      break;
-    case "inset-inline":
-    case "inset-block":
-      yield* expandLogical((edge) => `${property}-${edge}`, value);
-      break;
     case "border-width":
     case "border-style":
     case "border-color": {
@@ -709,6 +692,156 @@ const expandMaskBorder = function* (value: CssNode) {
   yield ["mask-border-mode", mode ?? createInitialNode()] as const;
 };
 
+/**
+ *
+ * offset = [
+ *   <'offset-position'>?
+ *   [ <'offset-path'> [ <'offset-distance'> || <'offset-rotate'> ]? ]?
+ * ]!
+ * [ / <'offset-anchor'> ]?
+ *
+ */
+const expandOffset = function* (value: CssNode) {
+  const [config, anchor] = splitByOperator(value, "/");
+  const [position, path, distance, rotate] = parseUnordered(
+    [
+      `<'offset-position'>`,
+      `<'offset-path'>`,
+      `<'offset-distance'>`,
+      `<'offset-rotate'>`,
+    ],
+    config ?? createIdentifier("none")
+  );
+  yield ["offset-position", position ?? createIdentifier("normal")] as const;
+  yield ["offset-path", path ?? createIdentifier("none")] as const;
+  yield ["offset-distance", distance ?? createNumber("0")] as const;
+  yield ["offset-rotate", rotate ?? createIdentifier("auto")] as const;
+  yield ["offset-anchor", anchor ?? createIdentifier("auto")] as const;
+};
+
+/**
+ *
+ * scroll-timeline = [ <'scroll-timeline-name'> <'scroll-timeline-axis'>? ]#
+ *
+ */
+const expandScrollTimeline = function* (value: CssNode) {
+  const list = splitByOperator(value, ",");
+  const names: CssNode[] = [];
+  const axises: CssNode[] = [];
+  for (const singleTimeline of list) {
+    const [name, axis] = getValueList(
+      singleTimeline ?? createIdentifier("none")
+    );
+    names.push(name);
+    axises.push(axis ?? createIdentifier("block"));
+  }
+  yield [
+    "scroll-timeline-name",
+    createValueNode(joinByOperator(names, ",")),
+  ] as const;
+  yield [
+    "scroll-timeline-axis",
+    createValueNode(joinByOperator(axises, ",")),
+  ] as const;
+};
+
+/**
+ *
+ * grid-template =
+ *   none |
+ *   [ <'grid-template-rows'> / <'grid-template-columns'> ] |
+ *   [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?
+ *
+ */
+const expandGridTemplate = function* (value: CssNode) {
+  let rows = createIdentifier("none");
+  let columns = createIdentifier("none");
+  let areas = createIdentifier("none");
+  [rows = createIdentifier("none"), columns = createIdentifier("none")] =
+    splitByOperator(value, "/");
+  const rowsNodes: CssNode[] = [];
+  const areasNodes: CssNode[] = [];
+  for (const node of getValueList(rows)) {
+    if (node.type === "String") {
+      areasNodes.push(node);
+    } else {
+      rowsNodes.push(node);
+    }
+  }
+  if (areasNodes.length > 0) {
+    areas = createValueNode(areasNodes);
+    rows = createValueNode(rowsNodes);
+  }
+  yield ["grid-template-areas", areas] as const;
+  yield ["grid-template-rows", rows] as const;
+  yield ["grid-template-columns", columns] as const;
+};
+
+/**
+ *
+ * grid =
+ *   <'grid-template'> |
+ *   <'grid-template-rows'> / [ auto-flow && dense? ] <'grid-auto-columns'>? |
+ *   [ auto-flow && dense? ] <'grid-auto-rows'>? / <'grid-template-columns'>
+ *
+ */
+const expandGrid = function* (value: CssNode) {
+  const areas = createIdentifier("none");
+  let templateRows = createIdentifier("none");
+  let templateColumns = createIdentifier("none");
+  let autoFlow = createIdentifier("row");
+  let autoRows = createIdentifier("auto");
+  let autoColumns = createIdentifier("auto");
+  const [rows = createIdentifier("none"), columns = createIdentifier("none")] =
+    splitByOperator(value, "/");
+  if (lexer.match(`<'grid-template'>`, value).matched) {
+    yield* expandGridTemplate(value);
+    yield ["grid-auto-flow.", autoFlow] as const;
+    yield ["grid-auto-rows", autoRows] as const;
+    yield ["grid-auto-columns", autoColumns] as const;
+    return;
+  }
+  if (
+    lexer.match(`[ auto-flow && dense? ] <'grid-auto-rows'>?`, rows).matched
+  ) {
+    const [autoFlowKeyword, denseKeyword, config] = parseUnordered(
+      ["auto-flow", "dense", `<'grid-auto-rows'>?`],
+      rows
+    );
+    if (autoFlowKeyword) {
+      autoFlow = createIdentifier("row");
+      if (denseKeyword) {
+        autoFlow.children.appendList(denseKeyword.children);
+      }
+    }
+    autoRows = config ?? createIdentifier("auto");
+    templateColumns = columns;
+  }
+  if (
+    lexer.match(`[ auto-flow && dense? ] <'grid-auto-columns'>?`, columns)
+      .matched
+  ) {
+    const [autoFlowKeyword, denseKeyword, config] = parseUnordered(
+      ["auto-flow", "dense", `<'grid-auto-columns'>?`],
+      columns
+    );
+    if (autoFlowKeyword) {
+      autoFlow = createIdentifier("column");
+      if (denseKeyword) {
+        autoFlow.children.appendList(denseKeyword.children);
+      }
+    }
+    autoColumns = config ?? createIdentifier("auto");
+    templateRows = rows;
+  }
+  yield ["grid-template-areas", areas] as const;
+  yield ["grid-template-rows", templateRows] as const;
+  yield ["grid-template-columns", templateColumns] as const;
+  yield ["grid-auto-flow.", autoFlow] as const;
+  yield ["grid-auto-rows", autoRows] as const;
+  yield ["grid-auto-columns", autoColumns] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -764,6 +897,27 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield* expandMaskBorder(value);
       break;
 
+    case "margin":
+    case "padding":
+      yield* expandBox((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "margin-inline":
+    case "margin-block":
+    case "padding-inline":
+    case "padding-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "inset":
+      yield* expandBox((edge) => edge, value);
+      break;
+
+    case "inset-inline":
+    case "inset-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
+      break;
+
     case "gap":
     case "grid-gap": {
       const [rowGap, columnGap] = getValueList(value);
@@ -808,6 +962,14 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield ["grid-column-end", end ?? createIdentifier("auto")] as const;
       break;
     }
+
+    case "grid-template":
+      yield* expandGridTemplate(value);
+      break;
+
+    case "grid":
+      yield* expandGrid(value);
+      break;
 
     case "flex":
       yield* expandFlex(value);
@@ -891,6 +1053,33 @@ const expandShorthand = function* (property: string, value: CssNode) {
     case "transition":
       yield* expandTransition(value);
       break;
+
+    case "offset":
+      yield* expandOffset(value);
+      break;
+
+    case "scroll-timeline":
+      yield* expandScrollTimeline(value);
+      break;
+
+    case "scroll-margin":
+    case "scroll-padding":
+      yield* expandBox((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "scroll-margin-inline":
+    case "scroll-margin-block":
+    case "scroll-padding-inline":
+    case "scroll-padding-block":
+      yield* expandLogical((edge) => `${property}-${edge}`, value);
+      break;
+
+    case "overflow": {
+      const [x, y] = getValueList(value);
+      yield ["overflow-x", x] as const;
+      yield ["overflow-y", y ?? x] as const;
+      break;
+    }
 
     default:
       yield [property, value] as const;

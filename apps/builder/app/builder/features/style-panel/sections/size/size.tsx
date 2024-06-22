@@ -104,7 +104,8 @@ export const properties = [
   "minHeight",
   "maxWidth",
   "maxHeight",
-  "overflow",
+  "overflowX",
+  "overflowY",
   "objectFit",
   "objectPosition",
   "aspectRatio",
@@ -120,6 +121,7 @@ export const Section = ({
   currentStyle,
   setProperty,
   deleteProperty,
+  createBatchUpdate,
 }: SectionProps) => {
   return (
     <CollapsibleSection
@@ -181,16 +183,31 @@ export const Section = ({
       <Separator />
       <SectionLayout columns={2}>
         <PropertyName
-          label={styleConfigByName("overflow").label}
-          properties={["overflow"]}
+          label="Overflow"
+          properties={["overflowX", "overflowY"]}
           style={currentStyle}
-          onReset={() => deleteProperty("overflow")}
+          onReset={() => {
+            const batch = createBatchUpdate();
+            deleteProperty("overflowX");
+            deleteProperty("overflowY");
+            batch.publish();
+          }}
         />
         <ToggleGroupControl
-          property="overflow"
+          property="overflowX"
           currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
+          setProperty={() => (value) => {
+            const batch = createBatchUpdate();
+            batch.setProperty("overflowX")(value);
+            batch.setProperty("overflowY")(value);
+            batch.publish();
+          }}
+          deleteProperty={() => {
+            const batch = createBatchUpdate();
+            batch.deleteProperty("overflowX");
+            batch.deleteProperty("overflowY");
+            batch.publish();
+          }}
           items={[
             {
               child: <EyeconOpenIcon />,
@@ -198,7 +215,7 @@ export const Section = ({
               description:
                 "Content is fully visible and extends beyond the container if it exceeds its size.",
               value: "visible",
-              propertyValues: "overflow: visible;",
+              propertyValues: "overflow-x: visible;\noverflow-y: visible;",
             },
             {
               child: <EyeconClosedIcon />,
@@ -206,7 +223,7 @@ export const Section = ({
               description:
                 "Content that exceeds the container's size is clipped and hidden without scrollbars.",
               value: "hidden",
-              propertyValues: "overflow: hidden;",
+              propertyValues: "overflow-x: hidden;\noverflow-y: hidden;",
             },
             {
               child: <ScrollIcon />,
@@ -214,7 +231,7 @@ export const Section = ({
               description:
                 "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
               value: "scroll",
-              propertyValues: "overflow: scroll;",
+              propertyValues: "overflow-x: scroll;\noverflow-y: scroll;",
             },
 
             {
@@ -223,7 +240,7 @@ export const Section = ({
               description:
                 "Scrollbars are added to the container only when necessary, based on the content size.",
               value: "auto",
-              propertyValues: "overflow: auto;",
+              propertyValues: "overflow-x: auto;\noverflow-y: auto;",
             },
           ]}
         />

@@ -13,10 +13,11 @@ import {
 import type { Instance } from "@webstudio-is/sdk";
 import { decodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
-import { $dataSources, $props } from "./nano-states";
+import { $dataSources, $memoryProps, $props } from "./nano-states";
 import { $instances, $selectedInstanceSelector } from "./instances";
 import { $selectedPage } from "./pages";
 import { $dataSourceVariables } from "./variables";
+import { nanoid } from "nanoid";
 
 const createHookContext = (): HookContext => {
   const metas = $registeredComponentMetas.get();
@@ -45,6 +46,57 @@ const createHookContext = (): HookContext => {
           }
         }
       }
+    },
+
+    setMemoryProp: (instanceSelector, propName, value) => {
+      if (instanceSelector.length === 0) {
+        console.error("instanceSelector is empty");
+        return;
+      }
+
+      const props = $memoryProps.get();
+
+      const newProps = props.get(JSON.stringify(instanceSelector)) ?? new Map();
+
+      const propBase = {
+        id: nanoid(),
+        instanceId: instanceSelector[0]!,
+        name: propName,
+      };
+
+      if (value !== undefined) {
+        switch (typeof value) {
+          case "string":
+            newProps.set(propName, {
+              ...propBase,
+              type: "string",
+              value,
+            });
+            break;
+          case "number":
+            newProps.set(propName, {
+              ...propBase,
+              type: "number",
+              value,
+            });
+            break;
+          case "boolean":
+            newProps.set(propName, {
+              ...propBase,
+              type: "boolean",
+              value,
+            });
+            break;
+          default:
+            throw new Error(`Unsupported type ${typeof value}`);
+        }
+      } else {
+        newProps.delete(propName);
+      }
+
+      props.set(JSON.stringify(instanceSelector), newProps);
+
+      $memoryProps.set(new Map(props));
     },
 
     setPropVariable: (instanceId, propName, value) => {
@@ -91,6 +143,7 @@ export const subscribeComponentHooks = () => {
               const instance = instances.get(id);
               return instance ? [instance] : [];
             }),
+            instanceSelector: lastSelectedInstanceSelector,
           });
         }
       }
@@ -102,6 +155,7 @@ export const subscribeComponentHooks = () => {
               const instance = instances.get(id);
               return instance ? [instance] : [];
             }),
+            instanceSelector,
           });
         }
       }

@@ -3,7 +3,11 @@ import {
   type ElementRef,
   type ComponentPropsWithoutRef,
 } from "react";
-import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
+import {
+  getClosestInstance,
+  getInstanceSelectorById,
+  type Hook,
+} from "@webstudio-is/react-sdk";
 import * as Dialog from "./dialog";
 
 export const Sheet = Dialog.Dialog;
@@ -55,8 +59,13 @@ export const hooksSheet: Hook = {
           instance,
           `${namespace}:Sheet`
         );
+
         if (sheet) {
-          context.setPropVariable(sheet.id, "open", false);
+          const instanceSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            sheet.id
+          );
+          context.setMemoryProp(instanceSelector, "open", undefined);
         }
       }
     }
@@ -70,7 +79,11 @@ export const hooksSheet: Hook = {
           `${namespace}:Sheet`
         );
         if (sheet) {
-          context.setPropVariable(sheet.id, "open", true);
+          const instanceSelector = getInstanceSelectorById(
+            event.instanceSelector,
+            sheet.id
+          );
+          context.setMemoryProp(instanceSelector, "open", true);
         }
       }
     }

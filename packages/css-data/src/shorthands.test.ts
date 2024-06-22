@@ -778,14 +778,170 @@ test("expand grid-row and grid-column", () => {
   ]);
 });
 
+test("expand overflow", () => {
+  expect(expandShorthands([["overflow", "hidden"]])).toEqual([
+    ["overflow-x", "hidden"],
+    ["overflow-y", "hidden"],
+  ]);
+  expect(expandShorthands([["overflow", "hidden auto"]])).toEqual([
+    ["overflow-x", "hidden"],
+    ["overflow-y", "auto"],
+  ]);
+});
+
+test("expand offset", () => {
+  expect(
+    expandShorthands([["offset", `path("M 100 100 L 300 100 L 200 300 z")`]])
+  ).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", 'path("M 100 100 L 300 100 L 200 300 z")'],
+    ["offset-distance", "0"],
+    ["offset-rotate", "auto"],
+    ["offset-anchor", "auto"],
+  ]);
+  expect(
+    expandShorthands([["offset", `url(arc.svg) 30deg / 50px 100px`]])
+  ).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", "url(arc.svg)"],
+    ["offset-distance", "0"],
+    ["offset-rotate", "30deg"],
+    ["offset-anchor", "50px 100px"],
+  ]);
+  expect(expandShorthands([["offset", `url(circle.svg) 40%`]])).toEqual([
+    ["offset-position", "normal"],
+    ["offset-path", "url(circle.svg)"],
+    ["offset-distance", "40%"],
+    ["offset-rotate", "auto"],
+    ["offset-anchor", "auto"],
+  ]);
+});
+
+test("expand scroll-timeline", () => {
+  expect(expandShorthands([["scroll-timeline", `none`]])).toEqual([
+    ["scroll-timeline-name", "none"],
+    ["scroll-timeline-axis", "block"],
+  ]);
+  expect(expandShorthands([["scroll-timeline", `none inline`]])).toEqual([
+    ["scroll-timeline-name", "none"],
+    ["scroll-timeline-axis", "inline"],
+  ]);
+  expect(
+    expandShorthands([["scroll-timeline", `--custom_name_for_timeline inline`]])
+  ).toEqual([
+    ["scroll-timeline-name", "--custom_name_for_timeline"],
+    ["scroll-timeline-axis", "inline"],
+  ]);
+  expect(
+    expandShorthands([["scroll-timeline", `none inline, --custom y`]])
+  ).toEqual([
+    ["scroll-timeline-name", "none,--custom"],
+    ["scroll-timeline-axis", "inline,y"],
+  ]);
+});
+
+test("expand scroll-margin/scroll-padding", () => {
+  expect(expandShorthands([["scroll-margin", "10px"]])).toEqual([
+    ["scroll-margin-top", "10px"],
+    ["scroll-margin-right", "10px"],
+    ["scroll-margin-bottom", "10px"],
+    ["scroll-margin-left", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-margin-block", "10px"]])).toEqual([
+    ["scroll-margin-block-start", "10px"],
+    ["scroll-margin-block-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-margin-inline", "10px"]])).toEqual([
+    ["scroll-margin-inline-start", "10px"],
+    ["scroll-margin-inline-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding", "10px"]])).toEqual([
+    ["scroll-padding-top", "10px"],
+    ["scroll-padding-right", "10px"],
+    ["scroll-padding-bottom", "10px"],
+    ["scroll-padding-left", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding-block", "10px"]])).toEqual([
+    ["scroll-padding-block-start", "10px"],
+    ["scroll-padding-block-end", "10px"],
+  ]);
+  expect(expandShorthands([["scroll-padding-inline", "10px"]])).toEqual([
+    ["scroll-padding-inline-start", "10px"],
+    ["scroll-padding-inline-end", "10px"],
+  ]);
+});
+
+test("expand grid-template", () => {
+  expect(expandShorthands([["grid-template", `none`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "none"],
+    ["grid-template-columns", "none"],
+  ]);
+  expect(expandShorthands([["grid-template", `100px 1fr / 50px 1fr`]])).toEqual(
+    [
+      ["grid-template-areas", "none"],
+      ["grid-template-rows", "100px 1fr"],
+      ["grid-template-columns", "50px 1fr"],
+    ]
+  );
+  expect(
+    expandShorthands([
+      [
+        "grid-template",
+        `
+        [header-top] "a a a" [header-bottom]
+        [main-top] "b b b" 1fr [main-bottom]
+        / auto 1fr auto
+        `,
+      ],
+    ])
+  ).toEqual([
+    ["grid-template-areas", `"a a a""b b b"`],
+    [
+      "grid-template-rows",
+      "[header-top][header-bottom][main-top]1fr[main-bottom]",
+    ],
+    ["grid-template-columns", "auto 1fr auto"],
+  ]);
+});
+
+test("expand grid", () => {
+  expect(expandShorthands([["grid", `none`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "none"],
+    ["grid-template-columns", "none"],
+    ["grid-auto-flow.", "row"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+  expect(expandShorthands([["grid", `100px 1fr / 50px 1fr`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "100px 1fr"],
+    ["grid-template-columns", "50px 1fr"],
+    ["grid-auto-flow.", "row"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+  expect(expandShorthands([["grid", `200px / auto-flow`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "200px"],
+    ["grid-template-columns", "none"],
+    ["grid-auto-flow.", "column"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+  expect(expandShorthands([["grid", `auto-flow dense / 30%`]])).toEqual([
+    ["grid-template-areas", "none"],
+    ["grid-template-rows", "none"],
+    ["grid-template-columns", "30%"],
+    ["grid-auto-flow.", "row dense"],
+    ["grid-auto-rows", "auto"],
+    ["grid-auto-columns", "auto"],
+  ]);
+});
+
 test.todo("container");
 test.todo("contain-intrinsic-size");
-test.todo("grid");
-test.todo("grid-template");
-test.todo("offset");
-test.todo("scroll-margin");
-test.todo("scroll-padding");
-test.todo("scroll-timeline");
 
 test.todo("white-space - not a shorthand in webflow");
 test.todo("text-wrap - not a shorthand in webflow");
@@ -794,9 +950,6 @@ test.todo("all - can negatively affect build size");
 test.todo("background - not used in webflow");
 test.todo("background-position-x - we use shorthand");
 test.todo("background-position-y - we use shorthand");
-test.todo("overflow - used in webflow");
-test.todo("overflow-x - we use shorthand");
-test.todo("overflow-y - we use shorthand");
 test.todo("translate - are these directly mappable to transform");
 test.todo("rotate");
 test.todo("scale");
