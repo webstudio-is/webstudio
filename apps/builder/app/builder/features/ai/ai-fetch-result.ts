@@ -10,14 +10,12 @@ import {
   generateJsxElement,
   generateJsxChildren,
   getIndexesWithinAncestors,
-  getStyleRules,
   idAttribute,
   componentAttribute,
   type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
 import { Instance, createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
-import { getMapValuesByKeysSet } from "~/shared/array-utils";
 import {
   $dataSources,
   $instances,
@@ -307,23 +305,22 @@ const $jsx = computed(
 
     const treeInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
 
-    const treeStyleSourceSelections = new Map(
-      getMapValuesByKeysSet(styleSourceSelections, treeInstanceIds).map(
-        (styleSourceSelection) => [
-          styleSourceSelection.instanceId,
-          styleSourceSelection,
-        ]
-      )
-    );
-
     const sheet = createRegularStyleSheet({ name: "ssr" });
-
-    const styleRules = getStyleRules(styles, treeStyleSourceSelections);
-    for (const { breakpointId, instanceId, state, style } of styleRules) {
-      sheet.addStyleRule(
-        { breakpoint: breakpointId, style },
-        `[${idAttribute}="${instanceId}"]${state ?? ""}`
-      );
+    for (const styleDecl of styles.values()) {
+      sheet.addMediaRule(styleDecl.breakpointId);
+      const rule = sheet.addMixinRule(styleDecl.styleSourceId);
+      rule.setDeclaration({
+        breakpoint: styleDecl.breakpointId,
+        selector: styleDecl.state ?? "",
+        property: styleDecl.property,
+        value: styleDecl.value,
+      });
+    }
+    for (const { instanceId, values } of styleSourceSelections.values()) {
+      if (treeInstanceIds.has(instanceId)) {
+        const rule = sheet.addNestingRule(`[${idAttribute}="${instanceId}"]`);
+        rule.applyMixins(values);
+      }
     }
 
     const css = sheet.cssText.replace(/\n/gm, " ");
