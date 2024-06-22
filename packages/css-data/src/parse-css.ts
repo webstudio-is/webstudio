@@ -93,7 +93,10 @@ const parseCssValue = (
       continue;
     }
 
-    final.set(property, parseCssValueLonghand(property, value));
+    final.set(
+      property,
+      parseCssValueLonghand(property as StyleProperty, value)
+    );
   }
   return final;
 };
