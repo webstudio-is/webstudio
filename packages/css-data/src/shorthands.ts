@@ -284,7 +284,7 @@ const expandBorderImage = function* (value: CssNode) {
 /**
  *
  * font =
- *   [ <'font-style'> || <font-variant-css2> || <'font-weight'> || <font-width-css3> ]?
+ *   [ <'font-style'> || <font-variant-css21> || <'font-weight'> || <'font-stretch'> ]?
  *   <'font-size'> [ / <'line-height'> ]? <'font-family'>
  *
  */
@@ -293,11 +293,9 @@ const expandFont = function* (value: CssNode) {
     parseUnordered(
       [
         "<'font-style'>",
-        // <font-variant-css2> is unsupported by csstree
-        "[ normal | small-caps ]",
+        "<font-variant-css21>",
         "<'font-weight'>",
-        // <font-width-css3> is unsupported by csstree
-        "[ normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded ]",
+        "<'font-stretch'>",
       ],
       value
     );
@@ -323,7 +321,7 @@ const expandFont = function* (value: CssNode) {
   yield ["font-style", fontStyle ?? createInitialNode()] as const;
   yield ["font-variant-caps", fontVariant ?? createInitialNode()] as const;
   yield ["font-weight", fontWeight ?? createInitialNode()] as const;
-  yield ["font-width", fontWidth ?? createInitialNode()] as const;
+  yield ["font-stretch", fontWidth ?? createInitialNode()] as const;
   yield ["font-size", fontSize] as const;
   yield ["line-height", lineHeight] as const;
   yield ["font-family", fontFamily] as const;
