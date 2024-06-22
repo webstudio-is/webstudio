@@ -17,12 +17,24 @@ import { kebabCase } from "change-case";
 
 type AnimatableProperty = (typeof animatableProperties)[number];
 
-export const transitionProperties = [
+export const transitionLongHandProperties = [
   "transitionProperty",
   "transitionTimingFunction",
   "transitionDelay",
   "transitionDuration",
 ] as const;
+
+export const commonTransitionProperties = [
+  "all",
+  "opacity",
+  "margin",
+  "padding",
+  "border",
+  "transform",
+  "filter",
+  "flex",
+  "background-color",
+];
 
 export const isAnimatableProperty = (
   property: string
@@ -30,13 +42,16 @@ export const isAnimatableProperty = (
   if (property === "all") {
     return true;
   }
-  return animatableProperties.some((item) => item === property);
+
+  return [...commonTransitionProperties, ...animatableProperties].some(
+    (item) => item === property
+  );
 };
 
-export const isTransitionProperty = (
+export const isTransitionLongHandProperty = (
   property: string
-): property is (typeof transitionProperties)[number] => {
-  return transitionProperties.some((item) => item === property);
+): property is (typeof transitionLongHandProperties)[number] => {
+  return transitionLongHandProperties.some((item) => item === property);
 };
 
 export const isValidTransitionValue = (
@@ -148,7 +163,7 @@ export const parseTransition = (
 };
 
 export const parseTransitionLonghands = (
-  property: (typeof transitionProperties)[number],
+  property: (typeof transitionLongHandProperties)[number],
   input: string
 ): LayersValue | InvalidValue | UnparsedValue => {
   const cssAst = cssTryParseValue(input);

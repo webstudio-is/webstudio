@@ -8,7 +8,7 @@ import {
   Text,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { transitionProperties } from "@webstudio-is/css-data";
+import { transitionLongHandProperties } from "@webstudio-is/css-data";
 
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
@@ -32,7 +32,7 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 
 const label = "Transitions";
 export const properties =
-  transitionProperties as unknown as Array<StyleProperty>;
+  transitionLongHandProperties as unknown as Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;

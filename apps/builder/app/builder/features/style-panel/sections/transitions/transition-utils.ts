@@ -13,7 +13,7 @@ import {
   extractTransitionProperties,
   isValidTransitionValue,
   parseTransition,
-  transitionProperties,
+  transitionLongHandProperties,
 } from "@webstudio-is/css-data";
 
 export const initialTransition = "opacity 200ms ease 0s";
@@ -102,7 +102,8 @@ export const findTimingFunctionFromValue = (
   );
 };
 
-export type TransitionProperties = (typeof transitionProperties)[number];
+export type TransitionProperties =
+  (typeof transitionLongHandProperties)[number];
 
 export const getTransitionProperties = (
   currentyStyle: StyleInfo
@@ -113,7 +114,7 @@ export const getTransitionProperties = (
     transitionDelay: { type: "layers", value: [] },
     transitionDuration: { type: "layers", value: [] },
   };
-  for (const property of transitionProperties) {
+  for (const property of transitionLongHandProperties) {
     const value = currentyStyle[property];
 
     if (value !== undefined && value.value.type === "layers") {
@@ -185,7 +186,7 @@ export const deleteTransitionProperties = (props: {
   createBatchUpdate: CreateBatchUpdate;
 }) => {
   const batch = props.createBatchUpdate();
-  transitionProperties.forEach((property) => {
+  transitionLongHandProperties.forEach((property) => {
     batch.deleteProperty(property);
   });
   batch.publish();
@@ -248,7 +249,7 @@ export const deleteTransitionLayer = (props: {
 
   const properties = getTransitionProperties(currentStyle);
   const batch = createBatchUpdate();
-  transitionProperties.forEach((property) => {
+  transitionLongHandProperties.forEach((property) => {
     const value = properties[property].value;
     batch.setProperty(property)({
       type: "layers",
@@ -345,7 +346,7 @@ export const swapTransitionLayers = (props: {
   const properties = getTransitionProperties(currentStyle);
   const batch = createBatchUpdate();
 
-  for (const property of transitionProperties) {
+  for (const property of transitionLongHandProperties) {
     const layer = properties[property];
     const layervalue = [...layer.value];
     layervalue.splice(oldIndex, 1);
@@ -368,7 +369,7 @@ export const hideTransitionLayer = (props: {
   const properties = getTransitionProperties(currentStyle);
   const batch = createBatchUpdate();
 
-  for (const property of transitionProperties) {
+  for (const property of transitionLongHandProperties) {
     const propertyLayer = properties[property];
     batch.setProperty(property)({
       type: "layers",

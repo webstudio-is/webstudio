@@ -11,7 +11,7 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 import {
-  isTransitionProperty,
+  isTransitionLongHandProperty,
   parseFilter,
   parseShadow,
   parseTransition,
@@ -98,7 +98,7 @@ export const parseCssValue = (
     return parseTransition(input);
   }
 
-  if (isTransitionProperty(property)) {
+  if (isTransitionLongHandProperty(property)) {
     return parseTransitionLonghands(property, input);
   }
 

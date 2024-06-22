@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   animatableProperties,
+  commonTransitionProperties,
   isAnimatableProperty,
 } from "@webstudio-is/css-data";
 import {
@@ -31,17 +32,7 @@ type TransitionPropertyProps = {
   onPropertySelection: (params: { property: KeywordValue }) => void;
 };
 
-const commonPropertiesSet = new Set<string>([
-  "all",
-  "opacity",
-  "margin",
-  "padding",
-  "border",
-  "transform",
-  "filter",
-  "flex",
-  "background-color",
-]);
+const commonPropertiesSet = new Set(commonTransitionProperties);
 
 const properties = Array.from(
   setUnion(commonPropertiesSet, new Set(animatableProperties))
