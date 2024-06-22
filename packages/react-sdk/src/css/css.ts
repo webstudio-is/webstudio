@@ -16,8 +16,7 @@ import type {
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../props";
 import { descendantComponent } from "../core-components";
-import { addGlobalRules } from "./global-rules";
-import { getPresetStyleRules } from "./style-rules";
+import { addGlobalRules, addPresetRules } from "./global-rules";
 
 export type CssConfig = {
   assets: Assets;
@@ -68,6 +67,7 @@ export const generateCss = ({
   assetBaseUrl,
   atomic,
 }: CssConfig) => {
+  const globalSheet = createRegularStyleSheet({ name: "ssr" });
   const sheet = createRegularStyleSheet({ name: "ssr" });
   const parentIdByInstanceId = new Map<Instance["id"], Instance["id"]>();
   for (const instance of instances.values()) {
@@ -85,21 +85,11 @@ export const generateCss = ({
     }
   }
 
-  addGlobalRules(sheet, { assets, assetBaseUrl });
+  addGlobalRules(globalSheet, { assets, assetBaseUrl });
+  addPresetRules(globalSheet, componentMetas);
 
   for (const breakpoint of breakpoints.values()) {
     sheet.addMediaRule(breakpoint.id, breakpoint);
-  }
-
-  for (const [component, meta] of componentMetas) {
-    const presetStyle = meta.presetStyle;
-    if (presetStyle === undefined) {
-      continue;
-    }
-    const rules = getPresetStyleRules(component, presetStyle);
-    for (const [selector, style] of rules) {
-      sheet.addStyleRule({ style }, selector);
-    }
   }
 
   const imageValueTransformer = createImageValueTransformer(assets, {
@@ -141,13 +131,14 @@ export const generateCss = ({
   }
 
   if (atomic) {
-    return generateAtomic(sheet, {
+    const { cssText, classesMap } = generateAtomic(sheet, {
       getKey: (rule) => instanceByRule.get(rule) ?? "",
       transformValue: imageValueTransformer,
     });
+    return { cssText: `${globalSheet.cssText}\n${cssText}`, classesMap };
   }
   return {
-    cssText: sheet.cssText,
+    cssText: `${globalSheet.cssText}\n${sheet.cssText}`,
     classesMap: new Map<string, Array<string>>(),
   };
 };
