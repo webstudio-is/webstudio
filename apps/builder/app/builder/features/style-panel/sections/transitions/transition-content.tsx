@@ -25,6 +25,7 @@ import {
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import type {
+  CreateBatchUpdate,
   DeleteProperty,
   StyleUpdateOptions,
 } from "../../shared/use-style-data";
@@ -37,7 +38,9 @@ import {
   defaultTransitionDuration,
   defaultTransitionTimingFunction,
   defaultTransitionDelay,
+  deleteTransitionLayer,
 } from "./transition-utils";
+import type { StyleInfo } from "../../shared/style-info";
 
 type TransitionContentProps = {
   index: number;
@@ -51,16 +54,18 @@ type TransitionContentProps = {
     options: StyleUpdateOptions
   ) => void;
   deleteProperty: DeleteProperty;
+  currentStyle: StyleInfo;
+  createBatchUpdate: CreateBatchUpdate;
 };
 
 export const TransitionContent = ({
   layer,
   index,
   tooltip,
-  property: transitionPropertyKey,
   onEditLayer,
   propertyValue,
-  deleteProperty,
+  createBatchUpdate,
+  currentStyle,
 }: TransitionContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -79,7 +84,7 @@ export const TransitionContent = ({
     });
   };
 
-  const handleComplete = () => {
+  const handleComplete = (options: StyleUpdateOptions) => {
     if (intermediateValue === undefined) {
       return;
     }
@@ -93,7 +98,7 @@ export const TransitionContent = ({
       return;
     }
 
-    onEditLayer(index, layers, { isEphemeral: false });
+    onEditLayer(index, layers, options);
   };
 
   const handlePropertyUpdate = (
@@ -237,12 +242,12 @@ export const TransitionContent = ({
           color={intermediateValue?.type === "invalid" ? "error" : undefined}
           value={intermediateValue?.value ?? ""}
           onChange={handleChange}
-          onBlur={handleComplete}
+          onBlur={() => handleComplete({ isEphemeral: true })}
           onKeyDown={(event) => {
             event.stopPropagation();
 
             if (event.key === "Enter") {
-              handleComplete();
+              handleComplete({ isEphemeral: false });
               event.preventDefault();
             }
 
@@ -251,7 +256,12 @@ export const TransitionContent = ({
                 return;
               }
 
-              deleteProperty(transitionPropertyKey, { isEphemeral: true });
+              deleteTransitionLayer({
+                currentStyle,
+                createBatchUpdate,
+                index,
+                options: { isEphemeral: true },
+              });
               setIntermediateValue(undefined);
               event.preventDefault();
             }

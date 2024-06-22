@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import { type StyleProperty } from "@webstudio-is/css-engine";
 import { useState, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
@@ -38,10 +38,10 @@ export const properties = Array.from(
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const transitionProperties = getTransitionProperties(currentStyle);
+  const extractedProperties = getTransitionProperties(currentStyle);
   const layers = useMemo(
-    () => convertIndividualTransitionToLayers(transitionProperties),
-    [transitionProperties]
+    () => convertIndividualTransitionToLayers(extractedProperties),
+    [extractedProperties]
   );
 
   const selectedOrLastStyleSourceSelector = useStore(
@@ -138,11 +138,13 @@ export const Section = (props: SectionProps) => {
             return (
               <TransitionContent
                 {...layerProps}
+                currentStyle={currentStyle}
                 layer={layerProps.layer}
-                onEditLayer={(index, layer, options) =>
+                createBatchUpdate={createBatchUpdate}
+                onEditLayer={(index, layers, options) =>
                   editTransitionLayer({
                     index,
-                    layer,
+                    layers,
                     options,
                     createBatchUpdate,
                     currentStyle,

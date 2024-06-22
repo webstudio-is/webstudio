@@ -112,7 +112,7 @@ describe("transition-utils", () => {
       currentStyle: styleInfo,
       index: 1,
       createBatchUpdate,
-      layer: {
+      layers: {
         type: "layers",
         value: [
           { type: "tuple", value: [{ type: "keyword", value: "width" }] },
@@ -178,7 +178,7 @@ describe("transition-utils", () => {
       currentStyle: styleInfo,
       index: 2,
       createBatchUpdate,
-      layer: {
+      layers: {
         type: "layers",
         value: [
           {
@@ -276,7 +276,7 @@ describe("transition-utils", () => {
       currentStyle: styleInfo,
       index: 1,
       createBatchUpdate,
-      layer: {
+      layers: {
         type: "layers",
         value: [
           {
