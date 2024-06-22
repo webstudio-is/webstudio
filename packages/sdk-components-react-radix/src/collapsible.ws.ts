@@ -32,23 +32,7 @@ export const metaCollapsible: WsComponentMeta = {
     {
       type: "instance",
       component: "Collapsible",
-      variables: {
-        collapsibleOpen: { initialValue: false },
-      },
-      props: [
-        {
-          type: "expression",
-          name: "open",
-          code: "collapsibleOpen",
-        },
-        {
-          name: "onOpenChange",
-          type: "action",
-          value: [
-            { type: "execute", args: ["open"], code: `collapsibleOpen = open` },
-          ],
-        },
-      ],
+      props: [],
       children: [
         {
           type: "instance",

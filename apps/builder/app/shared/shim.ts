@@ -25,7 +25,7 @@ export const setUnion = <Item>(current: Set<Item>, other: Set<Item>) => {
 };
 
 export const mapGroupBy = <Item, Key>(
-  array: Item[] | IterableIterator<Item>,
+  array: Item[] | Iterable<Item>,
   getKey: (item: Item) => Key
 ) => {
   const groups = new Map<Key, Item[]>();

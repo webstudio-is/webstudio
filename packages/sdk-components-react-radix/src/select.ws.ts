@@ -116,7 +116,6 @@ export const metaSelect: WsComponentMeta = {
       component: "Select",
       variables: {
         selectValue: { initialValue: "" },
-        selectOpen: { initialValue: false },
       },
       props: [
         {
@@ -129,18 +128,6 @@ export const metaSelect: WsComponentMeta = {
           type: "action",
           value: [
             { type: "execute", args: ["value"], code: `selectValue = value` },
-          ],
-        },
-        {
-          name: "open",
-          type: "expression",
-          code: "selectOpen",
-        },
-        {
-          name: "onOpenChange",
-          type: "action",
-          value: [
-            { type: "execute", args: ["open"], code: `selectOpen = open` },
           ],
         },
       ],

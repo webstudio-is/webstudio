@@ -56,10 +56,23 @@ export const propsOverrides = {
   },
 } as const;
 
+const optimize = props.optimize;
+optimize.description = "Optimize the image for enhanced performance.";
+
 export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
     ...propsOverrides,
+    optimize,
   },
-  initialProps: ["id", "className", "src", "width", "height", "alt", "loading"],
+  initialProps: [
+    "id",
+    "className",
+    "src",
+    "width",
+    "height",
+    "alt",
+    "loading",
+    "optimize",
+  ],
 };

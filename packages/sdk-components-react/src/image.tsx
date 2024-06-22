@@ -18,9 +18,9 @@ export const Image = forwardRef<
   (
     {
       loading = "lazy",
-      width: widthProp,
-      height: heightProp,
-      optimize: optimizeProp,
+      width,
+      height,
+      optimize = true,
       decoding: decodingProp,
       $webstudio$canvasOnly$assetId,
       ...props
@@ -36,11 +36,6 @@ export const Image = forwardRef<
 
     let key = src;
 
-    let optimize = optimizeProp;
-
-    let width = widthProp;
-    let height = heightProp;
-
     if (renderer === "canvas") {
       // With disabled cache and loading lazy, chrome may not render the image at all
       loading = "eager";
@@ -53,12 +48,12 @@ export const Image = forwardRef<
 
       // NaN width and height means that the image is not yet uploaded, and should not be optimized on canvas
       if (
-        widthProp !== undefined &&
-        heightProp !== undefined &&
-        Number.isNaN(widthProp) &&
-        Number.isNaN(heightProp)
+        width !== undefined &&
+        height !== undefined &&
+        Number.isNaN(width) &&
+        Number.isNaN(height)
       ) {
-        optimize = optimizeProp ?? false;
+        optimize = false;
         width = undefined;
         height = undefined;
       }

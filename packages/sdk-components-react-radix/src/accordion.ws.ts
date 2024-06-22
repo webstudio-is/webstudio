@@ -131,23 +131,9 @@ export const metaAccordion: WsComponentMeta = {
     {
       type: "instance",
       component: "Accordion",
-      variables: {
-        accordionValue: { initialValue: "0" },
-      },
       props: [
         { type: "boolean", name: "collapsible", value: true },
-        { type: "expression", name: "value", code: "accordionValue" },
-        {
-          name: "onValueChange",
-          type: "action",
-          value: [
-            {
-              type: "execute",
-              args: ["value"],
-              code: `accordionValue = value`,
-            },
-          ],
-        },
+        { type: "string", name: "defaultValue", value: "0" },
       ],
       children: [
         {
