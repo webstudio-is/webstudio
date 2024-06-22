@@ -1,6 +1,7 @@
 import type { StyleSheetRegular } from "@webstudio-is/css-engine";
 import type { Assets, FontAsset } from "@webstudio-is/sdk";
 import { getFontFaces } from "@webstudio-is/fonts";
+import type { WsComponentMeta } from "../components/component-meta";
 
 export const addGlobalRules = (
   sheet: StyleSheetRegular,
@@ -22,5 +23,27 @@ export const addGlobalRules = (
   const fontFaces = getFontFaces(fontAssets, { assetBaseUrl });
   for (const fontFace of fontFaces) {
     sheet.addFontFaceRule(fontFace);
+  }
+};
+
+export const addPresetRules = (
+  sheet: StyleSheetRegular,
+  metas: Map<string, WsComponentMeta>
+) => {
+  sheet.addMediaRule("presets");
+  for (const [component, meta] of metas) {
+    for (const [tag, styles] of Object.entries(meta.presetStyle ?? {})) {
+      const rule = sheet.addNestingRule(
+        `${tag}:where([data-ws-component="${component}"])`
+      );
+      for (const declaration of styles) {
+        rule.setDeclaration({
+          breakpoint: "presets",
+          selector: declaration.state ?? "",
+          property: declaration.property,
+          value: declaration.value,
+        });
+      }
+    }
   }
 };
