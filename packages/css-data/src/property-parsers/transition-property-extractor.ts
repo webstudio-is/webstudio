@@ -6,7 +6,7 @@ import type {
 
 export const isTimingFunction = (timing: string) => {
   const regex =
-    /^(ease(-in-out|-in|-out)?|linear|cubic-bezier\((-?\d+(\.\d+)?, ?){3}-?\d+(\.\d+)?\)|steps\(\d+(-?(start|end))?\))$/gm;
+    /^(ease(-in-out|-in|-out)?|linear|cubic-bezier\((-?\d+(\.\d+)?(, ?)?){3}-?\d+(\.\d+)?\)|steps\(\d+(,(start|end|jump-start|jump-end|jump-none|jump-both))?\))$/gm;
   return regex.test(timing);
 };
 

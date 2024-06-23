@@ -24,7 +24,7 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
     const property = styleDecl.property as string;
 
     // expand overflow shorthand into overflow-x and overflow-y longhands
-    if (property === "overflow") {
+    if (property === "overflow" || property === "transition") {
       data.styles.delete(styleDeclKey);
       const longhands = expandShorthands([
         [property, toValue(styleDecl.value)],

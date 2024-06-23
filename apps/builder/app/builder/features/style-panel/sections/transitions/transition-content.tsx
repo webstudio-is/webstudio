@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import {
   toValue,
   type InvalidValue,
-  type LayersValue,
+  LayersValue,
   type TupleValue,
   KeywordValue,
   UnitValue,
@@ -20,8 +20,11 @@ import {
   Grid,
 } from "@webstudio-is/design-system";
 import {
+  expandShorthands,
   extractTransitionProperties,
-  parseTransition,
+  isTransitionLongHandProperty,
+  isValidTransitionValue,
+  parseCssValue,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import type {
@@ -41,6 +44,7 @@ import {
   deleteTransitionLayer,
 } from "./transition-utils";
 import type { StyleInfo } from "../../shared/style-info";
+import { camelCase } from "change-case";
 
 type TransitionContentProps = {
   index: number;
@@ -89,8 +93,8 @@ export const TransitionContent = ({
       return;
     }
 
-    const layers = parseTransition(intermediateValue.value);
-    if (layers.type === "invalid") {
+    const layerValue = parseCssValue("transition", intermediateValue.value);
+    if (layerValue.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
         value: intermediateValue.value,
@@ -98,7 +102,31 @@ export const TransitionContent = ({
       return;
     }
 
-    onEditLayer(index, layers, options);
+    const longhands = expandShorthands([
+      ["transition", intermediateValue.value],
+    ]);
+
+    const layerTuple: TupleValue = { type: "tuple", value: [] };
+    for (const [hyphenedProperty, value] of longhands) {
+      const longhandProperty = camelCase(hyphenedProperty) as StyleProperty;
+      const longhandValue = parseCssValue(longhandProperty, value);
+      if (
+        longhandValue.type === "layers" &&
+        isTransitionLongHandProperty(longhandProperty) &&
+        isValidTransitionValue(longhandValue.value[0])
+      ) {
+        layerTuple.value.push(longhandValue.value[0]);
+      }
+    }
+
+    onEditLayer(
+      index,
+      {
+        type: "layers",
+        value: [layerTuple],
+      },
+      options
+    );
   };
 
   const handlePropertyUpdate = (
@@ -111,21 +139,23 @@ export const TransitionContent = ({
     }).filter<UnitValue | KeywordValue>(
       (item): item is UnitValue | KeywordValue => item != null
     );
-    const newLayer: TupleValue = { type: "tuple", value };
-    const layers = parseTransition(toValue(newLayer));
-    if (layers.type === "invalid") {
+    const layerTuple: TupleValue = { type: "tuple", value };
+    const layerValue = parseCssValue("transition", toValue(layerTuple));
+
+    if (layerValue.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
-        value: toValue(newLayer),
+        value: toValue(layerTuple),
       });
       return;
     }
 
     setIntermediateValue({
       type: "intermediate",
-      value: toValue(newLayer),
+      value: toValue(layerTuple),
     });
-    onEditLayer(index, layers, options);
+
+    onEditLayer(index, { type: "layers", value: [layerTuple] }, options);
   };
 
   return (
@@ -173,10 +203,15 @@ export const TransitionContent = ({
             handlePropertyUpdate({ duration });
           }}
           setValue={(value, options) => {
-            if (value === undefined || value.type !== "unit") {
+            if (
+              value === undefined ||
+              value.type !== "layers" ||
+              value.value[0].type !== "unit"
+            ) {
               return;
             }
-            handlePropertyUpdate({ duration: value }, options);
+
+            handlePropertyUpdate({ duration: value.value[0] }, options);
           }}
         />
 
@@ -206,10 +241,15 @@ export const TransitionContent = ({
           keywords={[]}
           deleteProperty={() => handlePropertyUpdate({ delay })}
           setValue={(value, options) => {
-            if (value === undefined || value.type !== "unit") {
+            if (
+              value === undefined ||
+              value.type !== "layers" ||
+              value.value[0].type !== "unit"
+            ) {
               return;
             }
-            handlePropertyUpdate({ delay: value }, options);
+
+            handlePropertyUpdate({ delay: value.value[0] }, options);
           }}
         />
 

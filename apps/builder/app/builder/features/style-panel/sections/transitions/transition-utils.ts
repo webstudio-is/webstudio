@@ -12,11 +12,9 @@ import type {
 import {
   extractTransitionProperties,
   isValidTransitionValue,
-  parseTransition,
   transitionLongHandProperties,
 } from "@webstudio-is/css-data";
 
-export const initialTransition = "opacity 200ms ease 0s";
 export const defaultTransitionProperty: KeywordValue = {
   type: "keyword",
   value: "opacity",
@@ -198,9 +196,15 @@ export const addDefaultTransitionLayer = (props: {
 }) => {
   const { createBatchUpdate, currentStyle } = props;
   const properties = getTransitionProperties(currentStyle);
-  const { timing, property, delay, duration } = extractTransitionProperties(
-    parseTransition(initialTransition).value[0] as TupleValue
-  );
+  const { timing, property, delay, duration } = extractTransitionProperties({
+    type: "tuple",
+    value: [
+      defaultTransitionProperty,
+      defaultTransitionDuration,
+      defaultTransitionTimingFunction,
+      defaultTransitionDelay,
+    ],
+  });
   const batch = createBatchUpdate();
 
   if (property) {
