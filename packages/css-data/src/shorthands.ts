@@ -81,7 +81,7 @@ const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
  */
 const parseUnordered = (syntaxes: string[], value: CssNode) => {
   const matched = new Map<number, Value>();
-  let nodes = getValueList(value);
+  const nodes = getValueList(value);
   let cursor = 0;
   while (matched.size < syntaxes.length && cursor < nodes.length) {
     let newCursor = cursor;
