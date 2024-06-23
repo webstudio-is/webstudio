@@ -443,6 +443,7 @@ export const props: Record<string, PropMeta> = {
     description: "Indicates the preferred method to decode the image.",
   },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",

@@ -88,6 +88,8 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
         return makePropMeta("number", "number");
       case "string":
         return makePropMeta("string", "text");
+      case "string | number | readonly string[]":
+        return makePropMeta("string", "text");
       case "string | number":
       case "number | string":
         if (defaultValue?.value === "") {

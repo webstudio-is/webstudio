@@ -429,6 +429,7 @@ export const props: Record<string, PropMeta> = {
   },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
