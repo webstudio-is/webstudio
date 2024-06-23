@@ -67,7 +67,21 @@ export const getElementsByInstanceSelector = (
     rootSelectorSet.has(element.getAttribute(selectorIdAttribute) ?? "")
   );
 
-  return rootElements;
+  return rootElements.map((element) => {
+    if (getComputedStyle(element).position === "fixed") {
+      // Can be edge case when fixed element has display: none
+      return element;
+    }
+
+    // We are not interested in display:none or option elements (they have offsetParent === null)
+    let findElt: HTMLElement = element;
+
+    while (findElt.offsetParent === null && findElt.parentElement !== null) {
+      findElt = findElt.parentElement;
+    }
+
+    return findElt;
+  });
 };
 
 type Rect = {

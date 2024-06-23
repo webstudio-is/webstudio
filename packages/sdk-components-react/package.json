@@ -27,6 +27,11 @@
       "webstudio": "./src/props.ts",
       "types": "./lib/types/props.d.ts",
       "import": "./lib/props.js"
+    },
+    "./hooks": {
+      "webstudio": "./src/hooks.ts",
+      "types": "./lib/types/hooks.d.ts",
+      "import": "./lib/hooks.js"
     }
   },
   "scripts": {
