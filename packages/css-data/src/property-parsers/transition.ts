@@ -1,20 +1,63 @@
 import * as csstree from "css-tree";
 import type {
   InvalidValue,
+  KeywordValue,
+  LayerValueItem,
   LayersValue,
   TupleValue,
   TupleValueItem,
   Unit,
+  UnparsedValue,
+  UnitValue,
 } from "@webstudio-is/css-engine";
 import { animatableProperties } from "../";
 import { isTimingFunction } from "./transition-property-extractor";
 import { cssTryParseValue } from "../parse-css-value";
+import { kebabCase } from "change-case";
 
 type AnimatableProperty = (typeof animatableProperties)[number];
+
+export const transitionLongHandProperties = [
+  "transitionProperty",
+  "transitionTimingFunction",
+  "transitionDelay",
+  "transitionDuration",
+] as const;
+
+export const commonTransitionProperties = [
+  "all",
+  "opacity",
+  "margin",
+  "padding",
+  "border",
+  "transform",
+  "filter",
+  "flex",
+  "background-color",
+];
+
 export const isAnimatableProperty = (
   property: string
 ): property is AnimatableProperty => {
-  return animatableProperties.some((item) => item === property);
+  if (property === "all") {
+    return true;
+  }
+
+  return [...commonTransitionProperties, ...animatableProperties].some(
+    (item) => item === property
+  );
+};
+
+export const isTransitionLongHandProperty = (
+  property: string
+): property is (typeof transitionLongHandProperties)[number] => {
+  return transitionLongHandProperties.some((item) => item === property);
+};
+
+export const isValidTransitionValue = (
+  value: LayerValueItem
+): value is KeywordValue | UnitValue => {
+  return value.type === "keyword" || value.type === "unit";
 };
 
 export const parseTransition = (
@@ -34,7 +77,6 @@ export const parseTransition = (
   }
 
   const cssAst = cssTryParseValue(tokenStream);
-
   if (cssAst === undefined) {
     return {
       type: "invalid",
@@ -118,4 +160,47 @@ export const parseTransition = (
       value: transition,
     };
   }
+};
+
+export const parseTransitionLonghands = (
+  property: (typeof transitionLongHandProperties)[number],
+  input: string
+): LayersValue | InvalidValue | UnparsedValue => {
+  const cssAst = cssTryParseValue(input);
+  if (cssAst === undefined) {
+    return {
+      type: "invalid",
+      value: input,
+    };
+  }
+
+  const parsed = csstree.lexer.matchProperty(kebabCase(property), cssAst);
+  if (parsed.error) {
+    return {
+      type: "invalid",
+      value: input,
+    };
+  }
+
+  const layers: LayersValue = { type: "layers", value: [] };
+  csstree.walk(cssAst, (node) => {
+    if (node.type === "Identifier") {
+      if (
+        isAnimatableProperty(node.name) === true ||
+        isTimingFunction(node.name) === true
+      ) {
+        layers.value.push({ type: "keyword", value: node.name });
+      }
+    }
+
+    if (node.type === "Dimension") {
+      layers.value.push({
+        type: "unit",
+        value: Number(node.value),
+        unit: node.unit as Unit,
+      });
+    }
+  });
+
+  return layers.value.length > 0 ? layers : { type: "invalid", value: input };
 };

@@ -10,7 +10,13 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { parseFilter, parseShadow, parseTransition } from "./property-parsers";
+import {
+  isTransitionLongHandProperty,
+  parseFilter,
+  parseShadow,
+  parseTransition,
+  parseTransitionLonghands,
+} from "./property-parsers";
 import { camelCase } from "change-case";
 
 export const cssTryParseValue = (input: string) => {
@@ -90,6 +96,10 @@ export const parseCssValue = (
 
   if (property === "transition") {
     return parseTransition(input);
+  }
+
+  if (isTransitionLongHandProperty(property)) {
+    return parseTransitionLonghands(property, input);
   }
 
   if (

@@ -1,6 +1,5 @@
 import type {
   KeywordValue,
-  StyleValue,
   TupleValue,
   UnitValue,
 } from "@webstudio-is/css-engine";
@@ -12,19 +11,17 @@ export const isTimingFunction = (timing: string) => {
 };
 
 export type ExtractedTransitionProperties = {
-  property?: KeywordValue | null;
-  timing?: KeywordValue | null;
-  delay?: StyleValue | null;
-  duration?: StyleValue | null;
+  property?: KeywordValue;
+  timing?: KeywordValue;
+  delay?: UnitValue;
+  duration?: UnitValue;
 };
 
 export const extractTransitionProperties = (
   transition: TupleValue
 ): ExtractedTransitionProperties => {
-  let property: KeywordValue | null = null;
-  let timing: KeywordValue | null = null;
-  let duration: UnitValue | null = null;
-  let delay: UnitValue | null = null;
+  let property: KeywordValue | undefined;
+  let timing: KeywordValue | undefined;
 
   const keywordValues: KeywordValue[] = [];
   const unitValues: UnitValue[] = [];
@@ -43,11 +40,11 @@ export const extractTransitionProperties = (
     timing = keywordValues[0];
   } else {
     property = keywordValues[0];
-    timing = keywordValues[1] ?? null;
+    timing = keywordValues[1] ?? undefined;
   }
 
-  duration = unitValues[0] ?? null;
-  delay = unitValues[1] ?? null;
+  const duration: UnitValue | undefined = unitValues[0] ?? undefined;
+  const delay: UnitValue | undefined = unitValues[1] ?? undefined;
 
   return {
     property,
