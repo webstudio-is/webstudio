@@ -104,10 +104,7 @@ export const Toaster = () => {
           onMouseEnter={startPause}
           onMouseLeave={endPause}
           onClick={() => {
-            // To give a way to dismiss the infinite toast
-            if (toastData.duration === Number.POSITIVE_INFINITY) {
-              hotToast.dismiss(toastData.id);
-            }
+            hotToast.remove(toastData.id);
           }}
         >
           {toastData.type === "blank" && (
