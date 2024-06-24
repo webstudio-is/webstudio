@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import {
   toValue,
   type InvalidValue,
-  LayersValue,
+  type LayersValue,
   type TupleValue,
-  KeywordValue,
-  UnitValue,
+  type KeywordValue,
+  type UnitValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import {
