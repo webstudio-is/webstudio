@@ -621,22 +621,22 @@ test("expand animation", () => {
 
 test("expand transition", () => {
   expect(
-    expandShorthands([["transition", `margin-right 4s, color 1s`]])
-  ).toEqual([
-    ["transition-property", "margin-right,color"],
-    ["transition-duration", "4s,1s"],
-    ["transition-timing-function", "ease,ease"],
-    ["transition-delay", "4s,1s"],
-    ["transition-behavior", "normal,normal"],
-  ]);
-  expect(
     expandShorthands([["transition", `margin-right 4s ease-in-out 1s`]])
   ).toEqual([
     ["transition-property", "margin-right"],
     ["transition-duration", "4s"],
     ["transition-timing-function", "ease-in-out"],
-    ["transition-delay", "4s"],
+    ["transition-delay", "1s"],
     ["transition-behavior", "normal"],
+  ]);
+  expect(
+    expandShorthands([["transition", `margin-right 4s, color 1s`]])
+  ).toEqual([
+    ["transition-property", "margin-right,color"],
+    ["transition-duration", "4s,1s"],
+    ["transition-timing-function", "ease,ease"],
+    ["transition-delay", "0s,0s"],
+    ["transition-behavior", "normal,normal"],
   ]);
   expect(
     expandShorthands([["transition", `display 4s allow-discrete`]])
@@ -644,7 +644,7 @@ test("expand transition", () => {
     ["transition-property", "display"],
     ["transition-duration", "4s"],
     ["transition-timing-function", "ease"],
-    ["transition-delay", "4s"],
+    ["transition-delay", "0s"],
     ["transition-behavior", "allow-discrete"],
   ]);
 });

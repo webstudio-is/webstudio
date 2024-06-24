@@ -80,41 +80,42 @@ const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
  * Value Definition Syntax use <Type> || <Type> operator for describe this
  */
 const parseUnordered = (syntaxes: string[], value: CssNode) => {
-  const matched = new Map<string, Value>();
-  const unprocessedSyntaxes = new Set(syntaxes);
-  let unprocessedNodes = getValueList(value);
-  let lastCursor = 0;
-  while (unprocessedSyntaxes.size > 0 && unprocessedNodes.length > 0) {
-    let nextCursor = lastCursor;
-    for (const syntax of unprocessedSyntaxes) {
+  const matched = new Map<number, Value>();
+  const nodes = getValueList(value);
+  let cursor = 0;
+  while (matched.size < syntaxes.length && cursor < nodes.length) {
+    let newCursor = cursor;
+    for (let syntaxIndex = 0; syntaxIndex < syntaxes.length; syntaxIndex += 1) {
+      if (matched.has(syntaxIndex)) {
+        continue;
+      }
+      const syntax = syntaxes[syntaxIndex];
       const buffer = [];
       let value: undefined | Value;
-      let cursor = 0;
-      for (const node of unprocessedNodes) {
+      for (let nodeIndex = cursor; nodeIndex < nodes.length; nodeIndex += 1) {
+        const node = nodes[nodeIndex];
         buffer.push(node);
         const newValue = createValueNode(buffer);
         if (lexer.match(syntax, newValue).matched) {
           value = newValue;
-          cursor = buffer.length;
+          newCursor = nodeIndex + 1;
         }
       }
       if (value) {
-        matched.set(syntax, value);
-        unprocessedNodes = unprocessedNodes.slice(cursor);
-        unprocessedSyntaxes.delete(syntax);
-        nextCursor += cursor;
+        matched.set(syntaxIndex, value);
+        break;
       }
     }
     // last pass is the same as previous one
     // which means infinite loop detected
-    if (lastCursor === nextCursor) {
+    if (cursor === newCursor) {
       break;
     }
-    lastCursor = nextCursor;
+    cursor = newCursor;
   }
   return [
-    ...syntaxes.map((syntax) => matched.get(syntax)),
-    createValueNode(unprocessedNodes),
+    ...syntaxes.map((_syntax, index) => matched.get(index)),
+    createValueNode(nodes.slice(cursor)),
   ];
 };
 
@@ -701,15 +702,22 @@ const expandMaskBorder = function* (value: CssNode) {
  */
 const expandOffset = function* (value: CssNode) {
   const [config, anchor] = splitByOperator(value, "/");
-  const [position, path, distance, rotate] = parseUnordered(
+  const [position, config2] = parseUnordered(
     [
       `<'offset-position'>`,
-      `<'offset-path'>`,
-      `<'offset-distance'>`,
-      `<'offset-rotate'>`,
+      `[ <'offset-path'> [ <'offset-distance'> || <'offset-rotate'> ]? ]`,
     ],
     config ?? createIdentifier("none")
   );
+  let path;
+  let distance;
+  let rotate;
+  if (config2) {
+    [path, distance, rotate] = parseUnordered(
+      [`<'offset-path'>`, `<'offset-distance'>`, `<'offset-rotate'>`],
+      config2
+    );
+  }
   yield ["offset-position", position ?? createIdentifier("normal")] as const;
   yield ["offset-path", path ?? createIdentifier("none")] as const;
   yield ["offset-distance", distance ?? createNumber("0")] as const;
