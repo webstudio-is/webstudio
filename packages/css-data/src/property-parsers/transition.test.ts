@@ -88,7 +88,7 @@ test("parses a vaild transitionTimingFunction longhand property", () => {
     },
     {
       "args": {
-        "type": "tuple",
+        "type": "layers",
         "value": [
           {
             "type": "keyword",
@@ -113,7 +113,7 @@ test("parses a vaild transitionTimingFunction longhand property", () => {
     },
     {
       "args": {
-        "type": "tuple",
+        "type": "layers",
         "value": [
           {
             "type": "keyword",
@@ -132,7 +132,7 @@ test("parses a vaild transitionTimingFunction longhand property", () => {
 }
 `);
   expect(toValue(parsedValue)).toMatchInlineSnapshot(
-    `"ease, ease-in, cubic-bezier(0.68 -0.6 0.32 1.6), steps(4 jump-start)"`
+    `"ease, ease-in, cubic-bezier(0.68, -0.6, 0.32, 1.6), steps(4, jump-start)"`
   );
 });
 

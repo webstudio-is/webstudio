@@ -121,6 +121,7 @@ export const parseTransitionLonghandProperty = (
                   );
                 }
 
+                // transition-timing function arguments are comma seperated values
                 const args: LayersValue = { type: "layers", value: [] };
                 const timingFunction: FunctionValue = {
                   type: "function",
