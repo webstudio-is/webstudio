@@ -20,10 +20,7 @@ import {
   Grid,
 } from "@webstudio-is/design-system";
 import {
-  expandShorthands,
   extractTransitionProperties,
-  isTransitionLongHandProperty,
-  isValidTransitionValue,
   parseCssValue,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
@@ -42,9 +39,9 @@ import {
   defaultTransitionTimingFunction,
   defaultTransitionDelay,
   deleteTransitionLayer,
+  parseTransitionShorthandToLayers,
 } from "./transition-utils";
 import type { StyleInfo } from "../../shared/style-info";
-import { camelCase } from "change-case";
 
 type TransitionContentProps = {
   index: number;
@@ -102,31 +99,9 @@ export const TransitionContent = ({
       return;
     }
 
-    const longhands = expandShorthands([
-      ["transition", intermediateValue.value],
-    ]);
+    const layers = parseTransitionShorthandToLayers(intermediateValue.value);
 
-    const layerTuple: TupleValue = { type: "tuple", value: [] };
-    for (const [hyphenedProperty, value] of longhands) {
-      const longhandProperty = camelCase(hyphenedProperty) as StyleProperty;
-      const longhandValue = parseCssValue(longhandProperty, value);
-      if (
-        longhandValue.type === "layers" &&
-        isTransitionLongHandProperty(longhandProperty) &&
-        isValidTransitionValue(longhandValue.value[0])
-      ) {
-        layerTuple.value.push(longhandValue.value[0]);
-      }
-    }
-
-    onEditLayer(
-      index,
-      {
-        type: "layers",
-        value: [layerTuple],
-      },
-      options
-    );
+    onEditLayer(index, layers, options);
   };
 
   const handlePropertyUpdate = (

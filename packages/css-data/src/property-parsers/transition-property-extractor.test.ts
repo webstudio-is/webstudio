@@ -329,7 +329,7 @@ describe("extractTransitionProperties", () => {
 `);
   });
 
-  test("parses and extracts values from custom-property ease", () => {
+  test("parses and throws error for non-animatable 'custom-property ease'", () => {
     const result = extractTransitionProperties({
       type: "tuple",
       value: [
@@ -345,7 +345,7 @@ describe("extractTransitionProperties", () => {
     });
 
     expect(result).toEqual({
-      property: { type: "keyword", value: "custom-property" },
+      property: undefined,
       duration: undefined,
       timing: { type: "keyword", value: "ease" },
       delay: undefined,
@@ -355,10 +355,7 @@ describe("extractTransitionProperties", () => {
 {
   "delay": undefined,
   "duration": undefined,
-  "property": {
-    "type": "keyword",
-    "value": "custom-property",
-  },
+  "property": undefined,
   "timing": {
     "type": "keyword",
     "value": "ease",

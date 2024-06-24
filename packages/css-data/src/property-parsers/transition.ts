@@ -5,10 +5,8 @@ import type {
   LayerValueItem,
   LayersValue,
   Unit,
-  UnparsedValue,
   UnitValue,
   FunctionValue,
-  TupleValue,
 } from "@webstudio-is/css-engine";
 import { animatableProperties } from "../";
 import { isTimingFunction } from "./transition-property-extractor";
@@ -67,7 +65,7 @@ export const isValidTransitionValue = (
 export const parseTransitionLonghandProperty = (
   property: (typeof transitionLongHandProperties)[number],
   input: string
-): LayersValue | InvalidValue | UnparsedValue => {
+): LayersValue | InvalidValue => {
   const cssAst = cssTryParseValue(input);
   if (cssAst === undefined) {
     return {
@@ -123,7 +121,7 @@ export const parseTransitionLonghandProperty = (
                   );
                 }
 
-                const args: TupleValue = { type: "tuple", value: [] };
+                const args: LayersValue = { type: "layers", value: [] };
                 const timingFunction: FunctionValue = {
                   type: "function",
                   args,

@@ -89,6 +89,12 @@ const extractPropertiesFromLayer = (layer: TupleValue | FunctionValue) => {
       }
       shadow.push(item.value);
     }
+
+    if (item.type === "function") {
+      const value = `${item.name}(${toValue(item.args)})`;
+      name.push(value);
+      shadow.push(value);
+    }
   }
 
   return { name: name.join(" "), value: shadow.join(" "), color };
