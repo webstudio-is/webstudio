@@ -1087,6 +1087,29 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
+    case "container": {
+      const [name, type] = splitByOperator(value, "/");
+      yield ["container-name", name ?? createIdentifier("none")] as const;
+      yield ["container-type", type ?? createIdentifier("normal")] as const;
+      break;
+    }
+
+    case "contain-intrinsic-size": {
+      const [width, height] = parseUnordered(
+        [`<'contain-intrinsic-width'>`, `<'contain-intrinsic-height'>`],
+        value
+      );
+      yield [
+        "contain-intrinsic-width",
+        width ?? createIdentifier("none"),
+      ] as const;
+      yield [
+        "contain-intrinsic-height",
+        height ?? width ?? createIdentifier("none"),
+      ] as const;
+      break;
+    }
+
     default:
       yield [property, value] as const;
   }
