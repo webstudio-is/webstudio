@@ -1,6 +1,28 @@
-import type { Style, StyleProperty, StyleValue } from "../schema";
+import type { StyleProperty, StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
 import { toProperty } from "./to-property";
+
+export type StyleMap = Map<StyleProperty, StyleValue>;
+
+export const generateStyleMap = ({
+  style,
+  indent = 0,
+  transformValue,
+}: {
+  style: StyleMap;
+  indent?: number;
+  transformValue?: TransformValue;
+}) => {
+  const spaces = " ".repeat(indent);
+  let lines = "";
+  for (const [property, value] of style) {
+    const propertyString = toProperty(property);
+    const valueString = toValue(value, transformValue);
+    const line = `${spaces}${propertyString}: ${valueString}`;
+    lines += lines === "" ? line : `;\n${line}`;
+  }
+  return lines;
+};
 
 type Declaration = {
   breakpoint: string;
@@ -159,121 +181,39 @@ export class NestingRule {
     ) {
       return cached.generated;
     }
-    const spaces = " ".repeat(indent);
-    const linesBySelector = new Map<string, string>();
+    const styleBySelector = new Map<string, StyleMap>();
     for (const declaration of this.getDeclarations()) {
       // generate declarations only for specified breakpoint
       if (declaration.breakpoint !== breakpoint) {
         continue;
       }
-      const { selector: nestedSelector, property, value } = declaration;
+      const { selector: nestedSelector } = declaration;
       const selector = this.#selector + this.#descendantSuffix + nestedSelector;
-      const lines = linesBySelector.get(selector) ?? "";
-      const propertyString = toProperty(property);
-      const valueString = toValue(value, transformValue);
-      const line = `${spaces}  ${propertyString}: ${valueString}`;
-      linesBySelector.set(selector, lines === "" ? line : `${lines};\n${line}`);
+      let style = styleBySelector.get(selector);
+      if (style === undefined) {
+        style = new Map();
+        styleBySelector.set(selector, style);
+      }
+      style.set(declaration.property, declaration.value);
     }
+    const spaces = " ".repeat(indent);
     // sort by selector to put values without nested selector first
-    const generated = Array.from(linesBySelector)
+    const generated = Array.from(styleBySelector)
       .sort(([leftSelector], [rightSelector]) =>
         leftSelector.localeCompare(rightSelector)
       )
-      .map(
-        ([selector, lines]) => `${spaces}${selector} {\n${lines}\n${spaces}}\n`
-      )
+      .map(([selector, style]) => {
+        const content = generateStyleMap({
+          style,
+          indent: indent + 2,
+          transformValue,
+        });
+        return `${spaces}${selector} {\n${content}\n${spaces}}\n`;
+      })
       .join("")
       .trimEnd();
     this.#cache.set(breakpoint, { generated, indent, transformValue });
     return generated;
-  }
-}
-
-export class StylePropertyMap {
-  #cached: undefined | string;
-  #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
-  #indent = 0;
-  #transformValue?: TransformValue;
-  constructor(style: Style) {
-    let property: StyleProperty;
-    for (property in style) {
-      this.#styleMap.set(property, style[property]);
-    }
-  }
-  set(property: StyleProperty, value?: StyleValue) {
-    this.#styleMap.set(property, value);
-    this.#cached = undefined;
-  }
-  get(property: StyleProperty) {
-    return this.#styleMap.get(property);
-  }
-  has(property: StyleProperty) {
-    return this.#styleMap.has(property);
-  }
-  get size() {
-    return this.#styleMap.size;
-  }
-  keys() {
-    return this.#styleMap.keys();
-  }
-  delete(property: StyleProperty) {
-    this.#styleMap.delete(property);
-    this.#cached = undefined;
-  }
-  clear() {
-    this.#styleMap.clear();
-    this.#cached = undefined;
-  }
-  toString({
-    indent = 0,
-    transformValue,
-  }: { indent?: number; transformValue?: TransformValue } = {}) {
-    // invalidate cache when indent is changed
-    if (
-      this.#cached &&
-      indent === this.#indent &&
-      transformValue === this.#transformValue
-    ) {
-      return this.#cached;
-    }
-    const block: Array<string> = [];
-    const spaces = " ".repeat(indent);
-    for (const [property, value] of this.#styleMap) {
-      if (value === undefined) {
-        continue;
-      }
-      block.push(
-        `${spaces}${toProperty(property)}: ${toValue(value, transformValue)}`
-      );
-    }
-    this.#cached = block.join(";\n");
-    this.#indent = indent;
-    this.#transformValue = transformValue;
-    return this.#cached;
-  }
-}
-
-export class StyleRule {
-  styleMap;
-  selectorText;
-  constructor(selectorText: string, style: StylePropertyMap | Style) {
-    this.selectorText = selectorText;
-    this.styleMap =
-      style instanceof StylePropertyMap ? style : new StylePropertyMap(style);
-  }
-  get cssText() {
-    return this.toString();
-  }
-  toString({
-    indent = 0,
-    transformValue,
-  }: { indent?: number; transformValue?: TransformValue } = {}) {
-    const spaces = " ".repeat(indent);
-    const content = this.styleMap.toString({
-      indent: indent + 2,
-      transformValue,
-    });
-    return `${spaces}${this.selectorText} {\n${content}\n${spaces}}`;
   }
 }
 
@@ -286,7 +226,7 @@ export type MediaRuleOptions = {
 export class MediaRule {
   #name: string;
   options: MediaRuleOptions;
-  rules: Map<string, StyleRule | PlaintextRule>;
+  rules: Map<string, PlaintextRule>;
   #mediaType;
   constructor(name: string, options: MediaRuleOptions = {}) {
     this.#name = name;
@@ -294,11 +234,8 @@ export class MediaRule {
     this.rules = new Map();
     this.#mediaType = options.mediaType ?? "all";
   }
-  insertRule(rule: StyleRule | PlaintextRule) {
-    this.rules.set(
-      rule instanceof StyleRule ? rule.selectorText : rule.cssText,
-      rule
-    );
+  insertRule(rule: PlaintextRule) {
+    this.rules.set(rule.cssText, rule);
     return rule;
   }
   get cssText() {
@@ -319,7 +256,7 @@ export class MediaRule {
     }
     const rules = [];
     for (const rule of this.rules.values()) {
-      rules.push(rule.toString({ indent: 2, transformValue }));
+      rules.push(rule.toString());
     }
     for (const rule of nestingRules) {
       const generatedRule = rule.toString({
