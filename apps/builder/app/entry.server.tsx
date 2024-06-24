@@ -41,5 +41,11 @@ export default function handleRequest(
     handle = handleRequestCanvas;
   }
 
-  return handle(request, responseStatusCode, responseHeaders, remixContext);
+  return new Response("Hello", {
+    status: 404,
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
+  // handle(request, responseStatusCode, responseHeaders, remixContext);
 }
