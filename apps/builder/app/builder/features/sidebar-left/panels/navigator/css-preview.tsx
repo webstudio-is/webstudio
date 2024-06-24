@@ -7,13 +7,12 @@ import {
 import {
   type StyleInfo,
   useStyleInfo,
-  type StyleValueInfo,
 } from "../../../style-panel/shared/style-info";
-import { createRegularStyleSheet } from "@webstudio-is/css-engine";
+import { generateStyleMap } from "@webstudio-is/css-engine";
+import type { StyleMap, StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
 import Prism from "prismjs";
-import type { Style, StyleProperty } from "@webstudio-is/css-engine";
 import { captureError } from "@webstudio-is/error-utils";
 
 const preStyle = css(textVariants.mono, {
@@ -26,15 +25,10 @@ const preStyle = css(textVariants.mono, {
 // - Compiles a CSS string from the style info
 // - Groups by category and separates categories with comments
 const getCssText = (currentStyle: StyleInfo) => {
-  const sheet = createRegularStyleSheet();
-  type StyleValueInfoMap = Map<
-    StyleProperty,
-    StyleValueInfo[keyof StyleValueInfo]
-  >;
-  const sourceStyles: StyleValueInfoMap = new Map();
-  const inheritedStyles: StyleValueInfoMap = new Map();
-  const cascadedStyles: StyleValueInfoMap = new Map();
-  const presetStyles: StyleValueInfoMap = new Map();
+  const sourceStyles: StyleMap = new Map();
+  const inheritedStyles: StyleMap = new Map();
+  const cascadedStyles: StyleMap = new Map();
+  const presetStyles: StyleMap = new Map();
 
   // Aggregate styles by category so we can group them when rendering.
   let property: StyleProperty;
@@ -68,16 +62,12 @@ const getCssText = (currentStyle: StyleInfo) => {
 
   const result: Array<string> = [];
 
-  const add = (comment: string, styles: StyleValueInfoMap) => {
-    if (styles.size === 0) {
+  const add = (comment: string, style: StyleMap) => {
+    if (style.size === 0) {
       return;
     }
-    const rule = sheet.addStyleRule(
-      { style: Object.fromEntries(styles) as Style },
-      comment
-    );
     result.push(`/* ${comment} */`);
-    result.push(rule.styleMap.toString());
+    result.push(generateStyleMap({ style }));
   };
 
   add("Style Sources", sourceStyles);

@@ -1,4 +1,3 @@
-import type { Style } from "../schema";
 import {
   FontFaceRule,
   MediaRule,
@@ -11,11 +10,6 @@ import {
 import { compareMedia } from "./compare-media";
 import { StyleElement } from "./style-element";
 import type { TransformValue } from "./to-value";
-
-export type CssRule = {
-  style: Style;
-  breakpoint?: string;
-};
 
 export class StyleSheet {
   #cssText = "";

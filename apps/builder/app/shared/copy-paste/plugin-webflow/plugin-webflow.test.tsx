@@ -1,7 +1,7 @@
 import { test, expect, describe, beforeEach } from "@jest/globals";
 import { nanoid } from "nanoid";
 import {
-  type StyleRule,
+  type NestingRule,
   createRegularStyleSheet,
 } from "@webstudio-is/css-engine";
 import {
@@ -62,26 +62,20 @@ const toCss = (fragment: WebstudioFragment) => {
   for (const breakpoint of fragment.breakpoints) {
     sheet.addMediaRule(breakpoint.id, breakpoint);
   }
-  const rulesMap = new Map<string, StyleRule>();
-  for (const style of fragment.styles) {
-    const token = fragment.styleSources.find(
-      (source) => source.id === style.styleSourceId
-    );
-    const name = token && "name" in token ? token.name : "Local";
-    const key = name + style.breakpointId;
-    let styleRule = rulesMap.get(key);
-    if (styleRule === undefined) {
-      styleRule = sheet.addStyleRule(
-        {
-          style: { [style.property]: style.value },
-          breakpoint: style.breakpointId,
-        },
-        name
-      );
-      rulesMap.set(key, styleRule);
-      continue;
-    }
-    styleRule.styleMap.set(style.property, style.value);
+  const ruleByStyleSourceId = new Map<string, NestingRule>();
+  for (const styleDecl of fragment.styleSources) {
+    const name = styleDecl.type === "token" ? styleDecl.name : "Local";
+    const rule = sheet.addNestingRule(name);
+    ruleByStyleSourceId.set(styleDecl.id, rule);
+  }
+  for (const styleDecl of fragment.styles) {
+    const rule = ruleByStyleSourceId.get(styleDecl.styleSourceId);
+    rule?.setDeclaration({
+      breakpoint: styleDecl.breakpointId,
+      selector: styleDecl.state ?? "",
+      property: styleDecl.property,
+      value: styleDecl.value,
+    });
   }
   return sheet.cssText;
 };
@@ -1676,7 +1670,14 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         a {
-          background-color: rgba(0, 0, 0, 0);
+          background-color: rgba(0, 0, 0, 0)
+        }
+        a:active {
+          outline-width: 0;
+          outline-style: initial;
+          outline-color: initial
+        }
+        a:hover {
           outline-width: 0;
           outline-style: initial;
           outline-color: initial
