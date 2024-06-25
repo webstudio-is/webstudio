@@ -22,7 +22,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   invalidAncestors: ["Button", "Link"],
-  type: "control",
+  type: "container",
   label: "Select",
   description:
     "A drop-down menu for users to select a single option from a predefined list.",
@@ -90,5 +90,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "className", "name", "required", "autoFocus"],
+  initialProps: ["id", "className", "name", "value", "required", "autoFocus"],
 };
