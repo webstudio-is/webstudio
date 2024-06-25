@@ -31,7 +31,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import {
-  $propValuesByInstanceSelector,
+  $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
   $instances,
   $registeredComponentMetas,
@@ -216,7 +216,7 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const [instanceId] = instanceSelector;
   const $instancePropsObject = useMemo(() => {
     return computed(
-      [$propValuesByInstanceSelector, $indexesWithinAncestors],
+      [$propValuesByInstanceSelectorWithMemoryProps, $indexesWithinAncestors],
       (propValuesByInstanceSelector, indexesWithinAncestors) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
         const index = indexesWithinAncestors.get(instanceId);

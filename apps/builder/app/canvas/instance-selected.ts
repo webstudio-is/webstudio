@@ -10,7 +10,7 @@ import {
   $stylesIndex,
   $instances,
   $selectedInstanceSelector,
-  $propValuesByInstanceSelector,
+  $propValuesByInstanceSelectorWithMemoryProps,
   $styles,
   $selectedInstanceStates,
   $styleSourceSelections,
@@ -250,7 +250,7 @@ const subscribeSelectedInstance = (
   const unsubscribe$stylesIndex = $stylesIndex.subscribe(update);
   const unsubscribe$instances = $instances.subscribe(update);
   const unsubscribePropValuesStore =
-    $propValuesByInstanceSelector.subscribe(update);
+    $propValuesByInstanceSelectorWithMemoryProps.subscribe(update);
 
   const unsubscribeIsResizingCanvas = $isResizingCanvas.subscribe(
     (isResizing) => {
