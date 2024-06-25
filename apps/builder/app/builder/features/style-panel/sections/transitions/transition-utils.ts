@@ -361,6 +361,14 @@ export const swapTransitionLayers = (props: {
   for (const property of transitionLongHandProperties) {
     const layer = properties[property];
     const layervalue = [...layer.value];
+
+    // You can swap only if there are at least two layers
+    // As we are checking across multiple properties, we can't be sure
+    // which property don't have two layers so we are checking here.
+    if (layervalue.length < 2) {
+      continue;
+    }
+
     layervalue.splice(oldIndex, 1);
     layervalue.splice(newIndex, 0, layer.value[oldIndex]);
     batch.setProperty(property)({
