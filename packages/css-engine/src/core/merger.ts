@@ -2,7 +2,7 @@ import { StyleValue, TupleValueItem } from "../schema";
 import type { StyleMap } from "./rules";
 import { toValue } from "./to-value";
 
-const cssWideKeywords = new Set(["initial", "inherit", "unset"]);
+const cssWideKeywords = new Set(["initial", "inherit", "unset", "revert"]);
 
 /**
  * Css wide keywords cannot be used in shorthand parts
