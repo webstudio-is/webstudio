@@ -1,6 +1,8 @@
 import { test, expect } from "@jest/globals";
 import { createRegularStyleSheet } from "./create-style-sheet";
 import { generateAtomic } from "./atomic";
+import type { NestingRule } from "./rules";
+import type { StyleValue } from "../schema";
 
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId0 = "0";
@@ -206,11 +208,11 @@ test("support descendant suffix", () => {
 `);
 });
 
-test("generated prefixed and unprefixed in the same rule", () => {
+test("generate prefixed and unprefixed in the same rule", () => {
   const sheet = createRegularStyleSheet();
   sheet.addMediaRule("x");
-  const rule1 = sheet.addNestingRule("instance");
-  rule1.setDeclaration({
+  const rule = sheet.addNestingRule("instance");
+  rule.setDeclaration({
     breakpoint: "x",
     selector: "",
     property: "textSizeAdjust",
@@ -222,6 +224,57 @@ test("generated prefixed and unprefixed in the same rule", () => {
   .c1h1gugw {
     -webkit-text-size-adjust: auto;
     text-size-adjust: auto
+  }
+}"
+`);
+});
+
+test("generate merged properties as single rule", () => {
+  const sheet = createRegularStyleSheet();
+  sheet.addMediaRule("x");
+  const setMargins = (rule: NestingRule, value: StyleValue) => {
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginTop",
+      value,
+    });
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginRight",
+      value,
+    });
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginBottom",
+      value,
+    });
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginLeft",
+      value,
+    });
+  };
+  setMargins(sheet.addNestingRule("instance"), {
+    type: "keyword",
+    value: "auto",
+  });
+  setMargins(sheet.addNestingRule("instance", " img"), {
+    type: "unit",
+    value: 10,
+    unit: "px",
+  });
+  expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
+    .toMatchInlineSnapshot(`
+"@media all {
+  .cdj9gv4 {
+    margin: auto
+  }
+  .c340vfr img {
+    margin: 10px
   }
 }"
 `);
