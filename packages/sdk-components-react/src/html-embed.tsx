@@ -113,7 +113,7 @@ type ChildProps = {
 const Placeholder = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   return (
-    <div ref={innerRef} {...rest} style={{ padding: 20 }}>
+    <div ref={innerRef} {...rest} style={{ display: "block", padding: 20 }}>
       {'Open the "Settings" panel to insert HTML code.'}
     </div>
   );
@@ -160,7 +160,6 @@ const ClientEmbed = (props: ChildProps) => {
     <div
       {...rest}
       ref={mergeRefs(innerRef, containerRef)}
-      style={{ display: "contents" }}
       dangerouslySetInnerHTML={{ __html: code ?? "" }}
     />
   );
@@ -176,7 +175,6 @@ const ServerEmbed = (props: ChildProps) => {
     <div
       {...rest}
       ref={innerRef}
-      style={{ display: "contents" }}
       dangerouslySetInnerHTML={{ __html: code ?? "" }}
     />
   );

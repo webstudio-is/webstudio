@@ -1,9 +1,19 @@
 import { EmbedIcon } from "@webstudio-is/icons/svg";
 import type {
+  PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { props } from "./__generated__/html-embed.props";
+
+const presetStyle = {
+  div: [
+    {
+      property: "display",
+      value: { type: "keyword", value: "contents" },
+    },
+  ],
+} satisfies PresetStyle<"div">;
 
 export const meta: WsComponentMeta = {
   category: "general",
@@ -11,7 +21,7 @@ export const meta: WsComponentMeta = {
   label: "HTML Embed",
   description: "Used to add HTML code to the page, such as an SVG or script.",
   icon: EmbedIcon,
-  stylable: false,
+  presetStyle,
   order: 8,
 };
 
