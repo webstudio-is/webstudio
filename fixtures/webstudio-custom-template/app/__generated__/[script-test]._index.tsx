@@ -39,7 +39,7 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="LW98_-srDnnagkR10lsk4"
       data-ws-component="Body"
-      className="crro89i ca0mhw9 c1ldy0s3 c1t3ec4y"
+      className="cjrgi00"
     >
       <Heading data-ws-id="SHXddDLFWST_sy44UfGQO" data-ws-component="Heading">
         {"Script Test"}

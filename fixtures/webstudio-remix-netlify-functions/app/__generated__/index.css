@@ -5,10 +5,6 @@ html {
 }
 @media all {
   body:where([data-ws-component="Body"]) {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -19,6 +15,7 @@ html {
     border-left-width: 1px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    margin: 0;
   }
   h1:where([data-ws-component="Heading"]) {
     box-sizing: border-box;
@@ -82,13 +79,13 @@ html {
   .c1jaw2zx {
     display: flex;
   }
-  .c1bn74oy {
+  .cbipm55 {
     align-items: center;
   }
-  .c1vwwfi7 {
+  .ctniqj4 {
     justify-content: center;
   }
-  .c1xn7xpo {
+  .ctgx88l {
     flex-direction: column;
   }
 }

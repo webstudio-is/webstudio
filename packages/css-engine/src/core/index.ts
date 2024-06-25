@@ -5,6 +5,8 @@ export type {
   PlaintextRule,
   FontFaceRule,
 } from "./rules";
+export { prefixStyles } from "./prefixer";
+export { mergeStyles } from "./merger";
 export { generateStyleMap } from "./rules";
 export type { StyleSheetRegular } from "./style-sheet-regular";
 export * from "./create-style-sheet";

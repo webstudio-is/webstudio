@@ -33,6 +33,10 @@ export const renderControl = ({
     return;
   }
 
+  if (meta.control === "action") {
+    return;
+  }
+
   if (meta.control === "json") {
     return <JsonControl key={key} meta={meta} prop={prop} {...rest} />;
   }

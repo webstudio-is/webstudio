@@ -30,7 +30,7 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="MMimeobf_zi4ZkRGXapju"
       data-ws-component="Body"
-      className="c1jaw2zx c1bn74oy c1vwwfi7 c1xn7xpo"
+      className="c1jaw2zx cbipm55 ctniqj4 ctgx88l"
     >
       <Heading data-ws-id="MYDt0guk1-vzc7yzqyN6A" data-ws-component="Heading">
         {"Simple Project to test CLI"}

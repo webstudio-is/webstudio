@@ -139,15 +139,17 @@ const expandBorder = function* (property: string, value: CssNode) {
     case "border-top":
     case "border-right":
     case "border-bottom":
-    case "border-left":
-    case "outline": {
+    case "border-left": {
       const [width, style, color] = parseUnordered(
         ["<line-width>", "<line-style>", "<color>"],
         value
       );
-      yield [`${property}-width`, width ?? createInitialNode()] as const;
-      yield [`${property}-style`, style ?? createInitialNode()] as const;
-      yield [`${property}-color`, color ?? createInitialNode()] as const;
+      yield [`${property}-width`, width ?? createIdentifier("medium")] as const;
+      yield [`${property}-style`, style ?? createIdentifier("none")] as const;
+      yield [
+        `${property}-color`,
+        color ?? createIdentifier("currentcolor"),
+      ] as const;
       break;
     }
     default:
@@ -894,6 +896,17 @@ const expandShorthand = function* (property: string, value: CssNode) {
     case "border-image":
       yield* expandBorderImage(value);
       break;
+
+    case "outline": {
+      const [color, style, width] = parseUnordered(
+        [`<'outline-color'>`, `<'outline-style'>`, `<'outline-width'>`],
+        value
+      );
+      yield [`${property}-width`, width ?? createIdentifier("medium")] as const;
+      yield [`${property}-style`, style ?? createIdentifier("none")] as const;
+      yield [`${property}-color`, color ?? createIdentifier("auto")] as const;
+      break;
+    }
 
     case "mask":
       yield* expandMask(value);

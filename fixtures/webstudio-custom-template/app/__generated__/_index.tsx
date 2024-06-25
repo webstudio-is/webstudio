@@ -104,19 +104,19 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="ibXgMoi9_ipHx1gVrvii0"
       data-ws-component="Body"
-      className="crro89i c1ldy0s3 ca0mhw9 c1t3ec4y"
+      className="cjrgi00"
     >
       <Heading
         data-ws-id="7pwqBSgrfuuOfk1JblWcL"
         data-ws-component="Heading"
-        className="c12poxag c13p4xw cpwo0o8 cjtvnga c1dgu1f0 c1mko7pq c1ryjtry c1yhbwj4 cm4n0xq c1weo8li"
+        className="ce7mxws cd0g70b c1ku1ozg c1kbs9xq c1m6kmmg crjoqt7 c1n5sjmn c1hqh3e6 cwdggon c4o64du"
       >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
       <Box
         data-ws-id="GMg3Wi9tJBFMtKcwbIK6z"
         data-ws-component="Box"
-        className="cxb89wn czqi13r ct7y0ym cy9si0i c1zln9k"
+        className="cxb89wn c12qr5j7 c111rqf8 cp8i2p0 cwfevk3"
       >
         <Image
           data-ws-id="Mfd_mI-VJtT4r7gICAvXi"
@@ -126,12 +126,12 @@ const Page = ({}: { system: any }) => {
           }
           width={1024}
           height={1024}
-          className="c9mecv c1xeb6ie c1cpdzfi cub4hpc"
+          className="ccgiojm cv4f3rn cer5re4 c9lz7ss"
         />
         <Box
           data-ws-id="COafOppxs73Ne4O0Geik0"
           data-ws-component="Box"
-          className="c9mecv c1xeb6ie c1cpdzfi cub4hpc"
+          className="ccgiojm cv4f3rn cer5re4 c9lz7ss"
         />
       </Box>
       <Heading data-ws-id="jWb8SRMYG_XPWqCYvGZjo" data-ws-component="Heading">
@@ -164,7 +164,7 @@ const Page = ({}: { system: any }) => {
         data-ws-component="Vimeo"
         url={"https://player.vimeo.com/video/831343124"}
         showPreview={true}
-        className="c17osjft c53gbe c8mrdqb"
+        className="c17osjft c5kxibo c8mrdqb"
       >
         <VimeoPreviewImage
           data-ws-id="wxd8Wul8dl2yPRFFedNn6"
@@ -172,12 +172,12 @@ const Page = ({}: { system: any }) => {
           alt={"Vimeo video preview image"}
           sizes={"100vw"}
           src={"/custom-folder/home_wsKvRSqvkajPPBeycZ-C8.svg"}
-          className="c13adha2 c3sa779 c8mrdqb chv0hit c14mu2ti c1dsdrfn c1id445d cf36655 c1dfx0rt"
+          className="c13adha2 c19kjzjn c8mrdqb chv0hit c1vw7ut7 c64vnj4 cow7xo6 cddunt6 cqjhyu2"
         />
         <VimeoSpinner
           data-ws-id="o8sAMUoaOraWYZClEfRgl"
           data-ws-component="VimeoSpinner"
-          className="c13adha2 c1ifzo79 c1ljqvnn c10zke2u cplzsl2 c1h30nuz czav9qc"
+          className="c13adha2 c1ifzo79 c1ljqvnn c10zke2u cplzsl2 c1ardg8l ces5mo3"
         >
           <HtmlEmbed
             data-ws-id="BeQ7sgDlUizFvf4aHqOsh"
@@ -192,7 +192,7 @@ const Page = ({}: { system: any }) => {
           data-ws-id="9hBBPGSf7hB30ZkSHKjNd"
           data-ws-component="VimeoPlayButton"
           aria-label={"Play button"}
-          className="c13adha2 c1t88ri8 ca7kf99 c1ifzo79 c1ljqvnn cguufcz c1an2y3u cxb89wn c1h8v1ng c19cfw6s cv7bbk3 c1tly7k c8mtcs c7jk6jf c17y59v6 c1d4fd4d c1yj9i1y c1xqoqjh cil01r8 crmtz4w coba2o7 c11eux2f"
+          className="c13adha2 c1t88ri8 ca7kf99 c1ifzo79 c1ljqvnn c1bld9op ctly9e6 cxb89wn cwcnvqs cvchf4 c1y7dyx c1bnrgjg c1joowif c120xed6 c2eug5n cvwgylz c1f0qcby c1syyj1x cil01r8 c11087u4 coba2o7 c82nx6d"
         >
           <Box
             data-ws-id="D__QElBIIQtamhJN3a4FI"

@@ -67,7 +67,7 @@ const Page = ({}: { system: any }) => {
           data-ws-id="zJ927zk9txwUbYycKB7QA"
           data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"
           data-ws-index="0"
-          className="c1jm23u4 c17v6wg4 c14ypr85"
+          className="c2onvcp"
         >
           <AccordionHeader
             data-ws-id="sMxg7xT1hwYt05hbOvoPL"
@@ -77,7 +77,7 @@ const Page = ({}: { system: any }) => {
             <AccordionTrigger
               data-ws-id="qQSA4NoyKC88O68mBiQe2"
               data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"
-              className="c13v7j50 c1njwnl4 cr59mug cuiulls c1aj1vjn cxqmhs5 cmt2mhu c1f88uyp coehty2 c1bsiosv cg783j6 c1s4llbc"
+              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc"
             >
               <Text data-ws-id="q-DVI4YTNrQ1LizmEyJHI" data-ws-component="Text">
                 {"Is it accessible?"}
@@ -85,7 +85,7 @@ const Page = ({}: { system: any }) => {
               <Box
                 data-ws-id="RSk81lLj2IGXgchTuXF7V"
                 data-ws-component="Box"
-                className="c14hansb c6d2sb5 cwwiftc c9oe4mg cum13td clcagvf cszwd2x"
+                className="c14hansb c6d2sb5 cwwiftc c16vb2zi c1hl6g8z c1xm49r0 c1vri55v"
               >
                 <HtmlEmbed
                   data-ws-id="d0sd_G-kHirxgjq6s6Uq1"
@@ -100,7 +100,7 @@ const Page = ({}: { system: any }) => {
           <AccordionContent
             data-ws-id="IUftdfjK-ilSzfOTdIx1u"
             data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"
-            className="c1mxwmum c11q6wf c11rm5bv c1f88uyp"
+            className="c1mxwmum c1j0j9ep c1gl2i2 c44srea"
           >
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
@@ -109,7 +109,7 @@ const Page = ({}: { system: any }) => {
           data-ws-id="C838wkvIcA1BQu30Xu2G8"
           data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"
           data-ws-index="1"
-          className="c1jm23u4 c17v6wg4 c14ypr85"
+          className="c2onvcp"
         >
           <AccordionHeader
             data-ws-id="fYUOB_brm6s0Ky68lzMfU"
@@ -119,7 +119,7 @@ const Page = ({}: { system: any }) => {
             <AccordionTrigger
               data-ws-id="dfd4gonev_AX6BpuCsxjb"
               data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"
-              className="c13v7j50 c1njwnl4 cr59mug cuiulls c1aj1vjn cxqmhs5 cmt2mhu c1f88uyp coehty2 c1bsiosv cg783j6 c1s4llbc"
+              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc"
             >
               <Text data-ws-id="lZ7sI6Kw_0VZkURriKscB" data-ws-component="Text">
                 {"Is it styled?"}
@@ -127,7 +127,7 @@ const Page = ({}: { system: any }) => {
               <Box
                 data-ws-id="wRw75kuvFzl5NWD8IGJoI"
                 data-ws-component="Box"
-                className="c14hansb c6d2sb5 cwwiftc c9oe4mg cum13td clcagvf cszwd2x"
+                className="c14hansb c6d2sb5 cwwiftc c16vb2zi c1hl6g8z c1xm49r0 c1vri55v"
               >
                 <HtmlEmbed
                   data-ws-id="StPslEr81nfBISqBE2R-Y"
@@ -142,7 +142,7 @@ const Page = ({}: { system: any }) => {
           <AccordionContent
             data-ws-id="wNRVuu0L5E8TVufKdswp1"
             data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"
-            className="c1mxwmum c11q6wf c11rm5bv c1f88uyp"
+            className="c1mxwmum c1j0j9ep c1gl2i2 c44srea"
           >
             {
               "Yes. It comes with default styles that matches the other components' aesthetic."
@@ -153,7 +153,7 @@ const Page = ({}: { system: any }) => {
           data-ws-id="65djoTmSBGemZ2L5izQ5M"
           data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"
           data-ws-index="2"
-          className="c1jm23u4 c17v6wg4 c14ypr85"
+          className="c2onvcp"
         >
           <AccordionHeader
             data-ws-id="UJYfe6kH7HqhH0YYeJwe7"
@@ -163,7 +163,7 @@ const Page = ({}: { system: any }) => {
             <AccordionTrigger
               data-ws-id="600nGddaNxGGdsuGgpxJR"
               data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"
-              className="c13v7j50 c1njwnl4 cr59mug cuiulls c1aj1vjn cxqmhs5 cmt2mhu c1f88uyp coehty2 c1bsiosv cg783j6 c1s4llbc"
+              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc"
             >
               <Text data-ws-id="1iNKIMG91n83PzJnEdxq9" data-ws-component="Text">
                 {"Is it animated?"}
@@ -171,7 +171,7 @@ const Page = ({}: { system: any }) => {
               <Box
                 data-ws-id="Ta70VqUb_fGJXBT_zsnxQ"
                 data-ws-component="Box"
-                className="c14hansb c6d2sb5 cwwiftc c9oe4mg cum13td clcagvf cszwd2x"
+                className="c14hansb c6d2sb5 cwwiftc c16vb2zi c1hl6g8z c1xm49r0 c1vri55v"
               >
                 <HtmlEmbed
                   data-ws-id="sO80m5u4f87jVGG91t6u8"
@@ -186,7 +186,7 @@ const Page = ({}: { system: any }) => {
           <AccordionContent
             data-ws-id="mOVPnIrlt6IwVAzI_i2Fc"
             data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"
-            className="c1mxwmum c11q6wf c11rm5bv c1f88uyp"
+            className="c1mxwmum c1j0j9ep c1gl2i2 c44srea"
           >
             {
               "Yes. It's animated by default, but you can disable it if you prefer."

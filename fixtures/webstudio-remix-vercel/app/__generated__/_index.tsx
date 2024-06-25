@@ -76,24 +76,24 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="On9cvWCxr5rdZtY9O1Bv0"
       data-ws-component="Body"
-      className="c198lioj cr65sqc c1ucc9vx c1dhla2v"
+      className="cielobv"
     >
       <Heading
         data-ws-id="nVMWvMsaLCcb0o1wuNQgg"
         data-ws-component="Heading"
-        className="c1knjlal"
+        className="ceva767"
       >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
       <Box
         data-ws-id="f0kF-WmL7DQg7MSyRvqY1"
         data-ws-component="Box"
-        className="c13v7j50 c1ubj2iz clu0378"
+        className="c13v7j50 cqkqnmd cv6wa71"
       >
         <Box
           data-ws-id="5XDbqPrZDeCwq4YJ3CHsc"
           data-ws-component="Box"
-          className="c15heboa c1njwnl4 cxq4cho cn5joda"
+          className="c1t3ybra c1qxdkbn c1ogzcge cv3kvac"
         >
           <Heading
             data-ws-id="oLXYe1UQiVMhVnZGvJSMr"
@@ -151,7 +151,7 @@ const Page = ({}: { system: any }) => {
         <Box
           data-ws-id="qPnkiFGDj8dITWb1kmpGl"
           data-ws-component="Box"
-          className="c15heboa c1njwnl4 cxq4cho cn5joda"
+          className="c1t3ybra c1qxdkbn c1ogzcge cv3kvac"
         >
           <Image
             data-ws-id="pX1ovPI7NdC0HRjkw6Kpw"
@@ -159,7 +159,7 @@ const Page = ({}: { system: any }) => {
             src={
               "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
             }
-            className="czgliev"
+            className="c1czoo99"
           />
         </Box>
       </Box>

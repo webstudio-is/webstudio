@@ -1,6 +1,8 @@
 import { describe, test, expect } from "@jest/globals";
 import { createRegularStyleSheet } from "./create-style-sheet";
 import type { TransformValue } from "./to-value";
+import type { NestingRule } from "./rules";
+import type { StyleValue } from "../schema";
 
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId0 = "0";
@@ -712,4 +714,54 @@ describe("Style Sheet Regular", () => {
 }"
 `);
   });
+});
+
+test("generate merged properties as single rule", () => {
+  const sheet = createRegularStyleSheet();
+  sheet.addMediaRule("x");
+  const setMargins = (rule: NestingRule, value: StyleValue) => {
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginTop",
+      value,
+    });
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginRight",
+      value,
+    });
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginBottom",
+      value,
+    });
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "marginLeft",
+      value,
+    });
+  };
+  setMargins(sheet.addNestingRule("instance"), {
+    type: "keyword",
+    value: "auto",
+  });
+  setMargins(sheet.addNestingRule("instance", " img"), {
+    type: "unit",
+    value: 10,
+    unit: "px",
+  });
+  expect(sheet.cssText).toMatchInlineSnapshot(`
+"@media all {
+  instance {
+    margin: auto
+  }
+  instance img {
+    margin: 10px
+  }
+}"
+`);
 });

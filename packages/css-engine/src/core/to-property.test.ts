@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { hyphenateProperty, toProperty } from "./to-property";
+import { hyphenateProperty } from "./to-property";
 
 describe("hyphenateProperty", () => {
   test("hyphenates regular css", () => {
@@ -15,13 +15,10 @@ describe("hyphenateProperty", () => {
     expect(hyphenateProperty("MozTransition")).toEqual("-moz-transition");
     expect(hyphenateProperty("WebkitTransition")).toEqual("-webkit-transition");
   });
-});
 
-describe("toProperty", () => {
-  test("boxSizing", () => {
-    expect(toProperty("boxSizing")).toBe("box-sizing");
-  });
-  test("backgroundClip", () => {
-    expect(toProperty("backgroundClip")).toBe("-webkit-background-clip");
+  test("hyphenating is idempotent", () => {
+    expect(hyphenateProperty(hyphenateProperty("-moz-transition"))).toEqual(
+      "-moz-transition"
+    );
   });
 });
