@@ -80,12 +80,12 @@ test("expand border edges", () => {
   // omit values
   expect(expandShorthands([["border-top", "1px"]])).toEqual([
     ["border-top-width", "1px"],
-    ["border-top-style", "initial"],
-    ["border-top-color", "initial"],
+    ["border-top-style", "none"],
+    ["border-top-color", "currentcolor"],
   ]);
   expect(expandShorthands([["border-top", "red"]])).toEqual([
-    ["border-top-width", "initial"],
-    ["border-top-style", "initial"],
+    ["border-top-width", "medium"],
+    ["border-top-style", "none"],
     ["border-top-color", "red"],
   ]);
 });
@@ -168,6 +168,11 @@ test("expand outline", () => {
     ["outline-width", "1px"],
     ["outline-style", "solid"],
     ["outline-color", "red"],
+  ]);
+  expect(expandShorthands([["outline", "1px solid"]])).toEqual([
+    ["outline-width", "1px"],
+    ["outline-style", "solid"],
+    ["outline-color", "auto"],
   ]);
 });
 
