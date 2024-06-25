@@ -68,19 +68,21 @@ export const getElementsByInstanceSelector = (
   );
 
   return rootElements.map((element) => {
-    if (getComputedStyle(element).position === "fixed") {
-      // Can be edge case when fixed element has display: none
-      return element;
-    }
-
     // We are not interested in display:none or option elements (they have offsetParent === null)
-    let findElt: HTMLElement = element;
+    let elementResult: HTMLElement = element;
 
-    while (findElt.offsetParent === null && findElt.parentElement !== null) {
-      findElt = findElt.parentElement;
+    while (
+      elementResult.offsetParent === null &&
+      elementResult.parentElement !== null
+    ) {
+      if (getComputedStyle(element).position === "fixed") {
+        return element;
+      }
+
+      elementResult = elementResult.parentElement;
     }
 
-    return findElt;
+    return elementResult;
   });
 };
 
