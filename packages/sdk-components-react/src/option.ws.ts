@@ -22,9 +22,19 @@ export const meta: WsComponentMeta = {
     "An item within a drop-down menu that users can select as their chosen value.",
   icon: ItemIcon,
   presetStyle,
+  states: [
+    // Applies when option is being activated (clicked)
+    { selector: ":active", label: "Active" },
+    // Applies to the currently selected option
+    { selector: ":checked", label: "Checked" },
+    // For <option> elements: The :default pseudo-class selects the <option> that has the selected attribute when the page loads. This is true even if the user later selects a different option.
+    { selector: ":default", label: "Default" },
+    { selector: ":hover", label: "Hover" },
+    { selector: ":disabled", label: "Disabled" },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["label", "selected", "value", "label"],
+  initialProps: ["label", "selected", "value", "label", "disabled"],
 };
