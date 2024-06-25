@@ -9,7 +9,19 @@ import type { defaultTag } from "./option";
 import { props } from "./__generated__/option.props";
 
 const presetStyle = {
-  option: [],
+  option: [
+    {
+      property: "backgroundColor",
+      state: ":checked",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 209,
+        g: 209,
+        b: 209,
+      },
+    },
+  ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
