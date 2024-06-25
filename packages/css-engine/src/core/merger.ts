@@ -1,6 +1,21 @@
-import { TupleValueItem } from "../schema";
+import { StyleValue, TupleValueItem } from "../schema";
 import type { StyleMap } from "./rules";
 import { toValue } from "./to-value";
+
+const cssWideKeywords = new Set(["initial", "inherit", "unset"]);
+
+/**
+ * Css wide keywords cannot be used in shorthand parts
+ */
+const isLonghandValue = (value?: StyleValue): value is StyleValue => {
+  if (value === undefined) {
+    return false;
+  }
+  if (value.type === "keyword" && cssWideKeywords.has(value.value)) {
+    return false;
+  }
+  return true;
+};
 
 const mergeBorder = (styleMap: StyleMap, base: string) => {
   // support any type in tuple, adding only
@@ -8,7 +23,11 @@ const mergeBorder = (styleMap: StyleMap, base: string) => {
   const width = styleMap.get(`${base}-width`) as undefined | TupleValueItem;
   const style = styleMap.get(`${base}-style`) as undefined | TupleValueItem;
   const color = styleMap.get(`${base}-color`) as undefined | TupleValueItem;
-  if (width && style && color) {
+  if (
+    isLonghandValue(width) &&
+    isLonghandValue(style) &&
+    isLonghandValue(color)
+  ) {
     styleMap.delete(`${base}-width`);
     styleMap.delete(`${base}-style`);
     styleMap.delete(`${base}-color`);
@@ -22,7 +41,12 @@ const mergeBox = (styleMap: StyleMap, base: string) => {
   const right = toValue(styleMap.get(`${base}-right`));
   const bottom = toValue(styleMap.get(`${base}-bottom`));
   const left = toValue(styleMap.get(`${base}-left`));
-  if (topValue && top === right && top === bottom && top === left) {
+  if (
+    isLonghandValue(topValue) &&
+    top === right &&
+    top === bottom &&
+    top === left
+  ) {
     styleMap.delete(`${base}-top`);
     styleMap.delete(`${base}-right`);
     styleMap.delete(`${base}-bottom`);

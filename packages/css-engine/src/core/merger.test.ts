@@ -47,6 +47,24 @@ test("merge border when all parts are set", () => {
   ]);
 });
 
+test("should not merge border with initial", () => {
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["border-width", { type: "keyword", value: "initial" }],
+          ["border-style", { type: "keyword", value: "solid" }],
+          ["border-color", { type: "keyword", value: "red" }],
+        ])
+      )
+    )
+  ).toEqual([
+    ["border-width", "initial"],
+    ["border-style", "solid"],
+    ["border-color", "red"],
+  ]);
+});
+
 test("merge border with vars", () => {
   expect(
     toStringMap(
