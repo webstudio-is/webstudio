@@ -5,10 +5,6 @@ html {
 }
 @media all {
   body:where([data-ws-component="Body"]) {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -19,6 +15,7 @@ html {
     border-left-width: 1px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    margin: 0;
   }
   h1:where([data-ws-component="Heading"]) {
     box-sizing: border-box;
@@ -224,30 +221,13 @@ html {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     box-sizing: border-box;
-    border-top-width: 0px;
-    border-right-width: 0px;
-    border-bottom-width: 0px;
-    border-left-width: 0px;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
     text-transform: none;
     background-color: transparent;
     background-image: none;
-    border-top-color: rgba(226, 232, 240, 1);
-    border-right-color: rgba(226, 232, 240, 1);
-    border-bottom-color: rgba(226, 232, 240, 1);
-    border-left-color: rgba(226, 232, 240, 1);
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
+    border: 0px solid rgba(226, 232, 240, 1);
+    margin: 0;
+    padding: 0px;
   }
   div:where(
       [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"]
@@ -281,10 +261,6 @@ html {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -295,15 +271,12 @@ html {
     border-bottom-style: solid;
     border-left-style: solid;
     display: block;
+    margin: 0;
   }
   button:where([data-ws-component="Button"]) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -314,6 +287,7 @@ html {
     border-bottom-style: solid;
     border-left-style: solid;
     text-transform: none;
+    margin: 0;
   }
 }
 @media all {
@@ -344,26 +318,11 @@ html {
   .c1czoo99 {
     aspect-ratio: 1;
   }
-  .c1rv17ff {
-    padding-top: 16px;
+  .cielobv {
+    padding: 16px;
   }
-  .ceuqm0z {
-    padding-right: 16px;
-  }
-  .c1dj16g6 {
-    padding-left: 16px;
-  }
-  .c11ai4np {
-    padding-bottom: 16px;
-  }
-  .c11jd1pp {
-    border-bottom-width: 1px;
-  }
-  .cpr1920 {
-    border-bottom-style: solid;
-  }
-  .czj7fc1 {
-    border-bottom-color: rgba(226, 232, 240, 1);
+  .c2onvcp {
+    border-bottom: 1px solid rgba(226, 232, 240, 1);
   }
   .chhejm9 {
     flex-shrink: 1;
@@ -386,11 +345,11 @@ html {
   .c14kxsax {
     font-weight: 500;
   }
-  .c1ad236a:hover {
-    text-decoration-line: underline;
-  }
   .cg783j6 {
     --accordion-trigger-icon-transform: 0deg;
+  }
+  .c1ad236a:hover {
+    text-decoration-line: underline;
   }
   .c1s4llbc[data-state="open"] {
     --accordion-trigger-icon-transform: 180deg;

@@ -2,6 +2,53 @@ import type { StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
 import { hyphenateProperty } from "./to-property";
 import { prefixStyles } from "./prefixer";
+import { mergeStyles } from "./merger";
+
+const mapGroupBy = <Item, Key>(
+  array: Item[] | Iterable<Item>,
+  getKey: (item: Item) => Key
+) => {
+  const groups = new Map<Key, Item[]>();
+  for (const item of array) {
+    const key = getKey(item);
+    let group = groups.get(key);
+    if (group === undefined) {
+      group = [];
+      groups.set(key, group);
+    }
+    group.push(item);
+  }
+  return groups;
+};
+
+/**
+ * Merge styles on every group by breakpoint and selector
+ * and convert back to declarations list
+ */
+const mergeDeclarations = (declarations: Iterable<Declaration>) => {
+  const newDeclarations: Declaration[] = [];
+  const groups = mapGroupBy(
+    declarations,
+    (declaration) => declaration.breakpoint + declaration.selector
+  );
+  for (const groupDeclarations of groups.values()) {
+    const { breakpoint, selector } = groupDeclarations[0];
+    const merged = mergeStyles(
+      new Map(
+        groupDeclarations.map((item) => [item.property, item.value] as const)
+      )
+    );
+    for (const [property, value] of merged) {
+      newDeclarations.push({
+        breakpoint,
+        selector,
+        property,
+        value,
+      });
+    }
+  }
+  return newDeclarations;
+};
 
 export type StyleMap = Map<string, StyleValue>;
 
@@ -25,7 +72,7 @@ export const generateStyleMap = ({
   return lines;
 };
 
-type Declaration = {
+export type Declaration = {
   breakpoint: string;
   selector: string;
   property: string;
@@ -154,7 +201,7 @@ export class NestingRule {
     this.#declarations.delete(getDeclarationKey(declaration));
     this.#cache.delete(declaration.breakpoint);
   }
-  getDeclarations() {
+  #getDeclarations() {
     // apply mixins first and then merge added declarations
     const declarations = new Map<string, Declaration>();
     for (const mixin of this.#mixins) {
@@ -170,6 +217,9 @@ export class NestingRule {
       declarations.set(getDeclarationKey(declaration), declaration);
     }
     return declarations.values();
+  }
+  getMergedDeclarations() {
+    return mergeDeclarations(this.#getDeclarations());
   }
   toString({
     breakpoint,
@@ -198,7 +248,7 @@ export class NestingRule {
       return cached.generated;
     }
     const styleBySelector = new Map<string, StyleMap>();
-    for (const declaration of this.getDeclarations()) {
+    for (const declaration of this.getMergedDeclarations()) {
       // generate declarations only for specified breakpoint
       if (declaration.breakpoint !== breakpoint) {
         continue;

@@ -8,7 +8,11 @@ import {
   type StyleInfo,
   useStyleInfo,
 } from "../../../style-panel/shared/style-info";
-import { generateStyleMap } from "@webstudio-is/css-engine";
+import {
+  generateStyleMap,
+  hyphenateProperty,
+  mergeStyles,
+} from "@webstudio-is/css-engine";
 import type { StyleMap, StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
@@ -34,6 +38,7 @@ const getCssText = (currentStyle: StyleInfo) => {
   let property: StyleProperty;
   for (property in currentStyle) {
     const value = currentStyle[property];
+    property = hyphenateProperty(property) as StyleProperty;
     if (value === undefined) {
       continue;
     }
@@ -67,7 +72,7 @@ const getCssText = (currentStyle: StyleInfo) => {
       return;
     }
     result.push(`/* ${comment} */`);
-    result.push(generateStyleMap({ style }));
+    result.push(generateStyleMap({ style: mergeStyles(style) }));
   };
 
   add("Style Sources", sourceStyles);

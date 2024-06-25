@@ -104,7 +104,7 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="ibXgMoi9_ipHx1gVrvii0"
       data-ws-component="Body"
-      className="c306nq8 ciostvv cp7h9on c12dzlms"
+      className="cjrgi00"
     >
       <Heading
         data-ws-id="7pwqBSgrfuuOfk1JblWcL"

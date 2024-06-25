@@ -23,7 +23,7 @@ export const generateAtomic = (sheet: StyleSheet, options: Options) => {
       classesMap.set(groupKey, classList);
     }
     // convert each declaration into separate rule
-    for (const declaration of rule.getDeclarations()) {
+    for (const declaration of rule.getMergedDeclarations()) {
       const atomicHash = hash(
         descendantSuffix +
           declaration.breakpoint +
