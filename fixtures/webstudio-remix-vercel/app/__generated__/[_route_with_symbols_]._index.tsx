@@ -35,7 +35,7 @@ const Page = ({}: { system: any }) => {
         data-ws-id="AdXSAYCx4QDo5QN6nLoGs"
         data-ws-component="Image"
         src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
-        className="czgliev"
+        className="c1czoo99"
       />
     </Body>
   );
