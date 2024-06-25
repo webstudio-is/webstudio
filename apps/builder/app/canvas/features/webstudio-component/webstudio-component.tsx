@@ -407,9 +407,14 @@ export const WebstudioComponentCanvas = forwardRef<
     [idAttribute]: instance.id,
   };
 
+  // React ignores defaultValue changes after first render.
+  // Key prop forces re-creation to reflect updates on canvas.
+  const key =
+    props.defaultValue != null ? props.defaultValue.toString() : undefined;
+
   const instanceElement = (
     <>
-      <Component {...props} ref={ref}>
+      <Component key={key} {...props} ref={ref}>
         {children}
       </Component>
     </>
