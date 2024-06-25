@@ -306,7 +306,6 @@ export type Property =
   | "transformBox"
   | "transformOrigin"
   | "transformStyle"
-  | "transition"
   | "transitionDelay"
   | "transitionDuration"
   | "transitionProperty"
