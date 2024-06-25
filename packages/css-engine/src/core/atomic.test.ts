@@ -12,8 +12,8 @@ test("use matching media rule", () => {
   rule.setDeclaration({
     breakpoint: "x",
     selector: "",
-    property: "display",
-    value: { type: "keyword", value: "block" },
+    property: "marginTop",
+    value: { type: "keyword", value: "auto" },
   });
   rule.setDeclaration({
     breakpoint: "x",
@@ -24,8 +24,8 @@ test("use matching media rule", () => {
   expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
     .toMatchInlineSnapshot(`
 "@media all {
-  .ccqp4le {
-    display: block
+  .chcgnqf {
+    margin-top: auto
   }
   .cen0ymu {
     color: red
@@ -201,6 +201,27 @@ test("support descendant suffix", () => {
   }
   .cpdl2lp img:hover {
     display: block
+  }
+}"
+`);
+});
+
+test("generated prefixed and unprefixed in the same rule", () => {
+  const sheet = createRegularStyleSheet();
+  sheet.addMediaRule("x");
+  const rule1 = sheet.addNestingRule("instance");
+  rule1.setDeclaration({
+    breakpoint: "x",
+    selector: "",
+    property: "textSizeAdjust",
+    value: { type: "keyword", value: "auto" },
+  });
+  expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
+    .toMatchInlineSnapshot(`
+"@media all {
+  .c1h1gugw {
+    -webkit-text-size-adjust: auto;
+    text-size-adjust: auto
   }
 }"
 `);

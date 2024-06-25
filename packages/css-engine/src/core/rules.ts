@@ -1,8 +1,9 @@
-import type { StyleProperty, StyleValue } from "../schema";
+import type { StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
-import { toProperty } from "./to-property";
+import { hyphenateProperty } from "./to-property";
+import { prefixStyles } from "./prefixer";
 
-export type StyleMap = Map<StyleProperty, StyleValue>;
+export type StyleMap = Map<string, StyleValue>;
 
 export const generateStyleMap = ({
   style,
@@ -16,7 +17,7 @@ export const generateStyleMap = ({
   const spaces = " ".repeat(indent);
   let lines = "";
   for (const [property, value] of style) {
-    const propertyString = toProperty(property);
+    const propertyString = hyphenateProperty(property);
     const valueString = toValue(value, transformValue);
     const line = `${spaces}${propertyString}: ${valueString}`;
     lines += lines === "" ? line : `;\n${line}`;
@@ -27,9 +28,16 @@ export const generateStyleMap = ({
 type Declaration = {
   breakpoint: string;
   selector: string;
-  property: StyleProperty;
+  property: string;
   value: StyleValue;
 };
+
+const normalizeDeclaration = <Type extends DeclarationKey>(
+  declaration: Type
+): Type => ({
+  ...declaration,
+  property: hyphenateProperty(declaration.property),
+});
 
 type DeclarationKey = Omit<Declaration, "value">;
 
@@ -66,10 +74,14 @@ export class MixinRule {
     this.#dirtyBreakpoints.clear();
   }
   setDeclaration(declaration: Declaration) {
+    // @todo temporary solution until styles are migrated to hyphenated format
+    declaration = normalizeDeclaration(declaration);
     this.#declarations.set(getDeclarationKey(declaration), declaration);
     this.#dirtyBreakpoints.add(declaration.breakpoint);
   }
   deleteDeclaration(declaration: DeclarationKey) {
+    // @todo temporary solution until styles are migrated to hyphenated format
+    declaration = normalizeDeclaration(declaration);
     this.#declarations.delete(getDeclarationKey(declaration));
     this.#dirtyBreakpoints.add(declaration.breakpoint);
   }
@@ -131,10 +143,14 @@ export class NestingRule {
     this.#cache.clear();
   }
   setDeclaration(declaration: Declaration) {
+    // @todo temporary solution until styles are migrated to hyphenated format
+    declaration = normalizeDeclaration(declaration);
     this.#declarations.set(getDeclarationKey(declaration), declaration);
     this.#cache.delete(declaration.breakpoint);
   }
   deleteDeclaration(declaration: DeclarationKey) {
+    // @todo temporary solution until styles are migrated to hyphenated format
+    declaration = normalizeDeclaration(declaration);
     this.#declarations.delete(getDeclarationKey(declaration));
     this.#cache.delete(declaration.breakpoint);
   }
@@ -204,7 +220,7 @@ export class NestingRule {
       )
       .map(([selector, style]) => {
         const content = generateStyleMap({
-          style,
+          style: prefixStyles(style),
           indent: indent + 2,
           transformValue,
         });

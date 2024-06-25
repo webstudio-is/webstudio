@@ -217,6 +217,7 @@ test("generate component presets", () => {
     display: block
   }
   a:where([data-ws-component="Box"]) {
+    -webkit-user-select: none;
     user-select: none
   }
 }
@@ -229,6 +230,7 @@ test("generate component presets", () => {
     display: block
   }
   a:where([data-ws-component="Box"]) {
+    -webkit-user-select: none;
     user-select: none
   }
 }
