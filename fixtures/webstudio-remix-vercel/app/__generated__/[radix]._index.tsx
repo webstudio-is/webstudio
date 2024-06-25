@@ -67,7 +67,7 @@ const Page = ({}: { system: any }) => {
           data-ws-id="zJ927zk9txwUbYycKB7QA"
           data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"
           data-ws-index="0"
-          className="c11jd1pp cpr1920 czj7fc1"
+          className="c2onvcp"
         >
           <AccordionHeader
             data-ws-id="sMxg7xT1hwYt05hbOvoPL"
@@ -77,7 +77,7 @@ const Page = ({}: { system: any }) => {
             <AccordionTrigger
               data-ws-id="qQSA4NoyKC88O68mBiQe2"
               data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"
-              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax c1ad236a cg783j6 c1s4llbc"
+              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc"
             >
               <Text data-ws-id="q-DVI4YTNrQ1LizmEyJHI" data-ws-component="Text">
                 {"Is it accessible?"}
@@ -109,7 +109,7 @@ const Page = ({}: { system: any }) => {
           data-ws-id="C838wkvIcA1BQu30Xu2G8"
           data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"
           data-ws-index="1"
-          className="c11jd1pp cpr1920 czj7fc1"
+          className="c2onvcp"
         >
           <AccordionHeader
             data-ws-id="fYUOB_brm6s0Ky68lzMfU"
@@ -119,7 +119,7 @@ const Page = ({}: { system: any }) => {
             <AccordionTrigger
               data-ws-id="dfd4gonev_AX6BpuCsxjb"
               data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"
-              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax c1ad236a cg783j6 c1s4llbc"
+              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc"
             >
               <Text data-ws-id="lZ7sI6Kw_0VZkURriKscB" data-ws-component="Text">
                 {"Is it styled?"}
@@ -153,7 +153,7 @@ const Page = ({}: { system: any }) => {
           data-ws-id="65djoTmSBGemZ2L5izQ5M"
           data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"
           data-ws-index="2"
-          className="c11jd1pp cpr1920 czj7fc1"
+          className="c2onvcp"
         >
           <AccordionHeader
             data-ws-id="UJYfe6kH7HqhH0YYeJwe7"
@@ -163,7 +163,7 @@ const Page = ({}: { system: any }) => {
             <AccordionTrigger
               data-ws-id="600nGddaNxGGdsuGgpxJR"
               data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"
-              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax c1ad236a cg783j6 c1s4llbc"
+              className="c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc"
             >
               <Text data-ws-id="1iNKIMG91n83PzJnEdxq9" data-ws-component="Text">
                 {"Is it animated?"}

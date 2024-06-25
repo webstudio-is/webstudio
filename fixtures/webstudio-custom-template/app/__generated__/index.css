@@ -13,10 +13,6 @@ html {
 }
 @media all {
   body:where([data-ws-component="Body"]) {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -27,6 +23,7 @@ html {
     border-left-width: 1px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    margin: 0;
   }
   h1:where([data-ws-component="Heading"]) {
     box-sizing: border-box;
@@ -109,10 +106,6 @@ html {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -123,6 +116,7 @@ html {
     border-bottom-style: solid;
     border-left-style: solid;
     text-transform: none;
+    margin: 0;
   }
   div:where([data-ws-component="Box"]) {
     box-sizing: border-box;
@@ -261,17 +255,8 @@ html {
   .c4o64du {
     background-size: auto, auto, auto;
   }
-  .c306nq8 {
-    margin-top: 15px;
-  }
-  .cp7h9on {
-    margin-bottom: 15px;
-  }
-  .ciostvv {
-    margin-right: 15px;
-  }
-  .c12dzlms {
-    margin-left: 15px;
+  .cjrgi00 {
+    margin: 15px;
   }
   .c17osjft {
     position: relative;
