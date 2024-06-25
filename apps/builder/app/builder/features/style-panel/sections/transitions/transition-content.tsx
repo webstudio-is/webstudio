@@ -59,6 +59,11 @@ type TransitionContentProps = {
   createBatchUpdate: CreateBatchUpdate;
 };
 
+// We are allowing users to add/edit layers as shorthand from the style-panel
+// So, we need to use the shorthand property to validate the layer too.
+// We removed transition from properties list to drop support from advanced tab and so the typecasting.
+const shortHandTransitionProperty = "transition" as StyleProperty;
+
 export const TransitionContent = ({
   layer,
   index,
@@ -90,7 +95,10 @@ export const TransitionContent = ({
       return;
     }
 
-    const layerValue = parseCssValue("transition", intermediateValue.value);
+    const layerValue = parseCssValue(
+      shortHandTransitionProperty,
+      intermediateValue.value
+    );
     if (layerValue.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
@@ -115,7 +123,10 @@ export const TransitionContent = ({
       (item): item is UnitValue | KeywordValue => item != null
     );
     const layerTuple: TupleValue = { type: "tuple", value };
-    const layerValue = parseCssValue("transition", toValue(layerTuple));
+    const layerValue = parseCssValue(
+      shortHandTransitionProperty,
+      toValue(layerTuple)
+    );
 
     if (layerValue.type === "invalid") {
       setIntermediateValue({
