@@ -67,7 +67,23 @@ export const getElementsByInstanceSelector = (
     rootSelectorSet.has(element.getAttribute(selectorIdAttribute) ?? "")
   );
 
-  return rootElements;
+  return rootElements.map((element) => {
+    // We are not interested in display:none or option elements (they have offsetParent === null)
+    let elementResult: HTMLElement = element;
+
+    while (
+      elementResult.offsetParent === null &&
+      elementResult.parentElement !== null
+    ) {
+      if (getComputedStyle(element).position === "fixed") {
+        return element;
+      }
+
+      elementResult = elementResult.parentElement;
+    }
+
+    return elementResult;
+  });
 };
 
 type Rect = {

@@ -442,6 +442,7 @@ export const props: Record<string, PropMeta> = {
   },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -750,6 +751,13 @@ export const props: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["off", "on"],
+  },
+  value: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines a default value which will be displayed in the element on pageload.",
   },
   vocab: { required: false, control: "text", type: "string" },
   width: {

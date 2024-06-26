@@ -246,8 +246,6 @@ export const $propValuesByInstanceSelector = computed(
     $pages,
     $assets,
     $uploadingFilesDataStore,
-    $memoryProps,
-    $isPreviewMode,
   ],
   (
     instances,
@@ -257,9 +255,7 @@ export const $propValuesByInstanceSelector = computed(
     params,
     pages,
     assets,
-    uploadingFilesDataStore,
-    memoryProps,
-    isPreviewMode
+    uploadingFilesDataStore
   ) => {
     const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
@@ -387,19 +383,27 @@ export const $propValuesByInstanceSelector = computed(
 
     traverseInstances([page.rootInstanceId]);
 
+    return propValuesByInstanceSelector;
+  }
+);
+
+export const $propValuesByInstanceSelectorWithMemoryProps = computed(
+  [$propValuesByInstanceSelector, $memoryProps, $isPreviewMode],
+  (propValuesByInstanceSelector, memoryProps, isPreviewMode) => {
     if (false === isPreviewMode) {
+      const result = new Map(propValuesByInstanceSelector);
+
       for (const [memoryKey, memoryValue] of memoryProps) {
-        const propsBySelector =
-          propValuesByInstanceSelector.get(memoryKey) ?? new Map();
+        const propsBySelector = new Map(result.get(memoryKey));
 
         for (const [memoryProp, memoryPropValue] of memoryValue) {
           propsBySelector.set(memoryProp, memoryPropValue.value);
         }
 
-        propValuesByInstanceSelector.set(memoryKey, propsBySelector);
+        result.set(memoryKey, propsBySelector);
       }
+      return result;
     }
-
     return propValuesByInstanceSelector;
   }
 );

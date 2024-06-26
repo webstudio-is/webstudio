@@ -31,7 +31,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import {
-  $propValuesByInstanceSelector,
+  $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
   $instances,
   $registeredComponentMetas,
@@ -216,7 +216,7 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const [instanceId] = instanceSelector;
   const $instancePropsObject = useMemo(() => {
     return computed(
-      [$propValuesByInstanceSelector, $indexesWithinAncestors],
+      [$propValuesByInstanceSelectorWithMemoryProps, $indexesWithinAncestors],
       (propValuesByInstanceSelector, indexesWithinAncestors) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
         const index = indexesWithinAncestors.get(instanceId);
@@ -407,9 +407,14 @@ export const WebstudioComponentCanvas = forwardRef<
     [idAttribute]: instance.id,
   };
 
+  // React ignores defaultValue changes after first render.
+  // Key prop forces re-creation to reflect updates on canvas.
+  const key =
+    props.defaultValue != null ? props.defaultValue.toString() : undefined;
+
   const instanceElement = (
     <>
-      <Component {...props} ref={ref}>
+      <Component key={key} {...props} ref={ref}>
         {children}
       </Component>
     </>

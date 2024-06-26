@@ -32,3 +32,5 @@ export { propsMeta as VimeoPlayButton } from "./vimeo-play-button.ws";
 export { propsMeta as VimeoSpinner } from "./vimeo-spinner.ws";
 export { propsMeta as XmlNode } from "./xml-node.ws";
 export { propsMeta as Time } from "./time.ws";
+export { propsMeta as Select } from "./select.ws";
+export { propsMeta as Option } from "./option.ws";

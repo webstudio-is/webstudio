@@ -33,3 +33,5 @@ export { meta as VimeoPlayButton } from "./vimeo-play-button.ws";
 export { meta as VimeoSpinner } from "./vimeo-spinner.ws";
 export { meta as XmlNode } from "./xml-node.ws";
 export { meta as Time } from "./time.ws";
+export { meta as Select } from "./select.ws";
+export { meta as Option } from "./option.ws";

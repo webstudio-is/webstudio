@@ -12,6 +12,7 @@ import {
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
+import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
@@ -159,6 +160,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
       components: baseComponents,
       metas: baseComponentMetas,
       propsMetas: baseComponentPropsMetas,
+      hooks: baseComponentHooks,
     });
     registerComponentLibrary({
       components: remixComponents,

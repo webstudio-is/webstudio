@@ -93,6 +93,16 @@ export const subscribeInterceptedEvents = () => {
     }
   };
 
+  const handlePointerDown = (event: PointerEvent) => {
+    if (false === event.target instanceof HTMLElement) {
+      return;
+    }
+
+    if (event.target.closest("select") && $isPreviewMode.get() === false) {
+      event.preventDefault();
+    }
+  };
+
   const handleSubmit = (event: SubmitEvent) => {
     if ($isPreviewMode.get()) {
       const form =
@@ -138,7 +148,14 @@ export const subscribeInterceptedEvents = () => {
   });
 
   document.documentElement.addEventListener("keydown", handleKeydown);
+
+  document.documentElement.addEventListener("pointerdown", handlePointerDown);
+
   return () => {
+    document.documentElement.removeEventListener(
+      "pointerdown",
+      handlePointerDown
+    );
     document.documentElement.removeEventListener("click", handleClick, {
       capture: true,
     });
