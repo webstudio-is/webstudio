@@ -851,10 +851,10 @@ const expandGrid = function* (value: CssNode) {
 };
 
 const expandWhiteSpace = function* (value: CssNode) {
-  let collapseKeyword = createIdentifier("collapse");
-  let preserveKeyword = createIdentifier("preserve");
-  let wrapKeyword = createIdentifier("wrap");
-  let nowrapKeyword = createIdentifier("nowrap");
+  const collapseKeyword = createIdentifier("collapse");
+  const preserveKeyword = createIdentifier("preserve");
+  const wrapKeyword = createIdentifier("wrap");
+  const nowrapKeyword = createIdentifier("nowrap");
   let collapse = collapseKeyword;
   let wrapMode = wrapKeyword;
   [collapse = collapseKeyword, wrapMode = wrapKeyword] = parseUnordered(
