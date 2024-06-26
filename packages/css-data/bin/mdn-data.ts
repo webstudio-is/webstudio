@@ -242,12 +242,8 @@ const unsupportedProperties = [
   "font-synthesis",
   "font-variant",
   "overflow",
-  // @todo for now webstudio supports only white-space
-  // need to figure out how to make it future proof
-  "white-space-collapse",
+  "white-space",
   "text-wrap",
-  "text-wrap-mode",
-  "text-wrap-style",
 ];
 
 const animatableProperties: string[] = [];

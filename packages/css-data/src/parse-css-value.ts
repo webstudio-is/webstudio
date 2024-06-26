@@ -35,6 +35,25 @@ export const isValidDeclaration = (
 ): boolean => {
   const cssPropertyName = hyphenateProperty(property);
 
+  // these properties have poor support natively and in csstree
+  // though rendered styles are merged as shorthand
+  // so validate artifically
+  if (cssPropertyName === "white-space-collapse") {
+    return keywordValues.whiteSpaceCollapse.includes(
+      value as (typeof keywordValues.whiteSpaceCollapse)[0]
+    );
+  }
+  if (cssPropertyName === "text-wrap-mode") {
+    return keywordValues.textWrapMode.includes(
+      value as (typeof keywordValues.textWrapMode)[0]
+    );
+  }
+  if (cssPropertyName === "text-wrap-style") {
+    return keywordValues.textWrapStyle.includes(
+      value as (typeof keywordValues.textWrapStyle)[0]
+    );
+  }
+
   // @todo remove after csstree fixes
   // - https://github.com/csstree/csstree/issues/246
   // - https://github.com/csstree/csstree/issues/164
