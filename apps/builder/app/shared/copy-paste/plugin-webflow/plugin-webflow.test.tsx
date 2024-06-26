@@ -1636,7 +1636,7 @@ describe("Styles", () => {
             type: "class",
             name: "is-secondary",
             comb: "&",
-            styleLess: "background-color: transparent; ",
+            styleLess: "background-color: transparent;",
             createdBy: "6075409192d886a671499223",
           },
         ],
