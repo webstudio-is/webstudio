@@ -229,6 +229,9 @@ html {
     margin: 0;
     padding: 0px;
   }
+  div:where([data-ws-component="HtmlEmbed"]) {
+    display: contents;
+  }
   div:where(
       [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"]
     ) {
