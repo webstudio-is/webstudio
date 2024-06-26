@@ -4,7 +4,11 @@ import {
   type StyleDecl,
   type WebstudioData,
 } from "@webstudio-is/sdk";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import {
+  hyphenateProperty,
+  toValue,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import { expandShorthands, parseCssValue } from "@webstudio-is/css-data";
 
 /**
@@ -21,11 +25,16 @@ import { expandShorthands, parseCssValue } from "@webstudio-is/css-data";
  */
 export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   for (const [styleDeclKey, styleDecl] of data.styles) {
-    const property = styleDecl.property as string;
+    const property = hyphenateProperty(styleDecl.property);
 
     // expands overflow shorthand into overflow-x and overflow-y longhands
     // expands transition shorthand into transition-property, transition-duration, transition-timing-function, transition-delay longhands
-    if (property === "overflow" || property === "transition") {
+    // expands white-space into white-space-collapse and text-wrap-mode
+    if (
+      property === "overflow" ||
+      property === "transition" ||
+      property === "white-space"
+    ) {
       data.styles.delete(styleDeclKey);
       const longhands = expandShorthands([
         [property, toValue(styleDecl.value)],

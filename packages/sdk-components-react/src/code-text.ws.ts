@@ -17,8 +17,12 @@ const presetStyle = {
       value: { type: "keyword", value: "block" },
     },
     {
-      property: "whiteSpace",
-      value: { type: "keyword", value: "pre-wrap" },
+      property: "whiteSpaceCollapse",
+      value: { type: "keyword", value: "preserve" },
+    },
+    {
+      property: "textWrapMode",
+      value: { type: "keyword", value: "wrap" },
     },
     {
       property: "paddingLeft",

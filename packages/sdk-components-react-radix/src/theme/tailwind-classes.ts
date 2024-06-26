@@ -756,10 +756,31 @@ export const font = (
 export const whitespace = (
   value: "normal" | "nowrap" | "pre" | "pre-line" | "pre-wrap" | "break-spaces"
 ): EmbedTemplateStyleDecl[] => {
+  let whiteSpaceCollapse = "collapse";
+  let textWrapMode = "wrap";
+  if (value === "normal") {
+    [whiteSpaceCollapse, textWrapMode] = ["collapse", "wrap"];
+  }
+  if (value === "pre") {
+    [whiteSpaceCollapse, textWrapMode] = ["preserve", "nowrap"];
+  }
+  if (value === "pre-wrap") {
+    [whiteSpaceCollapse, textWrapMode] = ["preserve", "wrap"];
+  }
+  if (value === "pre-line") {
+    [whiteSpaceCollapse, textWrapMode] = ["preserve-breaks", "wrap"];
+  }
+  if (value === "break-spaces") {
+    [whiteSpaceCollapse, textWrapMode] = ["break-spaces", "wrap"];
+  }
   return [
     {
-      property: "whiteSpace",
-      value: { type: "keyword", value },
+      property: "whiteSpaceCollapse",
+      value: { type: "keyword", value: whiteSpaceCollapse },
+    },
+    {
+      property: "textWrapMode",
+      value: { type: "keyword", value: textWrapMode },
     },
   ];
 };
