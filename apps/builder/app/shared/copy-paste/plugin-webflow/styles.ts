@@ -279,7 +279,7 @@ export const addStyles = async (
   wfStyles: Map<WfStyle["_id"], WfStyle>,
   doneNodes: Map<WfNode["_id"], Instance["id"] | false>,
   fragment: WebstudioFragment,
-  generateId: (sourceData: string) => Promise<string>
+  generateStyleSourceId: (sourceData: string) => Promise<string>
 ) => {
   const { styles: stylePresets } = await import(
     "./__generated__/style-presets"
@@ -302,7 +302,7 @@ export const addStyles = async (
 
     for (const name of mapComponentAndPresetStyles(wfNode, stylePresets)) {
       addNodeStyles({
-        styleSourceId: await generateId(name),
+        styleSourceId: await generateStyleSourceId(name),
         name,
         variants: new Map([
           ["base", stylePresets[name] as Array<EmbedTemplateStyleDecl>],
@@ -341,7 +341,7 @@ export const addStyles = async (
       });
 
       addNodeStyles({
-        styleSourceId: await generateId(classId),
+        styleSourceId: await generateStyleSourceId(classId),
         name: style.name,
         variants,
         instanceId,

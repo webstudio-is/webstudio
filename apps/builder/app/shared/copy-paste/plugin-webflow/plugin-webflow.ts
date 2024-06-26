@@ -58,7 +58,7 @@ const toWebstudioFragment = async (wfData: WfData) => {
    * Generates deterministic style IDs based on sourceId or unique data.
    * This simplifies merging and deduplicating styles from different sources.
    */
-  const generateId = async (sourceData: string) => {
+  const generateStyleSourceId = async (sourceData: string) => {
     // We are using projectId here to avoid id collisions between different projects.
     const projectId = $project.get()?.id;
     if (projectId === undefined) {
@@ -67,7 +67,13 @@ const toWebstudioFragment = async (wfData: WfData) => {
     return nanoHash(`${projectId}-${sourceData}`);
   };
 
-  await addStyles(wfNodes, wfStyles, doneNodes, fragment, generateId);
+  await addStyles(
+    wfNodes,
+    wfStyles,
+    doneNodes,
+    fragment,
+    generateStyleSourceId
+  );
   // First node should be always the root node in theory, if not
   // we need to find a node that is not a child of any other node.
   const rootWfNode = wfData.payload.nodes[0];
