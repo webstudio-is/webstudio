@@ -5,7 +5,6 @@ import {
 } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
-  authorizeAuthorizationToken,
   type AppContext,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
@@ -26,22 +25,9 @@ export const findMany = async (
     );
   }
 
-  // Get all leaf nodes for the project
-  const leafNodes =
-    await context.authorization.authorizeTrpc.expandLeafNodes.query({
-      namespace: "Project",
-      id: props.projectId,
-    });
-
-  const tokenLeafNodes = leafNodes.filter(
-    (leafNode) => leafNode.namespace === "Token"
-  );
-
   const dbTokens = await prisma.authorizationToken.findMany({
     where: {
-      token: {
-        in: tokenLeafNodes.map((leafNode) => leafNode.id),
-      },
+      projectId: props.projectId,
     },
     // Stable order
     orderBy: [
@@ -114,15 +100,6 @@ export const create = async (
     );
   }
 
-  await authorizeAuthorizationToken.registerToken(
-    {
-      tokenId,
-      projectId: props.projectId,
-      relation: props.relation,
-    },
-    context
-  );
-
   const dbToken = await prisma.authorizationToken.create({
     data: {
       projectId: props.projectId,
@@ -165,15 +142,6 @@ export const update = async (
 
   if (previousToken === null) {
     throw new AuthorizationError("Authorization token not found");
-  }
-
-  if (previousToken.relation !== props.relation) {
-    await authorizeAuthorizationToken.patchToken(
-      { tokenId: props.token, projectId },
-      previousToken.relation,
-      props.relation,
-      context
-    );
   }
 
   const dbToken = await prisma.authorizationToken.update({

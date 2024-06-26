@@ -1,33 +1,61 @@
 import type { Project } from "@webstudio-is/prisma-client";
-import type { AuthPermit } from "../shared/authorization-router";
 import type { AppContext } from "../context/context.server";
+import { prisma } from "@webstudio-is/prisma-client";
 
-/**
- * For 3rd party authorization systems like Ory we need to register the project owner.
- *
- * We do that before the project create (and out of the transaction),
- * so in case of an error we will have just stale records of non existed projects in authorization system.
- */
-export const registerProjectOwner = async (
-  props: { projectId: string },
-  context: AppContext
-) => {
-  const { authorization } = context;
-  const { userId, authorizeTrpc } = authorization;
+export type AuthPermit = "view" | "edit" | "build" | "admin" | "own";
 
-  if (userId === undefined) {
-    throw new Error("The user must be authenticated to create a project");
+type CheckInput = {
+  namespace: "Project";
+  id: string;
+
+  permit: AuthPermit;
+
+  subjectSet: {
+    namespace: "User" | "Token";
+    id: string;
+  };
+};
+
+const check = async (input: CheckInput) => {
+  const { subjectSet } = input;
+
+  if (subjectSet.namespace === "User") {
+    // We check only if the user is the owner of the project
+    const row = await prisma.project.findFirst({
+      where: {
+        id: input.id,
+        userId: subjectSet.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return { allowed: row !== null };
   }
 
-  await authorizeTrpc.create.mutate({
-    namespace: "Project",
-    id: props.projectId,
-    relation: "owners",
-    subjectSet: {
-      namespace: "User",
-      id: userId,
-    },
-  });
+  const permitToRelationRewrite = {
+    view: ["viewers", "editors", "builders", "administrators"],
+    edit: ["editors", "builders", "administrators"],
+    build: ["builders", "administrators"],
+    admin: ["administrators"],
+  } as const;
+
+  if (subjectSet.namespace === "Token" && input.permit !== "own") {
+    const row = await prisma.authorizationToken.findFirst({
+      where: {
+        token: subjectSet.id,
+        relation: {
+          in: [...permitToRelationRewrite[input.permit]],
+        },
+      },
+      select: { token: true },
+    });
+
+    return { allowed: row !== null };
+  }
+
+  return { allowed: false };
 };
 
 export const hasProjectPermit = async (
@@ -41,7 +69,6 @@ export const hasProjectPermit = async (
 
   try {
     const { authorization } = context;
-    const { authorizeTrpc } = authorization;
 
     const checks = [];
     const namespace = "Project";
@@ -71,7 +98,7 @@ export const hasProjectPermit = async (
     // Check if the user is allowed to access the project
     if (authorization.userId !== undefined) {
       checks.push(
-        authorizeTrpc.check.query({
+        check({
           subjectSet: {
             namespace: "User",
             id: authorization.userId,
@@ -87,7 +114,7 @@ export const hasProjectPermit = async (
     // Token doesn't have own permit, do not check it
     if (authorization.authToken !== undefined && props.permit !== "own") {
       checks.push(
-        authorizeTrpc.check.query({
+        check({
           namespace,
           id: props.projectId,
           subjectSet: {

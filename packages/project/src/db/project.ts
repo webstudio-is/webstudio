@@ -53,7 +53,6 @@ export const create = async (
   }
 
   const projectId = crypto.randomUUID();
-  await authorizeProject.registerProjectOwner({ projectId }, context);
 
   const project = await prisma.$transaction(async (client) => {
     const project = await client.project.create({
@@ -165,10 +164,6 @@ export const clone = async (
   }
 
   const newProjectId = crypto.randomUUID();
-  await authorizeProject.registerProjectOwner(
-    { projectId: newProjectId },
-    context
-  );
 
   const clonedProject = await prisma.$transaction(async (client) => {
     await cloneAssets(
