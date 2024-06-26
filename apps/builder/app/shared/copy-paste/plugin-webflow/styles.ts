@@ -39,6 +39,23 @@ const wfBreakpoints = new Map<WfBreakpointName, WfBreakpoint>([
   ["tiny", { maxWidth: 479 }],
 ]);
 
+const parseVariantName = (variant: string) => {
+  let [breakpointName, state = ""] = variant.split("_");
+  if (state) {
+    state = `:${state}`;
+  }
+
+  if (wfBreakpoints.has(breakpointName as WfBreakpointName) === false) {
+    console.error(`Invalid breakpoint name: ${breakpointName}`);
+    breakpointName = "base";
+  }
+
+  return {
+    breakpointName: breakpointName as WfBreakpointName,
+    state,
+  };
+};
+
 const findWsBreakpoint = (
   wfBreakpoint: WfBreakpoint,
   breakpoints: Breakpoints
@@ -56,10 +73,7 @@ const replaceAtVariables = (styles: string) => {
   return styles.replace(/@var_[\w-]+/g, "unset");
 };
 
-type UnparsedVariants = Map<
-  WfBreakpointName,
-  string | Array<EmbedTemplateStyleDecl>
->;
+type UnparsedVariants = Map<string, string | Array<EmbedTemplateStyleDecl>>;
 
 // Variants value can be wf styleLess string which is a styles block
 // or it can be an array of EmbedTemplateStyleDecl.
@@ -69,13 +83,16 @@ const toParsedVariants = (variants: UnparsedVariants) => {
     WfBreakpointName,
     Array<EmbedTemplateStyleDecl>
   >();
-
-  for (const [breakpointName, styles] of variants) {
+  for (const [variant, styles] of variants) {
+    const { breakpointName, state } = parseVariantName(variant);
     if (typeof styles === "string") {
       try {
         const parsed =
-          parseCss(`.styles {${replaceAtVariables(styles)}}`).styles ?? [];
-        parsedVariants.set(breakpointName, parsed);
+          parseCss(`.styles${state} {${replaceAtVariables(styles)}}`).styles ??
+          [];
+        const allBreakpointStyles = parsedVariants.get(breakpointName) ?? [];
+        allBreakpointStyles.push(...parsed);
+        parsedVariants.set(breakpointName, allBreakpointStyles);
       } catch (error) {
         console.error("Failed to parse style", error, breakpointName, styles);
       }

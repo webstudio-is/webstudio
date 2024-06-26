@@ -252,14 +252,7 @@ export const WfStyle = z.object({
   comb: z.string().optional(),
   namespace: z.string().optional(),
   variants: z
-    .object({
-      large: z.object({ styleLess: z.string() }).optional(),
-      medium: z.object({ styleLess: z.string() }).optional(),
-      small: z.object({ styleLess: z.string() }).optional(),
-      tiny: z.object({ styleLess: z.string() }).optional(),
-      xl: z.object({ styleLess: z.string() }).optional(),
-      xxl: z.object({ styleLess: z.string() }).optional(),
-    })
+    .record(z.string(), z.object({ styleLess: z.string() }))
     .optional(),
   children: z.array(z.string()).optional(),
   createdBy: z.string().optional(),
