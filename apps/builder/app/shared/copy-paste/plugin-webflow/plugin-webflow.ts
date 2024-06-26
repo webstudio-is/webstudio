@@ -12,12 +12,14 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedPage,
+  $project,
 } from "../../nano-states";
 import { WfData, WfNode, WfStyle, wfNodeTypes } from "./schema";
 import { addInstanceAndProperties } from "./instances-properties";
 import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
+import { nanoHash } from "~/shared/nano-hash";
 
 const { toast } = builderApi;
 
@@ -51,7 +53,27 @@ const toWebstudioFragment = async (wfData: WfData) => {
   for (const wfNode of wfNodes.values()) {
     addInstanceAndProperties(wfNode, doneNodes, wfNodes, fragment);
   }
-  await addStyles(wfNodes, wfStyles, doneNodes, fragment);
+
+  /**
+   * Generates deterministic style IDs based on sourceId or unique data.
+   * This simplifies merging and deduplicating styles from different sources.
+   */
+  const generateStyleSourceId = async (sourceData: string) => {
+    // We are using projectId here to avoid id collisions between different projects.
+    const projectId = $project.get()?.id;
+    if (projectId === undefined) {
+      throw new Error("Project id is not set");
+    }
+    return nanoHash(`${projectId}-${sourceData}`);
+  };
+
+  await addStyles(
+    wfNodes,
+    wfStyles,
+    doneNodes,
+    fragment,
+    generateStyleSourceId
+  );
   // First node should be always the root node in theory, if not
   // we need to find a node that is not a child of any other node.
   const rootWfNode = wfData.payload.nodes[0];

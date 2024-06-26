@@ -139,12 +139,14 @@ const addBreakpoints = (
 };
 
 const addNodeStyles = ({
+  styleSourceId,
   name,
   variants,
   instanceId,
   fragment,
   breakpointsByName,
 }: {
+  styleSourceId: string;
   name: string;
   variants: UnparsedVariants;
   instanceId: Instance["id"];
@@ -153,7 +155,6 @@ const addNodeStyles = ({
 }) => {
   const parsedVariants = toParsedVariants(variants);
 
-  const styleSourceId = nanoid();
   fragment.styleSources.push({
     type: "token",
     id: styleSourceId,
@@ -277,7 +278,8 @@ export const addStyles = async (
   wfNodes: Map<WfNode["_id"], WfNode>,
   wfStyles: Map<WfStyle["_id"], WfStyle>,
   doneNodes: Map<WfNode["_id"], Instance["id"] | false>,
-  fragment: WebstudioFragment
+  fragment: WebstudioFragment,
+  generateStyleSourceId: (sourceData: string) => Promise<string>
 ) => {
   const { styles: stylePresets } = await import(
     "./__generated__/style-presets"
@@ -298,8 +300,9 @@ export const addStyles = async (
 
     const breakpointsByName = addBreakpoints($breakpoints.get(), fragment);
 
-    mapComponentAndPresetStyles(wfNode, stylePresets).forEach((name) => {
+    for (const name of mapComponentAndPresetStyles(wfNode, stylePresets)) {
       addNodeStyles({
+        styleSourceId: await generateStyleSourceId(name),
         name,
         variants: new Map([
           ["base", stylePresets[name] as Array<EmbedTemplateStyleDecl>],
@@ -308,7 +311,7 @@ export const addStyles = async (
         fragment,
         breakpointsByName,
       });
-    });
+    }
 
     const instance = fragment.instances.find(
       (instance) => instance.id === instanceId
@@ -336,7 +339,9 @@ export const addStyles = async (
           variants.set(breakpointName, variant.styleLess);
         }
       });
+
       addNodeStyles({
+        styleSourceId: await generateStyleSourceId(classId),
         name: style.name,
         variants,
         instanceId,
