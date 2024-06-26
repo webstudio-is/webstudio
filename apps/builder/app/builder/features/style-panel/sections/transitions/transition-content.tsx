@@ -4,8 +4,8 @@ import {
   type InvalidValue,
   type LayersValue,
   type TupleValue,
-  KeywordValue,
-  UnitValue,
+  type KeywordValue,
+  type UnitValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   extractTransitionProperties,
-  parseTransition,
+  parseCssValue,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import type {
@@ -39,6 +39,7 @@ import {
   defaultTransitionTimingFunction,
   defaultTransitionDelay,
   deleteTransitionLayer,
+  parseTransitionShorthandToLayers,
 } from "./transition-utils";
 import type { StyleInfo } from "../../shared/style-info";
 
@@ -57,6 +58,11 @@ type TransitionContentProps = {
   currentStyle: StyleInfo;
   createBatchUpdate: CreateBatchUpdate;
 };
+
+// We are allowing users to add/edit layers as shorthand from the style-panel
+// So, we need to use the shorthand property to validate the layer too.
+// We removed transition from properties list to drop support from advanced tab and so the typecasting.
+const shortHandTransitionProperty = "transition" as StyleProperty;
 
 export const TransitionContent = ({
   layer,
@@ -89,14 +95,19 @@ export const TransitionContent = ({
       return;
     }
 
-    const layers = parseTransition(intermediateValue.value);
-    if (layers.type === "invalid") {
+    const layerValue = parseCssValue(
+      shortHandTransitionProperty,
+      intermediateValue.value
+    );
+    if (layerValue.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
         value: intermediateValue.value,
       });
       return;
     }
+
+    const layers = parseTransitionShorthandToLayers(intermediateValue.value);
 
     onEditLayer(index, layers, options);
   };
@@ -111,21 +122,26 @@ export const TransitionContent = ({
     }).filter<UnitValue | KeywordValue>(
       (item): item is UnitValue | KeywordValue => item != null
     );
-    const newLayer: TupleValue = { type: "tuple", value };
-    const layers = parseTransition(toValue(newLayer));
-    if (layers.type === "invalid") {
+    const layerTuple: TupleValue = { type: "tuple", value };
+    const layerValue = parseCssValue(
+      shortHandTransitionProperty,
+      toValue(layerTuple)
+    );
+
+    if (layerValue.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
-        value: toValue(newLayer),
+        value: toValue(layerTuple),
       });
       return;
     }
 
     setIntermediateValue({
       type: "intermediate",
-      value: toValue(newLayer),
+      value: toValue(layerTuple),
     });
-    onEditLayer(index, layers, options);
+
+    onEditLayer(index, { type: "layers", value: [layerTuple] }, options);
   };
 
   return (
@@ -173,10 +189,15 @@ export const TransitionContent = ({
             handlePropertyUpdate({ duration });
           }}
           setValue={(value, options) => {
-            if (value === undefined || value.type !== "unit") {
+            if (
+              value === undefined ||
+              value.type !== "layers" ||
+              value.value[0].type !== "unit"
+            ) {
               return;
             }
-            handlePropertyUpdate({ duration: value }, options);
+
+            handlePropertyUpdate({ duration: value.value[0] }, options);
           }}
         />
 
@@ -206,10 +227,15 @@ export const TransitionContent = ({
           keywords={[]}
           deleteProperty={() => handlePropertyUpdate({ delay })}
           setValue={(value, options) => {
-            if (value === undefined || value.type !== "unit") {
+            if (
+              value === undefined ||
+              value.type !== "layers" ||
+              value.value[0].type !== "unit"
+            ) {
               return;
             }
-            handlePropertyUpdate({ delay: value }, options);
+
+            handlePropertyUpdate({ delay: value.value[0] }, options);
           }}
         />
 

@@ -92,7 +92,7 @@ describe("transition-utils", () => {
     const layers = convertIndividualTransitionToLayers(properties);
 
     expect(published).toBe(true);
-    expect(toValue(layers)).toMatchInlineSnapshot(`"opacity 200ms ease 0s"`);
+    expect(toValue(layers)).toMatchInlineSnapshot(`"opacity 0ms ease 0ms"`);
   });
 
   test("update individual transition properties", () => {
@@ -134,7 +134,7 @@ describe("transition-utils", () => {
       `"width 0ms ease 0ms"`
     );
     expect(toValue(layers)).toMatchInlineSnapshot(
-      `"opacity 200ms ease 0s, width 0ms ease 0ms, opacity 200ms ease 0s"`
+      `"opacity 0ms ease 0ms, width 0ms ease 0ms, opacity 0ms ease 0ms"`
     );
   });
 
@@ -185,7 +185,7 @@ describe("transition-utils", () => {
 
     expect(published).toBe(true);
     expect(toValue(layers)).toMatchInlineSnapshot(
-      `"opacity 200ms ease 0s, width 0ms ease-in-out 0ms"`
+      `"opacity 0ms ease 0ms, width 0ms ease-in-out 0ms"`
     );
   });
 
@@ -212,7 +212,7 @@ describe("transition-utils", () => {
 
     expect(published).toBe(true);
     expect(layers.value.length).toBe(2);
-    expect(toValue(layers)).toMatchInlineSnapshot(`"opacity 200ms ease 0s"`);
+    expect(toValue(layers)).toMatchInlineSnapshot(`"opacity 0ms ease 0ms"`);
   });
 
   test("swap layer positions in transitions", () => {
@@ -250,7 +250,7 @@ describe("transition-utils", () => {
     expect(published).toBe(true);
     expect(layers.value.length).toBe(2);
     expect(toValue(layers)).toMatchInlineSnapshot(
-      `"width 0ms ease-in-out 0ms, opacity 200ms ease 0s"`
+      `"width 0ms ease-in-out 0ms, opacity 0ms ease 0ms"`
     );
   });
 });

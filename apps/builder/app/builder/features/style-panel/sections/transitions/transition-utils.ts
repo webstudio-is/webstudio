@@ -1,6 +1,8 @@
 import {
+  FunctionValue,
   type KeywordValue,
   type LayersValue,
+  type StyleProperty,
   type TupleValue,
   type UnitValue,
 } from "@webstudio-is/css-engine";
@@ -10,13 +12,15 @@ import type {
   StyleUpdateOptions,
 } from "../../shared/use-style-data";
 import {
+  expandShorthands,
   extractTransitionProperties,
+  isTransitionLongHandProperty,
   isValidTransitionValue,
-  parseTransition,
+  parseCssValue,
   transitionLongHandProperties,
 } from "@webstudio-is/css-data";
+import { camelCase } from "change-case";
 
-export const initialTransition = "opacity 200ms ease 0s";
 export const defaultTransitionProperty: KeywordValue = {
   type: "keyword",
   value: "opacity",
@@ -97,8 +101,10 @@ export type TimingFunctions =
 export const findTimingFunctionFromValue = (
   timingFunction: string
 ): TimingFunctions | undefined => {
+  const cleanedFuncValue = timingFunction.replace(/\s/g, "");
+
   return (Object.keys(timingFunctions) as TimingFunctions[]).find(
-    (key: TimingFunctions) => timingFunctions[key] === timingFunction
+    (key: TimingFunctions) => timingFunctions[key] === cleanedFuncValue
   );
 };
 
@@ -198,9 +204,15 @@ export const addDefaultTransitionLayer = (props: {
 }) => {
   const { createBatchUpdate, currentStyle } = props;
   const properties = getTransitionProperties(currentStyle);
-  const { timing, property, delay, duration } = extractTransitionProperties(
-    parseTransition(initialTransition).value[0] as TupleValue
-  );
+  const { timing, property, delay, duration } = extractTransitionProperties({
+    type: "tuple",
+    value: [
+      defaultTransitionProperty,
+      defaultTransitionDuration,
+      defaultTransitionTimingFunction,
+      defaultTransitionDelay,
+    ],
+  });
   const batch = createBatchUpdate();
 
   if (property) {
@@ -269,18 +281,10 @@ export const editTransitionLayer = (props: {
   const { index, layers, createBatchUpdate, options, currentStyle } = props;
   const batch = createBatchUpdate();
 
-  const properties = getTransitionProperties(currentStyle);
-  const {
-    transitionProperty,
-    transitionDelay,
-    transitionDuration,
-    transitionTimingFunction,
-  } = properties;
-
   const newTransitionProperties: KeywordValue[] = [];
   const newTransitionDurations: UnitValue[] = [];
   const newTransitionDelays: UnitValue[] = [];
-  const newTransitionTimingFunctions: KeywordValue[] = [];
+  const newTransitionTimingFunctions: Array<KeywordValue | FunctionValue> = [];
 
   for (const layer of layers.value) {
     if (layer.type !== "tuple") {
@@ -304,6 +308,14 @@ export const editTransitionLayer = (props: {
     newTransitionDelays.push(delay);
     newTransitionTimingFunctions.push(timing);
   }
+
+  const existingTransitionProperties = getTransitionProperties(currentStyle);
+  const {
+    transitionProperty,
+    transitionDelay,
+    transitionDuration,
+    transitionTimingFunction,
+  } = existingTransitionProperties;
 
   const newProperty = [...transitionProperty.value];
   newProperty.splice(index, 1, ...newTransitionProperties);
@@ -349,6 +361,14 @@ export const swapTransitionLayers = (props: {
   for (const property of transitionLongHandProperties) {
     const layer = properties[property];
     const layervalue = [...layer.value];
+
+    // You can swap only if there are at least two layers
+    // As we are checking across multiple properties, we can't be sure
+    // which property don't have two layers so we are checking here.
+    if (layervalue.length < 2) {
+      continue;
+    }
+
     layervalue.splice(oldIndex, 1);
     layervalue.splice(newIndex, 0, layer.value[oldIndex]);
     batch.setProperty(property)({
@@ -386,4 +406,29 @@ export const hideTransitionLayer = (props: {
   }
 
   batch.publish();
+};
+
+export const parseTransitionShorthandToLayers = (
+  transition: string
+): LayersValue => {
+  const longhands = expandShorthands([["transition", transition]]);
+
+  const layerTuple: TupleValue = { type: "tuple", value: [] };
+  for (const [hyphenedProperty, value] of longhands) {
+    const longhandProperty = camelCase(hyphenedProperty) as StyleProperty;
+    const longhandValue = parseCssValue(longhandProperty, value);
+
+    if (
+      longhandValue.type === "layers" &&
+      isTransitionLongHandProperty(longhandProperty) &&
+      isValidTransitionValue(longhandValue.value[0])
+    ) {
+      layerTuple.value.push(longhandValue.value[0]);
+    }
+  }
+
+  return {
+    type: "layers",
+    value: [layerTuple],
+  };
 };

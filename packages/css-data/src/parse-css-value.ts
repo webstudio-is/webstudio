@@ -14,8 +14,7 @@ import {
   isTransitionLongHandProperty,
   parseFilter,
   parseShadow,
-  parseTransition,
-  parseTransitionLonghands,
+  parseTransitionLonghandProperty,
 } from "./property-parsers";
 import { camelCase } from "change-case";
 
@@ -94,12 +93,8 @@ export const parseCssValue = (
     return parseShadow(property, input);
   }
 
-  if (property === "transition") {
-    return parseTransition(input);
-  }
-
   if (isTransitionLongHandProperty(property)) {
-    return parseTransitionLonghands(property, input);
+    return parseTransitionLonghandProperty(property, input);
   }
 
   if (

@@ -4,11 +4,9 @@ import type {
   KeywordValue,
   LayerValueItem,
   LayersValue,
-  TupleValue,
-  TupleValueItem,
   Unit,
-  UnparsedValue,
   UnitValue,
+  FunctionValue,
 } from "@webstudio-is/css-engine";
 import { animatableProperties } from "../";
 import { isTimingFunction } from "./transition-property-extractor";
@@ -56,116 +54,18 @@ export const isTransitionLongHandProperty = (
 
 export const isValidTransitionValue = (
   value: LayerValueItem
-): value is KeywordValue | UnitValue => {
-  return value.type === "keyword" || value.type === "unit";
+): value is KeywordValue | UnitValue | FunctionValue => {
+  return (
+    value.type === "keyword" ||
+    value.type === "unit" ||
+    value.type === "function"
+  );
 };
 
-export const parseTransition = (
-  transition: string
-): LayersValue | InvalidValue => {
-  let tokenStream = transition.trim();
-  tokenStream = tokenStream.endsWith(";")
-    ? tokenStream.slice(0, -1)
-    : tokenStream;
-
-  const cleanupKeywords = ["transition:"];
-
-  for (const cleanupKeyword of cleanupKeywords) {
-    tokenStream = tokenStream.startsWith(cleanupKeyword)
-      ? tokenStream.slice(cleanupKeyword.length).trim()
-      : tokenStream;
-  }
-
-  const cssAst = cssTryParseValue(tokenStream);
-  if (cssAst === undefined) {
-    return {
-      type: "invalid",
-      value: transition,
-    };
-  }
-
-  const parsed = csstree.lexer.matchProperty("transition", cssAst);
-  if (parsed.error) {
-    return {
-      type: "invalid",
-      value: transition,
-    };
-  }
-
-  try {
-    const layers: TupleValue[] = [];
-    csstree.walk(cssAst, (node) => {
-      if (node.type === "Value") {
-        const children = node.children;
-        let layer: csstree.CssNode[] = [];
-
-        for (const child of children) {
-          layer.push(child);
-
-          if (child.type === "Operator" || children.last === child) {
-            const transition: TupleValueItem[] = [];
-
-            for (let index = 0; index < layer.length; index++) {
-              const item = layer[index];
-              if (item.type === "Identifier") {
-                const isAnimatable = isAnimatableProperty(item.name);
-                const isTimingFunc = isTimingFunction(item.name);
-
-                if (isTimingFunc === false && isAnimatable === false) {
-                  throw new Error(`Invalid transition property: ${item.name}`);
-                }
-
-                transition.push({
-                  type: "keyword",
-                  value: item.name,
-                });
-              }
-
-              if (item.type === "Dimension") {
-                transition.push({
-                  type: "unit",
-                  value: Number(item.value),
-                  unit: item.unit as Unit,
-                });
-              }
-
-              if (item.type === "Function") {
-                transition.push({
-                  type: "keyword",
-                  value: csstree.generate(item),
-                });
-              }
-            }
-
-            layers.push({
-              type: "tuple",
-              value: transition,
-            });
-            layer = [];
-            continue;
-          }
-        }
-      }
-    });
-
-    return layers.length > 0
-      ? {
-          type: "layers",
-          value: layers,
-        }
-      : { type: "invalid", value: transition };
-  } catch (error) {
-    return {
-      type: "invalid",
-      value: transition,
-    };
-  }
-};
-
-export const parseTransitionLonghands = (
+export const parseTransitionLonghandProperty = (
   property: (typeof transitionLongHandProperties)[number],
   input: string
-): LayersValue | InvalidValue | UnparsedValue => {
+): LayersValue | InvalidValue => {
   const cssAst = cssTryParseValue(input);
   if (cssAst === undefined) {
     return {
@@ -183,24 +83,102 @@ export const parseTransitionLonghands = (
   }
 
   const layers: LayersValue = { type: "layers", value: [] };
-  csstree.walk(cssAst, (node) => {
-    if (node.type === "Identifier") {
-      if (
-        isAnimatableProperty(node.name) === true ||
-        isTimingFunction(node.name) === true
-      ) {
-        layers.value.push({ type: "keyword", value: node.name });
-      }
-    }
+  try {
+    csstree.walk(cssAst, (node) => {
+      if (node.type === "Value") {
+        const children = node.children;
 
-    if (node.type === "Dimension") {
-      layers.value.push({
-        type: "unit",
-        value: Number(node.value),
-        unit: node.unit as Unit,
-      });
-    }
-  });
+        for (const child of children) {
+          switch (property) {
+            case "transitionProperty": {
+              if (child.type === "Identifier") {
+                if (isAnimatableProperty(child.name) === false) {
+                  throw new Error(
+                    `Invalid animatable property, received ${csstree.generate(child)}`
+                  );
+                }
+
+                layers.value.push({ type: "keyword", value: child.name });
+              }
+              break;
+            }
+
+            case "transitionTimingFunction": {
+              if (child.type === "Identifier") {
+                if (isTimingFunction(csstree.generate(child)) === false) {
+                  throw new Error(
+                    `Invalid timing function, received ${csstree.generate(child)}`
+                  );
+                }
+
+                layers.value.push({ type: "keyword", value: child.name });
+              }
+
+              if (child.type === "Function") {
+                if (isTimingFunction(csstree.generate(child)) === false) {
+                  throw new Error(
+                    `Invalid timing function, received ${csstree.generate(child)}`
+                  );
+                }
+
+                // transition-timing function arguments are comma seperated values
+                const args: LayersValue = { type: "layers", value: [] };
+                const timingFunction: FunctionValue = {
+                  type: "function",
+                  args,
+                  name: child.name,
+                };
+
+                for (const arg of child.children) {
+                  if (arg.type === "Number") {
+                    args.value.push({ type: "keyword", value: arg.value });
+                  }
+
+                  if (arg.type === "Identifier") {
+                    args.value.push({ type: "keyword", value: arg.name });
+                  }
+
+                  if (arg.type === "Dimension") {
+                    args.value.push({
+                      type: "unit",
+                      value: Number(arg.value),
+                      unit: arg.unit as Unit,
+                    });
+                  }
+                }
+
+                layers.value.push(timingFunction);
+              }
+
+              break;
+            }
+
+            case "transitionDuration":
+            case "transitionDelay": {
+              if (child.type === "Dimension") {
+                layers.value.push({
+                  type: "unit",
+                  value: Number(child.value),
+                  unit: child.unit as Unit,
+                });
+              }
+
+              break;
+            }
+
+            default: {
+              throw new Error(`Received invalid property to parse ${property}`);
+            }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    return {
+      type: "invalid",
+      value: input,
+    };
+  }
 
   return layers.value.length > 0 ? layers : { type: "invalid", value: input };
 };

@@ -1,18 +1,21 @@
-import type {
-  KeywordValue,
-  TupleValue,
-  UnitValue,
+import {
+  FunctionValue,
+  toValue,
+  type KeywordValue,
+  type TupleValue,
+  type UnitValue,
 } from "@webstudio-is/css-engine";
+import { isAnimatableProperty } from "..";
 
 export const isTimingFunction = (timing: string) => {
   const regex =
-    /^(ease(-in-out|-in|-out)?|linear|cubic-bezier\((-?\d+(\.\d+)?, ?){3}-?\d+(\.\d+)?\)|steps\(\d+(-?(start|end))?\))$/gm;
+    /^(ease(-in-out|-in|-out)?|linear|cubic-bezier\((-?\d+(\.\d+)?(, ?)?){3}-?\d+(\.\d+)?\)|steps\(\d+(,(start|end|jump-start|jump-end|jump-none|jump-both))?\))$/gm;
   return regex.test(timing);
 };
 
 export type ExtractedTransitionProperties = {
   property?: KeywordValue;
-  timing?: KeywordValue;
+  timing?: KeywordValue | FunctionValue;
   delay?: UnitValue;
   duration?: UnitValue;
 };
@@ -21,26 +24,29 @@ export const extractTransitionProperties = (
   transition: TupleValue
 ): ExtractedTransitionProperties => {
   let property: KeywordValue | undefined;
-  let timing: KeywordValue | undefined;
+  let timing: KeywordValue | FunctionValue | undefined;
 
-  const keywordValues: KeywordValue[] = [];
   const unitValues: UnitValue[] = [];
 
-  for (const property of transition.value) {
-    if (property.type === "keyword") {
-      keywordValues.push(property);
+  for (const item of transition.value) {
+    if (
+      item.type === "keyword" &&
+      isAnimatableProperty(toValue(item)) === true
+    ) {
+      property = item;
     }
 
-    if (property.type === "unit") {
-      unitValues.push(property);
+    if (item.type === "keyword" && isAnimatableProperty(item.value) === false) {
+      timing = item;
     }
-  }
 
-  if (keywordValues.length && isTimingFunction(keywordValues[0].value)) {
-    timing = keywordValues[0];
-  } else {
-    property = keywordValues[0];
-    timing = keywordValues[1] ?? undefined;
+    if (item.type === "function") {
+      timing = item;
+    }
+
+    if (item.type === "unit") {
+      unitValues.push(item);
+    }
   }
 
   const duration: UnitValue | undefined = unitValues[0] ?? undefined;

@@ -18,7 +18,6 @@ import { LayersList } from "../../style-layers-list";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { TransitionContent } from "./transition-content";
 import {
-  initialTransition,
   getTransitionProperties,
   deleteTransitionProperties,
   addDefaultTransitionLayer,
@@ -31,6 +30,7 @@ import {
 import type { StyleProperty } from "@webstudio-is/css-engine";
 
 const label = "Transitions";
+const initialTransition = "opacity 200ms ease 0s";
 export const properties =
   transitionLongHandProperties as unknown as Array<StyleProperty>;
 

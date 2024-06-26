@@ -1,103 +1,151 @@
 import { expect, test } from "@jest/globals";
 
-import { parseTransition } from "./transition";
+import { parseTransitionLonghandProperty } from "./transition";
+import { toValue } from "@webstudio-is/css-engine";
 
-test("parses value and returns invalid when used a invalid color", () => {
-  expect(parseTransition(`10px 10px 5px foo`)).toMatchInlineSnapshot(`
-      {
-        "type": "invalid",
-        "value": "10px 10px 5px foo",
-      }
-    `);
-});
-
-test("parse value and returns multiple valid layers", () => {
-  expect(parseTransition("color .2s, text-shadow .2s")).toMatchInlineSnapshot(`
+test("parses a valid transitionDuration longhand property", () => {
+  expect(parseTransitionLonghandProperty("transitionDuration", `10ms, 10ms`))
+    .toMatchInlineSnapshot(`
 {
   "type": "layers",
   "value": [
     {
-      "type": "tuple",
-      "value": [
-        {
-          "type": "keyword",
-          "value": "color",
-        },
-        {
-          "type": "unit",
-          "unit": "s",
-          "value": 0.2,
-        },
-      ],
+      "type": "unit",
+      "unit": "ms",
+      "value": 10,
     },
     {
-      "type": "tuple",
-      "value": [
-        {
-          "type": "keyword",
-          "value": "text-shadow",
-        },
-        {
-          "type": "unit",
-          "unit": "s",
-          "value": 0.2,
-        },
-      ],
+      "type": "unit",
+      "unit": "ms",
+      "value": 10,
     },
   ],
 }
 `);
 });
 
-test("parse value and returns valid layer", () => {
-  expect(parseTransition("opacity 200ms ease 0s")).toMatchInlineSnapshot(`
+test("parses an in-valid transitionDuration longhand property", () => {
+  expect(parseTransitionLonghandProperty("transitionDuration", `10ms, foo`))
+    .toMatchInlineSnapshot(`
+{
+  "type": "invalid",
+  "value": "10ms, foo",
+}
+`);
+});
+
+test("parses a vaild transitionProeprty longhand property", () => {
+  expect(
+    parseTransitionLonghandProperty("transitionProperty", "opacity, width, all")
+  ).toMatchInlineSnapshot(`
 {
   "type": "layers",
   "value": [
     {
-      "type": "tuple",
-      "value": [
-        {
-          "type": "keyword",
-          "value": "opacity",
-        },
-        {
-          "type": "unit",
-          "unit": "ms",
-          "value": 200,
-        },
-        {
-          "type": "keyword",
-          "value": "ease",
-        },
-        {
-          "type": "unit",
-          "unit": "s",
-          "value": 0,
-        },
-      ],
+      "type": "keyword",
+      "value": "opacity",
+    },
+    {
+      "type": "keyword",
+      "value": "width",
+    },
+    {
+      "type": "keyword",
+      "value": "all",
     },
   ],
 }
 `);
 });
 
-test("throws error if any custom transition proeprty is used", () => {
-  const transition = parseTransition("all 200ms ease 0s, --foo 200ms ease 0s");
-  expect(transition).toMatchInlineSnapshot(`
+test("parses only valid transitionProperty longhand property", () => {
+  expect(
+    parseTransitionLonghandProperty("transitionProperty", "opacity, width, foo")
+  ).toMatchInlineSnapshot(`
 {
   "type": "invalid",
-  "value": "all 200ms ease 0s, --foo 200ms ease 0s",
+  "value": "opacity, width, foo",
 }
 `);
 });
 
-test("throws error if any custom transition timing function is used", () => {
-  const transition = parseTransition("all 200ms custom-function 0s");
-  expect(transition).toMatchInlineSnapshot(`
+test("parses a vaild transitionTimingFunction longhand property", () => {
+  const parsedValue = parseTransitionLonghandProperty(
+    "transitionTimingFunction",
+    "ease, ease-in, cubic-bezier(0.68,-0.6,0.32,1.6), steps(4, jump-start)"
+  );
+  expect(parsedValue).toMatchInlineSnapshot(`
+{
+  "type": "layers",
+  "value": [
+    {
+      "type": "keyword",
+      "value": "ease",
+    },
+    {
+      "type": "keyword",
+      "value": "ease-in",
+    },
+    {
+      "args": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "0.68",
+          },
+          {
+            "type": "keyword",
+            "value": "-0.6",
+          },
+          {
+            "type": "keyword",
+            "value": "0.32",
+          },
+          {
+            "type": "keyword",
+            "value": "1.6",
+          },
+        ],
+      },
+      "name": "cubic-bezier",
+      "type": "function",
+    },
+    {
+      "args": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "4",
+          },
+          {
+            "type": "keyword",
+            "value": "jump-start",
+          },
+        ],
+      },
+      "name": "steps",
+      "type": "function",
+    },
+  ],
+}
+`);
+  expect(toValue(parsedValue)).toMatchInlineSnapshot(
+    `"ease, ease-in, cubic-bezier(0.68, -0.6, 0.32, 1.6), steps(4, jump-start)"`
+  );
+});
+
+test("parses any invalid transitionTimingFunction proeprty and returns invalud", () => {
+  expect(
+    parseTransitionLonghandProperty(
+      "transitionTimingFunction",
+      "ease, ease-in, cubic-bezier(0.68,-0.6,0.32,1.6), testing"
+    )
+  ).toMatchInlineSnapshot(`
 {
   "type": "invalid",
-  "value": "all 200ms custom-function 0s",
+  "value": "ease, ease-in, cubic-bezier(0.68,-0.6,0.32,1.6), testing",
 }
 `);
 });

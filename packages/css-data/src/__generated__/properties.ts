@@ -2889,34 +2889,6 @@ export const properties = {
     },
     types: [],
   },
-  transition: {
-    unitGroups: ["time"],
-    inherited: false,
-    initial: {
-      type: "tuple",
-      value: [
-        {
-          type: "keyword",
-          value: "all",
-        },
-        {
-          type: "unit",
-          unit: "s",
-          value: 0,
-        },
-        {
-          type: "keyword",
-          value: "ease",
-        },
-        {
-          type: "unit",
-          unit: "s",
-          value: 0,
-        },
-      ],
-    },
-    types: ["custom-ident", "time"],
-  },
   transitionDelay: {
     unitGroups: ["time"],
     inherited: false,

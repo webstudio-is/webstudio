@@ -81,11 +81,11 @@ describe("extractTransitionProperties", () => {
       property: { type: "keyword", value: "opacity" },
       duration: { type: "unit", value: 200, unit: "ms" },
       timing: { type: "keyword", value: "ease" },
-      delay: null,
+      delay: undefined,
     });
     expect(result).toMatchInlineSnapshot(`
 {
-  "delay": null,
+  "delay": undefined,
   "duration": {
     "type": "unit",
     "unit": "ms",
@@ -127,7 +127,7 @@ describe("extractTransitionProperties", () => {
     expect(result).toEqual({
       property: { type: "keyword", value: "opacity" },
       duration: { type: "unit", value: 200, unit: "ms" },
-      timing: null,
+      timing: undefined,
       delay: { type: "unit", value: 10, unit: "ms" },
     });
     expect(result).toMatchInlineSnapshot(`
@@ -146,7 +146,7 @@ describe("extractTransitionProperties", () => {
     "type": "keyword",
     "value": "opacity",
   },
-  "timing": null,
+  "timing": undefined,
 }
 `);
   });
@@ -170,12 +170,12 @@ describe("extractTransitionProperties", () => {
     expect(result).toEqual({
       property: { type: "keyword", value: "opacity" },
       duration: { type: "unit", value: 200, unit: "ms" },
-      timing: null,
-      delay: null,
+      timing: undefined,
+      delay: undefined,
     });
     expect(result).toMatchInlineSnapshot(`
 {
-  "delay": null,
+  "delay": undefined,
   "duration": {
     "type": "unit",
     "unit": "ms",
@@ -185,7 +185,7 @@ describe("extractTransitionProperties", () => {
     "type": "keyword",
     "value": "opacity",
   },
-  "timing": null,
+  "timing": undefined,
 }
 `);
   });
@@ -206,10 +206,10 @@ describe("extractTransitionProperties", () => {
       ],
     });
     expect(result).toEqual({
-      property: null,
+      property: undefined,
       duration: { type: "unit", value: 10, unit: "ms" },
       timing: { type: "keyword", value: "ease" },
-      delay: null,
+      delay: undefined,
     });
   });
 
@@ -230,9 +230,9 @@ describe("extractTransitionProperties", () => {
 
     expect(result).toEqual({
       property: { type: "keyword", value: "opacity" },
-      duration: null,
+      duration: undefined,
       timing: { type: "keyword", value: "ease" },
-      delay: null,
+      delay: undefined,
     });
     expect(result).toMatchInlineSnapshot;
   });
@@ -261,11 +261,11 @@ describe("extractTransitionProperties", () => {
       property: { type: "keyword", value: "opacity" },
       duration: { type: "unit", value: 50, unit: "ms" },
       timing: { type: "keyword", value: "ease" },
-      delay: null,
+      delay: undefined,
     });
     expect(result).toMatchInlineSnapshot(`
 {
-  "delay": null,
+  "delay": undefined,
   "duration": {
     "type": "unit",
     "unit": "ms",
@@ -307,11 +307,11 @@ describe("extractTransitionProperties", () => {
       property: { type: "keyword", value: "transform" },
       duration: { type: "unit", value: 0.6, unit: "s" },
       timing: { type: "keyword", value: "cubic-bezier(0.36, 0, 0.66, -0.56)" },
-      delay: null,
+      delay: undefined,
     });
     expect(result).toMatchInlineSnapshot(`
 {
-  "delay": null,
+  "delay": undefined,
   "duration": {
     "type": "unit",
     "unit": "s",
@@ -329,7 +329,7 @@ describe("extractTransitionProperties", () => {
 `);
   });
 
-  test("parses and extracts values from custom-property ease", () => {
+  test("parses and throws error for non-animatable 'custom-property ease'", () => {
     const result = extractTransitionProperties({
       type: "tuple",
       value: [
@@ -345,20 +345,17 @@ describe("extractTransitionProperties", () => {
     });
 
     expect(result).toEqual({
-      property: { type: "keyword", value: "custom-property" },
-      duration: null,
+      property: undefined,
+      duration: undefined,
       timing: { type: "keyword", value: "ease" },
-      delay: null,
+      delay: undefined,
     });
 
     expect(result).toMatchInlineSnapshot(`
 {
-  "delay": null,
-  "duration": null,
-  "property": {
-    "type": "keyword",
-    "value": "custom-property",
-  },
+  "delay": undefined,
+  "duration": undefined,
+  "property": undefined,
   "timing": {
     "type": "keyword",
     "value": "ease",
@@ -379,17 +376,17 @@ describe("extractTransitionProperties", () => {
     });
 
     expect(result).toEqual({
-      property: null,
-      duration: null,
+      property: undefined,
+      duration: undefined,
       timing: { type: "keyword", value: "ease" },
-      delay: null,
+      delay: undefined,
     });
 
     expect(result).toMatchInlineSnapshot(`
 {
-  "delay": null,
-  "duration": null,
-  "property": null,
+  "delay": undefined,
+  "duration": undefined,
+  "property": undefined,
   "timing": {
     "type": "keyword",
     "value": "ease",
