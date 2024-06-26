@@ -198,6 +198,9 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
+  div:where([data-ws-component="HtmlEmbed"]) {
+    display: contents;
+  }
   div:where([data-ws-component="VimeoSpinner"]) {
     box-sizing: border-box;
     border-top-width: 1px;

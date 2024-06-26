@@ -12,7 +12,11 @@ import {
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
 import * as defaultMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import { __testing__ } from "./plugin-webflow";
-import { $breakpoints, $registeredComponentMetas } from "../../nano-states";
+import {
+  $breakpoints,
+  $project,
+  $registeredComponentMetas,
+} from "../../nano-states";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -83,6 +87,16 @@ const toCss = (fragment: WebstudioFragment) => {
 beforeEach(() => {
   const defaultMetasMap = new Map(Object.entries(defaultMetas));
   $registeredComponentMetas.set(defaultMetasMap);
+  $project.set({
+    id: "test",
+    createdAt: "",
+    domain: "",
+    title: "",
+    userId: "",
+    isDeleted: false,
+    previewImageAsset: null,
+    marketplaceApprovalStatus: "PENDING",
+  });
 
   $breakpoints.set(
     new Map(
