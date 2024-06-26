@@ -936,7 +936,10 @@ const expandShorthand = function* (property: string, value: CssNode) {
       );
       yield [`${property}-width`, width ?? createIdentifier("medium")] as const;
       yield [`${property}-style`, style ?? createIdentifier("none")] as const;
-      yield [`${property}-color`, color ?? createIdentifier("auto")] as const;
+      yield [
+        `${property}-color`,
+        color ?? createIdentifier("currentcolor"),
+      ] as const;
       break;
     }
 

@@ -1673,14 +1673,10 @@ describe("Styles", () => {
           background-color: rgba(0, 0, 0, 0)
         }
         a:active {
-          outline-width: 0;
-          outline-style: initial;
-          outline-color: initial
+          outline: 0 none currentColor
         }
         a:hover {
-          outline-width: 0;
-          outline-style: initial;
-          outline-color: initial
+          outline: 0 none currentColor
         }
         button {
           text-align: center
@@ -1803,14 +1799,10 @@ describe("Styles", () => {
           background-color: rgba(0, 0, 0, 0)
         }
         a:active {
-          outline-width: 0;
-          outline-style: initial;
-          outline-color: initial
+          outline: 0 none currentColor
         }
         a:hover {
-          outline-width: 0;
-          outline-style: initial;
-          outline-color: initial
+          outline: 0 none currentColor
         }
         x {
           transform: translate3d(7px,74px,16px)

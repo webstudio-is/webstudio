@@ -413,16 +413,16 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":active",
     },
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":hover",
     },
@@ -4618,8 +4618,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -4853,8 +4853,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
     },
     {
@@ -8330,8 +8330,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -8495,8 +8495,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -8665,8 +8665,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
     },
     {
@@ -9191,8 +9191,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -9330,8 +9330,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -9637,8 +9637,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
     },
     {
@@ -11974,8 +11974,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -12279,8 +12279,8 @@ export const styles = {
     {
       property: "outlineColor",
       value: {
-        type: "invalid",
-        value: "auto",
+        type: "keyword",
+        value: "currentColor",
       },
       state: ":focus",
     },
