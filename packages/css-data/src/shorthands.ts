@@ -850,6 +850,38 @@ const expandGrid = function* (value: CssNode) {
   yield ["grid-auto-columns", autoColumns] as const;
 };
 
+const expandWhiteSpace = function* (value: CssNode) {
+  const collapseKeyword = createIdentifier("collapse");
+  const preserveKeyword = createIdentifier("preserve");
+  const wrapKeyword = createIdentifier("wrap");
+  const nowrapKeyword = createIdentifier("nowrap");
+  let collapse = collapseKeyword;
+  let wrapMode = wrapKeyword;
+  [collapse = collapseKeyword, wrapMode = wrapKeyword] = parseUnordered(
+    [
+      // <'white-space-collapse'> is not supported by csstree
+      "collapse | preserve | preserve-breaks | preserve-spaces | break-spaces",
+      // <'text-wrap-mode'> is not supported by csstree
+      "wrap | nowrap",
+    ],
+    value
+  );
+  if (lexer.match("normal", value).matched) {
+    [collapse, wrapMode] = [collapseKeyword, wrapKeyword];
+  }
+  if (lexer.match("pre", value).matched) {
+    [collapse, wrapMode] = [preserveKeyword, nowrapKeyword];
+  }
+  if (lexer.match("pre-wrap", value).matched) {
+    [collapse, wrapMode] = [preserveKeyword, wrapKeyword];
+  }
+  if (lexer.match("pre-line", value).matched) {
+    [collapse, wrapMode] = [createIdentifier("preserve-breaks"), wrapKeyword];
+  }
+  yield ["white-space-collapse", collapse] as const;
+  yield ["text-wrap-mode", wrapMode] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -1120,6 +1152,28 @@ const expandShorthand = function* (property: string, value: CssNode) {
         "contain-intrinsic-height",
         height ?? width ?? createIdentifier("none"),
       ] as const;
+      break;
+    }
+
+    case "white-space":
+      yield* expandWhiteSpace(value);
+      break;
+
+    case "text-wrap": {
+      const [
+        mode = createIdentifier("wrap"),
+        style = createIdentifier("auto"),
+      ] = parseUnordered(
+        [
+          // <'text-wrap-mode'> is not supported by csstree
+          "wrap | nowrap",
+          // <'text-wrap-style'> is not supported by csstree
+          "auto | balance | stable | pretty",
+        ],
+        value
+      );
+      yield ["text-wrap-mode", mode] as const;
+      yield ["text-wrap-style", style] as const;
       break;
     }
 

@@ -1,3 +1,4 @@
+import { forwardRef, type ComponentProps } from "react";
 import {
   Flex,
   Grid,
@@ -37,7 +38,6 @@ import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-con
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSourceColor, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
-import { forwardRef, type ComponentProps } from "react";
 
 export const properties = [
   "fontFamily",
@@ -51,7 +51,9 @@ export const properties = [
   "letterSpacing",
   "textTransform",
   "direction",
-  "whiteSpace",
+  "whiteSpaceCollapse",
+  "textWrapMode",
+  "textWrapStyle",
   "textOverflow",
   "hyphens",
 ] satisfies Array<StyleProperty>;
@@ -352,7 +354,9 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
   const { deleteProperty, setProperty, createBatchUpdate, currentStyle } =
     props;
   const properties = {
-    whiteSpace: "whiteSpace",
+    whiteSpaceCollapse: "whiteSpaceCollapse",
+    textWrapMode: "textWrapMode",
+    textWrapStyle: "textWrapStyle",
     direction: "direction",
     hyphens: "hyphens",
     textOverflow: "textOverflow",
@@ -372,12 +376,41 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyName
               style={currentStyle}
-              properties={[properties.whiteSpace]}
+              properties={[properties.whiteSpaceCollapse]}
               label="White Space"
-              onReset={() => deleteProperty(properties.whiteSpace)}
+              onReset={() => deleteProperty(properties.whiteSpaceCollapse)}
             />
             <SelectControl
-              property={properties.whiteSpace}
+              property={properties.whiteSpaceCollapse}
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
+          </Grid>
+          {/* @todo cannot set because not supported in browser ??? */}
+          <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
+            <PropertyName
+              style={currentStyle}
+              properties={[properties.textWrapMode]}
+              label="Wrap Mode"
+              onReset={() => deleteProperty(properties.textWrapMode)}
+            />
+            <SelectControl
+              property={properties.textWrapMode}
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
+          </Grid>
+          <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
+            <PropertyName
+              style={currentStyle}
+              properties={[properties.textWrapStyle]}
+              label="Wrap Style"
+              onReset={() => deleteProperty(properties.textWrapStyle)}
+            />
+            <SelectControl
+              property={properties.textWrapStyle}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}

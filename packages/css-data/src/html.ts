@@ -91,8 +91,13 @@ const verticalAlign = (value: string): Styles[number] => ({
   value: { type: "keyword", value },
 });
 
-const whiteSpace = (value: string): Styles[number] => ({
-  property: "whiteSpace",
+const whiteSpaceCollapse = (value: string): Styles[number] => ({
+  property: "whiteSpaceCollapse",
+  value: { type: "keyword", value },
+});
+
+const textWrapMode = (value: string): Styles[number] => ({
+  property: "textWrapMode",
   value: { type: "keyword", value },
 });
 
@@ -283,7 +288,8 @@ export const h6: Styles = [
 
 export const pre: Styles = [
   display("block"),
-  whiteSpace("pre"),
+  whiteSpaceCollapse("preserve"),
+  textWrapMode("nowrap"),
   marginTop(1, "em"),
   marginBottom(1, "em"),
 ];
@@ -548,7 +554,8 @@ export const textarea: Styles = [
   verticalAlign("text-bottom"),
   cursor("text"),
   { property: "resize", value: { type: "keyword", value: "both" } },
-  whiteSpace("pre-wrap"),
+  whiteSpaceCollapse("preserve"),
+  textWrapMode("wrap"),
   {
     property: "wordWrap",
     value: { type: "keyword", value: "break-word" },
@@ -569,7 +576,7 @@ export const select: Styles = [
   ...borderWidth(2, "px"),
   // in browsers defined as inset
   ...borderStyle("solid"),
-  whiteSpace("nowrap"),
+  textWrapMode("nowrap"),
   {
     property: "wordWrap",
     value: { type: "keyword", value: "normal" },
@@ -592,7 +599,7 @@ export const option: Styles = [
   paddingRight(2, "px"),
   paddingLeft(4, "px"),
   userSelect("none"),
-  whiteSpace("nowrap"),
+  textWrapMode("nowrap"),
   {
     property: "wordWrap",
     value: { type: "keyword", value: "normal" },

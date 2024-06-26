@@ -979,8 +979,79 @@ test("expand contain-intrinsic-size", () => {
   ]);
 });
 
-test.todo("white-space - not a shorthand in webflow");
-test.todo("text-wrap - not a shorthand in webflow");
+test("expand white-space", () => {
+  expect(expandShorthands([["white-space", "normal"]])).toEqual([
+    ["white-space-collapse", "collapse"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  expect(expandShorthands([["white-space", "pre"]])).toEqual([
+    ["white-space-collapse", "preserve"],
+    ["text-wrap-mode", "nowrap"],
+  ]);
+  expect(expandShorthands([["white-space", "pre-wrap"]])).toEqual([
+    ["white-space-collapse", "preserve"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  expect(expandShorthands([["white-space", "pre-line"]])).toEqual([
+    ["white-space-collapse", "preserve-breaks"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  // white-space-collapse values
+  expect(expandShorthands([["white-space", "collapse"]])).toEqual([
+    ["white-space-collapse", "collapse"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  expect(expandShorthands([["white-space", "preserve"]])).toEqual([
+    ["white-space-collapse", "preserve"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  expect(expandShorthands([["white-space", "preserve-breaks"]])).toEqual([
+    ["white-space-collapse", "preserve-breaks"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  expect(expandShorthands([["white-space", "preserve-spaces"]])).toEqual([
+    ["white-space-collapse", "preserve-spaces"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  expect(expandShorthands([["white-space", "break-spaces"]])).toEqual([
+    ["white-space-collapse", "break-spaces"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  // text-wrap-mode values
+  expect(expandShorthands([["white-space", "wrap"]])).toEqual([
+    ["white-space-collapse", "collapse"],
+    ["text-wrap-mode", "wrap"],
+  ]);
+  expect(expandShorthands([["white-space", "nowrap"]])).toEqual([
+    ["white-space-collapse", "collapse"],
+    ["text-wrap-mode", "nowrap"],
+  ]);
+});
+
+test("expand text-wrap", () => {
+  // text-wrap-mode values
+  expect(expandShorthands([["text-wrap", "wrap"]])).toEqual([
+    ["text-wrap-mode", "wrap"],
+    ["text-wrap-style", "auto"],
+  ]);
+  expect(expandShorthands([["text-wrap", "nowrap"]])).toEqual([
+    ["text-wrap-mode", "nowrap"],
+    ["text-wrap-style", "auto"],
+  ]);
+  // text-wrap-style values
+  expect(expandShorthands([["text-wrap", "balance"]])).toEqual([
+    ["text-wrap-mode", "wrap"],
+    ["text-wrap-style", "balance"],
+  ]);
+  expect(expandShorthands([["text-wrap", "stable"]])).toEqual([
+    ["text-wrap-mode", "wrap"],
+    ["text-wrap-style", "stable"],
+  ]);
+  expect(expandShorthands([["text-wrap", "pretty"]])).toEqual([
+    ["text-wrap-mode", "wrap"],
+    ["text-wrap-style", "pretty"],
+  ]);
+});
 
 test.todo("all - can negatively affect build size");
 test.todo("background - not used in webflow");

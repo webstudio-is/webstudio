@@ -160,3 +160,135 @@ test("merge border longhands", () => {
     )
   ).toEqual([["border", "1px solid red"]]);
 });
+
+const mergeKeywords = (list: [property: string, keyword: string][]) => {
+  const styleMap: StyleMap = new Map();
+  for (const [property, value] of list) {
+    styleMap.set(property, { type: "keyword", value });
+  }
+  return toStringMap(mergeStyles(styleMap));
+};
+
+test("merge white-space-collapse and text-wrap-mode into white-space", () => {
+  expect(
+    mergeKeywords([
+      ["white-space-collapse", "collapse"],
+      ["text-wrap-mode", "wrap"],
+    ])
+  ).toEqual([
+    ["white-space", "normal"],
+    ["white-space-collapse", "collapse"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["white-space-collapse", "collapse"],
+      ["text-wrap-mode", "nowrap"],
+    ])
+  ).toEqual([
+    ["white-space", "nowrap"],
+    ["white-space-collapse", "collapse"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["white-space-collapse", "preserve"],
+      ["text-wrap-mode", "nowrap"],
+    ])
+  ).toEqual([
+    ["white-space", "pre"],
+    ["white-space-collapse", "preserve"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["white-space-collapse", "preserve"],
+      ["text-wrap-mode", "wrap"],
+    ])
+  ).toEqual([
+    ["white-space", "pre-wrap"],
+    ["white-space-collapse", "preserve"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["white-space-collapse", "preserve-breaks"],
+      ["text-wrap-mode", "wrap"],
+    ])
+  ).toEqual([
+    ["white-space", "pre-line"],
+    ["white-space-collapse", "preserve-breaks"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["white-space-collapse", "preserve-spaces"],
+      ["text-wrap-mode", "wrap"],
+    ])
+  ).toEqual([
+    ["white-space", "normal"],
+    ["white-space-collapse", "preserve-spaces"],
+  ]);
+});
+
+test("merge white-space with vars", () => {
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          [
+            "white-space-collapse",
+            { type: "var", value: "collapse", fallbacks: [] },
+          ],
+        ])
+      )
+    )
+  ).toEqual([["white-space-collapse", "var(--collapse)"]]);
+});
+
+test("merge text-wrap-mode and text-wrap-style into text-wrap", () => {
+  expect(
+    mergeKeywords([
+      ["text-wrap-mode", "wrap"],
+      ["text-wrap-style", "balance"],
+    ])
+  ).toEqual([
+    ["white-space", "normal"],
+    ["text-wrap", "balance"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["text-wrap-mode", "wrap"],
+      ["text-wrap-style", "stable"],
+    ])
+  ).toEqual([
+    ["white-space", "normal"],
+    ["text-wrap", "stable"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["text-wrap-mode", "wrap"],
+      ["text-wrap-style", "pretty"],
+    ])
+  ).toEqual([
+    ["white-space", "normal"],
+    ["text-wrap", "pretty"],
+  ]);
+});
+
+test("merge text-wrap with vars", () => {
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["text-wrap-mode", { type: "var", value: "mode", fallbacks: [] }],
+          ["text-wrap-style", { type: "var", value: "style", fallbacks: [] }],
+        ])
+      )
+    )
+  ).toEqual([["text-wrap", "var(--style)"]]);
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["text-wrap-style", { type: "var", value: "style", fallbacks: [] }],
+        ])
+      )
+    )
+  ).toEqual([["text-wrap", "var(--style)"]]);
+});

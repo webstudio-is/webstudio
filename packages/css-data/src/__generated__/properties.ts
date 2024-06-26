@@ -2819,6 +2819,24 @@ export const properties = {
     },
     types: [],
   },
+  textWrapMode: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "wrap",
+    },
+    types: [],
+  },
+  textWrapStyle: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    types: [],
+  },
   top: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -2972,12 +2990,12 @@ export const properties = {
     },
     types: [],
   },
-  whiteSpace: {
+  whiteSpaceCollapse: {
     unitGroups: [],
     inherited: true,
     initial: {
       type: "keyword",
-      value: "normal",
+      value: "collapse",
     },
     types: [],
   },
