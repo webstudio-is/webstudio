@@ -7,7 +7,7 @@ import type {
 import type { WfElementNode, WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
-import { parseCss } from "@webstudio-is/css-data";
+import { parseCss, pseudoElements } from "@webstudio-is/css-data";
 // @todo this should be moved
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { kebabCase } from "change-case";
@@ -42,9 +42,13 @@ const wfBreakpoints = new Map<WfBreakpointName, WfBreakpoint>([
 const parseVariantName = (variant: string) => {
   let [breakpointName, state = ""] = variant.split("_");
   if (state) {
-    state = `:${state}`;
+    const separator = pseudoElements.includes(
+      state as (typeof pseudoElements)[number]
+    )
+      ? "::"
+      : ":";
+    state = separator + state;
   }
-
   if (wfBreakpoints.has(breakpointName as WfBreakpointName) === false) {
     console.error(`Invalid breakpoint name: ${breakpointName}`);
     breakpointName = "base";
