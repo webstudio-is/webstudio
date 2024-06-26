@@ -60,7 +60,10 @@ const toWebstudioFragment = async (wfData: WfData) => {
    */
   const generateId = async (sourceData: string) => {
     // We are using projectId here to avoid id collisions between different projects.
-    const projectId = $project.get()!.id;
+    const projectId = $project.get()?.id;
+    if (projectId === undefined) {
+      throw new Error("Project id is not set");
+    }
     return nanoHash(`${projectId}-${sourceData}`);
   };
 
