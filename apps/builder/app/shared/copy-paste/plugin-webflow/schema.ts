@@ -268,12 +268,43 @@ export const WfStyle = z.object({
 });
 export type WfStyle = z.infer<typeof WfStyle>;
 
+const AssetVariantSchema = z.object({
+  origFileName: z.string(),
+  fileName: z.string(),
+  format: z.string(),
+  size: z.number(),
+  width: z.number(),
+  height: z.number().optional(),
+  quality: z.number(),
+  cdnUrl: z.string().url(),
+  s3Url: z.string().url(),
+});
+
+export const WfAssetSchema = z.object({
+  cdnUrl: z.string().url(),
+  siteId: z.string(),
+  width: z.number(),
+  height: z.number(),
+  fileName: z.string(),
+  createdOn: z.string(),
+  origFileName: z.string(),
+  fileHash: z.string(),
+  variants: z.array(AssetVariantSchema),
+  mimeType: z.string(),
+  s3Url: z.string().url(),
+  thumbUrl: z.string(),
+  _id: z.string(),
+  markedAsDeleted: z.boolean().optional(),
+  fileSize: z.number(),
+});
+
 export const WfData = z.object({
   type: z.literal("@webflow/XscpData"),
   payload: z.object({
     // Using WfBaseNode here just so we can skip a node with unknown node.type.
     nodes: z.array(z.union([WfNode, WfBaseNode])),
     styles: z.array(WfStyle),
+    assets: z.array(WfAssetSchema),
   }),
 });
 export type WfData = z.infer<typeof WfData>;

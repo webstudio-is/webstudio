@@ -137,6 +137,7 @@ export const onPaste = async (clipboardData: string) => {
   if (wfData === undefined) {
     return false;
   }
+
   let fragment = await toWebstudioFragment(wfData);
   const selectedPage = $selectedPage.get();
   if (fragment === undefined || selectedPage === undefined) {

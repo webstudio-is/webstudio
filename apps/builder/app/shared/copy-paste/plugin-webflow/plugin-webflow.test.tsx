@@ -127,6 +127,7 @@ test("Heading", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -153,6 +154,7 @@ test("Link Block, Button, Text Link", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -201,6 +203,7 @@ test("List and ListItem", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -233,6 +236,7 @@ test("Paragraph", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -261,6 +265,7 @@ test("Text", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -289,6 +294,7 @@ test("Blockquote", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -314,6 +320,7 @@ test("Strong", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -339,6 +346,7 @@ test("Emphasized", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
   equalFragment(fragment, <$.Italic>Emphasis</$.Italic>);
@@ -363,6 +371,7 @@ test("Superscript", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -388,6 +397,7 @@ test("Subscript", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -408,6 +418,7 @@ test("Section", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -428,6 +439,7 @@ test("BlockContainer", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
   equalFragment(fragment, <$.Box />);
@@ -447,6 +459,7 @@ test("Block", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -467,6 +480,7 @@ test("V Flex", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
   equalFragment(fragment, <$.Box />);
@@ -486,6 +500,7 @@ test("H Flex", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
   equalFragment(fragment, <$.Box />);
@@ -522,6 +537,7 @@ test("Quick Stack", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
   equalFragment(
@@ -547,6 +563,7 @@ test("Grid", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -584,6 +601,7 @@ test("Columns", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -619,6 +637,7 @@ test("Image", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -648,6 +667,7 @@ test("HtmlEmbed", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
   equalFragment(fragment, <$.HtmlEmbed code="some html" clientOnly={true} />);
@@ -671,6 +691,7 @@ test("CodeBlock", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1025,6 +1046,7 @@ test("RichText", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1160,6 +1182,7 @@ test("Form", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1201,6 +1224,7 @@ test("FormButton", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1233,6 +1257,7 @@ test("FormTextInput", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1275,6 +1300,7 @@ test("FormBlockLabel", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1305,6 +1331,7 @@ test("FormTextarea", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1345,6 +1372,7 @@ test("FormBlockLabel", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1396,6 +1424,7 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1460,6 +1489,7 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1516,6 +1546,7 @@ test("FormSelect", async () => {
         },
       ],
       styles: [],
+      assets: [],
     },
   });
 
@@ -1548,6 +1579,7 @@ describe("Custom attributes", () => {
           },
         ],
         styles: [],
+        assets: [],
       },
     });
     equalFragment(fragment, <$.Heading tag="h1" at="b" />);
@@ -1576,6 +1608,7 @@ describe("Styles", () => {
             styleLess: "color: hsla(0, 80.00%, 47.78%, 1.00);",
           },
         ],
+        assets: [],
       },
     });
 
@@ -1654,6 +1687,7 @@ describe("Styles", () => {
             createdBy: "6075409192d886a671499223",
           },
         ],
+        assets: [],
       },
     });
 
@@ -1728,6 +1762,7 @@ describe("Styles", () => {
             children: [],
           },
         ],
+        assets: [],
       },
     });
 
@@ -1785,6 +1820,7 @@ test("Breakpoints", async () => {
           },
         },
       ],
+      assets: [],
     },
   });
 
