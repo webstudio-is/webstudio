@@ -1820,6 +1820,7 @@ describe("Styles", () => {
             },
           },
         ],
+        assets: [],
       },
     });
 
