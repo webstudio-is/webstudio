@@ -15,6 +15,7 @@ export type AssetData = z.infer<typeof AssetData>;
 type BaseAssetOptions = {
   size: number;
   data: Uint8Array;
+  name: string;
 };
 
 type AssetOptions =
@@ -51,8 +52,7 @@ export const getAssetData = async (
       meta: { width, height },
     };
   }
-
-  const { format, ...meta } = getFontData(options.data);
+  const { format, ...meta } = getFontData(options.data, options.name);
 
   return {
     size: options.size,
