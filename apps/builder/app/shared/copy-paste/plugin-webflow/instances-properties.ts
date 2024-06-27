@@ -132,6 +132,7 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+    case "Container":
     case "BlockContainer": {
       const component = "Box";
       addInstance(component);
