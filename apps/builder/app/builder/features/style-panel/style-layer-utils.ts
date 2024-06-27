@@ -1,8 +1,11 @@
-import type {
-  InvalidValue,
-  LayersValue,
-  StyleProperty,
-  TupleValue,
+import {
+  KeywordValue,
+  toValue,
+  type FunctionValue,
+  type InvalidValue,
+  type LayersValue,
+  type StyleProperty,
+  type TupleValue,
 } from "@webstudio-is/css-engine";
 import type { SectionProps } from "./sections";
 import type { StyleInfo } from "./shared/style-info";
@@ -10,6 +13,10 @@ import type {
   CreateBatchUpdate,
   StyleUpdateOptions,
 } from "./shared/use-style-data";
+import { colord, type RgbaColor } from "colord";
+import { humanizeString } from "~/shared/string-utils";
+import { isAnimatableProperty } from "@webstudio-is/css-data";
+import { findTimingFunctionFromValue } from "./sections/transitions/transition-utils";
 
 export const deleteLayer = <Layers extends TupleValue | LayersValue>(
   property: StyleProperty,
@@ -180,4 +187,112 @@ export const swapLayers = (
         }
   );
   batch.publish();
+};
+
+export const extractNameAndValueFromLayer = (
+  property: StyleProperty,
+  layer: TupleValue | FunctionValue
+) => {
+  switch (property) {
+    case "transitionProperty":
+      if (layer.type === "tuple") {
+        const properties = [...layer.value];
+        const transitionProperty = properties.find(
+          (item): item is KeywordValue =>
+            item.type === "keyword" && isAnimatableProperty(item.value) === true
+        );
+
+        const transitionTimingFunction = properties.find(
+          (item): item is KeywordValue | FunctionValue =>
+            (item.type === "keyword" &&
+              isAnimatableProperty(item.value) === false) ||
+            (item.type === "function" &&
+              isAnimatableProperty(item.name) === false)
+        );
+
+        if (transitionProperty === undefined) {
+          throw `Transition property is missing from the layer ${JSON.stringify(layer)}`;
+        }
+        properties.splice(properties.indexOf(transitionProperty), 1);
+
+        if (transitionTimingFunction !== undefined) {
+          properties.splice(properties.indexOf(transitionTimingFunction), 1);
+        }
+
+        const customTimingFunction = findTimingFunctionFromValue(
+          toValue(transitionTimingFunction)
+        );
+
+        return {
+          name: `${humanizeString(transitionProperty.value)}: ${toValue({ type: "tuple", value: properties })} ${customTimingFunction ?? toValue(transitionTimingFunction)}`,
+          value: toValue(layer),
+          color: undefined,
+        };
+      }
+      throw new Error(`Invalid layer type for ${property} property`);
+
+    case "textShadow":
+    case "boxShadow":
+      // shadows are represented as a tuple in the data-layers
+      if (layer.type === "tuple") {
+        const name = [];
+        let color: RgbaColor | undefined;
+
+        if (property === "boxShadow") {
+          const isInsetLayer = layer.value.some(
+            (item) => item.type === "keyword" && item.value === "inset"
+          );
+          if (isInsetLayer === true) {
+            name.push("Inner shadow: ");
+          } else {
+            name.push("Outer shadow: ");
+          }
+        }
+
+        if (property === "textShadow") {
+          name.push("Text shadow: ");
+        }
+
+        for (const item of Object.values(layer.value)) {
+          if (item.type === "unit") {
+            const value = toValue(item);
+            name.push(value);
+          }
+
+          if (item.type === "rgb") {
+            color = colord(toValue(item)).toRgb();
+          }
+
+          if (item.type === "keyword" && item.value !== "inset") {
+            if (colord(item.value).isValid() === false) {
+              name.push(item.value);
+            } else {
+              color = colord(item.value).toRgb();
+            }
+          }
+
+          if (item.type === "function") {
+            const value = `${item.name}(${toValue(item.args)})`;
+            name.push(value);
+          }
+        }
+
+        return { name: name.join(" "), value: toValue(layer), color };
+      }
+      throw new Error(`Invalid layer type for ${property} property`);
+
+    case "filter":
+    case "backdropFilter":
+      // filter and backdrop-filter are represented as functions in data-layer
+      if (layer.type === "function") {
+        const name = `${humanizeString(layer.name)}: ${toValue(layer.args)}`;
+        const value = `${layer.name}(${toValue(layer.args)})`;
+        return { name, value, color: undefined };
+      }
+
+      throw new Error(`Invalid layer type for ${property} property`);
+
+    default:
+      throw new Error(`Style layer list does not support \n ${property}`);
+  }
 };

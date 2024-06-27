@@ -1,5 +1,4 @@
 import {
-  toValue,
   type FunctionValue,
   type LayersValue,
   type StyleProperty,
@@ -21,6 +20,7 @@ import {
   hideLayer,
   swapLayers,
   updateLayer,
+  extractNameAndValueFromLayer,
 } from "./style-layer-utils";
 import { useMemo } from "react";
 import type {
@@ -34,7 +34,6 @@ import {
   SubtractIcon,
 } from "@webstudio-is/icons";
 import { ColorThumb } from "./shared/color-thumb";
-import { colord, type RgbaColor } from "colord";
 
 type LayerListProps = SectionProps & {
   disabled?: boolean;
@@ -58,46 +57,6 @@ type LayerListProps = SectionProps & {
     ) => void;
     deleteProperty: DeleteProperty;
   }) => JSX.Element;
-};
-
-const extractPropertiesFromLayer = (layer: TupleValue | FunctionValue) => {
-  if (layer.type === "function") {
-    const value = `${layer.name}(${toValue(layer.args)})`;
-    return { name: value, value, color: undefined };
-  }
-
-  const name = [];
-  const shadow = [];
-  let color: RgbaColor | undefined;
-  for (const item of Object.values(layer.value)) {
-    if (item.type === "unit") {
-      const value = toValue(item);
-      name.push(value);
-      shadow.push(value);
-    }
-
-    if (item.type === "rgb") {
-      color = colord(toValue(item)).toRgb();
-      shadow.push(toValue(item));
-    }
-
-    if (item.type === "keyword") {
-      if (colord(item.value).isValid() === false) {
-        name.push(item.value);
-      } else {
-        color = colord(item.value).toRgb();
-      }
-      shadow.push(item.value);
-    }
-
-    if (item.type === "function") {
-      const value = `${item.name}(${toValue(item.args)})`;
-      name.push(value);
-      shadow.push(value);
-    }
-  }
-
-  return { name: name.join(" "), value: shadow.join(" "), color };
 };
 
 export const LayersList = (props: LayerListProps) => {
@@ -178,7 +137,7 @@ export const LayersList = (props: LayerListProps) => {
           }
 
           const id = String(index);
-          const properties = extractPropertiesFromLayer(layer);
+          const properties = extractNameAndValueFromLayer(property, layer);
 
           return (
             <FloatingPanel
