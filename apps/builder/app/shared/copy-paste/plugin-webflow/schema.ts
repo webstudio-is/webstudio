@@ -267,6 +267,17 @@ export const WfStyle = z.object({
 });
 export type WfStyle = z.infer<typeof WfStyle>;
 
+const ErrorAssetVariantSchema = z.object({
+  origFileName: z.string(),
+  fileName: z.string(),
+  format: z.string(),
+  size: z.number(),
+  width: z.number(),
+  quality: z.number(),
+  error: z.string(),
+  _id: z.string(),
+});
+
 const AssetVariantSchema = z.object({
   origFileName: z.string(),
   fileName: z.string(),
@@ -288,7 +299,7 @@ export const WfAssetSchema = z.object({
   createdOn: z.string(),
   origFileName: z.string(),
   fileHash: z.string(),
-  variants: z.array(AssetVariantSchema),
+  variants: z.array(z.union([AssetVariantSchema, ErrorAssetVariantSchema])),
   mimeType: z.string(),
   s3Url: z.string().url(),
   thumbUrl: z.string(),
