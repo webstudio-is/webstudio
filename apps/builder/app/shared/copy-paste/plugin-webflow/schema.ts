@@ -62,6 +62,7 @@ export const wfNodeTypes = [
   "FormRadioInput",
   "FormSelect",
   "LineBreak",
+  "Span",
 ] as const;
 
 export const WfElementNode = z.union([
@@ -233,6 +234,7 @@ export const WfElementNode = z.union([
     }),
   }),
   WfBaseNode.extend({ type: z.enum(["LineBreak"]) }),
+  WfBaseNode.extend({ type: z.enum(["Span"]) }),
 ]);
 
 export type WfElementNode = z.infer<typeof WfElementNode>;

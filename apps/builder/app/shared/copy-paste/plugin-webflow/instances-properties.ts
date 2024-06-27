@@ -93,7 +93,8 @@ const toFragment = (
     case "Paragraph":
     case "Superscript":
     case "Subscript":
-    case "Blockquote": {
+    case "Blockquote":
+    case "Span": {
       addInstance(component);
       return fragment;
     }
