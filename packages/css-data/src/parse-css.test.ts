@@ -39,9 +39,9 @@ describe("Parse CSS", () => {
 
   test("parses supported shorthand values", () => {
     const css = `
-      .test { 
-        background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC; 
-      }    
+      .test {
+        background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC;
+      }
     `;
     expect(parseCss(css)).toMatchInlineSnapshot(`
       {
@@ -71,6 +71,19 @@ describe("Parse CSS", () => {
         ],
       }
     `);
+  });
+
+  test.only("parses supported shorthand values 2", () => {
+    const css = `
+      .test {
+          background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), url("https://667d0b7769e0cc3754b584f6"), url("https://667d0fe180995eadc1534a26");
+          background-position: 0px 0px, 550px 0px, 0px 0px;
+          background-size: auto, contain, auto;
+          background-repeat: repeat, no-repeat, repeat;
+          background-attachment: scroll, fixed, scroll;
+      }
+    `;
+    console.log(JSON.stringify(parseCss(css), null, " "));
   });
 
   test("parse state", () => {
@@ -214,7 +227,7 @@ describe("Parse CSS", () => {
         margin-bottom: 10px;
         font-weight: bold;
       }
-      
+
       h1 {
         margin-top: 20px;
         font-size: 38px;
