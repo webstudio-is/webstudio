@@ -47,24 +47,6 @@ test("merge border when all parts are set", () => {
   ]);
 });
 
-test("should not merge border with initial", () => {
-  expect(
-    toStringMap(
-      mergeStyles(
-        new Map([
-          ["border-width", { type: "keyword", value: "initial" }],
-          ["border-style", { type: "keyword", value: "solid" }],
-          ["border-color", { type: "keyword", value: "red" }],
-        ])
-      )
-    )
-  ).toEqual([
-    ["border-width", "initial"],
-    ["border-style", "solid"],
-    ["border-color", "red"],
-  ]);
-});
-
 test("merge border with vars", () => {
   expect(
     toStringMap(
@@ -77,6 +59,31 @@ test("merge border with vars", () => {
       )
     )
   ).toEqual([["border", "var(--width) var(--style) var(--color)"]]);
+});
+
+test("should not merge border with initial, inherit or unset", () => {
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          [
+            "border-width",
+            {
+              type: "var",
+              value: "width",
+              fallbacks: [{ type: "keyword", value: "unset" }],
+            },
+          ],
+          ["border-style", { type: "var", value: "style", fallbacks: [] }],
+          ["border-color", { type: "var", value: "color", fallbacks: [] }],
+        ])
+      )
+    )
+  ).toEqual([
+    ["border-width", "var(--width, unset)"],
+    ["border-style", "var(--style)"],
+    ["border-color", "var(--color)"],
+  ]);
 });
 
 test("merge margin/padding when the same value is set", () => {
