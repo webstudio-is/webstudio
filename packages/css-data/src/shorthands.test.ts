@@ -172,7 +172,7 @@ test("expand outline", () => {
   expect(expandShorthands([["outline", "1px solid"]])).toEqual([
     ["outline-width", "1px"],
     ["outline-style", "solid"],
-    ["outline-color", "auto"],
+    ["outline-color", "currentcolor"],
   ]);
 });
 

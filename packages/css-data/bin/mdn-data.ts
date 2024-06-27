@@ -5,6 +5,7 @@ import { join, dirname } from "node:path";
 import { parse, definitionSyntax, type DSNode, type CssNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
+import selectors from "mdn-data/css/selectors.json";
 import data from "css-tree/dist/data";
 import { camelCase } from "change-case";
 import type {
@@ -321,6 +322,12 @@ for (property in filteredProperties) {
   };
 }
 
+const pseudoElements = Object.keys(selectors)
+  .filter((selector) => {
+    return selector.startsWith("::");
+  })
+  .map((selector) => selector.slice(2));
+
 const targetDir = join(process.cwd(), process.argv.slice(2).pop() as string);
 
 mkdirSync(targetDir, { recursive: true });
@@ -388,6 +395,8 @@ writeToFile(
   "animatableProperties",
   animatableProperties
 );
+
+writeToFile("pseudo-elements.ts", "pseudoElements", pseudoElements);
 
 let types = "";
 

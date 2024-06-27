@@ -1721,14 +1721,10 @@ describe("Styles", () => {
           background-color: rgba(0, 0, 0, 0)
         }
         a:active {
-          outline-width: 0;
-          outline-style: initial;
-          outline-color: initial
+          outline: 0 none currentColor
         }
         a:hover {
-          outline-width: 0;
-          outline-style: initial;
-          outline-color: initial
+          outline: 0 none currentColor
         }
         button {
           text-align: center
@@ -1770,6 +1766,116 @@ describe("Styles", () => {
       "@media all {
         block {
           color: unset
+        }
+      }"
+    `);
+  });
+
+  test("States", async () => {
+    const fragment = await toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "5c66aeeb-941d-c52f-8e14-c54312878021",
+            type: "Link",
+            tag: "a",
+            classes: ["81cf331a-ed88-7a5f-3538-8915c7788aea"],
+            children: [],
+            data: {
+              link: {
+                url: "#",
+              },
+            },
+          },
+        ],
+        styles: [
+          {
+            _id: "81cf331a-ed88-7a5f-3538-8915c7788aea",
+            fake: false,
+            type: "class",
+            name: "x",
+            namespace: "",
+            comb: "",
+            styleLess: "transform: translate3d(7px, 74px, 16px);",
+            variants: {
+              main_hover: {
+                styleLess: "background-color: hsla(0, 85.19%, 42.12%, 1.00);",
+              },
+              tiny_focus: {
+                styleLess: "background-color: hsla(264, 73.75%, 38.37%, 1.00);",
+              },
+              tiny_active: {
+                styleLess: "background-color: hsla(0, 46.06%, 51.80%, 1.00);",
+              },
+              "tiny_focus-visible": {
+                styleLess: "background-color: hsla(264, 36.36%, 41.56%, 1.00);",
+              },
+              tiny_visited: {
+                styleLess: "background-color: hsla(0, 83.67%, 42.10%, 1.00);",
+              },
+              tiny_hover: {
+                styleLess: "background-color: hsla(0, 60.99%, 58.99%, 1.00);",
+              },
+            },
+          },
+        ],
+        assets: [],
+      },
+    });
+
+    expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.any(String),
+        name: "a",
+      },
+      {
+        type: "token",
+        id: expect.any(String),
+        name: "x",
+      },
+    ]);
+    expect(fragment.styleSourceSelections).toEqual([
+      {
+        instanceId: expect.any(String),
+        values: [expect.any(String), expect.any(String)],
+      },
+    ]);
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        a {
+          background-color: rgba(0, 0, 0, 0)
+        }
+        a:active {
+          outline: 0 none currentColor
+        }
+        a:hover {
+          outline: 0 none currentColor
+        }
+        x {
+          transform: translate3d(7px,74px,16px)
+        }
+        x:hover {
+          background-color: rgba(199, 16, 16, 1)
+        }
+      }
+      @media all and (max-width: 479px) {
+        x:active {
+          background-color: rgba(189, 75, 75, 1)
+        }
+        x:focus {
+          background-color: rgba(83, 26, 170, 1)
+        }
+        x:focus-visible {
+          background-color: rgba(98, 67, 145, 1)
+        }
+        x:hover {
+          background-color: rgba(214, 87, 87, 1)
+        }
+        x:visited {
+          background-color: rgba(197, 18, 18, 1)
         }
       }"
     `);

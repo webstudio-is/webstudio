@@ -142,8 +142,9 @@ export const parseCss = (css: string) => {
 
       const statesArray = states.get(node.name) ?? [];
       states.set(node.name, statesArray);
-
-      if (item?.next && item.next.data.type === "PseudoClassSelector") {
+      if (item?.next && item.next.data.type === "PseudoElementSelector") {
+        statesArray.push(`::${item.next.data.name}`);
+      } else if (item?.next && item.next.data.type === "PseudoClassSelector") {
         statesArray.push(`:${item.next.data.name}`);
       } else {
         statesArray.push(undefined);

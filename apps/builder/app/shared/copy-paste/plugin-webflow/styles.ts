@@ -7,7 +7,7 @@ import type {
 import type { WfElementNode, WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
-import { parseCss } from "@webstudio-is/css-data";
+import { parseCss, pseudoElements } from "@webstudio-is/css-data";
 // @todo this should be moved
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { kebabCase } from "change-case";
@@ -39,6 +39,27 @@ const wfBreakpoints = new Map<WfBreakpointName, WfBreakpoint>([
   ["tiny", { maxWidth: 479 }],
 ]);
 
+const parseVariantName = (variant: string) => {
+  let [breakpointName, state = ""] = variant.split("_");
+  if (state) {
+    const separator = pseudoElements.includes(
+      state as (typeof pseudoElements)[number]
+    )
+      ? "::"
+      : ":";
+    state = separator + state;
+  }
+  if (wfBreakpoints.has(breakpointName as WfBreakpointName) === false) {
+    console.error(`Invalid breakpoint name: ${breakpointName}`);
+    breakpointName = "base";
+  }
+
+  return {
+    breakpointName: breakpointName as WfBreakpointName,
+    state,
+  };
+};
+
 const findWsBreakpoint = (
   wfBreakpoint: WfBreakpoint,
   breakpoints: Breakpoints
@@ -56,10 +77,7 @@ const replaceAtVariables = (styles: string) => {
   return styles.replace(/@var_[\w-]+/g, "unset");
 };
 
-type UnparsedVariants = Map<
-  WfBreakpointName,
-  string | Array<EmbedTemplateStyleDecl>
->;
+type UnparsedVariants = Map<string, string | Array<EmbedTemplateStyleDecl>>;
 
 // Variants value can be wf styleLess string which is a styles block
 // or it can be an array of EmbedTemplateStyleDecl.
@@ -69,13 +87,16 @@ const toParsedVariants = (variants: UnparsedVariants) => {
     WfBreakpointName,
     Array<EmbedTemplateStyleDecl>
   >();
-
-  for (const [breakpointName, styles] of variants) {
+  for (const [variant, styles] of variants) {
+    const { breakpointName, state } = parseVariantName(variant);
     if (typeof styles === "string") {
       try {
         const parsed =
-          parseCss(`.styles {${replaceAtVariables(styles)}}`).styles ?? [];
-        parsedVariants.set(breakpointName, parsed);
+          parseCss(`.styles${state} {${replaceAtVariables(styles)}}`).styles ??
+          [];
+        const allBreakpointStyles = parsedVariants.get(breakpointName) ?? [];
+        allBreakpointStyles.push(...parsed);
+        parsedVariants.set(breakpointName, allBreakpointStyles);
       } catch (error) {
         console.error("Failed to parse style", error, breakpointName, styles);
       }

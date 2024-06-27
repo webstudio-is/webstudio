@@ -93,6 +93,27 @@ describe("Parse CSS", () => {
     `);
   });
 
+  test("parse pseudo element", () => {
+    expect(parseCss(`input::placeholder { color: #ff0000 }`))
+      .toMatchInlineSnapshot(`
+      {
+        "input": [
+          {
+            "property": "color",
+            "state": "::placeholder",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("parse multiple selectors, one with state", () => {
     expect(parseCss(`a, a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
       {

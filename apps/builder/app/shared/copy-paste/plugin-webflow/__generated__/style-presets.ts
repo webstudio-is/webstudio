@@ -398,7 +398,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":active",
     },
@@ -406,7 +406,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":hover",
     },
@@ -414,7 +414,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":active",
     },
@@ -422,7 +422,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":hover",
     },
@@ -447,7 +447,7 @@ export const styles = {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
   ],
@@ -691,56 +691,56 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderTopColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderRightColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderLeftColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -983,12 +983,113 @@ export const styles = {
       },
     },
     {
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderTopColor",
+      value: {
+        type: "keyword",
+        value: "currentColor",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderRightColor",
+      value: {
+        type: "keyword",
+        value: "currentColor",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderBottomColor",
+      value: {
+        type: "keyword",
+        value: "currentColor",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      property: "borderLeftColor",
+      value: {
+        type: "keyword",
+        value: "currentColor",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
       property: "paddingTop",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       property: "paddingRight",
@@ -997,6 +1098,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       property: "paddingBottom",
@@ -1005,6 +1107,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       property: "paddingLeft",
@@ -1013,6 +1116,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       property: "cursor",
@@ -1064,56 +1168,56 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderTopColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderRightColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderLeftColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
   ],
@@ -1242,56 +1346,56 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderTopColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderRightColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderLeftColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -1690,56 +1794,56 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderTopColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderRightColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderLeftColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -2503,56 +2607,56 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderTopColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderRightColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderLeftColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -2890,28 +2994,28 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
@@ -3910,56 +4014,56 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderTopColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderRightColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderLeftColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -4211,6 +4315,16 @@ export const styles = {
   ],
   "w-input": [
     {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 51,
+        g: 51,
+        b: 51,
+      },
+    },
+    {
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -4410,12 +4524,24 @@ export const styles = {
       state: ":-moz-placeholder",
     },
     {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+      state: "::-moz-placeholder",
+    },
+    {
       property: "opacity",
       value: {
         type: "unit",
         unit: "number",
         value: 1,
       },
+      state: "::-moz-placeholder",
     },
     {
       property: "color",
@@ -4426,6 +4552,7 @@ export const styles = {
         g: 153,
         b: 153,
       },
+      state: "::-webkit-input-placeholder",
     },
     {
       property: "borderTopColor",
@@ -4484,7 +4611,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":focus",
     },
@@ -4492,7 +4619,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -4720,14 +4847,14 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -7256,7 +7383,7 @@ export const styles = {
       property: "borderTopWidth",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "medium",
       },
       state: ":after",
     },
@@ -7264,7 +7391,7 @@ export const styles = {
       property: "borderRightWidth",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "medium",
       },
       state: ":after",
     },
@@ -7272,7 +7399,7 @@ export const styles = {
       property: "borderBottomWidth",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "medium",
       },
       state: ":after",
     },
@@ -7280,7 +7407,7 @@ export const styles = {
       property: "borderLeftWidth",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "medium",
       },
       state: ":after",
     },
@@ -8150,7 +8277,7 @@ export const styles = {
       property: "transitionDelay",
       value: {
         type: "unparsed",
-        value: "0.1s,0.1s",
+        value: "0s,0s",
       },
     },
     {
@@ -8188,7 +8315,7 @@ export const styles = {
       property: "outlineWidth",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "medium",
       },
       state: ":focus",
     },
@@ -8204,7 +8331,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -8361,7 +8488,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":focus",
     },
@@ -8369,7 +8496,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -8532,14 +8659,14 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -8602,56 +8729,56 @@ export const styles = {
       property: "borderTopStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderRightStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderBottomStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderLeftStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "borderTopColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderRightColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderBottomColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
       property: "borderLeftColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -9057,7 +9184,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":focus",
     },
@@ -9065,7 +9192,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -9196,7 +9323,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":focus",
     },
@@ -9204,7 +9331,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -9504,14 +9631,14 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
     },
     {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
     },
     {
@@ -10144,7 +10271,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "s",
-        value: 0.3,
+        value: 0,
       },
     },
     {
@@ -11840,7 +11967,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":focus",
     },
@@ -11848,7 +11975,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":focus",
     },
@@ -12145,7 +12272,7 @@ export const styles = {
       property: "outlineStyle",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "none",
       },
       state: ":focus",
     },
@@ -12153,7 +12280,7 @@ export const styles = {
       property: "outlineColor",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "currentColor",
       },
       state: ":focus",
     },
