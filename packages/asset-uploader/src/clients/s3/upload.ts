@@ -69,6 +69,7 @@ export const uploadToS3 = async ({
     type: type.startsWith("image") ? "image" : "font",
     size: data.byteLength,
     data: new Uint8Array(data),
+    name,
   });
 
   return assetData;

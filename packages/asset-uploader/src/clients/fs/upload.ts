@@ -30,6 +30,7 @@ export const uploadToFs = async ({
     type: type.startsWith("image") ? "image" : "font",
     size: data.byteLength,
     data,
+    name,
   });
 
   return assetData;

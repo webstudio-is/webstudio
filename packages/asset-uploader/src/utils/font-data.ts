@@ -45,13 +45,22 @@ const splitAndTrim = (string: string) =>
 
 // Family name can contain additional information like "Roboto Black" or "Roboto Bold", though we need pure family name "Roboto", because the rest is already encoded in weight and style.
 // We need a name we can reference in CSS font-family property, while CSS matches it with the right font-face considering the weight and style.
-export const normalizeFamily = (family: string, subfamily: string) => {
+const normalizeFamily = (
+  family: string,
+  subfamily: string,
+  fileName: string
+) => {
   const familyParts = splitAndTrim(family);
   const subfamilyParts = splitAndTrim(subfamily.toLowerCase());
   const familyPartsNormalized = familyParts.filter(
     (familyPart) => subfamilyParts.includes(familyPart.toLowerCase()) === false
   );
-  return familyPartsNormalized.join(" ");
+  if (familyPartsNormalized.length !== 0) {
+    return familyPartsNormalized.join(" ");
+  }
+  // Broken fonts may lack any family information, so last resort is to use the file name
+  const extensionIndex = fileName.lastIndexOf(".");
+  return extensionIndex === -1 ? fileName : fileName.slice(0, extensionIndex);
 };
 
 type FontDataStatic = {
@@ -67,7 +76,7 @@ type FontDataVariable = {
 };
 type FontData = FontDataStatic | FontDataVariable;
 
-export const getFontData = (data: Uint8Array): FontData => {
+export const getFontData = (data: Uint8Array, fileName: string): FontData => {
   const font = createFontKit(data as Buffer);
   if (font.type !== "TTF" && font.type !== "WOFF" && font.type !== "WOFF2") {
     throw Error(`Unsupported font type ${font.type}`);
@@ -78,7 +87,7 @@ export const getFontData = (data: Uint8Array): FontData => {
     font.getName("preferredSubfamily", defaultLanguage) ??
     font.getName("fontSubfamily", defaultLanguage) ??
     "";
-  const family = normalizeFamily(originalFamily, subfamily);
+  const family = normalizeFamily(originalFamily, subfamily, fileName);
   const isVariable = Object.keys(font.variationAxes).length !== 0;
 
   if (isVariable) {
@@ -95,3 +104,5 @@ export const getFontData = (data: Uint8Array): FontData => {
     ...parseSubfamily(subfamily),
   };
 };
+
+export const __testing__ = { normalizeFamily };

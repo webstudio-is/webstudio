@@ -1,5 +1,7 @@
 import { describe, test, expect } from "@jest/globals";
-import { parseSubfamily, normalizeFamily } from "./font-data";
+import { parseSubfamily, __testing__ } from "./font-data";
+
+const { normalizeFamily } = __testing__;
 
 describe("font-data", () => {
   describe("parseSubfamily()", () => {
@@ -55,16 +57,31 @@ describe("font-data", () => {
 
   describe("normalizeFamily()", () => {
     test("basic", () => {
-      expect(normalizeFamily("Roboto Black", "Black")).toBe("Roboto");
-      expect(normalizeFamily("Roboto Light", "Light Italic")).toBe("Roboto");
-      expect(normalizeFamily("Robolder Bold", "Bold")).toBe("Robolder");
-      expect(normalizeFamily(" Roboto X Bold ", "Bold")).toBe("Roboto X");
-      expect(normalizeFamily(" 'Roboto X' Bold ", "Bold")).toBe("'Roboto X'");
-      expect(normalizeFamily(` "Roboto X" Bold `, "Bold")).toBe(`"Roboto X"`);
-      expect(normalizeFamily(`"Roboto Bold"`, "Bold")).toBe(`"Roboto Bold"`);
-      expect(normalizeFamily(`"Roboto Bold" Bold`, "Bold")).toBe(
+      expect(normalizeFamily("Roboto Black", "Black", "font.woff")).toBe(
+        "Roboto"
+      );
+      expect(normalizeFamily("Roboto Light", "Light Italic", "font.woff")).toBe(
+        "Roboto"
+      );
+      expect(normalizeFamily("Robolder Bold", "Bold", "font.woff")).toBe(
+        "Robolder"
+      );
+      expect(normalizeFamily(" Roboto X Bold ", "Bold", "font.woff")).toBe(
+        "Roboto X"
+      );
+      expect(normalizeFamily(" 'Roboto X' Bold ", "Bold", "font.woff")).toBe(
+        "'Roboto X'"
+      );
+      expect(normalizeFamily(` "Roboto X" Bold `, "Bold", "font.woff")).toBe(
+        `"Roboto X"`
+      );
+      expect(normalizeFamily(`"Roboto Bold"`, "Bold", "font.woff")).toBe(
         `"Roboto Bold"`
       );
+      expect(normalizeFamily(`"Roboto Bold" Bold`, "Bold", "font.woff")).toBe(
+        `"Roboto Bold"`
+      );
+      expect(normalizeFamily("", "", "font.woff")).toBe(`font`);
     });
   });
 });
