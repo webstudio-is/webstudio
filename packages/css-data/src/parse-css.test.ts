@@ -83,7 +83,151 @@ describe("Parse CSS", () => {
           background-attachment: scroll, fixed, scroll;
       }
     `;
-    console.log(JSON.stringify(parseCss(css), null, " "));
+    expect(parseCss(css)).toMatchInlineSnapshot(`
+{
+  "test": [
+    {
+      "property": "backgroundImage",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(180deg,hsla(0,0.00%,0.00%,0.11),white)",
+          },
+          {
+            "type": "image",
+            "value": {
+              "type": "url",
+              "url": "https://667d0b7769e0cc3754b584f6",
+            },
+          },
+          {
+            "type": "image",
+            "value": {
+              "type": "url",
+              "url": "https://667d0fe180995eadc1534a26",
+            },
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundPosition",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 550,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundSize",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "auto",
+          },
+          {
+            "type": "keyword",
+            "value": "contain",
+          },
+          {
+            "type": "keyword",
+            "value": "auto",
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundRepeat",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "repeat",
+          },
+          {
+            "type": "keyword",
+            "value": "no-repeat",
+          },
+          {
+            "type": "keyword",
+            "value": "repeat",
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundAttachment",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "scroll",
+          },
+          {
+            "type": "keyword",
+            "value": "fixed",
+          },
+          {
+            "type": "keyword",
+            "value": "scroll",
+          },
+        ],
+      },
+    },
+  ],
+}
+`);
   });
 
   test("parse state", () => {
