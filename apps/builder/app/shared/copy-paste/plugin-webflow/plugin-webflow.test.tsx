@@ -1571,10 +1571,6 @@ test("Multiline text", async () => {
             "b6a2a455-8ece-d70b-c88b-2f7b7dd39445",
             "49a4d697-0430-6739-9179-e75c1dbec765",
           ],
-          data: {
-            text: true,
-            tag: "div",
-          },
         },
         {
           _id: "629fa602-de2f-b70b-ba5e-a74de823cfff",
@@ -1587,11 +1583,6 @@ test("Multiline text", async () => {
           tag: "br",
           classes: [],
           children: [],
-          data: {
-            sym: {
-              inst: "LineBreak",
-            },
-          },
         },
         {
           _id: "49a4d697-0430-6739-9179-e75c1dbec765",
