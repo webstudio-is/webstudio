@@ -1556,6 +1556,64 @@ test("FormSelect", async () => {
   );
 });
 
+test("Multiline text", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "da7b8e40-a038-735c-bde8-0016079a5502",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: [
+            "629fa602-de2f-b70b-ba5e-a74de823cfff",
+            "b6a2a455-8ece-d70b-c88b-2f7b7dd39445",
+            "49a4d697-0430-6739-9179-e75c1dbec765",
+          ],
+          data: {
+            text: true,
+            tag: "div",
+          },
+        },
+        {
+          _id: "629fa602-de2f-b70b-ba5e-a74de823cfff",
+          text: true,
+          v: "a",
+        },
+        {
+          _id: "b6a2a455-8ece-d70b-c88b-2f7b7dd39445",
+          type: "LineBreak",
+          tag: "br",
+          classes: [],
+          children: [],
+          data: {
+            sym: {
+              inst: "LineBreak",
+            },
+          },
+        },
+        {
+          _id: "49a4d697-0430-6739-9179-e75c1dbec765",
+          text: true,
+          v: "b",
+        },
+      ],
+      styles: [],
+      assets: [],
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Text>
+      {"a"}
+      {"\n"}
+      {"b"}
+    </$.Text>
+  );
+});
+
 describe("Custom attributes", () => {
   test("Basic", async () => {
     const fragment = await toWebstudioFragment({

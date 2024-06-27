@@ -369,10 +369,17 @@ export const addInstanceAndProperties = (
     if (wfChildNode === undefined) {
       continue;
     }
-    if ("text" in wfChildNode) {
+    const value =
+      "text" in wfChildNode
+        ? wfChildNode.v
+        : wfChildNode.type === "LineBreak"
+          ? "\n"
+          : undefined;
+
+    if (value !== undefined) {
       children.push({
         type: "text",
-        value: wfChildNode.v,
+        value,
       });
       doneNodes.set(wfChildId, instanceId);
       continue;
