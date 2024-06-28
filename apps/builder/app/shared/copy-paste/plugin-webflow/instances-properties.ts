@@ -123,7 +123,7 @@ const toFragment = (
         addProp("href", `mailto:${data.link.email}${subject}`);
       }
       if ("tel" in data.link) {
-        addProp("tel", `tel:${data.link.tel}`);
+        addProp("href", `tel:${data.link.tel}`);
       }
       addInstance(component);
       return fragment;
