@@ -120,7 +120,7 @@ const toFragment = (
         const subject = data.link.subject
           ? `?subject=${data.link.subject}`
           : "";
-        addProp("email", `mailto:${data.link.email}${subject}`);
+        addProp("href", `mailto:${data.link.email}${subject}`);
       }
       if ("tel" in data.link) {
         addProp("tel", `tel:${data.link.tel}`);
