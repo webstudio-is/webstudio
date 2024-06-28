@@ -16,18 +16,13 @@ import { $assets } from "~/shared/nano-states";
 import { parseCssValue } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
+import { url } from "css-tree";
 
 const property: StyleProperty = "backgroundImage";
 
 type IntermediateValue = {
   type: "intermediate";
   value: string;
-};
-
-const extractUrlFromValue = (cssValue: string) => {
-  const regex = /url\(["']?(.*?)["']?\)/;
-  const match = cssValue.match(regex);
-  return match ? match[1] : undefined;
 };
 
 const isAbsoluteURL = (value: string) => {
@@ -104,7 +99,7 @@ export const BackgroundImage = (
     }
 
     if (newValue.type === "unparsed") {
-      const urlFromProperty = extractUrlFromValue(value);
+      const urlFromProperty = url.decode(value);
       if (urlFromProperty === undefined) {
         setIntermediateValue({
           type: "invalid",

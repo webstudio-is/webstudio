@@ -299,7 +299,7 @@ const WfAsset = z.object({
   createdOn: z.string(),
   origFileName: z.string(),
   fileHash: z.string(),
-  variants: z.array(z.union([WfAssetVariant, WfErrorAssetVariant])),
+  variants: z.array(z.union([WfAssetVariant, WfErrorAssetVariant])).optional(),
   mimeType: z.string(),
   s3Url: z.string().url(),
   thumbUrl: z.string(),

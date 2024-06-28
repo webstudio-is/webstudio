@@ -2137,5 +2137,5 @@ test("background images", async () => {
   });
 
   // @todo finish in the following PR
-  fragment;
+  console.log(JSON.stringify(fragment.styles));
 });
