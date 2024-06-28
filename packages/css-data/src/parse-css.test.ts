@@ -39,9 +39,9 @@ describe("Parse CSS", () => {
 
   test("parses supported shorthand values", () => {
     const css = `
-      .test { 
-        background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC; 
-      }    
+      .test {
+        background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC;
+      }
     `;
     expect(parseCss(css)).toMatchInlineSnapshot(`
       {
@@ -71,6 +71,163 @@ describe("Parse CSS", () => {
         ],
       }
     `);
+  });
+
+  test("parses supported shorthand values 2", () => {
+    const css = `
+      .test {
+          background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), url("https://667d0b7769e0cc3754b584f6"), url("https://667d0fe180995eadc1534a26");
+          background-position: 0px 0px, 550px 0px, 0px 0px;
+          background-size: auto, contain, auto;
+          background-repeat: repeat, no-repeat, repeat;
+          background-attachment: scroll, fixed, scroll;
+      }
+    `;
+    expect(parseCss(css)).toMatchInlineSnapshot(`
+{
+  "test": [
+    {
+      "property": "backgroundImage",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(180deg,hsla(0,0.00%,0.00%,0.11),white)",
+          },
+          {
+            "type": "image",
+            "value": {
+              "type": "url",
+              "url": "https://667d0b7769e0cc3754b584f6",
+            },
+          },
+          {
+            "type": "image",
+            "value": {
+              "type": "url",
+              "url": "https://667d0fe180995eadc1534a26",
+            },
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundPosition",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 550,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundSize",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "auto",
+          },
+          {
+            "type": "keyword",
+            "value": "contain",
+          },
+          {
+            "type": "keyword",
+            "value": "auto",
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundRepeat",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "repeat",
+          },
+          {
+            "type": "keyword",
+            "value": "no-repeat",
+          },
+          {
+            "type": "keyword",
+            "value": "repeat",
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundAttachment",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "scroll",
+          },
+          {
+            "type": "keyword",
+            "value": "fixed",
+          },
+          {
+            "type": "keyword",
+            "value": "scroll",
+          },
+        ],
+      },
+    },
+  ],
+}
+`);
   });
 
   test("parse state", () => {
@@ -214,7 +371,7 @@ describe("Parse CSS", () => {
         margin-bottom: 10px;
         font-weight: bold;
       }
-      
+
       h1 {
         margin-top: 20px;
         font-size: 38px;

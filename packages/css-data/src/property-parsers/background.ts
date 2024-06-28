@@ -1,5 +1,6 @@
 import * as csstree from "css-tree";
 import type {
+  ImageValue,
   InvalidValue,
   LayersValue,
   RgbValue,
@@ -89,12 +90,18 @@ export const backgroundToLonghand = (
         }
 
         nestingLevel++;
+        return;
       }
 
       if (node.type === "Hash" && item.next === null && nestingLevel === 0) {
         // If the depth is at level 0 and the next item is null, it's likely that the backgroundColor
         // is written as hex #XYZFGH
         backgroundColorRaw = csstree.generate(node);
+        return;
+      }
+
+      if (node.type === "Url") {
+        layers.push(csstree.generate(node));
       }
     },
     leave: (node, item, list) => {
@@ -113,14 +120,29 @@ export const backgroundToLonghand = (
 export const parseBackgroundImage = (
   layers: string[]
 ): LayersValue | InvalidValue => {
-  const backgroundImages: UnparsedValue[] = [];
+  const backgroundImages: (UnparsedValue | ImageValue)[] = [];
 
   for (const layer of layers) {
     if (
       gradientNames.some((gradientName) => layer.startsWith(gradientName)) ===
-      false
+        false &&
+      layer.startsWith("url(") === false
     ) {
       break;
+    }
+
+    if (layer.startsWith("url(")) {
+      backgroundImages.push({
+        type: "image",
+        value: {
+          type: "url",
+          url: layer
+            .replace(/^url\(/, "")
+            .replace(/\)$/, "")
+            .replaceAll(/\\(.)/g, "$1"),
+        },
+      });
+      continue;
     }
 
     const layerStyle = parseCssValue("backgroundImage", layer);
