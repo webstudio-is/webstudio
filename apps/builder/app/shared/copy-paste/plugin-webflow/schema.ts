@@ -267,7 +267,7 @@ export const WfStyle = z.object({
 });
 export type WfStyle = z.infer<typeof WfStyle>;
 
-const ErrorAssetVariantSchema = z.object({
+const ErrorAssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
@@ -278,7 +278,7 @@ const ErrorAssetVariantSchema = z.object({
   _id: z.string(),
 });
 
-const AssetVariantSchema = z.object({
+const AssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
@@ -290,7 +290,7 @@ const AssetVariantSchema = z.object({
   s3Url: z.string().url(),
 });
 
-export const WfAssetSchema = z.object({
+export const WfAsset = z.object({
   cdnUrl: z.string().url(),
   siteId: z.string(),
   width: z.number(),
@@ -299,7 +299,7 @@ export const WfAssetSchema = z.object({
   createdOn: z.string(),
   origFileName: z.string(),
   fileHash: z.string(),
-  variants: z.array(z.union([AssetVariantSchema, ErrorAssetVariantSchema])),
+  variants: z.array(z.union([AssetVariant, ErrorAssetVariant])),
   mimeType: z.string(),
   s3Url: z.string().url(),
   thumbUrl: z.string(),
@@ -314,7 +314,7 @@ export const WfData = z.object({
     // Using WfBaseNode here just so we can skip a node with unknown node.type.
     nodes: z.array(z.union([WfNode, WfBaseNode])),
     styles: z.array(WfStyle),
-    assets: z.array(WfAssetSchema),
+    assets: z.array(WfAsset),
   }),
 });
 export type WfData = z.infer<typeof WfData>;
