@@ -98,24 +98,24 @@ const parseCssValue = (
 
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
-  for (let [property, value] of expanded) {
-    property = normalizePropertyName(property);
+  for (const [property, value] of expanded) {
+    const normalizedProperty = normalizePropertyName(property);
     if (value === "") {
       // Keep the browser behavior when property is defined with an empty value e.g. `color:;`
       // It may override some existing value and effectively set it to "unset";
-      final.set(property, { type: "keyword", value: "unset" });
+      final.set(normalizedProperty, { type: "keyword", value: "unset" });
       continue;
     }
 
     // @todo https://github.com/webstudio-is/webstudio/issues/3399
     if (value.startsWith("var(")) {
-      final.set(property, { type: "keyword", value: "unset" });
+      final.set(normalizedProperty, { type: "keyword", value: "unset" });
       continue;
     }
 
     final.set(
-      property,
-      parseCssValueLonghand(property as StyleProperty, value)
+      normalizedProperty,
+      parseCssValueLonghand(normalizedProperty as StyleProperty, value)
     );
   }
   return final;
