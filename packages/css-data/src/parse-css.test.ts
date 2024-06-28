@@ -675,18 +675,18 @@ describe("Parse CSS", () => {
     // @todo parser is wrong here, it should be keyword horizontal
     expect(parseCss(`a { -webkit-box-orient: horizontal; }`))
       .toMatchInlineSnapshot(`
-      {
-        "a": [
-          {
-            "property": "WebkitBoxOrient",
-            "value": {
-              "type": "invalid",
-              "value": "",
-            },
-          },
-        ],
-      }
-    `);
+{
+  "a": [
+    {
+      "property": "-webkit-box-orient",
+      "value": {
+        "type": "keyword",
+        "value": "horizontal",
+      },
+    },
+  ],
+}
+`);
   });
 
   test("parse child combinator", () => {

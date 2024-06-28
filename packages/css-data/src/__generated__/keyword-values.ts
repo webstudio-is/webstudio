@@ -2,6 +2,7 @@
 export const keywordValues = {
   WebkitFontSmoothing: ["auto", "none", "antialiased", "subpixel-antialiased"],
   MozOsxFontSmoothing: ["auto", "grayscale"],
+  "-webkit-box-orient": ["horizontal", "vertical"],
   listStyleType: [
     "disc",
     "circle",
@@ -15,6 +16,7 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
+  "-webkit-line-clamp": ["none", "initial", "inherit", "unset"],
   accentColor: [
     "auto",
     "transparent",
@@ -3485,7 +3487,6 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
-  lineClamp: ["none", "initial", "inherit", "unset"],
   lineHeight: ["normal", "initial", "inherit", "unset"],
   listStyleImage: ["none", "initial", "inherit", "unset"],
   listStylePosition: ["inside", "outside", "initial", "inherit", "unset"],

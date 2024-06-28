@@ -18,6 +18,24 @@ export const properties = {
     },
     types: [],
   },
+  "-webkit-box-orient": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "horizontal",
+    },
+    types: [],
+  },
+  "-webkit-line-clamp": {
+    unitGroups: ["number"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    types: ["integer"],
+  },
   accentColor: {
     unitGroups: [],
     inherited: true,
@@ -1540,15 +1558,6 @@ export const properties = {
       value: "auto",
     },
     types: [],
-  },
-  lineClamp: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["integer"],
   },
   lineHeight: {
     unitGroups: ["number", "length", "percentage"],

@@ -70,6 +70,14 @@ propertiesData.MozOsxFontSmoothing = {
 };
 keywordValues.MozOsxFontSmoothing = ["auto", "grayscale"];
 
+propertiesData["-webkit-box-orient"] = {
+  unitGroups: [],
+  inherited: false,
+  initial: { type: "keyword", value: "horizontal" },
+  types: [],
+};
+keywordValues["-webkit-box-orient"] = ["horizontal", "vertical"];
+
 keywordValues.listStyleType = [
   "disc",
   "circle",

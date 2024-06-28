@@ -84,7 +84,6 @@ export const animatableProperties = [
   "inset-inline-start",
   "left",
   "letter-spacing",
-  "line-clamp",
   "line-height",
   "margin-block-end",
   "margin-block-start",

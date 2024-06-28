@@ -17,6 +17,18 @@ import type {
 } from "@webstudio-is/css-engine";
 import * as customData from "../src/custom-data";
 
+/**
+ * Store prefixed properties without change
+ * and convert to camel case only unprefixed properties
+ * @todo stop converting to camel case and use hyphenated format
+ */
+const normalizePropertyName = (property: string) => {
+  if (property.startsWith("-")) {
+    return property;
+  }
+  return camelCase(property);
+};
+
 const units: Record<customData.UnitGroup, Array<string>> = {
   number: [],
   // consider % as unit
@@ -228,15 +240,11 @@ type FilteredProperties = { [property in Property]: Value };
 const experimentalProperties = [
   "appearance",
   "aspect-ratio",
-  // not standard and not implemented without prefix
-  // @todo get rid once the issue with types in radix sdk is resolved
-  "line-clamp",
-  // used in normalize
   "text-size-adjust",
+  "-webkit-line-clamp",
 ];
 
 const unsupportedProperties = [
-  "-webkit-line-clamp",
   "--*",
   // shorthand properties
   "all",
@@ -278,7 +286,9 @@ const filteredProperties: FilteredProperties = (() => {
   return result;
 })();
 
-const propertiesData = { ...customData.propertiesData };
+const propertiesData = {
+  ...customData.propertiesData,
+};
 
 let property: Property;
 for (property in filteredProperties) {
@@ -314,7 +324,7 @@ for (property in filteredProperties) {
     );
   }
 
-  propertiesData[camelCase(property)] = {
+  propertiesData[normalizePropertyName(property)] = {
     unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
     initial: parseInitialValue(property, config.initial, unitGroups),
@@ -379,7 +389,7 @@ const keywordValues = (() => {
     }
 
     if (keywords.size !== 0) {
-      const key = camelCase(property);
+      const key = normalizePropertyName(property);
       result[key] = [...(result[key] ?? []), ...keywords];
     }
   }
