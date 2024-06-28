@@ -223,6 +223,10 @@ export const subscribeStyles = () => {
     renderUserSheetInTheNextFrame();
   });
 
+  const unsubscribeTransformValue = $transformValue.subscribe(() => {
+    renderUserSheetInTheNextFrame();
+  });
+
   // add/delete declarations in mixins
   let prevStylesSet = new Set<StyleDecl>();
   const unsubscribeStyles = $styles.subscribe((styles) => {
@@ -292,6 +296,7 @@ export const subscribeStyles = () => {
     unsubscribeStyles();
     unsubscribeStyleSourceSelections();
     unsubscribeDescendantSelectors();
+    unsubscribeTransformValue();
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
     }
