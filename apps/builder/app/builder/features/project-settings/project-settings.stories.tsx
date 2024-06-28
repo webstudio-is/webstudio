@@ -29,7 +29,7 @@ export const Redirects = () => {
     homePage: {
       id: "pageId",
       name: "My Name",
-      path: "/",
+      path: "",
       title: `"My Title"`,
       meta: {},
       rootInstanceId: "body",

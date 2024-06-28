@@ -1524,8 +1524,9 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         throw new Error(`Page with id ${pageId} not found`);
       }
 
-      const oldHomePage = pages.homePage;
-      pages.homePage = pages.pages[newHomePageIndex];
+      const oldHomePage = pages.homePage as (typeof pages.pages)[0];
+
+      pages.homePage = pages.pages[newHomePageIndex] as typeof pages.homePage;
 
       pages.homePage.path = "";
 

@@ -138,7 +138,7 @@
     "react-router-dom": "^6.24.0",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.3.1",
-    "typescript": "5.4.5",
+    "typescript": "5.5.2",
     "vite": "^5.3.1"
   },
   "sideEffects": false,
