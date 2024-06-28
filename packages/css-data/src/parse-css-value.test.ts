@@ -112,6 +112,16 @@ describe("Parse CSS value", () => {
       });
     });
 
+    test("modern format", () => {
+      expect(parseCssValue("backgroundColor", "rgb(99 102 241/0.5)")).toEqual({
+        type: "rgb",
+        r: 99,
+        g: 102,
+        b: 241,
+        alpha: 0.5,
+      });
+    });
+
     test("Color rgba values", () => {
       expect(parseCssValue("backgroundColor", "#00220011")).toEqual({
         type: "rgb",
