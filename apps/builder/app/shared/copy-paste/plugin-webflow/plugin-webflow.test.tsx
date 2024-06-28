@@ -17,6 +17,8 @@ import {
   $project,
   $registeredComponentMetas,
 } from "../../nano-states";
+import invariant from "tiny-invariant";
+import { WfData } from "./schema";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -2019,7 +2021,7 @@ test("Breakpoints", async () => {
 });
 
 test("background images", async () => {
-  const fragment = await toWebstudioFragment({
+  const input = WfData.parse({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -2136,6 +2138,27 @@ test("background images", async () => {
     },
   });
 
-  // @todo finish in the following PR
-  console.log(JSON.stringify(fragment.styles));
+  const fragment = await toWebstudioFragment(input);
+
+  const bgStyle = fragment.styles.find(
+    (style) => style.property === "backgroundImage"
+  );
+
+  expect(bgStyle).not.toBeNull();
+  expect(bgStyle?.value.type).toEqual("layers");
+
+  const layers = bgStyle?.value;
+
+  invariant(layers?.type === "layers");
+
+  const imgA = layers.value[1];
+  const imgB = layers.value[2];
+
+  invariant(imgA.type === "image");
+  invariant(imgA.value.type === "url");
+  invariant(imgB.type === "image");
+  invariant(imgB.value.type === "url");
+
+  expect(imgA.value.url).toEqual(input.payload.assets[0].s3Url);
+  expect(imgB.value.url).toEqual(input.payload.assets[1].s3Url);
 });
