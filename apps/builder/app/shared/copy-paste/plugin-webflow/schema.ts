@@ -83,10 +83,26 @@ const WfElementNode = z.union([
       attr: Attr.optional(),
       block: z.enum(["inline", "block", ""]).optional(),
       button: z.boolean().optional(),
-      link: z.object({
-        url: z.string(),
-        target: z.string().optional(),
-      }),
+      link: z.union([
+        // External link
+        z.object({
+          url: z.string(),
+          target: z.string().optional(),
+        }),
+        // Page link and section link
+        z.object({
+          href: z.string(),
+        }),
+        // Email link
+        z.object({
+          email: z.string(),
+          subject: z.string().optional(),
+        }),
+        // Phone link
+        z.object({
+          tel: z.string(),
+        }),
+      ]),
     }),
   }),
   WfBaseNode.extend({ type: z.enum(["Paragraph"]) }),
