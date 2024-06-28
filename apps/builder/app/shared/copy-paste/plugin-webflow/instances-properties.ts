@@ -356,7 +356,7 @@ export const addInstanceAndProperties = (
     return;
   }
   const instanceId = nanoid();
-  const nextFragment = toFragment(wfNode, instanceId, wfNodes);
+  const nextFragment = toFragment(wfNode, instanceId);
 
   if (nextFragment === undefined) {
     // Skip this node and its children.
