@@ -76,11 +76,11 @@ describe("Parse CSS", () => {
   test("parses supported shorthand values 2", () => {
     const css = `
       .test {
-          background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), url("https://667d0b7769e0cc3754b584f6"), url("https://667d0fe180995eadc1534a26");
-          background-position: 0px 0px, 550px 0px, 0px 0px;
-          background-size: auto, contain, auto;
-          background-repeat: repeat, no-repeat, repeat;
-          background-attachment: scroll, fixed, scroll;
+          background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), url("https://667d0b7769e0cc3754b584f6"), none, url("https://667d0fe180995eadc1534a26");
+          background-position: 0px 0px, 550px 0px, 0px 0px, 0px 0px;
+          background-size: auto, contain, auto, auto;
+          background-repeat: repeat, no-repeat, repeat, repeat;
+          background-attachment: scroll, fixed, scroll, scroll;
       }
     `;
     expect(parseCss(css)).toMatchInlineSnapshot(`
@@ -101,6 +101,10 @@ describe("Parse CSS", () => {
               "type": "url",
               "url": "https://667d0b7769e0cc3754b584f6",
             },
+          },
+          {
+            "type": "keyword",
+            "value": "none",
           },
           {
             "type": "image",
@@ -162,6 +166,21 @@ describe("Parse CSS", () => {
               },
             ],
           },
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
         ],
       },
     },
@@ -177,6 +196,10 @@ describe("Parse CSS", () => {
           {
             "type": "keyword",
             "value": "contain",
+          },
+          {
+            "type": "keyword",
+            "value": "auto",
           },
           {
             "type": "keyword",
@@ -202,6 +225,10 @@ describe("Parse CSS", () => {
             "type": "keyword",
             "value": "repeat",
           },
+          {
+            "type": "keyword",
+            "value": "repeat",
+          },
         ],
       },
     },
@@ -217,6 +244,10 @@ describe("Parse CSS", () => {
           {
             "type": "keyword",
             "value": "fixed",
+          },
+          {
+            "type": "keyword",
+            "value": "scroll",
           },
           {
             "type": "keyword",

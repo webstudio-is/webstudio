@@ -2045,7 +2045,7 @@ test("background images", async () => {
           namespace: "",
           comb: "",
           styleLess:
-            "height: 400px; background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), @img_667d0b7769e0cc3754b584f6, @img_667d0fe180995eadc1534a26; background-position: 0px 0px, 550px 0px, 0px 0px; background-size: auto, contain, auto; background-repeat: repeat, no-repeat, repeat; background-attachment: scroll, fixed, scroll;",
+            "height: 400px; background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), @img_667d0b7769e0cc3754b584f6, @img_667d0fe180995eadc1534a26, @img_example_bg; background-position: 0px 0px, 550px 0px, 0px 0px,0px 0px; background-size: auto, contain, auto, auto; background-repeat: repeat, no-repeat, repeat,repeat; background-attachment: scroll, fixed, scroll, fixed;",
           variants: {},
           children: [],
           createdBy: "5b7c48038bdf56493c54eae4",
@@ -2143,6 +2143,7 @@ test("background images", async () => {
   const bgStyle = fragment.styles.find(
     (style) => style.property === "backgroundImage"
   );
+  //
 
   expect(bgStyle).not.toBeNull();
   expect(bgStyle?.value.type).toEqual("layers");
@@ -2153,6 +2154,7 @@ test("background images", async () => {
 
   const imgA = layers.value[1];
   const imgB = layers.value[2];
+  const noneLayer = layers.value[3];
 
   invariant(imgA.type === "image");
   invariant(imgA.value.type === "url");
@@ -2161,4 +2163,8 @@ test("background images", async () => {
 
   expect(imgA.value.url).toEqual(input.payload.assets[0].s3Url);
   expect(imgB.value.url).toEqual(input.payload.assets[1].s3Url);
+
+  expect(noneLayer.type).toEqual("keyword");
+  invariant(noneLayer.type === "keyword");
+  expect(noneLayer.value).toEqual("none");
 });

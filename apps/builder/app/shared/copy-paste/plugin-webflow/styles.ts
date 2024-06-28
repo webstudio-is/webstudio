@@ -89,8 +89,10 @@ const replaceAtImages = (
     const asset = wfAssets.get(assetId);
 
     if (asset === undefined) {
-      console.error(`Asset not found: ${assetId}`);
-      return `url("https://asset-not-found")`;
+      if (assetId !== "example_bg") {
+        console.error(`Asset not found: ${assetId}`);
+      }
+      return `none`;
     }
 
     return url.encode(asset.s3Url);

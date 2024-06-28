@@ -2,6 +2,7 @@ import * as csstree from "css-tree";
 import type {
   ImageValue,
   InvalidValue,
+  KeywordValue,
   LayersValue,
   RgbValue,
   UnparsedValue,
@@ -103,6 +104,10 @@ export const backgroundToLonghand = (
       if (node.type === "Url") {
         layers.push(csstree.generate(node));
       }
+
+      if (node.type === "Identifier" && node.name === "none") {
+        layers.push(csstree.generate(node));
+      }
     },
     leave: (node, item, list) => {
       if (node.type === "Function") {
@@ -120,9 +125,17 @@ export const backgroundToLonghand = (
 export const parseBackgroundImage = (
   layers: string[]
 ): LayersValue | InvalidValue => {
-  const backgroundImages: (UnparsedValue | ImageValue)[] = [];
+  const backgroundImages: (UnparsedValue | ImageValue | KeywordValue)[] = [];
 
   for (const layer of layers) {
+    if (layer === "none") {
+      backgroundImages.push({
+        type: "keyword",
+        value: "none",
+      });
+      continue;
+    }
+
     if (
       gradientNames.some((gradientName) => layer.startsWith(gradientName)) ===
         false &&
