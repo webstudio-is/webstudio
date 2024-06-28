@@ -3133,7 +3133,14 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
       value: {
         type: "keyword",
         value: "nowrap",
@@ -7862,7 +7869,14 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
       value: {
         type: "keyword",
         value: "nowrap",
@@ -7930,10 +7944,17 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
-        value: "normal",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
+      value: {
+        type: "keyword",
+        value: "wrap",
       },
     },
     {
@@ -8963,7 +8984,14 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
       value: {
         type: "keyword",
         value: "nowrap",
@@ -9070,7 +9098,14 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
       value: {
         type: "keyword",
         value: "nowrap",
@@ -9213,7 +9248,14 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
       value: {
         type: "keyword",
         value: "nowrap",
@@ -9528,10 +9570,17 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
-        value: "normal",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
+      value: {
+        type: "keyword",
+        value: "wrap",
       },
     },
     {
@@ -10048,7 +10097,14 @@ export const styles = {
       },
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
       value: {
         type: "keyword",
         value: "nowrap",
@@ -10432,7 +10488,14 @@ export const styles = {
   ],
   "w-lightbox-strip": [
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
       value: {
         type: "keyword",
         value: "nowrap",
@@ -11293,10 +11356,17 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "whiteSpace",
+      property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
-        value: "initial",
+        value: "collapse",
+      },
+    },
+    {
+      property: "textWrapMode",
+      value: {
+        type: "keyword",
+        value: "wrap",
       },
     },
   ],

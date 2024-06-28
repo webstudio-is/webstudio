@@ -4,8 +4,7 @@ import type { WfElementNode, WfNode } from "./schema";
 
 const toFragment = (
   wfNode: WfElementNode,
-  instanceId: Instance["id"],
-  wfNodes: Map<WfNode["_id"], WfNode>
+  instanceId: Instance["id"]
 ): WebstudioFragment | undefined => {
   const fragment: WebstudioFragment = {
     children: [],
@@ -77,6 +76,9 @@ const toFragment = (
   }
 
   switch (component) {
+    case "LineBreak": {
+      return fragment;
+    }
     case "Heading": {
       addProp("tag", wfNode.tag);
       addInstance(component);
@@ -93,7 +95,8 @@ const toFragment = (
     case "Paragraph":
     case "Superscript":
     case "Subscript":
-    case "Blockquote": {
+    case "Blockquote":
+    case "Span": {
       addInstance(component);
       return fragment;
     }
@@ -131,6 +134,7 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+    case "Container":
     case "BlockContainer": {
       const component = "Box";
       addInstance(component);
@@ -352,7 +356,7 @@ export const addInstanceAndProperties = (
     return;
   }
   const instanceId = nanoid();
-  const nextFragment = toFragment(wfNode, instanceId, wfNodes);
+  const nextFragment = toFragment(wfNode, instanceId);
 
   if (nextFragment === undefined) {
     // Skip this node and its children.
@@ -369,10 +373,17 @@ export const addInstanceAndProperties = (
     if (wfChildNode === undefined) {
       continue;
     }
-    if ("text" in wfChildNode) {
+    const value =
+      "text" in wfChildNode
+        ? wfChildNode.v
+        : wfChildNode.type === "LineBreak"
+          ? "\n"
+          : undefined;
+
+    if (value !== undefined) {
       children.push({
         type: "text",
-        value: wfChildNode.v,
+        value,
       });
       doneNodes.set(wfChildId, instanceId);
       continue;
