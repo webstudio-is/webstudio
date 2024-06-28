@@ -1,5 +1,3 @@
-export const expandShorthand = (property: string) => {};
-
 /**
  * Expands shorthand CSS properties into their long-form equivalents.
  * For example, 'mx' is expanded to 'mr' (margin-right) and 'ml' (margin-left).
