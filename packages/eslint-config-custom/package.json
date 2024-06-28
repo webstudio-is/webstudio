@@ -9,6 +9,6 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-unicorn": "^53.0.0",
-    "typescript": "5.4.5"
+    "typescript": "5.5.2"
   }
 }
