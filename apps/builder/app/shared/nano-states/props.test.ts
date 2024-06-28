@@ -35,7 +35,6 @@ const setBoxInstance = (id: Instance["id"]) => {
 const selectPageRoot = (rootInstanceId: Instance["id"]) => {
   const defaultPages = createDefaultPages({
     homePageId: "pageId",
-    homePagePath: "/my-page",
     rootInstanceId,
     systemDataSourceId: "systemId",
   });
@@ -283,7 +282,7 @@ test("resolve page prop values when params is provided", () => {
   });
   expect(
     $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
-  ).toEqual(new Map<string, unknown>([["myPage", "/my-page"]]));
+  ).toEqual(new Map<string, unknown>([["myPage", "/"]]));
 
   cleanStores($propValuesByInstanceSelector);
 });

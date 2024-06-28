@@ -72,8 +72,8 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "typescript": "5.4.5",
-    "vite": "^5.3.1",
+    "typescript": "5.5.2",
+    "vite": "^5.3.2",
     "wrangler": "^3.48.0"
   }
 }

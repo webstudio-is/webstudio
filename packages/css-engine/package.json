@@ -27,7 +27,7 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "typescript": "5.4.5"
+    "typescript": "5.5.2"
   },
   "exports": {
     "webstudio": "./src/index.ts",

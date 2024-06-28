@@ -10,7 +10,7 @@ const pages = {
   meta: {},
   homePage: {
     id: "home",
-    path: "/",
+    path: "",
     name: "Home",
     title: "Home",
     rootInstanceId: "rootInstanceId",
@@ -58,7 +58,7 @@ const pages = {
 
 describe("getPagePath", () => {
   test("home page path", () => {
-    expect(getPagePath("home", pages)).toEqual("/");
+    expect(getPagePath("home", pages)).toEqual("");
   });
 
   test("nesting level 0", () => {

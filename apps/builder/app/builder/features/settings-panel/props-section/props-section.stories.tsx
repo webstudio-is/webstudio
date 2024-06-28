@@ -35,7 +35,8 @@ $pages.set({
     rootInstanceId: unique(),
     systemDataSourceId: unique(),
   }),
-  homePage: page("Home", "/"),
+
+  homePage: page("Home", "") as Page & { path: "" },
   pages: [
     page("About", "/about"),
     page("Pricing", "/pricing"),
@@ -43,12 +44,14 @@ $pages.set({
   ],
 });
 
-const getSectionInstanceId = (name: string, page = $pages.get()?.homePage) =>
-  page === undefined ? "" : `${page.id}-${name}`;
+const getSectionInstanceId = (
+  name: string,
+  page: Page = $pages.get()?.homePage as Page
+) => (page === undefined ? "" : `${page.id}-${name}`);
 
 const addLinkableSections = (
   names: string[],
-  page = $pages.get()?.homePage
+  page: Page = $pages.get()?.homePage as Page
 ) => {
   if (page === undefined) {
     return;

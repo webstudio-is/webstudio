@@ -1,11 +1,16 @@
 import * as csstree from "css-tree";
-import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
+import {
+  LayersValue,
+  StyleValue,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
 import { expandShorthands } from "./shorthands";
+import { parseBackground } from "./property-parsers";
 
 // @todo we don't parse correctly most of them if not all
 const prefixedProperties = [
@@ -113,6 +118,63 @@ const cssTreeTryParse = (input: string) => {
   }
 };
 
+const convertBackgroundProps = (styles: EmbedTemplateStyleDecl[]) => {
+  const backgroundProps = [
+    "backgroundAttachment",
+    "backgroundClip",
+    "backgroundBlendMode",
+    "backgroundOrigin",
+    "backgroundPosition",
+    "backgroundRepeat",
+    "backgroundSize",
+  ];
+
+  return styles
+    .map((style) => {
+      if (backgroundProps.includes(style.property)) {
+        if (style.value.type !== "unparsed") {
+          return style;
+        }
+
+        const layersResult = LayersValue.safeParse({
+          type: "layers",
+          value: style.value.value
+            .split(",")
+            .map((val) => parseCssValueLonghand(style.property, val)),
+        });
+
+        if (layersResult.success) {
+          return {
+            property: style.property,
+            value: layersResult.data,
+          };
+        }
+
+        console.error(
+          `Failed to convert background property ${
+            style.property
+          } with value ${JSON.stringify(style.value)} to layers`
+        );
+      }
+      return style;
+    })
+    .map((style) => {
+      if (style.property === "backgroundImage") {
+        if (style.value.type !== "unparsed") {
+          return style;
+        }
+
+        const { backgroundImage } = parseBackground(style.value.value);
+
+        return {
+          property: style.property,
+          value: backgroundImage,
+        };
+      }
+      return style;
+    });
+};
+
 export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
   let selectors: Selector[] = [];
@@ -200,5 +262,11 @@ export const parseCss = (css: string) => {
     }
   });
 
-  return styles;
+  const stylesResult: Styles = {};
+
+  for (const [selector, declarations] of Object.entries(styles)) {
+    stylesResult[selector] = convertBackgroundProps(declarations);
+  }
+
+  return stylesResult;
 };

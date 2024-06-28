@@ -267,7 +267,7 @@ export const WfStyle = z.object({
 });
 export type WfStyle = z.infer<typeof WfStyle>;
 
-const ErrorAssetVariant = z.object({
+const WfErrorAssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
@@ -278,7 +278,7 @@ const ErrorAssetVariant = z.object({
   _id: z.string(),
 });
 
-const AssetVariant = z.object({
+const WfAssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
@@ -290,7 +290,7 @@ const AssetVariant = z.object({
   s3Url: z.string().url(),
 });
 
-export const WfAsset = z.object({
+const WfAsset = z.object({
   cdnUrl: z.string().url(),
   siteId: z.string(),
   width: z.number(),
@@ -299,7 +299,7 @@ export const WfAsset = z.object({
   createdOn: z.string(),
   origFileName: z.string(),
   fileHash: z.string(),
-  variants: z.array(z.union([AssetVariant, ErrorAssetVariant])),
+  variants: z.array(z.union([WfAssetVariant, WfErrorAssetVariant])),
   mimeType: z.string(),
   s3Url: z.string().url(),
   thumbUrl: z.string(),
@@ -307,6 +307,8 @@ export const WfAsset = z.object({
   markedAsDeleted: z.boolean().optional(),
   fileSize: z.number(),
 });
+
+export type WfAsset = z.infer<typeof WfAsset>;
 
 export const WfData = z.object({
   type: z.literal("@webflow/XscpData"),
