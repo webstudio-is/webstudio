@@ -15,6 +15,7 @@ import { equalMedia } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import type { Styles as WfStylePresets } from "./__generated__/style-presets";
 import { builderApi } from "~/shared/builder-api";
+import { url } from "css-tree";
 
 const { toast } = builderApi;
 
@@ -79,10 +80,22 @@ const replaceAtVariables = (styles: string) => {
 
 // Converts webflow asset references like `@img_667d0b7769e0cc3754b584f6` to valid urls like
 // url("https://667d0b7769e0cc3754b584f6") to not break csstree parser
-const replaceAtImages = (styles: string) => {
+const replaceAtImages = (
+  styles: string,
+  wfAssets: Map<WfAsset["_id"], WfAsset>
+) => {
   return styles.replace(/@img_[\w-]+/g, (match) => {
     const assetId = match.slice(5);
-    return `url("https://${assetId}")`;
+    const asset = wfAssets.get(assetId);
+
+    if (asset === undefined) {
+      if (assetId !== "example_bg") {
+        console.error(`Asset not found: ${assetId}`);
+      }
+      return `none`;
+    }
+
+    return url.encode(asset.s3Url);
   });
 };
 
@@ -362,7 +375,7 @@ export const addStyles = async (
       const variants = new Map();
       variants.set(
         "base",
-        replaceAtImages(replaceAtVariables(style.styleLess))
+        replaceAtImages(replaceAtVariables(style.styleLess), wfAssets)
       );
       const wfVariants = style.variants ?? {};
       Object.keys(wfVariants).forEach((breakpointName) => {
@@ -370,7 +383,7 @@ export const addStyles = async (
         if (variant && "styleLess" in variant) {
           variants.set(
             breakpointName,
-            replaceAtImages(replaceAtVariables(variant.styleLess))
+            replaceAtImages(replaceAtVariables(variant.styleLess), wfAssets)
           );
         }
       });

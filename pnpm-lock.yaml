@@ -292,6 +292,9 @@ importers:
       cookie:
         specifier: ^0.6.0
         version: 0.6.0
+      css-tree:
+        specifier: ^2.3.1
+        version: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
@@ -15358,12 +15361,12 @@ snapshots:
   css-tree@2.2.1:
     dependencies:
       mdn-data: 2.0.28
-      source-map-js: 1.0.2
+      source-map-js: 1.2.0
 
   css-tree@2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy):
     dependencies:
       mdn-data: 2.0.30
-      source-map-js: 1.0.2
+      source-map-js: 1.2.0
 
   css-what@6.1.0: {}
 

@@ -17,6 +17,8 @@ import {
   $project,
   $registeredComponentMetas,
 } from "../../nano-states";
+import invariant from "tiny-invariant";
+import { WfData } from "./schema";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -2019,7 +2021,7 @@ test("Breakpoints", async () => {
 });
 
 test("background images", async () => {
-  const fragment = await toWebstudioFragment({
+  const input = WfData.parse({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -2043,7 +2045,7 @@ test("background images", async () => {
           namespace: "",
           comb: "",
           styleLess:
-            "height: 400px; background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), @img_667d0b7769e0cc3754b584f6, @img_667d0fe180995eadc1534a26; background-position: 0px 0px, 550px 0px, 0px 0px; background-size: auto, contain, auto; background-repeat: repeat, no-repeat, repeat; background-attachment: scroll, fixed, scroll;",
+            "height: 400px; background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), @img_667d0b7769e0cc3754b584f6, @img_667d0fe180995eadc1534a26, @img_example_bg; background-position: 0px 0px, 550px 0px, 0px 0px,0px 0px; background-size: auto, contain, auto, auto; background-repeat: repeat, no-repeat, repeat,repeat; background-attachment: scroll, fixed, scroll, fixed;",
           variants: {},
           children: [],
           createdBy: "5b7c48038bdf56493c54eae4",
@@ -2136,6 +2138,33 @@ test("background images", async () => {
     },
   });
 
-  // @todo finish in the following PR
-  fragment;
+  const fragment = await toWebstudioFragment(input);
+
+  const bgStyle = fragment.styles.find(
+    (style) => style.property === "backgroundImage"
+  );
+  //
+
+  expect(bgStyle).not.toBeNull();
+  expect(bgStyle?.value.type).toEqual("layers");
+
+  const layers = bgStyle?.value;
+
+  invariant(layers?.type === "layers");
+
+  const imgA = layers.value[1];
+  const imgB = layers.value[2];
+  const noneLayer = layers.value[3];
+
+  invariant(imgA.type === "image");
+  invariant(imgA.value.type === "url");
+  invariant(imgB.type === "image");
+  invariant(imgB.value.type === "url");
+
+  expect(imgA.value.url).toEqual(input.payload.assets[0].s3Url);
+  expect(imgB.value.url).toEqual(input.payload.assets[1].s3Url);
+
+  expect(noneLayer.type).toEqual("keyword");
+  invariant(noneLayer.type === "keyword");
+  expect(noneLayer.value).toEqual("none");
 });

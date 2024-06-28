@@ -1,6 +1,9 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { builderApi } from "../builder-api";
 import { nanoid } from "nanoid";
+import { produce, enablePatches, type Patch, applyPatches } from "immer";
+
+enablePatches();
 
 type StringProp = Extract<
   WebstudioFragment["props"][number],
@@ -34,6 +37,61 @@ const extractSrcProps = (
   return srcProps;
 };
 
+const extractUrlProps = (data: WebstudioFragment) => {
+  const changes: Patch[] = [];
+  const urls: string[] = [];
+
+  produce(
+    data,
+    (draft) => {
+      const images = draft.styles
+        .filter((style) => style.property === "backgroundImage")
+        .map((style) => style.value)
+        .filter((value) => value.type === "layers")
+        .flatMap((layer) => layer.value)
+        .filter((value) => value.type === "image");
+
+      for (const image of images) {
+        if (image.value.type === "url") {
+          const url = image.value.url;
+
+          urls.push(url);
+
+          image.value = {
+            type: "asset",
+            value: url,
+          };
+        }
+      }
+    },
+    (patches) => {
+      changes.push(...patches);
+    }
+  );
+
+  const applyUrlToIdChanges = (
+    sourceData: WebstudioFragment,
+    urlToId: Map<string, string>
+  ): WebstudioFragment => {
+    // Convert urls to ids in patches and apply them
+    const transformedPatched = JSON.parse(
+      JSON.stringify(changes),
+      (key, value) => {
+        if (typeof value === "string") {
+          if (urlToId.has(value)) {
+            return urlToId.get(value);
+          }
+        }
+        return value;
+      }
+    );
+
+    return applyPatches(sourceData, transformedPatched);
+  };
+
+  return { urls, applyUrlToIdChanges };
+};
+
 /**
  *
  * Similar to normalizeProps, where asset properties are replaced with values,
@@ -45,52 +103,60 @@ export const denormalizeSrcProps = async (
   generateId: (instanceId: string, propName: string) => string = () => nanoid()
 ): Promise<WebstudioFragment> => {
   const srcProps = extractSrcProps(data);
+  const { urls, applyUrlToIdChanges } = extractUrlProps(data);
 
-  const assetUrlToIds = await uploadImages(srcProps.map(([, value]) => value));
+  const assetUrlToIds = await uploadImages([
+    ...srcProps.map(([, value]) => value),
+    ...urls,
+  ]);
 
   const srcPropIdToAssetId = new Map(
     srcProps.map(([id, url]) => [id, assetUrlToIds.get(url)] as const)
   );
 
-  const result = { ...data };
+  let result = applyUrlToIdChanges(data, assetUrlToIds);
 
-  result.props = result.props
-    .map((prop) => {
-      if (prop.type === "string" && prop.name === "src") {
-        const assetId = srcPropIdToAssetId.get(prop.id);
+  result = {
+    ...result,
 
-        if (assetId === undefined) {
-          return prop;
+    props: result.props
+      .map((prop) => {
+        if (prop.type === "string" && prop.name === "src") {
+          const assetId = srcPropIdToAssetId.get(prop.id);
+
+          if (assetId === undefined) {
+            return prop;
+          }
+
+          // @todo: add width and height props
+          const assetWithSizeProps: WebstudioFragment["props"] = [
+            {
+              ...prop,
+              type: "asset",
+              value: assetId,
+            },
+            {
+              id: generateId(prop.instanceId, "width"),
+              name: "width",
+              instanceId: prop.instanceId,
+              type: "asset",
+              value: assetId,
+            },
+            {
+              id: generateId(prop.instanceId, "height"),
+              name: "height",
+              instanceId: prop.instanceId,
+              type: "asset",
+              value: assetId,
+            },
+          ];
+          return assetWithSizeProps;
         }
 
-        // @todo: add width and height props
-        const assetWithSizeProps: WebstudioFragment["props"] = [
-          {
-            ...prop,
-            type: "asset",
-            value: assetId,
-          },
-          {
-            id: generateId(prop.instanceId, "width"),
-            name: "width",
-            instanceId: prop.instanceId,
-            type: "asset",
-            value: assetId,
-          },
-          {
-            id: generateId(prop.instanceId, "height"),
-            name: "height",
-            instanceId: prop.instanceId,
-            type: "asset",
-            value: assetId,
-          },
-        ];
-        return assetWithSizeProps;
-      }
-
-      return prop;
-    })
-    .flat();
+        return prop;
+      })
+      .flat(),
+  };
 
   return result;
 };
