@@ -237,13 +237,15 @@ export const extractNameAndValueFromLayer = (
       if (layer.type === "tuple") {
         const name = [];
         let color: RgbaColor | undefined;
+        const properties = [...layer.value];
 
         if (property === "boxShadow") {
-          const isInsetLayer = layer.value.some(
+          const isInsetLayer = layer.value.find(
             (item) => item.type === "keyword" && item.value === "inset"
           );
-          if (isInsetLayer === true) {
+          if (isInsetLayer !== undefined) {
             name.push("Inner shadow: ");
+            properties.splice(properties.indexOf(isInsetLayer), 1);
           } else {
             name.push("Outer shadow: ");
           }
@@ -253,7 +255,7 @@ export const extractNameAndValueFromLayer = (
           name.push("Text shadow: ");
         }
 
-        for (const item of Object.values(layer.value)) {
+        for (const item of properties) {
           if (item.type === "unit") {
             const value = toValue(item);
             name.push(value);
@@ -263,7 +265,7 @@ export const extractNameAndValueFromLayer = (
             color = colord(toValue(item)).toRgb();
           }
 
-          if (item.type === "keyword" && item.value !== "inset") {
+          if (item.type === "keyword") {
             if (colord(item.value).isValid() === false) {
               name.push(item.value);
             } else {
