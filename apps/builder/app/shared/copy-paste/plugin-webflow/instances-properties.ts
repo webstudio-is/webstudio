@@ -77,6 +77,9 @@ const toFragment = (
   }
 
   switch (component) {
+    case "LineBreak": {
+      return fragment;
+    }
     case "Heading": {
       addProp("tag", wfNode.tag);
       addInstance(component);
