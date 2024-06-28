@@ -1597,11 +1597,11 @@ test("Multiline text", async () => {
 
   equalFragment(
     fragment,
-    <$.Text>
+    <$.Box>
       {"a"}
       {"\n"}
       {"b"}
-    </$.Text>
+    </$.Box>
   );
 });
 
