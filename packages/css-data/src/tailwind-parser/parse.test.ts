@@ -22,7 +22,7 @@ Quick Validation of Generated CSS in WebStudio:
             "type": "layers",
             "value": [{
               type: "unparsed",
-              value: "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)"
+              value: "linear-gradient(to right,rgb(99 102 241/1) 0%,rgb(99 102 241/0) 100%)"
             }]
           }
         }
@@ -107,7 +107,7 @@ describe("parseTailwindToWebstudio", () => {
       "value": [
         {
           "type": "unparsed",
-          "value": "linear-gradient(to right,rgba(99,102,241,1) 10%,rgba(14,165,233,1) 30%,rgba(16,185,129,1) 90%)",
+          "value": "linear-gradient(to right,rgb(99 102 241/1) 10%,rgb(14 165 233/1) 30%,rgb(16 185 129/1) 90%)",
         },
       ],
     },
@@ -387,7 +387,7 @@ describe("parseTailwindToCss", () => {
     const tailwindClasses = `bg-gradient-to-r from-indigo-500`;
 
     expect(await parseTailwindToCss(tailwindClasses)).toMatchInlineSnapshot(
-      `".bg-gradient-to-r{background-image:linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)}"`
+      `".bg-gradient-to-r{background-image:linear-gradient(to right,rgb(99 102 241/1) 0%,rgb(99 102 241/0) 100%)}"`
     );
   });
 
@@ -403,7 +403,7 @@ describe("parseTailwindToCss", () => {
     const tailwindClasses = `shadow`;
 
     expect(await parseTailwindToCss(tailwindClasses)).toMatchInlineSnapshot(
-      `".shadow{box-shadow:0 0 rgba(0,0,0,0),0 0 rgba(0,0,0,0),0 1px 3px 0 rgba(0,0,0,0.1),0 1px 2px -1px rgba(0,0,0,0.1)}"`
+      `".shadow{box-shadow:0 0 rgb(0 0 0/0),0 0 rgb(0 0 0/0),0 1px 3px 0 rgb(0 0 0/0.1),0 1px 2px -1px rgb(0 0 0/0.1)}"`
     );
   });
 
