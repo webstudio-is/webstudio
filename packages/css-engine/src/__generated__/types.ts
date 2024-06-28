@@ -1,6 +1,8 @@
 export type Property =
   | "WebkitFontSmoothing"
   | "MozOsxFontSmoothing"
+  | "-webkit-box-orient"
+  | "-webkit-line-clamp"
   | "accentColor"
   | "alignContent"
   | "alignItems"
@@ -167,7 +169,6 @@ export type Property =
   | "left"
   | "letterSpacing"
   | "lineBreak"
-  | "lineClamp"
   | "lineHeight"
   | "listStyleImage"
   | "listStylePosition"

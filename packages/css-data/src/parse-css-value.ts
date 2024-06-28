@@ -16,7 +16,6 @@ import {
   parseShadow,
   parseTransitionLonghandProperty,
 } from "./property-parsers";
-import { camelCase } from "change-case";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -156,8 +155,7 @@ export const parseCssValue = (
     }
 
     if (first?.type === "Identifier") {
-      const values =
-        keywordValues[camelCase(property) as keyof typeof keywordValues];
+      const values = keywordValues[property as keyof typeof keywordValues];
       if (values === undefined) {
         return {
           type: "invalid",

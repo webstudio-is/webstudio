@@ -12,6 +12,25 @@ import { camelCase } from "change-case";
 import { expandShorthands } from "./shorthands";
 import { parseBackground } from "./property-parsers";
 
+/**
+ * Store prefixed properties without change
+ * and convert to camel case only unprefixed properties
+ * @todo stop converting to camel case and use hyphenated format
+ */
+export const normalizePropertyName = (property: string) => {
+  // these are manually added with pascal case
+  if (property === "-webkit-font-smoothing") {
+    return "WebkitFontSmoothing";
+  }
+  if (property === "-moz-osx-font-smoothing") {
+    return "MozOsxFontSmoothing";
+  }
+  if (property.startsWith("-")) {
+    return property;
+  }
+  return camelCase(property);
+};
+
 // @todo we don't parse correctly most of them if not all
 const prefixedProperties = [
   "-webkit-box-orient",
@@ -31,14 +50,6 @@ const unprefixProperty = (property: string) => {
   return property.replace(prefixRegex, "");
 };
 
-const camelCaseProperty = (property: string) => {
-  let camelcased = camelCase(property);
-  if (property[0] === "-") {
-    camelcased = camelcased[0].toLocaleUpperCase() + camelcased.slice(1);
-  }
-  return camelcased;
-};
-
 type Selector = string;
 
 export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
@@ -46,7 +57,7 @@ export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
 type Longhand = keyof typeof toLonghand;
 
 const parseCssValue = (
-  property: Longhand | StyleProperty,
+  property: string,
   value: string
 ): Map<StyleProperty, StyleValue> => {
   const unwrap = toLonghand[property as Longhand];
@@ -87,7 +98,8 @@ const parseCssValue = (
 
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
-  for (const [property, value] of expanded) {
+  for (let [property, value] of expanded) {
+    property = normalizePropertyName(property);
     if (value === "") {
       // Keep the browser behavior when property is defined with an empty value e.g. `color:;`
       // It may override some existing value and effectively set it to "unset";
@@ -219,7 +231,7 @@ export const parseCss = (css: string) => {
       const stringValue = csstree.generate(node.value);
 
       const parsedCss = parseCssValue(
-        unprefixProperty(node.property) as Longhand | StyleProperty,
+        unprefixProperty(node.property),
         stringValue
       );
 
@@ -232,7 +244,7 @@ export const parseCss = (css: string) => {
               declarations = styles[selector] = [];
             }
             const styleDecl: EmbedTemplateStyleDecl = {
-              property: camelCaseProperty(
+              property: normalizePropertyName(
                 unprefixProperty(property)
               ) as StyleProperty,
               value,
