@@ -4,8 +4,7 @@ import type { WfElementNode, WfNode } from "./schema";
 
 const toFragment = (
   wfNode: WfElementNode,
-  instanceId: Instance["id"],
-  wfNodes: Map<WfNode["_id"], WfNode>
+  instanceId: Instance["id"]
 ): WebstudioFragment | undefined => {
   const fragment: WebstudioFragment = {
     children: [],
