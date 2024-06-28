@@ -14,7 +14,13 @@ import {
   $selectedPage,
   $project,
 } from "../../nano-states";
-import { WfData, WfNode, WfStyle, wfNodeTypes, type WfAsset } from "./schema";
+import {
+  WfData,
+  wfNodeTypes,
+  type WfNode,
+  type WfStyle,
+  type WfAsset,
+} from "./schema";
 import { addInstanceAndProperties } from "./instances-properties";
 import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";

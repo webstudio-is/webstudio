@@ -66,7 +66,7 @@ export const wfNodeTypes = [
   "Span",
 ] as const;
 
-export const WfElementNode = z.union([
+const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
@@ -246,10 +246,10 @@ export type WfElementNode = z.infer<typeof WfElementNode>;
 //@todo verify the other way around too
 //(typeof WfElementNode)["type"] satisfies typeof wfNodeTypes[number]
 
-export const WfNode = z.union([WfElementNode, WfTextNode]);
+const WfNode = z.union([WfElementNode, WfTextNode]);
 export type WfNode = z.infer<typeof WfNode>;
 
-export const WfStyle = z.object({
+const WfStyle = z.object({
   _id: z.string(),
   type: z.enum(["class"]),
   name: z.string(),
