@@ -134,6 +134,19 @@ test("Heading", async () => {
   });
 
   equalFragment(fragment, <$.Heading tag="h1">Turtle in the sea</$.Heading>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      h1 {
+        margin-right: 0;
+        margin-left: 0;
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 38px;
+        line-height: 44px
+      }
+    }"
+  `);
 });
 
 test("Link Block, Button, Text Link", async () => {
@@ -164,6 +177,19 @@ test("Link Block, Button, Text Link", async () => {
     fragment,
     <$.Link href="https://webstudio.is" target="_blank" />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      a {
+        background-color: rgba(0, 0, 0, 0)
+      }
+      a:active {
+        outline: 0 none currentColor
+      }
+      a:hover {
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("List and ListItem", async () => {
@@ -217,6 +243,16 @@ test("List and ListItem", async () => {
       <$.ListItem />
     </$.List>
   );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      ul {
+        margin-top: 0;
+        margin-bottom: 10px;
+        padding-left: 40px
+      }
+    }"
+  `);
 });
 
 test("Paragraph", async () => {
@@ -243,6 +279,15 @@ test("Paragraph", async () => {
   });
 
   equalFragment(fragment, <$.Paragraph>Text in a paragraph</$.Paragraph>);
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      p {
+        margin-top: 0;
+        margin-bottom: 10px
+      }
+    }"
+  `);
 });
 
 test("Text", async () => {
@@ -275,6 +320,8 @@ test("Text", async () => {
     fragment,
     <$.Text>This is some text inside of a div block.</$.Text>
   );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("Blockquote", async () => {
@@ -301,6 +348,23 @@ test("Blockquote", async () => {
   });
 
   equalFragment(fragment, <$.Blockquote>Block Quote</$.Blockquote>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      blockquote {
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        font-size: 18px;
+        line-height: 22px;
+        border-left: 5px solid rgba(226, 226, 226, 1)
+      }
+    }"
+  `);
 });
 
 test("Strong", async () => {
@@ -327,6 +391,13 @@ test("Strong", async () => {
   });
 
   equalFragment(fragment, <$.Bold>Bold Text</$.Bold>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      strong {
+        font-weight: bold
+      }
+    }"
+  `);
 });
 
 test("Emphasized", async () => {
@@ -352,6 +423,7 @@ test("Emphasized", async () => {
     },
   });
   equalFragment(fragment, <$.Italic>Emphasis</$.Italic>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("Superscript", async () => {
@@ -378,6 +450,17 @@ test("Superscript", async () => {
   });
 
   equalFragment(fragment, <$.Superscript>Superscript</$.Superscript>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      sup {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        top: -0.5em
+      }
+    }"
+  `);
 });
 
 test("Subscript", async () => {
@@ -404,6 +487,17 @@ test("Subscript", async () => {
   });
 
   equalFragment(fragment, <$.Subscript>Subscript</$.Subscript>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      sub {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        bottom: -0.25em
+      }
+    }"
+  `);
 });
 
 test("Section", async () => {
@@ -425,6 +519,13 @@ test("Section", async () => {
   });
 
   equalFragment(fragment, <$.Box tag="section" />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      section {
+        display: block
+      }
+    }"
+  `);
 });
 
 test("BlockContainer", async () => {
@@ -445,6 +546,38 @@ test("BlockContainer", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-blockcontainer {
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        max-width: none
+      }
+      w-container {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: none
+      }
+      w-container:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-container:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+    }"
+  `);
 });
 
 test("Block", async () => {
@@ -466,6 +599,7 @@ test("Block", async () => {
   });
 
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("V Flex", async () => {
@@ -486,6 +620,7 @@ test("V Flex", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("H Flex", async () => {
@@ -506,9 +641,10 @@ test("H Flex", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
-test("Quick Stack", async () => {
+test("QuickStack", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -549,6 +685,26 @@ test("Quick Stack", async () => {
       <$.Box />
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-layout {
+        row-gap: 20px;
+        column-gap: 20px;
+        grid-auto-columns: 1fr;
+        justify-content: center;
+        padding: 20px
+      }
+      wf-layout-layout {
+        display: grid
+      }
+      w-layout-cell {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        display: flex
+      }
+    }"
+  `);
 });
 
 test("Grid", async () => {
@@ -570,6 +726,18 @@ test("Grid", async () => {
   });
 
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-grid {
+        row-gap: 16px;
+        column-gap: 16px;
+        grid-template-rows: auto auto;
+        grid-template-columns: 1fr 1fr;
+        grid-auto-columns: 1fr;
+        display: grid
+      }
+    }"
+  `);
 });
 
 test("Columns", async () => {
@@ -614,6 +782,41 @@ test("Columns", async () => {
       <$.Box />
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-row {
+        margin-left: 0;
+        margin-right: 0
+      }
+      w-row:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-row:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      w-col {
+        float: left;
+        min-height: 1px;
+        padding-left: 10px;
+        padding-right: 10px;
+        position: relative;
+        left: auto;
+        right: auto;
+        width: 100%
+      }
+    }"
+  `);
 });
 
 test("Image", async () => {
@@ -652,6 +855,16 @@ test("Image", async () => {
       src="https://test.com/image.jpg"
     />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      img {
+        vertical-align: middle;
+        max-width: 100%;
+        display: inline-block;
+        border: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("HtmlEmbed", async () => {
@@ -673,6 +886,27 @@ test("HtmlEmbed", async () => {
     },
   });
   equalFragment(fragment, <$.HtmlEmbed code="some html" clientOnly={true} />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-embed:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-embed:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+    }"
+  `);
 });
 
 test("CodeBlock", async () => {
@@ -698,6 +932,16 @@ test("CodeBlock", async () => {
   });
 
   equalFragment(fragment, <$.CodeText lang="javascript" code="test" />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-code-block {
+        margin-top: unset;
+        margin-right: unset;
+        margin-bottom: unset;
+        margin-left: unset
+      }
+    }"
+  `);
 });
 
 test("RichText", async () => {
@@ -1100,6 +1344,107 @@ test("RichText", async () => {
       </$.Paragraph>
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      h1 {
+        margin-right: 0;
+        margin-left: 0;
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 38px;
+        line-height: 44px
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 32px;
+        line-height: 36px
+      }
+      h3 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 24px;
+        line-height: 30px
+      }
+      h4 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 10px;
+        font-size: 18px;
+        line-height: 24px
+      }
+      h5 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 10px;
+        font-size: 14px;
+        line-height: 20px
+      }
+      h6 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 10px;
+        font-size: 12px;
+        line-height: 18px
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 10px
+      }
+      blockquote {
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        font-size: 18px;
+        line-height: 22px;
+        border-left: 5px solid rgba(226, 226, 226, 1)
+      }
+      ol {
+        margin-top: 0;
+        margin-bottom: 10px;
+        padding-left: 40px
+      }
+      ul {
+        margin-top: 0;
+        margin-bottom: 10px;
+        padding-left: 40px
+      }
+      a {
+        background-color: rgba(0, 0, 0, 0)
+      }
+      a:active {
+        outline: 0 none currentColor
+      }
+      a:hover {
+        outline: 0 none currentColor
+      }
+      strong {
+        font-weight: bold
+      }
+      sup {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        top: -0.5em
+      }
+      sub {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        bottom: -0.25em
+      }
+    }"
+  `);
 });
 
 test("Form", async () => {
@@ -1205,6 +1550,67 @@ test("Form", async () => {
       </$.Box>
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-form {
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 15px;
+        margin-left: 0
+      }
+      input {
+        color: inherit;
+        font-style: initial;
+        font-variant-caps: initial;
+        font-weight: initial;
+        font-stretch: initial;
+        font-size: inherit;
+        font-family: unset;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-input {
+        color: rgba(51, 51, 51, 1);
+        vertical-align: middle;
+        background-color: rgba(255, 255, 255, 1);
+        width: 100%;
+        margin-bottom: 10px;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        font-size: 14px;
+        line-height: 1.42857;
+        display: block;
+        cursor: not-allowed;
+        height: auto;
+        border: 1px solid rgba(204, 204, 204, 1)
+      }
+      w-input:-moz-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input::-moz-placeholder {
+        color: rgba(153, 153, 153, 1);
+        opacity: 1
+      }
+      w-input::-webkit-input-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input:focus {
+        border-top-color: rgba(56, 152, 236, 1);
+        border-right-color: rgba(56, 152, 236, 1);
+        border-bottom-color: rgba(56, 152, 236, 1);
+        border-left-color: rgba(56, 152, 236, 1);
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormButton", async () => {
@@ -1231,6 +1637,46 @@ test("FormButton", async () => {
   });
 
   equalFragment(fragment, <$.Button>Submit</$.Button>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      input {
+        color: inherit;
+        font-style: initial;
+        font-variant-caps: initial;
+        font-weight: initial;
+        font-stretch: initial;
+        font-size: inherit;
+        font-family: unset;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-button {
+        color: rgba(255, 255, 255, 1);
+        line-height: inherit;
+        cursor: pointer;
+        background-color: rgba(56, 152, 236, 1);
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        padding-top: 9px;
+        padding-right: 15px;
+        padding-bottom: 9px;
+        padding-left: 15px;
+        text-decoration-line: none;
+        text-decoration-style: initial;
+        text-decoration-color: initial;
+        display: inline-block;
+        appearance: button;
+        border: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormTextInput", async () => {
@@ -1276,6 +1722,61 @@ test("FormTextInput", async () => {
       autoFocus={false}
     />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      input {
+        color: inherit;
+        font-style: initial;
+        font-variant-caps: initial;
+        font-weight: initial;
+        font-stretch: initial;
+        font-size: inherit;
+        font-family: unset;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-input {
+        color: rgba(51, 51, 51, 1);
+        vertical-align: middle;
+        background-color: rgba(255, 255, 255, 1);
+        width: 100%;
+        margin-bottom: 10px;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        font-size: 14px;
+        line-height: 1.42857;
+        display: block;
+        cursor: not-allowed;
+        height: auto;
+        border: 1px solid rgba(204, 204, 204, 1)
+      }
+      w-input:-moz-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input::-moz-placeholder {
+        color: rgba(153, 153, 153, 1);
+        opacity: 1
+      }
+      w-input::-webkit-input-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input:focus {
+        border-top-color: rgba(56, 152, 236, 1);
+        border-right-color: rgba(56, 152, 236, 1);
+        border-bottom-color: rgba(56, 152, 236, 1);
+        border-left-color: rgba(56, 152, 236, 1);
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormBlockLabel", async () => {
@@ -1307,6 +1808,15 @@ test("FormBlockLabel", async () => {
   });
 
   equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+    }"
+  `);
 });
 
 test("FormTextarea", async () => {
@@ -1348,6 +1858,59 @@ test("FormTextarea", async () => {
       autoFocus={false}
     />
   );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      textarea {
+        color: inherit;
+        font-style: initial;
+        font-variant-caps: initial;
+        font-weight: initial;
+        font-stretch: initial;
+        font-size: inherit;
+        line-height: initial;
+        font-family: unset;
+        overflow-x: auto;
+        overflow-y: auto;
+        height: auto;
+        margin: 0
+      }
+      w-input {
+        color: rgba(51, 51, 51, 1);
+        vertical-align: middle;
+        background-color: rgba(255, 255, 255, 1);
+        width: 100%;
+        margin-bottom: 10px;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        font-size: 14px;
+        line-height: 1.42857;
+        display: block;
+        cursor: not-allowed;
+        height: auto;
+        border: 1px solid rgba(204, 204, 204, 1)
+      }
+      w-input:-moz-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input::-moz-placeholder {
+        color: rgba(153, 153, 153, 1);
+        opacity: 1
+      }
+      w-input::-webkit-input-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input:focus {
+        border-top-color: rgba(56, 152, 236, 1);
+        border-right-color: rgba(56, 152, 236, 1);
+        border-bottom-color: rgba(56, 152, 236, 1);
+        border-left-color: rgba(56, 152, 236, 1);
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormBlockLabel", async () => {
@@ -1379,6 +1942,15 @@ test("FormBlockLabel", async () => {
   });
 
   equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+    }"
+  `);
 });
 
 test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
@@ -1444,6 +2016,68 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
       </$.Text>
     </$.Label>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-checkbox {
+        margin-bottom: 5px;
+        padding-left: 20px;
+        display: block
+      }
+      w-checkbox:after {
+        content: " ";
+        clear: both;
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      w-checkbox:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      input {
+        color: inherit;
+        font-style: initial;
+        font-variant-caps: initial;
+        font-weight: initial;
+        font-stretch: initial;
+        font-size: inherit;
+        font-family: unset;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-checkbox-input {
+        float: left;
+        margin-top: 4px;
+        margin-right: 0;
+        margin-bottom: 0;
+        margin-left: -20px;
+        line-height: normal
+      }
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+      w-form-label {
+        cursor: pointer;
+        margin-bottom: 0;
+        font-weight: normal;
+        display: inline-block
+      }
+    }"
+  `);
 });
 
 test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
@@ -1504,6 +2138,68 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
       </$.Text>
     </$.Label>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-radio {
+        margin-bottom: 5px;
+        padding-left: 20px;
+        display: block
+      }
+      w-radio:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-radio:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      input {
+        color: inherit;
+        font-style: initial;
+        font-variant-caps: initial;
+        font-weight: initial;
+        font-stretch: initial;
+        font-size: inherit;
+        font-family: unset;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-radio-input {
+        float: left;
+        margin-top: 3px;
+        margin-right: 0;
+        margin-bottom: 0;
+        margin-left: -20px;
+        line-height: normal
+      }
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+      w-form-label {
+        cursor: pointer;
+        margin-bottom: 0;
+        font-weight: normal;
+        display: inline-block
+      }
+    }"
+  `);
 });
 
 test("FormSelect", async () => {
@@ -1556,6 +2252,22 @@ test("FormSelect", async () => {
     fragment,
     <$.Input id="field-3" name="field-3" required={false} multiple={false} />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      select {
+        color: inherit;
+        font-style: initial;
+        font-variant-caps: initial;
+        font-weight: initial;
+        font-stretch: initial;
+        font-size: inherit;
+        line-height: initial;
+        font-family: unset;
+        text-transform: none;
+        margin: 0
+      }
+    }"
+  `);
 });
 
 test("Multiline text", async () => {
@@ -1605,6 +2317,8 @@ test("Multiline text", async () => {
       {"b"}
     </$.Box>
   );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 describe("Custom attributes", () => {
@@ -1634,6 +2348,19 @@ describe("Custom attributes", () => {
       },
     });
     equalFragment(fragment, <$.Heading tag="h1" at="b" />);
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        h1 {
+          margin-right: 0;
+          margin-left: 0;
+          margin-bottom: 10px;
+          font-weight: bold;
+          margin-top: 20px;
+          font-size: 38px;
+          line-height: 44px
+        }
+      }"
+    `);
   });
 });
 
@@ -2143,7 +2870,6 @@ test("background images", async () => {
   const bgStyle = fragment.styles.find(
     (style) => style.property === "backgroundImage"
   );
-  //
 
   expect(bgStyle).not.toBeNull();
   expect(bgStyle?.value.type).toEqual("layers");
@@ -2167,4 +2893,17 @@ test("background images", async () => {
   expect(noneLayer.type).toEqual("keyword");
   invariant(noneLayer.type === "keyword");
   expect(noneLayer.value).toEqual("none");
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      Div Block {
+        height: 400px;
+        background-image: linear-gradient(180deg,hsla(0,0.00%,0.00%,0.11),white), url("https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0b7769e0cc3754b584f6_IMG_2882%20(1).png"), url("https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20.webp"), none;
+        background-position: 0px 0px, 550px 0px, 0px 0px, 0px 0px;
+        background-size: auto, contain, auto, auto;
+        background-repeat: repeat, no-repeat, repeat, repeat;
+        background-attachment: scroll, fixed, scroll, fixed
+      }
+    }"
+  `);
 });
