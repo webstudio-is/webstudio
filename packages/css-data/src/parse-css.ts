@@ -133,6 +133,16 @@ const convertBackgroundProps = (styles: EmbedTemplateStyleDecl[]) => {
     .map((style) => {
       if (backgroundProps.includes(style.property)) {
         if (style.value.type !== "unparsed") {
+          const safeStyle = LayersValue.safeParse({
+            type: "layers",
+            value: [style.value],
+          });
+          if (safeStyle.success) {
+            return {
+              property: style.property,
+              value: safeStyle.data,
+            };
+          }
           return style;
         }
 
@@ -161,6 +171,16 @@ const convertBackgroundProps = (styles: EmbedTemplateStyleDecl[]) => {
     .map((style) => {
       if (style.property === "backgroundImage") {
         if (style.value.type !== "unparsed") {
+          const safeStyle = LayersValue.safeParse({
+            type: "layers",
+            value: [style.value],
+          });
+          if (safeStyle.success) {
+            return {
+              property: style.property,
+              value: safeStyle.data,
+            };
+          }
           return style;
         }
 

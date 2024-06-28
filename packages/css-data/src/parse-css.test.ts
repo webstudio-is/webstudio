@@ -261,6 +261,67 @@ describe("Parse CSS", () => {
 `);
   });
 
+  test("parses single layer", () => {
+    const css = `
+      .test {
+          background-image: none; background-position: 0px 0px; background-size: auto;
+      }
+    `;
+    expect(parseCss(css)).toMatchInlineSnapshot(`
+{
+  "test": [
+    {
+      "property": "backgroundImage",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "none",
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundPosition",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "tuple",
+            "value": [
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+              {
+                "type": "unit",
+                "unit": "px",
+                "value": 0,
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundSize",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "auto",
+          },
+        ],
+      },
+    },
+  ],
+}
+`);
+  });
+
   test("parse state", () => {
     expect(parseCss(`a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
       {
