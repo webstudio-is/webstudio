@@ -557,8 +557,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -2979,6 +3074,101 @@ export const styles = {
           {
             type: "keyword",
             value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -7137,8 +7327,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -7937,8 +8222,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -9583,8 +9963,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -9870,8 +10345,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -10334,8 +10904,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -10494,7 +11159,19 @@ export const styles = {
       },
     },
     {
-      property: "backgroundPosition",
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "center",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
       value: {
         type: "layers",
         value: [
@@ -10958,8 +11635,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -11844,8 +12616,103 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "invalid",
-            value: "",
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
           },
         ],
       },
@@ -12989,7 +13856,7 @@ export const styles = {
       },
     },
     {
-      property: "backgroundPosition",
+      property: "backgroundPositionX",
       value: {
         type: "layers",
         value: [
@@ -12997,6 +13864,18 @@ export const styles = {
             type: "unit",
             unit: "%",
             value: 50,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "center",
           },
         ],
       },
@@ -13383,7 +14262,7 @@ export const styles = {
       },
     },
     {
-      property: "backgroundPosition",
+      property: "backgroundPositionX",
       value: {
         type: "layers",
         value: [
@@ -13391,6 +14270,18 @@ export const styles = {
             type: "unit",
             unit: "%",
             value: 50,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "center",
           },
         ],
       },
@@ -13527,7 +14418,7 @@ export const styles = {
       },
     },
     {
-      property: "backgroundPosition",
+      property: "backgroundPositionX",
       value: {
         type: "layers",
         value: [
@@ -13535,6 +14426,18 @@ export const styles = {
             type: "unit",
             unit: "%",
             value: 50,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "center",
           },
         ],
       },

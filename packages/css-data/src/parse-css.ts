@@ -1,10 +1,8 @@
+import { camelCase } from "change-case";
 import * as csstree from "css-tree";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
-import * as parsers from "./property-parsers/parsers";
-import * as toLonghand from "./property-parsers/to-longhand";
-import { camelCase } from "change-case";
 import { expandShorthands } from "./shorthands";
 
 /**
@@ -49,48 +47,10 @@ type Selector = string;
 
 export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
 
-type Longhand = keyof typeof toLonghand;
-
 const parseCssValue = (
   property: string,
   value: string
 ): Map<StyleProperty, StyleValue> => {
-  const unwrap = toLonghand[property as Longhand];
-
-  if (typeof unwrap === "function") {
-    const longhands = unwrap(value);
-
-    return new Map(
-      Object.entries(longhands).map(([property, value]) => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore @todo remove this ignore: property is a `keyof typeof longhands` which is a key in parsers but TS can't infer the link
-        const valueParser = parsers[property];
-
-        if (typeof valueParser === "function") {
-          return [property, valueParser(value)];
-        }
-        if (Array.isArray(value)) {
-          return [
-            property,
-            {
-              type: "invalid",
-              value: value.join(""),
-            },
-          ];
-        }
-
-        if (value === undefined || value === "") {
-          return [property, { type: "invalid", value: "" }];
-        }
-
-        return [
-          property,
-          parseCssValueLonghand(property as StyleProperty, value),
-        ];
-      })
-    ) as Map<StyleProperty, StyleValue>;
-  }
-
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
   for (const [property, value] of expanded) {
