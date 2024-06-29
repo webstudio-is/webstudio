@@ -1053,10 +1053,64 @@ test("expand text-wrap", () => {
   ]);
 });
 
+test("expand background-position", () => {
+  expect(expandShorthands([["background-position", "initial"]])).toEqual([
+    ["background-position-x", "initial"],
+    ["background-position-y", "initial"],
+  ]);
+  expect(expandShorthands([["background-position", "0"]])).toEqual([
+    ["background-position-x", "0"],
+    ["background-position-y", "center"],
+  ]);
+  expect(expandShorthands([["background-position", "top left"]])).toEqual([
+    ["background-position-x", "left"],
+    ["background-position-y", "top"],
+  ]);
+  expect(expandShorthands([["background-position", "right bottom"]])).toEqual([
+    ["background-position-x", "right"],
+    ["background-position-y", "bottom"],
+  ]);
+  expect(expandShorthands([["background-position", "25% 75%"]])).toEqual([
+    ["background-position-x", "25%"],
+    ["background-position-y", "75%"],
+  ]);
+  expect(
+    expandShorthands([["background-position", "bottom 10px right"]])
+  ).toEqual([
+    ["background-position-x", "right"],
+    ["background-position-y", "bottom 10px"],
+  ]);
+  expect(
+    expandShorthands([["background-position", "center right 10px"]])
+  ).toEqual([
+    ["background-position-x", "right 10px"],
+    ["background-position-y", "center"],
+  ]);
+  expect(
+    expandShorthands([["background-position", "center bottom 10px"]])
+  ).toEqual([
+    ["background-position-x", "center"],
+    ["background-position-y", "bottom 10px"],
+  ]);
+  expect(expandShorthands([["background-position", "top right 10px"]])).toEqual(
+    [
+      ["background-position-x", "right 10px"],
+      ["background-position-y", "top"],
+    ]
+  );
+  expect(
+    expandShorthands([["background-position", "bottom 10px right 20px"]])
+  ).toEqual([
+    ["background-position-x", "right 20px"],
+    ["background-position-y", "bottom 10px"],
+  ]);
+  expect(expandShorthands([["background-position", "0 10px, center"]])).toEqual(
+    [
+      ["background-position-x", "0,center"],
+      ["background-position-y", "10px,center"],
+    ]
+  );
+});
+
 test.todo("all - can negatively affect build size");
 test.todo("background - not used in webflow");
-test.todo("background-position-x - we use shorthand");
-test.todo("background-position-y - we use shorthand");
-test.todo("translate - are these directly mappable to transform");
-test.todo("rotate");
-test.todo("scale");

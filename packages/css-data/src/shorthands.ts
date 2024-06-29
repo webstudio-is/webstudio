@@ -75,7 +75,7 @@ const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
 
 const parseRepeated = (
   value: CssNode,
-  parseSingle: (single: CssNode) => Value[]
+  parseSingle: (single: Value) => Value[]
 ): Value[] => {
   const values: CssNode[][] = [];
   for (const single of splitByOperator(value, ",")) {
@@ -830,6 +830,56 @@ const expandWhiteSpace = function* (value: CssNode) {
   yield ["text-wrap-mode", wrapMode] as const;
 };
 
+/**
+ *
+ * background-position = <bg-position>#
+ * <bg-position> =
+ *   [ left | center | right | top | bottom | <length-percentage> ] |
+ *   [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ] |
+ *   [ center | [ left | right ] <length-percentage>? ] && [ center | [ top | bottom ] <length-percentage>? ]
+ *
+ */
+const expandBackgroundPosition = function* (value: CssNode) {
+  const center = createIdentifier("center");
+  const [x, y] = parseRepeated(value, (single) => {
+    const list = getValueList(single);
+    if (list.length === 1) {
+      const [first] = list;
+      if (lexer.match(`center | <length-percentage>`, first).matched) {
+        return [createValueNode([first]), center];
+      }
+      if (lexer.match(`left | right`, first).matched) {
+        return [createValueNode([first]), center];
+      }
+      if (lexer.match(`top | bottom`, first).matched) {
+        return [center, createValueNode([first])];
+      }
+      return [single, single];
+    }
+    if (list.length === 2) {
+      const [first, second] = list;
+      if (
+        lexer.match(`top | bottom`, first).matched ||
+        lexer.match(`left | right`, second).matched
+      ) {
+        return [createValueNode([second]), createValueNode([first])];
+      }
+      return [createValueNode([first]), createValueNode([second])];
+    }
+    const [_center, x, y] = parseUnordered(
+      [
+        `center`,
+        `[ left | right ] <length-percentage>?`,
+        `[ top | bottom ] <length-percentage>?`,
+      ],
+      single
+    );
+    return [x ?? center, y ?? center];
+  });
+  yield ["background-position-x", x] as const;
+  yield ["background-position-y", y] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -1128,6 +1178,10 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield ["text-wrap-style", style] as const;
       break;
     }
+
+    case "background-position":
+      yield* expandBackgroundPosition(value);
+      break;
 
     default:
       yield [property, value] as const;

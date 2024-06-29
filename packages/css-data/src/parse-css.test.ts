@@ -95,24 +95,27 @@ describe("Parse CSS", () => {
       },
     },
     {
-      "property": "backgroundPosition",
+      "property": "backgroundPositionX",
       "value": {
         "type": "layers",
         "value": [
           {
-            "type": "tuple",
-            "value": [
-              {
-                "type": "unit",
-                "unit": "px",
-                "value": 0,
-              },
-              {
-                "type": "unit",
-                "unit": "px",
-                "value": 0,
-              },
-            ],
+            "type": "unit",
+            "unit": "px",
+            "value": 0,
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundPositionY",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unit",
+            "unit": "px",
+            "value": 0,
           },
         ],
       },

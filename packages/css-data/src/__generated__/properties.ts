@@ -237,23 +237,23 @@ export const properties = {
     },
     types: [],
   },
-  backgroundPosition: {
+  backgroundPositionX: {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "tuple",
-      value: [
-        {
-          type: "unit",
-          unit: "%",
-          value: 0,
-        },
-        {
-          type: "unit",
-          unit: "%",
-          value: 0,
-        },
-      ],
+      type: "unit",
+      unit: "%",
+      value: 0,
+    },
+    types: ["length", "percentage"],
+  },
+  backgroundPositionY: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "unit",
+      unit: "%",
+      value: 0,
     },
     types: ["length", "percentage"],
   },

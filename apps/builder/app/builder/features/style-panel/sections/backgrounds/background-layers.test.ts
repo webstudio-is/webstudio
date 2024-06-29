@@ -45,17 +45,17 @@ describe("setLayerProperty", () => {
 
           changedProps.push([propertyName, newValue]);
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });
 
     const setProperty = setLayerProperty(0, styleInfo, createBatchUpdate);
 
-    setProperty("backgroundPosition")({ type: "unit", value: 10, unit: "px" });
+    setProperty("backgroundPositionX")({ type: "unit", value: 10, unit: "px" });
 
     expect(published).toBe(true);
 
@@ -168,17 +168,17 @@ describe("setLayerProperty", () => {
 
           changedProps.push([propertyName, newValue]);
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });
 
     const setProperty = setLayerProperty(0, styleInfo, createBatchUpdate);
 
-    setProperty("backgroundPosition")({ type: "unit", value: 10, unit: "px" });
+    setProperty("backgroundPositionX")({ type: "unit", value: 10, unit: "px" });
 
     expect(published).toBe(true);
 
@@ -224,8 +224,8 @@ describe("setLayerProperty", () => {
       },
     };
 
-    const cascadedPosition: NonNullable<
-      StyleInfo["backgroundPosition"]
+    const cascadedPositionX: NonNullable<
+      StyleInfo["backgroundPositionX"]
     >["cascaded"] = {
       breakpointId: "mobile",
       value: {
@@ -250,9 +250,9 @@ describe("setLayerProperty", () => {
         cascaded,
         value: cascaded.value,
       },
-      backgroundPosition: {
-        cascaded: cascadedPosition,
-        value: cascadedPosition.value,
+      backgroundPositionX: {
+        cascaded: cascadedPositionX,
+        value: cascadedPositionX.value,
       },
     };
 
@@ -271,10 +271,10 @@ describe("setLayerProperty", () => {
 
           styleInfo[propertyName] = { value: newValue, local: newValue };
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });
@@ -311,7 +311,7 @@ describe("setLayerProperty", () => {
     `);
 
     // We should not reset existing properties to default values
-    expect(styleInfo.backgroundPosition?.value).toMatchInlineSnapshot(`
+    expect(styleInfo.backgroundPositionX?.value).toMatchInlineSnapshot(`
       {
         "type": "layers",
         "value": [
@@ -363,7 +363,7 @@ describe("setLayerProperty", () => {
       }
     `);
 
-    expect(styleInfo.backgroundPosition?.value).toMatchInlineSnapshot(`
+    expect(styleInfo.backgroundPositionX?.value).toMatchInlineSnapshot(`
       {
         "type": "layers",
         "value": [
@@ -432,7 +432,7 @@ describe("deleteLayer", () => {
       // not used
       deletedProperties.add(propertyName);
     },
-    publish: (options?: unknown) => {
+    publish: (_options?: unknown) => {
       published = true;
     },
   });
@@ -493,10 +493,10 @@ describe("swapLayers", () => {
 
           styleInfo[propertyName] = { value: newValue, local: newValue };
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });

@@ -1,4 +1,5 @@
 import { expect, test } from "@jest/globals";
+import type { StyleValue } from "../schema";
 import { mergeStyles } from "./merger";
 import type { StyleMap } from "./rules";
 import { toValue } from "./to-value";
@@ -298,4 +299,55 @@ test("merge text-wrap with vars", () => {
       )
     )
   ).toEqual([["text-wrap", "var(--style)"]]);
+});
+
+const layers = (...keywords: string[]): StyleValue => ({
+  type: "layers",
+  value: keywords.map((value) => ({ type: "keyword", value })),
+});
+
+test("merge background-position-{x,y}", () => {
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["background-position-x", layers("right")],
+          ["background-position-y", layers("bottom")],
+        ])
+      )
+    )
+  ).toEqual([["background-position", "right bottom"]]);
+  expect(
+    toStringMap(
+      mergeStyles(new Map([["background-position-x", layers("right")]]))
+    )
+  ).toEqual([["background-position-x", "right"]]);
+  expect(
+    toStringMap(
+      mergeStyles(new Map([["background-position-y", layers("bottom")]]))
+    )
+  ).toEqual([["background-position-y", "bottom"]]);
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["background-position-x", layers("right", "left")],
+          ["background-position-y", layers("bottom", "top")],
+        ])
+      )
+    )
+  ).toEqual([["background-position", "right bottom, left top"]]);
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["background-position-x", layers("right", "left")],
+          ["background-position-y", layers("bottom")],
+        ])
+      )
+    )
+  ).toEqual([
+    ["background-position-x", "right, left"],
+    ["background-position-y", "bottom"],
+  ]);
 });

@@ -170,40 +170,23 @@ test("parse background-image property as layers", () => {
   });
 });
 
-test("parse background-position property as layers", () => {
-  expect(
-    parseCssValue("backgroundPosition", `0px 0px, 550px 0px, 0px 0px, 0px 0px`)
-  ).toEqual({
+test("parse background-position-* properties as layers", () => {
+  expect(parseCssValue("backgroundPositionX", `0px, 550px, 0px, 0px`)).toEqual({
     type: "layers",
     value: [
-      {
-        type: "tuple",
-        value: [
-          { type: "unit", unit: "px", value: 0 },
-          { type: "unit", unit: "px", value: 0 },
-        ],
-      },
-      {
-        type: "tuple",
-        value: [
-          { type: "unit", unit: "px", value: 550 },
-          { type: "unit", unit: "px", value: 0 },
-        ],
-      },
-      {
-        type: "tuple",
-        value: [
-          { type: "unit", unit: "px", value: 0 },
-          { type: "unit", unit: "px", value: 0 },
-        ],
-      },
-      {
-        type: "tuple",
-        value: [
-          { type: "unit", unit: "px", value: 0 },
-          { type: "unit", unit: "px", value: 0 },
-        ],
-      },
+      { type: "unit", unit: "px", value: 0 },
+      { type: "unit", unit: "px", value: 550 },
+      { type: "unit", unit: "px", value: 0 },
+      { type: "unit", unit: "px", value: 0 },
+    ],
+  });
+  expect(parseCssValue("backgroundPositionY", `0px, 0px, 0px, 0px`)).toEqual({
+    type: "layers",
+    value: [
+      { type: "unit", unit: "px", value: 0 },
+      { type: "unit", unit: "px", value: 0 },
+      { type: "unit", unit: "px", value: 0 },
+      { type: "unit", unit: "px", value: 0 },
     ],
   });
 });
