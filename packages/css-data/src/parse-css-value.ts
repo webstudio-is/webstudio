@@ -83,7 +83,8 @@ const repeatedProps = new Set<StyleProperty>([
   "backgroundClip",
   "backgroundBlendMode",
   "backgroundOrigin",
-  "backgroundPosition",
+  "backgroundPositionX",
+  "backgroundPositionY",
   "backgroundRepeat",
   "backgroundSize",
 ]);

@@ -113,22 +113,25 @@ describe("parseTailwindToWebstudio", () => {
     },
   },
   {
-    "property": "backgroundPosition",
+    "property": "backgroundPositionX",
     "value": {
       "type": "layers",
       "value": [
         {
-          "type": "tuple",
-          "value": [
-            {
-              "type": "keyword",
-              "value": "left",
-            },
-            {
-              "type": "keyword",
-              "value": "top",
-            },
-          ],
+          "type": "keyword",
+          "value": "left",
+        },
+      ],
+    },
+  },
+  {
+    "property": "backgroundPositionY",
+    "value": {
+      "type": "layers",
+      "value": [
+        {
+          "type": "keyword",
+          "value": "top",
         },
       ],
     },

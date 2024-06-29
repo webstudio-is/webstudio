@@ -1,4 +1,4 @@
-import { StyleValue, TupleValueItem } from "../schema";
+import { StyleValue, TupleValue, TupleValueItem } from "../schema";
 import type { StyleMap } from "./rules";
 import { toValue } from "./to-value";
 
@@ -112,6 +112,30 @@ const mergeWhiteSpaceAndTextWrap = (styleMap: StyleMap) => {
   }
 };
 
+const mergeBackgroundPosition = (styleMap: StyleMap) => {
+  const x = styleMap.get("background-position-x");
+  const y = styleMap.get("background-position-y");
+  if (
+    x?.type === "layers" &&
+    y?.type === "layers" &&
+    x.value.length === y.value.length
+  ) {
+    const position = x.value.map((xValue, index): TupleValue => {
+      const yValue = y.value[index];
+      return {
+        type: "tuple",
+        value: [xValue as TupleValueItem, yValue as TupleValueItem],
+      };
+    });
+    styleMap.delete("background-position-x");
+    styleMap.delete("background-position-y");
+    styleMap.set("background-position", {
+      type: "layers",
+      value: position,
+    });
+  }
+};
+
 export const mergeStyles = (styleMap: StyleMap) => {
   const newStyle = new Map(styleMap);
   mergeBorder(newStyle, "border-top");
@@ -124,5 +148,6 @@ export const mergeStyles = (styleMap: StyleMap) => {
   mergeBox(newStyle, "margin");
   mergeBox(newStyle, "padding");
   mergeWhiteSpaceAndTextWrap(newStyle);
+  mergeBackgroundPosition(newStyle);
   return newStyle;
 };

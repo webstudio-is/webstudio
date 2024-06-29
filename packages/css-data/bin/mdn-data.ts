@@ -242,6 +242,8 @@ const experimentalProperties = [
   "aspect-ratio",
   "text-size-adjust",
   "-webkit-line-clamp",
+  "background-position-x",
+  "background-position-y",
 ];
 
 const unsupportedProperties = [
@@ -253,6 +255,7 @@ const unsupportedProperties = [
   "overflow",
   "white-space",
   "text-wrap",
+  "background-position",
 ];
 
 const animatableProperties: string[] = [];
