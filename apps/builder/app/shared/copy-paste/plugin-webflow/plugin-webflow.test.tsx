@@ -2899,11 +2899,11 @@ test("background images", async () => {
       Div Block {
         height: 400px;
         background-image: linear-gradient(180deg,hsla(0,0.00%,0.00%,0.11),white), url("https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0b7769e0cc3754b584f6_IMG_2882%20(1).png"), url("https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20.webp"), none;
-        background-position: 0px 0px, 550px 0px, 0px 0px, 0px 0px;
         background-size: auto, contain, auto, auto;
         background-repeat: repeat, no-repeat, repeat, repeat;
-        background-attachment: scroll, fixed, scroll, fixed
+        background-attachment: scroll, fixed, scroll, fixed;
+        background-position: 0px 0px, 550px 0px, 0px 0px, 0px 0px
       }
     }"
-  `);
+`);
 });
