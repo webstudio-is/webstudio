@@ -6,8 +6,8 @@ import { parseCssValue } from "../parse-css-value";
 export const parseBackground = (
   background: string
 ): {
-  backgroundColor: StyleValue;
-  backgroundImage: StyleValue;
+  backgroundColor?: StyleValue;
+  backgroundImage?: StyleValue;
 } => {
   let tokenStream = background.trim();
 

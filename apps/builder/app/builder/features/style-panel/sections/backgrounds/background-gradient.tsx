@@ -65,20 +65,25 @@ export const BackgroundGradient = (
     const { backgroundImage, backgroundColor } = parseBackground(
       intermediateValue.value
     );
+    const [layer] =
+      backgroundImage?.type === "layers"
+        ? backgroundImage.value
+        : [backgroundImage];
 
-    if (backgroundColor !== undefined) {
-      props.setBackgroundColor(backgroundColor);
-    }
-
-    if (backgroundImage.type !== "invalid") {
-      setIntermediateValue(undefined);
-      props.setProperty(property)(backgroundImage);
+    // set invalid state
+    if (
+      backgroundColor === undefined ||
+      backgroundColor.type === "invalid" ||
+      layer === undefined ||
+      layer.type === "invalid"
+    ) {
+      setIntermediateValue({ type: "invalid", value: intermediateValue.value });
+      props.deleteProperty(property, { isEphemeral: true });
       return;
     }
-
-    // Set invalid state
-    setIntermediateValue({ type: "invalid", value: intermediateValue.value });
-    props.deleteProperty(property, { isEphemeral: true });
+    props.setBackgroundColor(backgroundColor);
+    setIntermediateValue(undefined);
+    props.setProperty(property)(layer);
   };
 
   const handleOnCompleteRef = useRef(handleOnComplete);
