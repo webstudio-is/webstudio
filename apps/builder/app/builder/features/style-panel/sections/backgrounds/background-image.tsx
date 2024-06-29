@@ -97,8 +97,7 @@ export const BackgroundImage = (
       return;
     }
 
-    const [layer] =
-      newValue.type === "layers" ? newValue.value : [newValue.value];
+    const [layer] = newValue.type === "layers" ? newValue.value : [newValue];
     if (layer?.type !== "image" || layer.value.type !== "url") {
       setIntermediateValue({
         type: "invalid",
