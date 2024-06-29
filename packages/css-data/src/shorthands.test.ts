@@ -1112,8 +1112,100 @@ test("expand background-position", () => {
   );
 });
 
+test("expand background", () => {
+  expect(expandShorthands([["background", `none`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(expandShorthands([["background", `green`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "green"],
+  ]);
+  expect(expandShorthands([["background", `transparent`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(
+    expandShorthands([["background", `url("test.jpg") repeat-y`]])
+  ).toEqual([
+    ["background-image", "url(test.jpg)"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat-y"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(expandShorthands([["background", `border-box red`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "border-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "red"],
+  ]);
+  expect(
+    expandShorthands([
+      ["background", `no-repeat center/80% url("../img/image.png")`],
+    ])
+  ).toEqual([
+    ["background-image", "url(../img/image.png)"],
+    ["background-position-x", "center"],
+    ["background-position-y", "center"],
+    ["background-size", "80%"],
+    ["background-repeat", "no-repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(
+    expandShorthands([
+      [
+        "background",
+        `repeat scroll 0% 0% / auto padding-box border-box none transparent`,
+      ],
+    ])
+  ).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+});
+
 test.todo("all - can negatively affect build size");
-test.todo("background - not used in webflow");
 // https://developer.mozilla.org/en-US/docs/Web/CSS/animation-range
 test.todo("animation-range");
 // https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline

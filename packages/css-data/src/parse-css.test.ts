@@ -55,6 +55,144 @@ describe("Parse CSS", () => {
                   "type": "unparsed",
                   "value": "linear-gradient(180deg,#11181C 0%,rgba(17,24,28,0) 36.09%)",
                 },
+                {
+                  "type": "keyword",
+                  "value": "none",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundPositionX",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundPositionY",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundSize",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "tuple",
+                  "value": [
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                  ],
+                },
+                {
+                  "type": "tuple",
+                  "value": [
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundRepeat",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "repeat",
+                },
+                {
+                  "type": "keyword",
+                  "value": "repeat",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundAttachment",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "scroll",
+                },
+                {
+                  "type": "keyword",
+                  "value": "scroll",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundOrigin",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "padding-box",
+                },
+                {
+                  "type": "keyword",
+                  "value": "padding-box",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundClip",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "border-box",
+                },
+                {
+                  "type": "keyword",
+                  "value": "border-box",
+                },
               ],
             },
           },

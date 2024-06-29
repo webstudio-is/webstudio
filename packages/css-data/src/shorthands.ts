@@ -68,7 +68,7 @@ const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
     if (joined.length > 0) {
       joined.push({ type: "Operator", value: operator });
     }
-    joined.push(node);
+    joined.push(...getValueList(node));
   }
   return joined;
 };
@@ -880,6 +880,88 @@ const expandBackgroundPosition = function* (value: CssNode) {
   yield ["background-position-y", y] as const;
 };
 
+/**
+ *
+ * background = <bg-layer>#? , <final-bg-layer>
+ *
+ * <bg-layer> =
+ *   <bg-image> ||
+ *   <bg-position> [ / <bg-size> ]? ||
+ *   <repeat-style> ||
+ *   <attachment> ||
+ *   <visual-box> ||j
+ *   <visual-box>
+ *
+ * <final-bg-layer> =
+ *   <bg-image> ||
+ *   <bg-position> [ / <bg-size> ]? ||
+ *   <repeat-style> ||
+ *   <attachment> ||
+ *   <visual-box> ||
+ *   <visual-box> ||
+ *   <'background-color'>
+ *
+ */
+const expandBackground = function* (value: CssNode) {
+  let backgroundColor: Value = createIdentifier("transparent");
+  const [image, position, size, repeat, attachment, origin, clip] =
+    parseRepeated(value, (single) => {
+      const [
+        image,
+        positionAndSize,
+        repeatStyle,
+        attachment,
+        origin,
+        clip,
+        color,
+      ] = parseUnordered(
+        [
+          `<bg-image>`,
+          `<bg-position> [ / <bg-size> ]?`,
+          `<repeat-style>`,
+          `<attachment>`,
+          `<visual-box>`,
+          `<visual-box>`,
+          `<'background-color'>`,
+        ],
+        single
+      );
+      let position: undefined | Value;
+      let size: undefined | Value;
+      if (positionAndSize) {
+        [position, size] = splitByOperator(positionAndSize, "/");
+      }
+      if (color) {
+        backgroundColor = color;
+      }
+      return [
+        image ?? createIdentifier("none"),
+        position ??
+          createValueNode([
+            { type: "Dimension", value: "0", unit: "%" },
+            { type: "Dimension", value: "0", unit: "%" },
+          ]),
+        size ??
+          createValueNode([
+            { type: "Identifier", name: "auto" },
+            { type: "Identifier", name: "auto" },
+          ]),
+        repeatStyle ?? createIdentifier("repeat"),
+        attachment ?? createIdentifier("scroll"),
+        origin ?? createIdentifier("padding-box"),
+        clip ?? origin ?? createIdentifier("border-box"),
+      ];
+    });
+  yield ["background-image", image] as const;
+  yield* expandBackgroundPosition(position);
+  yield ["background-size", size] as const;
+  yield ["background-repeat", repeat] as const;
+  yield ["background-attachment", attachment] as const;
+  yield ["background-origin", origin] as const;
+  yield ["background-clip", clip] as const;
+  yield ["background-color", backgroundColor] as const;
+};
+
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
     case "font":
@@ -1181,6 +1263,10 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "background-position":
       yield* expandBackgroundPosition(value);
+      break;
+
+    case "background":
+      yield* expandBackground(value);
       break;
 
     default:

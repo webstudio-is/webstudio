@@ -1,4 +1,4 @@
-import type { InvalidValue, RgbValue } from "@webstudio-is/css-engine";
+import type { InvalidValue, StyleValue } from "@webstudio-is/css-engine";
 import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -17,7 +17,7 @@ type IntermediateValue = {
 
 export const BackgroundGradient = (
   props: Omit<ControlProps, "property" | "items"> & {
-    setBackgroundColor: (color: RgbValue) => void;
+    setBackgroundColor: (color: StyleValue) => void;
   }
 ) => {
   const property = "backgroundImage";

@@ -1,5 +1,6 @@
 import { colord } from "colord";
 import * as csstree from "css-tree";
+import type { CssNode } from "css-tree";
 import warnOnce from "warn-once";
 import {
   TupleValue,
@@ -13,7 +14,6 @@ import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 import {
   isTransitionLongHandProperty,
-  parseBackground,
   parseFilter,
   parseShadow,
   parseTransitionLonghandProperty,
@@ -26,6 +26,18 @@ export const cssTryParseValue = (input: string) => {
   } catch {
     return;
   }
+};
+
+const splitRepeated = (nodes: CssNode[]) => {
+  const lists: Array<CssNode[]> = [[]];
+  for (const node of nodes) {
+    if (node.type === "Operator" && node.value === ",") {
+      lists.push([]);
+    } else {
+      lists.at(-1)?.push(node);
+    }
+  }
+  return lists;
 };
 
 // Because csstree parser has bugs we use CSSStyleValue to validate css properties if available
@@ -87,6 +99,7 @@ const repeatedProps = new Set<StyleProperty>([
   "backgroundPositionY",
   "backgroundRepeat",
   "backgroundSize",
+  "backgroundImage",
 ]);
 
 export const parseCssValue = (
@@ -131,20 +144,21 @@ export const parseCssValue = (
 
   // prevent infinite splitting into layers for items
   if (repeatedProps.has(property) && topLevel) {
+    const nodes = "children" in ast ? ast.children?.toArray() ?? [] : [ast];
     return {
       type: "layers",
-      value: input
-        .split(",")
-        .map(
-          (single) => parseCssValue(property, single, false) as LayerValueItem
-        ),
+      value: splitRepeated(nodes).map(
+        (nodes) =>
+          parseCssValue(
+            property,
+            csstree.generate({
+              type: "Value",
+              children: new csstree.List<CssNode>().fromArray(nodes),
+            }),
+            false
+          ) as LayerValueItem
+      ),
     };
-  }
-
-  // prevent infinite splitting into layers for items
-  if (property === "backgroundImage" && topLevel) {
-    const { backgroundImage } = parseBackground(input);
-    return backgroundImage;
   }
 
   if (ast.type === "Value" && ast.children.first === ast.children.last) {
@@ -204,6 +218,16 @@ export const parseCssValue = (
           value: values[index]!,
         };
       }
+    }
+
+    if (first?.type === "Url") {
+      return {
+        type: "image",
+        value: {
+          type: "url",
+          url: first.value,
+        },
+      };
     }
   }
 
