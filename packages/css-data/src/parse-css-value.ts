@@ -4,6 +4,7 @@ import warnOnce from "warn-once";
 import {
   TupleValue,
   hyphenateProperty,
+  type LayerValueItem,
   type StyleProperty,
   type StyleValue,
   type Unit,
@@ -12,6 +13,7 @@ import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 import {
   isTransitionLongHandProperty,
+  parseBackground,
   parseFilter,
   parseShadow,
   parseTransitionLonghandProperty,
@@ -76,9 +78,20 @@ export const isValidDeclaration = (
   return matchResult.matched != null;
 };
 
+const repeatedProps = new Set<StyleProperty>([
+  "backgroundAttachment",
+  "backgroundClip",
+  "backgroundBlendMode",
+  "backgroundOrigin",
+  "backgroundPosition",
+  "backgroundRepeat",
+  "backgroundSize",
+]);
+
 export const parseCssValue = (
   property: StyleProperty, // Handles only long-hand values.
-  input: string
+  input: string,
+  topLevel = true
 ): StyleValue => {
   const invalidValue = {
     type: "invalid",
@@ -115,11 +128,25 @@ export const parseCssValue = (
     return parseTransitionLonghandProperty(property, input);
   }
 
-  if (
-    ast != null &&
-    ast.type === "Value" &&
-    ast.children.first === ast.children.last
-  ) {
+  // prevent infinite splitting into layers for items
+  if (repeatedProps.has(property) && topLevel) {
+    return {
+      type: "layers",
+      value: input
+        .split(",")
+        .map(
+          (single) => parseCssValue(property, single, false) as LayerValueItem
+        ),
+    };
+  }
+
+  // prevent infinite splitting into layers for items
+  if (property === "backgroundImage" && topLevel) {
+    const { backgroundImage } = parseBackground(input);
+    return backgroundImage;
+  }
+
+  if (ast.type === "Value" && ast.children.first === ast.children.last) {
     // Try extract units from 1st children
     const first = ast.children.first;
 
@@ -195,14 +222,16 @@ export const parseCssValue = (
   }
 
   // Probably a tuple like background-position
-  if (ast != null && ast.type === "Value" && ast.children.size === 2) {
+  if (ast.type === "Value" && ast.children.size === 2) {
     const tupleFirst = parseCssValue(
       property,
-      csstree.generate(ast.children.first!)
+      csstree.generate(ast.children.first!),
+      false
     );
     const tupleLast = parseCssValue(
       property,
-      csstree.generate(ast.children.last!)
+      csstree.generate(ast.children.last!),
+      false
     );
 
     const tupleResult = TupleValue.safeParse({

@@ -84,8 +84,8 @@ describe("Parse CSS value", () => {
   });
 
   describe("Tuples", () => {
-    test("backgroundPosition", () => {
-      expect(parseCssValue("backgroundPosition", "left top")).toEqual({
+    test("objectPosition", () => {
+      expect(parseCssValue("objectPosition", "left top")).toEqual({
         type: "tuple",
         value: [
           {
@@ -138,5 +138,109 @@ describe("Parse CSS value", () => {
         value: "red",
       });
     });
+  });
+});
+
+test("parse background-image property as layers", () => {
+  expect(
+    parseCssValue(
+      "backgroundImage",
+      `linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), url("https://667d0b7769e0cc3754b584f6"), none, url("https://667d0fe180995eadc1534a26")`
+    )
+  ).toEqual({
+    type: "layers",
+    value: [
+      {
+        type: "unparsed",
+        value: "linear-gradient(180deg,hsla(0,0.00%,0.00%,0.11),white)",
+      },
+      {
+        type: "image",
+        value: { type: "url", url: "https://667d0b7769e0cc3754b584f6" },
+      },
+      {
+        type: "keyword",
+        value: "none",
+      },
+      {
+        type: "image",
+        value: { type: "url", url: "https://667d0fe180995eadc1534a26" },
+      },
+    ],
+  });
+});
+
+test("parse background-position property as layers", () => {
+  expect(
+    parseCssValue("backgroundPosition", `0px 0px, 550px 0px, 0px 0px, 0px 0px`)
+  ).toEqual({
+    type: "layers",
+    value: [
+      {
+        type: "tuple",
+        value: [
+          { type: "unit", unit: "px", value: 0 },
+          { type: "unit", unit: "px", value: 0 },
+        ],
+      },
+      {
+        type: "tuple",
+        value: [
+          { type: "unit", unit: "px", value: 550 },
+          { type: "unit", unit: "px", value: 0 },
+        ],
+      },
+      {
+        type: "tuple",
+        value: [
+          { type: "unit", unit: "px", value: 0 },
+          { type: "unit", unit: "px", value: 0 },
+        ],
+      },
+      {
+        type: "tuple",
+        value: [
+          { type: "unit", unit: "px", value: 0 },
+          { type: "unit", unit: "px", value: 0 },
+        ],
+      },
+    ],
+  });
+});
+
+test("parse background-size property as layers", () => {
+  expect(parseCssValue("backgroundSize", `auto, contain, auto, auto`)).toEqual({
+    type: "layers",
+    value: [
+      { type: "keyword", value: "auto" },
+      { type: "keyword", value: "contain" },
+      { type: "keyword", value: "auto" },
+      { type: "keyword", value: "auto" },
+    ],
+  });
+  expect(
+    parseCssValue("backgroundRepeat", `repeat, no-repeat, repeat, repeat`)
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "keyword", value: "repeat" },
+      { type: "keyword", value: "no-repeat" },
+      { type: "keyword", value: "repeat" },
+      { type: "keyword", value: "repeat" },
+    ],
+  });
+});
+
+test("parse background-attachment property as layers", () => {
+  expect(
+    parseCssValue("backgroundAttachment", `scroll, fixed, scroll, scroll`)
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "keyword", value: "scroll" },
+      { type: "keyword", value: "fixed" },
+      { type: "keyword", value: "scroll" },
+      { type: "keyword", value: "scroll" },
+    ],
   });
 });

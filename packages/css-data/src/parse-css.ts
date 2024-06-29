@@ -1,16 +1,11 @@
 import * as csstree from "css-tree";
-import {
-  LayersValue,
-  StyleValue,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
 import { expandShorthands } from "./shorthands";
-import { parseBackground } from "./property-parsers";
 
 /**
  * Store prefixed properties without change
@@ -130,83 +125,6 @@ const cssTreeTryParse = (input: string) => {
   }
 };
 
-const convertBackgroundProps = (styles: EmbedTemplateStyleDecl[]) => {
-  const backgroundProps = [
-    "backgroundAttachment",
-    "backgroundClip",
-    "backgroundBlendMode",
-    "backgroundOrigin",
-    "backgroundPosition",
-    "backgroundRepeat",
-    "backgroundSize",
-  ];
-
-  return styles
-    .map((style) => {
-      if (backgroundProps.includes(style.property)) {
-        if (style.value.type !== "unparsed") {
-          const safeStyle = LayersValue.safeParse({
-            type: "layers",
-            value: [style.value],
-          });
-          if (safeStyle.success) {
-            return {
-              property: style.property,
-              value: safeStyle.data,
-            };
-          }
-          return style;
-        }
-
-        const layersResult = LayersValue.safeParse({
-          type: "layers",
-          value: style.value.value
-            .split(",")
-            .map((val) => parseCssValueLonghand(style.property, val)),
-        });
-
-        if (layersResult.success) {
-          return {
-            property: style.property,
-            value: layersResult.data,
-          };
-        }
-
-        console.error(
-          `Failed to convert background property ${
-            style.property
-          } with value ${JSON.stringify(style.value)} to layers`
-        );
-      }
-      return style;
-    })
-    .map((style) => {
-      if (style.property === "backgroundImage") {
-        if (style.value.type !== "unparsed") {
-          const safeStyle = LayersValue.safeParse({
-            type: "layers",
-            value: [style.value],
-          });
-          if (safeStyle.success) {
-            return {
-              property: style.property,
-              value: safeStyle.data,
-            };
-          }
-          return style;
-        }
-
-        const { backgroundImage } = parseBackground(style.value.value);
-
-        return {
-          property: style.property,
-          value: backgroundImage,
-        };
-      }
-      return style;
-    });
-};
-
 export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
   let selectors: Selector[] = [];
@@ -294,11 +212,5 @@ export const parseCss = (css: string) => {
     }
   });
 
-  const stylesResult: Styles = {};
-
-  for (const [selector, declarations] of Object.entries(styles)) {
-    stylesResult[selector] = convertBackgroundProps(declarations);
-  }
-
-  return stylesResult;
+  return styles;
 };

@@ -28,7 +28,7 @@ export const parseBackground = (
     backgroundToLonghand(background);
 
   const backgroundColor = backgroundColorRaw
-    ? (parseCssValue("backgroundColor", backgroundColorRaw) as RgbValue)
+    ? (parseCssValue("backgroundColor", backgroundColorRaw, false) as RgbValue)
     : undefined;
 
   return {
@@ -158,7 +158,7 @@ export const parseBackgroundImage = (
       continue;
     }
 
-    const layerStyle = parseCssValue("backgroundImage", layer);
+    const layerStyle = parseCssValue("backgroundImage", layer, false);
 
     if (layerStyle.type !== "unparsed") {
       break;
