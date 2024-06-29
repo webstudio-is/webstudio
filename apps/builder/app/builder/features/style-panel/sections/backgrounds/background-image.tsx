@@ -98,6 +98,10 @@ export const BackgroundImage = (
     }
 
     const [layer] = newValue.type === "layers" ? newValue.value : [newValue];
+    if (layer?.type === "keyword") {
+      setIntermediateValue(undefined);
+      props.setProperty(property)(layer, options);
+    }
     if (layer?.type !== "image" || layer.value.type !== "url") {
       setIntermediateValue({
         type: "invalid",
