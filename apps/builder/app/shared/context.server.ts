@@ -1,8 +1,9 @@
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { type AppContext } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
 import { trpcSharedClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
+
 import {
   getTokenPlanFeatures,
   getUserPlanFeatures,
@@ -29,7 +30,6 @@ const createAuthorizationContext = async (
     userId: user?.id,
     authToken,
     isServiceCall,
-    authorizeTrpc: trpcSharedClient.authorize,
   };
 
   return context;

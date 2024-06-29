@@ -18,9 +18,6 @@ type AuthorizationContext = {
    * Allow service 2 service communications to skip authorization for view calls
    */
   isServiceCall: boolean;
-
-  // Pass trpcClient through context as only main app can initialize it
-  authorizeTrpc: TrpcInterfaceClient["authorize"];
 };
 
 type DomainContext = {
