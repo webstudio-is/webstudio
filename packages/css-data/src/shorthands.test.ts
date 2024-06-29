@@ -1114,3 +1114,13 @@ test("expand background-position", () => {
 
 test.todo("all - can negatively affect build size");
 test.todo("background - not used in webflow");
+// https://developer.mozilla.org/en-US/docs/Web/CSS/animation-range
+test.todo("animation-range");
+// https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline
+test.todo("view-timeline");
+// https://www.w3.org/TR/css-anchor-position-1/#position-try-prop
+test.todo("position-try - not used in webflow");
+// https://www.w3.org/TR/css-ui-4/
+test.todo("caret - caret-color & caret-shape");
+// https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior
+test.todo("overscroll-behavior");
