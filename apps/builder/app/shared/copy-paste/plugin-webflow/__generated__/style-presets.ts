@@ -3032,9 +3032,9 @@ export const styles = {
       },
     },
     {
-      property: "fontSmoothing",
+      property: "WebkitFontSmoothing",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "auto",
       },
     },
@@ -8210,13 +8210,6 @@ export const styles = {
       },
     },
     {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
-      },
-    },
-    {
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -8509,13 +8502,6 @@ export const styles = {
         r: 0,
         g: 0,
         b: 0,
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
       },
     },
     {
@@ -8972,13 +8958,6 @@ export const styles = {
       },
     },
     {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
-      },
-    },
-    {
       property: "userSelect",
       value: {
         type: "keyword",
@@ -9141,13 +9120,6 @@ export const styles = {
         r: 0,
         g: 0,
         b: 0,
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
       },
     },
     {
@@ -10335,8 +10307,8 @@ export const styles = {
     {
       property: "-webkit-tap-highlight-color",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "transparent",
       },
     },
     {
@@ -10586,8 +10558,8 @@ export const styles = {
     {
       property: "-webkit-overflow-scrolling",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "touch",
       },
     },
     {
@@ -10617,8 +10589,8 @@ export const styles = {
     {
       property: "-webkit-overflow-scrolling",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "touch",
       },
     },
     {
@@ -13115,13 +13087,6 @@ export const styles = {
         r: 0,
         g: 0,
         b: 0,
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
       },
     },
     {

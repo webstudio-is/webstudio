@@ -12,11 +12,16 @@ import { expandShorthands } from "./shorthands";
  */
 export const normalizePropertyName = (property: string) => {
   // these are manually added with pascal case
-  if (property === "-webkit-font-smoothing") {
+  // convert unprefixed used by webflow version into prefixed one
+  if (property === "-webkit-font-smoothing" || property === "font-smoothing") {
     return "WebkitFontSmoothing";
   }
   if (property === "-moz-osx-font-smoothing") {
     return "MozOsxFontSmoothing";
+  }
+  // webflow use unprefixed version
+  if (property === "tap-highlight-color") {
+    return "-webkit-tap-highlight-color";
   }
   if (property.startsWith("-")) {
     return property;
@@ -54,23 +59,25 @@ const parseCssValue = (
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
   for (const [property, value] of expanded) {
-    const normalizedProperty = normalizePropertyName(property);
     if (value === "") {
       // Keep the browser behavior when property is defined with an empty value e.g. `color:;`
       // It may override some existing value and effectively set it to "unset";
-      final.set(normalizedProperty, { type: "keyword", value: "unset" });
+      final.set(property, { type: "keyword", value: "unset" });
       continue;
     }
 
     // @todo https://github.com/webstudio-is/webstudio/issues/3399
     if (value.startsWith("var(")) {
-      final.set(normalizedProperty, { type: "keyword", value: "unset" });
+      final.set(property, { type: "keyword", value: "unset" });
       continue;
     }
 
     final.set(
-      normalizedProperty,
-      parseCssValueLonghand(normalizedProperty as StyleProperty, value)
+      property,
+      parseCssValueLonghand(
+        normalizePropertyName(property) as StyleProperty,
+        value
+      )
     );
   }
   return final;

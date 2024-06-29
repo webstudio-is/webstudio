@@ -650,3 +650,64 @@ describe("Parse CSS", () => {
     expect(parseCss(`a b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });
 });
+
+test("parse font-smooth properties", () => {
+  expect(
+    parseCss(`
+      a {
+        font-smoothing: auto;
+      }
+      b {
+        -webkit-font-smoothing: auto;
+      }
+      c {
+        -moz-osx-font-smoothing: auto;
+      }
+   `)
+  ).toEqual({
+    a: [
+      {
+        property: "WebkitFontSmoothing",
+        value: { type: "keyword", value: "auto" },
+      },
+    ],
+    b: [
+      {
+        property: "WebkitFontSmoothing",
+        value: { type: "keyword", value: "auto" },
+      },
+    ],
+    c: [
+      {
+        property: "MozOsxFontSmoothing",
+        value: { type: "keyword", value: "auto" },
+      },
+    ],
+  });
+});
+
+test("parse incorrectly unprefixed tap-highlight-color", () => {
+  expect(
+    parseCss(`
+      a {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      }
+      b {
+        tap-highlight-color: transparent;
+      }
+   `)
+  ).toEqual({
+    a: [
+      {
+        property: "-webkit-tap-highlight-color",
+        value: { alpha: 0, b: 0, g: 0, r: 0, type: "rgb" },
+      },
+    ],
+    b: [
+      {
+        property: "-webkit-tap-highlight-color",
+        value: { type: "keyword", value: "transparent" },
+      },
+    ],
+  });
+});
