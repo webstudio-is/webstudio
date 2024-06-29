@@ -3,6 +3,8 @@ export type Property =
   | "MozOsxFontSmoothing"
   | "-webkit-box-orient"
   | "-webkit-line-clamp"
+  | "-webkit-overflow-scrolling"
+  | "-webkit-tap-highlight-color"
   | "accentColor"
   | "alignContent"
   | "alignItems"

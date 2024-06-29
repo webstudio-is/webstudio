@@ -36,6 +36,24 @@ export const properties = {
     },
     types: ["integer"],
   },
+  "-webkit-overflow-scrolling": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    types: [],
+  },
+  "-webkit-tap-highlight-color": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "black",
+    },
+    types: ["hex-color"],
+  },
   accentColor: {
     unitGroups: [],
     inherited: true,

@@ -244,6 +244,8 @@ const experimentalProperties = [
   "-webkit-line-clamp",
   "background-position-x",
   "background-position-y",
+  "-webkit-tap-highlight-color",
+  "-webkit-overflow-scrolling",
 ];
 
 const unsupportedProperties = [
