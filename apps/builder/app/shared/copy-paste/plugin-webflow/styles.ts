@@ -266,6 +266,7 @@ const mapComponentAndPresetStyles = (
       return presetStyles;
     }
     case "BlockContainer": {
+      presetStyles.push("w-layout-blockcontainer");
       presetStyles.push("w-container");
       return presetStyles;
     }
@@ -273,8 +274,22 @@ const mapComponentAndPresetStyles = (
       presetStyles.push("w-row");
       return presetStyles;
     }
+    case "Cell": {
+      presetStyles.push("w-layout-cell");
+      return presetStyles;
+    }
     case "Column": {
+      // @todo wf has w-col-1 etc in grid
       presetStyles.push("w-col");
+      return presetStyles;
+    }
+    case "Grid": {
+      presetStyles.push("w-layout-grid");
+      return presetStyles;
+    }
+    case "Layout": {
+      presetStyles.push("w-layout-layout");
+      presetStyles.push("wf-layout-layout");
       return presetStyles;
     }
     case "FormWrapper": {

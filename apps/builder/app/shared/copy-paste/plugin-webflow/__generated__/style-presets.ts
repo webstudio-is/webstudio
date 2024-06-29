@@ -28,8 +28,13 @@ export const styles = {
     {
       property: "backgroundAttachment",
       value: {
-        type: "keyword",
-        value: "scroll",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
       },
     },
     {
@@ -549,8 +554,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -2912,8 +2922,18 @@ export const styles = {
     {
       property: "textShadow",
       value: {
-        type: "keyword",
-        value: "none",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "none",
+              },
+            ],
+          },
+        ],
       },
     },
     {
@@ -2954,8 +2974,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "none",
+          },
+        ],
       },
     },
     {
@@ -3098,31 +3123,46 @@ export const styles = {
     {
       property: "transitionProperty",
       value: {
-        type: "keyword",
+        type: "invalid",
         value: "none",
       },
     },
     {
       property: "transitionDuration",
       value: {
-        type: "unit",
-        unit: "s",
-        value: 0,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0,
+            unit: "s",
+          },
+        ],
       },
     },
     {
       property: "transitionTimingFunction",
       value: {
-        type: "keyword",
-        value: "ease",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "ease",
+          },
+        ],
       },
     },
     {
       property: "transitionDelay",
       value: {
-        type: "unit",
-        unit: "s",
-        value: 0,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0,
+            unit: "s",
+          },
+        ],
       },
     },
     {
@@ -3156,8 +3196,68 @@ export const styles = {
     {
       property: "boxShadow",
       value: {
-        type: "unparsed",
-        value: "0 0 0 1px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.1)",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 1,
+                unit: "px",
+              },
+              {
+                type: "rgb",
+                alpha: 0.1,
+                r: 0,
+                g: 0,
+                b: 0,
+              },
+            ],
+          },
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 1,
+                unit: "px",
+              },
+              {
+                type: "unit",
+                value: 3,
+                unit: "px",
+              },
+              {
+                type: "rgb",
+                alpha: 0.1,
+                r: 0,
+                g: 0,
+                b: 0,
+              },
+            ],
+          },
+        ],
       },
     },
     {
@@ -7034,8 +7134,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -7810,7 +7915,7 @@ export const styles = {
       },
     },
     {
-      property: "WebkitTapHighlightColor",
+      property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
         alpha: 0,
@@ -7829,8 +7934,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -8012,7 +8122,7 @@ export const styles = {
       },
     },
     {
-      property: "WebkitTapHighlightColor",
+      property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
         alpha: 0,
@@ -8181,8 +8291,36 @@ export const styles = {
     {
       property: "boxShadow",
       value: {
-        type: "unparsed",
-        value: "0 0 3px rgba(51,51,51,0.4)",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 3,
+                unit: "px",
+              },
+              {
+                type: "rgb",
+                alpha: 0.4,
+                r: 51,
+                g: 51,
+                b: 51,
+              },
+            ],
+          },
+        ],
       },
     },
   ],
@@ -8212,8 +8350,18 @@ export const styles = {
     {
       property: "boxShadow",
       value: {
-        type: "keyword",
-        value: "none",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "none",
+              },
+            ],
+          },
+        ],
       },
     },
   ],
@@ -8276,29 +8424,69 @@ export const styles = {
     {
       property: "transitionProperty",
       value: {
-        type: "unparsed",
-        value: "background-color,color",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "background-color",
+          },
+          {
+            type: "keyword",
+            value: "color",
+          },
+        ],
       },
     },
     {
       property: "transitionDuration",
       value: {
-        type: "unparsed",
-        value: "0.1s,0.1s",
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0.1,
+            unit: "s",
+          },
+          {
+            type: "unit",
+            value: 0.1,
+            unit: "s",
+          },
+        ],
       },
     },
     {
       property: "transitionTimingFunction",
       value: {
-        type: "unparsed",
-        value: "ease,ease",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "ease",
+          },
+          {
+            type: "keyword",
+            value: "ease",
+          },
+        ],
       },
     },
     {
       property: "transitionDelay",
       value: {
-        type: "unparsed",
-        value: "0s,0s",
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0,
+            unit: "s",
+          },
+          {
+            type: "unit",
+            value: 0,
+            unit: "s",
+          },
+        ],
       },
     },
     {
@@ -8359,8 +8547,18 @@ export const styles = {
     {
       property: "boxShadow",
       value: {
-        type: "keyword",
-        value: "none",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "none",
+              },
+            ],
+          },
+        ],
       },
       state: ":focus",
     },
@@ -8384,7 +8582,7 @@ export const styles = {
       },
     },
     {
-      property: "WebkitTapHighlightColor",
+      property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
         alpha: 0,
@@ -8556,7 +8754,7 @@ export const styles = {
       },
     },
     {
-      property: "WebkitTapHighlightColor",
+      property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
         alpha: 0,
@@ -9382,8 +9580,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -9551,8 +9754,18 @@ export const styles = {
     {
       property: "textShadow",
       value: {
-        type: "keyword",
-        value: "none",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "none",
+              },
+            ],
+          },
+        ],
       },
     },
     {
@@ -9645,7 +9858,7 @@ export const styles = {
       },
     },
     {
-      property: "WebkitTapHighlightColor",
+      property: "-webkit-tap-highlight-color",
       value: {
         type: "invalid",
         value: "",
@@ -9654,8 +9867,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -9796,7 +10014,7 @@ export const styles = {
       },
     },
     {
-      property: "WebkitOverflowScrolling",
+      property: "-webkit-overflow-scrolling",
       value: {
         type: "invalid",
         value: "",
@@ -9827,7 +10045,7 @@ export const styles = {
   ],
   "w-lightbox-container": [
     {
-      property: "WebkitOverflowScrolling",
+      property: "-webkit-overflow-scrolling",
       value: {
         type: "invalid",
         value: "",
@@ -10113,8 +10331,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -10273,23 +10496,38 @@ export const styles = {
     {
       property: "backgroundPosition",
       value: {
-        type: "keyword",
-        value: "center",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "center",
+          },
+        ],
       },
     },
     {
       property: "backgroundRepeat",
       value: {
-        type: "keyword",
-        value: "no-repeat",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "no-repeat",
+          },
+        ],
       },
     },
     {
       property: "backgroundSize",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 24,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "px",
+            value: 24,
+          },
+        ],
       },
     },
     {
@@ -10303,31 +10541,51 @@ export const styles = {
     {
       property: "transitionProperty",
       value: {
-        type: "keyword",
-        value: "all",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "all",
+          },
+        ],
       },
     },
     {
       property: "transitionDuration",
       value: {
-        type: "unit",
-        unit: "s",
-        value: 0.3,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0.3,
+            unit: "s",
+          },
+        ],
       },
     },
     {
       property: "transitionTimingFunction",
       value: {
-        type: "keyword",
-        value: "ease",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "ease",
+          },
+        ],
       },
     },
     {
       property: "transitionDelay",
       value: {
-        type: "unit",
-        unit: "s",
-        value: 0,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0,
+            unit: "s",
+          },
+        ],
       },
     },
     {
@@ -10366,9 +10624,16 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "unparsed",
-        value:
-          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0yMCAwIDI0IDQwIiB3aWR0aD0iMjQiIGhlaWdodD0iNDAiPjxnIHRyYW5zZm9ybT0icm90YXRlKDQ1KSI+PHBhdGggZD0ibTAgMGg1djIzaDIzdjVoLTI4eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDN2MjNoMjN2M2gtMjZ6IiBmaWxsPSIjZmZmIi8+PC9nPjwvc3ZnPg==)",
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "url",
+              url: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0yMCAwIDI0IDQwIiB3aWR0aD0iMjQiIGhlaWdodD0iNDAiPjxnIHRyYW5zZm9ybT0icm90YXRlKDQ1KSI+PHBhdGggZD0ibTAgMGg1djIzaDIzdjVoLTI4eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDN2MjNoMjN2M2gtMjZ6IiBmaWxsPSIjZmZmIi8+PC9nPjwvc3ZnPg==",
+            },
+          },
+        ],
       },
     },
     {
@@ -10407,9 +10672,16 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "unparsed",
-        value:
-          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMjQgNDAiIHdpZHRoPSIyNCIgaGVpZ2h0PSI0MCI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMC0waDI4djI4aC01di0yM2gtMjN6IiBvcGFjaXR5PSIuNCIvPjxwYXRoIGQ9Im0xIDFoMjZ2MjZoLTN2LTIzaC0yM3oiIGZpbGw9IiNmZmYiLz48L2c+PC9zdmc+)",
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "url",
+              url: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMjQgNDAiIHdpZHRoPSIyNCIgaGVpZ2h0PSI0MCI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMC0waDI4djI4aC01di0yM2gtMjN6IiBvcGFjaXR5PSIuNCIvPjxwYXRoIGQ9Im0xIDFoMjZ2MjZoLTN2LTIzaC0yM3oiIGZpbGw9IiNmZmYiLz48L2c+PC9zdmc+",
+            },
+          },
+        ],
       },
     },
     {
@@ -10448,17 +10720,29 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "unparsed",
-        value:
-          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMTggMTciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxNyI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMCAwaDd2LTdoNXY3aDd2NWgtN3Y3aC01di03aC03eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDd2LTdoM3Y3aDd2M2gtN3Y3aC0zdi03aC03eiIgZmlsbD0iI2ZmZiIvPjwvZz48L3N2Zz4=)",
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "url",
+              url: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMTggMTciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxNyI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMCAwaDd2LTdoNXY3aDd2NWgtN3Y3aC01di03aC03eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDd2LTdoM3Y3aDd2M2gtN3Y3aC0zdi03aC03eiIgZmlsbD0iI2ZmZiIvPjwvZz48L3N2Zz4=",
+            },
+          },
+        ],
       },
     },
     {
       property: "backgroundSize",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "px",
+            value: 18,
+          },
+        ],
       },
     },
     {
@@ -10671,8 +10955,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -11552,8 +11841,13 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "invalid",
-        value: "",
+        type: "layers",
+        value: [
+          {
+            type: "invalid",
+            value: "",
+          },
+        ],
       },
     },
     {
@@ -11947,7 +12241,7 @@ export const styles = {
       },
     },
     {
-      property: "WebkitTapHighlightColor",
+      property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
         alpha: 0,
@@ -12507,6 +12801,276 @@ export const styles = {
       },
     },
   ],
+  "w-layout-blockcontainer": [
+    {
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "maxWidth",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
+  "w-layout-layout": [
+    {
+      property: "rowGap",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "columnGap",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "gridAutoColumns",
+      value: {
+        type: "unit",
+        unit: "fr",
+        value: 1,
+      },
+    },
+    {
+      property: "justifyContent",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+  ],
+  "w-layout-cell": [
+    {
+      property: "flexDirection",
+      value: {
+        type: "keyword",
+        value: "column",
+      },
+    },
+    {
+      property: "justifyContent",
+      value: {
+        type: "keyword",
+        value: "flex-start",
+      },
+    },
+    {
+      property: "alignItems",
+      value: {
+        type: "keyword",
+        value: "flex-start",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
+      },
+    },
+  ],
+  "w-layout-vflex": [
+    {
+      property: "flexDirection",
+      value: {
+        type: "keyword",
+        value: "column",
+      },
+    },
+    {
+      property: "alignItems",
+      value: {
+        type: "keyword",
+        value: "flex-start",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
+      },
+    },
+  ],
+  "w-layout-hflex": [
+    {
+      property: "flexDirection",
+      value: {
+        type: "keyword",
+        value: "row",
+      },
+    },
+    {
+      property: "alignItems",
+      value: {
+        type: "keyword",
+        value: "flex-start",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
+      },
+    },
+  ],
+  "w-embed-youtubevideo": [
+    {
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "url",
+              url: "https://d3e54v103j8qbb.cloudfront.net/static/youtube-placeholder.2b05e7d68d.svg",
+            },
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundPosition",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 50,
+          },
+        ],
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "cover",
+          },
+        ],
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      property: "minHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 75,
+      },
+      state: ":empty",
+    },
+    {
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 56.25,
+      },
+      state: ":empty",
+    },
+  ],
   "w-checkbox": [
     {
       property: "marginBottom",
@@ -12806,31 +13370,53 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "unparsed",
-        value:
-          "url(https://d3e54v103j8qbb.cloudfront.net/static/custom-checkbox-checkmark.589d534424.svg)",
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "url",
+              url: "https://d3e54v103j8qbb.cloudfront.net/static/custom-checkbox-checkmark.589d534424.svg",
+            },
+          },
+        ],
       },
     },
     {
       property: "backgroundPosition",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 50,
+          },
+        ],
       },
     },
     {
       property: "backgroundRepeat",
       value: {
-        type: "keyword",
-        value: "no-repeat",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "no-repeat",
+          },
+        ],
       },
     },
     {
       property: "backgroundSize",
       value: {
-        type: "keyword",
-        value: "cover",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "cover",
+          },
+        ],
       },
     },
     {
@@ -12876,8 +13462,41 @@ export const styles = {
     {
       property: "boxShadow",
       value: {
-        type: "unparsed",
-        value: "0 0 3px 1px #3898ec",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 3,
+                unit: "px",
+              },
+              {
+                type: "unit",
+                value: 1,
+                unit: "px",
+              },
+              {
+                type: "rgb",
+                alpha: 1,
+                r: 56,
+                g: 152,
+                b: 236,
+              },
+            ],
+          },
+        ],
       },
     },
   ],
@@ -12895,31 +13514,53 @@ export const styles = {
     {
       property: "backgroundImage",
       value: {
-        type: "unparsed",
-        value:
-          "url(https://d3e54v103j8qbb.cloudfront.net/static/custom-checkbox-checkmark.589d534424.svg)",
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "url",
+              url: "https://d3e54v103j8qbb.cloudfront.net/static/custom-checkbox-checkmark.589d534424.svg",
+            },
+          },
+        ],
       },
     },
     {
       property: "backgroundPosition",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 50,
+          },
+        ],
       },
     },
     {
       property: "backgroundRepeat",
       value: {
-        type: "keyword",
-        value: "no-repeat",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "no-repeat",
+          },
+        ],
       },
     },
     {
       property: "backgroundSize",
       value: {
-        type: "keyword",
-        value: "cover",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "cover",
+          },
+        ],
       },
     },
     {
@@ -12999,8 +13640,41 @@ export const styles = {
     {
       property: "boxShadow",
       value: {
-        type: "unparsed",
-        value: "0 0 3px 1px #3898ec",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 3,
+                unit: "px",
+              },
+              {
+                type: "unit",
+                value: 1,
+                unit: "px",
+              },
+              {
+                type: "rgb",
+                alpha: 1,
+                r: 56,
+                g: 152,
+                b: 236,
+              },
+            ],
+          },
+        ],
       },
     },
   ],
@@ -13076,8 +13750,41 @@ export const styles = {
     {
       property: "boxShadow",
       value: {
-        type: "unparsed",
-        value: "0 0 3px 1px #3898ec",
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 0,
+                unit: "number",
+              },
+              {
+                type: "unit",
+                value: 3,
+                unit: "px",
+              },
+              {
+                type: "unit",
+                value: 1,
+                unit: "px",
+              },
+              {
+                type: "rgb",
+                alpha: 1,
+                r: 56,
+                g: 152,
+                b: 236,
+              },
+            ],
+          },
+        ],
       },
     },
     {
@@ -13150,6 +13857,258 @@ export const styles = {
         r: 56,
         g: 152,
         b: 236,
+      },
+    },
+  ],
+  "w-form-formrecaptcha": [
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 8,
+      },
+    },
+  ],
+  "w-backgroundvideo-backgroundvideoplaypausebutton": [
+    {
+      property: "outlineOffset",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+      state: ":focus-visible",
+    },
+    {
+      property: "borderTopLeftRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":focus-visible",
+    },
+    {
+      property: "borderTopRightRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":focus-visible",
+    },
+    {
+      property: "borderBottomRightRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":focus-visible",
+    },
+    {
+      property: "outlineWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+      state: ":focus-visible",
+    },
+    {
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":focus-visible",
+    },
+    {
+      property: "outlineColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 59,
+        g: 121,
+        b: 195,
+      },
+      state: ":focus-visible",
+    },
+  ],
+  "w-layout-grid": [
+    {
+      property: "rowGap",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 16,
+      },
+    },
+    {
+      property: "columnGap",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 16,
+      },
+    },
+    {
+      property: "gridTemplateRows",
+      value: {
+        type: "tuple",
+        value: [
+          {
+            type: "keyword",
+            value: "auto",
+          },
+          {
+            type: "keyword",
+            value: "auto",
+          },
+        ],
+      },
+    },
+    {
+      property: "gridTemplateColumns",
+      value: {
+        type: "tuple",
+        value: [
+          {
+            type: "unit",
+            unit: "fr",
+            value: 1,
+          },
+          {
+            type: "unit",
+            unit: "fr",
+            value: 1,
+          },
+        ],
+      },
+    },
+    {
+      property: "gridAutoColumns",
+      value: {
+        type: "unit",
+        unit: "fr",
+        value: 1,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "grid",
+      },
+    },
+  ],
+  "utility-page-wrap": [
+    {
+      property: "justifyContent",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      property: "alignItems",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "vw",
+        value: 100,
+      },
+    },
+    {
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 100,
+      },
+    },
+    {
+      property: "maxHeight",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
+      },
+    },
+  ],
+  "utility-page-content": [
+    {
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      property: "flexDirection",
+      value: {
+        type: "keyword",
+        value: "column",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 260,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
+      },
+    },
+  ],
+  "utility-page-form": [
+    {
+      property: "flexDirection",
+      value: {
+        type: "keyword",
+        value: "column",
+      },
+    },
+    {
+      property: "alignItems",
+      value: {
+        type: "keyword",
+        value: "stretch",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
       },
     },
   ],

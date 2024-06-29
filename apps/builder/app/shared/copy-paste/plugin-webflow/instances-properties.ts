@@ -107,9 +107,24 @@ const toFragment = (
     }
     case "Link": {
       const data = wfNode.data;
-
-      addProp("href", data.link.url);
-      addProp("target", data.link.target);
+      if ("url" in data.link) {
+        addProp("href", data.link.url);
+      }
+      if ("target" in data.link) {
+        addProp("target", data.link.target);
+      }
+      if ("href" in data.link) {
+        addProp("href", data.link.href);
+      }
+      if ("email" in data.link) {
+        const subject = data.link.subject
+          ? `?subject=${data.link.subject}`
+          : "";
+        addProp("href", `mailto:${data.link.email}${subject}`);
+      }
+      if ("tel" in data.link) {
+        addProp("href", `tel:${data.link.tel}`);
+      }
       addInstance(component);
       return fragment;
     }
