@@ -1,6 +1,7 @@
 import type { Project } from "@webstudio-is/prisma-client";
 import type { AppContext } from "../context/context.server";
 import { prisma } from "@webstudio-is/prisma-client";
+import memoize from "memoize";
 
 export type AuthPermit = "view" | "edit" | "build" | "admin" | "own";
 
@@ -58,6 +59,12 @@ const check = async (input: CheckInput) => {
   return { allowed: false };
 };
 
+const memoizedCheck = memoize(check, {
+  // 1 minute
+  maxAge: 60 * 1000,
+  cacheKey: JSON.stringify,
+});
+
 export const hasProjectPermit = async (
   props: {
     projectId: Project["id"];
@@ -74,7 +81,7 @@ export const hasProjectPermit = async (
     const namespace = "Project";
 
     // Allow load production build env i.e. "published" project
-    if (props.permit === "view" && context.authorization.isServiceCall) {
+    if (props.permit === "view" && authorization.isServiceCall) {
       return true;
     }
 
@@ -98,7 +105,7 @@ export const hasProjectPermit = async (
     // Check if the user is allowed to access the project
     if (authorization.userId !== undefined) {
       checks.push(
-        check({
+        memoizedCheck({
           subjectSet: {
             namespace: "User",
             id: authorization.userId,
@@ -114,7 +121,7 @@ export const hasProjectPermit = async (
     // Token doesn't have own permit, do not check it
     if (authorization.authToken !== undefined && props.permit !== "own") {
       checks.push(
-        check({
+        memoizedCheck({
           namespace,
           id: props.projectId,
           subjectSet: {
