@@ -227,3 +227,23 @@ test("parse background-attachment property as layers", () => {
     ],
   });
 });
+
+test("parse transition-behavior property as layers", () => {
+  expect(parseCssValue("transitionBehavior", `normal`)).toEqual({
+    type: "layers",
+    value: [{ type: "keyword", value: "normal" }],
+  });
+  expect(parseCssValue("transitionBehavior", `normal, allow-discrete`)).toEqual(
+    {
+      type: "layers",
+      value: [
+        { type: "keyword", value: "normal" },
+        { type: "keyword", value: "allow-discrete" },
+      ],
+    }
+  );
+  expect(parseCssValue("transitionBehavior", `normal, invalid`)).toEqual({
+    type: "invalid",
+    value: "normal, invalid",
+  });
+});

@@ -7,6 +7,7 @@ import type {
   Unit,
   UnitValue,
   FunctionValue,
+  StyleProperty,
 } from "@webstudio-is/css-engine";
 import { animatableProperties } from "../";
 import { isTimingFunction } from "./transition-property-extractor";
@@ -20,7 +21,8 @@ export const transitionLongHandProperties = [
   "transitionTimingFunction",
   "transitionDelay",
   "transitionDuration",
-] as const;
+  "transitionBehavior",
+] as const satisfies StyleProperty[];
 
 export const commonTransitionProperties = [
   "all",

@@ -5066,6 +5066,13 @@ export const keywordValues = {
     "unset",
   ],
   transformStyle: ["flat", "preserve-3d", "initial", "inherit", "unset"],
+  transitionBehavior: [
+    "normal",
+    "allow-discrete",
+    "initial",
+    "inherit",
+    "unset",
+  ],
   transitionDelay: ["initial", "inherit", "unset"],
   transitionDuration: ["initial", "inherit", "unset"],
   transitionProperty: ["none", "all", "initial", "inherit", "unset"],

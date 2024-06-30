@@ -2934,6 +2934,15 @@ export const properties = {
     },
     types: [],
   },
+  transitionBehavior: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    types: [],
+  },
   transitionDelay: {
     unitGroups: ["time"],
     inherited: false,
