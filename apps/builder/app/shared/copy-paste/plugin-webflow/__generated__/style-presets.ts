@@ -921,8 +921,8 @@ export const styles = {
     {
       property: "all",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "inherit",
       },
     },
   ],

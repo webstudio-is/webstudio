@@ -4,6 +4,7 @@ import type { CssNode } from "css-tree";
 import warnOnce from "warn-once";
 import {
   TupleValue,
+  cssWideKeywords,
   hyphenateProperty,
   type LayerValueItem,
   type StyleProperty,
@@ -112,6 +113,11 @@ export const parseCssValue = (
   input: string,
   topLevel = true
 ): StyleValue => {
+  const potentialKeyword = input.toLowerCase();
+  if (cssWideKeywords.has(potentialKeyword)) {
+    return { type: "keyword", value: potentialKeyword };
+  }
+
   const invalidValue = {
     type: "invalid",
     value: input,
