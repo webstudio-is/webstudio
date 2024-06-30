@@ -246,6 +246,7 @@ const experimentalProperties = [
   "background-position-y",
   "-webkit-tap-highlight-color",
   "-webkit-overflow-scrolling",
+  "transition-behavior",
 ];
 
 const unsupportedProperties = [

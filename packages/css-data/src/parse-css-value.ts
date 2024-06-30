@@ -67,6 +67,10 @@ export const isValidDeclaration = (
     );
   }
 
+  if (cssPropertyName === "transition-behavior") {
+    return true;
+  }
+
   // @todo remove after csstree fixes
   // - https://github.com/csstree/csstree/issues/246
   // - https://github.com/csstree/csstree/issues/164
@@ -100,6 +104,7 @@ const repeatedProps = new Set<StyleProperty>([
   "backgroundRepeat",
   "backgroundSize",
   "backgroundImage",
+  "transitionBehavior",
 ]);
 
 export const parseCssValue = (
@@ -138,27 +143,44 @@ export const parseCssValue = (
     return parseShadow(property, input);
   }
 
-  if (isTransitionLongHandProperty(property)) {
+  if (
+    isTransitionLongHandProperty(property) &&
+    property !== "transitionBehavior"
+  ) {
     return parseTransitionLonghandProperty(property, input);
   }
 
   // prevent infinite splitting into layers for items
   if (repeatedProps.has(property) && topLevel) {
     const nodes = "children" in ast ? ast.children?.toArray() ?? [] : [ast];
-    return {
+    let invalid = false;
+    const layersValue: StyleValue = {
       type: "layers",
-      value: splitRepeated(nodes).map(
-        (nodes) =>
-          parseCssValue(
-            property,
-            csstree.generate({
-              type: "Value",
-              children: new csstree.List<CssNode>().fromArray(nodes),
-            }),
-            false
-          ) as LayerValueItem
-      ),
+      value: splitRepeated(nodes).map((nodes) => {
+        const value = csstree.generate({
+          type: "Value",
+          children: new csstree.List<CssNode>().fromArray(nodes),
+        });
+        const parsed = parseCssValue(property, value, false) as LayerValueItem;
+        if (parsed.type === "invalid") {
+          invalid = true;
+        }
+        return parsed;
+      }),
     };
+    // at least one layer is invalid then whole value is invalid
+    if (invalid) {
+      return invalidValue;
+    }
+    return layersValue;
+  }
+
+  // csstree does not support transition-behavior
+  // so check keywords manually
+  if (property === "transitionBehavior") {
+    return keywordValues[property].includes(input as never)
+      ? { type: "keyword", value: input }
+      : invalidValue;
   }
 
   if (ast.type === "Value" && ast.children.first === ast.children.last) {

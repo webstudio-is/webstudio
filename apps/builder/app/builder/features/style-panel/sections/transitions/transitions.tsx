@@ -31,8 +31,9 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 
 const label = "Transitions";
 const initialTransition = "opacity 200ms ease 0s";
-export const properties =
-  transitionLongHandProperties as unknown as Array<StyleProperty>;
+export const properties = (
+  transitionLongHandProperties as unknown as Array<StyleProperty>
+).filter((property) => property !== "transitionBehavior");
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;
