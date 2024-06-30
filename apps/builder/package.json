@@ -7,7 +7,8 @@
   "scripts": {
     "prebuild": "which remix",
     "build": "remix vite:build",
-    "build:webflow-presets": "css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
+    "css-to-ws": "NODE_OPTIONS=--conditions=webstudio css-to-ws",
+    "build:webflow-presets": "pnpm css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
     "start": "remix-serve build/server/index.js",
     "dev": "remix vite:dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",

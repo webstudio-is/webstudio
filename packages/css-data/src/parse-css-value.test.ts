@@ -228,6 +228,29 @@ test("parse background-attachment property as layers", () => {
   });
 });
 
+test("parse repeated value with css wide keywords", () => {
+  expect(parseCssValue("backgroundAttachment", "initial")).toEqual({
+    type: "keyword",
+    value: "initial",
+  });
+  expect(parseCssValue("backgroundAttachment", "INHERIT")).toEqual({
+    type: "keyword",
+    value: "inherit",
+  });
+  expect(parseCssValue("backgroundAttachment", "unset")).toEqual({
+    type: "keyword",
+    value: "unset",
+  });
+  expect(parseCssValue("backgroundAttachment", "revert")).toEqual({
+    type: "keyword",
+    value: "revert",
+  });
+  expect(parseCssValue("backgroundAttachment", "revert-layer")).toEqual({
+    type: "keyword",
+    value: "revert-layer",
+  });
+});
+
 test("parse transition-behavior property as layers", () => {
   expect(parseCssValue("transitionBehavior", `normal`)).toEqual({
     type: "layers",

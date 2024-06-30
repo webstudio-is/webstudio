@@ -1,5 +1,6 @@
 export * from "./core/index";
 export * from "./schema";
+export * from "./css";
 
 // necessary for sdk dts generation
 export type {
