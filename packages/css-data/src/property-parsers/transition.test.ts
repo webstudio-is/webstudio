@@ -34,41 +34,6 @@ test("parses an in-valid transitionDuration longhand property", () => {
 `);
 });
 
-test("parses a vaild transitionProeprty longhand property", () => {
-  expect(
-    parseTransitionLonghandProperty("transitionProperty", "opacity, width, all")
-  ).toMatchInlineSnapshot(`
-{
-  "type": "layers",
-  "value": [
-    {
-      "type": "keyword",
-      "value": "opacity",
-    },
-    {
-      "type": "keyword",
-      "value": "width",
-    },
-    {
-      "type": "keyword",
-      "value": "all",
-    },
-  ],
-}
-`);
-});
-
-test("parses only valid transitionProperty longhand property", () => {
-  expect(
-    parseTransitionLonghandProperty("transitionProperty", "opacity, width, foo")
-  ).toMatchInlineSnapshot(`
-{
-  "type": "invalid",
-  "value": "opacity, width, foo",
-}
-`);
-});
-
 test("parses a vaild transitionTimingFunction longhand property", () => {
   const parsedValue = parseTransitionLonghandProperty(
     "transitionTimingFunction",

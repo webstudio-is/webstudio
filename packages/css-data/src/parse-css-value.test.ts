@@ -251,6 +251,31 @@ test("parse repeated value with css wide keywords", () => {
   });
 });
 
+test("parse transition-property property", () => {
+  expect(parseCssValue("transitionProperty", "none")).toEqual({
+    type: "keyword",
+    value: "none",
+  });
+  expect(parseCssValue("transitionProperty", "opacity, width, all")).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "opacity" },
+      { type: "unparsed", value: "width" },
+      { type: "keyword", value: "all" },
+    ],
+  });
+  expect(parseCssValue("transitionProperty", "opacity, none, unknown")).toEqual(
+    {
+      type: "layers",
+      value: [
+        { type: "unparsed", value: "opacity" },
+        { type: "unparsed", value: "none" },
+        { type: "unparsed", value: "unknown" },
+      ],
+    }
+  );
+});
+
 test("parse transition-behavior property as layers", () => {
   expect(parseCssValue("transitionBehavior", `normal`)).toEqual({
     type: "layers",
