@@ -8,10 +8,17 @@ import {
 } from "@webstudio-is/css-engine";
 import { isAnimatableProperty } from "..";
 
-export const isTimingFunction = (timing: string) => {
-  const regex =
-    /^(ease(-in-out|-in|-out)?|linear|cubic-bezier\((-?\d+(\.\d+)?(, ?)?){3}-?\d+(\.\d+)?\)|steps\(\d+(,(start|end|jump-start|jump-end|jump-none|jump-both))?\))$/gm;
-  return regex.test(timing);
+export const isTimingFunction = (name: string) => {
+  const allowedNames = [
+    "ease-in",
+    "ease-out",
+    "ease-in-out",
+    "linear",
+    "cubic-bezier",
+    "steps",
+  ];
+
+  return allowedNames.includes(name);
 };
 
 export type ExtractedTransitionProperties = {
