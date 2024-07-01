@@ -2371,7 +2371,7 @@ test("Set show false when visibility's only condition is false", async () => {
       nodes: [
         {
           _id: "b35ac1a9-5a38-56c6-03ba-3196d421b95e",
-          type: "BlockContainer",
+          type: "Block",
           tag: "div",
           classes: [],
           children: [],
@@ -2386,20 +2386,8 @@ test("Set show false when visibility's only condition is false", async () => {
       assets: [],
     },
   });
-  equalFragment(fragment, <$.Heading tag="h1" at="b" />);
-  expect(toCss(fragment)).toMatchInlineSnapshot(`
-      "@media all {
-        h1 {
-          margin-right: 0;
-          margin-left: 0;
-          margin-bottom: 10px;
-          font-weight: bold;
-          margin-top: 20px;
-          font-size: 38px;
-          line-height: 44px
-        }
-      }"
-    `);
+  equalFragment(fragment, <$.Box data-ws-show={false} />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 describe("Styles", () => {
