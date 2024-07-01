@@ -51,7 +51,9 @@ const parseVariantName = (variant: string) => {
     state = separator + state;
   }
   if (wfBreakpoints.has(breakpointName as WfBreakpointName) === false) {
-    console.error(`Invalid breakpoint name: ${breakpointName}`);
+    if (breakpointName !== "main") {
+      console.error(`Invalid breakpoint name: ${breakpointName}`);
+    }
     breakpointName = "base";
   }
 
