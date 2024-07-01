@@ -107,17 +107,11 @@ export const parseTransitionLonghandProperty = (
 
             case "transitionTimingFunction": {
               if (child.type === "Identifier") {
-                if (isTimingFunction(csstree.generate(child)) === false) {
-                  throw new Error(
-                    `Invalid timing function, received ${csstree.generate(child)}`
-                  );
-                }
-
                 layers.value.push({ type: "keyword", value: child.name });
               }
 
               if (child.type === "Function") {
-                if (isTimingFunction(csstree.generate(child)) === false) {
+                if (isTimingFunction(child.name) === false) {
                   throw new Error(
                     `Invalid timing function, received ${csstree.generate(child)}`
                   );
