@@ -5,6 +5,11 @@ const Attr = z.object({ id: z.string() }).partial();
 const WfNodeData = z.object({
   attr: Attr.optional(),
   xattr: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
+  visibility: z
+    .object({
+      conditions: z.array(z.boolean()),
+    })
+    .optional(),
 });
 
 const WfBaseNode = z.object({

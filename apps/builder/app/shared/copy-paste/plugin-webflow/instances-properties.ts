@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import type { Instance, Prop, WebstudioFragment } from "@webstudio-is/sdk";
 import type { WfElementNode, WfNode } from "./schema";
+import { showAttribute } from "@webstudio-is/react-sdk";
 
 const toFragment = (
   wfNode: WfElementNode,
@@ -36,20 +37,20 @@ const toFragment = (
       });
       return;
     }
-    if (type === "number" && typeof value === "number") {
+    if (typeof value === "number") {
       fragment.props.push({
         ...prop,
-        type,
+        type: "number",
         name,
         value,
       });
       return;
     }
 
-    if (type === "boolean" && typeof value === "boolean") {
+    if (typeof value === "boolean") {
       fragment.props.push({
         ...prop,
-        type,
+        type: "boolean",
         name,
         value,
       });
@@ -75,6 +76,13 @@ const toFragment = (
     addProp("id", wfNode.data.attr.id);
   }
 
+  // Webflow will have conditions: [false, true] when condition is custom and depends on the collection value
+  // We only support condition that has a single value.
+  const conditions = wfNode.data?.visibility?.conditions ?? [];
+  if (conditions.length === 1 && conditions[0] === false) {
+    addProp(showAttribute, false);
+  }
+
   switch (component) {
     case "LineBreak": {
       return fragment;
@@ -86,7 +94,7 @@ const toFragment = (
     }
     case "List": {
       if (wfNode.tag === "ol") {
-        addProp("ordered", true, "boolean");
+        addProp("ordered", true);
       }
       addInstance(component);
       return fragment;
@@ -200,7 +208,7 @@ const toFragment = (
     }
     case "HtmlEmbed": {
       addProp("code", wfNode.v);
-      addProp("clientOnly", true, "boolean");
+      addProp("clientOnly", true);
       addInstance(component);
       return fragment;
     }
@@ -263,12 +271,12 @@ const toFragment = (
       const data = wfNode.data;
       const component = "Input";
       addProp("name", data.attr.name);
-      addProp("maxLength", data.attr.maxlength, "number");
+      addProp("maxLength", data.attr.maxlength);
       addProp("placeholder", data.attr.placeholder);
-      addProp("disabled", data.attr.disabled, "boolean");
+      addProp("disabled", data.attr.disabled);
       addProp("type", data.attr.type);
-      addProp("required", data.attr.required, "boolean");
-      addProp("autoFocus", data.attr.autofocus, "boolean");
+      addProp("required", data.attr.required);
+      addProp("autoFocus", data.attr.autofocus);
       addInstance(component);
       return fragment;
     }
@@ -276,10 +284,10 @@ const toFragment = (
       const data = wfNode.data;
       const component = "Textarea";
       addProp("name", data.attr.name);
-      addProp("maxLength", data.attr.maxlength, "number");
+      addProp("maxLength", data.attr.maxlength);
       addProp("placeholder", data.attr.placeholder);
-      addProp("required", data.attr.required, "boolean");
-      addProp("autoFocus", data.attr.autofocus, "boolean");
+      addProp("required", data.attr.required);
+      addProp("autoFocus", data.attr.autofocus);
       addInstance(component);
       return fragment;
     }
@@ -299,8 +307,8 @@ const toFragment = (
       const component = "Checkbox";
       const data = wfNode.data;
       addProp("name", data.attr.name);
-      addProp("required", data.attr.required, "boolean");
-      addProp("defaultChecked", data.attr.checked, "boolean");
+      addProp("required", data.attr.required);
+      addProp("defaultChecked", data.attr.checked);
       addInstance(component);
       return fragment;
     }
@@ -319,7 +327,7 @@ const toFragment = (
       const component = "RadioButton";
       const data = wfNode.data;
       addProp("name", data.attr.name);
-      addProp("required", data.attr.required, "boolean");
+      addProp("required", data.attr.required);
       addProp("value", data.attr.value);
       addInstance(component);
       return fragment;
@@ -329,8 +337,8 @@ const toFragment = (
       const component = "Input";
       const data = wfNode.data;
       addProp("name", data.attr.name);
-      addProp("required", data.attr.required, "boolean");
-      addProp("multiple", data.attr.multiple, "boolean");
+      addProp("required", data.attr.required);
+      addProp("multiple", data.attr.multiple);
       addInstance(component);
       return fragment;
     }
