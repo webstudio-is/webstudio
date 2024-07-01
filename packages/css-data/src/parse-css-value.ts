@@ -105,6 +105,7 @@ const repeatedProps = new Set<StyleProperty>([
   "backgroundRepeat",
   "backgroundSize",
   "backgroundImage",
+  "transitionProperty",
   "transitionBehavior",
 ]);
 
@@ -113,9 +114,18 @@ export const parseCssValue = (
   input: string,
   topLevel = true
 ): StyleValue => {
-  const potentialKeyword = input.toLowerCase();
+  const potentialKeyword = input.toLowerCase().trim();
   if (cssWideKeywords.has(potentialKeyword)) {
     return { type: "keyword", value: potentialKeyword };
+  }
+
+  if (property === "transitionProperty" && potentialKeyword === "none") {
+    if (topLevel) {
+      return { type: "keyword", value: potentialKeyword };
+    } else {
+      // none is not valid layer keyword
+      return { type: "unparsed", value: potentialKeyword };
+    }
   }
 
   const invalidValue = {
@@ -151,7 +161,8 @@ export const parseCssValue = (
 
   if (
     isTransitionLongHandProperty(property) &&
-    property !== "transitionBehavior"
+    property !== "transitionBehavior" &&
+    property !== "transitionProperty"
   ) {
     return parseTransitionLonghandProperty(property, input);
   }
