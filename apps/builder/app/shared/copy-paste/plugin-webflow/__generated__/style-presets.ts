@@ -3313,7 +3313,7 @@ export const styles = {
     {
       property: "transitionProperty",
       value: {
-        type: "invalid",
+        type: "keyword",
         value: "none",
       },
     },
@@ -8798,11 +8798,11 @@ export const styles = {
         type: "layers",
         value: [
           {
-            type: "keyword",
+            type: "unparsed",
             value: "background-color",
           },
           {
-            type: "keyword",
+            type: "unparsed",
             value: "color",
           },
         ],

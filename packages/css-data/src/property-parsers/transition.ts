@@ -60,7 +60,8 @@ export const isValidTransitionValue = (
   return (
     value.type === "keyword" ||
     value.type === "unit" ||
-    value.type === "function"
+    value.type === "function" ||
+    value.type === "unparsed"
   );
 };
 
@@ -92,19 +93,6 @@ export const parseTransitionLonghandProperty = (
 
         for (const child of children) {
           switch (property) {
-            case "transitionProperty": {
-              if (child.type === "Identifier") {
-                if (isAnimatableProperty(child.name) === false) {
-                  throw new Error(
-                    `Invalid animatable property, received ${csstree.generate(child)}`
-                  );
-                }
-
-                layers.value.push({ type: "keyword", value: child.name });
-              }
-              break;
-            }
-
             case "transitionTimingFunction": {
               if (child.type === "Identifier") {
                 if (isTimingFunction(csstree.generate(child)) === false) {

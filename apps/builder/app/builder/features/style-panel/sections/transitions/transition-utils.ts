@@ -1,5 +1,6 @@
 import {
   FunctionValue,
+  UnparsedValue,
   type KeywordValue,
   type LayersValue,
   type StyleProperty,
@@ -21,8 +22,8 @@ import {
 } from "@webstudio-is/css-data";
 import { camelCase } from "change-case";
 
-export const defaultTransitionProperty: KeywordValue = {
-  type: "keyword",
+export const defaultTransitionProperty: UnparsedValue = {
+  type: "unparsed",
   value: "opacity",
 };
 export const defaultTransitionDuration: UnitValue = {
@@ -277,7 +278,7 @@ export const editTransitionLayer = (props: {
   const { index, layers, createBatchUpdate, options, currentStyle } = props;
   const batch = createBatchUpdate();
 
-  const newTransitionProperties: KeywordValue[] = [];
+  const newTransitionProperties: Array<KeywordValue | UnparsedValue> = [];
   const newTransitionDurations: UnitValue[] = [];
   const newTransitionDelays: UnitValue[] = [];
   const newTransitionTimingFunctions: Array<KeywordValue | FunctionValue> = [];
@@ -390,7 +391,11 @@ export const hideTransitionLayer = (props: {
     batch.setProperty(property)({
       type: "layers",
       value: propertyLayer.value.map((layer, i) => {
-        if (layer.type !== "keyword" && layer.type !== "unit") {
+        if (
+          layer.type !== "keyword" &&
+          layer.type !== "unit" &&
+          layer.type !== "unparsed"
+        ) {
           return layer;
         }
 
