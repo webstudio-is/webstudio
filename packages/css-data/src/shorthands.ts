@@ -479,6 +479,35 @@ const expandAnimation = function* (value: CssNode) {
 
 /**
  *
+ * animation-range = [ <'animation-range-start'> <'animation-range-end'>? ]#
+ *
+ * <animation-range-start> =
+ *   [ normal | <length-percentage> | <timeline-range-name> <length-percentage>? ]#
+ *
+ * <animation-range-end> =
+ *   [ normal | <length-percentage> | <timeline-range-name> <length-percentage>? ]#
+ *
+ */
+const expandAnimationRange = function* (value: CssNode) {
+  const [start, end] = parseRepeated(value, (single) => {
+    const [start, end] = parseUnordered(
+      [
+        `normal | <length-percentage> | <ident> <length-percentage>?`,
+        `normal | <length-percentage> | <ident> <length-percentage>?`,
+      ],
+      single
+    );
+    return [
+      start ?? createIdentifier("normal"),
+      end ?? createIdentifier("normal"),
+    ];
+  });
+  yield ["animation-range-start", start] as const;
+  yield ["animation-range-end", end] as const;
+};
+
+/**
+ *
  * transition = <single-transition>#
  *
  * <single-transition> =
@@ -674,6 +703,39 @@ const expandScrollTimeline = function* (value: CssNode) {
   });
   yield ["scroll-timeline-name", name] as const;
   yield ["scroll-timeline-axis", axis] as const;
+};
+
+/**
+ *
+ * view-timeline =
+ *   [ <'view-timeline-name'> [ <'view-timeline-axis'> || <'view-timeline-inset'> ]? ]#
+ *
+ * <view-timeline-name> = [ none | <dashed-ident> ]#
+ *
+ * <view-timeline-axis> = [ block | inline | x | y ]#
+ *
+ * <view-timeline-inset> = [ [ auto | <length-percentage> ]{1,2} ]#
+ *
+ */
+const expandViewTimeline = function* (value: CssNode) {
+  const [name, axis, inset] = parseRepeated(value, (single) => {
+    const [name, axis, inset] = parseUnordered(
+      [
+        `none | <custom-ident>`,
+        `block | inline | x | y`,
+        `[ auto | <length-percentage> ]{1,2}`,
+      ],
+      single
+    );
+    return [
+      name ?? createIdentifier("none"),
+      axis ?? createIdentifier("block"),
+      inset ?? createIdentifier("auto"),
+    ];
+  });
+  yield ["view-timeline-name", name] as const;
+  yield ["view-timeline-axis", axis] as const;
+  yield ["view-timeline-inset", inset] as const;
 };
 
 /**
@@ -939,6 +1001,10 @@ const expandBackground = function* (value: CssNode) {
 
 const expandShorthand = function* (property: string, value: CssNode) {
   switch (property) {
+    // ignore "all" to avoid bloating styles with huge amount of longhand properties
+    case "all":
+      break;
+
     case "font":
       yield* expandFont(value);
       break;
@@ -1184,6 +1250,10 @@ const expandShorthand = function* (property: string, value: CssNode) {
       yield* expandAnimation(value);
       break;
 
+    case "animation-range":
+      yield* expandAnimationRange(value);
+      break;
+
     case "transition":
       yield* expandTransition(value);
       break;
@@ -1194,6 +1264,10 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
     case "scroll-timeline":
       yield* expandScrollTimeline(value);
+      break;
+
+    case "view-timeline":
+      yield* expandViewTimeline(value);
       break;
 
     case "scroll-margin":
@@ -1260,6 +1334,16 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
+    case "caret": {
+      const [color, shape] = parseUnordered(
+        [`<'caret-color'>`, `<'caret-shape'>`],
+        value
+      );
+      yield ["caret-color", color ?? createIdentifier("auto")] as const;
+      yield ["caret-shape", shape ?? createIdentifier("auto")] as const;
+      break;
+    }
+
     case "background-position":
       yield* expandBackgroundPosition(value);
       break;
@@ -1267,6 +1351,32 @@ const expandShorthand = function* (property: string, value: CssNode) {
     case "background":
       yield* expandBackground(value);
       break;
+
+    case "overscroll-behavior": {
+      const [x, y] = getValueList(value);
+      yield ["overscroll-behavior-x", x] as const;
+      yield ["overscroll-behavior-y", y ?? x] as const;
+      break;
+    }
+
+    case "position-try": {
+      const [order, options] = parseUnordered(
+        [
+          `normal | most-width | most-height | most-block-size | most-inline-size`,
+          `none | [ [<custom-ident> || flip-block || flip-inline || flip-start] | inset-area( <'inset-area'> ) ]#`,
+        ],
+        value
+      );
+      yield [
+        "position-try-order",
+        order ?? createIdentifier("normal"),
+      ] as const;
+      yield [
+        "position-try-options",
+        options ?? createIdentifier("none"),
+      ] as const;
+      break;
+    }
 
     default:
       yield [property, value] as const;

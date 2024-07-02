@@ -1,6 +1,15 @@
 import { expect, test } from "@jest/globals";
 import { expandShorthands } from "./shorthands";
 
+test("ignore all shorthand to not bloat webstudio data", () => {
+  expect(
+    expandShorthands([
+      ["all", "initial"],
+      ["color", "red"],
+    ])
+  ).toEqual([["color", "red"]]);
+});
+
 test("expand border", () => {
   expect(expandShorthands([["border", "1px solid red"]])).toEqual([
     ["border-top-width", "1px"],
@@ -768,6 +777,52 @@ test("expand animation with css-wide keywords", () => {
   ]);
 });
 
+test("expand animation-range", () => {
+  expect(expandShorthands([["animation-range", "normal"]])).toEqual([
+    ["animation-range-start", "normal"],
+    ["animation-range-end", "normal"],
+  ]);
+  expect(expandShorthands([["animation-range", "100px"]])).toEqual([
+    ["animation-range-start", "100px"],
+    ["animation-range-end", "normal"],
+  ]);
+  expect(expandShorthands([["animation-range", "entry 10% exit"]])).toEqual([
+    ["animation-range-start", "entry 10%"],
+    ["animation-range-end", "exit"],
+  ]);
+  expect(expandShorthands([["animation-range", "100px, 200px 50px"]])).toEqual([
+    ["animation-range-start", "100px,200px"],
+    ["animation-range-end", "normal,50px"],
+  ]);
+});
+
+test("expand view-timeline", () => {
+  expect(expandShorthands([["view-timeline", `none`]])).toEqual([
+    ["view-timeline-name", "none"],
+    ["view-timeline-axis", "block"],
+    ["view-timeline-inset", "auto"],
+  ]);
+  expect(expandShorthands([["view-timeline", `none inline 200px`]])).toEqual([
+    ["view-timeline-name", "none"],
+    ["view-timeline-axis", "inline"],
+    ["view-timeline-inset", "200px"],
+  ]);
+  expect(
+    expandShorthands([["view-timeline", `--custom_name_for_timeline inline`]])
+  ).toEqual([
+    ["view-timeline-name", "--custom_name_for_timeline"],
+    ["view-timeline-axis", "inline"],
+    ["view-timeline-inset", "auto"],
+  ]);
+  expect(
+    expandShorthands([["view-timeline", `none inline, --custom y`]])
+  ).toEqual([
+    ["view-timeline-name", "none,--custom"],
+    ["view-timeline-axis", "inline,y"],
+    ["view-timeline-inset", "auto,auto"],
+  ]);
+});
+
 test("expand transition", () => {
   expect(
     expandShorthands([["transition", `margin-right 4s ease-in-out 1s`]])
@@ -1349,14 +1404,47 @@ test("expand background", () => {
   ]);
 });
 
-test.todo("all - can negatively affect build size");
-// https://developer.mozilla.org/en-US/docs/Web/CSS/animation-range
-test.todo("animation-range");
-// https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline
-test.todo("view-timeline");
-// https://www.w3.org/TR/css-anchor-position-1/#position-try-prop
-test.todo("position-try - not used in webflow");
-// https://www.w3.org/TR/css-ui-4/
-test.todo("caret - caret-color & caret-shape");
-// https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior
-test.todo("overscroll-behavior");
+test("expand caret", () => {
+  expect(expandShorthands([["caret", "red"]])).toEqual([
+    ["caret-color", "red"],
+    ["caret-shape", "auto"],
+  ]);
+  expect(expandShorthands([["caret", "block"]])).toEqual([
+    ["caret-color", "auto"],
+    ["caret-shape", "block"],
+  ]);
+  expect(expandShorthands([["caret", "block red"]])).toEqual([
+    ["caret-color", "red"],
+    ["caret-shape", "block"],
+  ]);
+});
+
+test("expand overscroll-behavior", () => {
+  expect(expandShorthands([["overscroll-behavior", "auto"]])).toEqual([
+    ["overscroll-behavior-x", "auto"],
+    ["overscroll-behavior-y", "auto"],
+  ]);
+  expect(expandShorthands([["overscroll-behavior", "contain"]])).toEqual([
+    ["overscroll-behavior-x", "contain"],
+    ["overscroll-behavior-y", "contain"],
+  ]);
+  expect(expandShorthands([["overscroll-behavior", "contain none"]])).toEqual([
+    ["overscroll-behavior-x", "contain"],
+    ["overscroll-behavior-y", "none"],
+  ]);
+});
+
+test("expand position-try", () => {
+  expect(expandShorthands([["position-try", "none"]])).toEqual([
+    ["position-try-order", "normal"],
+    ["position-try-options", "none"],
+  ]);
+  expect(expandShorthands([["position-try", "most-width none"]])).toEqual([
+    ["position-try-order", "most-width"],
+    ["position-try-options", "none"],
+  ]);
+  expect(expandShorthands([["position-try", "--dashed-ident"]])).toEqual([
+    ["position-try-order", "normal"],
+    ["position-try-options", "--dashed-ident"],
+  ]);
+});
