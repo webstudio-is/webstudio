@@ -346,7 +346,7 @@ describe("Builder renderer= canvas | preview", () => {
     render(ui, { container });
 
     expect(
-      screen.queryByText(`Open the "Settings" panel to insert HTML code`)
+      screen.queryByText(`Open the "Settings" panel to insert HTML code.`)
     ).toBeInTheDocument();
   });
 });
