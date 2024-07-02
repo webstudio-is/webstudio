@@ -1560,12 +1560,12 @@ test("Form", async () => {
       }
       input {
         color: inherit;
-        font-style: initial;
-        font-variant-caps: initial;
-        font-weight: initial;
-        font-stretch: initial;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
         font-size: inherit;
-        font-family: unset;
+        font-family: inherit;
         cursor: pointer;
         line-height: normal;
         box-sizing: border-box;
@@ -1641,12 +1641,12 @@ test("FormButton", async () => {
     "@media all {
       input {
         color: inherit;
-        font-style: initial;
-        font-variant-caps: initial;
-        font-weight: initial;
-        font-stretch: initial;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
         font-size: inherit;
-        font-family: unset;
+        font-family: inherit;
         cursor: pointer;
         line-height: normal;
         box-sizing: border-box;
@@ -1726,12 +1726,12 @@ test("FormTextInput", async () => {
     "@media all {
       input {
         color: inherit;
-        font-style: initial;
-        font-variant-caps: initial;
-        font-weight: initial;
-        font-stretch: initial;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
         font-size: inherit;
-        font-family: unset;
+        font-family: inherit;
         cursor: pointer;
         line-height: normal;
         box-sizing: border-box;
@@ -1863,13 +1863,13 @@ test("FormTextarea", async () => {
     "@media all {
       textarea {
         color: inherit;
-        font-style: initial;
-        font-variant-caps: initial;
-        font-weight: initial;
-        font-stretch: initial;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
         font-size: inherit;
-        line-height: initial;
-        font-family: unset;
+        line-height: inherit;
+        font-family: inherit;
         overflow-x: auto;
         overflow-y: auto;
         height: auto;
@@ -2042,12 +2042,12 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
       }
       input {
         color: inherit;
-        font-style: initial;
-        font-variant-caps: initial;
-        font-weight: initial;
-        font-stretch: initial;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
         font-size: inherit;
-        font-family: unset;
+        font-family: inherit;
         cursor: pointer;
         line-height: normal;
         box-sizing: border-box;
@@ -2164,12 +2164,12 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
       }
       input {
         color: inherit;
-        font-style: initial;
-        font-variant-caps: initial;
-        font-weight: initial;
-        font-stretch: initial;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
         font-size: inherit;
-        font-family: unset;
+        font-family: inherit;
         cursor: pointer;
         line-height: normal;
         box-sizing: border-box;
@@ -2256,13 +2256,13 @@ test("FormSelect", async () => {
     "@media all {
       select {
         color: inherit;
-        font-style: initial;
-        font-variant-caps: initial;
-        font-weight: initial;
-        font-stretch: initial;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
         font-size: inherit;
-        line-height: initial;
-        font-family: unset;
+        line-height: inherit;
+        font-family: inherit;
         text-transform: none;
         margin: 0
       }

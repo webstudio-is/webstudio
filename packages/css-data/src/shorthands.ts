@@ -1,3 +1,4 @@
+import { cssWideKeywords } from "@webstudio-is/css-engine";
 import {
   List,
   parse,
@@ -6,6 +7,8 @@ import {
   type CssNode,
   type Value,
 } from "css-tree";
+
+const cssWideKeywordsSyntax = Array.from(cssWideKeywords).join(" | ");
 
 const createValueNode = (data?: CssNode[]): Value => ({
   type: "Value",
@@ -189,34 +192,6 @@ const expandLogical = function* (getProperty: GetProperty, value: CssNode) {
   const [start, end] = getValueList(value);
   yield [getProperty("start"), start] as const;
   yield [getProperty("end"), end ?? start] as const;
-};
-
-const expandEdges = function* (property: string, value: CssNode) {
-  switch (property) {
-    case "border-width":
-    case "border-style":
-    case "border-color": {
-      const type = property.split("-").pop() ?? ""; // width, style or color
-      yield* expandBox((edge) => `border-${edge}-${type}`, value);
-      break;
-    }
-    case "border-inline-width":
-    case "border-inline-style":
-    case "border-inline-color": {
-      const type = property.split("-").pop() ?? ""; // width, style or color
-      yield* expandLogical((edge) => `border-inline-${edge}-${type}`, value);
-      break;
-    }
-    case "border-block-width":
-    case "border-block-style":
-    case "border-block-color": {
-      const type = property.split("-").pop() ?? ""; // width, style or color
-      yield* expandLogical((edge) => `border-block-${edge}-${type}`, value);
-      break;
-    }
-    default:
-      yield [property, value] as const;
-  }
 };
 
 /**
@@ -1001,6 +976,30 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
+    case "border-width":
+    case "border-style":
+    case "border-color": {
+      const type = property.split("-").pop() ?? ""; // width, style or color
+      yield* expandBox((edge) => `border-${edge}-${type}`, value);
+      break;
+    }
+
+    case "border-inline-width":
+    case "border-inline-style":
+    case "border-inline-color": {
+      const type = property.split("-").pop() ?? ""; // width, style or color
+      yield* expandLogical((edge) => `border-inline-${edge}-${type}`, value);
+      break;
+    }
+
+    case "border-block-width":
+    case "border-block-style":
+    case "border-block-color": {
+      const type = property.split("-").pop() ?? ""; // width, style or color
+      yield* expandLogical((edge) => `border-block-${edge}-${type}`, value);
+      break;
+    }
+
     case "border-radius":
       yield* expandBorderRadius(value);
       break;
@@ -1291,17 +1290,20 @@ export const expandShorthands = (
     const generator = parseValue(property, value);
 
     for (const [property, value] of generator) {
+      // set all longhand properties to the same css-wide keyword
+      // specified in shorthand
+      let cssWideKeyword: undefined | CssNode;
+      if (lexer.match(cssWideKeywordsSyntax, value).matched) {
+        cssWideKeyword = value;
+      }
+
       const generator = expandBorder(property, value);
 
       for (const [property, value] of generator) {
-        const generator = expandEdges(property, value);
+        const generator = expandShorthand(property, value);
 
         for (const [property, value] of generator) {
-          const generator = expandShorthand(property, value);
-
-          for (const [property, value] of generator) {
-            longhands.push([property, generate(value)]);
-          }
+          longhands.push([property, generate(cssWideKeyword ?? value)]);
         }
       }
     }

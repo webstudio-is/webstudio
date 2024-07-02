@@ -35,6 +35,23 @@ test("expand border", () => {
   ]);
 });
 
+test("expand border with css-wide keywords", () => {
+  expect(expandShorthands([["border", "INHERIT"]])).toEqual([
+    ["border-top-width", "INHERIT"],
+    ["border-right-width", "INHERIT"],
+    ["border-bottom-width", "INHERIT"],
+    ["border-left-width", "INHERIT"],
+    ["border-top-style", "INHERIT"],
+    ["border-right-style", "INHERIT"],
+    ["border-bottom-style", "INHERIT"],
+    ["border-left-style", "INHERIT"],
+    ["border-top-color", "INHERIT"],
+    ["border-right-color", "INHERIT"],
+    ["border-bottom-color", "INHERIT"],
+    ["border-left-color", "INHERIT"],
+  ]);
+});
+
 test("expand border edges", () => {
   expect(expandShorthands([["border-top", "1px solid red"]])).toEqual([
     ["border-top-width", "1px"],
@@ -163,6 +180,15 @@ test("expand border-radius", () => {
   ]);
 });
 
+test("expand border-radius with css-wide keywords", () => {
+  expect(expandShorthands([["border-radius", "inherit"]])).toEqual([
+    ["border-top-left-radius", "inherit"],
+    ["border-top-right-radius", "inherit"],
+    ["border-bottom-right-radius", "inherit"],
+    ["border-top-left-radius", "inherit"],
+  ]);
+});
+
 test("expand outline", () => {
   expect(expandShorthands([["outline", "1px solid red"]])).toEqual([
     ["outline-width", "1px"],
@@ -173,6 +199,14 @@ test("expand outline", () => {
     ["outline-width", "1px"],
     ["outline-style", "solid"],
     ["outline-color", "currentcolor"],
+  ]);
+});
+
+test("expand outline with css-wide keywords", () => {
+  expect(expandShorthands([["outline", "inherit"]])).toEqual([
+    ["outline-width", "inherit"],
+    ["outline-style", "inherit"],
+    ["outline-color", "inherit"],
   ]);
 });
 
@@ -226,6 +260,21 @@ test("expand margin/padding", () => {
   ]);
 });
 
+test("expand margin/padding with css-wide keywords", () => {
+  expect(expandShorthands([["margin", "inherit"]])).toEqual([
+    ["margin-top", "inherit"],
+    ["margin-right", "inherit"],
+    ["margin-bottom", "inherit"],
+    ["margin-left", "inherit"],
+  ]);
+  expect(expandShorthands([["padding", "inherit"]])).toEqual([
+    ["padding-top", "inherit"],
+    ["padding-right", "inherit"],
+    ["padding-bottom", "inherit"],
+    ["padding-left", "inherit"],
+  ]);
+});
+
 test("expand inset", () => {
   expect(expandShorthands([["inset", "5px"]])).toEqual([
     ["top", "5px"],
@@ -270,6 +319,15 @@ test("expand inset", () => {
   ]);
 });
 
+test("expand inset with css-wide keywords", () => {
+  expect(expandShorthands([["inset", "inherit"]])).toEqual([
+    ["top", "inherit"],
+    ["right", "inherit"],
+    ["bottom", "inherit"],
+    ["left", "inherit"],
+  ]);
+});
+
 test("expand gap and grid-gap", () => {
   expect(expandShorthands([["gap", "5px"]])).toEqual([
     ["row-gap", "5px"],
@@ -289,6 +347,13 @@ test("expand gap and grid-gap", () => {
   ]);
   expect(expandShorthands([["grid-column-gap", "5px"]])).toEqual([
     ["column-gap", "5px"],
+  ]);
+});
+
+test("expand gap with css-wide keywords", () => {
+  expect(expandShorthands([["gap", "inherit"]])).toEqual([
+    ["row-gap", "inherit"],
+    ["column-gap", "inherit"],
   ]);
 });
 
@@ -350,6 +415,16 @@ test("expand border-image", () => {
   ]);
 });
 
+test("expand border-image with css-wide keywords", () => {
+  expect(expandShorthands([["border-image", `inherit`]])).toEqual([
+    ["border-image-source", "inherit"],
+    ["border-image-slice", "inherit"],
+    ["border-image-width", "inherit"],
+    ["border-image-outset", "inherit"],
+    ["border-image-repeat", "inherit"],
+  ]);
+});
+
 test("expand place properties", () => {
   expect(
     expandShorthands([
@@ -378,6 +453,23 @@ test("expand place properties", () => {
     ["justify-items", "end"],
     ["align-self", "start"],
     ["justify-self", "end"],
+  ]);
+});
+
+test("expand place properties with css-wide keywords", () => {
+  expect(
+    expandShorthands([
+      ["place-content", "inherit"],
+      ["place-items", "inherit"],
+      ["place-self", "inherit"],
+    ])
+  ).toEqual([
+    ["align-content", "inherit"],
+    ["justify-content", "inherit"],
+    ["align-items", "inherit"],
+    ["justify-items", "inherit"],
+    ["align-self", "inherit"],
+    ["justify-self", "inherit"],
   ]);
 });
 
@@ -411,6 +503,18 @@ test("expand font", () => {
   ]);
 });
 
+test("expand font with css-wide keywords", () => {
+  expect(expandShorthands([["font", `inherit`]])).toEqual([
+    ["font-style", "inherit"],
+    ["font-variant-caps", "inherit"],
+    ["font-weight", "inherit"],
+    ["font-stretch", "inherit"],
+    ["font-size", "inherit"],
+    ["line-height", "inherit"],
+    ["font-family", "inherit"],
+  ]);
+});
+
 test("expand font-synthesis", () => {
   expect(expandShorthands([["font-synthesis", `none`]])).toEqual([
     ["font-synthesis-weight", "none"],
@@ -431,6 +535,15 @@ test("expand font-synthesis", () => {
     ["font-synthesis-style", "auto"],
     ["font-synthesis-small-caps", "auto"],
     ["font-synthesis-position", "auto"],
+  ]);
+});
+
+test("expand font-synthesis with css-wide keywords", () => {
+  expect(expandShorthands([["font-synthesis", `inherit`]])).toEqual([
+    ["font-synthesis-weight", "inherit"],
+    ["font-synthesis-style", "inherit"],
+    ["font-synthesis-small-caps", "inherit"],
+    ["font-synthesis-position", "inherit"],
   ]);
 });
 
@@ -463,6 +576,18 @@ test("expand font-variant", () => {
     ["font-variant-east-asian", "normal"],
     ["font-variant-position", "normal"],
     ["font-variant-emoji", "normal"],
+  ]);
+});
+
+test("expand font-variant with css-wide keywords", () => {
+  expect(expandShorthands([["font-variant", `inherit`]])).toEqual([
+    ["font-variant-ligatures", "inherit"],
+    ["font-variant-caps", "inherit"],
+    ["font-variant-alternates", "inherit"],
+    ["font-variant-numeric", "inherit"],
+    ["font-variant-east-asian", "inherit"],
+    ["font-variant-position", "inherit"],
+    ["font-variant-emoji", "inherit"],
   ]);
 });
 
@@ -500,11 +625,6 @@ test("expand text-emphasis", () => {
 });
 
 test("expand flex", () => {
-  expect(expandShorthands([["flex", "initial"]])).toEqual([
-    ["flex-grow", "0"],
-    ["flex-shrink", "1"],
-    ["flex-basis", "auto"],
-  ]);
   expect(expandShorthands([["flex", "auto"]])).toEqual([
     ["flex-grow", "1"],
     ["flex-shrink", "1"],
@@ -529,6 +649,14 @@ test("expand flex", () => {
     ["flex-grow", "2"],
     ["flex-shrink", "3"],
     ["flex-basis", "0"],
+  ]);
+});
+
+test("expand flex with css-wide keywords", () => {
+  expect(expandShorthands([["flex", "inherit"]])).toEqual([
+    ["flex-grow", "inherit"],
+    ["flex-shrink", "inherit"],
+    ["flex-basis", "inherit"],
   ]);
 });
 
@@ -621,6 +749,22 @@ test("expand animation", () => {
     ["animation-timeline", "auto"],
     ["animation-range-start", "normal"],
     ["animation-range-end", "normal"],
+  ]);
+});
+
+test("expand animation with css-wide keywords", () => {
+  expect(expandShorthands([["animation", `inherit`]])).toEqual([
+    ["animation-duration", "inherit"],
+    ["animation-timing-function", "inherit"],
+    ["animation-delay", "inherit"],
+    ["animation-iteration-count", "inherit"],
+    ["animation-direction", "inherit"],
+    ["animation-fill-mode", "inherit"],
+    ["animation-play-state", "inherit"],
+    ["animation-name", "inherit"],
+    ["animation-timeline", "inherit"],
+    ["animation-range-start", "inherit"],
+    ["animation-range-end", "inherit"],
   ]);
 });
 
