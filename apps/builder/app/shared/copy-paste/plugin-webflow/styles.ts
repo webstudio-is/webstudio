@@ -332,14 +332,21 @@ const mapComponentAndPresetStyles = (
   return presetStyles;
 };
 
-export const addStyles = async (
-  wfNodes: Map<WfNode["_id"], WfNode>,
-  wfStyles: Map<WfStyle["_id"], WfStyle>,
-  wfAssets: Map<WfAsset["_id"], WfAsset>,
-  doneNodes: Map<WfNode["_id"], Instance["id"] | false>,
-  fragment: WebstudioFragment,
-  generateStyleSourceId: (sourceData: string) => Promise<string>
-) => {
+export const addStyles = async ({
+  wfNodes,
+  wfStyles,
+  wfAssets,
+  doneNodes,
+  fragment,
+  generateStyleSourceId,
+}: {
+  wfNodes: Map<WfNode["_id"], WfNode>;
+  wfStyles: Map<WfStyle["_id"], WfStyle>;
+  wfAssets: Map<WfAsset["_id"], WfAsset>;
+  doneNodes: Map<WfNode["_id"], Instance["id"] | false>;
+  fragment: WebstudioFragment;
+  generateStyleSourceId: (sourceData: string) => Promise<string>;
+}) => {
   const { styles: stylePresets } = await import(
     "./__generated__/style-presets"
   );

@@ -78,14 +78,14 @@ const toWebstudioFragment = async (wfData: WfData) => {
     return nanoHash(`${projectId}-${sourceData}`);
   };
 
-  await addStyles(
+  await addStyles({
     wfNodes,
     wfStyles,
     wfAssets,
     doneNodes,
     fragment,
-    generateStyleSourceId
-  );
+    generateStyleSourceId,
+  });
   // First node should be always the root node in theory, if not
   // we need to find a node that is not a child of any other node.
   const rootWfNode = wfData.payload.nodes[0];
