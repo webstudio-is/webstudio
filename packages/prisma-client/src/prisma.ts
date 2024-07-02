@@ -34,7 +34,7 @@ declare global {
     | undefined;
 }
 
-const logPrisma = process.env.NODE_ENV === "production";
+const logPrisma = true || process.env.NODE_ENV === "production";
 
 type PrismaClientOptions = {
   datasourceUrl: string;
