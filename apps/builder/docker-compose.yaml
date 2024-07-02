@@ -5,7 +5,7 @@ volumes:
 
 services:
   db:
-    image: postgres
+    image: supabase/postgres
     # Uncomment to log all queries
     command: ["postgres", "-c", "log_statement=all"]
     restart: always

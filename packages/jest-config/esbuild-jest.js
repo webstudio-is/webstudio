@@ -20,6 +20,9 @@ const createTransformer = () => ({
       sourcemap: true,
       sourcesContent: false,
       sourcefile: filename,
+      define: {
+        "import.meta.env": "{}",
+      },
     });
 
     const map = {

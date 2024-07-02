@@ -12,15 +12,19 @@
     "generate": "PRISMA_BINARY_TARGET=${PRISMA_BINARY_TARGET:-'[\"native\"]'} prisma generate",
     "build:prod": "PRISMA_BINARY_TARGET='[\"rhel-openssl-3.0.x\"]' pnpm build",
     "dts": "tsc --declarationDir lib",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest ./src/patches.test.js",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch ./src/patches.test.js",
     "migrations": "./migrations-cli/cli.ts"
   },
   "bin": {
     "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@prisma/client": "^5.12.1",
     "@types/node": "^20.12.7",
     "@webstudio-is/tsconfig": "workspace:*",
+    "immer": "^10.0.3",
     "prisma": "^5.12.1",
     "typescript": "5.5.2",
     "zod": "^3.22.4"

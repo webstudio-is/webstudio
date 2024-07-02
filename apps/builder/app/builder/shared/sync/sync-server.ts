@@ -182,9 +182,10 @@ const syncServer = async function () {
           // user may cancel to copy own state before reloading
           if (result.status === "version_mismatched") {
             const error =
+              result.errors ??
               "You are currently in single-player mode. " +
-              "The project has been edited in a different tab, browser, or by another user. " +
-              "Please reload the page to get the latest version.";
+                "The project has been edited in a different tab, browser, or by another user. " +
+                "Please reload the page to get the latest version.";
 
             const shouldReload = confirm(error);
             if (shouldReload) {
