@@ -92,6 +92,11 @@ export const isValidDeclaration = (
 
   const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
 
+  // allow to parse unknown properties as unparsed
+  if (matchResult.error?.message.includes("Unknown property")) {
+    return true;
+  }
+
   return matchResult.matched != null;
 };
 
@@ -239,8 +244,8 @@ export const parseCssValue = (
       const values = keywordValues[property as keyof typeof keywordValues];
       if (values === undefined) {
         return {
-          type: "invalid",
-          value: "",
+          type: "unparsed",
+          value: input,
         };
       }
       const lettersRegex = /[^a-zA-Z]+/g;

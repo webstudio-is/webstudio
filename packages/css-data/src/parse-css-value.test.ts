@@ -1,5 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { parseCssValue } from "./parse-css-value";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 
 describe("Parse CSS value", () => {
   describe("number value", () => {
@@ -294,4 +295,23 @@ test("parse transition-behavior property as layers", () => {
     type: "invalid",
     value: "normal, invalid",
   });
+});
+
+test("parse unknown properties as unparsed", () => {
+  expect(parseCssValue("animationTimeline" as StyleProperty, "auto")).toEqual({
+    type: "unparsed",
+    value: "auto",
+  });
+  expect(
+    parseCssValue("animationRangeStart" as StyleProperty, "normal")
+  ).toEqual({
+    type: "unparsed",
+    value: "normal",
+  });
+  expect(parseCssValue("animationRangeEnd" as StyleProperty, "normal")).toEqual(
+    {
+      type: "unparsed",
+      value: "normal",
+    }
+  );
 });
