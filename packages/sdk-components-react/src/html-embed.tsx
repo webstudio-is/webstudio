@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
   useState,
   type ReactNode,
+  useMemo,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
@@ -147,6 +148,13 @@ const ClientEmbed = (props: ChildProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const executeScripts = useRef(true);
 
+  const html = useMemo(
+    () => ({
+      __html: code ?? "",
+    }),
+    [code]
+  );
+
   useEffect(() => {
     const container = containerRef.current;
 
@@ -160,7 +168,7 @@ const ClientEmbed = (props: ChildProps) => {
     <div
       {...rest}
       ref={mergeRefs(innerRef, containerRef)}
-      dangerouslySetInnerHTML={{ __html: code ?? "" }}
+      dangerouslySetInnerHTML={html}
     />
   );
 };
