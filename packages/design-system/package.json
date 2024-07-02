@@ -8,8 +8,7 @@
   "scripts": {
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
     "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm test"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

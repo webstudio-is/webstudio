@@ -6,12 +6,10 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
     "build": "rm -rf lib && esbuild src/index.ts ./src/css/normalize.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
-    "checks": "pnpm typecheck && pnpm test"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

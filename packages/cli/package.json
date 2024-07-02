@@ -23,9 +23,7 @@
   ],
   "scripts": {
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
     "build": "rm -rf lib && esbuild src/cli.ts --outdir=lib --bundle --format=esm --packages=external",
-    "dev": "esbuild src/cli.ts --watch --bundle --format=esm --packages=external --outdir=./lib",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "license": "AGPL-3.0-or-later",
