@@ -7,7 +7,6 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"

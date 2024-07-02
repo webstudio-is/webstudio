@@ -6,19 +6,14 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
     "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "typecheck": "tsc",
-    "checks": "pnpm typecheck"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
-    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.5.2"
   },
@@ -28,8 +23,7 @@
     "import": "./lib/index.js"
   },
   "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
+    "lib/*"
   ],
   "license": "AGPL-3.0-or-later",
   "private": false,

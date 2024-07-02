@@ -1467,12 +1467,6 @@ importers:
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
-      '@jest/globals':
-        specifier: ^29.7.0
-        version: 29.7.0
-      '@webstudio-is/jest-config':
-        specifier: workspace:*
-        version: link:../jest-config
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

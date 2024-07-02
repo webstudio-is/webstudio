@@ -6,8 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc",
-    "checks": "pnpm typecheck"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@trpc/server": "^10.38.1",

@@ -6,9 +6,9 @@
   "scripts": {
     "build": "pnpm -r --filter='!./fixtures/*' build",
     "dts": "pnpm -r dts",
-    "checks": "pnpm -r checks",
     "dev": "pnpm --filter='@webstudio-is/builder' --filter='@webstudio-is/prisma-client' --parallel --recursive dev",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build",
