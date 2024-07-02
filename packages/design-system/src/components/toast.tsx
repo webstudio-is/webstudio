@@ -3,6 +3,7 @@ import hotToast, {
   resolveValue,
   useToaster,
   type Toast as HotToast,
+  type ToastOptions,
 } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
 import { Box } from "./box";
@@ -13,7 +14,7 @@ import { Text } from "./text";
 import { Tooltip } from "./tooltip";
 import { useState } from "react";
 
-const VIEWPORT_PADDING = 20;
+const VIEWPORT_PADDING = 8;
 
 const hide = keyframes({
   "0%": { opacity: 1 },
@@ -43,7 +44,6 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
   maxWidth: "100vw",
   margin: 0,
   listStyle: "none",
-  zIndex: theme.zIndices.max,
   outline: "none",
 });
 
@@ -74,7 +74,6 @@ const borderColor = "--ws-toast-border-color";
 const iconColor = "--ws-toast-icon-color";
 
 const ToastVariants = styled("div", {
-  width: theme.spacing[32],
   [borderAccentBackgroundColor]: theme.colors.foregroundMain,
   [backgroundColor]: theme.colors.backgroundNeutralNotification,
   [borderColor]: theme.colors.borderNeutral,
@@ -104,25 +103,45 @@ type ToastVariant = React.ComponentProps<typeof ToastVariants>["variant"];
 const cssVar = (name: string) => `var(${name})`;
 
 export const Toast = ({
+  onClose,
   children,
   variant,
+  icon,
 }: {
+  onClose?: () => void;
   children: React.ReactNode;
   variant?: ToastVariant;
+  icon?: React.ReactNode;
 }) => {
   const [copied, setCopied] = useState(false);
 
-  console.log(copied ? "Copied to Clipboard" : "Click to Copy");
+  const tooltipEnabled = variant === "error" || variant === "warning";
 
   return (
     <Tooltip
-      content={copied ? "Copied to Clipboard" : "Click to Copy"}
-      onClick={() => {
-        navigator.clipboard.writeText(children?.toString() ?? "");
-        setCopied(true);
-      }}
+      // Preserve tooltip open state after click
+      open={copied ? true : undefined}
+      content={
+        tooltipEnabled
+          ? copied
+            ? "Copied to Clipboard"
+            : "Click to Copy"
+          : undefined
+      }
     >
-      <ToastVariants variant={variant}>
+      <ToastVariants
+        css={{
+          width: theme.spacing[32],
+        }}
+        variant={variant}
+        onClick={async () => {
+          navigator.clipboard.writeText(children?.toString() ?? "");
+          setCopied(true);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setCopied(false);
+          onClose?.();
+        }}
+      >
         <Grid
           css={{
             display: "grid",
@@ -150,12 +169,20 @@ export const Toast = ({
             }}
           >
             <Box css={{ color: cssVar(iconColor) }}>
-              <AlertCircleIcon size={24} />
+              {icon ? icon : <AlertCircleIcon size={24} />}
             </Box>
 
             <Grid gap={"1"}>
               <ToastPrimitive.Description asChild>
-                <Text variant={"labelsSentenceCase"}>{children}</Text>
+                <Text
+                  css={{
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}
+                  variant={"labelsSentenceCase"}
+                >
+                  {children}
+                </Text>
               </ToastPrimitive.Description>
             </Grid>
           </Grid>
@@ -187,12 +214,15 @@ export const Toaster = () => {
             key={toastData.id}
             onMouseEnter={startPause}
             onMouseLeave={endPause}
-            onClick={() => {
-              hotToast.remove(toastData.id);
-            }}
             duration={toastData.duration}
           >
-            <Toast variant={toastVariant}>
+            <Toast
+              variant={toastVariant}
+              onClose={() => {
+                hotToast.remove(toastData.id);
+              }}
+              icon={toastData.icon}
+            >
               {resolveValue(toastData.message, toastData)}
             </Toast>
           </AnimatedToast>
@@ -203,9 +233,10 @@ export const Toaster = () => {
   );
 };
 
+type Options = Pick<ToastOptions, "duration" | "id" | "icon">;
+
 export const toast = {
-  info: hotToast,
-  error: hotToast.error,
-  success: hotToast.success,
-  warn: hotToast.custom,
+  info: (value: string, options?: Options) => hotToast.success(value, options),
+  error: (value: string, options?: Options) => hotToast.error(value, options),
+  warn: (value: string, options?: Options) => hotToast.custom(value, options),
 };

@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
-import { Box, Grid, toast, Text } from "@webstudio-is/design-system";
+import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
 import type {
@@ -29,8 +29,9 @@ import {
   getSha256HashOfFile,
   uploadingFileDataToAsset,
 } from "./asset-utils";
-import { Image } from "../image-manager/image";
+import { Image } from "@webstudio-is/image";
 import invariant from "tiny-invariant";
+import { $imageLoader } from "~/shared/nano-states";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   serverSyncStore.createTransaction([$assets], (assets) => {
@@ -238,43 +239,23 @@ const handleAfterSubmit = (
   safeSetAsset({ ...uploadedAsset, id: assetId }, projectId);
 };
 
-const ToastMessage = ({
-  assetId,
-  objectURL,
-  children,
-  title,
-}: {
-  assetId: string;
-  objectURL: string;
-  children: string;
-  title: string;
-}) => {
+const imageWidth = css({
+  maxWidth: "100%",
+});
+
+const ToastImageInfo = ({ objectURL }: { objectURL: string }) => {
+  const imageLoader = useStore($imageLoader);
+
   return (
-    <Grid
-      css={{
-        gridTemplateColumns: "20% 1fr",
-      }}
-      gap={2}
-    >
+    <Box css={{ width: theme.spacing[18] }}>
       <Image
-        alt={children}
-        objectURL={objectURL}
-        name={""}
-        assetId={assetId}
+        className={imageWidth()}
+        src={objectURL}
+        optimize={false}
         width={64}
+        loader={imageLoader}
       />
-      <Grid>
-        <Text variant={"titles"}>{title}</Text>
-        <Box
-          css={{
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-          }}
-        >
-          {children}
-        </Box>
-      </Grid>
-    </Grid>
+    </Box>
   );
 };
 
@@ -309,15 +290,9 @@ const processUpload = async (
       const assetId = fileData.assetId;
 
       if ($assets.get().has(assetId)) {
-        toast.warn(
-          <ToastMessage
-            title="Info"
-            assetId={assetId}
-            objectURL={fileData.objectURL}
-          >
-            Asset already exists
-          </ToastMessage>
-        );
+        toast.info("Asset already exists", {
+          icon: <ToastImageInfo objectURL={fileData.objectURL} />,
+        });
 
         deleteUploadingFileData(assetId);
         continue;
@@ -335,15 +310,9 @@ const processUpload = async (
         },
         onError: (error) => {
           deleteUploadingFileData(assetId);
-          toast.error(
-            <ToastMessage
-              title="Error"
-              assetId={assetId}
-              objectURL={fileData.objectURL}
-            >
-              {error}
-            </ToastMessage>
-          );
+          toast.error(error, {
+            icon: <ToastImageInfo objectURL={fileData.objectURL} />,
+          });
 
           safeDeleteAssets([assetId], projectId);
         },
@@ -393,16 +362,9 @@ export async function uploadAssets(
     if (uniqFilesDataMap.has(existingAssetId)) {
       const fileData = uniqFilesDataMap.get(existingAssetId)!;
       uniqFilesDataMap.delete(existingAssetId);
-
-      toast.warn(
-        <ToastMessage
-          title="Info"
-          assetId={fileData.assetId}
-          objectURL={fileData.objectURL}
-        >
-          Asset already exists
-        </ToastMessage>
-      );
+      toast.info("Asset already exists", {
+        icon: <ToastImageInfo objectURL={fileData.objectURL} />,
+      });
     }
   }
 
