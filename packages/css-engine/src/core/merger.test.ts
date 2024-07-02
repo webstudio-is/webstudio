@@ -1,4 +1,5 @@
 import { expect, test } from "@jest/globals";
+import type { StyleValue } from "../schema";
 import { mergeStyles } from "./merger";
 import type { StyleMap } from "./rules";
 import { toValue } from "./to-value";
@@ -47,24 +48,6 @@ test("merge border when all parts are set", () => {
   ]);
 });
 
-test("should not merge border with initial", () => {
-  expect(
-    toStringMap(
-      mergeStyles(
-        new Map([
-          ["border-width", { type: "keyword", value: "initial" }],
-          ["border-style", { type: "keyword", value: "solid" }],
-          ["border-color", { type: "keyword", value: "red" }],
-        ])
-      )
-    )
-  ).toEqual([
-    ["border-width", "initial"],
-    ["border-style", "solid"],
-    ["border-color", "red"],
-  ]);
-});
-
 test("merge border with vars", () => {
   expect(
     toStringMap(
@@ -77,6 +60,31 @@ test("merge border with vars", () => {
       )
     )
   ).toEqual([["border", "var(--width) var(--style) var(--color)"]]);
+});
+
+test("should not merge border with initial, inherit or unset", () => {
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          [
+            "border-width",
+            {
+              type: "var",
+              value: "width",
+              fallbacks: [{ type: "keyword", value: "unset" }],
+            },
+          ],
+          ["border-style", { type: "var", value: "style", fallbacks: [] }],
+          ["border-color", { type: "var", value: "color", fallbacks: [] }],
+        ])
+      )
+    )
+  ).toEqual([
+    ["border-width", "var(--width, unset)"],
+    ["border-style", "var(--style)"],
+    ["border-color", "var(--color)"],
+  ]);
 });
 
 test("merge margin/padding when the same value is set", () => {
@@ -291,4 +299,55 @@ test("merge text-wrap with vars", () => {
       )
     )
   ).toEqual([["text-wrap", "var(--style)"]]);
+});
+
+const layers = (...keywords: string[]): StyleValue => ({
+  type: "layers",
+  value: keywords.map((value) => ({ type: "keyword", value })),
+});
+
+test("merge background-position-{x,y}", () => {
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["background-position-x", layers("right")],
+          ["background-position-y", layers("bottom")],
+        ])
+      )
+    )
+  ).toEqual([["background-position", "right bottom"]]);
+  expect(
+    toStringMap(
+      mergeStyles(new Map([["background-position-x", layers("right")]]))
+    )
+  ).toEqual([["background-position-x", "right"]]);
+  expect(
+    toStringMap(
+      mergeStyles(new Map([["background-position-y", layers("bottom")]]))
+    )
+  ).toEqual([["background-position-y", "bottom"]]);
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["background-position-x", layers("right", "left")],
+          ["background-position-y", layers("bottom", "top")],
+        ])
+      )
+    )
+  ).toEqual([["background-position", "right bottom, left top"]]);
+  expect(
+    toStringMap(
+      mergeStyles(
+        new Map([
+          ["background-position-x", layers("right", "left")],
+          ["background-position-y", layers("bottom")],
+        ])
+      )
+    )
+  ).toEqual([
+    ["background-position-x", "right, left"],
+    ["background-position-y", "bottom"],
+  ]);
 });

@@ -54,7 +54,7 @@ describe("insert page copy", () => {
         homePage: {
           id: "pageId",
           name: "Name",
-          path: "/",
+          path: "",
           title: `"Title"`,
           meta: {},
           rootInstanceId: "bodyId",
@@ -113,7 +113,7 @@ describe("insert page copy", () => {
         homePage: {
           id: "homePageId",
           name: "Home",
-          path: "/",
+          path: "",
           title: `"Home"`,
           meta: {},
           rootInstanceId: "bodyId",
@@ -160,7 +160,7 @@ describe("insert page copy", () => {
         homePage: {
           id: "homePageId",
           name: "Home",
-          path: "/",
+          path: "",
           title: `"Home"`,
           meta: {},
           rootInstanceId: "bodyId",
@@ -224,7 +224,7 @@ describe("insert page copy", () => {
         homePage: {
           id: "homePageId",
           name: "Home",
-          path: "/",
+          path: "",
           title: `"Home"`,
           meta: {},
           rootInstanceId: "bodyId",
@@ -285,7 +285,7 @@ describe("insert page copy", () => {
         homePage: {
           id: "pageId",
           name: "Name",
-          path: "/",
+          path: "",
           title: `"Title: " + $ws$dataSource$systemId.params.value`,
           meta: {
             description: `"Description: " + $ws$dataSource$systemId.params.value`,
@@ -359,7 +359,7 @@ describe("insert page copy", () => {
         homePage: {
           id: "pageId",
           name: "Name",
-          path: "/",
+          path: "",
           title: `"Title"`,
           meta: {},
           rootInstanceId: "bodyId",

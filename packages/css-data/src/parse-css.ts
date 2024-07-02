@@ -1,11 +1,33 @@
+import { camelCase } from "change-case";
 import * as csstree from "css-tree";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
-import * as parsers from "./property-parsers/parsers";
-import * as toLonghand from "./property-parsers/to-longhand";
-import { camelCase } from "change-case";
 import { expandShorthands } from "./shorthands";
+
+/**
+ * Store prefixed properties without change
+ * and convert to camel case only unprefixed properties
+ * @todo stop converting to camel case and use hyphenated format
+ */
+export const normalizePropertyName = (property: string) => {
+  // these are manually added with pascal case
+  // convert unprefixed used by webflow version into prefixed one
+  if (property === "-webkit-font-smoothing" || property === "font-smoothing") {
+    return "WebkitFontSmoothing";
+  }
+  if (property === "-moz-osx-font-smoothing") {
+    return "MozOsxFontSmoothing";
+  }
+  // webflow use unprefixed version
+  if (property === "tap-highlight-color") {
+    return "-webkit-tap-highlight-color";
+  }
+  if (property.startsWith("-")) {
+    return property;
+  }
+  return camelCase(property);
+};
 
 // @todo we don't parse correctly most of them if not all
 const prefixedProperties = [
@@ -26,60 +48,14 @@ const unprefixProperty = (property: string) => {
   return property.replace(prefixRegex, "");
 };
 
-const camelCaseProperty = (property: string) => {
-  let camelcased = camelCase(property);
-  if (property[0] === "-") {
-    camelcased = camelcased[0].toLocaleUpperCase() + camelcased.slice(1);
-  }
-  return camelcased;
-};
-
 type Selector = string;
 
 export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
 
-type Longhand = keyof typeof toLonghand;
-
 const parseCssValue = (
-  property: Longhand | StyleProperty,
+  property: string,
   value: string
 ): Map<StyleProperty, StyleValue> => {
-  const unwrap = toLonghand[property as Longhand];
-
-  if (typeof unwrap === "function") {
-    const longhands = unwrap(value);
-
-    return new Map(
-      Object.entries(longhands).map(([property, value]) => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore @todo remove this ignore: property is a `keyof typeof longhands` which is a key in parsers but TS can't infer the link
-        const valueParser = parsers[property];
-
-        if (typeof valueParser === "function") {
-          return [property, valueParser(value)];
-        }
-        if (Array.isArray(value)) {
-          return [
-            property,
-            {
-              type: "invalid",
-              value: value.join(""),
-            },
-          ];
-        }
-
-        if (value === undefined || value === "") {
-          return [property, { type: "invalid", value: "" }];
-        }
-
-        return [
-          property,
-          parseCssValueLonghand(property as StyleProperty, value),
-        ];
-      })
-    ) as Map<StyleProperty, StyleValue>;
-  }
-
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
   for (const [property, value] of expanded) {
@@ -98,7 +74,10 @@ const parseCssValue = (
 
     final.set(
       property,
-      parseCssValueLonghand(property as StyleProperty, value)
+      parseCssValueLonghand(
+        normalizePropertyName(property) as StyleProperty,
+        value
+      )
     );
   }
   return final;
@@ -157,7 +136,7 @@ export const parseCss = (css: string) => {
       const stringValue = csstree.generate(node.value);
 
       const parsedCss = parseCssValue(
-        unprefixProperty(node.property) as Longhand | StyleProperty,
+        unprefixProperty(node.property),
         stringValue
       );
 
@@ -170,7 +149,7 @@ export const parseCss = (css: string) => {
               declarations = styles[selector] = [];
             }
             const styleDecl: EmbedTemplateStyleDecl = {
-              property: camelCaseProperty(
+              property: normalizePropertyName(
                 unprefixProperty(property)
               ) as StyleProperty,
               value,

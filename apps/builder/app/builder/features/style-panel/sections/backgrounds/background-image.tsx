@@ -24,12 +24,6 @@ type IntermediateValue = {
   value: string;
 };
 
-const extractUrlFromValue = (cssValue: string) => {
-  const regex = /url\(["']?(.*?)["']?\)/;
-  const match = cssValue.match(regex);
-  return match ? match[1] : undefined;
-};
-
 const isAbsoluteURL = (value: string) => {
   try {
     return Boolean(new URL(value));
@@ -103,9 +97,29 @@ export const BackgroundImage = (
       return;
     }
 
-    if (newValue.type === "unparsed") {
-      const urlFromProperty = extractUrlFromValue(value);
-      if (urlFromProperty === undefined) {
+    const [layer] = newValue.type === "layers" ? newValue.value : [newValue];
+    if (layer?.type === "keyword") {
+      setIntermediateValue(undefined);
+      props.setProperty(property)(layer, options);
+    }
+    if (layer?.type !== "image" || layer.value.type !== "url") {
+      setIntermediateValue({
+        type: "invalid",
+        value: value,
+      });
+      return;
+    }
+    const url = layer.value.url;
+
+    if (isAbsoluteURL(url) === true) {
+      props.setProperty(property)(layer, options);
+    } else {
+      const usedAsset = Array.from($assets.get().values()).find(
+        (asset) => asset.type === "image" && asset.name === url
+      );
+
+      if (usedAsset === undefined) {
+        setErrors([`Asset ${url} is not found in project `]);
         setIntermediateValue({
           type: "invalid",
           value: value,
@@ -113,43 +127,17 @@ export const BackgroundImage = (
         return;
       }
 
-      if (isAbsoluteURL(urlFromProperty) === true) {
-        props.setProperty(property)(
-          {
-            type: "image",
-            value: {
-              type: "url",
-              url: urlFromProperty,
-            },
+      setErrors([]);
+      props.setProperty(property)(
+        {
+          type: "image",
+          value: {
+            type: "asset",
+            value: usedAsset.id,
           },
-          options
-        );
-      } else {
-        const usedAsset = Array.from($assets.get().values()).find(
-          (asset) => asset.type === "image" && asset.name === urlFromProperty
-        );
-
-        if (usedAsset === undefined) {
-          setErrors([`Asset ${urlFromProperty} is not found in project `]);
-          setIntermediateValue({
-            type: "invalid",
-            value: value,
-          });
-          return;
-        }
-
-        setErrors([]);
-        props.setProperty(property)(
-          {
-            type: "image",
-            value: {
-              type: "asset",
-              value: usedAsset.id,
-            },
-          },
-          options
-        );
-      }
+        },
+        options
+      );
     }
   };
 

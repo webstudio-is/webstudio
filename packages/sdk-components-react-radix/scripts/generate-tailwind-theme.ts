@@ -135,7 +135,7 @@ const generatedThemeData: GeneratedThemeItem[] = [
   },
   {
     name: "lineClamp",
-    values: parsePropertyValues("lineClamp", theme.lineClamp),
+    values: parsePropertyValues("-webkit-line-clamp", theme.lineClamp),
   },
   {
     name: "textUnderlineOffset",

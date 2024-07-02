@@ -5,6 +5,11 @@ const Attr = z.object({ id: z.string() }).partial();
 const WfNodeData = z.object({
   attr: Attr.optional(),
   xattr: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
+  visibility: z
+    .object({
+      conditions: z.array(z.boolean()),
+    })
+    .optional(),
 });
 
 const WfBaseNode = z.object({
@@ -37,6 +42,7 @@ export const wfNodeTypes = [
   "Subscript",
   "Section",
   "BlockContainer",
+  "Container",
   "Layout",
   "Cell",
   "VFlex",
@@ -61,9 +67,11 @@ export const wfNodeTypes = [
   "FormRadioWrapper",
   "FormRadioInput",
   "FormSelect",
+  "LineBreak",
+  "Span",
 ] as const;
 
-export const WfElementNode = z.union([
+const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
@@ -80,10 +88,26 @@ export const WfElementNode = z.union([
       attr: Attr.optional(),
       block: z.enum(["inline", "block", ""]).optional(),
       button: z.boolean().optional(),
-      link: z.object({
-        url: z.string(),
-        target: z.string().optional(),
-      }),
+      link: z.union([
+        // External link
+        z.object({
+          url: z.string(),
+          target: z.string().optional(),
+        }),
+        // Page link and section link
+        z.object({
+          href: z.string(),
+        }),
+        // Email link
+        z.object({
+          email: z.string(),
+          subject: z.string().optional(),
+        }),
+        // Phone link
+        z.object({
+          tel: z.string(),
+        }),
+      ]),
     }),
   }),
   WfBaseNode.extend({ type: z.enum(["Paragraph"]) }),
@@ -95,6 +119,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Subscript"]) }),
   WfBaseNode.extend({ type: z.enum(["Section"]) }),
   WfBaseNode.extend({ type: z.enum(["BlockContainer"]) }),
+  WfBaseNode.extend({ type: z.enum(["Container"]) }),
   WfBaseNode.extend({ type: z.enum(["Layout"]) }),
   WfBaseNode.extend({ type: z.enum(["Cell"]) }),
   WfBaseNode.extend({ type: z.enum(["VFlex"]) }),
@@ -231,6 +256,8 @@ export const WfElementNode = z.union([
       }),
     }),
   }),
+  WfBaseNode.extend({ type: z.enum(["LineBreak"]) }),
+  WfBaseNode.extend({ type: z.enum(["Span"]) }),
 ]);
 
 export type WfElementNode = z.infer<typeof WfElementNode>;
@@ -240,10 +267,10 @@ export type WfElementNode = z.infer<typeof WfElementNode>;
 //@todo verify the other way around too
 //(typeof WfElementNode)["type"] satisfies typeof wfNodeTypes[number]
 
-export const WfNode = z.union([WfElementNode, WfTextNode]);
+const WfNode = z.union([WfElementNode, WfTextNode]);
 export type WfNode = z.infer<typeof WfNode>;
 
-export const WfStyle = z.object({
+const WfStyle = z.object({
   _id: z.string(),
   type: z.enum(["class"]),
   name: z.string(),
@@ -261,7 +288,18 @@ export const WfStyle = z.object({
 });
 export type WfStyle = z.infer<typeof WfStyle>;
 
-const AssetVariantSchema = z.object({
+const WfErrorAssetVariant = z.object({
+  origFileName: z.string(),
+  fileName: z.string(),
+  format: z.string(),
+  size: z.number(),
+  width: z.number(),
+  quality: z.number(),
+  error: z.string(),
+  _id: z.string(),
+});
+
+const WfAssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
@@ -273,7 +311,7 @@ const AssetVariantSchema = z.object({
   s3Url: z.string().url(),
 });
 
-export const WfAssetSchema = z.object({
+const WfAsset = z.object({
   cdnUrl: z.string().url(),
   siteId: z.string(),
   width: z.number(),
@@ -282,7 +320,7 @@ export const WfAssetSchema = z.object({
   createdOn: z.string(),
   origFileName: z.string(),
   fileHash: z.string(),
-  variants: z.array(AssetVariantSchema),
+  variants: z.array(z.union([WfAssetVariant, WfErrorAssetVariant])).optional(),
   mimeType: z.string(),
   s3Url: z.string().url(),
   thumbUrl: z.string(),
@@ -291,13 +329,15 @@ export const WfAssetSchema = z.object({
   fileSize: z.number(),
 });
 
+export type WfAsset = z.infer<typeof WfAsset>;
+
 export const WfData = z.object({
   type: z.literal("@webflow/XscpData"),
   payload: z.object({
     // Using WfBaseNode here just so we can skip a node with unknown node.type.
     nodes: z.array(z.union([WfNode, WfBaseNode])),
     styles: z.array(WfStyle),
-    assets: z.array(WfAssetSchema),
+    assets: z.array(WfAsset),
   }),
 });
 export type WfData = z.infer<typeof WfData>;

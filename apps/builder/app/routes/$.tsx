@@ -26,10 +26,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // This is because immutable caching rules apply to redirects, causing these files
   // to become permanently inaccessible. Ensure asset files are served correctly
   // without redirects to maintain availability and proper caching behavior.
-  const publicPath = "/assets/";
+  const publicPaths = ["/cgi/", "/assets/"];
 
   // In case of 404 on static assets, this route will be executed
-  if (url.pathname.startsWith(publicPath)) {
+  if (publicPaths.some((publicPath) => url.pathname.startsWith(publicPath))) {
     throw new Response("Not found", {
       status: 404,
       headers: {

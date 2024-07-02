@@ -1,6 +1,15 @@
 import { expect, test } from "@jest/globals";
 import { expandShorthands } from "./shorthands";
 
+test("ignore all shorthand to not bloat webstudio data", () => {
+  expect(
+    expandShorthands([
+      ["all", "initial"],
+      ["color", "red"],
+    ])
+  ).toEqual([["color", "red"]]);
+});
+
 test("expand border", () => {
   expect(expandShorthands([["border", "1px solid red"]])).toEqual([
     ["border-top-width", "1px"],
@@ -32,6 +41,23 @@ test("expand border", () => {
     ["border-block-end-style", "solid"],
     ["border-block-start-color", "red"],
     ["border-block-end-color", "red"],
+  ]);
+});
+
+test("expand border with css-wide keywords", () => {
+  expect(expandShorthands([["border", "INHERIT"]])).toEqual([
+    ["border-top-width", "INHERIT"],
+    ["border-right-width", "INHERIT"],
+    ["border-bottom-width", "INHERIT"],
+    ["border-left-width", "INHERIT"],
+    ["border-top-style", "INHERIT"],
+    ["border-right-style", "INHERIT"],
+    ["border-bottom-style", "INHERIT"],
+    ["border-left-style", "INHERIT"],
+    ["border-top-color", "INHERIT"],
+    ["border-right-color", "INHERIT"],
+    ["border-bottom-color", "INHERIT"],
+    ["border-left-color", "INHERIT"],
   ]);
 });
 
@@ -163,6 +189,15 @@ test("expand border-radius", () => {
   ]);
 });
 
+test("expand border-radius with css-wide keywords", () => {
+  expect(expandShorthands([["border-radius", "inherit"]])).toEqual([
+    ["border-top-left-radius", "inherit"],
+    ["border-top-right-radius", "inherit"],
+    ["border-bottom-right-radius", "inherit"],
+    ["border-top-left-radius", "inherit"],
+  ]);
+});
+
 test("expand outline", () => {
   expect(expandShorthands([["outline", "1px solid red"]])).toEqual([
     ["outline-width", "1px"],
@@ -173,6 +208,14 @@ test("expand outline", () => {
     ["outline-width", "1px"],
     ["outline-style", "solid"],
     ["outline-color", "currentcolor"],
+  ]);
+});
+
+test("expand outline with css-wide keywords", () => {
+  expect(expandShorthands([["outline", "inherit"]])).toEqual([
+    ["outline-width", "inherit"],
+    ["outline-style", "inherit"],
+    ["outline-color", "inherit"],
   ]);
 });
 
@@ -226,6 +269,21 @@ test("expand margin/padding", () => {
   ]);
 });
 
+test("expand margin/padding with css-wide keywords", () => {
+  expect(expandShorthands([["margin", "inherit"]])).toEqual([
+    ["margin-top", "inherit"],
+    ["margin-right", "inherit"],
+    ["margin-bottom", "inherit"],
+    ["margin-left", "inherit"],
+  ]);
+  expect(expandShorthands([["padding", "inherit"]])).toEqual([
+    ["padding-top", "inherit"],
+    ["padding-right", "inherit"],
+    ["padding-bottom", "inherit"],
+    ["padding-left", "inherit"],
+  ]);
+});
+
 test("expand inset", () => {
   expect(expandShorthands([["inset", "5px"]])).toEqual([
     ["top", "5px"],
@@ -270,6 +328,15 @@ test("expand inset", () => {
   ]);
 });
 
+test("expand inset with css-wide keywords", () => {
+  expect(expandShorthands([["inset", "inherit"]])).toEqual([
+    ["top", "inherit"],
+    ["right", "inherit"],
+    ["bottom", "inherit"],
+    ["left", "inherit"],
+  ]);
+});
+
 test("expand gap and grid-gap", () => {
   expect(expandShorthands([["gap", "5px"]])).toEqual([
     ["row-gap", "5px"],
@@ -289,6 +356,13 @@ test("expand gap and grid-gap", () => {
   ]);
   expect(expandShorthands([["grid-column-gap", "5px"]])).toEqual([
     ["column-gap", "5px"],
+  ]);
+});
+
+test("expand gap with css-wide keywords", () => {
+  expect(expandShorthands([["gap", "inherit"]])).toEqual([
+    ["row-gap", "inherit"],
+    ["column-gap", "inherit"],
   ]);
 });
 
@@ -350,6 +424,16 @@ test("expand border-image", () => {
   ]);
 });
 
+test("expand border-image with css-wide keywords", () => {
+  expect(expandShorthands([["border-image", `inherit`]])).toEqual([
+    ["border-image-source", "inherit"],
+    ["border-image-slice", "inherit"],
+    ["border-image-width", "inherit"],
+    ["border-image-outset", "inherit"],
+    ["border-image-repeat", "inherit"],
+  ]);
+});
+
 test("expand place properties", () => {
   expect(
     expandShorthands([
@@ -378,6 +462,23 @@ test("expand place properties", () => {
     ["justify-items", "end"],
     ["align-self", "start"],
     ["justify-self", "end"],
+  ]);
+});
+
+test("expand place properties with css-wide keywords", () => {
+  expect(
+    expandShorthands([
+      ["place-content", "inherit"],
+      ["place-items", "inherit"],
+      ["place-self", "inherit"],
+    ])
+  ).toEqual([
+    ["align-content", "inherit"],
+    ["justify-content", "inherit"],
+    ["align-items", "inherit"],
+    ["justify-items", "inherit"],
+    ["align-self", "inherit"],
+    ["justify-self", "inherit"],
   ]);
 });
 
@@ -411,6 +512,18 @@ test("expand font", () => {
   ]);
 });
 
+test("expand font with css-wide keywords", () => {
+  expect(expandShorthands([["font", `inherit`]])).toEqual([
+    ["font-style", "inherit"],
+    ["font-variant-caps", "inherit"],
+    ["font-weight", "inherit"],
+    ["font-stretch", "inherit"],
+    ["font-size", "inherit"],
+    ["line-height", "inherit"],
+    ["font-family", "inherit"],
+  ]);
+});
+
 test("expand font-synthesis", () => {
   expect(expandShorthands([["font-synthesis", `none`]])).toEqual([
     ["font-synthesis-weight", "none"],
@@ -431,6 +544,15 @@ test("expand font-synthesis", () => {
     ["font-synthesis-style", "auto"],
     ["font-synthesis-small-caps", "auto"],
     ["font-synthesis-position", "auto"],
+  ]);
+});
+
+test("expand font-synthesis with css-wide keywords", () => {
+  expect(expandShorthands([["font-synthesis", `inherit`]])).toEqual([
+    ["font-synthesis-weight", "inherit"],
+    ["font-synthesis-style", "inherit"],
+    ["font-synthesis-small-caps", "inherit"],
+    ["font-synthesis-position", "inherit"],
   ]);
 });
 
@@ -463,6 +585,18 @@ test("expand font-variant", () => {
     ["font-variant-east-asian", "normal"],
     ["font-variant-position", "normal"],
     ["font-variant-emoji", "normal"],
+  ]);
+});
+
+test("expand font-variant with css-wide keywords", () => {
+  expect(expandShorthands([["font-variant", `inherit`]])).toEqual([
+    ["font-variant-ligatures", "inherit"],
+    ["font-variant-caps", "inherit"],
+    ["font-variant-alternates", "inherit"],
+    ["font-variant-numeric", "inherit"],
+    ["font-variant-east-asian", "inherit"],
+    ["font-variant-position", "inherit"],
+    ["font-variant-emoji", "inherit"],
   ]);
 });
 
@@ -500,11 +634,6 @@ test("expand text-emphasis", () => {
 });
 
 test("expand flex", () => {
-  expect(expandShorthands([["flex", "initial"]])).toEqual([
-    ["flex-grow", "0"],
-    ["flex-shrink", "1"],
-    ["flex-basis", "auto"],
-  ]);
   expect(expandShorthands([["flex", "auto"]])).toEqual([
     ["flex-grow", "1"],
     ["flex-shrink", "1"],
@@ -529,6 +658,14 @@ test("expand flex", () => {
     ["flex-grow", "2"],
     ["flex-shrink", "3"],
     ["flex-basis", "0"],
+  ]);
+});
+
+test("expand flex with css-wide keywords", () => {
+  expect(expandShorthands([["flex", "inherit"]])).toEqual([
+    ["flex-grow", "inherit"],
+    ["flex-shrink", "inherit"],
+    ["flex-basis", "inherit"],
   ]);
 });
 
@@ -621,6 +758,68 @@ test("expand animation", () => {
     ["animation-timeline", "auto"],
     ["animation-range-start", "normal"],
     ["animation-range-end", "normal"],
+  ]);
+});
+
+test("expand animation with css-wide keywords", () => {
+  expect(expandShorthands([["animation", `inherit`]])).toEqual([
+    ["animation-duration", "inherit"],
+    ["animation-timing-function", "inherit"],
+    ["animation-delay", "inherit"],
+    ["animation-iteration-count", "inherit"],
+    ["animation-direction", "inherit"],
+    ["animation-fill-mode", "inherit"],
+    ["animation-play-state", "inherit"],
+    ["animation-name", "inherit"],
+    ["animation-timeline", "inherit"],
+    ["animation-range-start", "inherit"],
+    ["animation-range-end", "inherit"],
+  ]);
+});
+
+test("expand animation-range", () => {
+  expect(expandShorthands([["animation-range", "normal"]])).toEqual([
+    ["animation-range-start", "normal"],
+    ["animation-range-end", "normal"],
+  ]);
+  expect(expandShorthands([["animation-range", "100px"]])).toEqual([
+    ["animation-range-start", "100px"],
+    ["animation-range-end", "normal"],
+  ]);
+  expect(expandShorthands([["animation-range", "entry 10% exit"]])).toEqual([
+    ["animation-range-start", "entry 10%"],
+    ["animation-range-end", "exit"],
+  ]);
+  expect(expandShorthands([["animation-range", "100px, 200px 50px"]])).toEqual([
+    ["animation-range-start", "100px,200px"],
+    ["animation-range-end", "normal,50px"],
+  ]);
+});
+
+test("expand view-timeline", () => {
+  expect(expandShorthands([["view-timeline", `none`]])).toEqual([
+    ["view-timeline-name", "none"],
+    ["view-timeline-axis", "block"],
+    ["view-timeline-inset", "auto"],
+  ]);
+  expect(expandShorthands([["view-timeline", `none inline 200px`]])).toEqual([
+    ["view-timeline-name", "none"],
+    ["view-timeline-axis", "inline"],
+    ["view-timeline-inset", "200px"],
+  ]);
+  expect(
+    expandShorthands([["view-timeline", `--custom_name_for_timeline inline`]])
+  ).toEqual([
+    ["view-timeline-name", "--custom_name_for_timeline"],
+    ["view-timeline-axis", "inline"],
+    ["view-timeline-inset", "auto"],
+  ]);
+  expect(
+    expandShorthands([["view-timeline", `none inline, --custom y`]])
+  ).toEqual([
+    ["view-timeline-name", "none,--custom"],
+    ["view-timeline-axis", "inline,y"],
+    ["view-timeline-inset", "auto,auto"],
   ]);
 });
 
@@ -1053,10 +1252,199 @@ test("expand text-wrap", () => {
   ]);
 });
 
-test.todo("all - can negatively affect build size");
-test.todo("background - not used in webflow");
-test.todo("background-position-x - we use shorthand");
-test.todo("background-position-y - we use shorthand");
-test.todo("translate - are these directly mappable to transform");
-test.todo("rotate");
-test.todo("scale");
+test("expand background-position", () => {
+  expect(expandShorthands([["background-position", "initial"]])).toEqual([
+    ["background-position-x", "initial"],
+    ["background-position-y", "initial"],
+  ]);
+  expect(expandShorthands([["background-position", "0"]])).toEqual([
+    ["background-position-x", "0"],
+    ["background-position-y", "center"],
+  ]);
+  expect(expandShorthands([["background-position", "top left"]])).toEqual([
+    ["background-position-x", "left"],
+    ["background-position-y", "top"],
+  ]);
+  expect(expandShorthands([["background-position", "right bottom"]])).toEqual([
+    ["background-position-x", "right"],
+    ["background-position-y", "bottom"],
+  ]);
+  expect(expandShorthands([["background-position", "25% 75%"]])).toEqual([
+    ["background-position-x", "25%"],
+    ["background-position-y", "75%"],
+  ]);
+  expect(
+    expandShorthands([["background-position", "bottom 10px right"]])
+  ).toEqual([
+    ["background-position-x", "right"],
+    ["background-position-y", "bottom 10px"],
+  ]);
+  expect(
+    expandShorthands([["background-position", "center right 10px"]])
+  ).toEqual([
+    ["background-position-x", "right 10px"],
+    ["background-position-y", "center"],
+  ]);
+  expect(
+    expandShorthands([["background-position", "center bottom 10px"]])
+  ).toEqual([
+    ["background-position-x", "center"],
+    ["background-position-y", "bottom 10px"],
+  ]);
+  expect(expandShorthands([["background-position", "top right 10px"]])).toEqual(
+    [
+      ["background-position-x", "right 10px"],
+      ["background-position-y", "top"],
+    ]
+  );
+  expect(
+    expandShorthands([["background-position", "bottom 10px right 20px"]])
+  ).toEqual([
+    ["background-position-x", "right 20px"],
+    ["background-position-y", "bottom 10px"],
+  ]);
+  expect(expandShorthands([["background-position", "0 10px, center"]])).toEqual(
+    [
+      ["background-position-x", "0,center"],
+      ["background-position-y", "10px,center"],
+    ]
+  );
+});
+
+test("expand background", () => {
+  expect(expandShorthands([["background", `none`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(expandShorthands([["background", `green`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "green"],
+  ]);
+  expect(expandShorthands([["background", `transparent`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(
+    expandShorthands([["background", `url("test.jpg") repeat-y`]])
+  ).toEqual([
+    ["background-image", "url(test.jpg)"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat-y"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(expandShorthands([["background", `border-box red`]])).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "border-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "red"],
+  ]);
+  expect(
+    expandShorthands([
+      ["background", `no-repeat center/80% url("../img/image.png")`],
+    ])
+  ).toEqual([
+    ["background-image", "url(../img/image.png)"],
+    ["background-position-x", "center"],
+    ["background-position-y", "center"],
+    ["background-size", "80%"],
+    ["background-repeat", "no-repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+  expect(
+    expandShorthands([
+      [
+        "background",
+        `repeat scroll 0% 0% / auto padding-box border-box none transparent`,
+      ],
+    ])
+  ).toEqual([
+    ["background-image", "none"],
+    ["background-position-x", "0%"],
+    ["background-position-y", "0%"],
+    ["background-size", "auto"],
+    ["background-repeat", "repeat"],
+    ["background-attachment", "scroll"],
+    ["background-origin", "padding-box"],
+    ["background-clip", "border-box"],
+    ["background-color", "transparent"],
+  ]);
+});
+
+test("expand caret", () => {
+  expect(expandShorthands([["caret", "red"]])).toEqual([
+    ["caret-color", "red"],
+    ["caret-shape", "auto"],
+  ]);
+  expect(expandShorthands([["caret", "block"]])).toEqual([
+    ["caret-color", "auto"],
+    ["caret-shape", "block"],
+  ]);
+  expect(expandShorthands([["caret", "block red"]])).toEqual([
+    ["caret-color", "red"],
+    ["caret-shape", "block"],
+  ]);
+});
+
+test("expand overscroll-behavior", () => {
+  expect(expandShorthands([["overscroll-behavior", "auto"]])).toEqual([
+    ["overscroll-behavior-x", "auto"],
+    ["overscroll-behavior-y", "auto"],
+  ]);
+  expect(expandShorthands([["overscroll-behavior", "contain"]])).toEqual([
+    ["overscroll-behavior-x", "contain"],
+    ["overscroll-behavior-y", "contain"],
+  ]);
+  expect(expandShorthands([["overscroll-behavior", "contain none"]])).toEqual([
+    ["overscroll-behavior-x", "contain"],
+    ["overscroll-behavior-y", "none"],
+  ]);
+});
+
+test("expand position-try", () => {
+  expect(expandShorthands([["position-try", "none"]])).toEqual([
+    ["position-try-order", "normal"],
+    ["position-try-options", "none"],
+  ]);
+  expect(expandShorthands([["position-try", "most-width none"]])).toEqual([
+    ["position-try-order", "most-width"],
+    ["position-try-options", "none"],
+  ]);
+  expect(expandShorthands([["position-try", "--dashed-ident"]])).toEqual([
+    ["position-try-order", "normal"],
+    ["position-try-options", "--dashed-ident"],
+  ]);
+});

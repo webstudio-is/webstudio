@@ -1,11 +1,11 @@
 import { nanoid } from "nanoid";
 import type { Instance, Prop, WebstudioFragment } from "@webstudio-is/sdk";
 import type { WfElementNode, WfNode } from "./schema";
+import { showAttribute } from "@webstudio-is/react-sdk";
 
 const toFragment = (
   wfNode: WfElementNode,
-  instanceId: Instance["id"],
-  wfNodes: Map<WfNode["_id"], WfNode>
+  instanceId: Instance["id"]
 ): WebstudioFragment | undefined => {
   const fragment: WebstudioFragment = {
     children: [],
@@ -37,20 +37,20 @@ const toFragment = (
       });
       return;
     }
-    if (type === "number" && typeof value === "number") {
+    if (typeof value === "number") {
       fragment.props.push({
         ...prop,
-        type,
+        type: "number",
         name,
         value,
       });
       return;
     }
 
-    if (type === "boolean" && typeof value === "boolean") {
+    if (typeof value === "boolean") {
       fragment.props.push({
         ...prop,
-        type,
+        type: "boolean",
         name,
         value,
       });
@@ -76,7 +76,17 @@ const toFragment = (
     addProp("id", wfNode.data.attr.id);
   }
 
+  // Webflow will have conditions: [false, true] when condition is custom and depends on the collection value
+  // We only support condition that has a single value.
+  const conditions = wfNode.data?.visibility?.conditions ?? [];
+  if (conditions.length === 1 && conditions[0] === false) {
+    addProp(showAttribute, false);
+  }
+
   switch (component) {
+    case "LineBreak": {
+      return fragment;
+    }
     case "Heading": {
       addProp("tag", wfNode.tag);
       addInstance(component);
@@ -84,7 +94,7 @@ const toFragment = (
     }
     case "List": {
       if (wfNode.tag === "ol") {
-        addProp("ordered", true, "boolean");
+        addProp("ordered", true);
       }
       addInstance(component);
       return fragment;
@@ -93,7 +103,8 @@ const toFragment = (
     case "Paragraph":
     case "Superscript":
     case "Subscript":
-    case "Blockquote": {
+    case "Blockquote":
+    case "Span": {
       addInstance(component);
       return fragment;
     }
@@ -104,9 +115,24 @@ const toFragment = (
     }
     case "Link": {
       const data = wfNode.data;
-
-      addProp("href", data.link.url);
-      addProp("target", data.link.target);
+      if ("url" in data.link) {
+        addProp("href", data.link.url);
+      }
+      if ("target" in data.link) {
+        addProp("target", data.link.target);
+      }
+      if ("href" in data.link) {
+        addProp("href", data.link.href);
+      }
+      if ("email" in data.link) {
+        const subject = data.link.subject
+          ? `?subject=${data.link.subject}`
+          : "";
+        addProp("href", `mailto:${data.link.email}${subject}`);
+      }
+      if ("tel" in data.link) {
+        addProp("href", `tel:${data.link.tel}`);
+      }
       addInstance(component);
       return fragment;
     }
@@ -131,6 +157,7 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+    case "Container":
     case "BlockContainer": {
       const component = "Box";
       addInstance(component);
@@ -181,7 +208,7 @@ const toFragment = (
     }
     case "HtmlEmbed": {
       addProp("code", wfNode.v);
-      addProp("clientOnly", true, "boolean");
+      addProp("clientOnly", true);
       addInstance(component);
       return fragment;
     }
@@ -244,12 +271,12 @@ const toFragment = (
       const data = wfNode.data;
       const component = "Input";
       addProp("name", data.attr.name);
-      addProp("maxLength", data.attr.maxlength, "number");
+      addProp("maxLength", data.attr.maxlength);
       addProp("placeholder", data.attr.placeholder);
-      addProp("disabled", data.attr.disabled, "boolean");
+      addProp("disabled", data.attr.disabled);
       addProp("type", data.attr.type);
-      addProp("required", data.attr.required, "boolean");
-      addProp("autoFocus", data.attr.autofocus, "boolean");
+      addProp("required", data.attr.required);
+      addProp("autoFocus", data.attr.autofocus);
       addInstance(component);
       return fragment;
     }
@@ -257,10 +284,10 @@ const toFragment = (
       const data = wfNode.data;
       const component = "Textarea";
       addProp("name", data.attr.name);
-      addProp("maxLength", data.attr.maxlength, "number");
+      addProp("maxLength", data.attr.maxlength);
       addProp("placeholder", data.attr.placeholder);
-      addProp("required", data.attr.required, "boolean");
-      addProp("autoFocus", data.attr.autofocus, "boolean");
+      addProp("required", data.attr.required);
+      addProp("autoFocus", data.attr.autofocus);
       addInstance(component);
       return fragment;
     }
@@ -280,8 +307,8 @@ const toFragment = (
       const component = "Checkbox";
       const data = wfNode.data;
       addProp("name", data.attr.name);
-      addProp("required", data.attr.required, "boolean");
-      addProp("defaultChecked", data.attr.checked, "boolean");
+      addProp("required", data.attr.required);
+      addProp("defaultChecked", data.attr.checked);
       addInstance(component);
       return fragment;
     }
@@ -300,7 +327,7 @@ const toFragment = (
       const component = "RadioButton";
       const data = wfNode.data;
       addProp("name", data.attr.name);
-      addProp("required", data.attr.required, "boolean");
+      addProp("required", data.attr.required);
       addProp("value", data.attr.value);
       addInstance(component);
       return fragment;
@@ -310,8 +337,8 @@ const toFragment = (
       const component = "Input";
       const data = wfNode.data;
       addProp("name", data.attr.name);
-      addProp("required", data.attr.required, "boolean");
-      addProp("multiple", data.attr.multiple, "boolean");
+      addProp("required", data.attr.required);
+      addProp("multiple", data.attr.multiple);
       addInstance(component);
       return fragment;
     }
@@ -352,7 +379,7 @@ export const addInstanceAndProperties = (
     return;
   }
   const instanceId = nanoid();
-  const nextFragment = toFragment(wfNode, instanceId, wfNodes);
+  const nextFragment = toFragment(wfNode, instanceId);
 
   if (nextFragment === undefined) {
     // Skip this node and its children.
@@ -369,10 +396,17 @@ export const addInstanceAndProperties = (
     if (wfChildNode === undefined) {
       continue;
     }
-    if ("text" in wfChildNode) {
+    const value =
+      "text" in wfChildNode
+        ? wfChildNode.v
+        : wfChildNode.type === "LineBreak"
+          ? "\n"
+          : undefined;
+
+    if (value !== undefined) {
       children.push({
         type: "text",
-        value: wfChildNode.v,
+        value,
       });
       doneNodes.set(wfChildId, instanceId);
       continue;

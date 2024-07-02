@@ -17,6 +17,8 @@ import {
   $project,
   $registeredComponentMetas,
 } from "../../nano-states";
+import invariant from "tiny-invariant";
+import { WfData } from "./schema";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -132,6 +134,19 @@ test("Heading", async () => {
   });
 
   equalFragment(fragment, <$.Heading tag="h1">Turtle in the sea</$.Heading>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      h1 {
+        margin-right: 0;
+        margin-left: 0;
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 38px;
+        line-height: 44px
+      }
+    }"
+  `);
 });
 
 test("Link Block, Button, Text Link", async () => {
@@ -162,6 +177,19 @@ test("Link Block, Button, Text Link", async () => {
     fragment,
     <$.Link href="https://webstudio.is" target="_blank" />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      a {
+        background-color: rgba(0, 0, 0, 0)
+      }
+      a:active {
+        outline: 0 none currentColor
+      }
+      a:hover {
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("List and ListItem", async () => {
@@ -215,6 +243,16 @@ test("List and ListItem", async () => {
       <$.ListItem />
     </$.List>
   );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      ul {
+        margin-top: 0;
+        margin-bottom: 10px;
+        padding-left: 40px
+      }
+    }"
+  `);
 });
 
 test("Paragraph", async () => {
@@ -241,6 +279,15 @@ test("Paragraph", async () => {
   });
 
   equalFragment(fragment, <$.Paragraph>Text in a paragraph</$.Paragraph>);
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      p {
+        margin-top: 0;
+        margin-bottom: 10px
+      }
+    }"
+  `);
 });
 
 test("Text", async () => {
@@ -273,6 +320,8 @@ test("Text", async () => {
     fragment,
     <$.Text>This is some text inside of a div block.</$.Text>
   );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("Blockquote", async () => {
@@ -299,6 +348,23 @@ test("Blockquote", async () => {
   });
 
   equalFragment(fragment, <$.Blockquote>Block Quote</$.Blockquote>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      blockquote {
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        font-size: 18px;
+        line-height: 22px;
+        border-left: 5px solid rgba(226, 226, 226, 1)
+      }
+    }"
+  `);
 });
 
 test("Strong", async () => {
@@ -325,6 +391,13 @@ test("Strong", async () => {
   });
 
   equalFragment(fragment, <$.Bold>Bold Text</$.Bold>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      strong {
+        font-weight: bold
+      }
+    }"
+  `);
 });
 
 test("Emphasized", async () => {
@@ -350,6 +423,7 @@ test("Emphasized", async () => {
     },
   });
   equalFragment(fragment, <$.Italic>Emphasis</$.Italic>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("Superscript", async () => {
@@ -376,6 +450,17 @@ test("Superscript", async () => {
   });
 
   equalFragment(fragment, <$.Superscript>Superscript</$.Superscript>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      sup {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        top: -0.5em
+      }
+    }"
+  `);
 });
 
 test("Subscript", async () => {
@@ -402,6 +487,17 @@ test("Subscript", async () => {
   });
 
   equalFragment(fragment, <$.Subscript>Subscript</$.Subscript>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      sub {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        bottom: -0.25em
+      }
+    }"
+  `);
 });
 
 test("Section", async () => {
@@ -423,6 +519,13 @@ test("Section", async () => {
   });
 
   equalFragment(fragment, <$.Box tag="section" />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      section {
+        display: block
+      }
+    }"
+  `);
 });
 
 test("BlockContainer", async () => {
@@ -443,6 +546,38 @@ test("BlockContainer", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-blockcontainer {
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        max-width: none
+      }
+      w-container {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: none
+      }
+      w-container:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-container:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+    }"
+  `);
 });
 
 test("Block", async () => {
@@ -464,6 +599,7 @@ test("Block", async () => {
   });
 
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("V Flex", async () => {
@@ -484,6 +620,7 @@ test("V Flex", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 test("H Flex", async () => {
@@ -504,9 +641,10 @@ test("H Flex", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
-test("Quick Stack", async () => {
+test("QuickStack", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -547,6 +685,26 @@ test("Quick Stack", async () => {
       <$.Box />
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-layout {
+        row-gap: 20px;
+        column-gap: 20px;
+        grid-auto-columns: 1fr;
+        justify-content: center;
+        padding: 20px
+      }
+      wf-layout-layout {
+        display: grid
+      }
+      w-layout-cell {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        display: flex
+      }
+    }"
+  `);
 });
 
 test("Grid", async () => {
@@ -568,6 +726,18 @@ test("Grid", async () => {
   });
 
   equalFragment(fragment, <$.Box />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-grid {
+        row-gap: 16px;
+        column-gap: 16px;
+        grid-template-rows: auto auto;
+        grid-template-columns: 1fr 1fr;
+        grid-auto-columns: 1fr;
+        display: grid
+      }
+    }"
+  `);
 });
 
 test("Columns", async () => {
@@ -612,6 +782,41 @@ test("Columns", async () => {
       <$.Box />
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-row {
+        margin-left: 0;
+        margin-right: 0
+      }
+      w-row:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-row:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      w-col {
+        float: left;
+        min-height: 1px;
+        padding-left: 10px;
+        padding-right: 10px;
+        position: relative;
+        left: auto;
+        right: auto;
+        width: 100%
+      }
+    }"
+  `);
 });
 
 test("Image", async () => {
@@ -650,6 +855,16 @@ test("Image", async () => {
       src="https://test.com/image.jpg"
     />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      img {
+        vertical-align: middle;
+        max-width: 100%;
+        display: inline-block;
+        border: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("HtmlEmbed", async () => {
@@ -671,6 +886,27 @@ test("HtmlEmbed", async () => {
     },
   });
   equalFragment(fragment, <$.HtmlEmbed code="some html" clientOnly={true} />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-embed:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-embed:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+    }"
+  `);
 });
 
 test("CodeBlock", async () => {
@@ -696,6 +932,16 @@ test("CodeBlock", async () => {
   });
 
   equalFragment(fragment, <$.CodeText lang="javascript" code="test" />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-code-block {
+        margin-top: unset;
+        margin-right: unset;
+        margin-bottom: unset;
+        margin-left: unset
+      }
+    }"
+  `);
 });
 
 test("RichText", async () => {
@@ -1098,6 +1344,107 @@ test("RichText", async () => {
       </$.Paragraph>
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      h1 {
+        margin-right: 0;
+        margin-left: 0;
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 38px;
+        line-height: 44px
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 32px;
+        line-height: 36px
+      }
+      h3 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 24px;
+        line-height: 30px
+      }
+      h4 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 10px;
+        font-size: 18px;
+        line-height: 24px
+      }
+      h5 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 10px;
+        font-size: 14px;
+        line-height: 20px
+      }
+      h6 {
+        margin-bottom: 10px;
+        font-weight: bold;
+        margin-top: 10px;
+        font-size: 12px;
+        line-height: 18px
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 10px
+      }
+      blockquote {
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        font-size: 18px;
+        line-height: 22px;
+        border-left: 5px solid rgba(226, 226, 226, 1)
+      }
+      ol {
+        margin-top: 0;
+        margin-bottom: 10px;
+        padding-left: 40px
+      }
+      ul {
+        margin-top: 0;
+        margin-bottom: 10px;
+        padding-left: 40px
+      }
+      a {
+        background-color: rgba(0, 0, 0, 0)
+      }
+      a:active {
+        outline: 0 none currentColor
+      }
+      a:hover {
+        outline: 0 none currentColor
+      }
+      strong {
+        font-weight: bold
+      }
+      sup {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        top: -0.5em
+      }
+      sub {
+        vertical-align: baseline;
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        bottom: -0.25em
+      }
+    }"
+  `);
 });
 
 test("Form", async () => {
@@ -1203,6 +1550,67 @@ test("Form", async () => {
       </$.Box>
     </$.Box>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-form {
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 15px;
+        margin-left: 0
+      }
+      input {
+        color: inherit;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-input {
+        color: rgba(51, 51, 51, 1);
+        vertical-align: middle;
+        background-color: rgba(255, 255, 255, 1);
+        width: 100%;
+        margin-bottom: 10px;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        font-size: 14px;
+        line-height: 1.42857;
+        display: block;
+        cursor: not-allowed;
+        height: auto;
+        border: 1px solid rgba(204, 204, 204, 1)
+      }
+      w-input:-moz-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input::-moz-placeholder {
+        color: rgba(153, 153, 153, 1);
+        opacity: 1
+      }
+      w-input::-webkit-input-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input:focus {
+        border-top-color: rgba(56, 152, 236, 1);
+        border-right-color: rgba(56, 152, 236, 1);
+        border-bottom-color: rgba(56, 152, 236, 1);
+        border-left-color: rgba(56, 152, 236, 1);
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormButton", async () => {
@@ -1229,6 +1637,46 @@ test("FormButton", async () => {
   });
 
   equalFragment(fragment, <$.Button>Submit</$.Button>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      input {
+        color: inherit;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-button {
+        color: rgba(255, 255, 255, 1);
+        line-height: inherit;
+        cursor: pointer;
+        background-color: rgba(56, 152, 236, 1);
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        padding-top: 9px;
+        padding-right: 15px;
+        padding-bottom: 9px;
+        padding-left: 15px;
+        text-decoration-line: none;
+        text-decoration-style: initial;
+        text-decoration-color: initial;
+        display: inline-block;
+        appearance: button;
+        border: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormTextInput", async () => {
@@ -1274,6 +1722,61 @@ test("FormTextInput", async () => {
       autoFocus={false}
     />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      input {
+        color: inherit;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-input {
+        color: rgba(51, 51, 51, 1);
+        vertical-align: middle;
+        background-color: rgba(255, 255, 255, 1);
+        width: 100%;
+        margin-bottom: 10px;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        font-size: 14px;
+        line-height: 1.42857;
+        display: block;
+        cursor: not-allowed;
+        height: auto;
+        border: 1px solid rgba(204, 204, 204, 1)
+      }
+      w-input:-moz-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input::-moz-placeholder {
+        color: rgba(153, 153, 153, 1);
+        opacity: 1
+      }
+      w-input::-webkit-input-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input:focus {
+        border-top-color: rgba(56, 152, 236, 1);
+        border-right-color: rgba(56, 152, 236, 1);
+        border-bottom-color: rgba(56, 152, 236, 1);
+        border-left-color: rgba(56, 152, 236, 1);
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormBlockLabel", async () => {
@@ -1305,6 +1808,15 @@ test("FormBlockLabel", async () => {
   });
 
   equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+    }"
+  `);
 });
 
 test("FormTextarea", async () => {
@@ -1346,6 +1858,59 @@ test("FormTextarea", async () => {
       autoFocus={false}
     />
   );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      textarea {
+        color: inherit;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        font-family: inherit;
+        overflow-x: auto;
+        overflow-y: auto;
+        height: auto;
+        margin: 0
+      }
+      w-input {
+        color: rgba(51, 51, 51, 1);
+        vertical-align: middle;
+        background-color: rgba(255, 255, 255, 1);
+        width: 100%;
+        margin-bottom: 10px;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        font-size: 14px;
+        line-height: 1.42857;
+        display: block;
+        cursor: not-allowed;
+        height: auto;
+        border: 1px solid rgba(204, 204, 204, 1)
+      }
+      w-input:-moz-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input::-moz-placeholder {
+        color: rgba(153, 153, 153, 1);
+        opacity: 1
+      }
+      w-input::-webkit-input-placeholder {
+        color: rgba(153, 153, 153, 1)
+      }
+      w-input:focus {
+        border-top-color: rgba(56, 152, 236, 1);
+        border-right-color: rgba(56, 152, 236, 1);
+        border-bottom-color: rgba(56, 152, 236, 1);
+        border-left-color: rgba(56, 152, 236, 1);
+        outline: 0 none currentColor
+      }
+    }"
+  `);
 });
 
 test("FormBlockLabel", async () => {
@@ -1377,6 +1942,15 @@ test("FormBlockLabel", async () => {
   });
 
   equalFragment(fragment, <$.Label htmlFor="email">Email Address</$.Label>);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+    }"
+  `);
 });
 
 test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
@@ -1442,6 +2016,68 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
       </$.Text>
     </$.Label>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-checkbox {
+        margin-bottom: 5px;
+        padding-left: 20px;
+        display: block
+      }
+      w-checkbox:after {
+        content: " ";
+        clear: both;
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      w-checkbox:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      input {
+        color: inherit;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-checkbox-input {
+        float: left;
+        margin-top: 4px;
+        margin-right: 0;
+        margin-bottom: 0;
+        margin-left: -20px;
+        line-height: normal
+      }
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+      w-form-label {
+        cursor: pointer;
+        margin-bottom: 0;
+        font-weight: normal;
+        display: inline-block
+      }
+    }"
+  `);
 });
 
 test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
@@ -1502,6 +2138,68 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
       </$.Text>
     </$.Label>
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-radio {
+        margin-bottom: 5px;
+        padding-left: 20px;
+        display: block
+      }
+      w-radio:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-radio:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      input {
+        color: inherit;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        cursor: pointer;
+        line-height: normal;
+        box-sizing: border-box;
+        height: auto;
+        appearance: button;
+        border: 0 none currentColor;
+        margin: 0;
+        padding: 0
+      }
+      w-radio-input {
+        float: left;
+        margin-top: 3px;
+        margin-right: 0;
+        margin-bottom: 0;
+        margin-left: -20px;
+        line-height: normal
+      }
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block
+      }
+      w-form-label {
+        cursor: pointer;
+        margin-bottom: 0;
+        font-weight: normal;
+        display: inline-block
+      }
+    }"
+  `);
 });
 
 test("FormSelect", async () => {
@@ -1554,6 +2252,73 @@ test("FormSelect", async () => {
     fragment,
     <$.Input id="field-3" name="field-3" required={false} multiple={false} />
   );
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      select {
+        color: inherit;
+        font-style: inherit;
+        font-variant-caps: inherit;
+        font-weight: inherit;
+        font-stretch: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        font-family: inherit;
+        text-transform: none;
+        margin: 0
+      }
+    }"
+  `);
+});
+
+test("Multiline text", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "da7b8e40-a038-735c-bde8-0016079a5502",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: [
+            "629fa602-de2f-b70b-ba5e-a74de823cfff",
+            "b6a2a455-8ece-d70b-c88b-2f7b7dd39445",
+            "49a4d697-0430-6739-9179-e75c1dbec765",
+          ],
+        },
+        {
+          _id: "629fa602-de2f-b70b-ba5e-a74de823cfff",
+          text: true,
+          v: "a",
+        },
+        {
+          _id: "b6a2a455-8ece-d70b-c88b-2f7b7dd39445",
+          type: "LineBreak",
+          tag: "br",
+          classes: [],
+          children: [],
+        },
+        {
+          _id: "49a4d697-0430-6739-9179-e75c1dbec765",
+          text: true,
+          v: "b",
+        },
+      ],
+      styles: [],
+      assets: [],
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Box>
+      {"a"}
+      {"\n"}
+      {"b"}
+    </$.Box>
+  );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 describe("Custom attributes", () => {
@@ -1583,7 +2348,46 @@ describe("Custom attributes", () => {
       },
     });
     equalFragment(fragment, <$.Heading tag="h1" at="b" />);
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        h1 {
+          margin-right: 0;
+          margin-left: 0;
+          margin-bottom: 10px;
+          font-weight: bold;
+          margin-top: 20px;
+          font-size: 38px;
+          line-height: 44px
+        }
+      }"
+    `);
   });
+});
+
+test("Set show false when visibility's only condition is false", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "b35ac1a9-5a38-56c6-03ba-3196d421b95e",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: [],
+          data: {
+            visibility: {
+              conditions: [false],
+            },
+          },
+        },
+      ],
+      styles: [],
+      assets: [],
+    },
+  });
+  equalFragment(fragment, <$.Box data-ws-show={false} />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
 describe("Styles", () => {
@@ -1880,91 +2684,256 @@ describe("Styles", () => {
       }"
     `);
   });
-});
 
-test("Breakpoints", async () => {
-  const fragment = await toWebstudioFragment({
-    type: "@webflow/XscpData",
-    payload: {
-      nodes: [
-        {
-          _id: "c06c94aa-e2cd-fa7a-d8f8-574b474a20fa",
-          type: "Block",
-          tag: "div",
-          classes: ["81fbefba-d2de-9cc2-81bf-3a929d4eb219"],
-          children: [],
-        },
-      ],
-      styles: [
-        {
-          _id: "81fbefba-d2de-9cc2-81bf-3a929d4eb219",
-          fake: false,
-          type: "class",
-          name: "Div Block 2",
-          namespace: "",
-          comb: "",
-          styleLess: "background-color: hsla(191, 100.00%, 50.00%, 1.00);",
-          variants: {
-            large: {
-              styleLess: "background-color: hsla(150, 100.00%, 50.00%, 1.00);",
-            },
-            xl: {
-              styleLess: "background-color: hsla(69, 100.00%, 50.00%, 1.00);",
-            },
-            xxl: {
-              styleLess: "background-color: hsla(14, 100.00%, 50.00%, 1.00);",
-            },
-            medium: {
-              styleLess: "background-color: hsla(256, 100.00%, 50.00%, 1.00);",
-            },
-            small: {
-              styleLess: "background-color: hsla(308, 100.00%, 50.00%, 1.00);",
-            },
-            tiny: {
-              styleLess: "background-color: hsla(359, 100.00%, 50.00%, 1.00);",
+  test("Breakpoints", async () => {
+    const fragment = await toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "c06c94aa-e2cd-fa7a-d8f8-574b474a20fa",
+            type: "Block",
+            tag: "div",
+            classes: ["81fbefba-d2de-9cc2-81bf-3a929d4eb219"],
+            children: [],
+          },
+        ],
+        styles: [
+          {
+            _id: "81fbefba-d2de-9cc2-81bf-3a929d4eb219",
+            fake: false,
+            type: "class",
+            name: "Div Block 2",
+            namespace: "",
+            comb: "",
+            styleLess: "background-color: hsla(191, 100.00%, 50.00%, 1.00);",
+            variants: {
+              large: {
+                styleLess:
+                  "background-color: hsla(150, 100.00%, 50.00%, 1.00);",
+              },
+              xl: {
+                styleLess: "background-color: hsla(69, 100.00%, 50.00%, 1.00);",
+              },
+              xxl: {
+                styleLess: "background-color: hsla(14, 100.00%, 50.00%, 1.00);",
+              },
+              medium: {
+                styleLess:
+                  "background-color: hsla(256, 100.00%, 50.00%, 1.00);",
+              },
+              small: {
+                styleLess:
+                  "background-color: hsla(308, 100.00%, 50.00%, 1.00);",
+              },
+              tiny: {
+                styleLess:
+                  "background-color: hsla(359, 100.00%, 50.00%, 1.00);",
+              },
             },
           },
-        },
-      ],
-      assets: [],
-    },
+        ],
+        assets: [],
+      },
+    });
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        Div Block 2 {
+          background-color: rgba(0, 208, 255, 1)
+        }
+      }
+      @media all and (max-width: 991px) {
+        Div Block 2 {
+          background-color: rgba(68, 0, 255, 1)
+        }
+      }
+      @media all and (max-width: 767px) {
+        Div Block 2 {
+          background-color: rgba(255, 0, 221, 1)
+        }
+      }
+      @media all and (max-width: 479px) {
+        Div Block 2 {
+          background-color: rgba(255, 0, 4, 1)
+        }
+      }
+      @media all and (min-width: 1280px) {
+        Div Block 2 {
+          background-color: rgba(0, 255, 128, 1)
+        }
+      }
+      @media all and (min-width: 1440px) {
+        Div Block 2 {
+          background-color: rgba(217, 255, 0, 1)
+        }
+      }
+      @media all and (min-width: 1920px) {
+        Div Block 2 {
+          background-color: rgba(255, 60, 0, 1)
+        }
+      }"
+    `);
   });
 
-  expect(toCss(fragment)).toMatchInlineSnapshot(`
-    "@media all {
-      Div Block 2 {
-        background-color: rgba(0, 208, 255, 1)
-      }
-    }
-    @media all and (max-width: 991px) {
-      Div Block 2 {
-        background-color: rgba(68, 0, 255, 1)
-      }
-    }
-    @media all and (max-width: 767px) {
-      Div Block 2 {
-        background-color: rgba(255, 0, 221, 1)
-      }
-    }
-    @media all and (max-width: 479px) {
-      Div Block 2 {
-        background-color: rgba(255, 0, 4, 1)
-      }
-    }
-    @media all and (min-width: 1280px) {
-      Div Block 2 {
-        background-color: rgba(0, 255, 128, 1)
-      }
-    }
-    @media all and (min-width: 1440px) {
-      Div Block 2 {
-        background-color: rgba(217, 255, 0, 1)
-      }
-    }
-    @media all and (min-width: 1920px) {
-      Div Block 2 {
-        background-color: rgba(255, 60, 0, 1)
-      }
-    }"
+  test("background images", async () => {
+    const input = WfData.parse({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "2e9842a4-ac18-9d21-894b-026c6eb20441",
+            type: "Block",
+            tag: "div",
+            classes: ["98133834-439c-9a8c-7e9f-c3186f2fa45f"],
+            children: [],
+            data: {
+              text: false,
+            },
+          },
+        ],
+        styles: [
+          {
+            _id: "98133834-439c-9a8c-7e9f-c3186f2fa45f",
+            fake: false,
+            type: "class",
+            name: "Div Block",
+            namespace: "",
+            comb: "",
+            styleLess:
+              "height: 400px; background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), @img_667d0b7769e0cc3754b584f6, @img_667d0fe180995eadc1534a26, @img_example_bg; background-position: 0px 0px, 550px 0px, 0px 0px,0px 0px; background-size: auto, contain, auto, auto; background-repeat: repeat, no-repeat, repeat,repeat; background-attachment: scroll, fixed, scroll, fixed;",
+            variants: {},
+            children: [],
+            createdBy: "5b7c48038bdf56493c54eae4",
+            origin: null,
+            selector: null,
+          },
+        ],
+        assets: [
+          {
+            cdnUrl:
+              "https://uploads-ssl.webflow.com/667c32290bd6159c18dca9a0/667d0b7769e0cc3754b584f6_IMG_2882%20(1).png",
+            siteId: "667c32290bd6159c18dca9a0",
+            width: 800,
+            height: 600,
+            fileName: "IMG_2882 (1).png",
+            createdOn: "2024-06-27T06:49:27.100Z",
+            origFileName: "IMG_2882 (1).png",
+            fileHash: "36f49907757795f0a4ecfcfdfc483115",
+            variants: [
+              {
+                origFileName: "IMG_2882%20(1)-p-500.png",
+                fileName: "667d0b7769e0cc3754b584f6_IMG_2882%20(1)-p-500.png",
+                format: "png",
+                size: 192728,
+                width: 500,
+                quality: 100,
+                cdnUrl:
+                  "https://daks2k3a4ib2z.cloudfront.net/667c32290bd6159c18dca9a0/667d0b7769e0cc3754b584f6_IMG_2882%20(1)-p-500.png",
+                s3Url:
+                  "https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0b7769e0cc3754b584f6_IMG_2882%20(1)-p-500.png",
+              },
+            ],
+            mimeType: "image/png",
+            s3Url:
+              "https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0b7769e0cc3754b584f6_IMG_2882%20(1).png",
+            thumbUrl: "",
+            _id: "667d0b7769e0cc3754b584f6",
+            markedAsDeleted: false,
+            fileSize: 862053,
+          },
+          {
+            cdnUrl:
+              "https://uploads-ssl.webflow.com/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20.webp",
+            siteId: "667c32290bd6159c18dca9a0",
+            width: 1024,
+            height: 1024,
+            fileName: "Привет Мир : %2F .webp",
+            createdOn: "2024-06-27T07:08:17.010Z",
+            origFileName: "Привет Мир : %2F .webp",
+            fileHash: "d86e52a94c04120f455b276effa59046",
+            variants: [
+              {
+                origFileName:
+                  "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-500.webp",
+                fileName:
+                  "667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-500.webp",
+                format: "webp",
+                size: 26992,
+                width: 500,
+                quality: 100,
+                cdnUrl:
+                  "https://daks2k3a4ib2z.cloudfront.net/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-500.webp",
+                s3Url:
+                  "https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-500.webp",
+              },
+              {
+                origFileName:
+                  "%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-800.webp",
+                fileName:
+                  "667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-800.webp",
+                format: "webp",
+                size: 45964,
+                width: 800,
+                quality: 100,
+                cdnUrl:
+                  "https://daks2k3a4ib2z.cloudfront.net/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-800.webp",
+                s3Url:
+                  "https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20-p-800.webp",
+              },
+            ],
+            mimeType: "image/webp",
+            s3Url:
+              "https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20.webp",
+            thumbUrl: "",
+            _id: "667d0fe180995eadc1534a26",
+            markedAsDeleted: false,
+            fileSize: 191270,
+          },
+        ],
+      },
+    });
+
+    const fragment = await toWebstudioFragment(input);
+
+    const bgStyle = fragment.styles.find(
+      (style) => style.property === "backgroundImage"
+    );
+
+    expect(bgStyle).not.toBeNull();
+    expect(bgStyle?.value.type).toEqual("layers");
+
+    const layers = bgStyle?.value;
+
+    invariant(layers?.type === "layers");
+
+    const imgA = layers.value[1];
+    const imgB = layers.value[2];
+    const noneLayer = layers.value[3];
+
+    invariant(imgA.type === "image");
+    invariant(imgA.value.type === "url");
+    invariant(imgB.type === "image");
+    invariant(imgB.value.type === "url");
+
+    expect(imgA.value.url).toEqual(input.payload.assets[0].s3Url);
+    expect(imgB.value.url).toEqual(input.payload.assets[1].s3Url);
+
+    expect(noneLayer.type).toEqual("keyword");
+    invariant(noneLayer.type === "keyword");
+    expect(noneLayer.value).toEqual("none");
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        Div Block {
+          height: 400px;
+          background-image: linear-gradient(180deg,hsla(0,0.00%,0.00%,0.11),white), url("https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0b7769e0cc3754b584f6_IMG_2882%20(1).png"), url("https://s3.amazonaws.com/webflow-prod-assets/667c32290bd6159c18dca9a0/667d0fe180995eadc1534a26_%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%9C%D0%B8%D1%80%20%3A%20%252F%20.webp"), none;
+          background-size: auto, contain, auto, auto;
+          background-repeat: repeat, no-repeat, repeat, repeat;
+          background-attachment: scroll, fixed, scroll, fixed;
+          background-position: 0px 0px, 550px 0px, 0px 0px, 0px 0px
+        }
+      }"
   `);
+  });
 });

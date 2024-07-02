@@ -18,6 +18,42 @@ export const properties = {
     },
     types: [],
   },
+  "-webkit-box-orient": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "horizontal",
+    },
+    types: [],
+  },
+  "-webkit-line-clamp": {
+    unitGroups: ["number"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    types: ["integer"],
+  },
+  "-webkit-overflow-scrolling": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    types: [],
+  },
+  "-webkit-tap-highlight-color": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "black",
+    },
+    types: ["hex-color"],
+  },
   accentColor: {
     unitGroups: [],
     inherited: true,
@@ -219,23 +255,23 @@ export const properties = {
     },
     types: [],
   },
-  backgroundPosition: {
+  backgroundPositionX: {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "tuple",
-      value: [
-        {
-          type: "unit",
-          unit: "%",
-          value: 0,
-        },
-        {
-          type: "unit",
-          unit: "%",
-          value: 0,
-        },
-      ],
+      type: "unit",
+      unit: "%",
+      value: 0,
+    },
+    types: ["length", "percentage"],
+  },
+  backgroundPositionY: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "unit",
+      unit: "%",
+      value: 0,
     },
     types: ["length", "percentage"],
   },
@@ -1540,15 +1576,6 @@ export const properties = {
       value: "auto",
     },
     types: [],
-  },
-  lineClamp: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    types: ["integer"],
   },
   lineHeight: {
     unitGroups: ["number", "length", "percentage"],
@@ -2904,6 +2931,15 @@ export const properties = {
     initial: {
       type: "keyword",
       value: "flat",
+    },
+    types: [],
+  },
+  transitionBehavior: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
     },
     types: [],
   },

@@ -1,5 +1,6 @@
 import {
   FunctionValue,
+  UnparsedValue,
   type KeywordValue,
   type LayersValue,
   type StyleProperty,
@@ -21,8 +22,8 @@ import {
 } from "@webstudio-is/css-data";
 import { camelCase } from "change-case";
 
-export const defaultTransitionProperty: KeywordValue = {
-  type: "keyword",
+export const defaultTransitionProperty: UnparsedValue = {
+  type: "unparsed",
   value: "opacity",
 };
 export const defaultTransitionDuration: UnitValue = {
@@ -38,6 +39,10 @@ export const defaultTransitionDelay: UnitValue = {
 export const defaultTransitionTimingFunction: KeywordValue = {
   type: "keyword",
   value: "ease",
+};
+export const defaultTransitionBehavior: KeywordValue = {
+  type: "keyword",
+  value: "normal",
 };
 
 export const defaultFunctions = {
@@ -119,6 +124,7 @@ export const getTransitionProperties = (
     transitionTimingFunction: { type: "layers", value: [] },
     transitionDelay: { type: "layers", value: [] },
     transitionDuration: { type: "layers", value: [] },
+    transitionBehavior: { type: "layers", value: [] },
   };
   for (const property of transitionLongHandProperties) {
     const value = currentyStyle[property];
@@ -148,6 +154,7 @@ export const convertIndividualTransitionToLayers = (
     transitionDuration,
     transitionDelay,
     transitionTimingFunction,
+    transitionBehavior,
   } = properties;
 
   // https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function
@@ -169,12 +176,16 @@ export const convertIndividualTransitionToLayers = (
     const delay =
       getValueOrRepeatLast(transitionDelay.value, index) ??
       defaultTransitionDelay;
+    const behavior =
+      getValueOrRepeatLast(transitionBehavior.value, index) ??
+      defaultTransitionBehavior;
 
     if (
       isValidTransitionValue(property) &&
       isValidTransitionValue(duration) &&
       isValidTransitionValue(timingFunction) &&
-      isValidTransitionValue(delay)
+      isValidTransitionValue(delay) &&
+      isValidTransitionValue(behavior)
     ) {
       const layer: TupleValue = {
         type: "tuple",
@@ -204,45 +215,30 @@ export const addDefaultTransitionLayer = (props: {
 }) => {
   const { createBatchUpdate, currentStyle } = props;
   const properties = getTransitionProperties(currentStyle);
-  const { timing, property, delay, duration } = extractTransitionProperties({
-    type: "tuple",
+  const batch = createBatchUpdate();
+  batch.setProperty("transitionProperty")({
+    type: "layers",
+    value: [...properties.transitionProperty.value, defaultTransitionProperty],
+  });
+  batch.setProperty("transitionTimingFunction")({
+    type: "layers",
     value: [
-      defaultTransitionProperty,
-      defaultTransitionDuration,
+      ...properties.transitionTimingFunction.value,
       defaultTransitionTimingFunction,
-      defaultTransitionDelay,
     ],
   });
-  const batch = createBatchUpdate();
-
-  if (property) {
-    batch.setProperty("transitionProperty")({
-      type: "layers",
-      value: [...properties.transitionProperty.value, property],
-    });
-  }
-
-  if (timing) {
-    batch.setProperty("transitionTimingFunction")({
-      type: "layers",
-      value: [...properties.transitionTimingFunction.value, timing],
-    });
-  }
-
-  if (duration) {
-    batch.setProperty("transitionDuration")({
-      type: "layers",
-      value: [...properties.transitionDuration.value, duration],
-    });
-  }
-
-  if (delay) {
-    batch.setProperty("transitionDelay")({
-      type: "layers",
-      value: [...properties.transitionDelay.value, delay],
-    });
-  }
-
+  batch.setProperty("transitionDuration")({
+    type: "layers",
+    value: [...properties.transitionDuration.value, defaultTransitionDuration],
+  });
+  batch.setProperty("transitionDelay")({
+    type: "layers",
+    value: [...properties.transitionDelay.value, defaultTransitionDelay],
+  });
+  batch.setProperty("transitionBehavior")({
+    type: "layers",
+    value: [...properties.transitionBehavior.value, defaultTransitionBehavior],
+  });
   batch.publish();
 };
 
@@ -271,6 +267,7 @@ export const deleteTransitionLayer = (props: {
   batch.publish(options);
 };
 
+// @todo support editing transition-behavior
 export const editTransitionLayer = (props: {
   index: number;
   layers: LayersValue;
@@ -281,7 +278,7 @@ export const editTransitionLayer = (props: {
   const { index, layers, createBatchUpdate, options, currentStyle } = props;
   const batch = createBatchUpdate();
 
-  const newTransitionProperties: KeywordValue[] = [];
+  const newTransitionProperties: Array<KeywordValue | UnparsedValue> = [];
   const newTransitionDurations: UnitValue[] = [];
   const newTransitionDelays: UnitValue[] = [];
   const newTransitionTimingFunctions: Array<KeywordValue | FunctionValue> = [];
@@ -394,7 +391,11 @@ export const hideTransitionLayer = (props: {
     batch.setProperty(property)({
       type: "layers",
       value: propertyLayer.value.map((layer, i) => {
-        if (layer.type !== "keyword" && layer.type !== "unit") {
+        if (
+          layer.type !== "keyword" &&
+          layer.type !== "unit" &&
+          layer.type !== "unparsed"
+        ) {
           return layer;
         }
 

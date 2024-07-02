@@ -14,7 +14,13 @@ import {
   $selectedPage,
   $project,
 } from "../../nano-states";
-import { WfData, WfNode, WfStyle, wfNodeTypes } from "./schema";
+import {
+  WfData,
+  wfNodeTypes,
+  type WfNode,
+  type WfStyle,
+  type WfAsset,
+} from "./schema";
 import { addInstanceAndProperties } from "./instances-properties";
 import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";
@@ -48,6 +54,11 @@ const toWebstudioFragment = async (wfData: WfData) => {
   const wfStyles = new Map<WfStyle["_id"], WfStyle>(
     wfData.payload.styles.map((style: WfStyle) => [style._id, style])
   );
+
+  const wfAssets = new Map<WfAsset["_id"], WfAsset>(
+    wfData.payload.assets.map((asset: WfAsset) => [asset._id, asset])
+  );
+
   // False value used to skip a node.
   const doneNodes = new Map<WfNode["_id"], Instance["id"] | false>();
   for (const wfNode of wfNodes.values()) {
@@ -70,6 +81,7 @@ const toWebstudioFragment = async (wfData: WfData) => {
   await addStyles(
     wfNodes,
     wfStyles,
+    wfAssets,
     doneNodes,
     fragment,
     generateStyleSourceId

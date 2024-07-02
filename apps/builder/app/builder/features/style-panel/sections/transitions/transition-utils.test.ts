@@ -35,7 +35,7 @@ const createBatchUpdate: CreateBatchUpdate = () => ({
   deleteProperty: (propertyName: string) => {
     deletedProperties.add(propertyName);
   },
-  publish: (options?: unknown) => {
+  publish: (_options?: unknown) => {
     published = true;
   },
 });
@@ -72,6 +72,13 @@ describe("transition-utils", () => {
         value: [
           { type: "unit", value: 100, unit: "ms" },
           { type: "unit", value: 0, unit: "ms" },
+        ],
+      },
+      transitionBehavior: {
+        type: "layers",
+        value: [
+          { type: "keyword", value: "normal" },
+          { type: "keyword", value: "allow-discrete" },
         ],
       },
     };

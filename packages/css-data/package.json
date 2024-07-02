@@ -25,7 +25,7 @@
     "html-tags": "^3.3.1",
     "mdn-data": "2.8.0",
     "type-fest": "^4.3.1",
-    "typescript": "5.4.5",
+    "typescript": "5.5.2",
     "zod": "^3.22.4"
   },
   "peerDependencies": {
@@ -38,8 +38,8 @@
   "private": true,
   "sideEffects": false,
   "dependencies": {
-    "@unocss/core": "^0.56.4",
-    "@unocss/preset-uno": "^0.56.4",
+    "@unocss/core": "^0.61.0",
+    "@unocss/preset-uno": "^0.61.0",
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
     "colord": "^2.9.3",

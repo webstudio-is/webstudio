@@ -6,7 +6,7 @@ const pagesBase: Pages = {
   meta: {},
   homePage: {
     id: "home",
-    path: "/",
+    path: "",
     name: "Home",
     title: "Home",
     rootInstanceId: "instance-1",

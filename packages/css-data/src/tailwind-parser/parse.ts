@@ -1,14 +1,10 @@
-import * as csstree from "css-tree";
-import { camelCase } from "change-case";
 import { UnoGenerator, createGenerator } from "@unocss/core";
 import { type Theme, presetUno } from "@unocss/preset-uno";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { expandTailwindShorthand } from "./shorthand";
 import { substituteVariables } from "./substitute";
 import warnOnce from "warn-once";
-import { parseCssValue } from "../parse-css-value";
-import { LayersValue, type StyleProperty } from "@webstudio-is/css-engine";
-import { parseShadow } from "../property-parsers/shadows";
+import { parseCss } from "../parse-css";
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
 
@@ -24,9 +20,7 @@ const uno = () => {
  */
 export const parseTailwindToCss = async (classes: string, warn = warnOnce) => {
   const expandedClasses = expandTailwindShorthand(classes);
-  // Workaround for Uno bug: When expandedClasses is "[text-decoration-line:none]", CSS generation fails.
-  // Adding a preceding space as a fix.
-  const generated = await uno().generate(` ${expandedClasses}`, {
+  const generated = await uno().generate(expandedClasses, {
     preflights: true,
   });
 
@@ -35,76 +29,8 @@ export const parseTailwindToCss = async (classes: string, warn = warnOnce) => {
 };
 
 /**
- * Convert CSS prepared by parseTailwindToCss to Webstudio format.
- */
-const parseCssToWebstudio = (css: string) => {
-  const ast = csstree.parse(css);
-  const styles: EmbedTemplateStyleDecl[] = [];
-
-  csstree.walk(ast, {
-    enter: (node, item, list) => {
-      if (node.type === "Declaration") {
-        const property = camelCase(node.property.trim());
-        const cssValue = csstree.generate(node.value);
-
-        const style: EmbedTemplateStyleDecl = {
-          property: property as StyleProperty,
-          value: parseCssValue(property as StyleProperty, cssValue),
-        };
-
-        styles.push(style);
-      }
-    },
-  });
-
-  return styles;
-};
-
-/**
- * In WebStudio, background-related properties are managed using a specialized "layer" type.
- **/
-const postprocessBackgrounds = (
-  styles: EmbedTemplateStyleDecl[],
-  warn = warnOnce
-) => {
-  const backgroundProps = [
-    "backgroundAttachment",
-    "backgroundClip",
-    "backgroundBlendMode",
-    "backgroundImage",
-    "backgroundOrigin",
-    "backgroundPosition",
-    "backgroundRepeat",
-    "backgroundSize",
-  ];
-
-  return styles.map((style) => {
-    if (backgroundProps.includes(style.property)) {
-      const layersResult = LayersValue.safeParse({
-        type: "layers",
-        value: [style.value],
-      });
-
-      if (layersResult.success) {
-        return {
-          property: style.property,
-          value: layersResult.data,
-        };
-      }
-      warn(
-        true,
-        `Failed to convert background property ${
-          style.property
-        } with value ${JSON.stringify(style.value)} to layers`
-      );
-    }
-    return style;
-  });
-};
-
-/**
  * Tailwind by default has border-style: solid, but WebStudio doesn't.
- * Provide boder-style: solid if border-width is provided.
+ * Provide border-style: solid if border-width is provided.
  **/
 const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
   const borderPairs = [
@@ -137,22 +63,6 @@ const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
 };
 
 /**
- * In WebStudio, box-shadow property is managed using a specialized "layer" type.
- **/
-const postprocessBoxShadows = (styles: EmbedTemplateStyleDecl[]) => {
-  return styles.map((style) => {
-    if (style.property === "boxShadow" && style.value.type === "unparsed") {
-      const shadowStyle = parseShadow("boxShadow", style.value.value);
-      return {
-        property: style.property,
-        value: shadowStyle,
-      };
-    }
-    return style;
-  });
-};
-
-/**
  * Parses Tailwind classes to webstudio template format.
  */
 export const parseTailwindToWebstudio = async (
@@ -160,11 +70,9 @@ export const parseTailwindToWebstudio = async (
   warn = warnOnce
 ) => {
   const css = await parseTailwindToCss(classes, warn);
-  let styles = parseCssToWebstudio(css);
+  let styles = Object.values(parseCss(css)).flat();
   // postprocessing
-  styles = postprocessBackgrounds(styles, warn);
   styles = postprocessBorder(styles);
-  styles = postprocessBoxShadows(styles);
 
   return styles;
 };

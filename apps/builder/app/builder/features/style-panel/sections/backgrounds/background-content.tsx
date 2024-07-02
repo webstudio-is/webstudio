@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Flex,
@@ -13,7 +13,7 @@ import {
   Separator,
   styled,
 } from "@webstudio-is/design-system";
-import { ImageControl, SelectControl, PositionControl } from "../../controls";
+import { ImageControl, SelectControl } from "../../controls";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
   DeleteProperty,
@@ -42,12 +42,13 @@ import { toValue } from "@webstudio-is/css-engine";
 import { BackgroundGradient } from "./background-gradient";
 import { NonResetablePropertyName } from "../../shared/property-name";
 import { BackgroundImage } from "./background-image";
+import { BackgroundPosition } from "./background-position";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
   deleteProperty: DeleteBackgroundProperty;
-  setBackgroundColor: (color: RgbValue) => void;
+  setBackgroundColor: (color: StyleValue) => void;
 };
 
 const safeDeleteProperty = (
@@ -214,11 +215,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
 
         <Spacer />
 
-        <PositionControl
+        <BackgroundPosition
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
-          currentStyle={currentStyle}
-          property="backgroundPosition"
         />
 
         <Grid

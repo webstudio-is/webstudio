@@ -33,7 +33,8 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
     if (
       property === "overflow" ||
       property === "transition" ||
-      property === "white-space"
+      property === "white-space" ||
+      property === "background-position"
     ) {
       data.styles.delete(styleDeclKey);
       const longhands = expandShorthands([

@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "typescript": "5.4.5"
+    "typescript": "5.5.2"
   },
   "bin": {
     "generate-arg-types": "./src/cli.ts"

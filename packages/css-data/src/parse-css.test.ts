@@ -39,9 +39,9 @@ describe("Parse CSS", () => {
 
   test("parses supported shorthand values", () => {
     const css = `
-      .test { 
-        background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC; 
-      }    
+      .test {
+        background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC;
+      }
     `;
     expect(parseCss(css)).toMatchInlineSnapshot(`
       {
@@ -54,6 +54,144 @@ describe("Parse CSS", () => {
                 {
                   "type": "unparsed",
                   "value": "linear-gradient(180deg,#11181C 0%,rgba(17,24,28,0) 36.09%)",
+                },
+                {
+                  "type": "keyword",
+                  "value": "none",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundPositionX",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundPositionY",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+                {
+                  "type": "unit",
+                  "unit": "%",
+                  "value": 0,
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundSize",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "tuple",
+                  "value": [
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                  ],
+                },
+                {
+                  "type": "tuple",
+                  "value": [
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                    {
+                      "type": "keyword",
+                      "value": "auto",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundRepeat",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "repeat",
+                },
+                {
+                  "type": "keyword",
+                  "value": "repeat",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundAttachment",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "scroll",
+                },
+                {
+                  "type": "keyword",
+                  "value": "scroll",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundOrigin",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "padding-box",
+                },
+                {
+                  "type": "keyword",
+                  "value": "padding-box",
+                },
+              ],
+            },
+          },
+          {
+            "property": "backgroundClip",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "keyword",
+                  "value": "border-box",
+                },
+                {
+                  "type": "keyword",
+                  "value": "border-box",
                 },
               ],
             },
@@ -71,6 +209,70 @@ describe("Parse CSS", () => {
         ],
       }
     `);
+  });
+
+  test("parses single layer", () => {
+    const css = `
+      .test {
+          background-image: none; background-position: 0px 0px; background-size: auto;
+      }
+    `;
+    expect(parseCss(css)).toMatchInlineSnapshot(`
+{
+  "test": [
+    {
+      "property": "backgroundImage",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "none",
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundPositionX",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unit",
+            "unit": "px",
+            "value": 0,
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundPositionY",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unit",
+            "unit": "px",
+            "value": 0,
+          },
+        ],
+      },
+    },
+    {
+      "property": "backgroundSize",
+      "value": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "auto",
+          },
+        ],
+      },
+    },
+  ],
+}
+`);
   });
 
   test("parse state", () => {
@@ -214,7 +416,7 @@ describe("Parse CSS", () => {
         margin-bottom: 10px;
         font-weight: bold;
       }
-      
+
       h1 {
         margin-top: 20px;
         font-size: 38px;
@@ -426,18 +628,18 @@ describe("Parse CSS", () => {
     // @todo parser is wrong here, it should be keyword horizontal
     expect(parseCss(`a { -webkit-box-orient: horizontal; }`))
       .toMatchInlineSnapshot(`
-      {
-        "a": [
-          {
-            "property": "WebkitBoxOrient",
-            "value": {
-              "type": "invalid",
-              "value": "",
+        {
+          "a": [
+            {
+              "property": "-webkit-box-orient",
+              "value": {
+                "type": "keyword",
+                "value": "horizontal",
+              },
             },
-          },
-        ],
-      }
-    `);
+          ],
+        }
+      `);
   });
 
   test("parse child combinator", () => {
@@ -446,5 +648,66 @@ describe("Parse CSS", () => {
 
   test("parse space combinator", () => {
     expect(parseCss(`a b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
+  });
+});
+
+test("parse font-smooth properties", () => {
+  expect(
+    parseCss(`
+      a {
+        font-smoothing: auto;
+      }
+      b {
+        -webkit-font-smoothing: auto;
+      }
+      c {
+        -moz-osx-font-smoothing: auto;
+      }
+   `)
+  ).toEqual({
+    a: [
+      {
+        property: "WebkitFontSmoothing",
+        value: { type: "keyword", value: "auto" },
+      },
+    ],
+    b: [
+      {
+        property: "WebkitFontSmoothing",
+        value: { type: "keyword", value: "auto" },
+      },
+    ],
+    c: [
+      {
+        property: "MozOsxFontSmoothing",
+        value: { type: "keyword", value: "auto" },
+      },
+    ],
+  });
+});
+
+test("parse incorrectly unprefixed tap-highlight-color", () => {
+  expect(
+    parseCss(`
+      a {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      }
+      b {
+        tap-highlight-color: transparent;
+      }
+   `)
+  ).toEqual({
+    a: [
+      {
+        property: "-webkit-tap-highlight-color",
+        value: { alpha: 0, b: 0, g: 0, r: 0, type: "rgb" },
+      },
+    ],
+    b: [
+      {
+        property: "-webkit-tap-highlight-color",
+        value: { type: "keyword", value: "transparent" },
+      },
+    ],
   });
 });

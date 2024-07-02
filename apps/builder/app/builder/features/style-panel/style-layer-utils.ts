@@ -273,6 +273,10 @@ export const extractNameAndValueFromLayer = (
             }
           }
 
+          if (item.type === "unparsed") {
+            name.push(item.value);
+          }
+
           if (item.type === "function") {
             const value = `${item.name}(${toValue(item.args)})`;
             name.push(value);

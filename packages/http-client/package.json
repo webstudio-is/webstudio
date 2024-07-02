@@ -20,7 +20,7 @@
     "@jest/globals": "^29.7.0",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "typescript": "5.4.5"
+    "typescript": "5.5.2"
   },
   "exports": {
     "webstudio": "./src/index.ts",
