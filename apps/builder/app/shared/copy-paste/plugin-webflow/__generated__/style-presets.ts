@@ -918,13 +918,6 @@ export const styles = {
         value: 1,
       },
     },
-    {
-      property: "all",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
   ],
   code: [
     {
