@@ -2504,18 +2504,13 @@ describe("Styles", () => {
       {
         type: "token",
         id: expect.any(String),
-        name: "button",
-      },
-      {
-        type: "token",
-        id: expect.any(String),
-        name: "is-secondary",
+        name: "button.is-secondary",
       },
     ]);
     expect(fragment.styleSourceSelections).toEqual([
       {
         instanceId: expect.any(String),
-        values: [expect.any(String), expect.any(String), expect.any(String)],
+        values: [expect.any(String), expect.any(String)],
       },
     ]);
 
@@ -2530,10 +2525,8 @@ describe("Styles", () => {
         a:hover {
           outline: 0 none currentColor
         }
-        button {
-          text-align: center
-        }
-        is-secondary {
+        button.is-secondary {
+          text-align: center;
           background-color: transparent
         }
       }"
@@ -2900,7 +2893,7 @@ describe("Styles", () => {
       (style) => style.property === "backgroundImage"
     );
 
-    expect(bgStyle).not.toBeNull();
+    expect(bgStyle).toBeDefined();
     expect(bgStyle?.value.type).toEqual("layers");
 
     const layers = bgStyle?.value;

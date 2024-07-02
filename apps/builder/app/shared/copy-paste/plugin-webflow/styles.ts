@@ -332,6 +332,32 @@ const mapComponentAndPresetStyles = (
   return presetStyles;
 };
 
+const mergeComboStyles = (styles: Array<WfStyle>) => {
+  const mergedStyles: Array<WfStyle> = [];
+  for (const style of styles) {
+    if (style.comb) {
+      // Child style can be skipped, as it will be already merged into parent
+      continue;
+    }
+    const mergedStyle = { variants: {}, ...style, children: [] };
+    mergedStyles.push(mergedStyle);
+    for (const childId of style.children ?? []) {
+      const childStyle = styles.find((style) => style._id === childId);
+      if (childStyle) {
+        mergedStyle.styleLess += childStyle.styleLess;
+        for (const key in childStyle.variants) {
+          if (key in childStyle.variants === false) {
+            mergedStyle.variants[key] = { styleLess: "" };
+          }
+          mergedStyle.variants[key].styleLess += childStyle.variants[key];
+        }
+        mergedStyle.name += "." + childStyle.name;
+      }
+    }
+  }
+  return mergedStyles;
+};
+
 export const addStyles = async ({
   wfNodes,
   wfStyles,
@@ -388,11 +414,13 @@ export const addStyles = async ({
       continue;
     }
 
-    for (const classId of wfNode.classes) {
-      const style = wfStyles.get(classId);
-      if (style === undefined) {
-        continue;
-      }
+    let nodeStyles = wfNode.classes
+      .map((classId) => wfStyles.get(classId))
+      .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
+
+    nodeStyles = mergeComboStyles(nodeStyles);
+
+    for (const style of nodeStyles) {
       if (instance && instance.label === undefined) {
         instance.label = style.name;
       }
@@ -413,7 +441,7 @@ export const addStyles = async ({
       });
 
       addNodeStyles({
-        styleSourceId: await generateStyleSourceId(classId),
+        styleSourceId: await generateStyleSourceId(style._id),
         name: style.name,
         variants,
         instanceId,
