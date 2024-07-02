@@ -12010,21 +12010,21 @@ export const styles = {
     {
       property: "animationTimeline",
       value: {
-        type: "invalid",
-        value: "",
+        type: "unparsed",
+        value: "auto",
       },
     },
     {
       property: "animationRangeStart",
       value: {
-        type: "invalid",
+        type: "unparsed",
         value: "normal",
       },
     },
     {
       property: "animationRangeEnd",
       value: {
-        type: "invalid",
+        type: "unparsed",
         value: "normal",
       },
     },
