@@ -9,7 +9,6 @@
   "scripts": {
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
-    "checks": "pnpm typecheck && pnpm test",
     "build:prompts": "tsx ./bin/build-prompts.ts \"./src/chains/**/*.prompt.md\""
   },
   "devDependencies": {

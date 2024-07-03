@@ -13,8 +13,7 @@
     "!*.{test,stories}.*"
   ],
   "scripts": {
-    "typecheck": "tsc",
-    "checks": "pnpm typecheck"
+    "typecheck": "tsc"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {

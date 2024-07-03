@@ -47,4 +47,5 @@ jobs:
 
       - run: pnpm -r build
       - run: pnpm -r size-test
-      - run: pnpm -r checks
+      - run: pnpm -r test
+      - run: pnpm -r typecheck
