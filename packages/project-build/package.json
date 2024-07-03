@@ -18,8 +18,7 @@
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm test"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
     "@webstudio-is/prisma-client": "workspace:*",

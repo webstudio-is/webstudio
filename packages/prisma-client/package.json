@@ -7,7 +7,6 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
     "dev": "pnpm build",
     "build": "prisma format && pnpm generate && esbuild src/prisma.ts --outdir=lib --format=cjs && cp src/cjs/package.json lib && cp -r src/__generated__ lib/__generated__ && pnpm dts",
     "generate": "PRISMA_BINARY_TARGET=${PRISMA_BINARY_TARGET:-'[\"native\"]'} prisma generate",
