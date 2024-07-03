@@ -199,6 +199,9 @@ export const Toast = ({
             "&[data-state=auto]:hover": {
               background: "rgba(0, 0, 0, 0.07)",
             },
+            "&[data-state=auto]:active": {
+              background: "rgba(0, 0, 0, 0.04)",
+            },
           }}
           color="ghost"
           onClick={() => {
@@ -212,6 +215,9 @@ export const Toast = ({
           css={{
             "&[data-state=auto]:hover": {
               background: "rgba(0, 0, 0, 0.07)",
+            },
+            "&[data-state=auto]:active": {
+              background: "rgba(0, 0, 0, 0.04)",
             },
           }}
           color="ghost"
