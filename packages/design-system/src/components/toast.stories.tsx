@@ -134,6 +134,16 @@ export const Design = () => {
           <Toast icon={<ImageIcon />}>Asset already exists</Toast>
         </StoryGrid>
       </StorySection>
+
+      <StorySection title="Very long Toast">
+        <StoryGrid>
+          <Toast icon={<AlertCircleIcon size={24} />}>
+            {"We are what repeatedly do. Excellence is not an act but a habit.".repeat(
+              100
+            )}
+          </Toast>
+        </StoryGrid>
+      </StorySection>
     </>
   );
 };

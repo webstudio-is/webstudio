@@ -158,6 +158,11 @@ const InternalToast = ({
                 css={{
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
+                  display: "-webkit-box",
+                  "-webkit-line-clamp": 20,
+                  "-webkit-box-orient": "vertical",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
                 variant={"labelsSentenceCase"}
               >
