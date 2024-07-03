@@ -139,7 +139,7 @@ export const Design = () => {
 };
 Design.storyName = "Toast Design";
 
-let i = 0;
+let counter = 0;
 export const InAction = () => {
   return (
     <StorySection title="Toast In Action">
@@ -147,21 +147,21 @@ export const InAction = () => {
         <Toaster />
         <Button
           onClick={() => {
-            toast.error(texts[++i % texts.length], { duration: 5000 });
+            toast.error(texts[++counter % texts.length], { duration: 5000 });
           }}
         >
           Show Error Toast
         </Button>
         <Button
           onClick={() => {
-            toast.warn(texts[++i % texts.length], { duration: 5000 });
+            toast.warn(texts[++counter % texts.length], { duration: 5000 });
           }}
         >
           Show Warn Toast
         </Button>
         <Button
           onClick={() => {
-            toast.info(texts[++i % texts.length], { duration: 5000 });
+            toast.info(texts[++counter % texts.length], { duration: 5000 });
           }}
         >
           Show Info Toast
@@ -169,7 +169,7 @@ export const InAction = () => {
 
         <Button
           onClick={() => {
-            toast.error(texts[++i % texts.length], {
+            toast.error(texts[++counter % texts.length], {
               duration: 5000,
               icon: <ImageIcon />,
             });
@@ -179,7 +179,7 @@ export const InAction = () => {
         </Button>
         <Button
           onClick={() => {
-            toast.info(texts[++i % texts.length], {
+            toast.info(texts[++counter % texts.length], {
               duration: 5000,
               icon: <ImageIcon />,
             });

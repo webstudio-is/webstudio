@@ -16,7 +16,7 @@ import { Tooltip } from "./tooltip";
 import { Button } from "./button";
 import { CopyIcon, LargeXIcon } from "@webstudio-is/icons";
 
-const VIEWPORT_PADDING = 8;
+const ANIMATION_SLIDE_LENGTH = 30;
 
 const hide = keyframes({
   "0%": { opacity: 1 },
@@ -24,13 +24,13 @@ const hide = keyframes({
 });
 
 const slideIn = keyframes({
-  from: { transform: `translateY(calc(0px + ${VIEWPORT_PADDING}px))` },
+  from: { transform: `translateY(calc(0px + ${ANIMATION_SLIDE_LENGTH}px))` },
   to: { transform: "translateY(0)" },
 });
 
 const swipeOut = keyframes({
   from: { transform: "translateX(var(--radix-toast-swipe-end-x))" },
-  to: { transform: `translateX(calc(100% + ${VIEWPORT_PADDING}px))` },
+  to: { transform: `translateX(calc(100% + ${ANIMATION_SLIDE_LENGTH}px))` },
 });
 
 const StyledViewport = styled(ToastPrimitive.Viewport, {
@@ -39,8 +39,8 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
   right: 0,
   display: "flex",
   flexDirection: "column",
-  padding: VIEWPORT_PADDING,
-  gap: VIEWPORT_PADDING,
+  padding: theme.spacing[5],
+  gap: theme.spacing[5],
   minWidth: 200,
   width: "auto",
   maxWidth: "100vw",
