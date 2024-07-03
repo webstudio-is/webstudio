@@ -243,15 +243,15 @@ export const getHumanizedTextFromLayer = (
             (item) => item.type === "keyword" && item.value === "inset"
           );
           if (insetKeyword !== undefined) {
-            name.push("Inner shadow: ");
+            name.push("Inner Shadow: ");
             properties.splice(properties.indexOf(insetKeyword), 1);
           } else {
-            name.push("Outer shadow: ");
+            name.push("Outer Shadow: ");
           }
         }
 
         if (property === "textShadow") {
-          name.push("Text shadow: ");
+          name.push("Text Shadow: ");
         }
 
         for (const item of properties) {
