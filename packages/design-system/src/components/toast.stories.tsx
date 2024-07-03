@@ -112,6 +112,11 @@ export const Design = () => {
             are what repeatedly do. Excellence is not an act but a habit. We are
             what repeatedly do. Excellence is not an act but a habit.
           </Toast>
+          <Toast variant="success">
+            We are what repeatedly do. Excellence is not an act but a habit. We
+            are what repeatedly do. Excellence is not an act but a habit. We are
+            what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
         </StoryGrid>
       </StorySection>
 
@@ -126,6 +131,12 @@ export const Design = () => {
           </Toast>
 
           <Toast icon={<AlertCircleIcon size={24} />} variant="error">
+            We are what repeatedly do. Excellence is not an act but a habit. We
+            are what repeatedly do. Excellence is not an act but a habit. We are
+            what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
+
+          <Toast variant="success" icon={<AlertCircleIcon size={24} />}>
             We are what repeatedly do. Excellence is not an act but a habit. We
             are what repeatedly do. Excellence is not an act but a habit. We are
             what repeatedly do. Excellence is not an act but a habit.

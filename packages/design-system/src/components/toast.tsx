@@ -96,6 +96,12 @@ const ToastVariants = styled("div", {
         [borderColor]: theme.colors.backgroundDestructiveMain,
         [iconColor]: theme.colors.foregroundDestructive,
       },
+      success: {
+        [backgroundColor]: theme.colors.backgroundSuccessNotification,
+        [borderAccentBackgroundColor]: theme.colors.backgroundSuccessMain,
+        [borderColor]: theme.colors.backgroundSuccessMain,
+        [iconColor]: theme.colors.foregroundSuccess,
+      },
     },
   },
 });
@@ -328,7 +334,7 @@ export const Toast = ({
 };
 
 const mapToVariant: Record<HotToast["type"], ToastVariant> = {
-  success: "neutral",
+  success: "success",
   error: "error",
   loading: "neutral",
   blank: "neutral",
@@ -375,7 +381,9 @@ export const Toaster = () => {
 type Options = Pick<ToastOptions, "duration" | "id" | "icon">;
 
 export const toast = {
-  info: (value: string, options?: Options) => hotToast.success(value, options),
+  info: (value: string, options?: Options) => hotToast(value, options),
   error: (value: string, options?: Options) => hotToast.error(value, options),
   warn: (value: string, options?: Options) => hotToast.custom(value, options),
+  success: (value: string, options?: Options) =>
+    hotToast.success(value, options),
 };
