@@ -3,7 +3,7 @@
   "include": ["**/*.ts", "**/*.tsx", "**/*.mjs"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["vite/client"],
+    "types": ["vite/client", "@webstudio-is/react-sdk/placeholder"],
     "module": "esnext",
     "allowJs": true,
     "checkJs": true

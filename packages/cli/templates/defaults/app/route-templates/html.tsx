@@ -23,7 +23,7 @@ import {
   socialImageAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
-} from "../../../../__generated__/_index";
+} from "__CLIENT__";
 import {
   formsProperties,
   loadResources,
@@ -31,9 +31,9 @@ import {
   getRemixParams,
   projectId,
   contactEmail,
-} from "../../../../__generated__/_index.server";
+} from "__SERVER__";
 
-import css from "../__generated__/index.css?url";
+import css from "__CSS__?url";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 
 export const loader = async (arg: LoaderFunctionArgs) => {
