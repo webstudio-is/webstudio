@@ -4,6 +4,7 @@ import { Button } from "./button";
 import { Image } from "@webstudio-is/image";
 import { Box } from "./box";
 import { css, theme } from "../stitches.config";
+import { AlertCircleIcon } from "@webstudio-is/icons";
 
 export default {
   title: "Library/Toast",
@@ -66,25 +67,74 @@ const texts = [
 
 export const Design = () => {
   return (
-    <StorySection title="Toast Design">
-      <StoryGrid>
-        <Toast>
-          We are what repeatedly do. Excellence is not an act but a habit.
-        </Toast>
+    <>
+      <StorySection title="Toast Design">
+        <StoryGrid>
+          <Toast>1. We are what repeatedly do.</Toast>
 
-        <Toast variant="warning">
-          We are what repeatedly do. Excellence is not an act but a habit.
-        </Toast>
+          <Toast>
+            2. We are what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
 
-        <Toast variant="error">
-          We are what repeatedly do. Excellence is not an act but a habit. We
-          are what repeatedly do. Excellence is not an act but a habit. We are
-          what repeatedly do. Excellence is not an act but a habit.
-        </Toast>
+          <Toast>
+            3. We are what repeatedly do. We are what repeatedly do. Excellence
+            is not an act but a habit.
+          </Toast>
 
-        <Toast icon={<ImageIcon />}>Asset already exists</Toast>
-      </StoryGrid>
-    </StorySection>
+          <Toast>
+            3. We are what repeatedly do. We are what repeatedly do. Excellence
+            is not an act but a habit. We are what
+          </Toast>
+
+          <Toast>
+            4. We are what repeatedly do. We are what repeatedly do. We are what
+            repeatedly do. Excellence is not an act but a habit.
+          </Toast>
+
+          <Toast>
+            5. We are what repeatedly do. We are what repeatedly do. We are what
+            repeatedly do. We are what repeatedly do. Excellence is not an act
+            but a habit.
+          </Toast>
+
+          <Toast>
+            6. We are what repeatedly do. We are what repeatedly do. We are what
+            repeatedly do. We are what repeatedly do. We are what repeatedly do.
+            Excellence is not an act but a habit.
+          </Toast>
+
+          <Toast variant="warning">
+            We are what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
+
+          <Toast variant="error">
+            We are what repeatedly do. Excellence is not an act but a habit. We
+            are what repeatedly do. Excellence is not an act but a habit. We are
+            what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
+        </StoryGrid>
+      </StorySection>
+
+      <StorySection title="Toast With Icon Design">
+        <StoryGrid>
+          <Toast icon={<AlertCircleIcon size={24} />}>
+            We are what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
+
+          <Toast icon={<AlertCircleIcon size={24} />} variant="warning">
+            We are what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
+
+          <Toast icon={<AlertCircleIcon size={24} />} variant="error">
+            We are what repeatedly do. Excellence is not an act but a habit. We
+            are what repeatedly do. Excellence is not an act but a habit. We are
+            what repeatedly do. Excellence is not an act but a habit.
+          </Toast>
+
+          <Toast icon={<ImageIcon />}>Asset already exists</Toast>
+        </StoryGrid>
+      </StorySection>
+    </>
   );
 };
 Design.storyName = "Toast Design";

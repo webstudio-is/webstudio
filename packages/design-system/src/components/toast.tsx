@@ -5,14 +5,16 @@ import hotToast, {
   type Toast as HotToast,
   type ToastOptions,
 } from "react-hot-toast/headless";
-import { keyframes, styled } from "../stitches.config";
+import { keyframes, rawTheme, styled, type CSS } from "../stitches.config";
 import { Box } from "./box";
 import { theme } from "../stitches.config";
 import { Grid } from "./grid";
-import { AlertCircleIcon } from "@webstudio-is/icons";
+
 import { Text } from "./text";
+import { Flex } from "./flex";
 import { Tooltip } from "./tooltip";
-import { useState } from "react";
+import { Button } from "./button";
+import { CopyIcon, LargeXIcon } from "@webstudio-is/icons";
 
 const VIEWPORT_PADDING = 8;
 
@@ -102,93 +104,199 @@ type ToastVariant = React.ComponentProps<typeof ToastVariants>["variant"];
 
 const cssVar = (name: string) => `var(${name})`;
 
-export const Toast = ({
-  onClose,
+const InternalToast = ({
   children,
   variant,
   icon,
+  sideButtons,
 }: {
-  onClose?: () => void;
   children: React.ReactNode;
   variant?: ToastVariant;
   icon?: React.ReactNode;
+  sideButtons: React.ReactNode;
 }) => {
-  const [copied, setCopied] = useState(false);
-
-  const tooltipEnabled = variant === "error" || variant === "warning";
+  /*
+    navigator.clipboard.writeText(children?.toString() ?? "");
+    onClose?.();
+    */
 
   return (
-    <Tooltip
-      // Preserve tooltip open state after click
-      open={copied ? true : undefined}
-      content={
-        tooltipEnabled
-          ? copied
-            ? "Copied to Clipboard"
-            : "Click to Copy"
-          : undefined
-      }
-    >
-      <ToastVariants
+    <ToastVariants variant={variant}>
+      <Grid
         css={{
-          width: theme.spacing[32],
-        }}
-        variant={variant}
-        onClick={async () => {
-          navigator.clipboard.writeText(children?.toString() ?? "");
-          setCopied(true);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          setCopied(false);
-          onClose?.();
+          display: "grid",
+          gridTemplateColumns: "8px 1fr",
         }}
       >
-        <Grid
+        <Box
           css={{
-            display: "grid",
-            gridTemplateColumns: "8px 1fr",
+            backgroundColor: cssVar(borderAccentBackgroundColor),
+            borderTopLeftRadius: theme.borderRadius[5],
+            borderBottomLeftRadius: theme.borderRadius[5],
+          }}
+        ></Box>
+        <Grid
+          gap={"3"}
+          align={"center"}
+          css={{
+            backgroundColor: cssVar(backgroundColor),
+            padding: theme.spacing[9],
+            gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
+            borderBottomRightRadius: theme.borderRadius[5],
+            borderTopRightRadius: theme.borderRadius[5],
+            border: `1px solid ${cssVar(borderColor)}`,
+            borderLeft: "none",
           }}
         >
           <Box
             css={{
-              backgroundColor: cssVar(borderAccentBackgroundColor),
-              borderTopLeftRadius: theme.borderRadius[5],
-              borderBottomLeftRadius: theme.borderRadius[5],
-            }}
-          ></Box>
-          <Grid
-            gap={"3"}
-            align={"center"}
-            css={{
-              backgroundColor: cssVar(backgroundColor),
-              padding: theme.spacing[9],
-              gridTemplateColumns: "auto 1fr",
-              borderBottomRightRadius: theme.borderRadius[5],
-              borderTopRightRadius: theme.borderRadius[5],
-              border: `1px solid ${cssVar(borderColor)}`,
-              borderLeft: "none",
+              color: cssVar(iconColor),
+              display: icon ? "block" : "none",
             }}
           >
-            <Box css={{ color: cssVar(iconColor) }}>
-              {icon ? icon : <AlertCircleIcon size={24} />}
-            </Box>
+            {icon}
+          </Box>
 
-            <Grid gap={"1"}>
-              <ToastPrimitive.Description asChild>
-                <Text
-                  css={{
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                  variant={"labelsSentenceCase"}
-                >
-                  {children}
-                </Text>
-              </ToastPrimitive.Description>
-            </Grid>
+          <Grid gap={"1"}>
+            <ToastPrimitive.Description asChild>
+              <Text
+                css={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+                variant={"labelsSentenceCase"}
+              >
+                {children}
+              </Text>
+            </ToastPrimitive.Description>
           </Grid>
+
+          {sideButtons}
         </Grid>
-      </ToastVariants>
-    </Tooltip>
+      </Grid>
+    </ToastVariants>
+  );
+};
+
+export const Toast = ({
+  children,
+  variant,
+  icon,
+  onClose,
+  onCopy,
+}: {
+  onClose?: () => void;
+  onCopy?: () => void;
+  children: React.ReactNode;
+  variant?: ToastVariant;
+  icon?: React.ReactNode;
+}) => {
+  const sideButtons = (css: CSS) => (
+    <Flex css={css} wrap="wrapReverse">
+      <Tooltip content={"Copy to clipboard"}>
+        <Button
+          css={{
+            "&[data-state=auto]:hover": {
+              background: "rgba(0, 0, 0, 0.07)",
+            },
+          }}
+          color="ghost"
+          onClick={() => {
+            onCopy?.();
+          }}
+          prefix={<CopyIcon />}
+        ></Button>
+      </Tooltip>
+      <Tooltip content={"Close"}>
+        <Button
+          css={{
+            "&[data-state=auto]:hover": {
+              background: "rgba(0, 0, 0, 0.07)",
+            },
+          }}
+          color="ghost"
+          onClick={() => {
+            onCopy?.();
+          }}
+          prefix={<LargeXIcon />}
+        ></Button>
+      </Tooltip>
+    </Flex>
+  );
+
+  const buttonSize = Number.parseFloat(rawTheme.spacing[12]);
+  // Change the side button layout to vertical at a specific container size.
+  const layoutThreshold = `90px`;
+
+  /**
+   * Using `container-type: size` enables the @container (min-height) media query.
+   * This applies layout, style, and size containment to the container,
+   * meaning the element's size is computed in isolation, ignoring its child elements.
+   * We use `visibility: hidden` elements to set the container's size,
+   * placing all elements inside the same grid cell.
+   */
+  return (
+    <Grid
+      css={{
+        width: theme.spacing[33],
+      }}
+    >
+      {/* Toast with a horizontal layout for side buttons */}
+      <Box
+        css={{
+          gridColumn: "1",
+          gridRow: "1",
+          // Vertical button layout is applied after this height, so it must not affect the container height.
+          maxHeight: layoutThreshold,
+          overflow: "hidden",
+          visibility: "hidden",
+        }}
+      >
+        <InternalToast
+          variant={variant}
+          icon={icon}
+          sideButtons={sideButtons({})}
+        >
+          {children}
+        </InternalToast>
+      </Box>
+
+      {/* Toast with a vertical layout for side buttons. */}
+      <Box css={{ gridColumn: "1", gridRow: "1", visibility: "hidden" }}>
+        <InternalToast
+          variant={variant}
+          icon={icon}
+          sideButtons={sideButtons({
+            width: "min-content",
+            // Ensure buttons do not affect the container height; only the content should.
+            maxHeight: buttonSize,
+          })}
+        >
+          {children}
+        </InternalToast>
+      </Box>
+
+      {/* Toast inside container */}
+      <Grid
+        css={{
+          gridColumn: "1",
+          gridRow: "1",
+          containerType: "size",
+        }}
+      >
+        <InternalToast
+          variant={variant}
+          icon={icon}
+          sideButtons={sideButtons({
+            [`@container (min-height: ${layoutThreshold})`]: {
+              width: "min-content",
+            },
+          })}
+        >
+          {children}
+        </InternalToast>
+      </Grid>
+    </Grid>
   );
 };
 
