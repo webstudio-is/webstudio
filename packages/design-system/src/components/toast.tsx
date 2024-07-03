@@ -115,11 +115,6 @@ const InternalToast = ({
   icon?: React.ReactNode;
   sideButtons: React.ReactNode;
 }) => {
-  /*
-    navigator.clipboard.writeText(children?.toString() ?? "");
-    onClose?.();
-    */
-
   return (
     <ToastVariants variant={variant}>
       <Grid
@@ -216,7 +211,7 @@ export const Toast = ({
           }}
           color="ghost"
           onClick={() => {
-            onCopy?.();
+            onClose?.();
           }}
           prefix={<LargeXIcon />}
         ></Button>
@@ -316,6 +311,7 @@ export const Toaster = () => {
     <ToastPrimitive.ToastProvider>
       {toasts.map((toastData) => {
         const toastVariant = mapToVariant[toastData.type];
+        const children = resolveValue(toastData.message, toastData);
 
         return (
           <AnimatedToast
@@ -329,9 +325,12 @@ export const Toaster = () => {
               onClose={() => {
                 hotToast.remove(toastData.id);
               }}
+              onCopy={() => {
+                navigator.clipboard.writeText(children?.toString() ?? "");
+              }}
               icon={toastData.icon}
             >
-              {resolveValue(toastData.message, toastData)}
+              {children}
             </Toast>
           </AnimatedToast>
         );
