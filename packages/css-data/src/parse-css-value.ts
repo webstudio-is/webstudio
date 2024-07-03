@@ -157,7 +157,7 @@ export const parseCssValue = (
   }
 
   if (property === "filter" || property === "backdropFilter") {
-    return parseFilter(input);
+    return parseFilter(property, input);
   }
 
   if (property === "boxShadow" || property === "textShadow") {

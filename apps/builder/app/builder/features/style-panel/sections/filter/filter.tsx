@@ -50,7 +50,7 @@ export const Section = (props: SectionProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    parseFilter(initialFilter),
+                    parseFilter(property, initialFilter),
                     currentStyle,
                     props.createBatchUpdate
                   );
@@ -90,6 +90,7 @@ export const Section = (props: SectionProps) => {
             return (
               <FilterSectionContent
                 {...layerProps}
+                property={property}
                 layer={layerProps.layer}
                 tooltip={
                   <Tooltip

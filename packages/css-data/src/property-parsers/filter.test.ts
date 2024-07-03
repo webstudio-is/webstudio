@@ -3,7 +3,7 @@ import { parseFilter } from "./filter";
 
 describe("parse filter", () => {
   test("parse values and returns the valid style property values", () => {
-    expect(parseFilter("blur(4px)")).toMatchInlineSnapshot(`
+    expect(parseFilter("filter", "blur(4px)")).toMatchInlineSnapshot(`
 {
   "type": "tuple",
   "value": [
@@ -25,8 +25,9 @@ describe("parse filter", () => {
 }
 `);
 
-    expect(parseFilter("drop-shadow(10px 10px 25px rgba(0, 0, 255, 1))"))
-      .toMatchInlineSnapshot(`
+    expect(
+      parseFilter("filter", "drop-shadow(10px 10px 25px rgba(0, 0, 255, 1))")
+    ).toMatchInlineSnapshot(`
 {
   "type": "tuple",
   "value": [
@@ -65,7 +66,7 @@ describe("parse filter", () => {
 }
 `);
 
-    expect(parseFilter("drop-shadow(10px 10px 25px  #0000FF)"))
+    expect(parseFilter("filter", "drop-shadow(10px 10px 25px  #0000FF)"))
       .toMatchInlineSnapshot(`
 {
   "type": "tuple",
@@ -108,7 +109,10 @@ describe("parse filter", () => {
 
   test("Multiple valid function values", () => {
     expect(
-      parseFilter("blur(4px) drop-shadow(16px 16px 20px blue) opacity(25%)")
+      parseFilter(
+        "filter",
+        "blur(4px) drop-shadow(16px 16px 20px blue) opacity(25%)"
+      )
     ).toMatchInlineSnapshot(`
 {
   "type": "tuple",
@@ -177,7 +181,8 @@ describe("parse filter", () => {
   // parsers are used to use copied value. At the moment, we don't have support
   // for complex functions in the UI like the one below like calc(4px + 16em)
   test("Using complex functions inside filter function", () => {
-    expect(parseFilter("blur(calc(4px + 16em))")).toMatchInlineSnapshot(`
+    expect(parseFilter("filter", "blur(calc(4px + 16em))"))
+      .toMatchInlineSnapshot(`
 {
   "type": "tuple",
   "value": [

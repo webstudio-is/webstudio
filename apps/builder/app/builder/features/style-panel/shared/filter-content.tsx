@@ -1,6 +1,5 @@
 import {
   type InvalidValue,
-  type StyleProperty,
   type TupleValue,
   type FunctionValue,
   toValue,
@@ -78,7 +77,7 @@ const filterFunctions = {
 
 type FilterContentProps = {
   index: number;
-  property: StyleProperty;
+  property: "filter" | "backdropFilter";
   layer: FunctionValue;
   propertyValue: string;
   tooltip: JSX.Element;
@@ -151,7 +150,7 @@ export const FilterSectionContent = ({
     value: string,
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const layers = parseFilter(value);
+    const layers = parseFilter(property, value);
     setIntermediateValue({
       type: layers.type === "invalid" ? "invalid" : "intermediate",
       value,

@@ -20,7 +20,7 @@ import {
   hideLayer,
   swapLayers,
   updateLayer,
-  extractNameAndValueFromLayer,
+  getHumanizedTextFromLayer,
 } from "./style-layer-utils";
 import { useMemo } from "react";
 import type {
@@ -35,10 +35,19 @@ import {
 } from "@webstudio-is/icons";
 import { ColorThumb } from "./shared/color-thumb";
 
+export type LayerListProperty = Extract<
+  StyleProperty,
+  | "filter"
+  | "backdropFilter"
+  | "textShadow"
+  | "boxShadow"
+  | "transitionProperty"
+>;
+
 type LayerListProps = SectionProps & {
   disabled?: boolean;
   label: string;
-  property: StyleProperty;
+  property: LayerListProperty;
   value: TupleValue | LayersValue;
   deleteProperty: DeleteProperty;
   deleteLayer?: (index: number) => boolean | void;
@@ -47,7 +56,7 @@ type LayerListProps = SectionProps & {
   renderContent: (props: {
     index: number;
     layer: TupleValue | FunctionValue;
-    property: StyleProperty;
+    property: LayerListProperty;
     propertyValue: string;
     onDeleteLayer: (index: number) => void;
     onEditLayer: (
@@ -137,7 +146,10 @@ export const LayersList = (props: LayerListProps) => {
           }
 
           const id = String(index);
-          const properties = extractNameAndValueFromLayer(property, layer);
+          const properties = getHumanizedTextFromLayer(property, layer);
+          if (properties === undefined) {
+            return;
+          }
 
           return (
             <FloatingPanel
