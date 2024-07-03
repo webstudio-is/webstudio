@@ -48,3 +48,8 @@ declare module "__SITEMAP__" {
     lastModified: string;
   }>;
 }
+
+declare module "__REDIRECT__" {
+  export const url: string;
+  export const status: number;
+}
