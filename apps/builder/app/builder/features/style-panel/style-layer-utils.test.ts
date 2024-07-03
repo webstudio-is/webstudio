@@ -382,7 +382,7 @@ test("Generates humane layer names for shadow style layer", () => {
     "g": 0,
     "r": 0,
   },
-  "name": "Inner shadow:  2px 2px 5px",
+  "name": "Inner Shadow:  2px 2px 5px",
   "value": "inset 2px 2px 5px rgba(0, 0, 0, 0.5)",
 }
 `);
@@ -405,7 +405,7 @@ test("Generates humane layer names for shadow style layer", () => {
     "g": 0,
     "r": 255,
   },
-  "name": "Outer shadow:  3px 3px 10px",
+  "name": "Outer Shadow:  3px 3px 10px",
   "value": "3px 3px 10px rgba(255, 0, 0, 0.7)",
 }
 `);
@@ -420,7 +420,7 @@ test("Generates humane layer names for shadow style layer", () => {
   ).toMatchInlineSnapshot(`
 {
   "color": undefined,
-  "name": "Text shadow:  1px 1px 2px red",
+  "name": "Text Shadow:  1px 1px 2px red",
   "value": "1px 1px 2px red",
 }
 `);
