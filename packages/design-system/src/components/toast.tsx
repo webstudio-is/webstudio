@@ -244,6 +244,7 @@ export const Toast = ({
           // Vertical button layout is applied after this height, so it must not affect the container height.
           maxHeight: layoutThreshold,
           overflow: "hidden",
+          // Element is used to set the container size.
           visibility: "hidden",
         }}
       >
@@ -257,7 +258,14 @@ export const Toast = ({
       </Box>
 
       {/* Toast with a vertical layout for side buttons. */}
-      <Box css={{ gridColumn: "1", gridRow: "1", visibility: "hidden" }}>
+      <Box
+        css={{
+          gridColumn: "1",
+          gridRow: "1",
+          // Element is used to set the container size.
+          visibility: "hidden",
+        }}
+      >
         <InternalToast
           variant={variant}
           icon={icon}
@@ -271,7 +279,7 @@ export const Toast = ({
         </InternalToast>
       </Box>
 
-      {/* Toast inside container */}
+      {/* Container with Toast */}
       <Grid
         css={{
           gridColumn: "1",
@@ -285,6 +293,7 @@ export const Toast = ({
           sideButtons={sideButtons({
             [`@container (min-height: ${layoutThreshold})`]: {
               width: "min-content",
+              alignSelf: "start",
             },
           })}
         >
