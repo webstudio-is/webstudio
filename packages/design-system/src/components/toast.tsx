@@ -146,7 +146,7 @@ const InternalToast = ({
           <Box
             css={{
               color: cssVar(iconColor),
-              display: icon ? "block" : "none",
+              display: icon ? "contents" : "none",
             }}
           >
             {icon}
@@ -294,7 +294,19 @@ export const Toast = ({
       >
         <InternalToast
           variant={variant}
-          icon={icon}
+          icon={
+            icon ? (
+              <Box
+                css={{
+                  [`@container (min-height: ${layoutThreshold})`]: {
+                    alignSelf: "start",
+                  },
+                }}
+              >
+                {icon}
+              </Box>
+            ) : undefined
+          }
           sideButtons={sideButtons({
             [`@container (min-height: ${layoutThreshold})`]: {
               width: "min-content",
