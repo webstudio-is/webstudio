@@ -100,7 +100,7 @@ export const Section = (props: SectionProps) => {
       {layers.value.length > 0 && (
         <LayersList
           {...props}
-          property={properties[0]}
+          property={transitionLongHandProperties[0]}
           value={layers}
           label={label}
           deleteProperty={() =>

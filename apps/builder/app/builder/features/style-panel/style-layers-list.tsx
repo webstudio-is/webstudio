@@ -1,5 +1,4 @@
 import {
-  toValue,
   type FunctionValue,
   type LayersValue,
   type StyleProperty,
@@ -21,6 +20,7 @@ import {
   hideLayer,
   swapLayers,
   updateLayer,
+  getHumanizedTextFromLayer,
 } from "./style-layer-utils";
 import { useMemo } from "react";
 import type {
@@ -34,12 +34,20 @@ import {
   SubtractIcon,
 } from "@webstudio-is/icons";
 import { ColorThumb } from "./shared/color-thumb";
-import { colord, type RgbaColor } from "colord";
+
+export type LayerListProperty = Extract<
+  StyleProperty,
+  | "filter"
+  | "backdropFilter"
+  | "textShadow"
+  | "boxShadow"
+  | "transitionProperty"
+>;
 
 type LayerListProps = SectionProps & {
   disabled?: boolean;
   label: string;
-  property: StyleProperty;
+  property: LayerListProperty;
   value: TupleValue | LayersValue;
   deleteProperty: DeleteProperty;
   deleteLayer?: (index: number) => boolean | void;
@@ -48,7 +56,7 @@ type LayerListProps = SectionProps & {
   renderContent: (props: {
     index: number;
     layer: TupleValue | FunctionValue;
-    property: StyleProperty;
+    property: LayerListProperty;
     propertyValue: string;
     onDeleteLayer: (index: number) => void;
     onEditLayer: (
@@ -58,51 +66,6 @@ type LayerListProps = SectionProps & {
     ) => void;
     deleteProperty: DeleteProperty;
   }) => JSX.Element;
-};
-
-const extractPropertiesFromLayer = (layer: TupleValue | FunctionValue) => {
-  if (layer.type === "function") {
-    const value = `${layer.name}(${toValue(layer.args)})`;
-    return { name: value, value, color: undefined };
-  }
-
-  const name = [];
-  const shadow = [];
-  let color: RgbaColor | undefined;
-  for (const item of Object.values(layer.value)) {
-    if (item.type === "unit") {
-      const value = toValue(item);
-      name.push(value);
-      shadow.push(value);
-    }
-
-    if (item.type === "rgb") {
-      color = colord(toValue(item)).toRgb();
-      shadow.push(toValue(item));
-    }
-
-    if (item.type === "keyword") {
-      if (colord(item.value).isValid() === false) {
-        name.push(item.value);
-      } else {
-        color = colord(item.value).toRgb();
-      }
-      shadow.push(item.value);
-    }
-
-    if (item.type === "unparsed") {
-      name.push(item.value);
-      shadow.push(item.value);
-    }
-
-    if (item.type === "function") {
-      const value = `${item.name}(${toValue(item.args)})`;
-      name.push(value);
-      shadow.push(value);
-    }
-  }
-
-  return { name: name.join(" "), value: shadow.join(" "), color };
 };
 
 export const LayersList = (props: LayerListProps) => {
@@ -183,7 +146,10 @@ export const LayersList = (props: LayerListProps) => {
           }
 
           const id = String(index);
-          const properties = extractPropertiesFromLayer(layer);
+          const properties = getHumanizedTextFromLayer(property, layer);
+          if (properties === undefined) {
+            return;
+          }
 
           return (
             <FloatingPanel

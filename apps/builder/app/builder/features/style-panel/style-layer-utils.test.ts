@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "@jest/globals";
 import {
+  FunctionValue,
   type LayersValue,
   type StyleProperty,
   type StyleValue,
@@ -9,12 +10,13 @@ import type { CreateBatchUpdate } from "./shared/use-style-data";
 import {
   addLayer,
   deleteLayer,
+  getHumanizedTextFromLayer,
   hideLayer,
   swapLayers,
   updateLayer,
 } from "./style-layer-utils";
 import type { StyleInfo } from "./shared/style-info";
-import { parseShadow } from "@webstudio-is/css-data";
+import { parseFilter, parseShadow } from "@webstudio-is/css-data";
 
 let styleInfo: StyleInfo = {};
 let published = false;
@@ -359,4 +361,181 @@ describe("boxShadowUtils", () => {
       ]
     `);
   });
+});
+
+test("Generates humane layer names for shadow style layer", () => {
+  expect(
+    getHumanizedTextFromLayer(
+      "boxShadow",
+      (
+        parseShadow(
+          "boxShadow",
+          "inset 2px 2px 5px rgba(0, 0, 0, 0.5)"
+        ) as LayersValue
+      ).value[0] as TupleValue
+    )
+  ).toMatchInlineSnapshot(`
+{
+  "color": {
+    "a": 0.5,
+    "b": 0,
+    "g": 0,
+    "r": 0,
+  },
+  "name": "Inner Shadow:  2px 2px 5px",
+  "value": "inset 2px 2px 5px rgba(0, 0, 0, 0.5)",
+}
+`);
+
+  expect(
+    getHumanizedTextFromLayer(
+      "boxShadow",
+      (
+        parseShadow(
+          "boxShadow",
+          "3px 3px 10px rgba(255, 0, 0, 0.7)"
+        ) as LayersValue
+      ).value[0] as TupleValue
+    )
+  ).toMatchInlineSnapshot(`
+{
+  "color": {
+    "a": 0.7,
+    "b": 0,
+    "g": 0,
+    "r": 255,
+  },
+  "name": "Outer Shadow:  3px 3px 10px",
+  "value": "3px 3px 10px rgba(255, 0, 0, 0.7)",
+}
+`);
+
+  // colors is returning isValid as false in node env for 'red'
+  expect(
+    getHumanizedTextFromLayer(
+      "textShadow",
+      (parseShadow("textShadow", "text-shadow: 1px 1px 2px red") as LayersValue)
+        .value[0] as TupleValue
+    )
+  ).toMatchInlineSnapshot(`
+{
+  "color": undefined,
+  "name": "Text Shadow:  1px 1px 2px red",
+  "value": "1px 1px 2px red",
+}
+`);
+});
+
+test("Generates humane layer names for filter style layer", () => {
+  expect(
+    getHumanizedTextFromLayer(
+      "filter",
+      (parseFilter("filter", "blur(50px)") as TupleValue)
+        .value[0] as FunctionValue
+    )
+  ).toMatchInlineSnapshot(`
+{
+  "color": undefined,
+  "name": "Blur: 50px",
+  "value": "blur(50px)",
+}
+`);
+
+  expect(
+    getHumanizedTextFromLayer(
+      "filter",
+      (
+        parseFilter(
+          "filter",
+          "filter: drop-shadow(4px 4px 10px blue);"
+        ) as TupleValue
+      ).value[0] as FunctionValue
+    )
+  ).toMatchInlineSnapshot(`
+{
+  "color": undefined,
+  "name": "Drop Shadow: 4px 4px 10px blue",
+  "value": "drop-shadow(4px 4px 10px blue)",
+}
+`);
+});
+
+test("Generates humane layer names for transition style layer", () => {
+  const transition: TupleValue = {
+    type: "tuple",
+    value: [
+      {
+        type: "keyword",
+        value: "width",
+      },
+      {
+        type: "unit",
+        value: 0,
+        unit: "ms",
+      },
+      {
+        type: "keyword",
+        value: "ease-in-out",
+      },
+      {
+        type: "unit",
+        value: 0,
+        unit: "ms",
+      },
+    ],
+    hidden: false,
+  };
+
+  expect(getHumanizedTextFromLayer("transitionProperty", transition))
+    .toMatchInlineSnapshot(`
+{
+  "color": undefined,
+  "name": "Width: 0ms 0ms ease-in-out",
+  "value": "width 0ms ease-in-out 0ms",
+}
+`);
+
+  const transitionWithCustomTiming: TupleValue = {
+    type: "tuple",
+    value: [
+      {
+        type: "keyword",
+        value: "all",
+      },
+      {
+        type: "unit",
+        value: 50,
+        unit: "ms",
+      },
+      {
+        type: "unit",
+        value: 100,
+        unit: "ms",
+      },
+      {
+        type: "function",
+        name: "cubic-bezier",
+        args: {
+          type: "layers",
+          value: [
+            { type: "unit", value: 0.12, unit: "number" },
+            { type: "unit", value: 0, unit: "number" },
+            { type: "unit", value: 0.39, unit: "number" },
+            { type: "unit", value: 0, unit: "number" },
+          ],
+        },
+      },
+    ],
+    hidden: false,
+  };
+
+  expect(
+    getHumanizedTextFromLayer("transitionProperty", transitionWithCustomTiming)
+  ).toMatchInlineSnapshot(`
+{
+  "color": undefined,
+  "name": "All: 50ms 100ms ease-in-sine",
+  "value": "all 50ms 100ms cubic-bezier(0.12, 0, 0.39, 0)",
+}
+`);
 });

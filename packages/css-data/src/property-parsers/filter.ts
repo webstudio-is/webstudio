@@ -17,13 +17,23 @@ import { colord } from "colord";
   Which uses browser CSSStyleValue.parse to validate.
 */
 
-export const parseFilter = (input: string): TupleValue | InvalidValue => {
+const FilterProperties = {
+  filter: { cleanupKeywords: ["filter:"], propertyName: "filter" },
+  backdropFilter: {
+    cleanupKeywords: ["backdrop-filter:"],
+    propertyName: "backdrop-filter",
+  },
+};
+
+export const parseFilter = (
+  property: keyof typeof FilterProperties,
+  input: string
+): TupleValue | InvalidValue => {
   let tokenStream = input.trim();
   tokenStream = tokenStream.endsWith(";")
     ? tokenStream.slice(0, -1)
     : tokenStream;
-
-  const cleanupKeywords = ["filter:"];
+  const { cleanupKeywords, propertyName } = FilterProperties[property];
 
   for (const cleanupKeyword of cleanupKeywords) {
     tokenStream = tokenStream.startsWith(cleanupKeyword)
@@ -39,7 +49,10 @@ export const parseFilter = (input: string): TupleValue | InvalidValue => {
     };
   }
 
-  const isValidFilterDecleration = isValidDeclaration("filter", tokenStream);
+  const isValidFilterDecleration = isValidDeclaration(
+    propertyName,
+    tokenStream
+  );
   if (isValidFilterDecleration === false) {
     return {
       type: "invalid",
