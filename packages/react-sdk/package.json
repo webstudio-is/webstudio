@@ -50,10 +50,14 @@
       "webstudio": "./src/css/normalize.ts",
       "types": "./lib/types/css/normalize.d.ts",
       "import": "./lib/css/normalize.js"
+    },
+    "./placeholder": {
+      "types": "./placeholder.d.ts"
     }
   },
   "files": [
     "lib/*",
+    "./placeholder.d.ts",
     "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",

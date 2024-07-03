@@ -635,8 +635,6 @@ export const prebuild = async (options: {
     const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
 
     const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
-    const remixRoute = generateRemixRoute(pagePath);
-    const fileName = `${remixRoute}.tsx`;
 
     // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
@@ -663,7 +661,7 @@ export const prebuild = async (options: {
         ${JSON.stringify(pageBackgroundImageAssets)}
 
       ${
-        remixRoute === "_index"
+        pagePath === "/"
           ? `
             ${
               projectMeta?.code
@@ -726,32 +724,38 @@ export const prebuild = async (options: {
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;
 
+    const generatedBasename = generateRemixRoute(pagePath);
+
     const routeFileContent = (
       documentType === "html" ? routeFileTemplate : routeXmlFileTemplate
     )
-      .replace(
-        /".*\/__generated__\/_index"/,
-        `"../__generated__/${remixRoute}"`
-      )
-      .replace(
-        /".*\/__generated__\/_index.server"/,
-        `"../__generated__/${remixRoute}.server"`
-      );
-
-    await createFileIfNotExists(join(routesDir, fileName), routeFileContent);
-
-    await createFileIfNotExists(join(generatedDir, fileName), pageExports);
+      .replaceAll("__CLIENT__", `../__generated__/${generatedBasename}`)
+      .replaceAll("__SERVER__", `../__generated__/${generatedBasename}.server`)
+      .replaceAll("__CSS__", `../__generated__/index.css`);
 
     await createFileIfNotExists(
-      join(generatedDir, `${remixRoute}.server.tsx`),
+      join(routesDir, `${generateRemixRoute(pagePath)}.tsx`),
+      routeFileContent
+    );
+
+    await createFileIfNotExists(
+      join(generatedDir, `${generatedBasename}.tsx`),
+      pageExports
+    );
+
+    await createFileIfNotExists(
+      join(generatedDir, `${generatedBasename}.server.tsx`),
       serverExports
     );
   }
 
   // MARK: - Default sitemap.xml
   await createFileIfNotExists(
-    join(routesDir, "[sitemap.xml]._index.tsx"),
-    defaultSiteMapTemplate.replace(/".*\/__generated__\//, `"../__generated__/`)
+    join(routesDir, `${generateRemixRoute("/sitemap.xml")}.tsx`),
+    defaultSiteMapTemplate.replaceAll(
+      "__SITEMAP__",
+      `../__generated__/$resources.sitemap.xml`
+    )
   );
 
   await createFileIfNotExists(
