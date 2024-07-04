@@ -215,3 +215,7 @@ export const CssValueListArrowFocus = ({
     />
   );
 };
+
+export const __testing__ = {
+  listItemAttribute,
+};
