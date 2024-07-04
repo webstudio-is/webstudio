@@ -502,10 +502,12 @@ export const prebuild = async (options: {
   const defaultSiteMapXmlPath = normalize(
     join(routeTemplatesDir, "default-sitemap.tsx")
   );
+  const redirectPath = normalize(join(routeTemplatesDir, "redirect.tsx"));
 
   const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
   const routeXmlFileTemplate = await readFile(routeXmlTemplatePath, "utf8");
   const defaultSiteMapTemplate = await readFile(defaultSiteMapXmlPath, "utf8");
+  const redirectTemplate = await readFile(redirectPath, "utf8");
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
@@ -772,17 +774,22 @@ export const prebuild = async (options: {
   const redirects = siteData.build.pages?.redirects;
   if (redirects !== undefined && redirects.length > 0) {
     for (const redirect of redirects) {
-      const redirectPagePath = generateRemixRoute(redirect.old);
-      const redirectFileName = `${redirectPagePath}.ts`;
+      const generatedBasename = generateRemixRoute(redirect.old);
+      await createFileIfNotExists(
+        join(generatedDir, `${generatedBasename}.ts`),
+        `
+        export const url = "${redirect.new}";
+        export const status = ${redirect.status ?? 301};
+        `
+      );
 
-      const content = `import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
-
-      export const loader = (arg: LoaderFunctionArgs) => {
-      return redirect("${redirect.new}", ${redirect.status ?? 301});
-      };
-      `;
-
-      await createFileIfNotExists(join(routesDir, redirectFileName), content);
+      await createFileIfNotExists(
+        join(routesDir, `${generateRemixRoute(redirect.old)}.ts`),
+        redirectTemplate.replaceAll(
+          "__REDIRECT__",
+          `../__generated__/${generatedBasename}`
+        )
+      );
     }
   }
 
