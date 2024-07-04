@@ -19,6 +19,7 @@ export const getButtonStyles = (
     tc.rounded("md"),
     tc.text("sm"),
     tc.font("medium"),
+    tc.text("current"),
     tc.focusVisible(
       [tc.outline("none"), tc.ring("ring", 2, "background", 2)].flat()
     ),
@@ -47,8 +48,9 @@ export const getButtonStyles = (
 
   let sizeStyles: EmbedTemplateStyleDecl[] = [];
   if (size === "icon") {
+    // Set explicit paddings for IOS Safari to prevent the icon from collapsing
     // h-10 w-10
-    sizeStyles = [tc.h(10), tc.w(10)].flat();
+    sizeStyles = [tc.h(10), tc.w(10), tc.px(1.5), tc.py(0)].flat();
   }
   if (size === "sm") {
     // h-9 rounded-md px-3
