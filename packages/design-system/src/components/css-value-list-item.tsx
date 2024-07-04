@@ -2,8 +2,6 @@ import {
   type ComponentProps,
   type Ref,
   forwardRef,
-  Children,
-  useMemo,
   type ReactNode,
 } from "react";
 import { styled } from "../stitches.config";
@@ -13,8 +11,8 @@ import { theme } from "../stitches.config";
 import { DragHandleIcon } from "@webstudio-is/icons";
 import { ArrowFocus } from "./primitives/arrow-focus";
 
-const LIST_ITEM_ATTRIBUTE = "data-list-item";
-const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
+const listItemAttribute = "data-list-item";
+const listItemAttributes = { [listItemAttribute]: true };
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
   visibility: "hidden",
@@ -40,12 +38,7 @@ const IconButtonsWrapper = styled(Flex, {
   top: 0,
   bottom: 0,
   paddingRight: sharedPaddingRight,
-  display: "none",
-});
-
-const FakeIconButtonsWrapper = styled(Flex, {
-  paddingLeft: theme.spacing[5],
-  display: "none",
+  visibility: "hidden",
 });
 
 /**
@@ -68,14 +61,11 @@ const ItemButton = styled("button", {
   position: "relative",
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
-    [`& ${FakeIconButtonsWrapper}`]: {
-      display: "flex",
-    },
     [`~ ${IconButtonsWrapper}`]: {
-      display: "flex",
+      visibility: "visible",
     },
 
-    "&:after": {
+    "&::after": {
       borderRadius: theme.borderRadius[3],
       outline: `2px solid ${theme.colors.borderFocus}`,
       outlineOffset: "-2px",
@@ -126,18 +116,7 @@ const ItemWrapper = styled("div", {
         visibility: "visible",
       },
     },
-    [`& ${IconButtonsWrapper}`]: {
-      display: "flex",
-    },
-    [`& ${FakeIconButtonsWrapper}`]: {
-      display: "flex",
-    },
   },
-});
-
-const FakeSmallButton = styled("div", {
-  width: theme.spacing[9],
-  height: theme.spacing[9],
 });
 
 export const CssValueListItem = forwardRef(
@@ -158,18 +137,6 @@ export const CssValueListItem = forwardRef(
     }: Props,
     ref: Ref<HTMLButtonElement>
   ) => {
-    const buttonsCount = Children.count(buttons?.props.children);
-    const fakeButtons = useMemo(
-      () => (
-        <>
-          {Array.from(new Array(buttonsCount), (_v, index) => (
-            <FakeSmallButton key={index} />
-          ))}
-        </>
-      ),
-      [buttonsCount]
-    );
-
     return (
       <ArrowFocus
         render={({ handleKeyDown }) => (
@@ -202,20 +169,8 @@ export const CssValueListItem = forwardRef(
               </Flex>
 
               <Flex grow={true} />
-
-              {/*
-            We place fake divs with same dimensions as small buttons here to avoid following warning:
-            Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
-            Real buttons will be placed on top of fake buttons
-          */}
-              <FakeIconButtonsWrapper shrink={false} gap={2}>
-                {fakeButtons}
-              </FakeIconButtonsWrapper>
             </ItemButton>
 
-            {/*
-          Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning
-        */}
             <IconButtonsWrapper gap={2} align="center">
               {buttons}
             </IconButtonsWrapper>
@@ -249,7 +204,7 @@ export const CssValueListArrowFocus = ({
             if (event.key === "ArrowUp" || event.key === "ArrowDown") {
               handleKeyDown(event, {
                 accept: (element) =>
-                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
+                  element.getAttribute(listItemAttribute) === "true",
               });
             }
           }}
@@ -259,4 +214,8 @@ export const CssValueListArrowFocus = ({
       )}
     />
   );
+};
+
+export const __testing__ = {
+  listItemAttributes,
 };

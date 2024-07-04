@@ -194,12 +194,14 @@ const VariablesItem = ({
       ? variable.name
       : `${variable.name}: ${formatValuePreview(value)}`;
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <VariablePopoverTrigger key={variable.id} variable={variable}>
       <CssValueListItem
         id={variable.id}
         index={index}
         label={<Label truncate>{label}</Label>}
+        data-state={isMenuOpen ? "open" : undefined}
         buttons={
           <>
             <ValuePreviewDialog
@@ -210,7 +212,7 @@ const VariablesItem = ({
             >
               {undefined}
             </ValuePreviewDialog>
-            <DropdownMenu modal>
+            <DropdownMenu modal onOpenChange={setIsMenuOpen}>
               <DropdownMenuTrigger asChild>
                 {/* a11y is completely broken here
                   focus is not restored to button invoker
