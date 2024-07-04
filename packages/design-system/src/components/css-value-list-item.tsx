@@ -116,9 +116,6 @@ const ItemWrapper = styled("div", {
         visibility: "visible",
       },
     },
-    [`& ${IconButtonsWrapper}`]: {
-      display: "block",
-    },
   },
 });
 
