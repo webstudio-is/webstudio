@@ -203,19 +203,19 @@ export const CssValueListItem = forwardRef(
 
               <Flex grow={true} />
 
-              {/*
-            We place fake divs with same dimensions as small buttons here to avoid following warning:
-            Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
-            Real buttons will be placed on top of fake buttons
-          */}
+              {
+                // We place fake divs with same dimensions as small buttons here to avoid following warning:
+                // Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
+                // Real buttons will be placed on top of fake buttons
+              }
               <FakeIconButtonsWrapper shrink={false} gap={2}>
                 {fakeButtons}
               </FakeIconButtonsWrapper>
             </ItemButton>
 
-            {/*
-          Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning
-        */}
+            {
+              // Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning
+            }
             <IconButtonsWrapper gap={2} align="center">
               {buttons}
             </IconButtonsWrapper>
