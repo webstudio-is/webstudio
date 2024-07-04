@@ -2,8 +2,6 @@ import {
   type ComponentProps,
   type Ref,
   forwardRef,
-  Children,
-  useMemo,
   type ReactNode,
 } from "react";
 import { styled } from "../stitches.config";
@@ -13,8 +11,8 @@ import { theme } from "../stitches.config";
 import { DragHandleIcon } from "@webstudio-is/icons";
 import { ArrowFocus } from "./primitives/arrow-focus";
 
-const LIST_ITEM_ATTRIBUTE = "data-list-item";
-const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
+const listItemAttribute = "data-list-item";
+const listItemAttributes = { [listItemAttribute]: true };
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
   visibility: "hidden",
@@ -67,7 +65,7 @@ const ItemButton = styled("button", {
       visibility: "visible",
     },
 
-    "&:after": {
+    "&::after": {
       borderRadius: theme.borderRadius[3],
       outline: `2px solid ${theme.colors.borderFocus}`,
       outlineOffset: "-2px",
@@ -209,7 +207,7 @@ export const CssValueListArrowFocus = ({
             if (event.key === "ArrowUp" || event.key === "ArrowDown") {
               handleKeyDown(event, {
                 accept: (element) =>
-                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
+                  element.getAttribute(listItemAttribute) === "true",
               });
             }
           }}
