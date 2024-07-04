@@ -3,6 +3,7 @@ import { css, styled, theme } from "../stitches.config";
 import {
   CssValueListArrowFocus,
   CssValueListItem,
+  __testing__,
 } from "./css-value-list-item";
 import { Label, labelColors } from "./label";
 import { SmallToggleButton } from "./small-toggle-button";
@@ -32,10 +33,6 @@ export default {
   },
   title: "Library/CSS Value List Item",
 };
-
-const LIST_ITEM_ATTRIBUTE = "data-list-item";
-
-const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
 
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
@@ -90,7 +87,7 @@ const ListItem = (props: {
           />
         </>
       }
-      {...listItemAttributes}
+      {...__testing__.listItemAttributes}
     />
   );
 };

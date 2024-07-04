@@ -1,9 +1,15 @@
 import { camelCase } from "change-case";
 import * as csstree from "css-tree";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
-import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import { expandShorthands } from "./shorthands";
+
+export type ParsedStyleDecl = {
+  selector: string;
+  state?: string;
+  property: StyleProperty;
+  value: StyleValue;
+};
 
 /**
  * Store prefixed properties without change
@@ -50,8 +56,6 @@ const unprefixProperty = (property: string) => {
 
 type Selector = string;
 
-export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
-
 const parseCssValue = (
   property: string,
   value: string
@@ -96,10 +100,10 @@ export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
   let selectors: Selector[] = [];
   let states = new Map<Selector, Array<string | undefined>>();
-  const styles: Styles = {};
+  const styles = new Map<string, ParsedStyleDecl>();
 
   if (ast === undefined) {
-    return styles;
+    return [];
   }
 
   csstree.walk(ast, (node, item) => {
@@ -142,13 +146,9 @@ export const parseCss = (css: string) => {
 
       for (const [property, value] of parsedCss) {
         try {
-          StyleValue.parse(value);
           selectors.forEach((selector, index) => {
-            let declarations = styles[selector];
-            if (declarations === undefined) {
-              declarations = styles[selector] = [];
-            }
-            const styleDecl: EmbedTemplateStyleDecl = {
+            const styleDecl: ParsedStyleDecl = {
+              selector,
               property: normalizePropertyName(
                 unprefixProperty(property)
               ) as StyleProperty,
@@ -156,21 +156,13 @@ export const parseCss = (css: string) => {
             };
 
             const statesArray = states.get(selector) ?? [];
-            if (statesArray[index]) {
-              styleDecl.state = statesArray[index];
+            const state = statesArray[index] ?? "";
+            if (state) {
+              styleDecl.state = state;
             }
 
-            // Checks if there is already a prorperty that is exactly the same and will be overwritten,
-            // so we may as well remove it from the data.
-            const existingIndex = declarations.findIndex(
-              (decl) =>
-                decl.property === styleDecl.property &&
-                decl.state === styleDecl.state
-            );
-            if (existingIndex !== -1) {
-              declarations.splice(existingIndex, 1);
-            }
-            declarations.push(styleDecl);
+            // deduplicate styles within selector and state by using map
+            styles.set(`${selector}:${state}:${property}`, styleDecl);
           });
         } catch (error) {
           console.error("Bad CSS declaration", error, parsedCss);
@@ -179,5 +171,5 @@ export const parseCss = (css: string) => {
     }
   });
 
-  return styles;
+  return Array.from(styles.values());
 };

@@ -201,7 +201,7 @@ const VariablesItem = ({
         id={variable.id}
         index={index}
         label={<Label truncate>{label}</Label>}
-        state={isMenuOpen ? "open" : undefined}
+        data-state={isMenuOpen ? "open" : undefined}
         buttons={
           <>
             <ValuePreviewDialog

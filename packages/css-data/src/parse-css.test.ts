@@ -3,212 +3,142 @@ import { parseCss } from "./parse-css";
 
 describe("Parse CSS", () => {
   test("longhand property name with keyword value", () => {
-    expect(parseCss(`.test { background-color: red }`)).toMatchInlineSnapshot(`
+    expect(parseCss(`.test { background-color: red }`)).toEqual([
       {
-        "test": [
-          {
-            "property": "backgroundColor",
-            "value": {
-              "type": "keyword",
-              "value": "red",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "test",
+        property: "backgroundColor",
+        value: { type: "keyword", value: "red" },
+      },
+    ]);
   });
 
   test("one class selector rules", () => {
-    expect(parseCss(`.test { color: #ff0000 }`)).toMatchInlineSnapshot(`
+    expect(parseCss(`.test { color: #ff0000 }`)).toEqual([
       {
-        "test": [
-          {
-            "property": "color",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "test",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 
-  test("parses supported shorthand values", () => {
+  test("parse supported shorthand values", () => {
     const css = `
       .test {
         background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC;
       }
     `;
-    expect(parseCss(css)).toMatchInlineSnapshot(`
+    expect(parseCss(css)).toEqual([
       {
-        "test": [
-          {
-            "property": "backgroundImage",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "unparsed",
-                  "value": "linear-gradient(180deg,#11181C 0%,rgba(17,24,28,0) 36.09%)",
-                },
-                {
-                  "type": "keyword",
-                  "value": "none",
-                },
+        selector: "test",
+        property: "backgroundImage",
+        value: {
+          type: "layers",
+          value: [
+            {
+              type: "unparsed",
+              value:
+                "linear-gradient(180deg,#11181C 0%,rgba(17,24,28,0) 36.09%)",
+            },
+            { type: "keyword", value: "none" },
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundPositionX",
+        value: {
+          type: "layers",
+          value: [
+            { type: "unit", unit: "%", value: 0 },
+            { type: "unit", unit: "%", value: 0 },
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundPositionY",
+        value: {
+          type: "layers",
+          value: [
+            { type: "unit", unit: "%", value: 0 },
+            { type: "unit", unit: "%", value: 0 },
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundSize",
+        value: {
+          type: "layers",
+          value: [
+            {
+              type: "tuple",
+              value: [
+                { type: "keyword", value: "auto" },
+                { type: "keyword", value: "auto" },
               ],
             },
-          },
-          {
-            "property": "backgroundPositionX",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "unit",
-                  "unit": "%",
-                  "value": 0,
-                },
-                {
-                  "type": "unit",
-                  "unit": "%",
-                  "value": 0,
-                },
+            {
+              type: "tuple",
+              value: [
+                { type: "keyword", value: "auto" },
+                { type: "keyword", value: "auto" },
               ],
             },
-          },
-          {
-            "property": "backgroundPositionY",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "unit",
-                  "unit": "%",
-                  "value": 0,
-                },
-                {
-                  "type": "unit",
-                  "unit": "%",
-                  "value": 0,
-                },
-              ],
-            },
-          },
-          {
-            "property": "backgroundSize",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "tuple",
-                  "value": [
-                    {
-                      "type": "keyword",
-                      "value": "auto",
-                    },
-                    {
-                      "type": "keyword",
-                      "value": "auto",
-                    },
-                  ],
-                },
-                {
-                  "type": "tuple",
-                  "value": [
-                    {
-                      "type": "keyword",
-                      "value": "auto",
-                    },
-                    {
-                      "type": "keyword",
-                      "value": "auto",
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-          {
-            "property": "backgroundRepeat",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "keyword",
-                  "value": "repeat",
-                },
-                {
-                  "type": "keyword",
-                  "value": "repeat",
-                },
-              ],
-            },
-          },
-          {
-            "property": "backgroundAttachment",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "keyword",
-                  "value": "scroll",
-                },
-                {
-                  "type": "keyword",
-                  "value": "scroll",
-                },
-              ],
-            },
-          },
-          {
-            "property": "backgroundOrigin",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "keyword",
-                  "value": "padding-box",
-                },
-                {
-                  "type": "keyword",
-                  "value": "padding-box",
-                },
-              ],
-            },
-          },
-          {
-            "property": "backgroundClip",
-            "value": {
-              "type": "layers",
-              "value": [
-                {
-                  "type": "keyword",
-                  "value": "border-box",
-                },
-                {
-                  "type": "keyword",
-                  "value": "border-box",
-                },
-              ],
-            },
-          },
-          {
-            "property": "backgroundColor",
-            "value": {
-              "alpha": 1,
-              "b": 252,
-              "g": 255,
-              "r": 235,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundRepeat",
+        value: {
+          type: "layers",
+          value: [
+            { type: "keyword", value: "repeat" },
+            { type: "keyword", value: "repeat" },
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundAttachment",
+        value: {
+          type: "layers",
+          value: [
+            { type: "keyword", value: "scroll" },
+            { type: "keyword", value: "scroll" },
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundOrigin",
+        value: {
+          type: "layers",
+          value: [
+            { type: "keyword", value: "padding-box" },
+            { type: "keyword", value: "padding-box" },
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundClip",
+        value: {
+          type: "layers",
+          value: [
+            { type: "keyword", value: "border-box" },
+            { type: "keyword", value: "border-box" },
+          ],
+        },
+      },
+      {
+        selector: "test",
+        property: "backgroundColor",
+        value: { alpha: 1, b: 252, g: 255, r: 235, type: "rgb" },
+      },
+    ]);
   });
 
   test("parses single layer", () => {
@@ -217,193 +147,120 @@ describe("Parse CSS", () => {
           background-image: none; background-position: 0px 0px; background-size: auto;
       }
     `;
-    expect(parseCss(css)).toMatchInlineSnapshot(`
-{
-  "test": [
-    {
-      "property": "backgroundImage",
-      "value": {
-        "type": "layers",
-        "value": [
-          {
-            "type": "keyword",
-            "value": "none",
-          },
-        ],
+    expect(parseCss(css)).toEqual([
+      {
+        selector: "test",
+        property: "backgroundImage",
+        value: {
+          type: "layers",
+          value: [{ type: "keyword", value: "none" }],
+        },
       },
-    },
-    {
-      "property": "backgroundPositionX",
-      "value": {
-        "type": "layers",
-        "value": [
-          {
-            "type": "unit",
-            "unit": "px",
-            "value": 0,
-          },
-        ],
+      {
+        selector: "test",
+        property: "backgroundPositionX",
+        value: {
+          type: "layers",
+          value: [{ type: "unit", unit: "px", value: 0 }],
+        },
       },
-    },
-    {
-      "property": "backgroundPositionY",
-      "value": {
-        "type": "layers",
-        "value": [
-          {
-            "type": "unit",
-            "unit": "px",
-            "value": 0,
-          },
-        ],
+      {
+        selector: "test",
+        property: "backgroundPositionY",
+        value: {
+          type: "layers",
+          value: [{ type: "unit", unit: "px", value: 0 }],
+        },
       },
-    },
-    {
-      "property": "backgroundSize",
-      "value": {
-        "type": "layers",
-        "value": [
-          {
-            "type": "keyword",
-            "value": "auto",
-          },
-        ],
+      {
+        selector: "test",
+        property: "backgroundSize",
+        value: {
+          type: "layers",
+          value: [{ type: "keyword", value: "auto" }],
+        },
       },
-    },
-  ],
-}
-`);
+    ]);
   });
 
   test("parse state", () => {
-    expect(parseCss(`a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
+    expect(parseCss(`a:hover { color: #ff0000 }`)).toEqual([
       {
-        "a": [
-          {
-            "property": "color",
-            "state": ":hover",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "a",
+        state: ":hover",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 
   test("parse pseudo element", () => {
-    expect(parseCss(`input::placeholder { color: #ff0000 }`))
-      .toMatchInlineSnapshot(`
+    expect(parseCss(`input::placeholder { color: #ff0000 }`)).toEqual([
       {
-        "input": [
-          {
-            "property": "color",
-            "state": "::placeholder",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "input",
+        state: "::placeholder",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 
   test("parse multiple selectors, one with state", () => {
-    expect(parseCss(`a, a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
+    expect(parseCss(`a, a:hover { color: #ff0000 }`)).toEqual([
       {
-        "a": [
-          {
-            "property": "color",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-          {
-            "property": "color",
-            "state": ":hover",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "a",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+      {
+        selector: "a",
+        state: ":hover",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 
   test("parse multiple selectors, both with state", () => {
-    expect(parseCss(`a:active, a:hover { color: #ff0000 }`))
-      .toMatchInlineSnapshot(`
+    expect(parseCss(`a:active, a:hover { color: #ff0000 }`)).toEqual([
       {
-        "a": [
-          {
-            "property": "color",
-            "state": ":active",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-          {
-            "property": "color",
-            "state": ":hover",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "a",
+        state: ":active",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+      {
+        selector: "a",
+        state: ":hover",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 
   test("parse multiple rules", () => {
-    expect(parseCss(`a { color: red} a:hover { color: #ff0000 }`))
-      .toMatchInlineSnapshot(`
-        {
-          "a": [
-            {
-              "property": "color",
-              "value": {
-                "type": "keyword",
-                "value": "red",
-              },
-            },
-            {
-              "property": "color",
-              "state": ":hover",
-              "value": {
-                "alpha": 1,
-                "b": 0,
-                "g": 0,
-                "r": 255,
-                "type": "rgb",
-              },
-            },
-          ],
-        }
-    `);
+    expect(parseCss(`a { color: red} a:hover { color: #ff0000 }`)).toEqual([
+      {
+        selector: "a",
+        property: "color",
+        value: {
+          type: "keyword",
+          value: "red",
+        },
+      },
+      {
+        selector: "a",
+        state: ":hover",
+        property: "color",
+        value: {
+          alpha: 1,
+          b: 0,
+          g: 0,
+          r: 255,
+          type: "rgb",
+        },
+      },
+    ]);
   });
 
   test("parse multiple rules, remove overwritten properties", () => {
@@ -423,231 +280,152 @@ describe("Parse CSS", () => {
         line-height: 44px;
       }
     `;
-    expect(parseCss(css)).toMatchInlineSnapshot(`
+    expect(parseCss(css)).toEqual([
       {
-        "h1": [
-          {
-            "property": "marginBottom",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 10,
-            },
-          },
-          {
-            "property": "fontWeight",
-            "value": {
-              "type": "keyword",
-              "value": "bold",
-            },
-          },
-          {
-            "property": "marginTop",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 20,
-            },
-          },
-          {
-            "property": "fontSize",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 38,
-            },
-          },
-          {
-            "property": "lineHeight",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 44,
-            },
-          },
-        ],
-      }
-    `);
+        selector: "h1",
+        property: "marginBottom",
+        value: { type: "unit", unit: "px", value: 10 },
+      },
+      {
+        selector: "h1",
+        property: "fontSize",
+        value: { type: "unit", unit: "px", value: 38 },
+      },
+      {
+        selector: "h1",
+        property: "fontWeight",
+        value: { type: "keyword", value: "bold" },
+      },
+      {
+        selector: "h1",
+        property: "marginTop",
+        value: { type: "unit", unit: "px", value: 20 },
+      },
+      {
+        selector: "h1",
+        property: "lineHeight",
+        value: { type: "unit", unit: "px", value: 44 },
+      },
+    ]);
   });
 
   test("parse shorthand", () => {
-    expect(parseCss(`a { border: 1px solid red }`)).toMatchInlineSnapshot(`
+    expect(parseCss(`a { border: 1px solid red }`)).toEqual([
       {
-        "a": [
-          {
-            "property": "borderTopWidth",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 1,
-            },
-          },
-          {
-            "property": "borderRightWidth",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 1,
-            },
-          },
-          {
-            "property": "borderBottomWidth",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 1,
-            },
-          },
-          {
-            "property": "borderLeftWidth",
-            "value": {
-              "type": "unit",
-              "unit": "px",
-              "value": 1,
-            },
-          },
-          {
-            "property": "borderTopStyle",
-            "value": {
-              "type": "keyword",
-              "value": "solid",
-            },
-          },
-          {
-            "property": "borderRightStyle",
-            "value": {
-              "type": "keyword",
-              "value": "solid",
-            },
-          },
-          {
-            "property": "borderBottomStyle",
-            "value": {
-              "type": "keyword",
-              "value": "solid",
-            },
-          },
-          {
-            "property": "borderLeftStyle",
-            "value": {
-              "type": "keyword",
-              "value": "solid",
-            },
-          },
-          {
-            "property": "borderTopColor",
-            "value": {
-              "type": "keyword",
-              "value": "red",
-            },
-          },
-          {
-            "property": "borderRightColor",
-            "value": {
-              "type": "keyword",
-              "value": "red",
-            },
-          },
-          {
-            "property": "borderBottomColor",
-            "value": {
-              "type": "keyword",
-              "value": "red",
-            },
-          },
-          {
-            "property": "borderLeftColor",
-            "value": {
-              "type": "keyword",
-              "value": "red",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "a",
+        property: "borderTopWidth",
+        value: { type: "unit", unit: "px", value: 1 },
+      },
+      {
+        selector: "a",
+        property: "borderRightWidth",
+        value: { type: "unit", unit: "px", value: 1 },
+      },
+      {
+        selector: "a",
+        property: "borderBottomWidth",
+        value: { type: "unit", unit: "px", value: 1 },
+      },
+      {
+        selector: "a",
+        property: "borderLeftWidth",
+        value: { type: "unit", unit: "px", value: 1 },
+      },
+      {
+        selector: "a",
+        property: "borderTopStyle",
+        value: { type: "keyword", value: "solid" },
+      },
+      {
+        selector: "a",
+        property: "borderRightStyle",
+        value: { type: "keyword", value: "solid" },
+      },
+      {
+        selector: "a",
+        property: "borderBottomStyle",
+        value: { type: "keyword", value: "solid" },
+      },
+      {
+        selector: "a",
+        property: "borderLeftStyle",
+        value: { type: "keyword", value: "solid" },
+      },
+      {
+        selector: "a",
+        property: "borderTopColor",
+        value: { type: "keyword", value: "red" },
+      },
+      {
+        selector: "a",
+        property: "borderRightColor",
+        value: { type: "keyword", value: "red" },
+      },
+      {
+        selector: "a",
+        property: "borderBottomColor",
+        value: { type: "keyword", value: "red" },
+      },
+      {
+        selector: "a",
+        property: "borderLeftColor",
+        value: { type: "keyword", value: "red" },
+      },
+    ]);
   });
 
   // @todo https://github.com/webstudio-is/webstudio/issues/3399
   test("parse variable", () => {
-    expect(parseCss(`a { color: var(--color) }`)).toMatchInlineSnapshot(`
+    expect(parseCss(`a { color: var(--color) }`)).toEqual([
       {
-        "a": [
-          {
-            "property": "color",
-            "value": {
-              "type": "keyword",
-              "value": "unset",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "a",
+        property: "color",
+        value: { type: "keyword", value: "unset" },
+      },
+    ]);
   });
 
   test("parse empty value as unset", () => {
-    expect(parseCss(`a { color: ; background-color: red }`))
-      .toMatchInlineSnapshot(`
+    expect(parseCss(`a { color: ; background-color: red }`)).toEqual([
       {
-        "a": [
-          {
-            "property": "color",
-            "value": {
-              "type": "keyword",
-              "value": "unset",
-            },
-          },
-          {
-            "property": "backgroundColor",
-            "value": {
-              "type": "keyword",
-              "value": "red",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "a",
+        property: "color",
+        value: { type: "keyword", value: "unset" },
+      },
+      {
+        selector: "a",
+        property: "backgroundColor",
+        value: { type: "keyword", value: "red" },
+      },
+    ]);
   });
 
   test("unprefix property that doesn't need a prefix", () => {
-    expect(parseCss(`a { -webkit-color: red; }`)).toMatchInlineSnapshot(`
+    expect(parseCss(`a { -webkit-color: red; }`)).toEqual([
       {
-        "a": [
-          {
-            "property": "color",
-            "value": {
-              "type": "keyword",
-              "value": "red",
-            },
-          },
-        ],
-      }
-    `);
+        selector: "a",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ]);
   });
 
   test("keep prefix for property that needs one", () => {
-    // @todo parser is wrong here, it should be keyword horizontal
-    expect(parseCss(`a { -webkit-box-orient: horizontal; }`))
-      .toMatchInlineSnapshot(`
-        {
-          "a": [
-            {
-              "property": "-webkit-box-orient",
-              "value": {
-                "type": "keyword",
-                "value": "horizontal",
-              },
-            },
-          ],
-        }
-      `);
+    expect(parseCss(`a { -webkit-box-orient: horizontal; }`)).toEqual([
+      {
+        selector: "a",
+        property: "-webkit-box-orient",
+        value: { type: "keyword", value: "horizontal" },
+      },
+    ]);
   });
 
   test("parse child combinator", () => {
-    expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
+    expect(parseCss(`a > b { color: #ff0000 }`)).toEqual([]);
   });
 
   test("parse space combinator", () => {
-    expect(parseCss(`a b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
+    expect(parseCss(`a b { color: #ff0000 }`)).toEqual([]);
   });
 });
 
@@ -664,26 +442,23 @@ test("parse font-smooth properties", () => {
         -moz-osx-font-smoothing: auto;
       }
    `)
-  ).toEqual({
-    a: [
-      {
-        property: "WebkitFontSmoothing",
-        value: { type: "keyword", value: "auto" },
-      },
-    ],
-    b: [
-      {
-        property: "WebkitFontSmoothing",
-        value: { type: "keyword", value: "auto" },
-      },
-    ],
-    c: [
-      {
-        property: "MozOsxFontSmoothing",
-        value: { type: "keyword", value: "auto" },
-      },
-    ],
-  });
+  ).toEqual([
+    {
+      selector: "a",
+      property: "WebkitFontSmoothing",
+      value: { type: "keyword", value: "auto" },
+    },
+    {
+      selector: "b",
+      property: "WebkitFontSmoothing",
+      value: { type: "keyword", value: "auto" },
+    },
+    {
+      selector: "c",
+      property: "MozOsxFontSmoothing",
+      value: { type: "keyword", value: "auto" },
+    },
+  ]);
 });
 
 test("parse incorrectly unprefixed tap-highlight-color", () => {
@@ -696,18 +471,16 @@ test("parse incorrectly unprefixed tap-highlight-color", () => {
         tap-highlight-color: transparent;
       }
    `)
-  ).toEqual({
-    a: [
-      {
-        property: "-webkit-tap-highlight-color",
-        value: { alpha: 0, b: 0, g: 0, r: 0, type: "rgb" },
-      },
-    ],
-    b: [
-      {
-        property: "-webkit-tap-highlight-color",
-        value: { type: "keyword", value: "transparent" },
-      },
-    ],
-  });
+  ).toEqual([
+    {
+      selector: "a",
+      property: "-webkit-tap-highlight-color",
+      value: { alpha: 0, b: 0, g: 0, r: 0, type: "rgb" },
+    },
+    {
+      selector: "b",
+      property: "-webkit-tap-highlight-color",
+      value: { type: "keyword", value: "transparent" },
+    },
+  ]);
 });
