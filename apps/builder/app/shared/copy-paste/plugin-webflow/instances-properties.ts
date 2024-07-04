@@ -347,11 +347,10 @@ const toFragment = (
     }
 
     case "NavbarMenu": {
-      const component = "Box";
       addProp("tag", wfNode.tag);
       addProp("role", wfNode.data?.attr?.role);
 
-      addInstance(component);
+      addInstance("Box", [], component);
       return fragment;
     }
     case "NavbarContainer":
