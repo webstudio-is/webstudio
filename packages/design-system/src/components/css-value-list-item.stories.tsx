@@ -34,8 +34,6 @@ export default {
   title: "Library/CSS Value List Item",
 };
 
-const listItemAttributes = { [__testing__.listItemAttribute]: true };
-
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
   height: theme.spacing[10],
@@ -89,7 +87,7 @@ const ListItem = (props: {
           />
         </>
       }
-      {...listItemAttributes}
+      {...__testing__.listItemAttributes}
     />
   );
 };
