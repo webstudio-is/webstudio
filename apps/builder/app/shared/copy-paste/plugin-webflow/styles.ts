@@ -115,7 +115,7 @@ const toParsedVariants = (variants: UnparsedVariants) => {
     const { breakpointName, state } = parseVariantName(variant);
     if (typeof styles === "string") {
       try {
-        const parsed = parseCss(`.styles${state} {${styles}}`).styles ?? [];
+        const parsed = parseCss(`.styles${state} {${styles}}`) ?? [];
         const allBreakpointStyles = parsedVariants.get(breakpointName) ?? [];
         allBreakpointStyles.push(...parsed);
         parsedVariants.set(breakpointName, allBreakpointStyles);

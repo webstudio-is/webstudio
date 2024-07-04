@@ -70,7 +70,8 @@ export const parseTailwindToWebstudio = async (
   warn = warnOnce
 ) => {
   const css = await parseTailwindToCss(classes, warn);
-  let styles = Object.values(parseCss(css)).flat();
+  // remove properties from parsed declaration to align with embed template
+  let styles = parseCss(css).map(({ selector, ...styleDecl }) => styleDecl);
   // postprocessing
   styles = postprocessBorder(styles);
 
