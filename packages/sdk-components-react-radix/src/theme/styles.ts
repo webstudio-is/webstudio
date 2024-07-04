@@ -19,6 +19,7 @@ export const getButtonStyles = (
     tc.rounded("md"),
     tc.text("sm"),
     tc.font("medium"),
+    tc.text("current"),
     tc.focusVisible(
       [tc.outline("none"), tc.ring("ring", 2, "background", 2)].flat()
     ),
