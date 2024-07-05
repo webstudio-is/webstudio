@@ -1,5 +1,3 @@
-const match = segment.match(/^(?<type>\w+)\s*:\s*(?<modifier>.+)$/);
-
 const getRemixSegment = (segment: string) => {
   if (segment === "*") {
     return "$";
