@@ -30,9 +30,15 @@ jobs:
             basehead: `refs/tags/0.169.0...refs/tags/0.170.0`,
           });
           commits.data.commits.forEach(commit => {
-            console.log(commit.sha)
-            console.log(commit.commit.message)
-            console.log(commit.html_url)
-            console.log(commit.author.login)
-            console.log('====')
+            const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n/);
+            const type = match?.groups?.type;
+            const message = match?.groups?.message;
+            if (type && message) {
+              console.log(commit.sha)
+              console.log(type)
+              console.log(message)
+              console.log(commit.html_url)
+              console.log(commit.author.login)
+              console.log('====')
+            }
           })
