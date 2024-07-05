@@ -32,7 +32,7 @@ jobs:
             other: [`## Other changes\n`],
           }
           for (const commit of commits.data.commits) {
-            const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n/)
+            const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n*/)
             const type = match?.groups?.type
             const message = match?.groups?.message
             if (type && message) {
