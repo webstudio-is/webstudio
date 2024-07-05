@@ -8,11 +8,15 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: ardalanamini/auto-changelog@v4
-      id: changelog
+    - uses: actions/github-script@v7
+      id: my-script
       with:
-        commit-types: |
-          feat: Features
-          fix: Fixes
-          docs: Documentation
-          experimental: Experimental
+        result-encoding: string
+        retries: 3
+        script: |
+          const releases = github.rest.repos.listReleases({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            per_page: 3,
+          });
+          console.log(releases)
