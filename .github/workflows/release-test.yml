@@ -35,7 +35,7 @@ jobs:
             const type = match?.groups?.type
             const message = match?.groups?.message
             if (type && message) {
-              groups[type] ?? groups.other +=
+              (groups[type] ?? groups.other) +=
                 `- ${message} by @${commit.author.login}\n`
             }
           }
