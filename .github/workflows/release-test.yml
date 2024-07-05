@@ -18,7 +18,7 @@ jobs:
           const commits = await github.rest.repos.compareCommitsWithBasehead({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            basehead: `refs/tags/${latestRelease.data.tag_name}...${context.sha}`,
+            basehead: `refs/tags/${latestRelease.data.tag_name}...refs/tags/${context.sha}`,
           })
 
           const groups = {
@@ -47,7 +47,7 @@ jobs:
             .join('\n\n')
           console.info(changelog)
 
-          await octokit.rest.repos.createRelease({
+          await github.rest.repos.createRelease({
             owner: context.repo.owner,
             repo: context.repo.repo,
             tag_name: 'hello' + context.sha,
