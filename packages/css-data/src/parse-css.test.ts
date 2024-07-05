@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { parseCss } from "./parse-css";
+import { parseCss, parseMediaQuery } from "./parse-css";
 
 describe("Parse CSS", () => {
   test("longhand property name with keyword value", () => {
@@ -483,4 +483,172 @@ test("parse incorrectly unprefixed tap-highlight-color", () => {
       value: { type: "keyword", value: "transparent" },
     },
   ]);
+});
+
+test("parse top level rules and media all as base query", () => {
+  expect(
+    parseCss(`
+      a {
+        color: red;
+      }
+      @media all {
+        b {
+          width: auto;
+        }
+      }
+   `)
+  ).toEqual([
+    {
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      selector: "b",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    },
+  ]);
+});
+
+test("parse media queries", () => {
+  expect(
+    parseCss(`
+      @media  ( max-width:  768px )  {
+        a {
+          color: red;
+        }
+      }
+      @media (min-width: 768px) {
+        a {
+          color: green;
+        }
+      }
+   `)
+  ).toEqual([
+    {
+      breakpoint: `(max-width:768px)`,
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpoint: `(min-width:768px)`,
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    },
+  ]);
+});
+
+test("support only screen media type", () => {
+  expect(
+    parseCss(`
+      @media all {
+        a {
+          color: yellow;
+        }
+      }
+      @media all and ( min-width: 768px )  {
+        a {
+          color: red;
+        }
+      }
+      @media screen and (min-width: 1024px) {
+        a {
+          color: green;
+        }
+      }
+      @media print and (min-width: 1280px) {
+        a {
+          color: blue;
+        }
+      }
+   `)
+  ).toEqual([
+    {
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "yellow" },
+    },
+    {
+      breakpoint: `(min-width:768px)`,
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpoint: `(min-width:1024px)`,
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    },
+  ]);
+});
+
+test("ignore unsupported media queries", () => {
+  expect(
+    parseCss(`
+      a {
+        color: red;
+      }
+      @media (min-width: 768px) and (max-width: 1024px) {
+        b {
+          color: green;
+        }
+      }
+      @media (min-width: 768px) and (max-width: 1024px) {
+        c {
+          color: blue;
+        }
+      }
+      @media (hover: hover) {
+        d {
+          color: yellow;
+        }
+      }
+      @media (min-width: 40rem)  {
+        e {
+          color: orange;
+        }
+      }
+   `)
+  ).toEqual([
+    {
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ]);
+});
+
+test("ignore unsupported at rules", () => {
+  expect(
+    parseCss(`
+      a {
+        color: red;
+      }
+      @supports (display: grid) {
+        b {
+          color: green;
+        }
+      }
+   `)
+  ).toEqual([
+    {
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ]);
+});
+
+test("parse media query", () => {
+  expect(parseMediaQuery(`(min-width: 768px)`)).toEqual({
+    minWidth: 768,
+  });
+  expect(parseMediaQuery(`(max-width: 768px)`)).toEqual({
+    maxWidth: 768,
+  });
+  expect(parseMediaQuery(`(hover: hover)`)).toEqual(undefined);
 });
