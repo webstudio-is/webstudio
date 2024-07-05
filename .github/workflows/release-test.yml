@@ -36,7 +36,8 @@ jobs:
             const message = match?.groups?.message
             if (type && message) {
               const availableType = type in groups ? type : 'other'
-              groups[availableType].push(`- ${message} by @${commit.author.login}`)
+              const capitalized = message[0].toLocaleUpperCase() + message.slice(1)
+              groups[availableType].push(`- ${capitalized} by @${commit.author.login}`)
             }
           }
           const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/0.169.0...${latestRelease.data.tag_name}`
