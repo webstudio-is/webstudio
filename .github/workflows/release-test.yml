@@ -18,7 +18,7 @@ jobs:
           const commits = await github.rest.repos.compareCommitsWithBasehead({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            basehead: `refs/tags/${latestRelease.data.tag_name}...refs/tags/${github.sha}`,
+            basehead: `refs/tags/${latestRelease.data.tag_name}...refs/tags/${context.sha}`,
           })
 
           const groups = {
@@ -39,7 +39,7 @@ jobs:
             }
           }
 
-          const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${latestRelease.data.tag_name}...${github.sha}`
+          const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${latestRelease.data.tag_name}...${context.sha}`
           const changelog = Object.values(groups)
             .filter(lines => lines.length > 1)
             .map(lines => lines.join('\n'))
@@ -50,6 +50,6 @@ jobs:
           await octokit.rest.repos.createRelease({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            tag_name: 'hello' + github.sha,
+            tag_name: 'hello' + context.sha,
             body: changelog,
           })
