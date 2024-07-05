@@ -25,8 +25,8 @@ jobs:
           });
           console.log(latestTag.data.object.sha)
           const commits = await github.rest.repos.compareCommitsWithBasehead({
-            owner,
-            repo,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
             basehead: `refs/tags/0.169...refs/tags/0.170.0`,
           });
           commits.data.commits.forEach(commit => {
