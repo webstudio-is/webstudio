@@ -39,8 +39,10 @@ jobs:
               groups[availableType].push(`- ${message} by @${commit.author.login}`)
             }
           }
+          const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/0.169.0...${latestRelease.data.tag_name}`
           const changelog = Object.values(groups)
             .filter(lines => lines.length > 1)
             .map(lines => lines.join('\n'))
+            .concat(fullChangelog)
             .join('\n\n')
           console.log(changelog)
