@@ -22,6 +22,12 @@ jobs:
           const latestTag = await github.rest.git.getTag({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            tag_sha: latestRelease?.data?.tag_name,
+            tag_sha: `refs/${latestRelease?.data?.tag_name}`,
           });
           console.log(latestTag)
+          const latestTag2 = await github.rest.git.getTag({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_sha: `tags/${latestRelease?.data?.tag_name}`,
+          });
+          console.log(latestTag2)
