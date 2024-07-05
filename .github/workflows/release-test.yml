@@ -15,7 +15,13 @@ jobs:
         retries: 3
         script: |
           const latestRelease = await github.rest.repos.getLatestRelease({
-            owner,
-            repo,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
           });
           console.log(latestRelease)
+          const latestTag = await github.rest.git.getTag({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_sha: latestRelease?.data?.tag_name,
+          });
+          console.log(latestTag)
