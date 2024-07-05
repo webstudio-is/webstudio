@@ -21,6 +21,18 @@ jobs:
           const latestTag = await github.rest.git.getRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            ref: `tags/${latestRelease?.data?.tag_name}`,
+            ref: `tags/${latestRelease.data.tag_name}`,
           });
-          console.log(latestTag)
+          console.log(latestTag.data.object.sha)
+          const commits = await github.rest.repos.compareCommitsWithBasehead({
+            owner,
+            repo,
+            basehead: `refs/tags/0.169...refs/tags/0.170.0`,
+          });
+          commits.data.commits.forEach(commit => {
+            console.log(commit.sha)
+            console.log(commit.commit.message)
+            console.log(commit.html_url)
+            console.log(commit.author.login)
+            console.log('====')
+          })
