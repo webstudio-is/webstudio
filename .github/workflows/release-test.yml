@@ -39,4 +39,4 @@ jobs:
               groups[availableType] += `- ${message} by @${commit.author.login}\n`
             }
           }
-          return Object.values(groups).join('\n\n')
+          console.log(Object.values(groups).join('\n\n'))
