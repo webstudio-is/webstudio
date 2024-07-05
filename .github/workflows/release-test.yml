@@ -27,7 +27,7 @@ jobs:
           const commits = await github.rest.repos.compareCommitsWithBasehead({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            basehead: `refs/tags/0.169...refs/tags/0.170.0`,
+            basehead: `refs/tags/0.169.0...refs/tags/0.170.0`,
           });
           commits.data.commits.forEach(commit => {
             console.log(commit.sha)
