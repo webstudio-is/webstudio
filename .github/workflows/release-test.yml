@@ -17,28 +17,26 @@ jobs:
           const latestRelease = await github.rest.repos.getLatestRelease({
             owner: context.repo.owner,
             repo: context.repo.repo,
-          });
-          const latestTag = await github.rest.git.getRef({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: `tags/${latestRelease.data.tag_name}`,
-          });
-          console.log(latestTag.data.object.sha)
+          })
           const commits = await github.rest.repos.compareCommitsWithBasehead({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            basehead: `refs/tags/0.169.0...refs/tags/0.170.0`,
-          });
-          commits.data.commits.forEach(commit => {
-            const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n/);
-            const type = match?.groups?.type;
-            const message = match?.groups?.message;
-            if (type && message) {
-              console.log(commit.sha)
-              console.log(type)
-              console.log(message)
-              console.log(commit.html_url)
-              console.log(commit.author.login)
-              console.log('====')
-            }
+            basehead: `refs/tags/0.169.0...refs/tags/${latestRelease.data.tag_name}`,
           })
+          const groups = {
+            feat: `## Features\n\n`,
+            fix: `## Fixes\n\n`,
+            docs: `## Documentation\n\n`,
+            experimental: `## Experimental\n\n`,
+            other: `## Other changes\n\n`,
+          }
+          for (const commit of commits.data.commits) {
+            const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n/)
+            const type = match?.groups?.type
+            const message = match?.groups?.message
+            if (type && message) {
+              const section = groups[type] ?? groups.other
+              section += `- ${message} by @${commit.author.login}\n`
+            }
+          }
+          return Object.values(groups).join('\n\n')
