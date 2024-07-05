@@ -14,9 +14,8 @@ jobs:
         result-encoding: string
         retries: 3
         script: |
-          const releases = await github.rest.repos.listReleases({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            per_page: 3,
+          const latestRelease = await github.rest.repos.getLatestRelease({
+            owner,
+            repo,
           });
-          console.log(releases)
+          console.log(latestRelease)
