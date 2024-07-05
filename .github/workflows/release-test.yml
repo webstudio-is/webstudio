@@ -35,8 +35,8 @@ jobs:
             const type = match?.groups?.type
             const message = match?.groups?.message
             if (type && message) {
-              const section = groups[type] ?? groups.other
-              section += `- ${message} by @${commit.author.login}\n`
+              groups[type] ?? groups.other +=
+                `- ${message} by @${commit.author.login}\n`
             }
           }
           return Object.values(groups).join('\n\n')
