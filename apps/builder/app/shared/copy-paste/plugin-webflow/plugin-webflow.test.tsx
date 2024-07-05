@@ -137,12 +137,12 @@ test("Heading", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       h1 {
-        margin-right: 0;
-        margin-left: 0;
-        margin-bottom: 10px;
-        font-weight: bold;
         margin-top: 20px;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
         font-size: 38px;
+        font-weight: bold;
         line-height: 44px
       }
     }"
@@ -549,15 +549,15 @@ test("BlockContainer", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       w-layout-blockcontainer {
+        max-width: none;
         margin-left: auto;
         margin-right: auto;
-        display: block;
-        max-width: none
+        display: block
       }
       w-container {
+        max-width: none;
         margin-left: auto;
-        margin-right: auto;
-        max-width: none
+        margin-right: auto
       }
       w-container:after {
         content: " ";
@@ -807,13 +807,13 @@ test("Columns", async () => {
       }
       w-col {
         float: left;
+        width: 100%;
         min-height: 1px;
         padding-left: 10px;
         padding-right: 10px;
         position: relative;
         left: auto;
-        right: auto;
-        width: 100%
+        right: auto
       }
     }"
   `);
@@ -1347,12 +1347,12 @@ test("RichText", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       h1 {
-        margin-right: 0;
-        margin-left: 0;
-        margin-bottom: 10px;
-        font-weight: bold;
         margin-top: 20px;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
         font-size: 38px;
+        font-weight: bold;
         line-height: 44px
       }
       h2 {
@@ -1565,12 +1565,12 @@ test("Form", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
         border: 0 none currentColor;
         margin: 0;
         padding: 0
@@ -1580,6 +1580,7 @@ test("Form", async () => {
         vertical-align: middle;
         background-color: rgba(255, 255, 255, 1);
         width: 100%;
+        height: auto;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1589,7 +1590,6 @@ test("Form", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        height: auto;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -1646,12 +1646,12 @@ test("FormButton", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
         border: 0 none currentColor;
         margin: 0;
         padding: 0
@@ -1731,12 +1731,12 @@ test("FormTextInput", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
         border: 0 none currentColor;
         margin: 0;
         padding: 0
@@ -1746,6 +1746,7 @@ test("FormTextInput", async () => {
         vertical-align: middle;
         background-color: rgba(255, 255, 255, 1);
         width: 100%;
+        height: auto;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1755,7 +1756,6 @@ test("FormTextInput", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        height: auto;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -1880,6 +1880,7 @@ test("FormTextarea", async () => {
         vertical-align: middle;
         background-color: rgba(255, 255, 255, 1);
         width: 100%;
+        height: auto;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1889,7 +1890,6 @@ test("FormTextarea", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        height: auto;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -2047,12 +2047,12 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
         border: 0 none currentColor;
         margin: 0;
         padding: 0
@@ -2169,12 +2169,12 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
         border: 0 none currentColor;
         margin: 0;
         padding: 0
@@ -2351,12 +2351,12 @@ describe("Custom attributes", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
-          margin-right: 0;
-          margin-left: 0;
-          margin-bottom: 10px;
-          font-weight: bold;
           margin-top: 20px;
+          margin-right: 0;
+          margin-bottom: 10px;
+          margin-left: 0;
           font-size: 38px;
+          font-weight: bold;
           line-height: 44px
         }
       }"
@@ -2438,12 +2438,12 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
-          margin-right: 0;
-          margin-left: 0;
-          margin-bottom: 10px;
-          font-weight: bold;
           margin-top: 20px;
+          margin-right: 0;
+          margin-bottom: 10px;
+          margin-left: 0;
           font-size: 38px;
+          font-weight: bold;
           line-height: 44px
         }
         Heading {
