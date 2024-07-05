@@ -130,7 +130,7 @@ const ItemWrapper = styled("div", {
       visibility: "visible",
     },
     [`& ${FakeIconButtonsWrapper}`]: {
-      visibility: "visible",
+      visibility: "hidden",
     },
   },
 });
