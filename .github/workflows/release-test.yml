@@ -18,7 +18,7 @@ jobs:
           const commits = await github.rest.repos.compareCommitsWithBasehead({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            basehead: `refs/tags/${latestRelease.data.tag_name}...refs/tags/${context.sha}`,
+            basehead: `refs/tags/${latestRelease.data.tag_name}...${context.sha}`,
           })
 
           const groups = {
