@@ -24,11 +24,11 @@ jobs:
             basehead: `refs/tags/0.169.0...refs/tags/${latestRelease.data.tag_name}`,
           })
           const groups = {
-            feat: `## Features\n\n`,
-            fix: `## Fixes\n\n`,
-            docs: `## Documentation\n\n`,
-            experimental: `## Experimental\n\n`,
-            other: `## Other changes\n\n`,
+            feat: [`## Features\n`],
+            fix: [`## Fixes\n`],
+            docs: [`## Documentation\n`],
+            experimental: [`## Experimental\n`],
+            other: [`## Other changes\n`],
           }
           for (const commit of commits.data.commits) {
             const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n/)
@@ -36,7 +36,11 @@ jobs:
             const message = match?.groups?.message
             if (type && message) {
               const availableType = type in groups ? type : 'other'
-              groups[availableType] += `- ${message} by @${commit.author.login}\n`
+              groups[availableType].push(`- ${message} by @${commit.author.login}`)
             }
           }
-          console.log(Object.values(groups).join('\n\n'))
+          const changelog = Object.values(groups)
+            .filter(lines => lines.length > 1)
+            .map(lines => line.join('\n'))
+            .join('\n\n')
+          console.log(changelog)
