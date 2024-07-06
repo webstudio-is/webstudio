@@ -292,15 +292,15 @@ const WfErrorAssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
-  size: z.number(),
-  width: z.number(),
-  quality: z.number(),
+  size: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  quality: z.number().optional(),
   error: z.string(),
   _id: z.string(),
 });
 
 const WfAssetVariant = z.object({
-  _id: z.string(),
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
@@ -315,8 +315,8 @@ const WfAssetVariant = z.object({
 const WfAsset = z.object({
   cdnUrl: z.string().url(),
   siteId: z.string(),
-  width: z.number(),
-  height: z.number(),
+  width: z.number().optional(),
+  height: z.number().optional(),
   fileName: z.string(),
   createdOn: z.string(),
   origFileName: z.string(),
