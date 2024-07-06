@@ -300,13 +300,14 @@ const WfErrorAssetVariant = z.object({
 });
 
 const WfAssetVariant = z.object({
+  _id: z.string(),
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
-  size: z.number(),
-  width: z.number(),
+  size: z.number().optional(),
+  width: z.number().optional(),
   height: z.number().optional(),
-  quality: z.number(),
+  quality: z.number().optional(),
   cdnUrl: z.string().url(),
   s3Url: z.string().url(),
 });
