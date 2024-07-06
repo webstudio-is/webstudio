@@ -301,7 +301,6 @@ const WfErrorAssetVariant = z.object({
 });
 
 const WfAssetVariant = z.object({
-  _id: z.string(),
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
