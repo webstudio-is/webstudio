@@ -49,7 +49,7 @@ export const useSetCanvasWidth = () => {
         update();
       }
     });
-    const unsubscribeSelectedBreakpoint = $selectedBreakpoint.subscribe(
+    const unsubscribeSelectedBreakpoint = $selectedBreakpoint.listen(
       (selectedBreakpoint) => {
         // This will set initial width of the canvas once the initial selected breakpoint is known.
         if (selectedBreakpoint) {
