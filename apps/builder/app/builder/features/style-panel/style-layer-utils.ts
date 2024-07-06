@@ -199,9 +199,11 @@ export const getHumanizedTextFromLayer = (
     case "transitionProperty":
       if (layer.type === "tuple") {
         const properties = [...layer.value];
-        const transitionProperty = properties.find(
+
+        let transitionProperty = properties.find(
           (item): item is KeywordValue =>
-            item.type === "keyword" && isAnimatableProperty(item.value) === true
+            (item.type === "unparsed" || item.type === "keyword") &&
+            isAnimatableProperty(item.value) === true
         );
 
         const transitionTimingFunction = properties.find(
@@ -211,7 +213,10 @@ export const getHumanizedTextFromLayer = (
         );
 
         if (transitionProperty === undefined) {
-          throw `Transition property is missing from the layer ${JSON.stringify(layer)}`;
+          transitionProperty = {
+            type: "keyword",
+            value: "unknown",
+          };
         }
 
         properties.splice(properties.indexOf(transitionProperty), 1);
