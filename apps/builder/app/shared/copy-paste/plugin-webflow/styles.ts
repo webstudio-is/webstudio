@@ -7,15 +7,18 @@ import type {
 import type { WfAsset, WfElementNode, WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
-import { parseCss, pseudoElements } from "@webstudio-is/css-data";
-// @todo this should be moved
-import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
+import {
+  parseCss,
+  pseudoElements,
+  type ParsedStyleDecl,
+} from "@webstudio-is/css-data";
 import { kebabCase } from "change-case";
 import { equalMedia } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import type { Styles as WfStylePresets } from "./__generated__/style-presets";
 import { builderApi } from "~/shared/builder-api";
 import { url } from "css-tree";
+import { mapGroupBy } from "~/shared/shim";
 
 const { toast } = builderApi;
 
@@ -38,6 +41,15 @@ const wfBreakpoints = new Map<WfBreakpointName, WfBreakpoint>([
   ["medium", { maxWidth: 991 }],
   ["small", { maxWidth: 767 }],
   ["tiny", { maxWidth: 479 }],
+]);
+const wfBreakpointByMediaQuery = new Map<undefined | string, WfBreakpointName>([
+  [undefined, "base"],
+  ["(min-width:1920px)", "xxl"],
+  ["(min-width:1440px)", "xl"],
+  ["(min-width:1280px)", "large"],
+  ["(max-width:991px)", "medium"],
+  ["(max-width:767px)", "small"],
+  ["(max-width:479px)", "tiny"],
 ]);
 
 const parseVariantName = (variant: string) => {
@@ -101,16 +113,13 @@ const replaceAtImages = (
   });
 };
 
-type UnparsedVariants = Map<string, string | Array<EmbedTemplateStyleDecl>>;
+type UnparsedVariants = Map<string, string | Array<ParsedStyleDecl>>;
 
 // Variants value can be wf styleLess string which is a styles block
 // or it can be an array of EmbedTemplateStyleDecl.
 // If its an array, convert it to ws style decl.
 const toParsedVariants = (variants: UnparsedVariants) => {
-  const parsedVariants = new Map<
-    WfBreakpointName,
-    Array<EmbedTemplateStyleDecl>
-  >();
+  const parsedVariants = new Map<WfBreakpointName, Array<ParsedStyleDecl>>();
   for (const [variant, styles] of variants) {
     const { breakpointName, state } = parseVariantName(variant);
     if (typeof styles === "string") {
@@ -363,9 +372,18 @@ export const addStyles = async (
       addNodeStyles({
         styleSourceId: await generateStyleSourceId(name),
         name,
-        variants: new Map([
-          ["base", stylePresets[name] as Array<EmbedTemplateStyleDecl>],
-        ]),
+        variants: new Map(
+          Array.from(
+            mapGroupBy(
+              stylePresets[name] as Array<ParsedStyleDecl>,
+              (item) => item.breakpoint
+            ),
+            ([mediaQuery, value]) => [
+              wfBreakpointByMediaQuery.get(mediaQuery) ?? "base",
+              value,
+            ]
+          )
+        ),
         instanceId,
         fragment,
         breakpointsByName,

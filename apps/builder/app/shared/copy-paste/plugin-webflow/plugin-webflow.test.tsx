@@ -549,13 +549,13 @@ test("BlockContainer", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       w-layout-blockcontainer {
-        max-width: none;
+        max-width: 940px;
         margin-left: auto;
         margin-right: auto;
         display: block
       }
       w-container {
-        max-width: none;
+        max-width: 940px;
         margin-left: auto;
         margin-right: auto
       }
@@ -575,6 +575,24 @@ test("BlockContainer", async () => {
         grid-row-end: 2;
         grid-column-end: 2;
         display: table
+      }
+    }
+    @media all and (max-width: 991px) {
+      w-layout-blockcontainer {
+        max-width: 728px
+      }
+      w-container {
+        max-width: 728px
+      }
+    }
+    @media all and (max-width: 767px) {
+      w-layout-blockcontainer {
+        max-width: none
+      }
+    }
+    @media all and (max-width: 479px) {
+      w-container {
+        max-width: none
       }
     }"
   `);
@@ -784,10 +802,6 @@ test("Columns", async () => {
   );
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
-      w-row {
-        margin-left: 0;
-        margin-right: 0
-      }
       w-row:after {
         content: " ";
         grid-row-start: 1;
@@ -811,9 +825,23 @@ test("Columns", async () => {
         min-height: 1px;
         padding-left: 10px;
         padding-right: 10px;
-        position: relative;
+        position: relative
+      }
+    }
+    @media all and (max-width: 767px) {
+      w-row {
+        margin-left: 0;
+        margin-right: 0
+      }
+      w-col {
+        width: 100%;
         left: auto;
         right: auto
+      }
+    }
+    @media all and (max-width: 479px) {
+      w-col {
+        width: 100%
       }
     }"
   `);
@@ -1571,14 +1599,17 @@ test("Form", async () => {
         cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(255, 255, 255, 1);
+        background-color: rgba(238, 238, 238, 1);
         width: 100%;
         height: auto;
         margin-bottom: 10px;
@@ -1652,8 +1683,11 @@ test("FormButton", async () => {
         cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-button {
@@ -1737,14 +1771,17 @@ test("FormTextInput", async () => {
         cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(255, 255, 255, 1);
+        background-color: rgba(238, 238, 238, 1);
         width: 100%;
         height: auto;
         margin-bottom: 10px;
@@ -1878,7 +1915,7 @@ test("FormTextarea", async () => {
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(255, 255, 255, 1);
+        background-color: rgba(238, 238, 238, 1);
         width: 100%;
         height: auto;
         margin-bottom: 10px;
@@ -2053,8 +2090,11 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-checkbox-input {
@@ -2175,8 +2215,11 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
         cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-radio-input {

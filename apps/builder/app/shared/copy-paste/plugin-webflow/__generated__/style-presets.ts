@@ -348,6 +348,25 @@ export const styles = {
         value: "inline-block",
       },
     },
+    {
+      selector: "audio",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "audio",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":not",
+    },
   ],
   canvas: [
     {
@@ -437,6 +456,24 @@ export const styles = {
     },
     {
       selector: "a",
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":active",
+    },
+    {
+      selector: "a",
+      property: "outlineColor",
+      value: {
+        type: "keyword",
+        value: "currentColor",
+      },
+      state: ":active",
+    },
+    {
+      selector: "a",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -452,25 +489,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
-      state: ":active",
-    },
-    {
-      selector: "a",
-      property: "outlineStyle",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
       state: ":hover",
-    },
-    {
-      selector: "a",
-      property: "outlineColor",
-      value: {
-        type: "keyword",
-        value: "currentColor",
-      },
-      state: ":active",
     },
     {
       selector: "a",
@@ -968,6 +987,26 @@ export const styles = {
         type: "keyword",
         value: "inline-block",
       },
+    },
+  ],
+  svg: [
+    {
+      selector: "svg",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+      state: ":not",
+    },
+    {
+      selector: "svg",
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+      state: ":not",
     },
   ],
   hr: [
@@ -1600,6 +1639,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1609,6 +1649,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1618,6 +1659,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1627,6 +1669,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1635,6 +1678,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1643,6 +1687,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1651,6 +1696,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1659,6 +1705,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1667,6 +1714,7 @@ export const styles = {
         type: "keyword",
         value: "currentColor",
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1675,6 +1723,7 @@ export const styles = {
         type: "keyword",
         value: "currentColor",
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1683,6 +1732,7 @@ export const styles = {
         type: "keyword",
         value: "currentColor",
       },
+      state: "::-moz-focus-inner",
     },
     {
       selector: "input",
@@ -1690,6 +1740,55 @@ export const styles = {
       value: {
         type: "keyword",
         value: "currentColor",
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
+      property: "boxSizing",
+      value: {
+        type: "keyword",
+        value: "border-box",
       },
     },
     {
@@ -1726,14 +1825,6 @@ export const styles = {
         type: "unit",
         unit: "number",
         value: 0,
-      },
-    },
-    {
-      selector: "input",
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "border-box",
       },
     },
     {
@@ -2277,39 +2368,6 @@ export const styles = {
         value: 0,
       },
     },
-    {
-      selector: "td",
-      property: "fontFamily",
-      value: {
-        type: "unparsed",
-        value: "webflow-icons",
-      },
-    },
-    {
-      selector: "td",
-      property: "src",
-      value: {
-        type: "unparsed",
-        value:
-          'url(data:application/x-font-ttf;charset=utf-8;base64,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)format("truetype")',
-      },
-    },
-    {
-      selector: "td",
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      selector: "td",
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
   ],
   th: [
     {
@@ -2346,39 +2404,6 @@ export const styles = {
         type: "unit",
         unit: "number",
         value: 0,
-      },
-    },
-    {
-      selector: "th",
-      property: "fontFamily",
-      value: {
-        type: "unparsed",
-        value: "webflow-icons",
-      },
-    },
-    {
-      selector: "th",
-      property: "src",
-      value: {
-        type: "unparsed",
-        value:
-          'url(data:application/x-font-ttf;charset=utf-8;base64,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)format("truetype")',
-      },
-    },
-    {
-      selector: "th",
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      selector: "th",
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "normal",
       },
     },
   ],
@@ -2606,6 +2631,7 @@ export const styles = {
         type: "unparsed",
         value: '"î˜ƒ"',
       },
+      state: ":before",
     },
     {
       selector: "w-icon-dropdown-toggle",
@@ -2853,6 +2879,36 @@ export const styles = {
     },
     {
       selector: "w-clearfix",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-clearfix",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-clearfix",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-clearfix",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -2869,16 +2925,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-clearfix",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -2889,27 +2935,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-clearfix",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-clearfix",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-clearfix",
@@ -4637,6 +4663,36 @@ export const styles = {
     },
     {
       selector: "w-embed",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-embed",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-embed",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-embed",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -4653,16 +4709,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-embed",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -4673,27 +4719,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-embed",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-embed",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-embed",
@@ -4969,6 +4995,17 @@ export const styles = {
         value: "not-allowed",
       },
     },
+    {
+      selector: "fieldset",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+    },
   ],
   "w-form": [
     {
@@ -5192,9 +5229,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
+        r: 238,
+        g: 238,
+        b: 238,
       },
     },
     {
@@ -5535,9 +5572,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
+        r: 51,
+        g: 51,
+        b: 51,
       },
     },
     {
@@ -5633,9 +5670,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -5644,9 +5681,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -5655,9 +5692,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -5666,9 +5703,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -5761,12 +5798,97 @@ export const styles = {
     },
     {
       selector: "w-select",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+      state: ":-moz-placeholder",
+    },
+    {
+      selector: "w-select",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+      state: "::-moz-placeholder",
+    },
+    {
+      selector: "w-select",
       property: "opacity",
       value: {
         type: "unit",
         unit: "number",
         value: 1,
       },
+      state: "::-moz-placeholder",
+    },
+    {
+      selector: "w-select",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+      state: "::-webkit-input-placeholder",
+    },
+    {
+      selector: "w-select",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
     },
     {
       selector: "w-select",
@@ -5776,6 +5898,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: ":focus",
     },
     {
       selector: "w-select",
@@ -5784,6 +5907,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
+      state: ":focus",
     },
     {
       selector: "w-select",
@@ -5792,6 +5916,7 @@ export const styles = {
         type: "keyword",
         value: "currentColor",
       },
+      state: ":focus",
     },
     {
       selector: "w-select",
@@ -5907,6 +6032,36 @@ export const styles = {
     },
     {
       selector: "w-radio",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-radio",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-radio",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-radio",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -5923,16 +6078,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-radio",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -5943,27 +6088,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-radio",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-radio",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-radio",
@@ -7171,8 +7296,9 @@ export const styles = {
       selector: "w-container",
       property: "maxWidth",
       value: {
-        type: "keyword",
-        value: "none",
+        type: "unit",
+        unit: "px",
+        value: 940,
       },
     },
     {
@@ -7221,6 +7347,36 @@ export const styles = {
     },
     {
       selector: "w-container",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-container",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-container",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-container",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -7237,16 +7393,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-container",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -7257,27 +7403,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-container",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-container",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-container",
@@ -7315,6 +7441,25 @@ export const styles = {
         value: "both",
       },
       state: ":after",
+    },
+    {
+      selector: "w-container",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 728,
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-container",
+      property: "maxWidth",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-row": [
@@ -7348,6 +7493,36 @@ export const styles = {
     },
     {
       selector: "w-row",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-row",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-row",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-row",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -7364,16 +7539,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-row",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -7384,27 +7549,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-row",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-row",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-row",
@@ -7451,6 +7596,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      breakpoint: "(max-width:767px)",
     },
     {
       selector: "w-row",
@@ -7460,6 +7606,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col": [
@@ -7517,11 +7664,22 @@ export const styles = {
     },
     {
       selector: "w-col",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-col",
       property: "left",
       value: {
         type: "keyword",
         value: "auto",
       },
+      breakpoint: "(max-width:767px)",
     },
     {
       selector: "w-col",
@@ -7530,6 +7688,17 @@ export const styles = {
         type: "keyword",
         value: "auto",
       },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-col",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-1": [
@@ -7670,8 +7839,35 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-hidden-main",
+      property: "display",
+      value: {
+        type: "keyword",
         value: "inherit",
       },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-hidden-main",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-hidden-main",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-hidden-medium": [
@@ -7680,8 +7876,27 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-hidden-medium",
+      property: "display",
+      value: {
+        type: "keyword",
         value: "inherit",
       },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-hidden-medium",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-medium-1": [
@@ -7693,6 +7908,7 @@ export const styles = {
         unit: "%",
         value: 8.33333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-2": [
@@ -7704,6 +7920,7 @@ export const styles = {
         unit: "%",
         value: 16.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-3": [
@@ -7715,6 +7932,7 @@ export const styles = {
         unit: "%",
         value: 25,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-4": [
@@ -7726,6 +7944,7 @@ export const styles = {
         unit: "%",
         value: 33.3333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-5": [
@@ -7737,6 +7956,7 @@ export const styles = {
         unit: "%",
         value: 41.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-6": [
@@ -7748,6 +7968,7 @@ export const styles = {
         unit: "%",
         value: 50,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-7": [
@@ -7759,6 +7980,7 @@ export const styles = {
         unit: "%",
         value: 58.3333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-8": [
@@ -7770,6 +7992,7 @@ export const styles = {
         unit: "%",
         value: 66.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-9": [
@@ -7781,6 +8004,7 @@ export const styles = {
         unit: "%",
         value: 75,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-10": [
@@ -7792,6 +8016,7 @@ export const styles = {
         unit: "%",
         value: 83.3333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-11": [
@@ -7803,6 +8028,7 @@ export const styles = {
         unit: "%",
         value: 91.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-medium-12": [
@@ -7814,6 +8040,7 @@ export const styles = {
         unit: "%",
         value: 100,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-col-stack": [
@@ -7825,6 +8052,7 @@ export const styles = {
         unit: "%",
         value: 100,
       },
+      breakpoint: "(max-width:991px)",
     },
     {
       selector: "w-col-stack",
@@ -7833,6 +8061,7 @@ export const styles = {
         type: "keyword",
         value: "auto",
       },
+      breakpoint: "(max-width:991px)",
     },
     {
       selector: "w-col-stack",
@@ -7841,6 +8070,7 @@ export const styles = {
         type: "keyword",
         value: "auto",
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
   "w-hidden-small": [
@@ -7849,8 +8079,18 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-hidden-small",
+      property: "display",
+      value: {
+        type: "keyword",
         value: "inherit",
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-small-1": [
@@ -7862,6 +8102,7 @@ export const styles = {
         unit: "%",
         value: 8.33333,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-2": [
@@ -7873,6 +8114,7 @@ export const styles = {
         unit: "%",
         value: 16.6667,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-3": [
@@ -7884,6 +8126,7 @@ export const styles = {
         unit: "%",
         value: 25,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-4": [
@@ -7895,6 +8138,7 @@ export const styles = {
         unit: "%",
         value: 33.3333,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-5": [
@@ -7906,6 +8150,7 @@ export const styles = {
         unit: "%",
         value: 41.6667,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-6": [
@@ -7917,6 +8162,7 @@ export const styles = {
         unit: "%",
         value: 50,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-7": [
@@ -7928,6 +8174,7 @@ export const styles = {
         unit: "%",
         value: 58.3333,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-8": [
@@ -7939,6 +8186,7 @@ export const styles = {
         unit: "%",
         value: 66.6667,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-9": [
@@ -7950,6 +8198,7 @@ export const styles = {
         unit: "%",
         value: 75,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-10": [
@@ -7961,6 +8210,7 @@ export const styles = {
         unit: "%",
         value: 83.3333,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-11": [
@@ -7972,6 +8222,7 @@ export const styles = {
         unit: "%",
         value: 91.6667,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col-small-12": [
@@ -7983,6 +8234,7 @@ export const styles = {
         unit: "%",
         value: 100,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-hidden-tiny": [
@@ -7993,6 +8245,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-1": [
@@ -8004,6 +8257,7 @@ export const styles = {
         unit: "%",
         value: 8.33333,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-2": [
@@ -8015,6 +8269,7 @@ export const styles = {
         unit: "%",
         value: 16.6667,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-3": [
@@ -8026,6 +8281,7 @@ export const styles = {
         unit: "%",
         value: 25,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-4": [
@@ -8037,6 +8293,7 @@ export const styles = {
         unit: "%",
         value: 33.3333,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-5": [
@@ -8048,6 +8305,7 @@ export const styles = {
         unit: "%",
         value: 41.6667,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-6": [
@@ -8059,6 +8317,7 @@ export const styles = {
         unit: "%",
         value: 50,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-7": [
@@ -8070,6 +8329,7 @@ export const styles = {
         unit: "%",
         value: 58.3333,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-8": [
@@ -8081,6 +8341,7 @@ export const styles = {
         unit: "%",
         value: 66.6667,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-9": [
@@ -8092,6 +8353,7 @@ export const styles = {
         unit: "%",
         value: 75,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-10": [
@@ -8103,6 +8365,7 @@ export const styles = {
         unit: "%",
         value: 83.3333,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-11": [
@@ -8114,6 +8377,7 @@ export const styles = {
         unit: "%",
         value: 91.6667,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-tiny-12": [
@@ -8125,6 +8389,7 @@ export const styles = {
         unit: "%",
         value: 100,
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-widget": [
@@ -8511,6 +8776,227 @@ export const styles = {
     },
     {
       selector: "w-widget-twitter-count-shim",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -9,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 8,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8587,7 +9073,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: -9,
+        value: 6,
       },
     },
     {
@@ -8598,6 +9084,7 @@ export const styles = {
         unit: "px",
         value: 5,
       },
+      state: ":before",
     },
     {
       selector: "w--large",
@@ -8607,6 +9094,7 @@ export const styles = {
         unit: "px",
         value: 5,
       },
+      state: ":before",
     },
     {
       selector: "w--large",
@@ -8616,6 +9104,7 @@ export const styles = {
         unit: "px",
         value: 5,
       },
+      state: ":before",
     },
     {
       selector: "w--large",
@@ -8625,6 +9114,7 @@ export const styles = {
         unit: "px",
         value: 5,
       },
+      state: ":before",
     },
     {
       selector: "w--large",
@@ -8634,6 +9124,77 @@ export const styles = {
         unit: "px",
         value: -5,
       },
+      state: ":before",
+    },
+    {
+      selector: "w--large",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -10,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--large",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -9,
+      },
+      state: ":after",
     },
   ],
   "w--vertical": [
@@ -8643,7 +9204,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: -4,
+        value: -9,
       },
     },
     {
@@ -8677,7 +9238,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
       },
     },
     {
@@ -8686,7 +9247,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
       },
     },
     {
@@ -8695,7 +9256,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
       },
     },
     {
@@ -8704,7 +9265,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
       },
     },
     {
@@ -8744,7 +9305,7 @@ export const styles = {
       property: "borderTopColor",
       value: {
         type: "rgb",
-        alpha: 1,
+        alpha: 0,
         r: 255,
         g: 255,
         b: 255,
@@ -8755,7 +9316,7 @@ export const styles = {
       property: "borderRightColor",
       value: {
         type: "rgb",
-        alpha: 0,
+        alpha: 1,
         r: 255,
         g: 255,
         b: 255,
@@ -8797,8 +9358,8 @@ export const styles = {
       property: "height",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 33,
       },
     },
     {
@@ -8815,7 +9376,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "%",
-        value: 100,
+        value: 50,
       },
     },
     {
@@ -8823,8 +9384,8 @@ export const styles = {
       property: "left",
       value: {
         type: "unit",
-        unit: "%",
-        value: 50,
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -8852,7 +9413,25 @@ export const styles = {
         type: "unparsed",
         value: '" "',
       },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
       state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":before",
     },
     {
       selector: "w--vertical",
@@ -8867,8 +9446,133 @@ export const styles = {
       selector: "w--vertical",
       property: "borderTopWidth",
       value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopStyle",
+      value: {
         type: "keyword",
-        value: "medium",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 93,
+        g: 108,
+        b: 123,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
       },
       state: ":after",
     },
@@ -8876,8 +9580,9 @@ export const styles = {
       selector: "w--vertical",
       property: "borderRightWidth",
       value: {
-        type: "keyword",
-        value: "medium",
+        type: "unit",
+        unit: "px",
+        value: 4,
       },
       state: ":after",
     },
@@ -8885,8 +9590,9 @@ export const styles = {
       selector: "w--vertical",
       property: "borderBottomWidth",
       value: {
-        type: "keyword",
-        value: "medium",
+        type: "unit",
+        unit: "px",
+        value: 4,
       },
       state: ":after",
     },
@@ -8894,8 +9600,9 @@ export const styles = {
       selector: "w--vertical",
       property: "borderLeftWidth",
       value: {
-        type: "keyword",
-        value: "medium",
+        type: "unit",
+        unit: "px",
+        value: 4,
       },
       state: ":after",
     },
@@ -8940,10 +9647,10 @@ export const styles = {
       property: "borderTopColor",
       value: {
         type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
       },
       state: ":after",
     },
@@ -8953,9 +9660,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
+        r: 255,
+        g: 255,
+        b: 255,
       },
       state: ":after",
     },
@@ -8965,9 +9672,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
+        r: 255,
+        g: 255,
+        b: 255,
       },
       state: ":after",
     },
@@ -8977,11 +9684,21 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
+        r: 255,
+        g: 255,
+        b: 255,
       },
       state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":before",
     },
     {
       selector: "w--vertical",
@@ -9001,7 +9718,26 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
       state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":before",
     },
     {
       selector: "w--vertical",
@@ -9020,6 +9756,16 @@ export const styles = {
         unit: "%",
         value: 100,
       },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
       state: ":after",
     },
     {
@@ -9029,6 +9775,36 @@ export const styles = {
         type: "unit",
         unit: "%",
         value: 50,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -4,
       },
       state: ":after",
     },
@@ -10372,6 +11148,7 @@ export const styles = {
         unit: "number",
         value: 0,
       },
+      state: ":focus",
     },
     {
       selector: "w-slider-arrow-right",
@@ -10380,6 +11157,7 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
+      state: ":focus",
     },
     {
       selector: "w-slider-arrow-right",
@@ -10388,6 +11166,7 @@ export const styles = {
         type: "keyword",
         value: "currentColor",
       },
+      state: ":focus",
     },
     {
       selector: "w-slider-arrow-right",
@@ -11377,6 +12156,7 @@ export const styles = {
         unit: "px",
         value: 10,
       },
+      breakpoint: "(max-width:767px)",
     },
     {
       selector: "w-nav-brand",
@@ -11929,7 +12709,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "vh",
-        value: 96,
+        value: 100,
       },
     },
     {
@@ -11958,12 +12738,23 @@ export const styles = {
     },
     {
       selector: "w-lightbox-content",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 96,
+      },
+      breakpoint: "(min-width:768px)",
+    },
+    {
+      selector: "w-lightbox-content",
       property: "marginTop",
       value: {
         type: "unit",
         unit: "vh",
         value: 2,
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-view": [
@@ -11991,7 +12782,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "vh",
-        value: 96,
+        value: 100,
       },
     },
     {
@@ -12017,7 +12808,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "vh",
-        value: 96,
+        value: 100,
       },
       state: ":before",
     },
@@ -12028,6 +12819,7 @@ export const styles = {
         type: "keyword",
         value: "middle",
       },
+      state: ":before",
     },
     {
       selector: "w-lightbox-view",
@@ -12036,6 +12828,28 @@ export const styles = {
         type: "keyword",
         value: "inline-block",
       },
+      state: ":before",
+    },
+    {
+      selector: "w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 96,
+      },
+      breakpoint: "(min-width:768px)",
+    },
+    {
+      selector: "w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 96,
+      },
+      breakpoint: "(min-width:768px)",
+      state: ":before",
     },
   ],
   "w-lightbox-group": [
@@ -12045,8 +12859,18 @@ export const styles = {
       value: {
         type: "unit",
         unit: "vh",
+        value: 86,
+      },
+    },
+    {
+      selector: "w-lightbox-group",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
         value: 84,
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-frame": [
@@ -12154,7 +12978,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "vw",
-        value: 96,
+        value: 100,
       },
     },
     {
@@ -12163,7 +12987,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "vh",
-        value: 96,
+        value: 100,
       },
     },
     {
@@ -12173,6 +12997,26 @@ export const styles = {
         type: "keyword",
         value: "block",
       },
+    },
+    {
+      selector: "w-lightbox-image",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "vw",
+        value: 96,
+      },
+      breakpoint: "(min-width:768px)",
+    },
+    {
+      selector: "w-lightbox-image",
+      property: "maxHeight",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 96,
+      },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-caption": [
@@ -12649,6 +13493,7 @@ export const styles = {
         unit: "number",
         value: 1,
       },
+      breakpoint: "(min-width:768px)",
       state: ":hover",
     },
   ],
@@ -12674,7 +13519,7 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
-        value: "block",
+        value: "none",
       },
     },
     {
@@ -12703,6 +13548,16 @@ export const styles = {
         unit: "number",
         value: 0.5,
       },
+      breakpoint: "(min-width:768px)",
+    },
+    {
+      selector: "w-lightbox-left",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-right": [
@@ -12727,7 +13582,7 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
-        value: "block",
+        value: "none",
       },
     },
     {
@@ -12756,6 +13611,16 @@ export const styles = {
         unit: "number",
         value: 0.5,
       },
+      breakpoint: "(min-width:768px)",
+    },
+    {
+      selector: "w-lightbox-right",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-close": [
@@ -12815,6 +13680,7 @@ export const styles = {
         unit: "number",
         value: 0.8,
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-strip": [
@@ -13803,6 +14669,36 @@ export const styles = {
     },
     {
       selector: "w-richtext",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-richtext",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-richtext",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-richtext",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -13819,16 +14715,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-richtext",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -13839,27 +14725,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-richtext",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-richtext",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-richtext",
@@ -14289,6 +15155,36 @@ export const styles = {
     },
     {
       selector: "w-nav",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-nav",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-nav",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-nav",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -14305,16 +15201,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-nav",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -14325,27 +15211,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-nav",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-nav",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-nav",
@@ -14424,6 +15290,33 @@ export const styles = {
         type: "keyword",
         value: "block",
       },
+    },
+    {
+      selector: "w-nav",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-nav",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-nav",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-nav-link": [
@@ -14881,6 +15774,36 @@ export const styles = {
     },
     {
       selector: "w-tabs",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-tabs",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-tabs",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-tabs",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -14897,16 +15820,6 @@ export const styles = {
         unit: "number",
         value: 1,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-tabs",
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
       state: ":after",
     },
     {
@@ -14917,27 +15830,7 @@ export const styles = {
         unit: "number",
         value: 2,
       },
-      state: ":before",
-    },
-    {
-      selector: "w-tabs",
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
       state: ":after",
-    },
-    {
-      selector: "w-tabs",
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
     },
     {
       selector: "w-tabs",
@@ -15099,7 +15992,7 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
-        value: "block",
+        value: "inline-block",
       },
     },
     {
@@ -15137,6 +16030,15 @@ export const styles = {
         value: "currentColor",
       },
       state: ":focus",
+    },
+    {
+      selector: "w-tab-link",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-tab-content": [
@@ -15306,8 +16208,9 @@ export const styles = {
       selector: "w-layout-blockcontainer",
       property: "maxWidth",
       value: {
-        type: "keyword",
-        value: "none",
+        type: "unit",
+        unit: "px",
+        value: 940,
       },
     },
     {
@@ -15333,6 +16236,25 @@ export const styles = {
         type: "keyword",
         value: "block",
       },
+    },
+    {
+      selector: "w-layout-blockcontainer",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 728,
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-layout-blockcontainer",
+      property: "maxWidth",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-layout-layout": [
