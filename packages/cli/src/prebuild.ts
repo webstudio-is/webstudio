@@ -502,10 +502,12 @@ export const prebuild = async (options: {
   const defaultSiteMapXmlPath = normalize(
     join(routeTemplatesDir, "default-sitemap.tsx")
   );
+  const redirectPath = normalize(join(routeTemplatesDir, "redirect.tsx"));
 
   const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
   const routeXmlFileTemplate = await readFile(routeXmlTemplatePath, "utf8");
   const defaultSiteMapTemplate = await readFile(defaultSiteMapXmlPath, "utf8");
+  const redirectTemplate = await readFile(redirectPath, "utf8");
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
@@ -635,8 +637,6 @@ export const prebuild = async (options: {
     const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
 
     const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
-    const remixRoute = generateRemixRoute(pagePath);
-    const fileName = `${remixRoute}.tsx`;
 
     // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
@@ -663,7 +663,7 @@ export const prebuild = async (options: {
         ${JSON.stringify(pageBackgroundImageAssets)}
 
       ${
-        remixRoute === "_index"
+        pagePath === "/"
           ? `
             ${
               projectMeta?.code
@@ -726,32 +726,38 @@ export const prebuild = async (options: {
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;
 
+    const generatedBasename = generateRemixRoute(pagePath);
+
     const routeFileContent = (
       documentType === "html" ? routeFileTemplate : routeXmlFileTemplate
     )
-      .replace(
-        /".*\/__generated__\/_index"/,
-        `"../__generated__/${remixRoute}"`
-      )
-      .replace(
-        /".*\/__generated__\/_index.server"/,
-        `"../__generated__/${remixRoute}.server"`
-      );
-
-    await createFileIfNotExists(join(routesDir, fileName), routeFileContent);
-
-    await createFileIfNotExists(join(generatedDir, fileName), pageExports);
+      .replaceAll("__CLIENT__", `../__generated__/${generatedBasename}`)
+      .replaceAll("__SERVER__", `../__generated__/${generatedBasename}.server`)
+      .replaceAll("__CSS__", `../__generated__/index.css`);
 
     await createFileIfNotExists(
-      join(generatedDir, `${remixRoute}.server.tsx`),
+      join(routesDir, `${generateRemixRoute(pagePath)}.tsx`),
+      routeFileContent
+    );
+
+    await createFileIfNotExists(
+      join(generatedDir, `${generatedBasename}.tsx`),
+      pageExports
+    );
+
+    await createFileIfNotExists(
+      join(generatedDir, `${generatedBasename}.server.tsx`),
       serverExports
     );
   }
 
   // MARK: - Default sitemap.xml
   await createFileIfNotExists(
-    join(routesDir, "[sitemap.xml]._index.tsx"),
-    defaultSiteMapTemplate.replace(/".*\/__generated__\//, `"../__generated__/`)
+    join(routesDir, `${generateRemixRoute("/sitemap.xml")}.tsx`),
+    defaultSiteMapTemplate.replaceAll(
+      "__SITEMAP__",
+      `../__generated__/$resources.sitemap.xml`
+    )
   );
 
   await createFileIfNotExists(
@@ -768,17 +774,22 @@ export const prebuild = async (options: {
   const redirects = siteData.build.pages?.redirects;
   if (redirects !== undefined && redirects.length > 0) {
     for (const redirect of redirects) {
-      const redirectPagePath = generateRemixRoute(redirect.old);
-      const redirectFileName = `${redirectPagePath}.ts`;
+      const generatedBasename = generateRemixRoute(redirect.old);
+      await createFileIfNotExists(
+        join(generatedDir, `${generatedBasename}.ts`),
+        `
+        export const url = "${redirect.new}";
+        export const status = ${redirect.status ?? 301};
+        `
+      );
 
-      const content = `import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
-
-      export const loader = (arg: LoaderFunctionArgs) => {
-      return redirect("${redirect.new}", ${redirect.status ?? 301});
-      };
-      `;
-
-      await createFileIfNotExists(join(routesDir, redirectFileName), content);
+      await createFileIfNotExists(
+        join(routesDir, `${generateRemixRoute(redirect.old)}.ts`),
+        redirectTemplate.replaceAll(
+          "__REDIRECT__",
+          `../__generated__/${generatedBasename}`
+        )
+      );
     }
   }
 

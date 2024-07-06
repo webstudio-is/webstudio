@@ -13,8 +13,8 @@ import { theme } from "../stitches.config";
 import { DragHandleIcon } from "@webstudio-is/icons";
 import { ArrowFocus } from "./primitives/arrow-focus";
 
-const LIST_ITEM_ATTRIBUTE = "data-list-item";
-const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
+const listItemAttribute = "data-list-item";
+const listItemAttributes = { [listItemAttribute]: true };
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
   visibility: "hidden",
@@ -40,12 +40,12 @@ const IconButtonsWrapper = styled(Flex, {
   top: 0,
   bottom: 0,
   paddingRight: sharedPaddingRight,
-  display: "none",
+  visibility: "hidden",
 });
 
 const FakeIconButtonsWrapper = styled(Flex, {
   paddingLeft: theme.spacing[5],
-  display: "none",
+  visibility: "hidden",
 });
 
 /**
@@ -69,10 +69,10 @@ const ItemButton = styled("button", {
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
     [`& ${FakeIconButtonsWrapper}`]: {
-      display: "flex",
+      visibility: "visible",
     },
     [`~ ${IconButtonsWrapper}`]: {
-      display: "flex",
+      visibility: "visible",
     },
 
     "&:after": {
@@ -127,10 +127,10 @@ const ItemWrapper = styled("div", {
       },
     },
     [`& ${IconButtonsWrapper}`]: {
-      display: "flex",
+      visibility: "visible",
     },
     [`& ${FakeIconButtonsWrapper}`]: {
-      display: "flex",
+      visibility: "hidden",
     },
   },
 });
@@ -203,19 +203,19 @@ export const CssValueListItem = forwardRef(
 
               <Flex grow={true} />
 
-              {/*
-            We place fake divs with same dimensions as small buttons here to avoid following warning:
-            Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
-            Real buttons will be placed on top of fake buttons
-          */}
+              {
+                // We place fake divs with same dimensions as small buttons here to avoid following warning:
+                // Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
+                // Real buttons will be placed on top of fake buttons
+              }
               <FakeIconButtonsWrapper shrink={false} gap={2}>
                 {fakeButtons}
               </FakeIconButtonsWrapper>
             </ItemButton>
 
-            {/*
-          Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning
-        */}
+            {
+              // Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning
+            }
             <IconButtonsWrapper gap={2} align="center">
               {buttons}
             </IconButtonsWrapper>
@@ -249,7 +249,7 @@ export const CssValueListArrowFocus = ({
             if (event.key === "ArrowUp" || event.key === "ArrowDown") {
               handleKeyDown(event, {
                 accept: (element) =>
-                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
+                  element.getAttribute(listItemAttribute) === "true",
               });
             }
           }}
@@ -259,4 +259,8 @@ export const CssValueListArrowFocus = ({
       )}
     />
   );
+};
+
+export const __testing__ = {
+  listItemAttributes,
 };

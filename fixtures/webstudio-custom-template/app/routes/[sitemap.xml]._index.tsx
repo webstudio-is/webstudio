@@ -7,7 +7,6 @@ import {
   getPageMeta,
   getRemixParams,
 } from "../__generated__/[sitemap.xml]._index.server";
-
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 import { renderToString } from "react-dom/server";
 

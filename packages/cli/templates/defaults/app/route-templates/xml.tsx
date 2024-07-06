@@ -1,13 +1,8 @@
 /* eslint-disable camelcase */
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
-import { Page } from "../../../../__generated__/_index";
-import {
-  loadResources,
-  getPageMeta,
-  getRemixParams,
-} from "../../../../__generated__/_index.server";
-
+import { Page } from "__CLIENT__";
+import { loadResources, getPageMeta, getRemixParams } from "__SERVER__";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 import { renderToString } from "react-dom/server";
 

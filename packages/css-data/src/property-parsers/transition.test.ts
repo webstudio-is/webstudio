@@ -34,6 +34,70 @@ test("parses an in-valid transitionDuration longhand property", () => {
 `);
 });
 
+test("parses a vaild transitionTimingFunction longhand property with 0 omitted", () => {
+  const parsedValue = parseTransitionLonghandProperty(
+    "transitionTimingFunction",
+    "ease, ease-in, cubic-bezier(.68,-0.6,0.32,1.6), steps(4, jump-start)"
+  );
+  expect(parsedValue).toMatchInlineSnapshot(`
+{
+  "type": "layers",
+  "value": [
+    {
+      "type": "keyword",
+      "value": "ease",
+    },
+    {
+      "type": "keyword",
+      "value": "ease-in",
+    },
+    {
+      "args": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": ".68",
+          },
+          {
+            "type": "keyword",
+            "value": "-0.6",
+          },
+          {
+            "type": "keyword",
+            "value": "0.32",
+          },
+          {
+            "type": "keyword",
+            "value": "1.6",
+          },
+        ],
+      },
+      "name": "cubic-bezier",
+      "type": "function",
+    },
+    {
+      "args": {
+        "type": "layers",
+        "value": [
+          {
+            "type": "keyword",
+            "value": "4",
+          },
+          {
+            "type": "keyword",
+            "value": "jump-start",
+          },
+        ],
+      },
+      "name": "steps",
+      "type": "function",
+    },
+  ],
+}
+`);
+});
+
 test("parses a vaild transitionTimingFunction longhand property", () => {
   const parsedValue = parseTransitionLonghandProperty(
     "transitionTimingFunction",

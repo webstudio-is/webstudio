@@ -38,7 +38,7 @@ import {
   minCanvasWidth,
 } from "~/shared/breakpoints";
 import { $scale } from "~/builder/shared/nano-states";
-import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { setCanvasWidth } from "./use-set-initial-canvas-width";
 import { serverSyncStore } from "~/shared/sync";
 
 export const BreakpointsPopover = () => {
@@ -76,7 +76,7 @@ export const BreakpointsPopover = () => {
       const base =
         breakpointsArray.find(isBaseBreakpoint) ?? breakpointsArray[0];
       $selectedBreakpointId.set(base.id);
-      setInitialCanvasWidth(base.id);
+      setCanvasWidth(base.id);
     }
     setBreakpointToDelete(undefined);
     $breakpointsMenuView.set("editor");
@@ -147,7 +147,7 @@ export const BreakpointsPopover = () => {
                           asChild
                           onSelect={() => {
                             $selectedBreakpointId.set(breakpoint.id);
-                            setInitialCanvasWidth(breakpoint.id);
+                            setCanvasWidth(breakpoint.id);
                           }}
                           index={index}
                           key={breakpoint.id}
