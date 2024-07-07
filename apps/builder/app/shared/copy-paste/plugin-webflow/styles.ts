@@ -13,7 +13,7 @@ import {
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
 import { kebabCase } from "change-case";
-import { equalMedia } from "@webstudio-is/css-engine";
+import { equalMedia, hyphenateProperty } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import type { Styles as WfStylePresets } from "./__generated__/style-presets";
 import { builderApi } from "~/shared/builder-api";
@@ -192,36 +192,16 @@ const addBreakpoints = (
 
 const addNodeStyles = ({
   styleSourceId,
-  name,
   variants,
-  instanceId,
   fragment,
   breakpointsByName,
 }: {
   styleSourceId: string;
-  name: string;
   variants: UnparsedVariants;
-  instanceId: Instance["id"];
   fragment: WebstudioFragment;
   breakpointsByName: BreakpointsByWfName;
 }) => {
   const parsedVariants = toParsedVariants(variants);
-
-  fragment.styleSources.push({
-    type: "token",
-    id: styleSourceId,
-    name,
-  });
-
-  let styleSourceSelection = fragment.styleSourceSelections.find(
-    (selection) => selection.instanceId === instanceId
-  );
-  if (styleSourceSelection === undefined) {
-    styleSourceSelection = { instanceId, values: [] };
-    fragment.styleSourceSelections.push(styleSourceSelection);
-  }
-  styleSourceSelection.values.push(styleSourceId);
-
   for (const [breakpointName, styles] of parsedVariants) {
     const breakpoint = breakpointsByName.get(breakpointName);
     if (breakpoint === undefined) {
@@ -238,12 +218,106 @@ const addNodeStyles = ({
         state: style.state,
       });
       if (style.value.type === "invalid") {
-        const error = `Invalid style value: ${name} "${kebabCase(style.property)}: ${style.value.value}"`;
+        const error = `Invalid style value: Local "${kebabCase(style.property)}: ${style.value.value}"`;
         toast.error(error);
         console.error(error);
       }
     }
   }
+};
+
+const addNodeTokenStyles = ({
+  styleSourceId,
+  name,
+  variants,
+  instanceId,
+  fragment,
+  breakpointsByName,
+}: {
+  styleSourceId: string;
+  name: string;
+  variants: UnparsedVariants;
+  instanceId: Instance["id"];
+  fragment: WebstudioFragment;
+  breakpointsByName: BreakpointsByWfName;
+}) => {
+  fragment.styleSources.push({
+    type: "token",
+    id: styleSourceId,
+    name,
+  });
+
+  let styleSourceSelection = fragment.styleSourceSelections.find(
+    (selection) => selection.instanceId === instanceId
+  );
+  if (styleSourceSelection === undefined) {
+    styleSourceSelection = { instanceId, values: [] };
+    fragment.styleSourceSelections.push(styleSourceSelection);
+  }
+  styleSourceSelection.values.push(styleSourceId);
+
+  addNodeStyles({
+    styleSourceId,
+    variants,
+    fragment,
+    breakpointsByName,
+  });
+};
+
+const addNodeLocalStyles = ({
+  styleSourceId,
+  style,
+  instanceId,
+  fragment,
+  breakpointsByName,
+}: {
+  styleSourceId: string;
+  style: NonNullable<WfElementNode["data"]>["style"];
+  instanceId: Instance["id"];
+  fragment: WebstudioFragment;
+  breakpointsByName: BreakpointsByWfName;
+}) => {
+  let hasLocalStyles = false;
+  const instanceDataVariants = new Map<string, string>();
+  // @todo we don't know what is base, maybe the opposite of cringe?
+  for (const baseStyle of Object.values(style ?? {})) {
+    for (const [breakpoint, breakpointStyle] of Object.entries(baseStyle)) {
+      let css = ``;
+      // @todo we don't know format for pseudo
+      // because webflow does not set styles on pseudo
+      // in quick stack instance
+      for (const pseudoStyle of Object.values(breakpointStyle)) {
+        for (const [property, value] of Object.entries(pseudoStyle)) {
+          hasLocalStyles = true;
+          css += `${hyphenateProperty(property)}: ${value};`;
+        }
+      }
+      instanceDataVariants.set(breakpoint, css);
+    }
+  }
+  if (hasLocalStyles === false) {
+    return;
+  }
+
+  fragment.styleSources.push({
+    type: "local",
+    id: styleSourceId,
+  });
+  let styleSourceSelection = fragment.styleSourceSelections.find(
+    (selection) => selection.instanceId === instanceId
+  );
+  if (styleSourceSelection === undefined) {
+    styleSourceSelection = { instanceId, values: [] };
+    fragment.styleSourceSelections.push(styleSourceSelection);
+  }
+  styleSourceSelection.values.push(styleSourceId);
+
+  addNodeStyles({
+    styleSourceId,
+    variants: instanceDataVariants,
+    fragment,
+    breakpointsByName,
+  });
 };
 
 const mapComponentAndPresetStyles = (
@@ -369,7 +443,7 @@ export const addStyles = async (
     const breakpointsByName = addBreakpoints($breakpoints.get(), fragment);
 
     for (const name of mapComponentAndPresetStyles(wfNode, stylePresets)) {
-      addNodeStyles({
+      addNodeTokenStyles({
         styleSourceId: await generateStyleSourceId(name),
         name,
         variants: new Map(
@@ -384,6 +458,14 @@ export const addStyles = async (
             ]
           )
         ),
+        instanceId,
+        fragment,
+        breakpointsByName,
+      });
+
+      addNodeLocalStyles({
+        styleSourceId: await generateStyleSourceId(wfNode._id),
+        style: wfNode.data?.style,
         instanceId,
         fragment,
         breakpointsByName,
@@ -423,7 +505,7 @@ export const addStyles = async (
         }
       });
 
-      addNodeStyles({
+      addNodeTokenStyles({
         styleSourceId: await generateStyleSourceId(classId),
         name: style.name,
         variants,
