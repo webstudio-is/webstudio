@@ -662,30 +662,42 @@ test("H Flex", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
-test("QuickStack", async () => {
+test("QuickStack with instance styles", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
         {
-          _id: "91782272-bf55-194d-ce85-9ddc69c51dee",
+          _id: "aeb3895f-67c9-b5a0-69b4-7960b893ec04",
           type: "Layout",
           tag: "div",
           classes: [],
           children: [
-            "91782272-bf55-194d-ce85-9ddc69c51def",
-            "91782272-bf55-194d-ce85-9ddc69c51df0",
+            "ca264069-ff87-c2e5-7dc0-a4c0ec0e9146",
+            "ec30cdfd-1a60-eeb0-1bfa-1df6f1956ed5",
           ],
+          data: {
+            style: {
+              base: {
+                main: {
+                  noPseudo: {
+                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateRows: "auto",
+                  },
+                },
+              },
+            },
+          },
         },
         {
-          _id: "91782272-bf55-194d-ce85-9ddc69c51def",
+          _id: "ca264069-ff87-c2e5-7dc0-a4c0ec0e9146",
           type: "Cell",
           tag: "div",
           classes: [],
           children: [],
         },
         {
-          _id: "91782272-bf55-194d-ce85-9ddc69c51df0",
+          _id: "ec30cdfd-1a60-eeb0-1bfa-1df6f1956ed5",
           type: "Cell",
           tag: "div",
           classes: [],
@@ -711,6 +723,10 @@ test("QuickStack", async () => {
         grid-auto-columns: 1fr;
         justify-content: center;
         padding: 20px
+      }
+      Local {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto
       }
       wf-layout-layout {
         display: grid
