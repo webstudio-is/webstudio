@@ -1,6 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { parseCssValue } from "./parse-css-value";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 
 describe("Parse CSS value", () => {
   describe("number value", () => {
@@ -277,12 +277,71 @@ test("parse transition-property property", () => {
   );
 });
 
+test("parse transition-duration property", () => {
+  expect(parseCssValue("transitionDuration", `10ms, 10ms`)).toEqual({
+    type: "layers",
+    value: [
+      { type: "unit", unit: "ms", value: 10 },
+      { type: "unit", unit: "ms", value: 10 },
+    ],
+  });
+  expect(parseCssValue("transitionDuration", `10ms, foo`)).toEqual({
+    type: "invalid",
+    value: "10ms, foo",
+  });
+});
+
+test("parse transition-timing-function property", () => {
+  const parsedValue = parseCssValue(
+    "transitionTimingFunction",
+    "ease, ease-in, cubic-bezier(0.68,-0.6,.32,1.6), steps(4, jump-start)"
+  );
+  expect(parsedValue).toEqual({
+    type: "layers",
+    value: [
+      { type: "keyword", value: "ease" },
+      { type: "keyword", value: "ease-in" },
+      {
+        type: "function",
+        name: "cubic-bezier",
+        args: {
+          type: "layers",
+          value: [
+            { type: "keyword", value: "0.68" },
+            { type: "keyword", value: "-0.6" },
+            { type: "keyword", value: ".32" },
+            { type: "keyword", value: "1.6" },
+          ],
+        },
+      },
+      {
+        type: "function",
+        name: "steps",
+        args: {
+          type: "layers",
+          value: [
+            { type: "keyword", value: "4" },
+            { type: "keyword", value: "jump-start" },
+          ],
+        },
+      },
+    ],
+  });
+  expect(toValue(parsedValue)).toMatchInlineSnapshot(
+    `"ease, ease-in, cubic-bezier(0.68, -0.6, .32, 1.6), steps(4, jump-start)"`
+  );
+  expect(parseCssValue("transitionTimingFunction", "ease, testing")).toEqual({
+    type: "invalid",
+    value: "ease, testing",
+  });
+});
+
 test("parse transition-behavior property as layers", () => {
   expect(parseCssValue("transitionBehavior", `normal`)).toEqual({
     type: "layers",
     value: [{ type: "keyword", value: "normal" }],
   });
-  expect(parseCssValue("transitionBehavior", `normal, allow-discrete`)).toEqual(
+  expect(parseCssValue("transitionBehavior", `NORMAL, allow-discrete`)).toEqual(
     {
       type: "layers",
       value: [
