@@ -3,6 +3,7 @@ import * as csstree from "css-tree";
 import type { CssNode } from "css-tree";
 import warnOnce from "warn-once";
 import {
+  LayersValue,
   TupleValue,
   cssWideKeywords,
   hyphenateProperty,
@@ -13,12 +14,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import {
-  isTransitionLongHandProperty,
-  parseFilter,
-  parseShadow,
-  parseTransitionLonghandProperty,
-} from "./property-parsers";
+import { parseFilter, parseShadow } from "./property-parsers";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -111,6 +107,9 @@ const repeatedProps = new Set<StyleProperty>([
   "backgroundSize",
   "backgroundImage",
   "transitionProperty",
+  "transitionDuration",
+  "transitionDelay",
+  "transitionTimingFunction",
   "transitionBehavior",
 ]);
 
@@ -164,14 +163,6 @@ export const parseCssValue = (
     return parseShadow(property, input);
   }
 
-  if (
-    isTransitionLongHandProperty(property) &&
-    property !== "transitionBehavior" &&
-    property !== "transitionProperty"
-  ) {
-    return parseTransitionLonghandProperty(property, input);
-  }
-
   // prevent infinite splitting into layers for items
   if (repeatedProps.has(property) && topLevel) {
     const nodes = "children" in ast ? ast.children?.toArray() ?? [] : [ast];
@@ -200,9 +191,33 @@ export const parseCssValue = (
   // csstree does not support transition-behavior
   // so check keywords manually
   if (property === "transitionBehavior") {
-    return keywordValues[property].includes(input as never)
-      ? { type: "keyword", value: input }
+    return keywordValues[property].includes(potentialKeyword as never)
+      ? { type: "keyword", value: potentialKeyword }
       : invalidValue;
+  }
+
+  if (property === "transitionTimingFunction") {
+    const node = ast.type === "Value" ? ast.children.first : ast;
+    if (node?.type === "Identifier") {
+      return { type: "keyword", value: node.name };
+    }
+    if (node?.type === "Function") {
+      // transition timing function arguments are comma seperated values
+      const args: LayersValue = { type: "layers", value: [] };
+      for (const arg of node.children) {
+        if (arg.type === "Number") {
+          args.value.push({ type: "keyword", value: arg.value });
+        }
+        if (arg.type === "Identifier") {
+          args.value.push({ type: "keyword", value: arg.name });
+        }
+        if (arg.type === "Dimension") {
+          const unit = arg.unit as Unit;
+          args.value.push({ type: "unit", value: Number(arg.value), unit });
+        }
+      }
+      return { type: "function", args, name: node.name };
+    }
   }
 
   if (ast.type === "Value" && ast.children.first === ast.children.last) {
