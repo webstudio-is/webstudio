@@ -13,6 +13,7 @@ import {
   editTransitionLayer,
   getTransitionProperties,
   hideTransitionLayer,
+  parseTransitionShorthandToLayers,
   swapTransitionLayers,
 } from "./transition-utils";
 import type { TransitionProperties } from "./transition-utils";
@@ -259,5 +260,45 @@ describe("transition-utils", () => {
     expect(toValue(layers)).toMatchInlineSnapshot(
       `"width 0ms ease-in-out 0ms, opacity 0ms ease 0ms"`
     );
+  });
+
+  test("parses a transition shorthand property and converts into a layer", () => {
+    const transition = "margin-right 4s ease 1s";
+
+    const layers = parseTransitionShorthandToLayers(transition);
+    expect(layers).toMatchInlineSnapshot(`
+{
+  "type": "layers",
+  "value": [
+    {
+      "type": "tuple",
+      "value": [
+        {
+          "type": "keyword",
+          "value": "margin-right",
+        },
+        {
+          "type": "unit",
+          "unit": "s",
+          "value": 4,
+        },
+        {
+          "type": "keyword",
+          "value": "ease",
+        },
+        {
+          "type": "unit",
+          "unit": "s",
+          "value": 1,
+        },
+        {
+          "type": "keyword",
+          "value": "normal",
+        },
+      ],
+    },
+  ],
+}
+`);
   });
 });

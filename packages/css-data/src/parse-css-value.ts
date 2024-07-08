@@ -14,7 +14,11 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { parseFilter, parseShadow } from "./property-parsers";
+import {
+  isAnimatableProperty,
+  parseFilter,
+  parseShadow,
+} from "./property-parsers";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -218,6 +222,13 @@ export const parseCssValue = (
       }
       return { type: "function", args, name: node.name };
     }
+  }
+
+  if (property === "transitionProperty" && isAnimatableProperty(input)) {
+    return {
+      type: "keyword",
+      value: input,
+    };
   }
 
   if (ast.type === "Value" && ast.children.first === ast.children.last) {

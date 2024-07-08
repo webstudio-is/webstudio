@@ -260,8 +260,8 @@ test("parse transition-property property", () => {
   expect(parseCssValue("transitionProperty", "opacity, width, all")).toEqual({
     type: "layers",
     value: [
-      { type: "unparsed", value: "opacity" },
-      { type: "unparsed", value: "width" },
+      { type: "keyword", value: "opacity" },
+      { type: "keyword", value: "width" },
       { type: "keyword", value: "all" },
     ],
   });
@@ -269,7 +269,7 @@ test("parse transition-property property", () => {
     {
       type: "layers",
       value: [
-        { type: "unparsed", value: "opacity" },
+        { type: "keyword", value: "opacity" },
         { type: "unparsed", value: "none" },
         { type: "unparsed", value: "unknown" },
       ],
