@@ -1,9 +1,8 @@
 import { UnoGenerator, createGenerator } from "@unocss/core";
 import { type Theme, presetUno } from "@unocss/preset-uno";
-import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
-import { expandTailwindShorthand } from "./shorthand";
-import { substituteVariables } from "./substitute";
 import warnOnce from "warn-once";
+import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
+import { substituteVariables } from "./substitute";
 import { parseCss } from "../parse-css";
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
@@ -19,8 +18,7 @@ const uno = () => {
  * Parses Tailwind classes to CSS by expanding shorthands and substituting variables.
  */
 export const parseTailwindToCss = async (classes: string, warn = warnOnce) => {
-  const expandedClasses = expandTailwindShorthand(classes);
-  const generated = await uno().generate(expandedClasses, {
+  const generated = await uno().generate(classes, {
     preflights: true,
   });
 

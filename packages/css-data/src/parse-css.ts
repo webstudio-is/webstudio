@@ -5,6 +5,7 @@ import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import { expandShorthands } from "./shorthands";
 
 export type ParsedStyleDecl = {
+  breakpoint?: string;
   selector: string;
   state?: string;
   property: StyleProperty;
@@ -54,8 +55,6 @@ const unprefixProperty = (property: string) => {
   return property.replace(prefixRegex, "");
 };
 
-type Selector = string;
-
 const parseCssValue = (
   property: string,
   value: string
@@ -96,23 +95,82 @@ const cssTreeTryParse = (input: string) => {
   }
 };
 
+type Selector = {
+  name: string;
+  state?: string;
+};
+
 export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
-  let selectors: Selector[] = [];
-  let states = new Map<Selector, Array<string | undefined>>();
   const styles = new Map<string, ParsedStyleDecl>();
 
   if (ast === undefined) {
     return [];
   }
 
-  csstree.walk(ast, (node, item) => {
-    if (node.type === "SelectorList") {
-      selectors = [];
-      states = new Map();
+  csstree.walk(ast, function (node) {
+    if (node.type !== "Declaration" || this.rule?.prelude.type === undefined) {
+      return;
     }
 
-    if (node.type === "ClassSelector" || node.type === "TypeSelector") {
+    if (this.atrule && this.atrule.name !== "media") {
+      return;
+    }
+
+    const supportedMediaFeatures = ["min-width", "max-width"];
+    const supportedUnits = ["px"];
+    let breakpoint: undefined | string;
+    let invalidBreakpoint = false;
+    if (this.atrule?.prelude?.type === "AtrulePrelude") {
+      csstree.walk(this.atrule.prelude, {
+        enter: (node, item, list) => {
+          if (node.type === "Identifier") {
+            if (
+              node.name === "screen" ||
+              node.name === "all" ||
+              node.name === "and"
+            ) {
+              list.remove(item);
+            }
+            // prevent saving print styles
+            if (node.name === "print") {
+              invalidBreakpoint = true;
+            }
+          }
+          if (
+            node.type === "MediaFeature" &&
+            supportedMediaFeatures.includes(node.name) === false
+          ) {
+            invalidBreakpoint = true;
+          }
+          if (
+            node.type === "Dimension" &&
+            supportedUnits.includes(node.unit) === false
+          ) {
+            invalidBreakpoint = true;
+          }
+        },
+        leave: (node) => {
+          // complex media queries are not supported yet
+          if (node.type === "MediaQuery" && node.children.size > 1) {
+            invalidBreakpoint = true;
+          }
+        },
+      });
+      const generated = csstree.generate(this.atrule.prelude);
+      if (generated) {
+        breakpoint = generated;
+      }
+    }
+    if (invalidBreakpoint) {
+      return;
+    }
+
+    const selectors: Selector[] = [];
+    csstree.walk(this.rule.prelude, (node, item) => {
+      if (node.type !== "ClassSelector" && node.type !== "TypeSelector") {
+        return;
+      }
       // We don't support nesting yet.
       if (
         (item?.prev && item.prev.data.type === "Combinator") ||
@@ -121,55 +179,83 @@ export const parseCss = (css: string) => {
         return;
       }
 
-      selectors.push(node.name);
-
-      const statesArray = states.get(node.name) ?? [];
-      states.set(node.name, statesArray);
       if (item?.next && item.next.data.type === "PseudoElementSelector") {
-        statesArray.push(`::${item.next.data.name}`);
+        selectors.push({
+          name: node.name,
+          state: `::${item.next.data.name}`,
+        });
       } else if (item?.next && item.next.data.type === "PseudoClassSelector") {
-        statesArray.push(`:${item.next.data.name}`);
+        selectors.push({
+          name: node.name,
+          state: `:${item.next.data.name}`,
+        });
       } else {
-        statesArray.push(undefined);
+        selectors.push({
+          name: node.name,
+        });
       }
+    });
 
-      return;
-    }
+    const stringValue = csstree.generate(node.value);
 
-    if (node.type === "Declaration") {
-      const stringValue = csstree.generate(node.value);
+    const parsedCss = parseCssValue(
+      unprefixProperty(node.property),
+      stringValue
+    );
 
-      const parsedCss = parseCssValue(
-        unprefixProperty(node.property),
-        stringValue
-      );
-
+    for (const { name: selector, state } of selectors) {
       for (const [property, value] of parsedCss) {
-        try {
-          selectors.forEach((selector, index) => {
-            const styleDecl: ParsedStyleDecl = {
-              selector,
-              property: normalizePropertyName(
-                unprefixProperty(property)
-              ) as StyleProperty,
-              value,
-            };
-
-            const statesArray = states.get(selector) ?? [];
-            const state = statesArray[index] ?? "";
-            if (state) {
-              styleDecl.state = state;
-            }
-
-            // deduplicate styles within selector and state by using map
-            styles.set(`${selector}:${state}:${property}`, styleDecl);
-          });
-        } catch (error) {
-          console.error("Bad CSS declaration", error, parsedCss);
+        const styleDecl: ParsedStyleDecl = {
+          selector,
+          property: normalizePropertyName(
+            unprefixProperty(property)
+          ) as StyleProperty,
+          value,
+        };
+        if (breakpoint) {
+          styleDecl.breakpoint = breakpoint;
         }
+        if (state) {
+          styleDecl.state = state;
+        }
+
+        // deduplicate styles within selector and state by using map
+        styles.set(`${breakpoint}:${selector}:${state}:${property}`, styleDecl);
       }
     }
   });
 
   return Array.from(styles.values());
+};
+
+type ParsedBreakpoint = {
+  minWidth?: number;
+  maxWidth?: number;
+};
+
+export const parseMediaQuery = (
+  mediaQuery: string
+): undefined | ParsedBreakpoint => {
+  const ast = csstree.parse(mediaQuery, { context: "mediaQuery" });
+  let property: undefined | "minWidth" | "maxWidth";
+  let value: undefined | number;
+  csstree.walk(ast, (node) => {
+    if (node.type === "MediaFeature") {
+      if (node.name === "min-width") {
+        property = "minWidth";
+      }
+      if (node.name === "max-width") {
+        property = "maxWidth";
+      }
+    }
+    if (node.type === "Dimension" && node.unit === "px") {
+      value = Number(node.value);
+    }
+  });
+  if (property === undefined || value === undefined) {
+    return;
+  }
+  return {
+    [property]: value,
+  };
 };

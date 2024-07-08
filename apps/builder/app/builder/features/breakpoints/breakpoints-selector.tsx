@@ -17,7 +17,7 @@ import {
   $selectedBreakpointId,
 } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
-import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { setCanvasWidth } from "./use-set-initial-canvas-width";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -149,7 +149,7 @@ export const BreakpointsSelector = ({
             return;
           }
           $selectedBreakpointId.set(breakpointId);
-          setInitialCanvasWidth(breakpointId);
+          setCanvasWidth(breakpointId);
         }}
         css={{ position: "relative" }}
       >

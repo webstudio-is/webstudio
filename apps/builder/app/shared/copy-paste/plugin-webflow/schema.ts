@@ -2,6 +2,16 @@ import { z } from "zod";
 
 const Attr = z.object({ id: z.string() }).partial();
 
+const styleBase = z.string();
+
+const styleBreakpoint = z.string();
+
+const stylePseudo = z.string();
+
+const styleProperty = z.string();
+
+const styleValue = z.string();
+
 const WfNodeData = z.object({
   attr: Attr.optional(),
   xattr: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
@@ -9,6 +19,15 @@ const WfNodeData = z.object({
     .object({
       conditions: z.array(z.boolean()),
     })
+    .optional(),
+  style: z
+    .record(
+      styleBase,
+      z.record(
+        styleBreakpoint,
+        z.record(stylePseudo, z.record(styleProperty, styleValue))
+      )
+    )
     .optional(),
 });
 
@@ -292,9 +311,10 @@ const WfErrorAssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
-  size: z.number(),
-  width: z.number(),
-  quality: z.number(),
+  size: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  quality: z.number().optional(),
   error: z.string(),
   _id: z.string(),
 });
@@ -303,10 +323,10 @@ const WfAssetVariant = z.object({
   origFileName: z.string(),
   fileName: z.string(),
   format: z.string(),
-  size: z.number(),
-  width: z.number(),
+  size: z.number().optional(),
+  width: z.number().optional(),
   height: z.number().optional(),
-  quality: z.number(),
+  quality: z.number().optional(),
   cdnUrl: z.string().url(),
   s3Url: z.string().url(),
 });
@@ -314,8 +334,8 @@ const WfAssetVariant = z.object({
 const WfAsset = z.object({
   cdnUrl: z.string().url(),
   siteId: z.string(),
-  width: z.number(),
-  height: z.number(),
+  width: z.number().optional(),
+  height: z.number().optional(),
   fileName: z.string(),
   createdOn: z.string(),
   origFileName: z.string(),

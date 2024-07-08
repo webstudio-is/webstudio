@@ -2,6 +2,8 @@ import {
   type ComponentProps,
   type Ref,
   forwardRef,
+  Children,
+  useMemo,
   type ReactNode,
 } from "react";
 import { styled } from "../stitches.config";
@@ -41,6 +43,11 @@ const IconButtonsWrapper = styled(Flex, {
   visibility: "hidden",
 });
 
+const FakeIconButtonsWrapper = styled(Flex, {
+  paddingLeft: theme.spacing[5],
+  visibility: "hidden",
+});
+
 /**
  * Should be a button as otherwise radix trigger doesn't work with keyboard interactions
  */
@@ -61,11 +68,14 @@ const ItemButton = styled("button", {
   position: "relative",
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
+    [`& ${FakeIconButtonsWrapper}`]: {
+      visibility: "visible",
+    },
     [`~ ${IconButtonsWrapper}`]: {
       visibility: "visible",
     },
 
-    "&::after": {
+    "&:after": {
       borderRadius: theme.borderRadius[3],
       outline: `2px solid ${theme.colors.borderFocus}`,
       outlineOffset: "-2px",
@@ -116,7 +126,18 @@ const ItemWrapper = styled("div", {
         visibility: "visible",
       },
     },
+    [`& ${IconButtonsWrapper}`]: {
+      visibility: "visible",
+    },
+    [`& ${FakeIconButtonsWrapper}`]: {
+      visibility: "hidden",
+    },
   },
+});
+
+const FakeSmallButton = styled("div", {
+  width: theme.spacing[9],
+  height: theme.spacing[9],
 });
 
 export const CssValueListItem = forwardRef(
@@ -137,6 +158,18 @@ export const CssValueListItem = forwardRef(
     }: Props,
     ref: Ref<HTMLButtonElement>
   ) => {
+    const buttonsCount = Children.count(buttons?.props.children);
+    const fakeButtons = useMemo(
+      () => (
+        <>
+          {Array.from(new Array(buttonsCount), (_v, index) => (
+            <FakeSmallButton key={index} />
+          ))}
+        </>
+      ),
+      [buttonsCount]
+    );
+
     return (
       <ArrowFocus
         render={({ handleKeyDown }) => (
@@ -169,8 +202,20 @@ export const CssValueListItem = forwardRef(
               </Flex>
 
               <Flex grow={true} />
+
+              {
+                // We place fake divs with same dimensions as small buttons here to avoid following warning:
+                // Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
+                // Real buttons will be placed on top of fake buttons
+              }
+              <FakeIconButtonsWrapper shrink={false} gap={2}>
+                {fakeButtons}
+              </FakeIconButtonsWrapper>
             </ItemButton>
 
+            {
+              // Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning
+            }
             <IconButtonsWrapper gap={2} align="center">
               {buttons}
             </IconButtonsWrapper>
