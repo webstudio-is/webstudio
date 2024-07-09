@@ -1448,3 +1448,7 @@ test("expand position-try", () => {
     ["position-try-options", "--dashed-ident"],
   ]);
 });
+
+test("Does not fail on empty transition", () => {
+  expect(expandShorthands([["transition", ""]])).toEqual([]);
+});

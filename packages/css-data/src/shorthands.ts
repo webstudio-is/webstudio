@@ -7,6 +7,7 @@ import {
   type CssNode,
   type Value,
 } from "css-tree";
+import warnOnce from "warn-once";
 
 const cssWideKeywordsSyntax = Array.from(cssWideKeywords).join(" | ");
 
@@ -1419,7 +1420,14 @@ export const expandShorthands = (
         const generator = expandShorthand(property, value);
 
         for (const [property, value] of generator) {
-          longhands.push([property, generate(cssWideKeyword ?? value)]);
+          try {
+            longhands.push([property, generate(cssWideKeyword ?? value)]);
+          } catch {
+            warnOnce(
+              true,
+              `Failed to generate longhands for shorthand ${shorthands.map((shorthand) => shorthand.join("=")).join(", ")}`
+            );
+          }
         }
       }
     }
