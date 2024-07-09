@@ -44,6 +44,7 @@ export type UnparsedValue = z.infer<typeof UnparsedValue>;
 const FontFamilyValue = z.object({
   type: z.literal("fontFamily"),
   value: z.array(z.string()),
+  hidden: z.boolean().optional(),
 });
 export type FontFamilyValue = z.infer<typeof FontFamilyValue>;
 
@@ -53,6 +54,7 @@ const RgbValue = z.object({
   g: z.number(),
   b: z.number(),
   alpha: z.number(),
+  hidden: z.boolean().optional(),
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
@@ -88,6 +90,7 @@ export type ImageValue = z.infer<typeof ImageValue>;
 // https://www.w3.org/TR/css-variables-1/#guaranteed-invalid
 export const GuaranteedInvalidValue = z.object({
   type: z.literal("guaranteedInvalid"),
+  hidden: z.boolean().optional(),
 });
 export type GuaranteedInvalidValue = z.infer<typeof GuaranteedInvalidValue>;
 
@@ -96,12 +99,14 @@ export type GuaranteedInvalidValue = z.infer<typeof GuaranteedInvalidValue>;
 export const InvalidValue = z.object({
   type: z.literal("invalid"),
   value: z.string(),
+  hidden: z.boolean().optional(),
 });
 export type InvalidValue = z.infer<typeof InvalidValue>;
 
 const UnsetValue = z.object({
   type: z.literal("unset"),
   value: z.literal(""),
+  hidden: z.boolean().optional(),
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
@@ -139,6 +144,7 @@ export type LayerValueItem = z.infer<typeof LayerValueItem>;
 export const LayersValue = z.object({
   type: z.literal("layers"),
   value: z.array(LayerValueItem),
+  hidden: z.boolean().optional(),
 });
 
 export type LayersValue = z.infer<typeof LayersValue>;
@@ -186,6 +192,7 @@ const VarValue = z.object({
   type: z.literal("var"),
   value: z.string(),
   fallbacks: z.array(ValidStaticStyleValue),
+  hidden: z.boolean().optional(),
 });
 export type VarValue = z.infer<typeof VarValue>;
 
