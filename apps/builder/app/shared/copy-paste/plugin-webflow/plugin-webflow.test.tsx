@@ -72,7 +72,7 @@ const toCss = (fragment: WebstudioFragment) => {
   }
   const ruleByStyleSourceId = new Map<string, NestingRule>();
   for (const styleDecl of fragment.styleSources) {
-    const name = "name" in styleDecl ? styleDecl.name : "Local";
+    const name = styleDecl.type === "token" ? styleDecl.name : "Local";
     const rule = sheet.addNestingRule(name);
     ruleByStyleSourceId.set(styleDecl.id, rule);
   }
