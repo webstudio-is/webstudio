@@ -69,6 +69,9 @@ const WfLinkData = WfNodeData.extend({
     z.object({
       tel: z.string(),
     }),
+    z.object({
+      mode: z.string(),
+    }),
   ]),
 });
 
