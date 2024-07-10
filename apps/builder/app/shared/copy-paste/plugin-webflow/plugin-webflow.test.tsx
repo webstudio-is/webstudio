@@ -2744,7 +2744,7 @@ describe("Styles", () => {
           outline: 0 none currentColor
         }
         x {
-          transform: translate3d(7px,74px,16px)
+          transform: translate3d(7px, 74px, 16px)
         }
         x:hover {
           background-color: rgba(199, 16, 16, 1)
