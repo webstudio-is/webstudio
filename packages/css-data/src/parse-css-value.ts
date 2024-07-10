@@ -14,7 +14,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { parseFilter, parseShadow } from "./property-parsers";
+import { parseFilter, parseScale, parseShadow } from "./property-parsers";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -130,6 +130,10 @@ export const parseCssValue = (
       // none is not valid layer keyword
       return { type: "unparsed", value: potentialKeyword };
     }
+  }
+
+  if (property === "scale") {
+    return parseScale(input);
   }
 
   const invalidValue = {

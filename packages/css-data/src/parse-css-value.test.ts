@@ -374,3 +374,57 @@ test("parse unknown properties as unparsed", () => {
     }
   );
 });
+
+test("parses a valid translate value", () => {
+  expect(parseCssValue("scale", "1.5")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "keyword",
+        value: "1.5",
+      },
+    ],
+  });
+
+  expect(parseCssValue("scale", "5 10 15")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "keyword",
+        value: "5",
+      },
+      {
+        type: "keyword",
+        value: "10",
+      },
+      {
+        type: "keyword",
+        value: "15",
+      },
+    ],
+  });
+
+  expect(parseCssValue("scale", "50%")).toEqual({
+    type: "tuple",
+    value: [{ type: "unit", value: 50, unit: "%" }],
+  });
+});
+
+test("throws error for invalid scale proeprty values", () => {
+  expect(parseCssValue("scale", "10 foo")).toEqual({
+    type: "invalid",
+    value: "10 foo",
+  });
+  expect(parseCssValue("scale", "5 10 15 20")).toEqual({
+    type: "invalid",
+    value: "5 10 15 20",
+  });
+  expect(parseCssValue("scale", "5, 15")).toEqual({
+    type: "invalid",
+    value: "5, 15",
+  });
+  expect(parseCssValue("scale", "5px")).toEqual({
+    type: "invalid",
+    value: "5px",
+  });
+});

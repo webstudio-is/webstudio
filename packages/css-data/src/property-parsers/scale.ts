@@ -28,7 +28,11 @@ export const parseScale = (input: string): TupleValue | InvalidValue => {
     };
   }
 
-  const parsed = csstree.lexer.matchProperty("scale", cssAst);
+  // scale css-proeprty accepts both number and percentage.
+  // The syntax from MDN is incorrect and should be updated.
+  // Here is a PR that fixes the same, but it is not merged yet.
+  // https://github.com/mdn/data/pull/746
+  const parsed = csstree.lexer.match("none | <number-percentage>{1,3}", input);
   if (parsed.error) {
     return {
       type: "invalid",
