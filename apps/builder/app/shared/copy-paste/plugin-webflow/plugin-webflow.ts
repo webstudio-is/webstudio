@@ -140,7 +140,7 @@ const parse = (clipboardData: string) => {
 
   if (result.success) {
     const unpasedTypes = new Set<string>();
-    // console.log("result.data.payload.nodes", result.data.payload.nodes);
+
     for (let i = 0; i !== result.data.payload.nodes.length; ++i) {
       if ("type" in result.data.payload.nodes[i]) {
         continue;
