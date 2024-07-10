@@ -1389,10 +1389,11 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
 const parseValue = function* (property: string, value: string) {
   try {
-    const ast = parse(value, { context: "value" });
-    if (ast.type === "Value" && ast.children.isEmpty === false) {
-      yield [property, ast] as const;
+    let ast = parse(value, { context: "value" });
+    if (ast.type === "Value" && ast.children.isEmpty) {
+      ast.children.appendData({ type: "Identifier", name: "unset" });
     }
+    yield [property, ast] as const;
   } catch {
     // empty block
   }

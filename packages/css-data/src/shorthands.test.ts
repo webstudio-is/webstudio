@@ -1449,7 +1449,18 @@ test("expand position-try", () => {
   ]);
 });
 
-test("Does not fail on empty value", () => {
+test("replace empty value with unset", () => {
+  expect(expandShorthands([["color", ""]])).toEqual([["color", "unset"]]);
+  expect(expandShorthands([["transition", ""]])).toEqual([
+    ["transition-property", "unset"],
+    ["transition-duration", "unset"],
+    ["transition-timing-function", "unset"],
+    ["transition-delay", "unset"],
+    ["transition-behavior", "unset"],
+  ]);
+});
+
+test("does not fail on empty value", () => {
   expect(() => expandShorthands([["transition", ""]])).not.toThrow();
   expect(() => expandShorthands([["border", ""]])).not.toThrow();
   expect(() => expandShorthands([["font", ""]])).not.toThrow();
