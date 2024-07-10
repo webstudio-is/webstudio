@@ -1389,7 +1389,7 @@ const expandShorthand = function* (property: string, value: CssNode) {
 
 const parseValue = function* (property: string, value: string) {
   try {
-    let ast = parse(value, { context: "value" });
+    const ast = parse(value, { context: "value" });
     if (ast.type === "Value" && ast.children.isEmpty) {
       ast.children.appendData({ type: "Identifier", name: "unset" });
     }
