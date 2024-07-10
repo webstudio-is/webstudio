@@ -58,12 +58,9 @@ const splitByOperator = (node: CssNode, operator: string) => {
       lists.at(-1)?.push(node);
     }
   }
-  return lists.map((list) => {
-    if (list.length === 0) {
-      return;
-    }
-    return createValueNode(list);
-  });
+  return lists
+    .filter((list) => list.length > 0)
+    .map((list) => createValueNode(list));
 };
 
 const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
@@ -1393,7 +1390,9 @@ const expandShorthand = function* (property: string, value: CssNode) {
 const parseValue = function* (property: string, value: string) {
   try {
     const ast = parse(value, { context: "value" });
-    yield [property, ast] as const;
+    if (ast.type === "Value" && ast.children.isEmpty === false) {
+      yield [property, ast] as const;
+    }
   } catch {
     // empty block
   }
