@@ -16,6 +16,8 @@ import {
   $breakpoints,
   $project,
   $registeredComponentMetas,
+  $styleSources,
+  $styles,
 } from "../../nano-states";
 import invariant from "tiny-invariant";
 import { WfData } from "./schema";
@@ -2513,6 +2515,32 @@ describe("Styles", () => {
   });
 
   test("Combo class", async () => {
+    $styleSources.set(
+      new Map([
+        [
+          "uuBw1PRC_uE8RhTmwxaH8",
+          {
+            id: "uuBw1PRC_uE8RhTmwxaH8",
+            type: "token",
+            name: "button",
+          },
+        ],
+      ])
+    );
+    $styles.set(
+      new Map([
+        [
+          "uuBw1PRC_uE8RhTmwxaH8",
+          {
+            styleSourceId: "uuBw1PRC_uE8RhTmwxaH8",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "green" },
+          },
+        ],
+      ])
+    );
+
     const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
@@ -2563,18 +2591,18 @@ describe("Styles", () => {
       {
         type: "token",
         id: expect.any(String),
-        name: "button",
-      },
-      {
-        type: "token",
-        id: expect.any(String),
-        name: "is-secondary",
+        name: "button.is-secondary",
       },
     ]);
+
     expect(fragment.styleSourceSelections).toEqual([
       {
         instanceId: expect.any(String),
-        values: [expect.any(String), expect.any(String), expect.any(String)],
+        values: [
+          "uu1p3Xdvlq_AZOxnzDvAv",
+          "uuBw1PRC_uE8RhTmwxaH8",
+          "uuFc5tqBSacRR9VpjbFi1",
+        ],
       },
     ]);
 
@@ -2589,10 +2617,8 @@ describe("Styles", () => {
         a:hover {
           outline: 0 none currentColor
         }
-        button {
-          text-align: center
-        }
-        is-secondary {
+        button.is-secondary {
+          text-align: center;
           background-color: transparent
         }
       }"
@@ -2959,7 +2985,7 @@ describe("Styles", () => {
       (style) => style.property === "backgroundImage"
     );
 
-    expect(bgStyle).not.toBeNull();
+    expect(bgStyle).toBeDefined();
     expect(bgStyle?.value.type).toEqual("layers");
 
     const layers = bgStyle?.value;

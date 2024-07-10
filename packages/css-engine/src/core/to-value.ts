@@ -96,20 +96,17 @@ export const toValue = (
 
   if (value.type === "layers") {
     const valueString = value.value
-      .filter(
-        (layer) =>
-          "hidden" in layer === false ||
-          ("hidden" in layer && layer.hidden === false)
-      )
-      .map((layer) => {
-        return toValue(layer, transformValue);
-      })
+      .filter((layer) => layer.hidden !== true)
+      .map((layer) => toValue(layer, transformValue))
       .join(", ");
     return valueString === "" ? "none" : valueString;
   }
 
   if (value.type === "tuple") {
-    return value.value.map((value) => toValue(value, transformValue)).join(" ");
+    return value.value
+      .filter((value) => value.hidden !== true)
+      .map((value) => toValue(value, transformValue))
+      .join(" ");
   }
 
   if (value.type === "function") {

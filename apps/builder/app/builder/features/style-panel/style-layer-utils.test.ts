@@ -203,7 +203,7 @@ describe("boxShadowUtils", () => {
     expect(published).toBe(true);
     expect(boxShadowValue).toBeDefined();
     expect(deletedProperties.has("boxShadow")).toBe(false);
-    expect((boxShadowValue.value[0] as TupleValue).hidden).toBe(true);
+    expect(boxShadowValue.value[0].hidden).toBe(true);
   });
 
   test("adds layer to box-shadow proeprty", () => {

@@ -6,7 +6,7 @@ import type {
 } from "@webstudio-is/sdk";
 import type { WfAsset, WfElementNode, WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
-import { $breakpoints } from "~/shared/nano-states";
+import { $breakpoints, $styleSources } from "~/shared/nano-states";
 import {
   parseCss,
   pseudoElements,
@@ -226,6 +226,24 @@ const addNodeStyles = ({
   }
 };
 
+const addStyleSource = (
+  styleSourceId: string,
+  instanceId: Instance["id"],
+  fragment: WebstudioFragment
+) => {
+  let styleSourceSelection = fragment.styleSourceSelections.find(
+    (selection) => selection.instanceId === instanceId
+  );
+  if (styleSourceSelection === undefined) {
+    styleSourceSelection = { instanceId, values: [] };
+    fragment.styleSourceSelections.push(styleSourceSelection);
+  }
+
+  if (styleSourceSelection.values.includes(styleSourceId) === false) {
+    styleSourceSelection.values.push(styleSourceId);
+  }
+};
+
 const addNodeTokenStyles = ({
   styleSourceId,
   name,
@@ -247,14 +265,7 @@ const addNodeTokenStyles = ({
     name,
   });
 
-  let styleSourceSelection = fragment.styleSourceSelections.find(
-    (selection) => selection.instanceId === instanceId
-  );
-  if (styleSourceSelection === undefined) {
-    styleSourceSelection = { instanceId, values: [] };
-    fragment.styleSourceSelections.push(styleSourceSelection);
-  }
-  styleSourceSelection.values.push(styleSourceId);
+  addStyleSource(styleSourceId, instanceId, fragment);
 
   addNodeStyles({
     styleSourceId,
@@ -415,14 +426,50 @@ const mapComponentAndPresetStyles = (
   return presetStyles;
 };
 
-export const addStyles = async (
-  wfNodes: Map<WfNode["_id"], WfNode>,
-  wfStyles: Map<WfStyle["_id"], WfStyle>,
-  wfAssets: Map<WfAsset["_id"], WfAsset>,
-  doneNodes: Map<WfNode["_id"], Instance["id"] | false>,
-  fragment: WebstudioFragment,
-  generateStyleSourceId: (sourceData: string) => Promise<string>
-) => {
+const mergeComboStyles = (styles: Array<WfStyle>) => {
+  const mergedStyles: Array<WfStyle> = [];
+  const mergedClasses = new Set<string>();
+  for (const style of styles) {
+    if (style.comb) {
+      // Child style can be skipped, as it will be already merged into parent
+      continue;
+    }
+    const mergedStyle = { variants: {}, ...style };
+    mergedStyles.push(mergedStyle);
+    for (const childId of style.children ?? []) {
+      const childStyle = styles.find((style) => style._id === childId);
+      if (childStyle) {
+        mergedClasses.add(style.name);
+        mergedClasses.add(childStyle.name);
+        mergedStyle.styleLess += childStyle.styleLess;
+        for (const key in childStyle.variants) {
+          if (key in childStyle.variants === false) {
+            mergedStyle.variants[key] = { styleLess: "" };
+          }
+          mergedStyle.variants[key].styleLess += childStyle.variants[key];
+        }
+        mergedStyle.name += "." + childStyle.name;
+      }
+    }
+  }
+  return { mergedStyles, mergedClasses };
+};
+
+export const addStyles = async ({
+  wfNodes,
+  wfStyles,
+  wfAssets,
+  doneNodes,
+  fragment,
+  generateStyleSourceId,
+}: {
+  wfNodes: Map<WfNode["_id"], WfNode>;
+  wfStyles: Map<WfStyle["_id"], WfStyle>;
+  wfAssets: Map<WfAsset["_id"], WfAsset>;
+  doneNodes: Map<WfNode["_id"], Instance["id"] | false>;
+  fragment: WebstudioFragment;
+  generateStyleSourceId: (sourceData: string) => Promise<string>;
+}) => {
   const { styles: stylePresets } = await import(
     "./__generated__/style-presets"
   );
@@ -481,20 +528,23 @@ export const addStyles = async (
       continue;
     }
 
-    for (const classId of wfNode.classes) {
-      const style = wfStyles.get(classId);
-      if (style === undefined) {
-        continue;
-      }
+    let wfNodeStyles = wfNode.classes
+      .map((classId) => wfStyles.get(classId))
+      .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
+
+    const comboStylesMerge = mergeComboStyles(wfNodeStyles);
+    wfNodeStyles = comboStylesMerge.mergedStyles;
+
+    for (const wfStyle of wfNodeStyles) {
       if (instance && instance.label === undefined) {
-        instance.label = style.name;
+        instance.label = wfStyle.name;
       }
       const variants = new Map();
       variants.set(
         "base",
-        replaceAtImages(replaceAtVariables(style.styleLess), wfAssets)
+        replaceAtImages(replaceAtVariables(wfStyle.styleLess), wfAssets)
       );
-      const wfVariants = style.variants ?? {};
+      const wfVariants = wfStyle.variants ?? {};
       Object.keys(wfVariants).forEach((breakpointName) => {
         const variant = wfVariants[breakpointName as keyof typeof wfVariants];
         if (variant && "styleLess" in variant) {
@@ -505,9 +555,17 @@ export const addStyles = async (
         }
       });
 
+      // We need to see if the individual classes have already existed in the system
+      // and if so, add them to the selection, because webflow relies on combo class logic and we merge the combo into one.
+      for (const childClass of comboStylesMerge.mergedClasses) {
+        const wsStyleSourceId = await generateStyleSourceId(childClass);
+        if ($styleSources.get().has(wsStyleSourceId)) {
+          addStyleSource(wsStyleSourceId, instanceId, fragment);
+        }
+      }
       addNodeTokenStyles({
-        styleSourceId: await generateStyleSourceId(classId),
-        name: style.name,
+        styleSourceId: await generateStyleSourceId(wfStyle.name),
+        name: wfStyle.name,
         variants,
         instanceId,
         fragment,
