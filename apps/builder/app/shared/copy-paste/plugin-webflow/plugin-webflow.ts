@@ -118,18 +118,20 @@ const parse = (clipboardData: string) => {
     return;
   }
 
-  const unsupportedNodeTypes: Array<string> = data.payload.nodes
-    .filter((node: { type: string }) => {
-      return (
-        node.type !== undefined &&
-        wfNodeTypes.includes(node.type as (typeof wfNodeTypes)[number]) ===
-          false
-      );
-    })
-    .map((node: { type: string }) => node.type);
+  const unsupportedNodeTypes: Set<string> = new Set(
+    data.payload.nodes
+      .filter((node: { type: string }) => {
+        return (
+          node.type !== undefined &&
+          wfNodeTypes.includes(node.type as (typeof wfNodeTypes)[number]) ===
+            false
+        );
+      })
+      .map((node: { type: string }) => node.type)
+  );
 
-  if (unsupportedNodeTypes.length !== 0) {
-    const message = `Skipping unsupported elements: ${unsupportedNodeTypes.join(", ")}`;
+  if (unsupportedNodeTypes.size !== 0) {
+    const message = `Skipping unsupported elements: ${[...unsupportedNodeTypes.values()].join(", ")}`;
     toast.info(message);
     console.info(message);
   }
@@ -137,6 +139,32 @@ const parse = (clipboardData: string) => {
   const result = WfData.safeParse(data);
 
   if (result.success) {
+    const unpasedTypes = new Set<string>();
+
+    for (let i = 0; i !== result.data.payload.nodes.length; ++i) {
+      if ("type" in result.data.payload.nodes[i]) {
+        continue;
+      }
+
+      if (data.payload.nodes[i].type === undefined) {
+        continue;
+      }
+
+      const probablyUnparsedType = data.payload.nodes[i].type;
+
+      if (unsupportedNodeTypes.has(probablyUnparsedType)) {
+        continue;
+      }
+
+      unpasedTypes.add(probablyUnparsedType);
+    }
+
+    if (unpasedTypes.size !== 0) {
+      const message = `The following types were skipped due to a parsing error: ${[...unpasedTypes.values()].join(", ")}`;
+      toast.info(message);
+      console.info(message);
+    }
+
     return result.data;
   }
 

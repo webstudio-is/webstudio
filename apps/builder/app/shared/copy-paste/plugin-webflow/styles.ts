@@ -372,6 +372,39 @@ const mapComponentAndPresetStyles = (
       presetStyles.push("w-radio-input");
       return presetStyles;
     }
+
+    case "Icon": {
+      const data = wfNode.data;
+
+      if (data.widget?.icon) {
+        presetStyles.push(`w-icon-${data.widget.icon}`);
+      }
+      return presetStyles;
+    }
+
+    case "NavbarMenu":
+      presetStyles.push("w-nav-menu");
+      return presetStyles;
+
+    case "NavbarContainer":
+      presetStyles.push("w-container");
+      return presetStyles;
+
+    case "NavbarWrapper":
+      presetStyles.push("w-nav");
+      return presetStyles;
+
+    case "NavbarBrand":
+      presetStyles.push("w-nav-brand");
+      return presetStyles;
+
+    case "NavbarLink":
+      presetStyles.push("w-nav-link");
+      return presetStyles;
+
+    case "NavbarButton":
+      presetStyles.push("w-nav-button");
+      return presetStyles;
   }
 
   return presetStyles;
@@ -394,7 +427,7 @@ const mergeComboStyles = (styles: Array<WfStyle>) => {
         mergedClasses.add(childStyle.name);
         mergedStyle.styleLess += childStyle.styleLess;
         for (const key in childStyle.variants) {
-          if (key in childStyle.variants === false) {
+          if (key in mergedStyle.variants === false) {
             mergedStyle.variants[key] = { styleLess: "" };
           }
           mergedStyle.variants[key].styleLess += childStyle.variants[key];
