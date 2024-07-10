@@ -380,7 +380,7 @@ const WfAsset = z.object({
   variants: z.array(z.union([WfAssetVariant, WfErrorAssetVariant])).optional(),
   mimeType: z.string(),
   s3Url: z.string().url(),
-  thumbUrl: z.string(),
+  thumbUrl: z.string().optional(),
   _id: z.string(),
   markedAsDeleted: z.boolean().optional(),
   fileSize: z.number(),
