@@ -3016,4 +3016,50 @@ describe("Styles", () => {
       }"
   `);
   });
+
+  test("@raw webflow custom properties", async () => {
+    const input = WfData.parse({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "89ed49d8-2d32-5bab-22e1-264acb8d2d84",
+            type: "Block",
+            tag: "div",
+            classes: ["393ac121-a395-7678-e598-994e30fb7880"],
+            children: [],
+            data: { text: false, tag: "div" },
+          },
+        ],
+        styles: [
+          {
+            _id: "393ac121-a395-7678-e598-994e30fb7880",
+            fake: false,
+            type: "class",
+            name: "Div Block",
+            namespace: "",
+            comb: "",
+            styleLess: "color: @raw<|black|>; background-color: @raw<|red|>;",
+            variants: {},
+            children: [],
+            createdBy: "635e72dd77408d16b581b4bc",
+            origin: null,
+            selector: null,
+          },
+        ],
+        assets: [],
+      },
+    });
+
+    const fragment = await toWebstudioFragment(input);
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+"@media all {
+  Div Block {
+    color: black;
+    background-color: red
+  }
+}"
+`);
+  });
 });
