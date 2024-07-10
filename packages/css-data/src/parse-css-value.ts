@@ -18,6 +18,7 @@ import {
   parseFilter,
   parseShadow,
   parseTransitionLonghandProperty,
+  parseTranslate,
 } from "./property-parsers";
 
 export const cssTryParseValue = (input: string) => {
@@ -154,6 +155,10 @@ export const parseCssValue = (
       `Can't parse css property "${property}" with value "${input}"`
     );
     return invalidValue;
+  }
+
+  if (property === "translate") {
+    return parseTranslate(input);
   }
 
   if (property === "filter" || property === "backdropFilter") {

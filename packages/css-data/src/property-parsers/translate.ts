@@ -39,35 +39,28 @@ export const parseTranslate = (input: string): TupleValue | InvalidValue => {
 
   const translateValues: TupleValueItem[] = [];
 
-  try {
-    csstree.walk(cssAst, (node) => {
-      if (node.type === "Value") {
-        const children = node.children;
-        for (const child of children) {
-          if (child.type === "Dimension") {
-            translateValues.push({
-              type: "unit",
-              value: Number(child.value),
-              unit: child.unit as Unit,
-            });
-          }
+  csstree.walk(cssAst, (node) => {
+    if (node.type === "Value") {
+      const children = node.children;
+      for (const child of children) {
+        if (child.type === "Dimension") {
+          translateValues.push({
+            type: "unit",
+            value: Number(child.value),
+            unit: child.unit as Unit,
+          });
+        }
 
-          if (child.type === "Percentage") {
-            translateValues.push({
-              type: "unit",
-              value: Number(child.value),
-              unit: "%",
-            });
-          }
+        if (child.type === "Percentage") {
+          translateValues.push({
+            type: "unit",
+            value: Number(child.value),
+            unit: "%",
+          });
         }
       }
-    });
-  } catch {
-    return {
-      type: "invalid",
-      value: input,
-    };
-  }
+    }
+  });
 
   return {
     type: "tuple",
