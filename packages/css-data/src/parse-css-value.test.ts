@@ -380,8 +380,9 @@ test("parses a valid translate value", () => {
     type: "tuple",
     value: [
       {
-        type: "keyword",
-        value: "1.5",
+        type: "unit",
+        value: 1.5,
+        unit: "number",
       },
     ],
   });
@@ -390,16 +391,19 @@ test("parses a valid translate value", () => {
     type: "tuple",
     value: [
       {
-        type: "keyword",
-        value: "5",
+        type: "unit",
+        value: 5,
+        unit: "number",
       },
       {
-        type: "keyword",
-        value: "10",
+        type: "unit",
+        value: 10,
+        unit: "number",
       },
       {
-        type: "keyword",
-        value: "15",
+        type: "unit",
+        value: 15,
+        unit: "number",
       },
     ],
   });

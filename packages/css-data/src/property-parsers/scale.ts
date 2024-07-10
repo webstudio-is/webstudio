@@ -49,8 +49,9 @@ export const parseScale = (input: string): TupleValue | InvalidValue => {
         for (const child of children) {
           if (child.type === "Number") {
             scaleValue.push({
-              type: "keyword",
-              value: child.value,
+              type: "unit",
+              value: Number(child.value),
+              unit: "number",
             });
           }
 
