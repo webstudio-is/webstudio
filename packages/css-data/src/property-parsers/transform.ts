@@ -54,7 +54,11 @@ export const parseTransform = (input: string): TupleValue | InvalidValue => {
 
           for (const arg of child.children) {
             if (arg.type === "Number") {
-              args.value.push({ type: "keyword", value: arg.value });
+              args.value.push({
+                type: "unit",
+                value: Number(arg.value),
+                unit: "number",
+              });
             }
 
             if (arg.type === "Dimension") {
