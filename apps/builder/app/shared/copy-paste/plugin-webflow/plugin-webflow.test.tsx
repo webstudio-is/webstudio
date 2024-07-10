@@ -2798,10 +2798,7 @@ describe("Styles", () => {
                   "background-color: hsla(150, 100.00%, 50.00%, 1.00);",
               },
               xl: {
-                styleLess: "background-color: hsla(69, 100.00%, 50.00%, 1.00);",
-              },
-              xxl: {
-                styleLess: "background-color: hsla(14, 100.00%, 50.00%, 1.00);",
+                styleLess: "",
               },
               medium: {
                 styleLess:
@@ -2821,6 +2818,14 @@ describe("Styles", () => {
         assets: [],
       },
     });
+
+    expect(fragment.breakpoints).toEqual([
+      { id: expect.any(String), label: "base" },
+      { id: expect.any(String), label: "large", minWidth: 1280 },
+      { id: expect.any(String), label: "medium", maxWidth: 991 },
+      { id: expect.any(String), label: "small", maxWidth: 767 },
+      { id: expect.any(String), label: "tiny", maxWidth: 479 },
+    ]);
 
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
@@ -2846,16 +2851,6 @@ describe("Styles", () => {
       @media all and (min-width: 1280px) {
         Div Block 2 {
           background-color: rgba(0, 255, 128, 1)
-        }
-      }
-      @media all and (min-width: 1440px) {
-        Div Block 2 {
-          background-color: rgba(217, 255, 0, 1)
-        }
-      }
-      @media all and (min-width: 1920px) {
-        Div Block 2 {
-          background-color: rgba(255, 60, 0, 1)
         }
       }"
     `);
