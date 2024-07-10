@@ -37,8 +37,8 @@
   "private": true,
   "sideEffects": false,
   "dependencies": {
-    "@unocss/core": "^0.61.0",
-    "@unocss/preset-uno": "^0.61.0",
+    "@unocss/core": "^0.61.2",
+    "@unocss/preset-uno": "^0.61.2",
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
     "colord": "^2.9.3",

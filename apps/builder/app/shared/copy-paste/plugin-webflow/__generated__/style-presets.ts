@@ -3,6 +3,7 @@
 export const styles = {
   html: [
     {
+      selector: "html",
       property: "textSizeAdjust",
       value: {
         type: "unit",
@@ -11,6 +12,7 @@ export const styles = {
       },
     },
     {
+      selector: "html",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -18,6 +20,7 @@ export const styles = {
       },
     },
     {
+      selector: "html",
       property: "height",
       value: {
         type: "unit",
@@ -26,6 +29,7 @@ export const styles = {
       },
     },
     {
+      selector: "html",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -38,6 +42,7 @@ export const styles = {
       },
     },
     {
+      selector: "html",
       property: "color",
       value: {
         type: "rgb",
@@ -50,6 +55,43 @@ export const styles = {
   ],
   body: [
     {
+      selector: "body",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "body",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "body",
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "body",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "body",
       property: "color",
       value: {
         type: "rgb",
@@ -60,6 +102,7 @@ export const styles = {
       },
     },
     {
+      selector: "body",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -70,6 +113,7 @@ export const styles = {
       },
     },
     {
+      selector: "body",
       property: "minHeight",
       value: {
         type: "unit",
@@ -78,38 +122,7 @@ export const styles = {
       },
     },
     {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
+      selector: "body",
       property: "fontFamily",
       value: {
         type: "unparsed",
@@ -117,6 +130,7 @@ export const styles = {
       },
     },
     {
+      selector: "body",
       property: "fontSize",
       value: {
         type: "unit",
@@ -125,6 +139,7 @@ export const styles = {
       },
     },
     {
+      selector: "body",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -135,6 +150,7 @@ export const styles = {
   ],
   article: [
     {
+      selector: "article",
       property: "display",
       value: {
         type: "keyword",
@@ -144,6 +160,7 @@ export const styles = {
   ],
   aside: [
     {
+      selector: "aside",
       property: "display",
       value: {
         type: "keyword",
@@ -153,6 +170,7 @@ export const styles = {
   ],
   details: [
     {
+      selector: "details",
       property: "display",
       value: {
         type: "keyword",
@@ -162,6 +180,7 @@ export const styles = {
   ],
   figcaption: [
     {
+      selector: "figcaption",
       property: "display",
       value: {
         type: "keyword",
@@ -169,6 +188,7 @@ export const styles = {
       },
     },
     {
+      selector: "figcaption",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -176,6 +196,7 @@ export const styles = {
       },
     },
     {
+      selector: "figcaption",
       property: "marginTop",
       value: {
         type: "unit",
@@ -186,6 +207,7 @@ export const styles = {
   ],
   figure: [
     {
+      selector: "figure",
       property: "display",
       value: {
         type: "keyword",
@@ -193,6 +215,7 @@ export const styles = {
       },
     },
     {
+      selector: "figure",
       property: "marginTop",
       value: {
         type: "unit",
@@ -201,6 +224,7 @@ export const styles = {
       },
     },
     {
+      selector: "figure",
       property: "marginRight",
       value: {
         type: "unit",
@@ -209,6 +233,7 @@ export const styles = {
       },
     },
     {
+      selector: "figure",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -217,6 +242,7 @@ export const styles = {
       },
     },
     {
+      selector: "figure",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -227,6 +253,7 @@ export const styles = {
   ],
   footer: [
     {
+      selector: "footer",
       property: "display",
       value: {
         type: "keyword",
@@ -236,6 +263,7 @@ export const styles = {
   ],
   header: [
     {
+      selector: "header",
       property: "display",
       value: {
         type: "keyword",
@@ -245,6 +273,7 @@ export const styles = {
   ],
   hgroup: [
     {
+      selector: "hgroup",
       property: "display",
       value: {
         type: "keyword",
@@ -254,6 +283,7 @@ export const styles = {
   ],
   main: [
     {
+      selector: "main",
       property: "display",
       value: {
         type: "keyword",
@@ -263,6 +293,7 @@ export const styles = {
   ],
   menu: [
     {
+      selector: "menu",
       property: "display",
       value: {
         type: "keyword",
@@ -272,6 +303,7 @@ export const styles = {
   ],
   nav: [
     {
+      selector: "nav",
       property: "display",
       value: {
         type: "keyword",
@@ -281,6 +313,7 @@ export const styles = {
   ],
   section: [
     {
+      selector: "section",
       property: "display",
       value: {
         type: "keyword",
@@ -290,6 +323,7 @@ export const styles = {
   ],
   summary: [
     {
+      selector: "summary",
       property: "display",
       value: {
         type: "keyword",
@@ -299,6 +333,7 @@ export const styles = {
   ],
   audio: [
     {
+      selector: "audio",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -306,15 +341,36 @@ export const styles = {
       },
     },
     {
+      selector: "audio",
       property: "display",
       value: {
         type: "keyword",
         value: "inline-block",
       },
     },
+    {
+      selector: "audio",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "audio",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":not",
+    },
   ],
   canvas: [
     {
+      selector: "canvas",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -322,6 +378,7 @@ export const styles = {
       },
     },
     {
+      selector: "canvas",
       property: "display",
       value: {
         type: "keyword",
@@ -331,6 +388,7 @@ export const styles = {
   ],
   progress: [
     {
+      selector: "progress",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -338,6 +396,7 @@ export const styles = {
       },
     },
     {
+      selector: "progress",
       property: "display",
       value: {
         type: "keyword",
@@ -347,6 +406,7 @@ export const styles = {
   ],
   video: [
     {
+      selector: "video",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -354,6 +414,7 @@ export const styles = {
       },
     },
     {
+      selector: "video",
       property: "display",
       value: {
         type: "keyword",
@@ -363,6 +424,7 @@ export const styles = {
   ],
   template: [
     {
+      selector: "template",
       property: "display",
       value: {
         type: "keyword",
@@ -372,6 +434,7 @@ export const styles = {
   ],
   a: [
     {
+      selector: "a",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -382,6 +445,7 @@ export const styles = {
       },
     },
     {
+      selector: "a",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -391,15 +455,7 @@ export const styles = {
       state: ":active",
     },
     {
-      property: "outlineWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-      state: ":hover",
-    },
-    {
+      selector: "a",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -408,14 +464,7 @@ export const styles = {
       state: ":active",
     },
     {
-      property: "outlineStyle",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-      state: ":hover",
-    },
-    {
+      selector: "a",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -424,6 +473,26 @@ export const styles = {
       state: ":active",
     },
     {
+      selector: "a",
+      property: "outlineWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":hover",
+    },
+    {
+      selector: "a",
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":hover",
+    },
+    {
+      selector: "a",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -434,6 +503,7 @@ export const styles = {
   ],
   abbr: [
     {
+      selector: "abbr",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -442,6 +512,7 @@ export const styles = {
       },
     },
     {
+      selector: "abbr",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -449,6 +520,7 @@ export const styles = {
       },
     },
     {
+      selector: "abbr",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -458,6 +530,7 @@ export const styles = {
   ],
   b: [
     {
+      selector: "b",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -467,6 +540,7 @@ export const styles = {
   ],
   strong: [
     {
+      selector: "strong",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -476,6 +550,7 @@ export const styles = {
   ],
   dfn: [
     {
+      selector: "dfn",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -485,37 +560,7 @@ export const styles = {
   ],
   h1: [
     {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
+      selector: "h1",
       property: "marginTop",
       value: {
         type: "unit",
@@ -524,6 +569,34 @@ export const styles = {
       },
     },
     {
+      selector: "h1",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "h1",
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      selector: "h1",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "h1",
       property: "fontSize",
       value: {
         type: "unit",
@@ -532,6 +605,15 @@ export const styles = {
       },
     },
     {
+      selector: "h1",
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "bold",
+      },
+    },
+    {
+      selector: "h1",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -542,6 +624,7 @@ export const styles = {
   ],
   mark: [
     {
+      selector: "mark",
       property: "color",
       value: {
         type: "rgb",
@@ -552,6 +635,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -564,6 +648,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -577,6 +662,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -590,6 +676,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -611,6 +698,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -623,6 +711,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -635,6 +724,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -647,6 +737,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -659,6 +750,7 @@ export const styles = {
       },
     },
     {
+      selector: "mark",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -671,6 +763,7 @@ export const styles = {
   ],
   small: [
     {
+      selector: "small",
       property: "fontSize",
       value: {
         type: "unit",
@@ -681,6 +774,7 @@ export const styles = {
   ],
   sub: [
     {
+      selector: "sub",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -688,6 +782,7 @@ export const styles = {
       },
     },
     {
+      selector: "sub",
       property: "fontSize",
       value: {
         type: "unit",
@@ -696,6 +791,7 @@ export const styles = {
       },
     },
     {
+      selector: "sub",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -704,6 +800,7 @@ export const styles = {
       },
     },
     {
+      selector: "sub",
       property: "position",
       value: {
         type: "keyword",
@@ -711,6 +808,7 @@ export const styles = {
       },
     },
     {
+      selector: "sub",
       property: "bottom",
       value: {
         type: "unit",
@@ -721,6 +819,7 @@ export const styles = {
   ],
   sup: [
     {
+      selector: "sup",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -728,6 +827,7 @@ export const styles = {
       },
     },
     {
+      selector: "sup",
       property: "fontSize",
       value: {
         type: "unit",
@@ -736,6 +836,7 @@ export const styles = {
       },
     },
     {
+      selector: "sup",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -744,6 +845,7 @@ export const styles = {
       },
     },
     {
+      selector: "sup",
       property: "position",
       value: {
         type: "keyword",
@@ -751,6 +853,7 @@ export const styles = {
       },
     },
     {
+      selector: "sup",
       property: "top",
       value: {
         type: "unit",
@@ -761,6 +864,7 @@ export const styles = {
   ],
   img: [
     {
+      selector: "img",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -769,6 +873,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -777,6 +882,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -785,6 +891,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -793,6 +900,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -800,6 +908,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -807,6 +916,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -814,6 +924,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -821,6 +932,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -828,6 +940,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -835,6 +948,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -842,6 +956,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -849,6 +964,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -856,6 +972,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -864,6 +981,7 @@ export const styles = {
       },
     },
     {
+      selector: "img",
       property: "display",
       value: {
         type: "keyword",
@@ -871,8 +989,29 @@ export const styles = {
       },
     },
   ],
+  svg: [
+    {
+      selector: "svg",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+      state: ":not",
+    },
+    {
+      selector: "svg",
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+      state: ":not",
+    },
+  ],
   hr: [
     {
+      selector: "hr",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -880,6 +1019,7 @@ export const styles = {
       },
     },
     {
+      selector: "hr",
       property: "height",
       value: {
         type: "unit",
@@ -890,6 +1030,7 @@ export const styles = {
   ],
   pre: [
     {
+      selector: "pre",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -897,6 +1038,7 @@ export const styles = {
       },
     },
     {
+      selector: "pre",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -904,6 +1046,7 @@ export const styles = {
       },
     },
     {
+      selector: "pre",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -911,6 +1054,7 @@ export const styles = {
       },
     },
     {
+      selector: "pre",
       property: "fontSize",
       value: {
         type: "unit",
@@ -921,6 +1065,7 @@ export const styles = {
   ],
   code: [
     {
+      selector: "code",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -928,6 +1073,7 @@ export const styles = {
       },
     },
     {
+      selector: "code",
       property: "fontSize",
       value: {
         type: "unit",
@@ -938,6 +1084,7 @@ export const styles = {
   ],
   kbd: [
     {
+      selector: "kbd",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -945,6 +1092,7 @@ export const styles = {
       },
     },
     {
+      selector: "kbd",
       property: "fontSize",
       value: {
         type: "unit",
@@ -955,6 +1103,7 @@ export const styles = {
   ],
   samp: [
     {
+      selector: "samp",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -962,6 +1111,7 @@ export const styles = {
       },
     },
     {
+      selector: "samp",
       property: "fontSize",
       value: {
         type: "unit",
@@ -972,6 +1122,7 @@ export const styles = {
   ],
   button: [
     {
+      selector: "button",
       property: "color",
       value: {
         type: "keyword",
@@ -979,6 +1130,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -986,6 +1138,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "fontVariantCaps",
       value: {
         type: "keyword",
@@ -993,6 +1146,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -1000,6 +1154,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "fontStretch",
       value: {
         type: "keyword",
@@ -1007,6 +1162,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "fontSize",
       value: {
         type: "keyword",
@@ -1014,6 +1170,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -1021,6 +1178,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -1028,6 +1186,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "marginTop",
       value: {
         type: "unit",
@@ -1036,6 +1195,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "marginRight",
       value: {
         type: "unit",
@@ -1044,6 +1204,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -1052,6 +1213,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -1060,6 +1222,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -1067,6 +1230,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -1074,6 +1238,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "textTransform",
       value: {
         type: "keyword",
@@ -1081,6 +1246,23 @@ export const styles = {
       },
     },
     {
+      selector: "button",
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "button",
+      },
+    },
+    {
+      selector: "button",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+    {
+      selector: "button",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -1090,6 +1272,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -1099,6 +1282,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -1108,6 +1292,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -1117,6 +1302,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -1125,6 +1311,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -1133,6 +1320,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -1141,6 +1329,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -1149,6 +1338,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -1157,6 +1347,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -1165,6 +1356,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -1173,6 +1365,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -1181,6 +1374,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -1190,6 +1384,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -1199,6 +1394,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -1208,6 +1404,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
+      selector: "button",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -1217,20 +1414,7 @@ export const styles = {
       state: "::-moz-focus-inner",
     },
     {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "appearance",
-      value: {
-        type: "keyword",
-        value: "button",
-      },
-    },
-    {
+      selector: "button",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -1239,6 +1423,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -1247,6 +1432,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -1255,6 +1441,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -1263,6 +1450,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -1270,6 +1458,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -1277,6 +1466,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -1284,6 +1474,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -1291,6 +1482,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -1298,6 +1490,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -1305,6 +1498,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -1312,6 +1506,7 @@ export const styles = {
       },
     },
     {
+      selector: "button",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -1321,6 +1516,7 @@ export const styles = {
   ],
   input: [
     {
+      selector: "input",
       property: "color",
       value: {
         type: "keyword",
@@ -1328,6 +1524,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -1335,6 +1532,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "fontVariantCaps",
       value: {
         type: "keyword",
@@ -1342,6 +1540,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -1349,6 +1548,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "fontStretch",
       value: {
         type: "keyword",
@@ -1356,6 +1556,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "fontSize",
       value: {
         type: "keyword",
@@ -1363,6 +1564,15 @@ export const styles = {
       },
     },
     {
+      selector: "input",
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: "input",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -1370,6 +1580,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "marginTop",
       value: {
         type: "unit",
@@ -1378,6 +1589,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "marginRight",
       value: {
         type: "unit",
@@ -1386,6 +1598,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -1394,6 +1607,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -1402,6 +1616,15 @@ export const styles = {
       },
     },
     {
+      selector: "input",
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "button",
+      },
+    },
+    {
+      selector: "input",
       property: "cursor",
       value: {
         type: "keyword",
@@ -1409,101 +1632,159 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "borderTopWidth",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderRightWidth",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderBottomWidth",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderLeftWidth",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderTopStyle",
       value: {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderRightStyle",
       value: {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
         value: "none",
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderTopColor",
       value: {
         type: "keyword",
         value: "currentColor",
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderRightColor",
       value: {
         type: "keyword",
         value: "currentColor",
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderBottomColor",
       value: {
         type: "keyword",
         value: "currentColor",
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
       property: "borderLeftColor",
       value: {
         type: "keyword",
         value: "currentColor",
       },
+      state: "::-moz-focus-inner",
     },
     {
-      property: "lineHeight",
+      selector: "input",
+      property: "paddingTop",
       value: {
-        type: "keyword",
-        value: "normal",
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
+      state: "::-moz-focus-inner",
     },
     {
+      selector: "input",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: "::-moz-focus-inner",
+    },
+    {
+      selector: "input",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -1511,6 +1792,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -1519,6 +1801,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -1527,6 +1810,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -1535,6 +1819,7 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -1543,22 +1828,17 @@ export const styles = {
       },
     },
     {
+      selector: "input",
       property: "height",
       value: {
         type: "keyword",
         value: "auto",
       },
     },
-    {
-      property: "appearance",
-      value: {
-        type: "keyword",
-        value: "button",
-      },
-    },
   ],
   optgroup: [
     {
+      selector: "optgroup",
       property: "color",
       value: {
         type: "keyword",
@@ -1566,6 +1846,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -1573,6 +1854,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "fontVariantCaps",
       value: {
         type: "keyword",
@@ -1580,103 +1862,15 @@ export const styles = {
       },
     },
     {
-      property: "fontStretch",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
+      selector: "optgroup",
       property: "fontWeight",
       value: {
         type: "keyword",
         value: "bold",
       },
     },
-  ],
-  select: [
     {
-      property: "color",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantCaps",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
+      selector: "optgroup",
       property: "fontStretch",
       value: {
         type: "keyword",
@@ -1684,6 +1878,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "fontSize",
       value: {
         type: "keyword",
@@ -1691,6 +1886,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -1698,6 +1894,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -1705,6 +1902,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "marginTop",
       value: {
         type: "unit",
@@ -1713,6 +1911,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "marginRight",
       value: {
         type: "unit",
@@ -1721,6 +1920,7 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -1729,6 +1929,109 @@ export const styles = {
       },
     },
     {
+      selector: "optgroup",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  select: [
+    {
+      selector: "select",
+      property: "color",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "fontVariantCaps",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "fontStretch",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "select",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "select",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "select",
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "select",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -1737,6 +2040,7 @@ export const styles = {
       },
     },
     {
+      selector: "select",
       property: "textTransform",
       value: {
         type: "keyword",
@@ -1746,6 +2050,7 @@ export const styles = {
   ],
   textarea: [
     {
+      selector: "textarea",
       property: "color",
       value: {
         type: "keyword",
@@ -1753,6 +2058,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -1760,6 +2066,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "fontVariantCaps",
       value: {
         type: "keyword",
@@ -1767,6 +2074,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -1774,6 +2082,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "fontStretch",
       value: {
         type: "keyword",
@@ -1781,6 +2090,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "fontSize",
       value: {
         type: "keyword",
@@ -1788,6 +2098,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -1795,6 +2106,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -1802,6 +2114,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "marginTop",
       value: {
         type: "unit",
@@ -1810,6 +2123,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "marginRight",
       value: {
         type: "unit",
@@ -1818,6 +2132,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -1826,6 +2141,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -1834,6 +2150,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -1841,6 +2158,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -1848,6 +2166,7 @@ export const styles = {
       },
     },
     {
+      selector: "textarea",
       property: "height",
       value: {
         type: "keyword",
@@ -1857,6 +2176,7 @@ export const styles = {
   ],
   legend: [
     {
+      selector: "legend",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -1865,6 +2185,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -1873,6 +2194,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -1881,6 +2203,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -1889,6 +2212,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -1896,6 +2220,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -1903,6 +2228,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -1910,6 +2236,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -1917,6 +2244,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -1924,6 +2252,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -1931,6 +2260,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -1938,6 +2268,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -1945,6 +2276,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -1953,6 +2285,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -1961,6 +2294,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -1969,6 +2303,7 @@ export const styles = {
       },
     },
     {
+      selector: "legend",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -1979,6 +2314,7 @@ export const styles = {
   ],
   table: [
     {
+      selector: "table",
       property: "borderCollapse",
       value: {
         type: "keyword",
@@ -1986,6 +2322,7 @@ export const styles = {
       },
     },
     {
+      selector: "table",
       property: "borderSpacing",
       value: {
         type: "unit",
@@ -1996,6 +2333,7 @@ export const styles = {
   ],
   td: [
     {
+      selector: "td",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -2004,6 +2342,7 @@ export const styles = {
       },
     },
     {
+      selector: "td",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -2012,6 +2351,7 @@ export const styles = {
       },
     },
     {
+      selector: "td",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -2020,45 +2360,18 @@ export const styles = {
       },
     },
     {
+      selector: "td",
       property: "paddingLeft",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "unparsed",
-        value: "webflow-icons",
-      },
-    },
-    {
-      property: "src",
-      value: {
-        type: "unparsed",
-        value:
-          'url(data:application/x-font-ttf;charset=utf-8;base64,AAEAAAALAIAAAwAwT1MvMg8SBiUAAAC8AAAAYGNtYXDpP+a4AAABHAAAAFxnYXNwAAAAEAAAAXgAAAAIZ2x5ZmhS2XEAAAGAAAADHGhlYWQTFw3HAAAEnAAAADZoaGVhCXYFgQAABNQAAAAkaG10eCe4A1oAAAT4AAAAMGxvY2EDtALGAAAFKAAAABptYXhwABAAPgAABUQAAAAgbmFtZSoCsMsAAAVkAAABznBvc3QAAwAAAAAHNAAAACAAAwP4AZAABQAAApkCzAAAAI8CmQLMAAAB6wAzAQkAAAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAAAAAAAABAAADpAwPA/8AAQAPAAEAAAAABAAAAAAAAAAAAAAAgAAAAAAADAAAAAwAAABwAAQADAAAAHAADAAEAAAAcAAQAQAAAAAwACAACAAQAAQAg5gPpA//9//8AAAAAACDmAOkA//3//wAB/+MaBBcIAAMAAQAAAAAAAAAAAAAAAAABAAH//wAPAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAAAAAAAAAgAANzkBAAAAAAEBIAAAAyADgAAFAAAJAQcJARcDIP5AQAGA/oBAAcABwED+gP6AQAABAOAAAALgA4AABQAAEwEXCQEH4AHAQP6AAYBAAcABwED+gP6AQAAAAwDAAOADQALAAA8AHwAvAAABISIGHQEUFjMhMjY9ATQmByEiBh0BFBYzITI2PQE0JgchIgYdARQWMyEyNj0BNCYDIP3ADRMTDQJADRMTDf3ADRMTDQJADRMTDf3ADRMTDQJADRMTAsATDSANExMNIA0TwBMNIA0TEw0gDRPAEw0gDRMTDSANEwAAAAABAJ0AtAOBApUABQAACQIHCQEDJP7r/upcAXEBcgKU/usBFVz+fAGEAAAAAAL//f+9BAMDwwAEAAkAABcBJwEXAwE3AQdpA5ps/GZsbAOabPxmbEMDmmz8ZmwDmvxmbAOabAAAAgAA/8AEAAPAAB0AOwAABSInLgEnJjU0Nz4BNzYzMTIXHgEXFhUUBw4BBwYjNTI3PgE3NjU0Jy4BJyYjMSIHDgEHBhUUFx4BFxYzAgBqXV6LKCgoKIteXWpqXV6LKCgoKIteXWpVSktvICEhIG9LSlVVSktvICEhIG9LSlVAKCiLXl1qal1eiygoKCiLXl1qal1eiygoZiEgb0tKVVVKS28gISEgb0tKVVVKS28gIQABAAABwAIAA8AAEgAAEzQ3PgE3NjMxFSIHDgEHBhUxIwAoKIteXWpVSktvICFmAcBqXV6LKChmISBvS0pVAAAAAgAA/8AFtgPAADIAOgAAARYXHgEXFhUUBw4BBwYHIxUhIicuAScmNTQ3PgE3NjMxOAExNDc+ATc2MzIXHgEXFhcVATMJATMVMzUEjD83NlAXFxYXTjU1PQL8kz01Nk8XFxcXTzY1PSIjd1BQWlJJSXInJw3+mdv+2/7c25MCUQYcHFg5OUA/ODlXHBwIAhcXTzY1PTw1Nk8XF1tQUHcjIhwcYUNDTgL+3QFt/pOTkwABAAAAAQAAmM7nP18PPPUACwQAAAAAANciZKUAAAAA1yJkpf/9/70FtgPDAAAACAACAAAAAAAAAAEAAAPA/8AAAAW3//3//QW2AAEAAAAAAAAAAAAAAAAAAAAMBAAAAAAAAAAAAAAAAgAAAAQAASAEAADgBAAAwAQAAJ0EAP/9BAAAAAQAAAAFtwAAAAAAAAAKABQAHgAyAEYAjACiAL4BFgE2AY4AAAABAAAADAA8AAMAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAADgCuAAEAAAAAAAEADQAAAAEAAAAAAAIABwCWAAEAAAAAAAMADQBIAAEAAAAAAAQADQCrAAEAAAAAAAUACwAnAAEAAAAAAAYADQBvAAEAAAAAAAoAGgDSAAMAAQQJAAEAGgANAAMAAQQJAAIADgCdAAMAAQQJAAMAGgBVAAMAAQQJAAQAGgC4AAMAAQQJAAUAFgAyAAMAAQQJAAYAGgB8AAMAAQQJAAoANADsd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzVmVyc2lvbiAxLjAAVgBlAHIAcwBpAG8AbgAgADEALgAwd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzUmVndWxhcgBSAGUAZwB1AGwAYQByd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzRm9udCBnZW5lcmF0ZWQgYnkgSWNvTW9vbi4ARgBvAG4AdAAgAGcAZQBuAGUAcgBhAHQAZQBkACAAYgB5ACAASQBjAG8ATQBvAG8AbgAuAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==)format("truetype")',
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "normal",
       },
     },
   ],
   th: [
     {
+      selector: "th",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -2067,6 +2380,7 @@ export const styles = {
       },
     },
     {
+      selector: "th",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -2075,6 +2389,7 @@ export const styles = {
       },
     },
     {
+      selector: "th",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -2083,6 +2398,7 @@ export const styles = {
       },
     },
     {
+      selector: "th",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -2090,38 +2406,10 @@ export const styles = {
         value: 0,
       },
     },
-    {
-      property: "fontFamily",
-      value: {
-        type: "unparsed",
-        value: "webflow-icons",
-      },
-    },
-    {
-      property: "src",
-      value: {
-        type: "unparsed",
-        value:
-          'url(data:application/x-font-ttf;charset=utf-8;base64,AAEAAAALAIAAAwAwT1MvMg8SBiUAAAC8AAAAYGNtYXDpP+a4AAABHAAAAFxnYXNwAAAAEAAAAXgAAAAIZ2x5ZmhS2XEAAAGAAAADHGhlYWQTFw3HAAAEnAAAADZoaGVhCXYFgQAABNQAAAAkaG10eCe4A1oAAAT4AAAAMGxvY2EDtALGAAAFKAAAABptYXhwABAAPgAABUQAAAAgbmFtZSoCsMsAAAVkAAABznBvc3QAAwAAAAAHNAAAACAAAwP4AZAABQAAApkCzAAAAI8CmQLMAAAB6wAzAQkAAAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAAAAAAAABAAADpAwPA/8AAQAPAAEAAAAABAAAAAAAAAAAAAAAgAAAAAAADAAAAAwAAABwAAQADAAAAHAADAAEAAAAcAAQAQAAAAAwACAACAAQAAQAg5gPpA//9//8AAAAAACDmAOkA//3//wAB/+MaBBcIAAMAAQAAAAAAAAAAAAAAAAABAAH//wAPAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAAAAAAAAAgAANzkBAAAAAAEBIAAAAyADgAAFAAAJAQcJARcDIP5AQAGA/oBAAcABwED+gP6AQAABAOAAAALgA4AABQAAEwEXCQEH4AHAQP6AAYBAAcABwED+gP6AQAAAAwDAAOADQALAAA8AHwAvAAABISIGHQEUFjMhMjY9ATQmByEiBh0BFBYzITI2PQE0JgchIgYdARQWMyEyNj0BNCYDIP3ADRMTDQJADRMTDf3ADRMTDQJADRMTDf3ADRMTDQJADRMTAsATDSANExMNIA0TwBMNIA0TEw0gDRPAEw0gDRMTDSANEwAAAAABAJ0AtAOBApUABQAACQIHCQEDJP7r/upcAXEBcgKU/usBFVz+fAGEAAAAAAL//f+9BAMDwwAEAAkAABcBJwEXAwE3AQdpA5ps/GZsbAOabPxmbEMDmmz8ZmwDmvxmbAOabAAAAgAA/8AEAAPAAB0AOwAABSInLgEnJjU0Nz4BNzYzMTIXHgEXFhUUBw4BBwYjNTI3PgE3NjU0Jy4BJyYjMSIHDgEHBhUUFx4BFxYzAgBqXV6LKCgoKIteXWpqXV6LKCgoKIteXWpVSktvICEhIG9LSlVVSktvICEhIG9LSlVAKCiLXl1qal1eiygoKCiLXl1qal1eiygoZiEgb0tKVVVKS28gISEgb0tKVVVKS28gIQABAAABwAIAA8AAEgAAEzQ3PgE3NjMxFSIHDgEHBhUxIwAoKIteXWpVSktvICFmAcBqXV6LKChmISBvS0pVAAAAAgAA/8AFtgPAADIAOgAAARYXHgEXFhUUBw4BBwYHIxUhIicuAScmNTQ3PgE3NjMxOAExNDc+ATc2MzIXHgEXFhcVATMJATMVMzUEjD83NlAXFxYXTjU1PQL8kz01Nk8XFxcXTzY1PSIjd1BQWlJJSXInJw3+mdv+2/7c25MCUQYcHFg5OUA/ODlXHBwIAhcXTzY1PTw1Nk8XF1tQUHcjIhwcYUNDTgL+3QFt/pOTkwABAAAAAQAAmM7nP18PPPUACwQAAAAAANciZKUAAAAA1yJkpf/9/70FtgPDAAAACAACAAAAAAAAAAEAAAPA/8AAAAW3//3//QW2AAEAAAAAAAAAAAAAAAAAAAAMBAAAAAAAAAAAAAAAAgAAAAQAASAEAADgBAAAwAQAAJ0EAP/9BAAAAAQAAAAFtwAAAAAAAAAKABQAHgAyAEYAjACiAL4BFgE2AY4AAAABAAAADAA8AAMAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAADgCuAAEAAAAAAAEADQAAAAEAAAAAAAIABwCWAAEAAAAAAAMADQBIAAEAAAAAAAQADQCrAAEAAAAAAAUACwAnAAEAAAAAAAYADQBvAAEAAAAAAAoAGgDSAAMAAQQJAAEAGgANAAMAAQQJAAIADgCdAAMAAQQJAAMAGgBVAAMAAQQJAAQAGgC4AAMAAQQJAAUAFgAyAAMAAQQJAAYAGgB8AAMAAQQJAAoANADsd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzVmVyc2lvbiAxLjAAVgBlAHIAcwBpAG8AbgAgADEALgAwd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzUmVndWxhcgBSAGUAZwB1AGwAYQByd2ViZmxvdy1pY29ucwB3AGUAYgBmAGwAbwB3AC0AaQBjAG8AbgBzRm9udCBnZW5lcmF0ZWQgYnkgSWNvTW9vbi4ARgBvAG4AdAAgAGcAZQBuAGUAcgBhAHQAZQBkACAAYgB5ACAASQBjAG8ATQBvAG8AbgAuAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==)format("truetype")',
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
   ],
   "w-icon-slider-right": [
     {
+      selector: "w-icon-slider-right",
       property: "content",
       value: {
         type: "unparsed",
@@ -2130,6 +2418,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-icon-slider-right",
       property: "width",
       value: {
         type: "unit",
@@ -2138,6 +2427,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "height",
       value: {
         type: "unit",
@@ -2146,6 +2436,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -2153,6 +2444,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -2160,6 +2452,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -2167,6 +2460,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -2174,6 +2468,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "top",
       value: {
         type: "unit",
@@ -2182,6 +2477,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "bottom",
       value: {
         type: "unit",
@@ -2190,6 +2486,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "left",
       value: {
         type: "unit",
@@ -2198,6 +2495,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-right",
       property: "right",
       value: {
         type: "unit",
@@ -2208,6 +2506,7 @@ export const styles = {
   ],
   "w-icon-slider-left": [
     {
+      selector: "w-icon-slider-left",
       property: "content",
       value: {
         type: "unparsed",
@@ -2216,6 +2515,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-icon-slider-left",
       property: "width",
       value: {
         type: "unit",
@@ -2224,6 +2524,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "height",
       value: {
         type: "unit",
@@ -2232,6 +2533,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -2239,6 +2541,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -2246,6 +2549,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -2253,6 +2557,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -2260,6 +2565,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "top",
       value: {
         type: "unit",
@@ -2268,6 +2574,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "bottom",
       value: {
         type: "unit",
@@ -2276,6 +2583,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "left",
       value: {
         type: "unit",
@@ -2284,6 +2592,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-slider-left",
       property: "right",
       value: {
         type: "unit",
@@ -2294,6 +2603,7 @@ export const styles = {
   ],
   "w-icon-nav-menu": [
     {
+      selector: "w-icon-nav-menu",
       property: "content",
       value: {
         type: "unparsed",
@@ -2304,6 +2614,7 @@ export const styles = {
   ],
   "w-icon-arrow-down": [
     {
+      selector: "w-icon-arrow-down",
       property: "content",
       value: {
         type: "unparsed",
@@ -2314,13 +2625,16 @@ export const styles = {
   ],
   "w-icon-dropdown-toggle": [
     {
+      selector: "w-icon-dropdown-toggle",
       property: "content",
       value: {
         type: "unparsed",
         value: '"î˜ƒ"',
       },
+      state: ":before",
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "width",
       value: {
         type: "unit",
@@ -2329,6 +2643,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "height",
       value: {
         type: "unit",
@@ -2337,6 +2652,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -2344,6 +2660,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "marginRight",
       value: {
         type: "unit",
@@ -2352,6 +2669,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -2359,6 +2677,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -2366,6 +2685,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "position",
       value: {
         type: "keyword",
@@ -2373,6 +2693,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "top",
       value: {
         type: "unit",
@@ -2381,6 +2702,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "bottom",
       value: {
         type: "unit",
@@ -2389,6 +2711,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-dropdown-toggle",
       property: "right",
       value: {
         type: "unit",
@@ -2399,6 +2722,7 @@ export const styles = {
   ],
   "w-icon-file-upload-remove": [
     {
+      selector: "w-icon-file-upload-remove",
       property: "content",
       value: {
         type: "unparsed",
@@ -2407,6 +2731,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-icon-file-upload-remove",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -2414,6 +2739,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-remove",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -2421,6 +2747,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-remove",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -2428,6 +2755,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-remove",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -2435,6 +2763,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-remove",
       property: "fontSize",
       value: {
         type: "unit",
@@ -2445,6 +2774,7 @@ export const styles = {
   ],
   "w-icon-file-upload-icon": [
     {
+      selector: "w-icon-file-upload-icon",
       property: "content",
       value: {
         type: "unparsed",
@@ -2453,6 +2783,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-icon-file-upload-icon",
       property: "width",
       value: {
         type: "unit",
@@ -2461,6 +2792,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-icon",
       property: "marginRight",
       value: {
         type: "unit",
@@ -2469,6 +2801,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-icon",
       property: "display",
       value: {
         type: "keyword",
@@ -2478,6 +2811,7 @@ export const styles = {
   ],
   "*": [
     {
+      selector: "*",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -2487,6 +2821,7 @@ export const styles = {
   ],
   "w-block": [
     {
+      selector: "w-block",
       property: "display",
       value: {
         type: "keyword",
@@ -2496,6 +2831,7 @@ export const styles = {
   ],
   "w-inline-block": [
     {
+      selector: "w-inline-block",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -2504,6 +2840,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-inline-block",
       property: "display",
       value: {
         type: "keyword",
@@ -2513,6 +2850,7 @@ export const styles = {
   ],
   "w-clearfix": [
     {
+      selector: "w-clearfix",
       property: "content",
       value: {
         type: "unparsed",
@@ -2521,6 +2859,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-clearfix",
       property: "content",
       value: {
         type: "unparsed",
@@ -2529,6 +2868,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-clearfix",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -2538,6 +2878,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-clearfix",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-clearfix",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-clearfix",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-clearfix",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -2547,15 +2918,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-clearfix",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -2565,15 +2928,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-clearfix",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -2583,15 +2938,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-clearfix",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -2601,6 +2948,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-clearfix",
       property: "display",
       value: {
         type: "keyword",
@@ -2609,6 +2957,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-clearfix",
       property: "display",
       value: {
         type: "keyword",
@@ -2617,6 +2966,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-clearfix",
       property: "clear",
       value: {
         type: "keyword",
@@ -2627,6 +2977,7 @@ export const styles = {
   ],
   "w-hidden": [
     {
+      selector: "w-hidden",
       property: "display",
       value: {
         type: "keyword",
@@ -2636,6 +2987,7 @@ export const styles = {
   ],
   "w-button": [
     {
+      selector: "w-button",
       property: "color",
       value: {
         type: "rgb",
@@ -2646,6 +2998,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -2653,6 +3006,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "cursor",
       value: {
         type: "keyword",
@@ -2660,6 +3014,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -2670,6 +3025,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -2678,6 +3034,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -2686,6 +3043,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -2694,6 +3052,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -2702,6 +3061,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -2709,6 +3069,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -2716,6 +3077,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -2723,6 +3085,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -2730,6 +3093,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -2737,6 +3101,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -2744,6 +3109,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -2751,6 +3117,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -2758,6 +3125,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -2766,6 +3134,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -2774,6 +3143,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -2782,6 +3152,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -2790,6 +3161,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -2798,6 +3170,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -2806,6 +3179,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -2814,6 +3188,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -2821,6 +3196,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -2828,6 +3204,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -2835,6 +3212,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "display",
       value: {
         type: "keyword",
@@ -2842,6 +3220,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-button",
       property: "appearance",
       value: {
         type: "keyword",
@@ -2851,6 +3230,7 @@ export const styles = {
   ],
   "w-code-block": [
     {
+      selector: "w-code-block",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -2858,6 +3238,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-code-block",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -2865,6 +3246,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-code-block",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -2872,6 +3254,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-code-block",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -2881,6 +3264,24 @@ export const styles = {
   ],
   "w-webflow-badge": [
     {
+      selector: "w-webflow-badge",
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2147483647,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "visibility",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -2888,6 +3289,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "float",
       value: {
         type: "keyword",
@@ -2895,6 +3297,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "clear",
       value: {
         type: "keyword",
@@ -2902,486 +3305,7 @@ export const styles = {
       },
     },
     {
-      property: "direction",
-      value: {
-        type: "keyword",
-        value: "ltr",
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantLigatures",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantCaps",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantAlternates",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantNumeric",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantEastAsian",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantPosition",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariantEmoji",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "letterSpacing",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "textIndent",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "textTransform",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "textShadow",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "keyword",
-                value: "none",
-              },
-            ],
-          },
-        ],
-      },
-    },
-    {
-      property: "WebkitFontSmoothing",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "baseline",
-      },
-    },
-    {
-      property: "wordBreak",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordSpacing",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordWrap",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "none",
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundPositionX",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "unit",
-            unit: "%",
-            value: 0,
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundPositionY",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "unit",
-            unit: "%",
-            value: 0,
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundSize",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "keyword",
-                value: "auto",
-              },
-              {
-                type: "keyword",
-                value: "auto",
-              },
-            ],
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundRepeat",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "repeat",
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundAttachment",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "scroll",
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundOrigin",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "padding-box",
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundClip",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "border-box",
-          },
-        ],
-      },
-    },
-    {
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "borderTopStyle",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "borderRightStyle",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "borderBottomStyle",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "borderLeftStyle",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "borderTopColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "borderBottomColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "minWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "minHeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "maxHeight",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "listStyleType",
-      value: {
-        type: "keyword",
-        value: "disc",
-      },
-    },
-    {
-      property: "transitionProperty",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "transitionDuration",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "unit",
-            value: 0,
-            unit: "s",
-          },
-        ],
-      },
-    },
-    {
-      property: "transitionTimingFunction",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "ease",
-          },
-        ],
-      },
-    },
-    {
-      property: "transitionDelay",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "unit",
-            value: 0,
-            unit: "s",
-          },
-        ],
-      },
-    },
-    {
-      property: "transitionBehavior",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "normal",
-          },
-        ],
-      },
-    },
-    {
-      property: "whiteSpaceCollapse",
-      value: {
-        type: "keyword",
-        value: "collapse",
-      },
-    },
-    {
-      property: "textWrapMode",
-      value: {
-        type: "keyword",
-        value: "nowrap",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
+      selector: "w-webflow-badge",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -3449,21 +3373,40 @@ export const styles = {
       },
     },
     {
-      property: "visibility",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-    {
-      property: "zIndex",
+      selector: "w-webflow-badge",
+      property: "opacity",
       value: {
         type: "unit",
         unit: "number",
-        value: 2147483647,
+        value: 1,
       },
     },
     {
+      selector: "w-webflow-badge",
+      property: "direction",
+      value: {
+        type: "keyword",
+        value: "ltr",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
       property: "color",
       value: {
         type: "rgb",
@@ -3474,14 +3417,343 @@ export const styles = {
       },
     },
     {
-      property: "opacity",
+      selector: "w-webflow-badge",
+      property: "fontSize",
       value: {
         type: "unit",
-        unit: "number",
-        value: 1,
+        unit: "px",
+        value: 12,
       },
     },
     {
+      selector: "w-webflow-badge",
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 14,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontVariantLigatures",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontVariantCaps",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontVariantAlternates",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontVariantNumeric",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontVariantEastAsian",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontVariantPosition",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "fontVariantEmoji",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "letterSpacing",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textDecorationLine",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textIndent",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textTransform",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textShadow",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "none",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "WebkitFontSmoothing",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "verticalAlign",
+      value: {
+        type: "keyword",
+        value: "baseline",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "textWrapMode",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "wordBreak",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "wordSpacing",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "wordWrap",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -3492,6 +3764,119 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -3500,6 +3885,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -3508,6 +3894,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -3516,6 +3903,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "width",
       value: {
         type: "keyword",
@@ -3523,6 +3911,24 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
+      property: "minWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "maxWidth",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
       property: "height",
       value: {
         type: "keyword",
@@ -3530,6 +3936,24 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
+      property: "minHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "maxHeight",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3538,6 +3962,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "marginRight",
       value: {
         type: "unit",
@@ -3546,6 +3971,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3554,6 +3980,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -3562,6 +3989,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -3570,6 +3998,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -3578,6 +4007,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -3586,6 +4016,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -3594,43 +4025,77 @@ export const styles = {
       },
     },
     {
-      property: "fontSize",
+      selector: "w-webflow-badge",
+      property: "listStyleType",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 12,
+        type: "keyword",
+        value: "disc",
       },
     },
     {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 14,
-      },
-    },
-    {
-      property: "textDecorationLine",
+      selector: "w-webflow-badge",
+      property: "transitionProperty",
       value: {
         type: "keyword",
         value: "none",
       },
     },
     {
-      property: "textDecorationStyle",
+      selector: "w-webflow-badge",
+      property: "transitionDuration",
       value: {
-        type: "keyword",
-        value: "initial",
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0,
+            unit: "s",
+          },
+        ],
       },
     },
     {
-      property: "textDecorationColor",
+      selector: "w-webflow-badge",
+      property: "transitionTimingFunction",
       value: {
-        type: "keyword",
-        value: "initial",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "ease",
+          },
+        ],
       },
     },
     {
+      selector: "w-webflow-badge",
+      property: "transitionDelay",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 0,
+            unit: "s",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
+      property: "transitionBehavior",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "normal",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge",
       property: "display",
       value: {
         type: "keyword",
@@ -3638,6 +4103,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "position",
       value: {
         type: "keyword",
@@ -3645,6 +4111,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "top",
       value: {
         type: "keyword",
@@ -3652,6 +4119,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "bottom",
       value: {
         type: "unit",
@@ -3660,6 +4128,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "left",
       value: {
         type: "keyword",
@@ -3667,6 +4136,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "right",
       value: {
         type: "unit",
@@ -3675,6 +4145,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -3682,6 +4153,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -3689,6 +4161,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-webflow-badge",
       property: "transform",
       value: {
         type: "keyword",
@@ -3698,6 +4171,7 @@ export const styles = {
   ],
   h2: [
     {
+      selector: "h2",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3706,6 +4180,7 @@ export const styles = {
       },
     },
     {
+      selector: "h2",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -3713,6 +4188,7 @@ export const styles = {
       },
     },
     {
+      selector: "h2",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3721,6 +4197,7 @@ export const styles = {
       },
     },
     {
+      selector: "h2",
       property: "fontSize",
       value: {
         type: "unit",
@@ -3729,6 +4206,7 @@ export const styles = {
       },
     },
     {
+      selector: "h2",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -3739,6 +4217,7 @@ export const styles = {
   ],
   h3: [
     {
+      selector: "h3",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3747,6 +4226,7 @@ export const styles = {
       },
     },
     {
+      selector: "h3",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -3754,6 +4234,7 @@ export const styles = {
       },
     },
     {
+      selector: "h3",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3762,6 +4243,7 @@ export const styles = {
       },
     },
     {
+      selector: "h3",
       property: "fontSize",
       value: {
         type: "unit",
@@ -3770,6 +4252,7 @@ export const styles = {
       },
     },
     {
+      selector: "h3",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -3780,6 +4263,7 @@ export const styles = {
   ],
   h4: [
     {
+      selector: "h4",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3788,6 +4272,7 @@ export const styles = {
       },
     },
     {
+      selector: "h4",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -3795,6 +4280,7 @@ export const styles = {
       },
     },
     {
+      selector: "h4",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3803,6 +4289,7 @@ export const styles = {
       },
     },
     {
+      selector: "h4",
       property: "fontSize",
       value: {
         type: "unit",
@@ -3811,6 +4298,7 @@ export const styles = {
       },
     },
     {
+      selector: "h4",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -3821,6 +4309,7 @@ export const styles = {
   ],
   h5: [
     {
+      selector: "h5",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3829,6 +4318,7 @@ export const styles = {
       },
     },
     {
+      selector: "h5",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -3836,6 +4326,7 @@ export const styles = {
       },
     },
     {
+      selector: "h5",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3844,6 +4335,7 @@ export const styles = {
       },
     },
     {
+      selector: "h5",
       property: "fontSize",
       value: {
         type: "unit",
@@ -3852,6 +4344,7 @@ export const styles = {
       },
     },
     {
+      selector: "h5",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -3862,6 +4355,7 @@ export const styles = {
   ],
   h6: [
     {
+      selector: "h6",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3870,6 +4364,7 @@ export const styles = {
       },
     },
     {
+      selector: "h6",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -3877,6 +4372,7 @@ export const styles = {
       },
     },
     {
+      selector: "h6",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3885,6 +4381,7 @@ export const styles = {
       },
     },
     {
+      selector: "h6",
       property: "fontSize",
       value: {
         type: "unit",
@@ -3893,6 +4390,7 @@ export const styles = {
       },
     },
     {
+      selector: "h6",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -3903,6 +4401,7 @@ export const styles = {
   ],
   p: [
     {
+      selector: "p",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3911,6 +4410,7 @@ export const styles = {
       },
     },
     {
+      selector: "p",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3921,6 +4421,7 @@ export const styles = {
   ],
   blockquote: [
     {
+      selector: "blockquote",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -3929,6 +4430,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -3936,6 +4438,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -3946,6 +4449,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "marginTop",
       value: {
         type: "unit",
@@ -3954,6 +4458,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "marginRight",
       value: {
         type: "unit",
@@ -3962,6 +4467,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -3970,6 +4476,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -3978,6 +4485,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -3986,6 +4494,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -3994,6 +4503,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -4002,6 +4512,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4010,6 +4521,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "fontSize",
       value: {
         type: "unit",
@@ -4018,6 +4530,7 @@ export const styles = {
       },
     },
     {
+      selector: "blockquote",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -4028,6 +4541,7 @@ export const styles = {
   ],
   ul: [
     {
+      selector: "ul",
       property: "marginTop",
       value: {
         type: "unit",
@@ -4036,6 +4550,7 @@ export const styles = {
       },
     },
     {
+      selector: "ul",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -4044,6 +4559,7 @@ export const styles = {
       },
     },
     {
+      selector: "ul",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4054,6 +4570,7 @@ export const styles = {
   ],
   ol: [
     {
+      selector: "ol",
       property: "marginTop",
       value: {
         type: "unit",
@@ -4062,6 +4579,7 @@ export const styles = {
       },
     },
     {
+      selector: "ol",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -4070,6 +4588,7 @@ export const styles = {
       },
     },
     {
+      selector: "ol",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4080,6 +4599,7 @@ export const styles = {
   ],
   "w-list-unstyled": [
     {
+      selector: "w-list-unstyled",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4088,6 +4608,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-list-unstyled",
       property: "listStylePosition",
       value: {
         type: "keyword",
@@ -4095,6 +4616,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-list-unstyled",
       property: "listStyleImage",
       value: {
         type: "keyword",
@@ -4102,6 +4624,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-list-unstyled",
       property: "listStyleType",
       value: {
         type: "keyword",
@@ -4111,6 +4634,7 @@ export const styles = {
   ],
   "w-embed": [
     {
+      selector: "w-embed",
       property: "content",
       value: {
         type: "unparsed",
@@ -4119,6 +4643,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-embed",
       property: "content",
       value: {
         type: "unparsed",
@@ -4127,6 +4652,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-embed",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -4136,6 +4662,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-embed",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-embed",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-embed",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-embed",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -4145,15 +4702,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-embed",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -4163,15 +4712,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-embed",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -4181,15 +4722,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-embed",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -4199,6 +4732,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-embed",
       property: "display",
       value: {
         type: "keyword",
@@ -4207,6 +4741,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-embed",
       property: "display",
       value: {
         type: "keyword",
@@ -4215,6 +4750,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-embed",
       property: "clear",
       value: {
         type: "keyword",
@@ -4225,6 +4761,7 @@ export const styles = {
   ],
   "w-video": [
     {
+      selector: "w-video",
       property: "width",
       value: {
         type: "unit",
@@ -4233,6 +4770,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-video",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -4241,6 +4779,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-video",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -4249,6 +4788,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-video",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -4257,6 +4797,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-video",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4265,6 +4806,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-video",
       property: "position",
       value: {
         type: "keyword",
@@ -4274,6 +4816,7 @@ export const styles = {
   ],
   fieldset: [
     {
+      selector: "fieldset",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -4282,6 +4825,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -4290,6 +4834,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -4298,6 +4843,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -4306,6 +4852,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -4313,6 +4860,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -4320,6 +4868,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -4327,6 +4876,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -4334,6 +4884,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -4341,6 +4892,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -4348,6 +4900,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -4355,6 +4908,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -4362,6 +4916,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "marginTop",
       value: {
         type: "unit",
@@ -4370,6 +4925,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "marginRight",
       value: {
         type: "unit",
@@ -4378,6 +4934,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -4386,6 +4943,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -4394,6 +4952,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -4402,6 +4961,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -4410,6 +4970,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -4418,6 +4979,7 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4426,15 +4988,28 @@ export const styles = {
       },
     },
     {
+      selector: "fieldset",
       property: "cursor",
       value: {
         type: "keyword",
         value: "not-allowed",
       },
     },
+    {
+      selector: "fieldset",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+    },
   ],
   "w-form": [
     {
+      selector: "w-form",
       property: "marginTop",
       value: {
         type: "unit",
@@ -4443,6 +5018,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form",
       property: "marginRight",
       value: {
         type: "unit",
@@ -4451,6 +5027,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -4459,6 +5036,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -4469,6 +5047,7 @@ export const styles = {
   ],
   "w-form-done": [
     {
+      selector: "w-form-done",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -4476,6 +5055,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-done",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -4486,6 +5066,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-done",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -4494,6 +5075,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-done",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -4502,6 +5084,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-done",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -4510,6 +5093,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-done",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4518,6 +5102,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-done",
       property: "display",
       value: {
         type: "keyword",
@@ -4527,6 +5112,7 @@ export const styles = {
   ],
   "w-form-fail": [
     {
+      selector: "w-form-fail",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -4537,6 +5123,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-fail",
       property: "marginTop",
       value: {
         type: "unit",
@@ -4545,6 +5132,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-fail",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -4553,6 +5141,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-fail",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -4561,6 +5150,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-fail",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -4569,6 +5159,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-fail",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4577,6 +5168,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-fail",
       property: "display",
       value: {
         type: "keyword",
@@ -4586,6 +5178,7 @@ export const styles = {
   ],
   label: [
     {
+      selector: "label",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -4594,6 +5187,7 @@ export const styles = {
       },
     },
     {
+      selector: "label",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -4601,6 +5195,7 @@ export const styles = {
       },
     },
     {
+      selector: "label",
       property: "display",
       value: {
         type: "keyword",
@@ -4610,6 +5205,7 @@ export const styles = {
   ],
   "w-input": [
     {
+      selector: "w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -4620,6 +5216,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -4627,16 +5224,18 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "backgroundColor",
       value: {
         type: "rgb",
         alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
+        r: 238,
+        g: 238,
+        b: 238,
       },
     },
     {
+      selector: "w-input",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -4645,6 +5244,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -4653,6 +5253,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -4661,6 +5262,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -4669,6 +5271,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -4676,6 +5279,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -4683,6 +5287,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -4690,6 +5295,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -4697,6 +5303,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -4707,6 +5314,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -4717,6 +5325,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -4727,6 +5336,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -4737,6 +5347,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "width",
       value: {
         type: "unit",
@@ -4745,6 +5356,15 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-input",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -4753,6 +5373,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -4761,6 +5382,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -4769,6 +5391,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -4777,6 +5400,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4785,6 +5409,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "fontSize",
       value: {
         type: "unit",
@@ -4793,6 +5418,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -4801,6 +5427,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "display",
       value: {
         type: "keyword",
@@ -4808,6 +5435,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -4819,6 +5447,7 @@ export const styles = {
       state: ":-moz-placeholder",
     },
     {
+      selector: "w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -4830,6 +5459,7 @@ export const styles = {
       state: "::-moz-placeholder",
     },
     {
+      selector: "w-input",
       property: "opacity",
       value: {
         type: "unit",
@@ -4839,6 +5469,7 @@ export const styles = {
       state: "::-moz-placeholder",
     },
     {
+      selector: "w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -4850,6 +5481,7 @@ export const styles = {
       state: "::-webkit-input-placeholder",
     },
     {
+      selector: "w-input",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -4861,6 +5493,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-input",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -4872,6 +5505,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-input",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -4883,6 +5517,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-input",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -4894,6 +5529,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-input",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -4903,6 +5539,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-input",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -4911,6 +5548,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-input",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -4919,22 +5557,28 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-input",
       property: "cursor",
       value: {
         type: "keyword",
         value: "not-allowed",
       },
     },
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
   ],
   "w-select": [
     {
+      selector: "w-select",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 51,
+        g: 51,
+        b: 51,
+      },
+    },
+    {
+      selector: "w-select",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -4942,224 +5586,7 @@ export const styles = {
       },
     },
     {
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 1,
-      },
-    },
-    {
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 1,
-      },
-    },
-    {
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 1,
-      },
-    },
-    {
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 1,
-      },
-    },
-    {
-      property: "borderTopStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "borderRightStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "borderBottomStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "borderLeftStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "paddingTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 8,
-      },
-    },
-    {
-      property: "paddingRight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 12,
-      },
-    },
-    {
-      property: "paddingBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 8,
-      },
-    },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 12,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 14,
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1.42857,
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
-      },
-    },
-    {
-      property: "borderTopColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderBottomColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "outlineWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "outlineStyle",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "outlineColor",
-      value: {
-        type: "keyword",
-        value: "currentColor",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
+      selector: "w-select",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -5170,15 +5597,339 @@ export const styles = {
       },
     },
     {
+      selector: "w-select",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 204,
+        g: 204,
+        b: 204,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 204,
+        g: 204,
+        b: 204,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 204,
+        g: 204,
+        b: 204,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 204,
+        g: 204,
+        b: 204,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-select",
       property: "height",
       value: {
         type: "keyword",
         value: "auto",
       },
     },
+    {
+      selector: "w-select",
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 8,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 8,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 14,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1.42857,
+      },
+    },
+    {
+      selector: "w-select",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      selector: "w-select",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+      state: ":-moz-placeholder",
+    },
+    {
+      selector: "w-select",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+      state: "::-moz-placeholder",
+    },
+    {
+      selector: "w-select",
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: "::-moz-placeholder",
+    },
+    {
+      selector: "w-select",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+      state: "::-webkit-input-placeholder",
+    },
+    {
+      selector: "w-select",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "outlineWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "outlineColor",
+      value: {
+        type: "keyword",
+        value: "currentColor",
+      },
+      state: ":focus",
+    },
+    {
+      selector: "w-select",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
   ],
   "w-input-disabled": [
     {
+      selector: "w-input-disabled",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -5191,6 +5942,7 @@ export const styles = {
   ],
   "w-form-label": [
     {
+      selector: "w-form-label",
       property: "cursor",
       value: {
         type: "keyword",
@@ -5198,6 +5950,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-label",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -5206,6 +5959,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-label",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -5213,6 +5967,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-label",
       property: "display",
       value: {
         type: "keyword",
@@ -5222,6 +5977,7 @@ export const styles = {
   ],
   "w-radio": [
     {
+      selector: "w-radio",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -5230,6 +5986,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -5238,6 +5995,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio",
       property: "display",
       value: {
         type: "keyword",
@@ -5245,6 +6003,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio",
       property: "content",
       value: {
         type: "unparsed",
@@ -5253,6 +6012,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-radio",
       property: "content",
       value: {
         type: "unparsed",
@@ -5261,6 +6021,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-radio",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -5270,6 +6031,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-radio",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-radio",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-radio",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-radio",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -5279,15 +6071,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-radio",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -5297,15 +6081,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-radio",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -5315,15 +6091,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-radio",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -5333,6 +6101,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-radio",
       property: "display",
       value: {
         type: "keyword",
@@ -5341,6 +6110,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-radio",
       property: "display",
       value: {
         type: "keyword",
@@ -5349,6 +6119,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-radio",
       property: "clear",
       value: {
         type: "keyword",
@@ -5359,6 +6130,7 @@ export const styles = {
   ],
   "w-radio-input": [
     {
+      selector: "w-radio-input",
       property: "float",
       value: {
         type: "keyword",
@@ -5366,6 +6138,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio-input",
       property: "marginTop",
       value: {
         type: "unit",
@@ -5374,6 +6147,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio-input",
       property: "marginRight",
       value: {
         type: "unit",
@@ -5382,6 +6156,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio-input",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -5390,6 +6165,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio-input",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -5398,6 +6174,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-radio-input",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -5407,6 +6184,7 @@ export const styles = {
   ],
   "w-file-upload": [
     {
+      selector: "w-file-upload",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -5415,6 +6193,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload",
       property: "display",
       value: {
         type: "keyword",
@@ -5424,6 +6203,7 @@ export const styles = {
   ],
   "w-file-upload-input": [
     {
+      selector: "w-file-upload-input",
       property: "opacity",
       value: {
         type: "unit",
@@ -5432,6 +6212,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-input",
       property: "zIndex",
       value: {
         type: "unit",
@@ -5440,6 +6221,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-input",
       property: "width",
       value: {
         type: "unit",
@@ -5448,6 +6230,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-input",
       property: "height",
       value: {
         type: "unit",
@@ -5456,6 +6239,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-input",
       property: "position",
       value: {
         type: "keyword",
@@ -5463,6 +6247,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-input",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -5470,6 +6255,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-input",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -5479,6 +6265,7 @@ export const styles = {
   ],
   "w-file-upload-default": [
     {
+      selector: "w-file-upload-default",
       property: "color",
       value: {
         type: "rgb",
@@ -5489,6 +6276,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-default",
       property: "display",
       value: {
         type: "keyword",
@@ -5498,6 +6286,7 @@ export const styles = {
   ],
   "w-file-upload-uploading": [
     {
+      selector: "w-file-upload-uploading",
       property: "color",
       value: {
         type: "rgb",
@@ -5508,6 +6297,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading",
       property: "display",
       value: {
         type: "keyword",
@@ -5517,6 +6307,7 @@ export const styles = {
   ],
   "w-file-upload-success": [
     {
+      selector: "w-file-upload-success",
       property: "color",
       value: {
         type: "rgb",
@@ -5527,6 +6318,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-success",
       property: "display",
       value: {
         type: "keyword",
@@ -5536,6 +6328,7 @@ export const styles = {
   ],
   "w-file-upload-error": [
     {
+      selector: "w-file-upload-error",
       property: "marginTop",
       value: {
         type: "unit",
@@ -5544,6 +6337,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-error",
       property: "display",
       value: {
         type: "keyword",
@@ -5553,6 +6347,7 @@ export const styles = {
   ],
   "w-file-upload-uploading-btn": [
     {
+      selector: "w-file-upload-uploading-btn",
       property: "cursor",
       value: {
         type: "keyword",
@@ -5560,6 +6355,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -5570,6 +6366,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -5578,6 +6375,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -5586,6 +6384,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -5594,6 +6393,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -5602,6 +6402,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -5609,6 +6410,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -5616,6 +6418,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -5623,6 +6426,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -5630,6 +6434,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -5640,6 +6445,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -5650,6 +6456,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -5660,6 +6467,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -5670,6 +6478,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "marginTop",
       value: {
         type: "unit",
@@ -5678,6 +6487,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "marginRight",
       value: {
         type: "unit",
@@ -5686,6 +6496,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -5694,6 +6505,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -5702,6 +6514,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -5710,6 +6523,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -5718,6 +6532,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -5726,6 +6541,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -5734,6 +6550,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "fontSize",
       value: {
         type: "unit",
@@ -5742,6 +6559,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -5749,6 +6567,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-uploading-btn",
       property: "display",
       value: {
         type: "keyword",
@@ -5758,6 +6577,7 @@ export const styles = {
   ],
   "w-file-upload-file": [
     {
+      selector: "w-file-upload-file",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -5768,6 +6588,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -5776,6 +6597,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -5784,6 +6606,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -5792,6 +6615,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -5800,6 +6624,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -5807,6 +6632,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -5814,6 +6640,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -5821,6 +6648,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -5828,6 +6656,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -5838,6 +6667,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -5848,6 +6678,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -5858,6 +6689,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -5868,6 +6700,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "flexGrow",
       value: {
         type: "unit",
@@ -5876,6 +6709,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -5883,6 +6717,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "marginTop",
       value: {
         type: "unit",
@@ -5891,6 +6726,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "marginRight",
       value: {
         type: "unit",
@@ -5899,6 +6735,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -5907,6 +6744,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -5915,6 +6753,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -5923,6 +6762,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -5931,6 +6771,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -5939,6 +6780,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -5947,6 +6789,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file",
       property: "display",
       value: {
         type: "keyword",
@@ -5956,6 +6799,7 @@ export const styles = {
   ],
   "w-file-upload-file-name": [
     {
+      selector: "w-file-upload-file-name",
       property: "fontSize",
       value: {
         type: "unit",
@@ -5964,6 +6808,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file-name",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -5971,6 +6816,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-file-name",
       property: "display",
       value: {
         type: "keyword",
@@ -5980,6 +6826,7 @@ export const styles = {
   ],
   "w-file-remove-link": [
     {
+      selector: "w-file-remove-link",
       property: "cursor",
       value: {
         type: "keyword",
@@ -5987,6 +6834,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "width",
       value: {
         type: "keyword",
@@ -5994,6 +6842,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "height",
       value: {
         type: "keyword",
@@ -6001,6 +6850,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "marginTop",
       value: {
         type: "unit",
@@ -6009,6 +6859,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -6017,6 +6868,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -6025,6 +6877,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -6033,6 +6886,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -6041,6 +6895,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -6049,6 +6904,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-remove-link",
       property: "display",
       value: {
         type: "keyword",
@@ -6058,6 +6914,7 @@ export const styles = {
   ],
   "w-file-upload-error-msg": [
     {
+      selector: "w-file-upload-error-msg",
       property: "color",
       value: {
         type: "rgb",
@@ -6068,6 +6925,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-error-msg",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -6076,6 +6934,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-error-msg",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -6084,6 +6943,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-error-msg",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -6092,6 +6952,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-error-msg",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -6100,6 +6961,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-error-msg",
       property: "display",
       value: {
         type: "keyword",
@@ -6109,6 +6971,7 @@ export const styles = {
   ],
   "w-file-upload-info": [
     {
+      selector: "w-file-upload-info",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -6117,6 +6980,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-info",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -6125,6 +6989,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-info",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -6133,6 +6998,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-info",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -6141,6 +7007,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-info",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -6149,6 +7016,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-info",
       property: "display",
       value: {
         type: "keyword",
@@ -6158,6 +7026,7 @@ export const styles = {
   ],
   "w-file-upload-label": [
     {
+      selector: "w-file-upload-label",
       property: "cursor",
       value: {
         type: "keyword",
@@ -6165,6 +7034,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -6175,6 +7045,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -6183,6 +7054,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -6191,6 +7063,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -6199,6 +7072,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -6207,6 +7081,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -6214,6 +7089,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -6221,6 +7097,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -6228,6 +7105,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -6235,6 +7113,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -6245,6 +7124,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -6255,6 +7135,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -6265,6 +7146,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -6275,6 +7157,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "marginTop",
       value: {
         type: "unit",
@@ -6283,6 +7166,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "marginRight",
       value: {
         type: "unit",
@@ -6291,6 +7175,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -6299,6 +7184,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -6307,6 +7193,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -6315,6 +7202,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -6323,6 +7211,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -6331,6 +7220,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -6339,6 +7229,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "fontSize",
       value: {
         type: "unit",
@@ -6347,6 +7238,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -6354,6 +7246,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-file-upload-label",
       property: "display",
       value: {
         type: "keyword",
@@ -6363,6 +7256,7 @@ export const styles = {
   ],
   "w-icon-file-upload-uploading": [
     {
+      selector: "w-icon-file-upload-uploading",
       property: "width",
       value: {
         type: "unit",
@@ -6371,6 +7265,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-uploading",
       property: "marginRight",
       value: {
         type: "unit",
@@ -6379,6 +7274,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-uploading",
       property: "display",
       value: {
         type: "keyword",
@@ -6386,6 +7282,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-icon-file-upload-uploading",
       property: "height",
       value: {
         type: "unit",
@@ -6396,6 +7293,16 @@ export const styles = {
   ],
   "w-container": [
     {
+      selector: "w-container",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 940,
+      },
+    },
+    {
+      selector: "w-container",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -6403,6 +7310,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-container",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -6410,6 +7318,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-container",
       property: "content",
       value: {
         type: "unparsed",
@@ -6418,6 +7327,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-container",
       property: "content",
       value: {
         type: "unparsed",
@@ -6426,6 +7336,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-container",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -6435,6 +7346,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-container",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-container",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-container",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-container",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -6444,15 +7386,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-container",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -6462,15 +7396,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-container",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -6480,15 +7406,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-container",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -6498,6 +7416,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-container",
       property: "display",
       value: {
         type: "keyword",
@@ -6506,6 +7425,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-container",
       property: "display",
       value: {
         type: "keyword",
@@ -6514,6 +7434,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-container",
       property: "clear",
       value: {
         type: "keyword",
@@ -6522,15 +7443,28 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-container",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 728,
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-container",
       property: "maxWidth",
       value: {
         type: "keyword",
         value: "none",
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-row": [
     {
+      selector: "w-row",
       property: "content",
       value: {
         type: "unparsed",
@@ -6539,6 +7473,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-row",
       property: "content",
       value: {
         type: "unparsed",
@@ -6547,6 +7482,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-row",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -6556,6 +7492,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-row",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-row",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-row",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-row",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -6565,15 +7532,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-row",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -6583,15 +7542,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-row",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -6601,15 +7552,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-row",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -6619,6 +7562,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-row",
       property: "display",
       value: {
         type: "keyword",
@@ -6627,6 +7571,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-row",
       property: "display",
       value: {
         type: "keyword",
@@ -6635,6 +7580,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-row",
       property: "clear",
       value: {
         type: "keyword",
@@ -6643,24 +7589,29 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-row",
       property: "marginLeft",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      breakpoint: "(max-width:767px)",
     },
     {
+      selector: "w-row",
       property: "marginRight",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-col": [
     {
+      selector: "w-col",
       property: "float",
       value: {
         type: "keyword",
@@ -6668,6 +7619,16 @@ export const styles = {
       },
     },
     {
+      selector: "w-col",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-col",
       property: "minHeight",
       value: {
         type: "unit",
@@ -6676,6 +7637,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-col",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -6684,6 +7646,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-col",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -6692,6 +7655,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-col",
       property: "position",
       value: {
         type: "keyword",
@@ -6699,30 +7663,47 @@ export const styles = {
       },
     },
     {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
+      selector: "w-col",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 100,
       },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-col",
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-col",
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-col",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-col-1": [
     {
+      selector: "w-col-1",
       property: "width",
       value: {
         type: "unit",
@@ -6733,6 +7714,7 @@ export const styles = {
   ],
   "w-col-2": [
     {
+      selector: "w-col-2",
       property: "width",
       value: {
         type: "unit",
@@ -6743,6 +7725,7 @@ export const styles = {
   ],
   "w-col-3": [
     {
+      selector: "w-col-3",
       property: "width",
       value: {
         type: "unit",
@@ -6753,6 +7736,7 @@ export const styles = {
   ],
   "w-col-4": [
     {
+      selector: "w-col-4",
       property: "width",
       value: {
         type: "unit",
@@ -6763,6 +7747,7 @@ export const styles = {
   ],
   "w-col-5": [
     {
+      selector: "w-col-5",
       property: "width",
       value: {
         type: "unit",
@@ -6773,6 +7758,7 @@ export const styles = {
   ],
   "w-col-6": [
     {
+      selector: "w-col-6",
       property: "width",
       value: {
         type: "unit",
@@ -6783,6 +7769,7 @@ export const styles = {
   ],
   "w-col-7": [
     {
+      selector: "w-col-7",
       property: "width",
       value: {
         type: "unit",
@@ -6793,6 +7780,7 @@ export const styles = {
   ],
   "w-col-8": [
     {
+      selector: "w-col-8",
       property: "width",
       value: {
         type: "unit",
@@ -6803,6 +7791,7 @@ export const styles = {
   ],
   "w-col-9": [
     {
+      selector: "w-col-9",
       property: "width",
       value: {
         type: "unit",
@@ -6813,6 +7802,7 @@ export const styles = {
   ],
   "w-col-10": [
     {
+      selector: "w-col-10",
       property: "width",
       value: {
         type: "unit",
@@ -6823,6 +7813,7 @@ export const styles = {
   ],
   "w-col-11": [
     {
+      selector: "w-col-11",
       property: "width",
       value: {
         type: "unit",
@@ -6833,6 +7824,7 @@ export const styles = {
   ],
   "w-col-12": [
     {
+      selector: "w-col-12",
       property: "width",
       value: {
         type: "unit",
@@ -6843,426 +7835,566 @@ export const styles = {
   ],
   "w-hidden-main": [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  "w-hidden-medium": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  "w-col-medium-1": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 8.33333,
-      },
-    },
-  ],
-  "w-col-medium-2": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 16.6667,
-      },
-    },
-  ],
-  "w-col-medium-3": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 25,
-      },
-    },
-  ],
-  "w-col-medium-4": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 33.3333,
-      },
-    },
-  ],
-  "w-col-medium-5": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 41.6667,
-      },
-    },
-  ],
-  "w-col-medium-6": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-  ],
-  "w-col-medium-7": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 58.3333,
-      },
-    },
-  ],
-  "w-col-medium-8": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 66.6667,
-      },
-    },
-  ],
-  "w-col-medium-9": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 75,
-      },
-    },
-  ],
-  "w-col-medium-10": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 83.3333,
-      },
-    },
-  ],
-  "w-col-medium-11": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 91.6667,
-      },
-    },
-  ],
-  "w-col-medium-12": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
-  "w-col-stack": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-  ],
-  "w-hidden-small": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  "w-col-small-1": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 8.33333,
-      },
-    },
-  ],
-  "w-col-small-2": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 16.6667,
-      },
-    },
-  ],
-  "w-col-small-3": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 25,
-      },
-    },
-  ],
-  "w-col-small-4": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 33.3333,
-      },
-    },
-  ],
-  "w-col-small-5": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 41.6667,
-      },
-    },
-  ],
-  "w-col-small-6": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-  ],
-  "w-col-small-7": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 58.3333,
-      },
-    },
-  ],
-  "w-col-small-8": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 66.6667,
-      },
-    },
-  ],
-  "w-col-small-9": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 75,
-      },
-    },
-  ],
-  "w-col-small-10": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 83.3333,
-      },
-    },
-  ],
-  "w-col-small-11": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 91.6667,
-      },
-    },
-  ],
-  "w-col-small-12": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
-  "w-hidden-tiny": [
-    {
+      selector: "w-hidden-main",
       property: "display",
       value: {
         type: "keyword",
         value: "none",
       },
     },
-  ],
-  "w-col-tiny-1": [
     {
+      selector: "w-hidden-main",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-hidden-main",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-hidden-main",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-hidden-medium": [
+    {
+      selector: "w-hidden-medium",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-hidden-medium",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-hidden-medium",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-medium-1": [
+    {
+      selector: "w-col-medium-1",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 8.33333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-2": [
+  "w-col-medium-2": [
     {
+      selector: "w-col-medium-2",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 16.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-3": [
+  "w-col-medium-3": [
     {
+      selector: "w-col-medium-3",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 25,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-4": [
+  "w-col-medium-4": [
     {
+      selector: "w-col-medium-4",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 33.3333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-5": [
+  "w-col-medium-5": [
     {
+      selector: "w-col-medium-5",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 41.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-6": [
+  "w-col-medium-6": [
     {
+      selector: "w-col-medium-6",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 50,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-7": [
+  "w-col-medium-7": [
     {
+      selector: "w-col-medium-7",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 58.3333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-8": [
+  "w-col-medium-8": [
     {
+      selector: "w-col-medium-8",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 66.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-9": [
+  "w-col-medium-9": [
     {
+      selector: "w-col-medium-9",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 75,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-10": [
+  "w-col-medium-10": [
     {
+      selector: "w-col-medium-10",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 83.3333,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-11": [
+  "w-col-medium-11": [
     {
+      selector: "w-col-medium-11",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 91.6667,
       },
+      breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-tiny-12": [
+  "w-col-medium-12": [
     {
+      selector: "w-col-medium-12",
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 100,
       },
+      breakpoint: "(max-width:991px)",
+    },
+  ],
+  "w-col-stack": [
+    {
+      selector: "w-col-stack",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-col-stack",
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-col-stack",
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+  ],
+  "w-hidden-small": [
+    {
+      selector: "w-hidden-small",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-hidden-small",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-small-1": [
+    {
+      selector: "w-col-small-1",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 8.33333,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-2": [
+    {
+      selector: "w-col-small-2",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 16.6667,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-3": [
+    {
+      selector: "w-col-small-3",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 25,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-4": [
+    {
+      selector: "w-col-small-4",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 33.3333,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-5": [
+    {
+      selector: "w-col-small-5",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 41.6667,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-6": [
+    {
+      selector: "w-col-small-6",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-7": [
+    {
+      selector: "w-col-small-7",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 58.3333,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-8": [
+    {
+      selector: "w-col-small-8",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 66.6667,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-9": [
+    {
+      selector: "w-col-small-9",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 75,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-10": [
+    {
+      selector: "w-col-small-10",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 83.3333,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-11": [
+    {
+      selector: "w-col-small-11",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 91.6667,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-col-small-12": [
+    {
+      selector: "w-col-small-12",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  "w-hidden-tiny": [
+    {
+      selector: "w-hidden-tiny",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-1": [
+    {
+      selector: "w-col-tiny-1",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 8.33333,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-2": [
+    {
+      selector: "w-col-tiny-2",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 16.6667,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-3": [
+    {
+      selector: "w-col-tiny-3",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 25,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-4": [
+    {
+      selector: "w-col-tiny-4",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 33.3333,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-5": [
+    {
+      selector: "w-col-tiny-5",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 41.6667,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-6": [
+    {
+      selector: "w-col-tiny-6",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-7": [
+    {
+      selector: "w-col-tiny-7",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 58.3333,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-8": [
+    {
+      selector: "w-col-tiny-8",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 66.6667,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-9": [
+    {
+      selector: "w-col-tiny-9",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 75,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-10": [
+    {
+      selector: "w-col-tiny-10",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 83.3333,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-11": [
+    {
+      selector: "w-col-tiny-11",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 91.6667,
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col-tiny-12": [
+    {
+      selector: "w-col-tiny-12",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-widget": [
     {
+      selector: "w-widget",
       property: "position",
       value: {
         type: "keyword",
@@ -7272,6 +8404,7 @@ export const styles = {
   ],
   "w-widget-map": [
     {
+      selector: "w-widget-map",
       property: "width",
       value: {
         type: "unit",
@@ -7280,6 +8413,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-map",
       property: "height",
       value: {
         type: "unit",
@@ -7290,6 +8424,7 @@ export const styles = {
   ],
   "w-widget-twitter": [
     {
+      selector: "w-widget-twitter",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -7297,6 +8432,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -7306,6 +8442,7 @@ export const styles = {
   ],
   "w-widget-twitter-count-shim": [
     {
+      selector: "w-widget-twitter-count-shim",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -7313,6 +8450,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -7320,6 +8458,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -7332,6 +8471,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -7345,6 +8485,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -7358,6 +8499,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -7379,6 +8521,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -7391,6 +8534,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -7403,6 +8547,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -7415,6 +8560,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -7427,6 +8573,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -7437,6 +8584,119 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -7445,6 +8705,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -7453,6 +8714,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -7461,63 +8723,16 @@ export const styles = {
       },
     },
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "marginBottom",
+      selector: "w-widget-twitter-count-shim",
+      property: "width",
       value: {
         type: "unit",
         unit: "px",
-        value: 8,
+        value: 76,
       },
     },
     {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-    },
-    {
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "borderTopStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "borderRightStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "borderBottomStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "borderLeftStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
+      selector: "w-widget-twitter-count-shim",
       property: "height",
       value: {
         type: "unit",
@@ -7526,6 +8741,15 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
       property: "position",
       value: {
         type: "keyword",
@@ -7533,102 +8757,7 @@ export const styles = {
       },
     },
     {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderTopColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "borderBottomColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -4,
-      },
-    },
-    {
+      selector: "w-widget-twitter-count-shim",
       property: "fontSize",
       value: {
         type: "unit",
@@ -7637,6 +8766,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -7645,98 +8775,228 @@ export const styles = {
       },
     },
     {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 76,
-      },
-    },
-  ],
-  "w--large": [
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 28,
-      },
-    },
-    {
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
+      selector: "w-widget-twitter-count-shim",
       property: "marginLeft",
       value: {
         type: "unit",
         unit: "px",
         value: -9,
       },
+      state: ":not",
     },
     {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 76,
-      },
-    },
-  ],
-  "w--vertical": [
-    {
+      selector: "w-widget-twitter-count-shim",
       property: "marginRight",
       value: {
         type: "unit",
         unit: "px",
         value: 8,
       },
+      state: ":not",
     },
     {
+      selector: "w-widget-twitter-count-shim",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":not",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
       property: "marginTop",
       value: {
         type: "unit",
         unit: "px",
         value: -5,
       },
+      state: ":not",
     },
     {
+      selector: "w-widget-twitter-count-shim",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -7745,14 +9005,7 @@ export const styles = {
       },
     },
     {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-      state: ":after",
-    },
-    {
+      selector: "w-widget-twitter-count-shim",
       property: "content",
       value: {
         type: "unparsed",
@@ -7760,14 +9013,7 @@ export const styles = {
       },
     },
     {
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-      state: ":after",
-    },
-    {
+      selector: "w-widget-twitter-count-shim",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -7775,250 +9021,299 @@ export const styles = {
       },
     },
     {
-      property: "borderTopWidth",
+      selector: "w-widget-twitter-count-shim",
+      property: "top",
       value: {
-        type: "keyword",
-        value: "medium",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderRightWidth",
-      value: {
-        type: "keyword",
-        value: "medium",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderBottomWidth",
-      value: {
-        type: "keyword",
-        value: "medium",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderLeftWidth",
-      value: {
-        type: "keyword",
-        value: "medium",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderTopStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderTopStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
     {
-      property: "borderRightStyle",
+      selector: "w-widget-twitter-count-shim",
+      property: "left",
       value: {
-        type: "keyword",
-        value: "solid",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderRightStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
+        type: "unit",
+        unit: "%",
+        value: 50,
       },
     },
     {
-      property: "borderBottomStyle",
+      selector: "w-widget-twitter-count-shim",
+      property: "marginLeft",
       value: {
-        type: "keyword",
-        value: "solid",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderBottomStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
+        type: "unit",
+        unit: "px",
+        value: -4,
       },
     },
+  ],
+  "w--large": [
     {
-      property: "borderLeftStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-      state: ":after",
-    },
-    {
-      property: "borderLeftStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      property: "borderTopColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-      state: ":after",
-    },
-    {
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-      state: ":after",
-    },
-    {
-      property: "borderBottomColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-      state: ":after",
-    },
-    {
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-      state: ":after",
-    },
-    {
+      selector: "w--large",
       property: "width",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 76,
       },
-      state: ":after",
     },
     {
+      selector: "w--large",
       property: "height",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 28,
       },
-      state: ":after",
     },
     {
-      property: "height",
+      selector: "w--large",
+      property: "marginLeft",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 6,
       },
     },
     {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-      state: ":after",
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-      state: ":after",
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-      state: ":after",
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
+      selector: "w--large",
       property: "borderTopWidth",
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
       },
+      state: ":before",
     },
     {
+      selector: "w--large",
       property: "borderRightWidth",
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
       },
+      state: ":before",
     },
     {
+      selector: "w--large",
       property: "borderBottomWidth",
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
       },
+      state: ":before",
     },
     {
+      selector: "w--large",
       property: "borderLeftWidth",
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--large",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--large",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -10,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--large",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--large",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -9,
+      },
+      state: ":after",
+    },
+  ],
+  "w--vertical": [
+    {
+      selector: "w--vertical",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -9,
       },
     },
     {
+      selector: "w--vertical",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 8,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector: "w--vertical",
       property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightColor",
       value: {
         type: "rgb",
         alpha: 1,
@@ -8028,16 +9323,7 @@ export const styles = {
       },
     },
     {
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
+      selector: "w--vertical",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -8048,6 +9334,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--vertical",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -8058,14 +9345,7 @@ export const styles = {
       },
     },
     {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -4,
-      },
-    },
-    {
+      selector: "w--vertical",
       property: "width",
       value: {
         type: "unit",
@@ -8073,9 +9353,465 @@ export const styles = {
         value: 76,
       },
     },
+    {
+      selector: "w--vertical",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 33,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 8,
+      },
+    },
+    {
+      selector: "w--vertical",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 93,
+        g: 108,
+        b: 123,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w--vertical",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w--vertical",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -4,
+      },
+      state: ":after",
+    },
   ],
   "w-background-video": [
     {
+      selector: "w-background-video",
       property: "color",
       value: {
         type: "rgb",
@@ -8086,6 +9822,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video",
       property: "height",
       value: {
         type: "unit",
@@ -8094,6 +9831,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video",
       property: "position",
       value: {
         type: "keyword",
@@ -8101,6 +9839,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -8108,6 +9847,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -8117,6 +9857,7 @@ export const styles = {
   ],
   "w-background-video--control": [
     {
+      selector: "w-background-video--control",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8127,6 +9868,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video--control",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -8135,6 +9877,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video--control",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -8143,6 +9886,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video--control",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -8151,6 +9895,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video--control",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -8159,6 +9904,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video--control",
       property: "position",
       value: {
         type: "keyword",
@@ -8166,6 +9912,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video--control",
       property: "bottom",
       value: {
         type: "unit",
@@ -8174,6 +9921,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-background-video--control",
       property: "right",
       value: {
         type: "unit",
@@ -8184,6 +9932,7 @@ export const styles = {
   ],
   "w-slider": [
     {
+      selector: "w-slider",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -8191,6 +9940,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "clear",
       value: {
         type: "keyword",
@@ -8198,6 +9948,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -8208,6 +9959,18 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
+      property: "-webkit-tap-highlight-color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-slider",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -8220,6 +9983,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -8233,6 +9997,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -8246,6 +10011,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -8267,6 +10033,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -8279,6 +10046,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -8291,6 +10059,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -8303,6 +10072,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -8315,6 +10085,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8325,6 +10096,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "height",
       value: {
         type: "unit",
@@ -8333,6 +10105,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider",
       property: "position",
       value: {
         type: "keyword",
@@ -8342,6 +10115,7 @@ export const styles = {
   ],
   "w-slider-mask": [
     {
+      selector: "w-slider-mask",
       property: "zIndex",
       value: {
         type: "unit",
@@ -8350,6 +10124,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -8357,6 +10132,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -8364,6 +10140,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "height",
       value: {
         type: "unit",
@@ -8372,6 +10149,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "display",
       value: {
         type: "keyword",
@@ -8379,6 +10157,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "position",
       value: {
         type: "keyword",
@@ -8386,6 +10165,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "left",
       value: {
         type: "unit",
@@ -8394,6 +10174,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "right",
       value: {
         type: "unit",
@@ -8402,6 +10183,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -8409,6 +10191,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-mask",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -8418,6 +10201,7 @@ export const styles = {
   ],
   "w-slide": [
     {
+      selector: "w-slide",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -8425,6 +10209,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slide",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -8432,6 +10217,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slide",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -8439,6 +10225,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slide",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -8446,6 +10233,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slide",
       property: "width",
       value: {
         type: "unit",
@@ -8454,6 +10242,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slide",
       property: "height",
       value: {
         type: "unit",
@@ -8462,6 +10251,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slide",
       property: "display",
       value: {
         type: "keyword",
@@ -8469,6 +10259,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slide",
       property: "position",
       value: {
         type: "keyword",
@@ -8478,6 +10269,7 @@ export const styles = {
   ],
   "w-slider-nav": [
     {
+      selector: "w-slider-nav",
       property: "zIndex",
       value: {
         type: "unit",
@@ -8486,6 +10278,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-nav",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -8493,6 +10286,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-nav",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -8503,117 +10297,18 @@ export const styles = {
       },
     },
     {
-      property: "marginTop",
+      selector: "w-slider-nav",
+      property: "-webkit-tap-highlight-color",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
       },
     },
     {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "borderTopLeftRadius",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "borderTopRightRadius",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "borderBottomRightRadius",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
+      selector: "w-slider-nav",
       property: "height",
       value: {
         type: "keyword",
@@ -8621,6 +10316,39 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-nav",
+      property: "marginTop",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "marginBottom",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-nav",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -8629,6 +10357,101 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-nav",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "top",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "borderTopLeftRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "borderTopRightRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "borderBottomRightRadius",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-slider-nav",
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-nav",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -8637,6 +10460,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-nav",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -8645,6 +10469,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-nav",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -8653,6 +10478,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-nav",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -8690,6 +10516,7 @@ export const styles = {
   ],
   "w-slider-nav-invert": [
     {
+      selector: "w-slider-nav-invert",
       property: "color",
       value: {
         type: "rgb",
@@ -8702,6 +10529,7 @@ export const styles = {
   ],
   "w-active": [
     {
+      selector: "w-active",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8712,6 +10540,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-active",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -8731,6 +10560,7 @@ export const styles = {
   ],
   "w-slider-dot": [
     {
+      selector: "w-slider-dot",
       property: "cursor",
       value: {
         type: "keyword",
@@ -8738,6 +10568,18 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      selector: "w-slider-dot",
       property: "width",
       value: {
         type: "unit",
@@ -8746,6 +10588,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "height",
       value: {
         type: "unit",
@@ -8754,6 +10597,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "marginTop",
       value: {
         type: "unit",
@@ -8762,6 +10606,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "marginRight",
       value: {
         type: "unit",
@@ -8770,6 +10615,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8778,6 +10624,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -8786,6 +10633,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "transitionProperty",
       value: {
         type: "layers",
@@ -8802,6 +10650,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "transitionDuration",
       value: {
         type: "layers",
@@ -8820,6 +10669,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "transitionTimingFunction",
       value: {
         type: "layers",
@@ -8836,6 +10686,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "transitionDelay",
       value: {
         type: "layers",
@@ -8854,6 +10705,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "transitionBehavior",
       value: {
         type: "layers",
@@ -8870,6 +10722,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "display",
       value: {
         type: "keyword",
@@ -8877,6 +10730,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-dot",
       property: "position",
       value: {
         type: "keyword",
@@ -8884,16 +10738,7 @@ export const styles = {
       },
     },
     {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
+      selector: "w-slider-dot",
       property: "outlineWidth",
       value: {
         type: "keyword",
@@ -8902,6 +10747,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-slider-dot",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -8910,6 +10756,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-slider-dot",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -8918,6 +10765,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-slider-dot",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -8938,6 +10786,7 @@ export const styles = {
   ],
   "w-slider-arrow-left": [
     {
+      selector: "w-slider-arrow-left",
       property: "cursor",
       value: {
         type: "keyword",
@@ -8945,6 +10794,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "color",
       value: {
         type: "rgb",
@@ -8955,6 +10805,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -8965,6 +10816,18 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
+      property: "-webkit-tap-highlight-color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-slider-arrow-left",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -8972,6 +10835,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "width",
       value: {
         type: "unit",
@@ -8980,6 +10844,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -8987,6 +10852,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -8994,6 +10860,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -9001,6 +10868,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -9008,6 +10876,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "fontSize",
       value: {
         type: "unit",
@@ -9016,6 +10885,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "position",
       value: {
         type: "keyword",
@@ -9023,6 +10893,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "top",
       value: {
         type: "unit",
@@ -9031,6 +10902,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "bottom",
       value: {
         type: "unit",
@@ -9039,6 +10911,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "left",
       value: {
         type: "unit",
@@ -9047,6 +10920,15 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-arrow-left",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -9054,6 +10936,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -9061,6 +10944,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-left",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -9070,6 +10954,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-slider-arrow-left",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -9078,6 +10963,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-slider-arrow-left",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -9086,6 +10972,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-slider-arrow-left",
       property: "zIndex",
       value: {
         type: "unit",
@@ -9093,16 +10980,10 @@ export const styles = {
         value: 3,
       },
     },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
   ],
   "w-slider-arrow-right": [
     {
+      selector: "w-slider-arrow-right",
       property: "cursor",
       value: {
         type: "keyword",
@@ -9110,6 +10991,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "color",
       value: {
         type: "rgb",
@@ -9120,6 +11002,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -9130,6 +11013,18 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
+      property: "-webkit-tap-highlight-color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-slider-arrow-right",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -9137,6 +11032,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "width",
       value: {
         type: "unit",
@@ -9145,6 +11041,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -9152,6 +11049,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -9159,6 +11057,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -9166,6 +11065,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -9173,6 +11073,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "fontSize",
       value: {
         type: "unit",
@@ -9181,6 +11082,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "position",
       value: {
         type: "keyword",
@@ -9188,6 +11090,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "top",
       value: {
         type: "unit",
@@ -9196,6 +11099,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "bottom",
       value: {
         type: "unit",
@@ -9204,6 +11108,15 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-arrow-right",
       property: "right",
       value: {
         type: "unit",
@@ -9212,6 +11125,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -9219,6 +11133,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -9226,28 +11141,35 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-arrow-right",
       property: "outlineWidth",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
+      state: ":focus",
     },
     {
+      selector: "w-slider-arrow-right",
       property: "outlineStyle",
       value: {
         type: "keyword",
         value: "none",
       },
+      state: ":focus",
     },
     {
+      selector: "w-slider-arrow-right",
       property: "outlineColor",
       value: {
         type: "keyword",
         value: "currentColor",
       },
+      state: ":focus",
     },
     {
+      selector: "w-slider-arrow-right",
       property: "zIndex",
       value: {
         type: "unit",
@@ -9255,16 +11177,10 @@ export const styles = {
         value: 4,
       },
     },
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
   ],
   "w-slider-aria-label": [
     {
+      selector: "w-slider-aria-label",
       property: "clip",
       value: {
         type: "unparsed",
@@ -9272,6 +11188,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -9280,6 +11197,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -9288,6 +11206,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -9296,6 +11215,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -9304,6 +11224,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -9311,6 +11232,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -9318,6 +11240,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -9325,6 +11248,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -9332,6 +11256,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -9339,6 +11264,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -9346,6 +11272,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -9353,6 +11280,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -9360,6 +11288,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "width",
       value: {
         type: "unit",
@@ -9368,6 +11297,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "height",
       value: {
         type: "unit",
@@ -9376,6 +11306,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "marginTop",
       value: {
         type: "unit",
@@ -9384,6 +11315,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "marginRight",
       value: {
         type: "unit",
@@ -9392,6 +11324,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -9400,6 +11333,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9408,6 +11342,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -9416,6 +11351,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9424,6 +11360,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -9432,6 +11369,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9440,6 +11378,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "position",
       value: {
         type: "keyword",
@@ -9447,6 +11386,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -9454,6 +11394,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-slider-aria-label",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -9463,6 +11404,7 @@ export const styles = {
   ],
   "w-slider-force-show": [
     {
+      selector: "w-slider-force-show",
       property: "display",
       value: {
         type: "keyword",
@@ -9472,6 +11414,7 @@ export const styles = {
   ],
   "w-dropdown": [
     {
+      selector: "w-dropdown",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -9479,6 +11422,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown",
       property: "zIndex",
       value: {
         type: "unit",
@@ -9487,6 +11431,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -9494,6 +11439,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -9501,6 +11447,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown",
       property: "display",
       value: {
         type: "keyword",
@@ -9508,6 +11455,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown",
       property: "position",
       value: {
         type: "keyword",
@@ -9517,6 +11465,7 @@ export const styles = {
   ],
   "w-dropdown-btn": [
     {
+      selector: "w-dropdown-btn",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -9524,6 +11473,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "color",
       value: {
         type: "rgb",
@@ -9534,6 +11484,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -9541,6 +11492,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -9548,6 +11500,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -9555,6 +11508,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -9562,6 +11516,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -9569,6 +11524,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -9577,6 +11533,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9585,6 +11542,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -9593,6 +11551,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9601,6 +11560,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -9608,6 +11568,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -9615,6 +11576,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -9622,6 +11584,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-btn",
       property: "position",
       value: {
         type: "keyword",
@@ -9631,6 +11594,7 @@ export const styles = {
   ],
   "w-dropdown-toggle": [
     {
+      selector: "w-dropdown-toggle",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -9638,6 +11602,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "color",
       value: {
         type: "rgb",
@@ -9648,6 +11613,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -9655,6 +11621,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -9662,6 +11629,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -9669,6 +11637,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -9676,6 +11645,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -9683,6 +11653,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -9691,64 +11662,7 @@ export const styles = {
       },
     },
     {
-      property: "paddingBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "textDecorationLine",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textDecorationStyle",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "textDecorationColor",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "userSelect",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
+      selector: "w-dropdown-toggle",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9757,6 +11671,73 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
+      property: "textDecorationLine",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
+      property: "userSelect",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+    {
+      selector: "w-dropdown-toggle",
       property: "display",
       value: {
         type: "keyword",
@@ -9764,6 +11745,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-toggle",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -9773,6 +11755,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-dropdown-toggle",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -9781,6 +11764,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-dropdown-toggle",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -9791,6 +11775,7 @@ export const styles = {
   ],
   "w-dropdown-link": [
     {
+      selector: "w-dropdown-link",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -9798,108 +11783,7 @@ export const styles = {
       },
     },
     {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "left",
-      },
-    },
-    {
-      property: "whiteSpaceCollapse",
-      value: {
-        type: "keyword",
-        value: "collapse",
-      },
-    },
-    {
-      property: "textWrapMode",
-      value: {
-        type: "keyword",
-        value: "nowrap",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "textDecorationLine",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textDecorationStyle",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "textDecorationColor",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "paddingTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "paddingRight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "paddingBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
+      selector: "w-dropdown-link",
       property: "color",
       value: {
         type: "rgb",
@@ -9910,6 +11794,123 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-link",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "left",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "textWrapMode",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "textDecorationLine",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      selector: "w-dropdown-link",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -9919,6 +11920,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-dropdown-link",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -9927,6 +11929,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-dropdown-link",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -9937,6 +11940,7 @@ export const styles = {
   ],
   "w-dropdown-list": [
     {
+      selector: "w-dropdown-list",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -9949,6 +11953,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -9962,6 +11967,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -9975,6 +11981,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -9996,6 +12003,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -10008,6 +12016,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -10020,6 +12029,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -10032,6 +12042,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -10044,6 +12055,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -10054,6 +12066,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
       property: "minWidth",
       value: {
         type: "unit",
@@ -10062,22 +12075,25 @@ export const styles = {
       },
     },
     {
+      selector: "w-dropdown-list",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      selector: "w-dropdown-list",
       property: "position",
       value: {
         type: "keyword",
         value: "absolute",
       },
     },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
   ],
   "w--open": [
     {
+      selector: "w--open",
       property: "display",
       value: {
         type: "keyword",
@@ -10085,6 +12101,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--open",
       property: "color",
       value: {
         type: "rgb",
@@ -10095,6 +12112,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--open",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -10107,6 +12125,7 @@ export const styles = {
   ],
   "w--current": [
     {
+      selector: "w--current",
       property: "color",
       value: {
         type: "rgb",
@@ -10117,6 +12136,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--current",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -10129,6 +12149,17 @@ export const styles = {
   ],
   "w-nav-brand": [
     {
+      selector: "w-nav-brand",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-nav-brand",
       property: "float",
       value: {
         type: "keyword",
@@ -10136,6 +12167,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-brand",
       property: "color",
       value: {
         type: "rgb",
@@ -10146,6 +12178,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-brand",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -10153,6 +12186,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-brand",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -10160,6 +12194,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-brand",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -10167,23 +12202,17 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-brand",
       property: "position",
       value: {
         type: "keyword",
         value: "relative",
       },
     },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
   ],
   "w-lightbox-backdrop": [
     {
+      selector: "w-lightbox-backdrop",
       property: "cursor",
       value: {
         type: "keyword",
@@ -10191,6 +12220,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "letterSpacing",
       value: {
         type: "keyword",
@@ -10198,6 +12228,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "textIndent",
       value: {
         type: "unit",
@@ -10206,6 +12237,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "textShadow",
       value: {
         type: "layers",
@@ -10223,6 +12255,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "textTransform",
       value: {
         type: "keyword",
@@ -10230,6 +12263,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "visibility",
       value: {
         type: "keyword",
@@ -10237,6 +12271,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -10244,6 +12279,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -10251,6 +12287,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "wordBreak",
       value: {
         type: "keyword",
@@ -10258,6 +12295,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "wordSpacing",
       value: {
         type: "keyword",
@@ -10265,6 +12303,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "wordWrap",
       value: {
         type: "keyword",
@@ -10272,6 +12311,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "color",
       value: {
         type: "rgb",
@@ -10282,6 +12322,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -10289,6 +12330,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "zIndex",
       value: {
         type: "unit",
@@ -10297,6 +12339,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "opacity",
       value: {
         type: "unit",
@@ -10305,6 +12348,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -10312,6 +12356,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "keyword",
@@ -10319,6 +12364,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -10331,6 +12377,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -10344,6 +12391,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -10357,6 +12405,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -10378,6 +12427,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -10390,6 +12440,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -10402,6 +12453,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -10414,6 +12466,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -10426,6 +12479,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -10436,6 +12490,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -10444,6 +12499,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -10451,6 +12507,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -10458,6 +12515,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "fontFamily",
       value: {
         type: "unparsed",
@@ -10465,6 +12523,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "fontSize",
       value: {
         type: "unit",
@@ -10473,6 +12532,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -10480,6 +12540,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "fontWeight",
       value: {
         type: "unit",
@@ -10488,6 +12549,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -10496,6 +12558,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "listStylePosition",
       value: {
         type: "keyword",
@@ -10503,6 +12566,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "listStyleImage",
       value: {
         type: "keyword",
@@ -10510,6 +12574,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "listStyleType",
       value: {
         type: "keyword",
@@ -10517,6 +12582,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "position",
       value: {
         type: "keyword",
@@ -10524,6 +12590,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "top",
       value: {
         type: "unit",
@@ -10532,6 +12599,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "bottom",
       value: {
         type: "unit",
@@ -10540,6 +12608,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "left",
       value: {
         type: "unit",
@@ -10548,6 +12617,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "right",
       value: {
         type: "unit",
@@ -10556,6 +12626,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "transform",
       value: {
         type: "unparsed",
@@ -10563,6 +12634,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "-webkit-overflow-scrolling",
       value: {
         type: "keyword",
@@ -10570,6 +12642,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "height",
       value: {
         type: "unit",
@@ -10578,6 +12651,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -10585,6 +12659,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-backdrop",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -10594,6 +12669,7 @@ export const styles = {
   ],
   "w-lightbox-container": [
     {
+      selector: "w-lightbox-container",
       property: "-webkit-overflow-scrolling",
       value: {
         type: "keyword",
@@ -10601,6 +12677,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-container",
       property: "height",
       value: {
         type: "unit",
@@ -10609,6 +12686,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-container",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -10616,6 +12694,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-container",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -10625,6 +12704,16 @@ export const styles = {
   ],
   "w-lightbox-content": [
     {
+      selector: "w-lightbox-content",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-lightbox-content",
       property: "position",
       value: {
         type: "keyword",
@@ -10632,6 +12721,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-content",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -10639,6 +12729,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-content",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -10646,24 +12737,29 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-content",
       property: "height",
       value: {
         type: "unit",
         unit: "vh",
         value: 96,
       },
+      breakpoint: "(min-width:768px)",
     },
     {
+      selector: "w-lightbox-content",
       property: "marginTop",
       value: {
         type: "unit",
         unit: "vh",
         value: 2,
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-view": [
     {
+      selector: "w-lightbox-view",
       property: "opacity",
       value: {
         type: "unit",
@@ -10672,6 +12768,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-view",
       property: "width",
       value: {
         type: "unit",
@@ -10680,6 +12777,16 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-lightbox-view",
       property: "position",
       value: {
         type: "keyword",
@@ -10687,6 +12794,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-view",
       property: "content",
       value: {
         type: "unparsed",
@@ -10695,49 +12803,79 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 100,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-lightbox-view",
       property: "verticalAlign",
       value: {
         type: "keyword",
         value: "middle",
       },
+      state: ":before",
     },
     {
+      selector: "w-lightbox-view",
       property: "display",
       value: {
         type: "keyword",
         value: "inline-block",
       },
+      state: ":before",
     },
     {
+      selector: "w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
         unit: "vh",
         value: 96,
       },
+      breakpoint: "(min-width:768px)",
     },
     {
+      selector: "w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
         unit: "vh",
         value: 96,
       },
+      breakpoint: "(min-width:768px)",
       state: ":before",
     },
   ],
   "w-lightbox-group": [
     {
+      selector: "w-lightbox-group",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 86,
+      },
+    },
+    {
+      selector: "w-lightbox-group",
       property: "height",
       value: {
         type: "unit",
         unit: "vh",
         value: 84,
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-frame": [
     {
+      selector: "w-lightbox-frame",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -10745,6 +12883,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-frame",
       property: "display",
       value: {
         type: "keyword",
@@ -10754,6 +12893,7 @@ export const styles = {
   ],
   "w-lightbox-figure": [
     {
+      selector: "w-lightbox-figure",
       property: "marginTop",
       value: {
         type: "unit",
@@ -10762,6 +12902,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-figure",
       property: "marginRight",
       value: {
         type: "unit",
@@ -10770,6 +12911,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-figure",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -10778,6 +12920,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-figure",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -10786,6 +12929,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-figure",
       property: "position",
       value: {
         type: "keyword",
@@ -10795,6 +12939,7 @@ export const styles = {
   ],
   "w-lightbox-img": [
     {
+      selector: "w-lightbox-img",
       property: "width",
       value: {
         type: "keyword",
@@ -10802,6 +12947,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-img",
       property: "maxWidth",
       value: {
         type: "keyword",
@@ -10809,6 +12955,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-img",
       property: "height",
       value: {
         type: "keyword",
@@ -10818,6 +12965,7 @@ export const styles = {
   ],
   "w-lightbox-image": [
     {
+      selector: "w-lightbox-image",
       property: "float",
       value: {
         type: "keyword",
@@ -10825,6 +12973,25 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-image",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "vw",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-lightbox-image",
+      property: "maxHeight",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-lightbox-image",
       property: "display",
       value: {
         type: "keyword",
@@ -10832,24 +12999,29 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-image",
       property: "maxWidth",
       value: {
         type: "unit",
         unit: "vw",
         value: 96,
       },
+      breakpoint: "(min-width:768px)",
     },
     {
+      selector: "w-lightbox-image",
       property: "maxHeight",
       value: {
         type: "unit",
         unit: "vh",
         value: 96,
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-caption": [
     {
+      selector: "w-lightbox-caption",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -10857,6 +13029,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "textOverflow",
       value: {
         type: "keyword",
@@ -10864,6 +13037,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -10871,6 +13045,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -10878,6 +13053,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -10890,6 +13066,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -10903,6 +13080,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -10916,6 +13094,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -10937,6 +13116,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -10949,6 +13129,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -10961,6 +13142,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -10973,6 +13155,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -10985,6 +13168,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -10995,6 +13179,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -11003,6 +13188,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -11011,6 +13197,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -11019,6 +13206,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -11027,6 +13215,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "position",
       value: {
         type: "keyword",
@@ -11034,6 +13223,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "bottom",
       value: {
         type: "unit",
@@ -11042,6 +13232,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "left",
       value: {
         type: "unit",
@@ -11050,6 +13241,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "right",
       value: {
         type: "unit",
@@ -11058,6 +13250,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -11065,6 +13258,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-caption",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -11074,6 +13268,7 @@ export const styles = {
   ],
   "w-lightbox-embed": [
     {
+      selector: "w-lightbox-embed",
       property: "width",
       value: {
         type: "unit",
@@ -11082,6 +13277,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-embed",
       property: "height",
       value: {
         type: "unit",
@@ -11090,6 +13286,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-embed",
       property: "position",
       value: {
         type: "keyword",
@@ -11097,6 +13294,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-embed",
       property: "top",
       value: {
         type: "unit",
@@ -11105,6 +13303,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-embed",
       property: "bottom",
       value: {
         type: "unit",
@@ -11113,6 +13312,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-embed",
       property: "left",
       value: {
         type: "unit",
@@ -11121,6 +13321,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-embed",
       property: "right",
       value: {
         type: "unit",
@@ -11131,6 +13332,7 @@ export const styles = {
   ],
   "w-lightbox-control": [
     {
+      selector: "w-lightbox-control",
       property: "cursor",
       value: {
         type: "keyword",
@@ -11138,6 +13340,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -11150,6 +13353,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -11162,6 +13366,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -11174,6 +13379,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -11187,6 +13393,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "width",
       value: {
         type: "unit",
@@ -11195,6 +13402,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "transitionProperty",
       value: {
         type: "layers",
@@ -11207,6 +13415,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "transitionDuration",
       value: {
         type: "layers",
@@ -11220,6 +13429,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "transitionTimingFunction",
       value: {
         type: "layers",
@@ -11232,6 +13442,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "transitionDelay",
       value: {
         type: "layers",
@@ -11245,6 +13456,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "transitionBehavior",
       value: {
         type: "layers",
@@ -11257,6 +13469,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "position",
       value: {
         type: "keyword",
@@ -11264,6 +13477,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "top",
       value: {
         type: "unit",
@@ -11272,17 +13486,20 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-control",
       property: "opacity",
       value: {
         type: "unit",
         unit: "number",
         value: 1,
       },
+      breakpoint: "(min-width:768px)",
       state: ":hover",
     },
   ],
   "w-lightbox-left": [
     {
+      selector: "w-lightbox-left",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -11298,6 +13515,15 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-left",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-lightbox-left",
       property: "bottom",
       value: {
         type: "unit",
@@ -11306,6 +13532,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-left",
       property: "left",
       value: {
         type: "unit",
@@ -11314,23 +13541,28 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-left",
       property: "opacity",
       value: {
         type: "unit",
         unit: "number",
         value: 0.5,
       },
+      breakpoint: "(min-width:768px)",
     },
     {
+      selector: "w-lightbox-left",
       property: "display",
       value: {
         type: "keyword",
         value: "block",
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-right": [
     {
+      selector: "w-lightbox-right",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -11346,6 +13578,15 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-right",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-lightbox-right",
       property: "bottom",
       value: {
         type: "unit",
@@ -11354,6 +13595,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-right",
       property: "right",
       value: {
         type: "unit",
@@ -11362,23 +13604,28 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-right",
       property: "opacity",
       value: {
         type: "unit",
         unit: "number",
         value: 0.5,
       },
+      breakpoint: "(min-width:768px)",
     },
     {
+      selector: "w-lightbox-right",
       property: "display",
       value: {
         type: "keyword",
         value: "block",
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-close": [
     {
+      selector: "w-lightbox-close",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -11394,6 +13641,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-close",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -11407,6 +13655,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-close",
       property: "height",
       value: {
         type: "unit",
@@ -11415,6 +13664,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-close",
       property: "right",
       value: {
         type: "unit",
@@ -11423,16 +13673,19 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-close",
       property: "opacity",
       value: {
         type: "unit",
         unit: "number",
         value: 0.8,
       },
+      breakpoint: "(min-width:768px)",
     },
   ],
   "w-lightbox-strip": [
     {
+      selector: "w-lightbox-strip",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -11440,6 +13693,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -11447,6 +13701,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -11455,6 +13710,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -11463,6 +13719,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -11471,6 +13728,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -11479,6 +13737,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -11487,6 +13746,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "position",
       value: {
         type: "keyword",
@@ -11494,6 +13754,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "bottom",
       value: {
         type: "unit",
@@ -11502,6 +13763,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "left",
       value: {
         type: "unit",
@@ -11510,6 +13772,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "right",
       value: {
         type: "unit",
@@ -11518,6 +13781,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -11525,6 +13789,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-strip",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -11534,6 +13799,7 @@ export const styles = {
   ],
   "w-lightbox-item": [
     {
+      selector: "w-lightbox-item",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -11541,6 +13807,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "cursor",
       value: {
         type: "keyword",
@@ -11548,6 +13815,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "width",
       value: {
         type: "unit",
@@ -11556,6 +13824,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -11564,6 +13833,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -11572,6 +13842,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -11580,6 +13851,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -11588,6 +13860,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "display",
       value: {
         type: "keyword",
@@ -11595,6 +13868,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-item",
       property: "transform",
       value: {
         type: "unparsed",
@@ -11604,6 +13878,7 @@ export const styles = {
   ],
   "w-lightbox-active": [
     {
+      selector: "w-lightbox-active",
       property: "opacity",
       value: {
         type: "unit",
@@ -11614,6 +13889,7 @@ export const styles = {
   ],
   "w-lightbox-thumbnail": [
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -11626,6 +13902,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -11639,6 +13916,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -11652,6 +13930,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -11673,6 +13952,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -11685,6 +13965,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -11697,6 +13978,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -11709,6 +13991,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -11721,6 +14004,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -11731,6 +14015,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "height",
       value: {
         type: "unit",
@@ -11739,6 +14024,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "position",
       value: {
         type: "keyword",
@@ -11746,6 +14032,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -11753,6 +14040,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -11762,6 +14050,7 @@ export const styles = {
   ],
   "w-lightbox-thumbnail-image": [
     {
+      selector: "w-lightbox-thumbnail-image",
       property: "position",
       value: {
         type: "keyword",
@@ -11769,6 +14058,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail-image",
       property: "top",
       value: {
         type: "unit",
@@ -11777,6 +14067,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-thumbnail-image",
       property: "left",
       value: {
         type: "unit",
@@ -11787,6 +14078,7 @@ export const styles = {
   ],
   "w-lightbox-spinner": [
     {
+      selector: "w-lightbox-spinner",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -11794,6 +14086,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -11802,6 +14095,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -11810,6 +14104,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -11818,6 +14113,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -11826,6 +14122,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -11833,6 +14130,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -11840,6 +14138,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -11847,6 +14146,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -11854,6 +14154,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -11864,6 +14165,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -11874,6 +14176,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -11884,6 +14187,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -11894,6 +14198,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -11902,6 +14207,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -11910,6 +14216,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -11918,6 +14225,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "width",
       value: {
         type: "unit",
@@ -11926,6 +14234,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "height",
       value: {
         type: "unit",
@@ -11934,6 +14243,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "marginTop",
       value: {
         type: "unit",
@@ -11942,6 +14252,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -11950,6 +14261,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationDuration",
       value: {
         type: "unit",
@@ -11958,6 +14270,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationTimingFunction",
       value: {
         type: "keyword",
@@ -11965,6 +14278,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationDelay",
       value: {
         type: "unit",
@@ -11973,6 +14287,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationIterationCount",
       value: {
         type: "keyword",
@@ -11980,6 +14295,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationDirection",
       value: {
         type: "keyword",
@@ -11987,6 +14303,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationFillMode",
       value: {
         type: "keyword",
@@ -11994,6 +14311,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationPlayState",
       value: {
         type: "keyword",
@@ -12001,6 +14319,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationName",
       value: {
         type: "unparsed",
@@ -12008,6 +14327,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationTimeline",
       value: {
         type: "unparsed",
@@ -12015,6 +14335,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationRangeStart",
       value: {
         type: "unparsed",
@@ -12022,6 +14343,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "animationRangeEnd",
       value: {
         type: "unparsed",
@@ -12029,6 +14351,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "position",
       value: {
         type: "keyword",
@@ -12036,6 +14359,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "top",
       value: {
         type: "unit",
@@ -12044,6 +14368,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "left",
       value: {
         type: "unit",
@@ -12052,6 +14377,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-spinner",
       property: "content",
       value: {
         type: "unparsed",
@@ -12060,6 +14386,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -12069,6 +14396,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -12078,6 +14406,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -12087,6 +14416,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -12096,6 +14426,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -12104,6 +14435,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -12112,6 +14444,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -12120,6 +14453,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -12128,6 +14462,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -12139,6 +14474,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -12150,17 +14486,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-      state: ":after",
-    },
-    {
+      selector: "w-lightbox-spinner",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -12172,6 +14498,19 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-lightbox-spinner",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -12181,6 +14520,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -12190,6 +14530,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -12199,6 +14540,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "position",
       value: {
         type: "keyword",
@@ -12207,6 +14549,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "top",
       value: {
         type: "unit",
@@ -12216,6 +14559,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "bottom",
       value: {
         type: "unit",
@@ -12225,6 +14569,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "left",
       value: {
         type: "unit",
@@ -12234,6 +14579,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-lightbox-spinner",
       property: "right",
       value: {
         type: "unit",
@@ -12245,6 +14591,7 @@ export const styles = {
   ],
   "w-lightbox-hide": [
     {
+      selector: "w-lightbox-hide",
       property: "display",
       value: {
         type: "keyword",
@@ -12254,6 +14601,7 @@ export const styles = {
   ],
   "w-lightbox-noscroll": [
     {
+      selector: "w-lightbox-noscroll",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -12261,6 +14609,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-noscroll",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -12270,6 +14619,7 @@ export const styles = {
   ],
   "w-lightbox-inactive": [
     {
+      selector: "w-lightbox-inactive",
       property: "opacity",
       value: {
         type: "unit",
@@ -12278,6 +14628,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-lightbox-inactive",
       property: "opacity",
       value: {
         type: "unit",
@@ -12289,6 +14640,7 @@ export const styles = {
   ],
   "w-richtext": [
     {
+      selector: "w-richtext",
       property: "content",
       value: {
         type: "unparsed",
@@ -12297,6 +14649,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-richtext",
       property: "content",
       value: {
         type: "unparsed",
@@ -12305,6 +14658,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-richtext",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -12314,6 +14668,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-richtext",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-richtext",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-richtext",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-richtext",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -12323,15 +14708,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-richtext",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -12341,15 +14718,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-richtext",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -12359,15 +14728,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-richtext",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -12377,6 +14738,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-richtext",
       property: "display",
       value: {
         type: "keyword",
@@ -12385,6 +14747,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-richtext",
       property: "display",
       value: {
         type: "keyword",
@@ -12393,6 +14756,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-richtext",
       property: "clear",
       value: {
         type: "keyword",
@@ -12401,6 +14765,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-richtext",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -12408,6 +14773,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -12417,6 +14783,7 @@ export const styles = {
   ],
   "w-richtext-figcaption-placeholder": [
     {
+      selector: "w-richtext-figcaption-placeholder",
       property: "opacity",
       value: {
         type: "unit",
@@ -12427,6 +14794,7 @@ export const styles = {
   ],
   "w-richtext-figure-type-image": [
     {
+      selector: "w-richtext-figure-type-image",
       property: "display",
       value: {
         type: "keyword",
@@ -12436,6 +14804,7 @@ export const styles = {
   ],
   "w-richtext-figure-type-video": [
     {
+      selector: "w-richtext-figure-type-video",
       property: "width",
       value: {
         type: "unit",
@@ -12444,6 +14813,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-figure-type-video",
       property: "height",
       value: {
         type: "unit",
@@ -12454,6 +14824,7 @@ export const styles = {
   ],
   "w-richtext-align-center": [
     {
+      selector: "w-richtext-align-center",
       property: "clear",
       value: {
         type: "keyword",
@@ -12461,6 +14832,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-center",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -12468,6 +14840,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-center",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -12475,6 +14848,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-center",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -12485,6 +14859,7 @@ export const styles = {
   ],
   "w-richtext-align-normal": [
     {
+      selector: "w-richtext-align-normal",
       property: "clear",
       value: {
         type: "keyword",
@@ -12494,6 +14869,7 @@ export const styles = {
   ],
   "w-richtext-align-fullwidth": [
     {
+      selector: "w-richtext-align-fullwidth",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -12501,6 +14877,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-fullwidth",
       property: "clear",
       value: {
         type: "keyword",
@@ -12508,6 +14885,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-fullwidth",
       property: "width",
       value: {
         type: "unit",
@@ -12516,6 +14894,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-fullwidth",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -12524,6 +14903,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-fullwidth",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -12531,6 +14911,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-fullwidth",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -12538,6 +14919,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-fullwidth",
       property: "display",
       value: {
         type: "keyword",
@@ -12547,6 +14929,7 @@ export const styles = {
   ],
   "w-richtext-align-floatleft": [
     {
+      selector: "w-richtext-align-floatleft",
       property: "float",
       value: {
         type: "keyword",
@@ -12554,6 +14937,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-floatleft",
       property: "clear",
       value: {
         type: "keyword",
@@ -12561,6 +14945,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-floatleft",
       property: "marginRight",
       value: {
         type: "unit",
@@ -12571,6 +14956,7 @@ export const styles = {
   ],
   "w-richtext-align-floatright": [
     {
+      selector: "w-richtext-align-floatright",
       property: "float",
       value: {
         type: "keyword",
@@ -12578,6 +14964,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-floatright",
       property: "clear",
       value: {
         type: "keyword",
@@ -12585,6 +14972,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-richtext-align-floatright",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -12595,6 +14983,16 @@ export const styles = {
   ],
   "w-nav": [
     {
+      selector: "w-nav",
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: "w-nav",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -12607,6 +15005,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -12620,6 +15019,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -12633,6 +15033,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -12654,6 +15055,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -12666,6 +15068,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -12678,6 +15081,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -12690,6 +15094,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -12702,6 +15107,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -12712,6 +15118,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "position",
       value: {
         type: "keyword",
@@ -12719,6 +15126,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "content",
       value: {
         type: "unparsed",
@@ -12727,6 +15135,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-nav",
       property: "content",
       value: {
         type: "unparsed",
@@ -12735,6 +15144,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-nav",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -12744,6 +15154,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-nav",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-nav",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-nav",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-nav",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -12753,15 +15194,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-nav",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -12771,15 +15204,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-nav",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -12789,15 +15214,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-nav",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -12807,6 +15224,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-nav",
       property: "display",
       value: {
         type: "keyword",
@@ -12815,6 +15233,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-nav",
       property: "display",
       value: {
         type: "keyword",
@@ -12823,6 +15242,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-nav",
       property: "clear",
       value: {
         type: "keyword",
@@ -12831,13 +15251,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
+      selector: "w-nav",
       property: "width",
       value: {
         type: "keyword",
@@ -12845,14 +15259,7 @@ export const styles = {
       },
     },
     {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
+      selector: "w-nav",
       property: "top",
       value: {
         type: "unit",
@@ -12861,6 +15268,15 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-nav",
       property: "left",
       value: {
         type: "keyword",
@@ -12868,15 +15284,44 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav",
       property: "display",
       value: {
         type: "keyword",
         value: "block",
       },
     },
+    {
+      selector: "w-nav",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-nav",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-nav",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:479px)",
+    },
   ],
   "w-nav-link": [
     {
+      selector: "w-nav-link",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -12884,94 +15329,7 @@ export const styles = {
       },
     },
     {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "left",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "paddingTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "paddingRight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "paddingBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "textDecorationLine",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textDecorationStyle",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "textDecorationColor",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
+      selector: "w-nav-link",
       property: "color",
       value: {
         type: "rgb",
@@ -12981,9 +15339,110 @@ export const styles = {
         b: 243,
       },
     },
+    {
+      selector: "w-nav-link",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "left",
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "textDecorationLine",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+    {
+      selector: "w-nav-link",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
   ],
   "w-nav-menu": [
     {
+      selector: "w-nav-menu",
       property: "float",
       value: {
         type: "keyword",
@@ -12991,6 +15450,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-menu",
       property: "position",
       value: {
         type: "keyword",
@@ -13000,6 +15460,7 @@ export const styles = {
   ],
   "w--nav-link-open": [
     {
+      selector: "w--nav-link-open",
       property: "display",
       value: {
         type: "keyword",
@@ -13007,6 +15468,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--nav-link-open",
       property: "position",
       value: {
         type: "keyword",
@@ -13016,6 +15478,7 @@ export const styles = {
   ],
   "w-nav-overlay": [
     {
+      selector: "w-nav-overlay",
       property: "width",
       value: {
         type: "unit",
@@ -13024,6 +15487,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-overlay",
       property: "display",
       value: {
         type: "keyword",
@@ -13031,6 +15495,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-overlay",
       property: "position",
       value: {
         type: "keyword",
@@ -13038,6 +15503,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-overlay",
       property: "top",
       value: {
         type: "unit",
@@ -13046,6 +15512,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-overlay",
       property: "left",
       value: {
         type: "unit",
@@ -13054,6 +15521,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-overlay",
       property: "right",
       value: {
         type: "unit",
@@ -13062,6 +15530,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-overlay",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -13069,6 +15538,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-overlay",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -13078,6 +15548,7 @@ export const styles = {
   ],
   "w-nav-button": [
     {
+      selector: "w-nav-button",
       property: "float",
       value: {
         type: "keyword",
@@ -13085,6 +15556,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "cursor",
       value: {
         type: "keyword",
@@ -13092,6 +15564,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -13102,6 +15575,18 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
+      property: "-webkit-tap-highlight-color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-nav-button",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -13109,6 +15594,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -13117,6 +15603,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -13125,6 +15612,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -13133,6 +15621,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -13141,6 +15630,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "fontSize",
       value: {
         type: "unit",
@@ -13149,6 +15639,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "display",
       value: {
         type: "keyword",
@@ -13156,6 +15647,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "position",
       value: {
         type: "keyword",
@@ -13163,6 +15655,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -13172,6 +15665,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-nav-button",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -13180,6 +15674,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-nav-button",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -13188,6 +15683,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-nav-button",
       property: "color",
       value: {
         type: "rgb",
@@ -13198,6 +15694,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-nav-button",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -13210,6 +15707,7 @@ export const styles = {
   ],
   "w--nav-dropdown-open": [
     {
+      selector: "w--nav-dropdown-open",
       property: "display",
       value: {
         type: "keyword",
@@ -13219,6 +15717,7 @@ export const styles = {
   ],
   "w--nav-dropdown-toggle-open": [
     {
+      selector: "w--nav-dropdown-toggle-open",
       property: "display",
       value: {
         type: "keyword",
@@ -13228,6 +15727,7 @@ export const styles = {
   ],
   "w--nav-dropdown-list-open": [
     {
+      selector: "w--nav-dropdown-list-open",
       property: "position",
       value: {
         type: "keyword",
@@ -13237,6 +15737,7 @@ export const styles = {
   ],
   "w-tabs": [
     {
+      selector: "w-tabs",
       property: "position",
       value: {
         type: "keyword",
@@ -13244,6 +15745,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tabs",
       property: "content",
       value: {
         type: "unparsed",
@@ -13252,6 +15754,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-tabs",
       property: "content",
       value: {
         type: "unparsed",
@@ -13260,6 +15763,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-tabs",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -13269,6 +15773,37 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-tabs",
+      property: "gridColumnStart",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-tabs",
+      property: "gridRowEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-tabs",
+      property: "gridColumnEnd",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-tabs",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -13278,15 +15813,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnStart",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-tabs",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -13296,15 +15823,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridRowEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-tabs",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -13314,15 +15833,7 @@ export const styles = {
       state: ":after",
     },
     {
-      property: "gridColumnEnd",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
-      },
-      state: ":before",
-    },
-    {
+      selector: "w-tabs",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -13332,6 +15843,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-tabs",
       property: "display",
       value: {
         type: "keyword",
@@ -13340,6 +15852,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-tabs",
       property: "display",
       value: {
         type: "keyword",
@@ -13348,6 +15861,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-tabs",
       property: "clear",
       value: {
         type: "keyword",
@@ -13358,6 +15872,7 @@ export const styles = {
   ],
   "w-tab-menu": [
     {
+      selector: "w-tab-menu",
       property: "position",
       value: {
         type: "keyword",
@@ -13367,6 +15882,7 @@ export const styles = {
   ],
   "w-tab-link": [
     {
+      selector: "w-tab-link",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -13374,6 +15890,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-link",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -13381,6 +15898,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-link",
       property: "cursor",
       value: {
         type: "keyword",
@@ -13388,6 +15906,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-link",
       property: "color",
       value: {
         type: "rgb",
@@ -13398,66 +15917,7 @@ export const styles = {
       },
     },
     {
-      property: "paddingTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 9,
-      },
-    },
-    {
-      property: "paddingRight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 30,
-      },
-    },
-    {
-      property: "paddingBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 9,
-      },
-    },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 30,
-      },
-    },
-    {
-      property: "textDecorationLine",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textDecorationStyle",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "textDecorationColor",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
+      selector: "w-tab-link",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -13468,6 +15928,83 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-link",
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 9,
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 30,
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 9,
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 30,
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "textDecorationLine",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+    {
+      selector: "w-tab-link",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      selector: "w-tab-link",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -13477,6 +16014,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-tab-link",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -13485,6 +16023,7 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-tab-link",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -13493,15 +16032,18 @@ export const styles = {
       state: ":focus",
     },
     {
+      selector: "w-tab-link",
       property: "display",
       value: {
         type: "keyword",
         value: "block",
       },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-tab-content": [
     {
+      selector: "w-tab-content",
       property: "display",
       value: {
         type: "keyword",
@@ -13509,6 +16051,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-content",
       property: "position",
       value: {
         type: "keyword",
@@ -13516,6 +16059,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-content",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -13523,6 +16067,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-content",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -13532,6 +16077,7 @@ export const styles = {
   ],
   "w-tab-pane": [
     {
+      selector: "w-tab-pane",
       property: "display",
       value: {
         type: "keyword",
@@ -13539,6 +16085,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-tab-pane",
       property: "position",
       value: {
         type: "keyword",
@@ -13548,6 +16095,7 @@ export const styles = {
   ],
   "w--tab-active": [
     {
+      selector: "w--tab-active",
       property: "display",
       value: {
         type: "keyword",
@@ -13557,6 +16105,7 @@ export const styles = {
   ],
   "w-ix-emptyfix": [
     {
+      selector: "w-ix-emptyfix",
       property: "content",
       value: {
         type: "unparsed",
@@ -13567,6 +16116,7 @@ export const styles = {
   ],
   "w-dyn-empty": [
     {
+      selector: "w-dyn-empty",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -13577,6 +16127,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dyn-empty",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -13585,6 +16136,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dyn-empty",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -13593,6 +16145,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dyn-empty",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -13601,6 +16154,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-dyn-empty",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -13611,6 +16165,7 @@ export const styles = {
   ],
   "w-dyn-hide": [
     {
+      selector: "w-dyn-hide",
       property: "display",
       value: {
         type: "keyword",
@@ -13620,6 +16175,7 @@ export const styles = {
   ],
   "w-dyn-bind-empty": [
     {
+      selector: "w-dyn-bind-empty",
       property: "display",
       value: {
         type: "keyword",
@@ -13629,6 +16185,7 @@ export const styles = {
   ],
   "w-condition-invisible": [
     {
+      selector: "w-condition-invisible",
       property: "display",
       value: {
         type: "keyword",
@@ -13638,6 +16195,7 @@ export const styles = {
   ],
   "wf-layout-layout": [
     {
+      selector: "wf-layout-layout",
       property: "display",
       value: {
         type: "keyword",
@@ -13647,6 +16205,16 @@ export const styles = {
   ],
   "w-layout-blockcontainer": [
     {
+      selector: "w-layout-blockcontainer",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 940,
+      },
+    },
+    {
+      selector: "w-layout-blockcontainer",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -13654,6 +16222,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-blockcontainer",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -13661,6 +16230,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-blockcontainer",
       property: "display",
       value: {
         type: "keyword",
@@ -13668,15 +16238,28 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-blockcontainer",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 728,
+      },
+      breakpoint: "(max-width:991px)",
+    },
+    {
+      selector: "w-layout-blockcontainer",
       property: "maxWidth",
       value: {
         type: "keyword",
         value: "none",
       },
+      breakpoint: "(max-width:767px)",
     },
   ],
   "w-layout-layout": [
     {
+      selector: "w-layout-layout",
       property: "rowGap",
       value: {
         type: "unit",
@@ -13685,6 +16268,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-layout",
       property: "columnGap",
       value: {
         type: "unit",
@@ -13693,6 +16277,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-layout",
       property: "gridAutoColumns",
       value: {
         type: "unit",
@@ -13701,6 +16286,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-layout",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -13708,6 +16294,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-layout",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -13716,6 +16303,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-layout",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -13724,6 +16312,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-layout",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -13732,6 +16321,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-layout",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -13742,6 +16332,7 @@ export const styles = {
   ],
   "w-layout-cell": [
     {
+      selector: "w-layout-cell",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -13749,6 +16340,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-cell",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -13756,6 +16348,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-cell",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -13763,6 +16356,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-cell",
       property: "display",
       value: {
         type: "keyword",
@@ -13772,6 +16366,7 @@ export const styles = {
   ],
   "w-layout-vflex": [
     {
+      selector: "w-layout-vflex",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -13779,6 +16374,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-vflex",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -13786,6 +16382,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-vflex",
       property: "display",
       value: {
         type: "keyword",
@@ -13795,6 +16392,7 @@ export const styles = {
   ],
   "w-layout-hflex": [
     {
+      selector: "w-layout-hflex",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -13802,6 +16400,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-hflex",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -13809,6 +16408,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-hflex",
       property: "display",
       value: {
         type: "keyword",
@@ -13818,6 +16418,7 @@ export const styles = {
   ],
   "w-embed-youtubevideo": [
     {
+      selector: "w-embed-youtubevideo",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -13833,6 +16434,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -13846,6 +16448,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -13858,6 +16461,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -13870,6 +16474,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "width",
       value: {
         type: "unit",
@@ -13878,6 +16483,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -13886,6 +16492,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -13894,6 +16501,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -13902,6 +16510,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "position",
       value: {
         type: "keyword",
@@ -13909,6 +16518,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "minHeight",
       value: {
         type: "unit",
@@ -13918,6 +16528,7 @@ export const styles = {
       state: ":empty",
     },
     {
+      selector: "w-embed-youtubevideo",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -13929,6 +16540,7 @@ export const styles = {
   ],
   "w-checkbox": [
     {
+      selector: "w-checkbox",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -13937,6 +16549,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -13945,6 +16558,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox",
       property: "display",
       value: {
         type: "keyword",
@@ -13952,6 +16566,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox",
       property: "content",
       value: {
         type: "unparsed",
@@ -13960,6 +16575,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-checkbox",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -13969,6 +16585,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-checkbox",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -13978,6 +16595,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-checkbox",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -13987,6 +16605,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-checkbox",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -13996,6 +16615,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-checkbox",
       property: "display",
       value: {
         type: "keyword",
@@ -14004,6 +16624,7 @@ export const styles = {
       state: ":before",
     },
     {
+      selector: "w-checkbox",
       property: "content",
       value: {
         type: "unparsed",
@@ -14012,6 +16633,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-checkbox",
       property: "clear",
       value: {
         type: "keyword",
@@ -14020,6 +16642,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-checkbox",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -14029,6 +16652,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-checkbox",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -14038,6 +16662,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-checkbox",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -14047,6 +16672,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-checkbox",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -14056,6 +16682,7 @@ export const styles = {
       state: ":after",
     },
     {
+      selector: "w-checkbox",
       property: "display",
       value: {
         type: "keyword",
@@ -14066,6 +16693,7 @@ export const styles = {
   ],
   "w-checkbox-input": [
     {
+      selector: "w-checkbox-input",
       property: "float",
       value: {
         type: "keyword",
@@ -14073,6 +16701,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input",
       property: "marginTop",
       value: {
         type: "unit",
@@ -14081,6 +16710,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input",
       property: "marginRight",
       value: {
         type: "unit",
@@ -14089,6 +16719,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -14097,6 +16728,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -14105,6 +16737,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -14114,6 +16747,7 @@ export const styles = {
   ],
   "w-checkbox-input--inputType-custom": [
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -14122,6 +16756,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -14130,6 +16765,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -14138,6 +16774,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -14146,6 +16783,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -14153,6 +16791,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -14160,6 +16799,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -14167,6 +16807,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -14174,6 +16815,51 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-checkbox-input--inputType-custom",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-checkbox-input--inputType-custom",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-checkbox-input--inputType-custom",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -14182,6 +16868,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -14190,6 +16877,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -14198,6 +16886,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "width",
       value: {
         type: "unit",
@@ -14206,6 +16895,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "height",
       value: {
         type: "unit",
@@ -14214,6 +16904,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -14224,6 +16915,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -14239,6 +16931,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -14252,6 +16945,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -14264,6 +16958,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -14276,6 +16971,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-checkbox-input--inputType-custom",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -14288,46 +16984,7 @@ export const styles = {
       },
     },
     {
-      property: "borderTopColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderBottomColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
+      selector: "w-checkbox-input--inputType-custom",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -14370,6 +17027,7 @@ export const styles = {
   ],
   "w--redirected-checked": [
     {
+      selector: "w--redirected-checked",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -14380,6 +17038,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -14395,6 +17054,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -14408,6 +17068,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -14420,6 +17081,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -14432,6 +17094,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -14444,38 +17107,7 @@ export const styles = {
       },
     },
     {
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
+      selector: "w--redirected-checked",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -14486,6 +17118,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -14496,6 +17129,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -14506,6 +17140,7 @@ export const styles = {
       },
     },
     {
+      selector: "w--redirected-checked",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -14515,9 +17150,46 @@ export const styles = {
         b: 236,
       },
     },
+    {
+      selector: "w--redirected-checked",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w--redirected-checked",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w--redirected-checked",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w--redirected-checked",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
   ],
   "w--redirected-focus": [
     {
+      selector: "w--redirected-focus",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -14560,6 +17232,43 @@ export const styles = {
   ],
   "w-form-formradioinput--inputType-custom": [
     {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -14567,6 +17276,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -14574,6 +17284,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -14581,6 +17292,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -14588,6 +17300,51 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -14596,6 +17353,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -14604,6 +17362,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -14612,6 +17371,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "width",
       value: {
         type: "unit",
@@ -14620,6 +17380,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "height",
       value: {
         type: "unit",
@@ -14628,6 +17389,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-form-formradioinput--inputType-custom",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -14667,81 +17429,10 @@ export const styles = {
         ],
       },
     },
-    {
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "borderTopColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderBottomColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
   ],
   "w-form-formrecaptcha": [
     {
+      selector: "w-form-formrecaptcha",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -14752,6 +17443,7 @@ export const styles = {
   ],
   "w-backgroundvideo-backgroundvideoplaypausebutton": [
     {
+      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineOffset",
       value: {
         type: "unit",
@@ -14761,6 +17453,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
+      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -14770,6 +17463,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
+      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -14779,6 +17473,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
+      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -14788,6 +17483,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
+      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -14797,6 +17493,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
+      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -14805,6 +17502,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
+      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineColor",
       value: {
         type: "rgb",
@@ -14818,6 +17516,7 @@ export const styles = {
   ],
   "w-layout-grid": [
     {
+      selector: "w-layout-grid",
       property: "rowGap",
       value: {
         type: "unit",
@@ -14826,6 +17525,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-grid",
       property: "columnGap",
       value: {
         type: "unit",
@@ -14834,6 +17534,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-grid",
       property: "gridTemplateRows",
       value: {
         type: "tuple",
@@ -14850,6 +17551,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-grid",
       property: "gridTemplateColumns",
       value: {
         type: "tuple",
@@ -14868,6 +17570,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-grid",
       property: "gridAutoColumns",
       value: {
         type: "unit",
@@ -14876,6 +17579,7 @@ export const styles = {
       },
     },
     {
+      selector: "w-layout-grid",
       property: "display",
       value: {
         type: "keyword",
@@ -14885,6 +17589,7 @@ export const styles = {
   ],
   "utility-page-wrap": [
     {
+      selector: "utility-page-wrap",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -14892,6 +17597,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-wrap",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -14899,6 +17605,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-wrap",
       property: "width",
       value: {
         type: "unit",
@@ -14907,6 +17614,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-wrap",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -14915,6 +17623,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-wrap",
       property: "height",
       value: {
         type: "unit",
@@ -14923,6 +17632,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-wrap",
       property: "maxHeight",
       value: {
         type: "unit",
@@ -14931,6 +17641,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-wrap",
       property: "display",
       value: {
         type: "keyword",
@@ -14940,6 +17651,7 @@ export const styles = {
   ],
   "utility-page-content": [
     {
+      selector: "utility-page-content",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -14947,6 +17659,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-content",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -14954,6 +17667,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-content",
       property: "width",
       value: {
         type: "unit",
@@ -14962,6 +17676,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-content",
       property: "display",
       value: {
         type: "keyword",
@@ -14971,6 +17686,7 @@ export const styles = {
   ],
   "utility-page-form": [
     {
+      selector: "utility-page-form",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -14978,6 +17694,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-form",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -14985,6 +17702,7 @@ export const styles = {
       },
     },
     {
+      selector: "utility-page-form",
       property: "display",
       value: {
         type: "keyword",

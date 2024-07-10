@@ -603,13 +603,13 @@ test("expand font-variant with css-wide keywords", () => {
 test("expand text-decoration", () => {
   expect(expandShorthands([["text-decoration", `underline`]])).toEqual([
     ["text-decoration-line", "underline"],
-    ["text-decoration-style", "initial"],
-    ["text-decoration-color", "initial"],
+    ["text-decoration-style", "solid"],
+    ["text-decoration-color", "currentcolor"],
   ]);
   expect(expandShorthands([["text-decoration", `underline dotted`]])).toEqual([
     ["text-decoration-line", "underline"],
     ["text-decoration-style", "dotted"],
-    ["text-decoration-color", "initial"],
+    ["text-decoration-color", "currentcolor"],
   ]);
   expect(
     expandShorthands([["text-decoration", `green wavy underline`]])

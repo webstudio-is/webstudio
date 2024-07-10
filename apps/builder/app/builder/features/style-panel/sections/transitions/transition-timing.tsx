@@ -4,6 +4,7 @@ import {
   type FunctionValue,
   type KeywordValue,
 } from "@webstudio-is/css-engine";
+import { parseCssValue } from "@webstudio-is/css-data";
 import {
   Label,
   Tooltip,
@@ -23,7 +24,6 @@ import {
   type TimingFunctions,
   findTimingFunctionFromValue,
 } from "./transition-utils";
-import { parseTransitionLonghandProperty } from "@webstudio-is/css-data";
 
 type TransitionTimingProps = {
   timing: KeywordValue | FunctionValue;
@@ -57,23 +57,19 @@ export const TransitionTiming = ({
     }
 
     const selectedTiming = timingFunctions[value];
-    const longhandValue = parseTransitionLonghandProperty(
+    const parsedEasing = parseCssValue(
       "transitionTimingFunction",
       selectedTiming
     );
 
-    if (longhandValue.type === "invalid") {
+    if (parsedEasing.type === "invalid") {
       return;
     }
+    const easingValue =
+      parsedEasing.type === "layers" ? parsedEasing.value[0] : parsedEasing;
 
-    const timingValue = longhandValue.value[0];
-    const isValidTransitionTimingFunc =
-      timingValue.type === "keyword" || timingValue.type === "function";
-
-    if (isValidTransitionTimingFunc === true) {
-      onTimingSelection({
-        timing: timingValue,
-      });
+    if (easingValue.type === "keyword" || easingValue.type === "function") {
+      onTimingSelection({ timing: easingValue });
     }
   };
 

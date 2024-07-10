@@ -1068,11 +1068,11 @@ importers:
   packages/css-data:
     dependencies:
       '@unocss/core':
-        specifier: ^0.61.0
-        version: 0.61.0
+        specifier: ^0.61.2
+        version: 0.61.2
       '@unocss/preset-uno':
-        specifier: ^0.61.0
-        version: 0.61.0
+        specifier: ^0.61.2
+        version: 0.61.2
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -5557,23 +5557,23 @@ packages:
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
-  '@unocss/core@0.61.0':
-    resolution: {integrity: sha512-Y/Ly3LPIAzOBlWCdKBVzVzIaaWDsf+oWPIUZlaW7DL++WWypVBCghmxXIT5dyuMGXE560Hj92st4AkXfuVdxGQ==}
+  '@unocss/core@0.61.2':
+    resolution: {integrity: sha512-CbETiw3vPs9xlKumBhwjSA3I7fkQjx/nTEN2UjFZSxBrlh+7MrTOCKwbEdGB7AjM3Ef6vO30sredq4t1usWoNA==}
 
-  '@unocss/extractor-arbitrary-variants@0.61.0':
-    resolution: {integrity: sha512-9ru/UR4kZ1+jGXpMawV9T8kpL54FrJBmWKMuFlDTEDIwtzDyyfLbt/buoXdzKDLmil9hOXH3IH8+dah/OiiDoA==}
+  '@unocss/extractor-arbitrary-variants@0.61.2':
+    resolution: {integrity: sha512-M2cvrhd8qiiULCxtfcOyG1dcPV0J143n8ECYD4KzVSCuCTU2zRS2EXa9LQrilagpXXFyy12/6+K7uBduvGQ06A==}
 
-  '@unocss/preset-mini@0.61.0':
-    resolution: {integrity: sha512-P+DdMtPtzAQ2aQ1/WWPoO3X/qvky+Fqq4eKXIvbqXOQ9c2oem7/dnsPeT08zzLIqxVJnuykymPwRT85EumS0gg==}
+  '@unocss/preset-mini@0.61.2':
+    resolution: {integrity: sha512-69NJhqe77C8jeRyweIqeNWP83wNzio3dOPliCF1FOHkVU1vw9NQaHMAOBe5/eGLgR9YcegQCLSJkcx0k25B5qw==}
 
-  '@unocss/preset-uno@0.61.0':
-    resolution: {integrity: sha512-mkKOra3dQEc3uI7aPIqa3t8MJXlmpLSgGaPfEJK52xkFe991ex6CiUunYMMWbh6ZSzmdxkO31IwQIH9lcmj/Uw==}
+  '@unocss/preset-uno@0.61.2':
+    resolution: {integrity: sha512-iS/CEB7fiyrP/kIaP5whgaa5JpQLuknk26Uy4d8Ea4Q/nHuBtUlhfzTBJstXBW9kMTcLfO1O6QY+JI4M3CQzpg==}
 
-  '@unocss/preset-wind@0.61.0':
-    resolution: {integrity: sha512-PooyLVAF4wH9KvW4OKfDxYFuM4qmnlU+Ci6O6RGgVsKyQMq76crRqqK76lbnehg7jOoZJVxmWfQ6k5gT3aQeXQ==}
+  '@unocss/preset-wind@0.61.2':
+    resolution: {integrity: sha512-2BpU5RZfsG+TpjQ6UyhUsz8I/fUoTBXhTu1oaPUqUxGT6Swu2Y/FRQul3TUn8NPbtJ//Qm3etNp6S1PZBT0+aw==}
 
-  '@unocss/rule-utils@0.61.0':
-    resolution: {integrity: sha512-MCdmfhE6Q9HSWjWqi2sx5/nnKyOEhfhoo+pVumHIqkHQICQ/LuKioFf7Y7e5ycqjFE/7dC2hKGZJ8WTMGIOMwA==}
+  '@unocss/rule-utils@0.61.2':
+    resolution: {integrity: sha512-E0FbNzIk8TkVUF+kZGscDEmfYHps8/9qjvwJK6BjbbnxTaBPoSY9DQjsGWcCiD9pUKJt2tquNwADPiYzzkiKtA==}
     engines: {node: '>=14'}
 
   '@upstash/core-analytics@0.0.6':
@@ -14519,34 +14519,34 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@unocss/core@0.61.0': {}
+  '@unocss/core@0.61.2': {}
 
-  '@unocss/extractor-arbitrary-variants@0.61.0':
+  '@unocss/extractor-arbitrary-variants@0.61.2':
     dependencies:
-      '@unocss/core': 0.61.0
+      '@unocss/core': 0.61.2
 
-  '@unocss/preset-mini@0.61.0':
+  '@unocss/preset-mini@0.61.2':
     dependencies:
-      '@unocss/core': 0.61.0
-      '@unocss/extractor-arbitrary-variants': 0.61.0
-      '@unocss/rule-utils': 0.61.0
+      '@unocss/core': 0.61.2
+      '@unocss/extractor-arbitrary-variants': 0.61.2
+      '@unocss/rule-utils': 0.61.2
 
-  '@unocss/preset-uno@0.61.0':
+  '@unocss/preset-uno@0.61.2':
     dependencies:
-      '@unocss/core': 0.61.0
-      '@unocss/preset-mini': 0.61.0
-      '@unocss/preset-wind': 0.61.0
-      '@unocss/rule-utils': 0.61.0
+      '@unocss/core': 0.61.2
+      '@unocss/preset-mini': 0.61.2
+      '@unocss/preset-wind': 0.61.2
+      '@unocss/rule-utils': 0.61.2
 
-  '@unocss/preset-wind@0.61.0':
+  '@unocss/preset-wind@0.61.2':
     dependencies:
-      '@unocss/core': 0.61.0
-      '@unocss/preset-mini': 0.61.0
-      '@unocss/rule-utils': 0.61.0
+      '@unocss/core': 0.61.2
+      '@unocss/preset-mini': 0.61.2
+      '@unocss/rule-utils': 0.61.2
 
-  '@unocss/rule-utils@0.61.0':
+  '@unocss/rule-utils@0.61.2':
     dependencies:
-      '@unocss/core': 0.61.0
+      '@unocss/core': 0.61.2
       magic-string: 0.30.10
 
   '@upstash/core-analytics@0.0.6':

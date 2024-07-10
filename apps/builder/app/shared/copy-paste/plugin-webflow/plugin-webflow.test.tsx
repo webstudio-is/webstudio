@@ -137,12 +137,12 @@ test("Heading", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       h1 {
-        margin-right: 0;
-        margin-left: 0;
-        margin-bottom: 10px;
-        font-weight: bold;
         margin-top: 20px;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
         font-size: 38px;
+        font-weight: bold;
         line-height: 44px
       }
     }"
@@ -549,15 +549,15 @@ test("BlockContainer", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       w-layout-blockcontainer {
+        max-width: 940px;
         margin-left: auto;
         margin-right: auto;
-        display: block;
-        max-width: none
+        display: block
       }
       w-container {
+        max-width: 940px;
         margin-left: auto;
-        margin-right: auto;
-        max-width: none
+        margin-right: auto
       }
       w-container:after {
         content: " ";
@@ -575,6 +575,24 @@ test("BlockContainer", async () => {
         grid-row-end: 2;
         grid-column-end: 2;
         display: table
+      }
+    }
+    @media all and (max-width: 991px) {
+      w-layout-blockcontainer {
+        max-width: 728px
+      }
+      w-container {
+        max-width: 728px
+      }
+    }
+    @media all and (max-width: 767px) {
+      w-layout-blockcontainer {
+        max-width: none
+      }
+    }
+    @media all and (max-width: 479px) {
+      w-container {
+        max-width: none
       }
     }"
   `);
@@ -644,30 +662,42 @@ test("H Flex", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
-test("QuickStack", async () => {
+test("QuickStack with instance styles", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
         {
-          _id: "91782272-bf55-194d-ce85-9ddc69c51dee",
+          _id: "aeb3895f-67c9-b5a0-69b4-7960b893ec04",
           type: "Layout",
           tag: "div",
           classes: [],
           children: [
-            "91782272-bf55-194d-ce85-9ddc69c51def",
-            "91782272-bf55-194d-ce85-9ddc69c51df0",
+            "ca264069-ff87-c2e5-7dc0-a4c0ec0e9146",
+            "ec30cdfd-1a60-eeb0-1bfa-1df6f1956ed5",
           ],
+          data: {
+            style: {
+              base: {
+                main: {
+                  noPseudo: {
+                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateRows: "auto",
+                  },
+                },
+              },
+            },
+          },
         },
         {
-          _id: "91782272-bf55-194d-ce85-9ddc69c51def",
+          _id: "ca264069-ff87-c2e5-7dc0-a4c0ec0e9146",
           type: "Cell",
           tag: "div",
           classes: [],
           children: [],
         },
         {
-          _id: "91782272-bf55-194d-ce85-9ddc69c51df0",
+          _id: "ec30cdfd-1a60-eeb0-1bfa-1df6f1956ed5",
           type: "Cell",
           tag: "div",
           classes: [],
@@ -693,6 +723,10 @@ test("QuickStack", async () => {
         grid-auto-columns: 1fr;
         justify-content: center;
         padding: 20px
+      }
+      Local {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto
       }
       wf-layout-layout {
         display: grid
@@ -784,10 +818,6 @@ test("Columns", async () => {
   );
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
-      w-row {
-        margin-left: 0;
-        margin-right: 0
-      }
       w-row:after {
         content: " ";
         grid-row-start: 1;
@@ -807,12 +837,26 @@ test("Columns", async () => {
       }
       w-col {
         float: left;
+        width: 100%;
         min-height: 1px;
         padding-left: 10px;
         padding-right: 10px;
-        position: relative;
+        position: relative
+      }
+    }
+    @media all and (max-width: 767px) {
+      w-row {
+        margin-left: 0;
+        margin-right: 0
+      }
+      w-col {
+        width: 100%;
         left: auto;
-        right: auto;
+        right: auto
+      }
+    }
+    @media all and (max-width: 479px) {
+      w-col {
         width: 100%
       }
     }"
@@ -1347,12 +1391,12 @@ test("RichText", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       h1 {
-        margin-right: 0;
-        margin-left: 0;
-        margin-bottom: 10px;
-        font-weight: bold;
         margin-top: 20px;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0;
         font-size: 38px;
+        font-weight: bold;
         line-height: 44px
       }
       h2 {
@@ -1565,21 +1609,25 @@ test("Form", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(255, 255, 255, 1);
+        background-color: rgba(238, 238, 238, 1);
         width: 100%;
+        height: auto;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1589,7 +1637,6 @@ test("Form", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        height: auto;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -1646,14 +1693,17 @@ test("FormButton", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-button {
@@ -1731,21 +1781,25 @@ test("FormTextInput", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(255, 255, 255, 1);
+        background-color: rgba(238, 238, 238, 1);
         width: 100%;
+        height: auto;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1755,7 +1809,6 @@ test("FormTextInput", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        height: auto;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -1878,8 +1931,9 @@ test("FormTextarea", async () => {
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(255, 255, 255, 1);
+        background-color: rgba(238, 238, 238, 1);
         width: 100%;
+        height: auto;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1889,7 +1943,6 @@ test("FormTextarea", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        height: auto;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -2047,14 +2100,17 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-checkbox-input {
@@ -2169,14 +2225,17 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
         font-weight: inherit;
         font-stretch: inherit;
         font-size: inherit;
-        font-family: inherit;
-        cursor: pointer;
         line-height: normal;
+        font-family: inherit;
+        appearance: button;
+        cursor: pointer;
         box-sizing: border-box;
         height: auto;
-        appearance: button;
-        border: 0 none currentColor;
         margin: 0;
+        padding: 0
+      }
+      input::-moz-focus-inner {
+        border: 0 none currentColor;
         padding: 0
       }
       w-radio-input {
@@ -2351,12 +2410,12 @@ describe("Custom attributes", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
-          margin-right: 0;
-          margin-left: 0;
-          margin-bottom: 10px;
-          font-weight: bold;
           margin-top: 20px;
+          margin-right: 0;
+          margin-bottom: 10px;
+          margin-left: 0;
           font-size: 38px;
+          font-weight: bold;
           line-height: 44px
         }
       }"
@@ -2438,12 +2497,12 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
-          margin-right: 0;
-          margin-left: 0;
-          margin-bottom: 10px;
-          font-weight: bold;
           margin-top: 20px;
+          margin-right: 0;
+          margin-bottom: 10px;
+          margin-left: 0;
           font-size: 38px;
+          font-weight: bold;
           line-height: 44px
         }
         Heading {
