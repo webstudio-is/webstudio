@@ -211,7 +211,7 @@ describe("boxShadowUtils", () => {
       property,
       parseCssValue(
         "boxShadow",
-        `box-shadow: 10px 10px 10px 0px rgba(0, 0, 0, 0.75)`
+        `10px 10px 10px 0px rgba(0, 0, 0, 0.75)`
       ) as LayersValue,
       styleInfo,
       createBatchUpdate
@@ -324,7 +324,7 @@ describe("boxShadowUtils", () => {
       property,
       parseCssValue(
         "boxShadow",
-        `box-shadow: 0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14);`
+        `0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14)`
       ) as LayersValue,
       styleInfo,
       createBatchUpdate
@@ -414,12 +414,8 @@ test("Generates humane layer names for shadow style layer", () => {
   expect(
     getHumanizedTextFromLayer(
       "textShadow",
-      (
-        parseCssValue(
-          "textShadow",
-          "text-shadow: 1px 1px 2px red"
-        ) as LayersValue
-      ).value[0] as TupleValue
+      (parseCssValue("textShadow", "1px 1px 2px red") as LayersValue)
+        .value[0] as TupleValue
     )
   ).toMatchInlineSnapshot(`
 {
@@ -448,12 +444,8 @@ test("Generates humane layer names for filter style layer", () => {
   expect(
     getHumanizedTextFromLayer(
       "filter",
-      (
-        parseCssValue(
-          "filter",
-          "filter: drop-shadow(4px 4px 10px blue);"
-        ) as TupleValue
-      ).value[0] as FunctionValue
+      (parseCssValue("filter", "drop-shadow(4px 4px 10px blue)") as TupleValue)
+        .value[0] as FunctionValue
     )
   ).toMatchInlineSnapshot(`
 {
