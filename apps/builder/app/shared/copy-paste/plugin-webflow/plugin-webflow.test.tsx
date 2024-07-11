@@ -2525,6 +2525,14 @@ describe("Styles", () => {
             name: "button",
           },
         ],
+        [
+          "uuORexg4BOrRXBJZgB80_",
+          {
+            id: "uuORexg4BOrRXBJZgB80_",
+            type: "token",
+            name: "button.is-small",
+          },
+        ],
       ])
     );
     $styles.set(
@@ -2536,6 +2544,15 @@ describe("Styles", () => {
             breakpointId: "base",
             property: "color",
             value: { type: "keyword", value: "green" },
+          },
+        ],
+        [
+          "uuORexg4BOrRXBJZgB80_0",
+          {
+            styleSourceId: "uuORexg4BOrRXBJZgB80_",
+            breakpointId: "base",
+            property: "paddingTop",
+            value: { type: "unit", unit: "rem", value: 1 },
           },
         ],
       ])
@@ -2551,6 +2568,7 @@ describe("Styles", () => {
             tag: "a",
             classes: [
               "194e7d07-469d-6ffa-3925-1f51bdad7e44",
+              "194e7d07-469d-6ffa-3925-1f51bdad7e47",
               "194e7d07-469d-6ffa-3925-1f51bdad7e46",
             ],
             children: [],
@@ -2567,7 +2585,18 @@ describe("Styles", () => {
             type: "class",
             name: "button",
             styleLess: "text-align: center;",
-            children: ["194e7d07-469d-6ffa-3925-1f51bdad7e46"],
+            children: [
+              "194e7d07-469d-6ffa-3925-1f51bdad7e47",
+              "194e7d07-469d-6ffa-3925-1f51bdad7e46",
+            ],
+          },
+          {
+            _id: "194e7d07-469d-6ffa-3925-1f51bdad7e47",
+            type: "class",
+            name: "is-small",
+            comb: "&",
+            styleLess: "",
+            createdBy: "6075409192d886a671499223",
           },
           {
             _id: "194e7d07-469d-6ffa-3925-1f51bdad7e46",
@@ -2591,17 +2620,17 @@ describe("Styles", () => {
       {
         type: "token",
         id: expect.any(String),
-        name: "button.is-secondary",
+        name: "button.is-small.is-secondary",
       },
     ]);
-
     expect(fragment.styleSourceSelections).toEqual([
       {
         instanceId: expect.any(String),
         values: [
           "uu1p3Xdvlq_AZOxnzDvAv",
           "uuBw1PRC_uE8RhTmwxaH8",
-          "uuFc5tqBSacRR9VpjbFi1",
+          "uuORexg4BOrRXBJZgB80_",
+          "uumXb7vHOnzTr-4SIW-wJ",
         ],
       },
     ]);
@@ -2617,7 +2646,7 @@ describe("Styles", () => {
         a:hover {
           outline: 0 none currentColor
         }
-        button.is-secondary {
+        button.is-small.is-secondary {
           text-align: center;
           background-color: transparent
         }
