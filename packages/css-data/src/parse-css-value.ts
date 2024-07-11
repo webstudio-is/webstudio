@@ -15,12 +15,12 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 import {
-  parseFilter,
-  parseShadow,
   parseTranslate,
   parseTransform,
   parseScale,
 } from "./property-parsers";
+import { parseFilter } from "./property-parsers/filter";
+import { parseShadow } from "./property-parsers/shadows";
 
 export const cssTryParseValue = (input: string) => {
   try {

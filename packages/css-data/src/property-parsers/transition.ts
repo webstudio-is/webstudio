@@ -41,12 +41,6 @@ export const isAnimatableProperty = (
   );
 };
 
-export const isTransitionLongHandProperty = (
-  property: string
-): property is (typeof transitionLongHandProperties)[number] => {
-  return transitionLongHandProperties.some((item) => item === property);
-};
-
 export const isValidTransitionValue = (
   value: LayerValueItem
 ): value is KeywordValue | UnitValue | FunctionValue => {
