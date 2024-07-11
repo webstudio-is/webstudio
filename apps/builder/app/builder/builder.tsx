@@ -391,7 +391,8 @@ export const Builder = ({
         // when canvas is rendered
         $dataLoadingState.set("loaded");
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error(error);
         // @todo make needs error handling and error state? e.g. a toast
         $dataLoadingState.set("idle");
       });

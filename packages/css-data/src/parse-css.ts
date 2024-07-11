@@ -17,7 +17,7 @@ export type ParsedStyleDecl = {
  * and convert to camel case only unprefixed properties
  * @todo stop converting to camel case and use hyphenated format
  */
-export const normalizePropertyName = (property: string) => {
+const normalizePropertyName = (property: string) => {
   // these are manually added with pascal case
   // convert unprefixed used by webflow version into prefixed one
   if (property === "-webkit-font-smoothing" || property === "font-smoothing") {

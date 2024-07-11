@@ -374,3 +374,211 @@ test("parse unknown properties as unparsed", () => {
     }
   );
 });
+
+test("parse transform property as tuple", () => {
+  expect(
+    parseCssValue("transform", "rotateX(45deg) rotateY(30deg) rotateZ(60deg)")
+  ).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "function",
+        name: "rotateX",
+        args: {
+          type: "tuple",
+          value: [{ type: "unit", value: 45, unit: "deg" }],
+        },
+      },
+      {
+        type: "function",
+        name: "rotateY",
+        args: {
+          type: "tuple",
+          value: [{ type: "unit", value: 30, unit: "deg" }],
+        },
+      },
+      {
+        type: "function",
+        name: "rotateZ",
+        args: {
+          type: "tuple",
+          value: [{ type: "unit", value: 60, unit: "deg" }],
+        },
+      },
+    ],
+  });
+
+  expect(parseCssValue("transform", "skew(30deg, 20deg)")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "function",
+        name: "skew",
+        args: {
+          type: "layers",
+          value: [
+            { type: "unit", value: 30, unit: "deg" },
+            { type: "unit", value: 20, unit: "deg" },
+          ],
+        },
+      },
+    ],
+  });
+
+  expect(
+    parseCssValue("transform", "translate3d(-100px, 50px, -150px)")
+  ).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "function",
+        name: "translate3d",
+        args: {
+          type: "layers",
+          value: [
+            { type: "unit", value: -100, unit: "px" },
+            { type: "unit", value: 50, unit: "px" },
+            { type: "unit", value: -150, unit: "px" },
+          ],
+        },
+      },
+    ],
+  });
+});
+
+test("parses transform values and returns invalid for invalid values", () => {
+  expect(parseCssValue("transform", "scale(1.5, 50px)")).toEqual({
+    type: "invalid",
+    value: "scale(1.5, 50px)",
+  });
+
+  expect(parseCssValue("transform", "matrix(1, 0.5, -0.5, 1, 100)")).toEqual({
+    type: "invalid",
+    value: "matrix(1, 0.5, -0.5, 1, 100)",
+  });
+});
+
+test("parses a valid translate value", () => {
+  expect(parseCssValue("translate", "100px")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "unit",
+        unit: "px",
+        value: 100,
+      },
+    ],
+  });
+
+  expect(parseCssValue("translate", "100px 200px")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "unit",
+        unit: "px",
+        value: 100,
+      },
+      {
+        type: "unit",
+        unit: "px",
+        value: 200,
+      },
+    ],
+  });
+
+  expect(parseCssValue("translate", "10em 10em 10em")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "unit",
+        unit: "em",
+        value: 10,
+      },
+      {
+        type: "unit",
+        unit: "em",
+        value: 10,
+      },
+      {
+        type: "unit",
+        unit: "em",
+        value: 10,
+      },
+    ],
+  });
+});
+
+test("parses and returns invalid for invalid translate values", () => {
+  expect(parseCssValue("translate", "foo bar")).toEqual({
+    type: "invalid",
+    value: "foo bar",
+  });
+
+  expect(parseCssValue("translate", "100px 200px 300px 400px")).toEqual({
+    type: "invalid",
+    value: "100px 200px 300px 400px",
+  });
+
+  expect(parseCssValue("translate", "100%, 200%")).toEqual({
+    type: "invalid",
+    value: "100%, 200%",
+  });
+});
+
+test("parses a valid translate value", () => {
+  expect(parseCssValue("scale", "1.5")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "unit",
+        value: 1.5,
+        unit: "number",
+      },
+    ],
+  });
+
+  expect(parseCssValue("scale", "5 10 15")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "unit",
+        value: 5,
+        unit: "number",
+      },
+      {
+        type: "unit",
+        value: 10,
+        unit: "number",
+      },
+      {
+        type: "unit",
+        value: 15,
+        unit: "number",
+      },
+    ],
+  });
+
+  expect(parseCssValue("scale", "50%")).toEqual({
+    type: "tuple",
+    value: [{ type: "unit", value: 50, unit: "%" }],
+  });
+});
+
+test("throws error for invalid scale proeprty values", () => {
+  expect(parseCssValue("scale", "10 foo")).toEqual({
+    type: "invalid",
+    value: "10 foo",
+  });
+  expect(parseCssValue("scale", "5 10 15 20")).toEqual({
+    type: "invalid",
+    value: "5 10 15 20",
+  });
+  expect(parseCssValue("scale", "5, 15")).toEqual({
+    type: "invalid",
+    value: "5, 15",
+  });
+  expect(parseCssValue("scale", "5px")).toEqual({
+    type: "invalid",
+    value: "5px",
+  });
+});

@@ -9,14 +9,14 @@ import {
   Tooltip,
   Text,
 } from "@webstudio-is/design-system";
+import { parseCssValue } from "@webstudio-is/css-data";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import { type StyleProperty } from "@webstudio-is/css-engine";
+import { LayersValue, type StyleProperty } from "@webstudio-is/css-engine";
 import { getStyleSource } from "../../shared/style-info";
 import { LayersList } from "../../style-layers-list";
 import { addLayer } from "../../style-layer-utils";
-import { parseFilter } from "@webstudio-is/css-data";
 import { FilterSectionContent } from "../../shared/filter-content";
 
 export const properties = ["filter"] satisfies Array<StyleProperty>;
@@ -50,7 +50,7 @@ export const Section = (props: SectionProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    parseFilter(property, initialFilter),
+                    parseCssValue(property, initialFilter) as LayersValue,
                     currentStyle,
                     props.createBatchUpdate
                   );
