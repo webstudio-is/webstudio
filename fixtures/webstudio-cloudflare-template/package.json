@@ -47,7 +47,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240405.0",
+    "@cloudflare/workers-types": "^4.20240620.0",
     "@remix-run/dev": "2.10.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
