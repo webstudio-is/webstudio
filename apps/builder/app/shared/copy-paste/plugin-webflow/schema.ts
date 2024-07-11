@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const Attr = z.object({ id: z.string() }).partial();
+const Attr = z.object({ id: z.string(), role: z.string() }).partial();
 
 const styleBase = z.string();
 
@@ -46,6 +46,35 @@ const WfTextNode = z.object({
   text: z.boolean(),
 });
 
+const WfLinkData = WfNodeData.extend({
+  attr: Attr.optional(),
+  block: z.enum(["inline", "block", ""]).optional(),
+  button: z.boolean().optional(),
+  link: z.union([
+    // External link
+    z.object({
+      url: z.string(),
+      target: z.string().optional(),
+    }),
+    // Page link and section link
+    z.object({
+      href: z.string(),
+    }),
+    // Email link
+    z.object({
+      email: z.string(),
+      subject: z.string().optional(),
+    }),
+    // Phone link
+    z.object({
+      tel: z.string(),
+    }),
+    z.object({
+      mode: z.string(),
+    }),
+  ]),
+});
+
 export const wfNodeTypes = [
   "Heading",
   "Block",
@@ -88,9 +117,44 @@ export const wfNodeTypes = [
   "FormSelect",
   "LineBreak",
   "Span",
+  "NavbarMenu",
+  "NavbarWrapper",
+  "NavbarBrand",
+  "NavbarLink",
+  "NavbarButton",
+  "NavbarContainer",
+  "Icon",
 ] as const;
 
 const WfElementNode = z.union([
+  WfBaseNode.extend({
+    type: z.enum(["Icon"]),
+    data: WfNodeData.extend({
+      widget: z
+        .object({
+          type: z.string(),
+          icon: z.string(),
+        })
+        .optional(),
+    }),
+  }),
+
+  WfBaseNode.extend({ type: z.enum(["NavbarMenu"]) }),
+  WfBaseNode.extend({ type: z.enum(["NavbarContainer"]) }),
+
+  WfBaseNode.extend({ type: z.enum(["NavbarWrapper"]) }),
+
+  WfBaseNode.extend({
+    type: z.enum(["NavbarBrand"]),
+    data: WfLinkData,
+  }),
+  WfBaseNode.extend({
+    type: z.enum(["NavbarLink"]),
+    data: WfLinkData,
+  }),
+
+  WfBaseNode.extend({ type: z.enum(["NavbarButton"]) }),
+
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
@@ -103,31 +167,7 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
   WfBaseNode.extend({
     type: z.enum(["Link"]),
-    data: WfNodeData.extend({
-      attr: Attr.optional(),
-      block: z.enum(["inline", "block", ""]).optional(),
-      button: z.boolean().optional(),
-      link: z.union([
-        // External link
-        z.object({
-          url: z.string(),
-          target: z.string().optional(),
-        }),
-        // Page link and section link
-        z.object({
-          href: z.string(),
-        }),
-        // Email link
-        z.object({
-          email: z.string(),
-          subject: z.string().optional(),
-        }),
-        // Phone link
-        z.object({
-          tel: z.string(),
-        }),
-      ]),
-    }),
+    data: WfLinkData,
   }),
   WfBaseNode.extend({ type: z.enum(["Paragraph"]) }),
   WfBaseNode.extend({ type: z.enum(["Blockquote"]) }),
@@ -343,7 +383,7 @@ const WfAsset = z.object({
   variants: z.array(z.union([WfAssetVariant, WfErrorAssetVariant])).optional(),
   mimeType: z.string(),
   s3Url: z.string().url(),
-  thumbUrl: z.string(),
+  thumbUrl: z.string().optional(),
   _id: z.string(),
   markedAsDeleted: z.boolean().optional(),
   fileSize: z.number(),

@@ -171,10 +171,7 @@ export const LayersList = (props: LayerListProps) => {
                 active={dragItemId === id}
                 index={index}
                 label={<Label truncate>{properties.name}</Label>}
-                hidden={
-                  (layer.type === "tuple" || layer.type === "function") &&
-                  layer?.hidden
-                }
+                hidden={layer.hidden}
                 thumbnail={
                   property === "textShadow" || property === "boxShadow" ? (
                     <ColorThumb color={properties.color} />
@@ -185,12 +182,12 @@ export const LayersList = (props: LayerListProps) => {
                     {layer.type === "tuple" || layer.type === "function" ? (
                       <SmallToggleButton
                         variant="normal"
-                        pressed={layer?.hidden}
+                        pressed={layer.hidden}
                         disabled={false}
                         tabIndex={-1}
                         onPressedChange={() => handleHideLayer(index)}
                         icon={
-                          layer?.hidden ? (
+                          layer.hidden ? (
                             <EyeconClosedIcon />
                           ) : (
                             <EyeconOpenIcon />
@@ -201,10 +198,7 @@ export const LayersList = (props: LayerListProps) => {
                     <SmallIconButton
                       variant="destructive"
                       tabIndex={-1}
-                      disabled={
-                        (layer.type === "tuple" || layer.type === "function") &&
-                        layer.hidden
-                      }
+                      disabled={layer.hidden}
                       icon={<SubtractIcon />}
                       onClick={() => handleDeleteLayer(index)}
                     />

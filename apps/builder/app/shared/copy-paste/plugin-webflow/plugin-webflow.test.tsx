@@ -16,6 +16,8 @@ import {
   $breakpoints,
   $project,
   $registeredComponentMetas,
+  $styleSources,
+  $styles,
 } from "../../nano-states";
 import invariant from "tiny-invariant";
 import { WfData } from "./schema";
@@ -2513,6 +2515,32 @@ describe("Styles", () => {
   });
 
   test("Combo class", async () => {
+    $styleSources.set(
+      new Map([
+        [
+          "uuBw1PRC_uE8RhTmwxaH8",
+          {
+            id: "uuBw1PRC_uE8RhTmwxaH8",
+            type: "token",
+            name: "button",
+          },
+        ],
+      ])
+    );
+    $styles.set(
+      new Map([
+        [
+          "uuBw1PRC_uE8RhTmwxaH8",
+          {
+            styleSourceId: "uuBw1PRC_uE8RhTmwxaH8",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "green" },
+          },
+        ],
+      ])
+    );
+
     const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
@@ -2563,18 +2591,18 @@ describe("Styles", () => {
       {
         type: "token",
         id: expect.any(String),
-        name: "button",
-      },
-      {
-        type: "token",
-        id: expect.any(String),
-        name: "is-secondary",
+        name: "button.is-secondary",
       },
     ]);
+
     expect(fragment.styleSourceSelections).toEqual([
       {
         instanceId: expect.any(String),
-        values: [expect.any(String), expect.any(String), expect.any(String)],
+        values: [
+          "uu1p3Xdvlq_AZOxnzDvAv",
+          "uuBw1PRC_uE8RhTmwxaH8",
+          "uuFc5tqBSacRR9VpjbFi1",
+        ],
       },
     ]);
 
@@ -2589,10 +2617,8 @@ describe("Styles", () => {
         a:hover {
           outline: 0 none currentColor
         }
-        button {
-          text-align: center
-        }
-        is-secondary {
+        button.is-secondary {
+          text-align: center;
           background-color: transparent
         }
       }"
@@ -2718,7 +2744,7 @@ describe("Styles", () => {
           outline: 0 none currentColor
         }
         x {
-          transform: translate3d(7px,74px,16px)
+          transform: translate3d(7px, 74px, 16px)
         }
         x:hover {
           background-color: rgba(199, 16, 16, 1)
@@ -2772,10 +2798,7 @@ describe("Styles", () => {
                   "background-color: hsla(150, 100.00%, 50.00%, 1.00);",
               },
               xl: {
-                styleLess: "background-color: hsla(69, 100.00%, 50.00%, 1.00);",
-              },
-              xxl: {
-                styleLess: "background-color: hsla(14, 100.00%, 50.00%, 1.00);",
+                styleLess: "",
               },
               medium: {
                 styleLess:
@@ -2795,6 +2818,14 @@ describe("Styles", () => {
         assets: [],
       },
     });
+
+    expect(fragment.breakpoints).toEqual([
+      { id: expect.any(String), label: "base" },
+      { id: expect.any(String), label: "large", minWidth: 1280 },
+      { id: expect.any(String), label: "medium", maxWidth: 991 },
+      { id: expect.any(String), label: "small", maxWidth: 767 },
+      { id: expect.any(String), label: "tiny", maxWidth: 479 },
+    ]);
 
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
@@ -2820,16 +2851,6 @@ describe("Styles", () => {
       @media all and (min-width: 1280px) {
         Div Block 2 {
           background-color: rgba(0, 255, 128, 1)
-        }
-      }
-      @media all and (min-width: 1440px) {
-        Div Block 2 {
-          background-color: rgba(217, 255, 0, 1)
-        }
-      }
-      @media all and (min-width: 1920px) {
-        Div Block 2 {
-          background-color: rgba(255, 60, 0, 1)
         }
       }"
     `);
@@ -2959,7 +2980,7 @@ describe("Styles", () => {
       (style) => style.property === "backgroundImage"
     );
 
-    expect(bgStyle).not.toBeNull();
+    expect(bgStyle).toBeDefined();
     expect(bgStyle?.value.type).toEqual("layers");
 
     const layers = bgStyle?.value;
@@ -2994,5 +3015,51 @@ describe("Styles", () => {
         }
       }"
   `);
+  });
+
+  test("@raw webflow custom properties", async () => {
+    const input = WfData.parse({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "89ed49d8-2d32-5bab-22e1-264acb8d2d84",
+            type: "Block",
+            tag: "div",
+            classes: ["393ac121-a395-7678-e598-994e30fb7880"],
+            children: [],
+            data: { text: false, tag: "div" },
+          },
+        ],
+        styles: [
+          {
+            _id: "393ac121-a395-7678-e598-994e30fb7880",
+            fake: false,
+            type: "class",
+            name: "Div Block",
+            namespace: "",
+            comb: "",
+            styleLess: "color: @raw<|black|>; background-color: @raw<|red|>;",
+            variants: {},
+            children: [],
+            createdBy: "635e72dd77408d16b581b4bc",
+            origin: null,
+            selector: null,
+          },
+        ],
+        assets: [],
+      },
+    });
+
+    const fragment = await toWebstudioFragment(input);
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+"@media all {
+  Div Block {
+    color: black;
+    background-color: red
+  }
+}"
+`);
   });
 });

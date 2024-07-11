@@ -7,6 +7,7 @@ import {
   type CssNode,
   type Value,
 } from "css-tree";
+import warnOnce from "warn-once";
 
 const cssWideKeywordsSyntax = Array.from(cssWideKeywords).join(" | ");
 
@@ -57,12 +58,9 @@ const splitByOperator = (node: CssNode, operator: string) => {
       lists.at(-1)?.push(node);
     }
   }
-  return lists.map((list) => {
-    if (list.length === 0) {
-      return;
-    }
-    return createValueNode(list);
-  });
+  return lists
+    .filter((list) => list.length > 0)
+    .map((list) => createValueNode(list));
 };
 
 const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
@@ -1392,6 +1390,9 @@ const expandShorthand = function* (property: string, value: CssNode) {
 const parseValue = function* (property: string, value: string) {
   try {
     const ast = parse(value, { context: "value" });
+    if (ast.type === "Value" && ast.children.isEmpty) {
+      ast.children.appendData({ type: "Identifier", name: "unset" });
+    }
     yield [property, ast] as const;
   } catch {
     // empty block
@@ -1419,7 +1420,14 @@ export const expandShorthands = (
         const generator = expandShorthand(property, value);
 
         for (const [property, value] of generator) {
-          longhands.push([property, generate(cssWideKeyword ?? value)]);
+          try {
+            longhands.push([property, generate(cssWideKeyword ?? value)]);
+          } catch {
+            warnOnce(
+              true,
+              `Failed to generate longhands for shorthand ${shorthands.map((shorthand) => shorthand.join("=")).join(", ")}`
+            );
+          }
         }
       }
     }

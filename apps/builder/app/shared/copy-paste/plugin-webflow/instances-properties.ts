@@ -113,7 +113,10 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+
     case "Link": {
+      const component = "Link";
+
       const data = wfNode.data;
       if ("url" in data.link) {
         addProp("href", data.link.url);
@@ -340,6 +343,51 @@ const toFragment = (
       addProp("required", data.attr.required);
       addProp("multiple", data.attr.multiple);
       addInstance(component);
+      return fragment;
+    }
+
+    case "NavbarMenu": {
+      addProp("tag", wfNode.tag);
+      addProp("role", wfNode.data?.attr?.role);
+
+      addInstance("Box", [], component);
+      return fragment;
+    }
+    case "NavbarContainer":
+    case "NavbarButton":
+    case "NavbarWrapper": {
+      addInstance("Box", [], component);
+      return fragment;
+    }
+
+    case "NavbarBrand":
+    case "NavbarLink": {
+      const data = wfNode.data;
+      if ("url" in data.link) {
+        addProp("href", data.link.url);
+      }
+      if ("target" in data.link) {
+        addProp("target", data.link.target);
+      }
+      if ("href" in data.link) {
+        addProp("href", data.link.href);
+      }
+      if ("email" in data.link) {
+        const subject = data.link.subject
+          ? `?subject=${data.link.subject}`
+          : "";
+        addProp("href", `mailto:${data.link.email}${subject}`);
+      }
+      if ("tel" in data.link) {
+        addProp("href", `tel:${data.link.tel}`);
+      }
+      addInstance("Link", [], component);
+      return fragment;
+    }
+
+    case "Icon": {
+      // We don't have access to widget icons
+      addInstance("Box", [], component);
       return fragment;
     }
   }

@@ -1448,3 +1448,88 @@ test("expand position-try", () => {
     ["position-try-options", "--dashed-ident"],
   ]);
 });
+
+test("replace empty value with unset", () => {
+  expect(expandShorthands([["color", ""]])).toEqual([["color", "unset"]]);
+  expect(expandShorthands([["transition", ""]])).toEqual([
+    ["transition-property", "unset"],
+    ["transition-duration", "unset"],
+    ["transition-timing-function", "unset"],
+    ["transition-delay", "unset"],
+    ["transition-behavior", "unset"],
+  ]);
+});
+
+test("does not fail on empty value", () => {
+  expect(() => expandShorthands([["transition", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border", ""]])).not.toThrow();
+  expect(() => expandShorthands([["font", ""]])).not.toThrow();
+  expect(() => expandShorthands([["font-synthesis", ""]])).not.toThrow();
+  expect(() => expandShorthands([["font-variant", ""]])).not.toThrow();
+  expect(() => expandShorthands([["text-decoration", ""]])).not.toThrow();
+  expect(() => expandShorthands([["text-emphasis", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-width", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-style", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-color", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-inline-width", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-inline-style", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-inline-color", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-block-width", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-block-style", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-block-color", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-radius", ""]])).not.toThrow();
+  expect(() => expandShorthands([["border-image", ""]])).not.toThrow();
+  expect(() => expandShorthands([["outline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["mask", ""]])).not.toThrow();
+  expect(() => expandShorthands([["mask-border", ""]])).not.toThrow();
+  expect(() => expandShorthands([["margin", ""]])).not.toThrow();
+  expect(() => expandShorthands([["padding", ""]])).not.toThrow();
+  expect(() => expandShorthands([["margin-inline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["margin-block", ""]])).not.toThrow();
+  expect(() => expandShorthands([["padding-inline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["padding-block", ""]])).not.toThrow();
+  expect(() => expandShorthands([["inset", ""]])).not.toThrow();
+  expect(() => expandShorthands([["inset-inline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["inset-block", ""]])).not.toThrow();
+  expect(() => expandShorthands([["gap", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid-gap", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid-row-gap", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid-column-gap", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid-area", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid-row", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid-column", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid-template", ""]])).not.toThrow();
+  expect(() => expandShorthands([["grid", ""]])).not.toThrow();
+  expect(() => expandShorthands([["flex", ""]])).not.toThrow();
+  expect(() => expandShorthands([["flex-flow", ""]])).not.toThrow();
+  expect(() => expandShorthands([["place-content", ""]])).not.toThrow();
+  expect(() => expandShorthands([["place-items", ""]])).not.toThrow();
+  expect(() => expandShorthands([["place-self", ""]])).not.toThrow();
+  expect(() => expandShorthands([["columns", ""]])).not.toThrow();
+  expect(() => expandShorthands([["column-rule", ""]])).not.toThrow();
+  expect(() => expandShorthands([["list-style", ""]])).not.toThrow();
+  expect(() => expandShorthands([["animation", ""]])).not.toThrow();
+  expect(() => expandShorthands([["animation-range", ""]])).not.toThrow();
+  expect(() => expandShorthands([["transition", ""]])).not.toThrow();
+  expect(() => expandShorthands([["offset", ""]])).not.toThrow();
+  expect(() => expandShorthands([["scroll-timeline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["view-timeline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["scroll-margin", ""]])).not.toThrow();
+  expect(() => expandShorthands([["scroll-padding", ""]])).not.toThrow();
+  expect(() => expandShorthands([["scroll-margin-inline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["scroll-margin-block", ""]])).not.toThrow();
+  expect(() => expandShorthands([["scroll-padding-inline", ""]])).not.toThrow();
+  expect(() => expandShorthands([["scroll-padding-block", ""]])).not.toThrow();
+  expect(() => expandShorthands([["overflow", ""]])).not.toThrow();
+  expect(() => expandShorthands([["container", ""]])).not.toThrow();
+  expect(() =>
+    expandShorthands([["contain-intrinsic-size", ""]])
+  ).not.toThrow();
+  expect(() => expandShorthands([["white-space", ""]])).not.toThrow();
+  expect(() => expandShorthands([["text-wrap", ""]])).not.toThrow();
+  expect(() => expandShorthands([["caret", ""]])).not.toThrow();
+  expect(() => expandShorthands([["background-position", ""]])).not.toThrow();
+  expect(() => expandShorthands([["background", ""]])).not.toThrow();
+  expect(() => expandShorthands([["overscroll-behavior", ""]])).not.toThrow();
+  expect(() => expandShorthands([["position-try", ""]])).not.toThrow();
+});

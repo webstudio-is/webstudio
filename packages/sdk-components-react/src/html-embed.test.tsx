@@ -2,17 +2,12 @@
  * @jest-environment jsdom
  */
 import * as React from "react";
-// import ReactDOM from "react-dom";
 import ReactDOMServer from "react-dom/server";
 import { test, expect, describe } from "@jest/globals";
-import "@testing-library/jest-dom/jest-globals";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { __testing__, HtmlEmbed } from "./html-embed";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { cartesian } from "./test-utils/cartesian";
-
-// @todo: Find a better way to fix "detail: ReferenceError: React is not defined" (can be fixed by using import * as React from "react"; in components)
-global.React = React;
 
 const scriptTestIdPrefix = __testing__.scriptTestIdPrefix;
 const SCRIPT_TEST_ID = "script-a";
@@ -72,40 +67,38 @@ describe("Published site", () => {
     // Server rendering
     document.body.appendChild(container);
     container.innerHTML = ReactDOMServer.renderToString(ui);
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
     // Hydration
     render(ui, { container, hydrate: true });
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
     // Force page rerender
     fireEvent.click(screen.getByText("refresh:0"));
-    expect(screen.getByText("refresh:1")).toBeInTheDocument();
+    expect(screen.getByText("refresh:1")).toBeTruthy();
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
-    expect(
-      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
     expect(screen.queryByTestId(SCRIPT_TEST_ID)?.dataset.page).toEqual("0");
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
     // Force page change
     fireEvent.click(screen.getByText("page:0"));
     expect(screen.getByText("page:1")).toBeTruthy();
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
     // Script has changed
     expect(
       screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)?.dataset.page
     ).toEqual("1");
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
   });
 
   /**
@@ -120,44 +113,41 @@ describe("Published site", () => {
     // Server rendering
     document.body.appendChild(container);
     container.innerHTML = ReactDOMServer.renderToString(ui);
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
-    ).not.toBeInTheDocument();
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).not.toBeTruthy();
 
     // Hydration
     render(ui, { container, hydrate: true });
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
     // Force page rerender
     fireEvent.click(screen.getByText("refresh:0"));
-    expect(screen.getByText("refresh:1")).toBeInTheDocument();
+    expect(screen.getByText("refresh:1")).toBeTruthy();
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
     expect(
       screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)?.dataset.page
     ).toEqual("0");
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
     // Force page change
     fireEvent.click(screen.getByText("page:0"));
-    expect(screen.getByText("page:1")).toBeTruthy();
-
+    expect(screen.getByText("page:1")).toBeTruthy;
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
     expect(
       screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)?.dataset.page
     ).toEqual("1");
-    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
   });
 });
 
@@ -194,22 +184,18 @@ describe("Builder renderer= canvas | preview", () => {
       // Wait execute await task(); to be executed (if exists)
       await Promise.resolve();
 
-      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
-      expect(
-        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
-      ).not.toBeInTheDocument();
-      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
       fireEvent.click(screen.getByText("refresh:0"));
-      expect(screen.getByText("refresh:1")).toBeInTheDocument();
+      expect(screen.getByText("refresh:1")).toBeTruthy();
       // Wait execute await task(); to be executed (if exists)
       await Promise.resolve();
 
-      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
-      expect(
-        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
-      ).not.toBeInTheDocument();
-      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
     }
   );
 
@@ -248,22 +234,18 @@ describe("Builder renderer= canvas | preview", () => {
       // Wait execute await task(); to be executed (if exists)
       await Promise.resolve();
 
-      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
-      ).toBeInTheDocument();
-      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
       fireEvent.click(screen.getByText("refresh:0"));
-      expect(screen.getByText("refresh:1")).toBeInTheDocument();
+      expect(screen.getByText("refresh:1")).toBeTruthy();
       // Wait execute await task(); to be executed (if exists)
       await Promise.resolve();
 
-      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
-      ).toBeInTheDocument();
-      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
 
       document.body.removeChild(container);
     }
@@ -314,22 +296,18 @@ describe("Builder renderer= canvas | preview", () => {
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
 
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
 
     // Force page rerender
     fireEvent.click(screen.getByText("code:0"));
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
 
-    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
     // Code has changed, new script processed
-    expect(
-      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID_2)
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID_2)).toBeTruthy();
   });
 
   test.each(["", "   "])("Placeholder is shown if code is %p", async (code) => {
@@ -347,6 +325,6 @@ describe("Builder renderer= canvas | preview", () => {
 
     expect(
       screen.queryByText(`Open the "Settings" panel to insert HTML code.`)
-    ).toBeInTheDocument();
+    ).toBeTruthy();
   });
 });

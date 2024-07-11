@@ -28,6 +28,7 @@ import {
   convertIndividualTransitionToLayers,
 } from "./transition-utils";
 import type { StyleProperty } from "@webstudio-is/css-engine";
+import { getStyleSource } from "../../shared/style-info";
 
 const label = "Transitions";
 const initialTransition = "opacity 200ms ease 0s";
@@ -39,6 +40,13 @@ export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;
   const [isOpen, setIsOpen] = useState(true);
   const extractedProperties = getTransitionProperties(currentStyle);
+  const propertyValue = currentStyle?.["transitionProperty"]?.value;
+  const sectionStyleSource =
+    propertyValue?.type === "unparsed" ||
+    propertyValue?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle["transitionProperty"]);
+
   const layers = useMemo(
     () => convertIndividualTransitionToLayers(extractedProperties),
     [extractedProperties]
@@ -87,7 +95,11 @@ export const Section = (props: SectionProps) => {
             style={currentStyle}
             description="Animate the transition between states on this instance."
             properties={properties}
-            label={<SectionTitleLabel>{label}</SectionTitleLabel>}
+            label={
+              <SectionTitleLabel color={sectionStyleSource}>
+                {label}
+              </SectionTitleLabel>
+            }
             onReset={() =>
               deleteTransitionProperties({
                 createBatchUpdate,
