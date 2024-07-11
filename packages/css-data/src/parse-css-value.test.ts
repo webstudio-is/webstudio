@@ -524,3 +524,61 @@ test("parses and returns invalid for invalid translate values", () => {
     value: "100%, 200%",
   });
 });
+
+test("parses a valid translate value", () => {
+  expect(parseCssValue("scale", "1.5")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "unit",
+        value: 1.5,
+        unit: "number",
+      },
+    ],
+  });
+
+  expect(parseCssValue("scale", "5 10 15")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "unit",
+        value: 5,
+        unit: "number",
+      },
+      {
+        type: "unit",
+        value: 10,
+        unit: "number",
+      },
+      {
+        type: "unit",
+        value: 15,
+        unit: "number",
+      },
+    ],
+  });
+
+  expect(parseCssValue("scale", "50%")).toEqual({
+    type: "tuple",
+    value: [{ type: "unit", value: 50, unit: "%" }],
+  });
+});
+
+test("throws error for invalid scale proeprty values", () => {
+  expect(parseCssValue("scale", "10 foo")).toEqual({
+    type: "invalid",
+    value: "10 foo",
+  });
+  expect(parseCssValue("scale", "5 10 15 20")).toEqual({
+    type: "invalid",
+    value: "5 10 15 20",
+  });
+  expect(parseCssValue("scale", "5, 15")).toEqual({
+    type: "invalid",
+    value: "5, 15",
+  });
+  expect(parseCssValue("scale", "5px")).toEqual({
+    type: "invalid",
+    value: "5px",
+  });
+});

@@ -19,6 +19,7 @@ import {
   parseShadow,
   parseTranslate,
   parseTransform,
+  parseScale,
 } from "./property-parsers";
 
 export const cssTryParseValue = (input: string) => {
@@ -135,6 +136,10 @@ export const parseCssValue = (
       // none is not valid layer keyword
       return { type: "unparsed", value: potentialKeyword };
     }
+  }
+
+  if (property === "scale") {
+    return parseScale(input);
   }
 
   const invalidValue = {
