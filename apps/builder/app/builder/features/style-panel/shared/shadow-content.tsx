@@ -9,7 +9,6 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   extractShadowProperties,
-  parseShadow,
   type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
 import {
@@ -36,6 +35,7 @@ import type {
   SetProperty,
   StyleUpdateOptions,
 } from "../shared/use-style-data";
+import { parseCssFragment } from "./parse-css-fragment";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -131,16 +131,16 @@ export const ShadowContent = ({
     if (intermediateValue === undefined) {
       return;
     }
-    const layers = parseShadow(property, intermediateValue.value);
-    if (layers.type === "invalid") {
-      setIntermediateValue({
-        type: "invalid",
-        value: intermediateValue.value,
-      });
+    const parsed = parseCssFragment(intermediateValue.value, property);
+    const parsedValue = parsed.get(property);
+    if (parsedValue?.type === "layers") {
+      onEditLayer(index, parsedValue, { isEphemeral: false });
       return;
     }
-
-    onEditLayer(index, layers, { isEphemeral: false });
+    setIntermediateValue({
+      type: "invalid",
+      value: intermediateValue.value,
+    });
   };
 
   const handlePropertyChange = (

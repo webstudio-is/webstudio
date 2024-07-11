@@ -1,5 +1,5 @@
 import type { InvalidValue, StyleValue } from "@webstudio-is/css-engine";
-import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
+import { parseCssValue } from "@webstudio-is/css-data";
 import {
   Flex,
   TextArea,
@@ -9,6 +9,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type { ControlProps } from "../../controls";
 import { NonResetablePropertyName } from "../../shared/property-name";
+import { parseCssFragment } from "../../shared/parse-css-fragment";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -62,9 +63,9 @@ export const BackgroundGradient = (
       return;
     }
 
-    const { backgroundImage, backgroundColor } = parseBackground(
-      intermediateValue.value
-    );
+    const parsed = parseCssFragment(intermediateValue.value, "background");
+    const backgroundImage = parsed.get("backgroundImage");
+    const backgroundColor = parsed.get("backgroundColor");
     const [layer] =
       backgroundImage?.type === "layers"
         ? backgroundImage.value

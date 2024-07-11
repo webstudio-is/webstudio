@@ -1,4 +1,4 @@
-import { InvalidValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { InvalidValue } from "@webstudio-is/css-engine";
 import {
   TextArea,
   textVariants,
@@ -13,11 +13,9 @@ import { useRef, useState, useEffect } from "react";
 import type { ControlProps } from "../../controls";
 import { useStore } from "@nanostores/react";
 import { $assets } from "~/shared/nano-states";
-import { parseCssValue } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-
-const property: StyleProperty = "backgroundImage";
+import { parseCssFragment } from "../../shared/parse-css-fragment";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -37,7 +35,7 @@ export const BackgroundImage = (
 ) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const assets = useStore($assets);
-  const styleValue = props.currentStyle[property]?.value;
+  const styleValue = props.currentStyle.backgroundImage?.value;
   const [errors, setErrors] = useState<string[]>([]);
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
@@ -88,8 +86,10 @@ export const BackgroundImage = (
       value: value,
     });
 
-    const newValue = parseCssValue(property, value);
-    if (newValue.type === "invalid") {
+    const parsed = parseCssFragment(value, "background");
+    const newValue = parsed.get("backgroundImage");
+
+    if (newValue === undefined || newValue?.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
         value: value,
@@ -100,7 +100,7 @@ export const BackgroundImage = (
     const [layer] = newValue.type === "layers" ? newValue.value : [newValue];
     if (layer?.type === "keyword") {
       setIntermediateValue(undefined);
-      props.setProperty(property)(layer, options);
+      props.setProperty("backgroundImage")(layer, options);
     }
     if (layer?.type !== "image" || layer.value.type !== "url") {
       setIntermediateValue({
@@ -112,7 +112,7 @@ export const BackgroundImage = (
     const url = layer.value.url;
 
     if (isAbsoluteURL(url) === true) {
-      props.setProperty(property)(layer, options);
+      props.setProperty("backgroundImage")(layer, options);
     } else {
       const usedAsset = Array.from($assets.get().values()).find(
         (asset) => asset.type === "image" && asset.name === url
@@ -128,7 +128,7 @@ export const BackgroundImage = (
       }
 
       setErrors([]);
-      props.setProperty(property)(
+      props.setProperty("backgroundImage")(
         {
           type: "image",
           value: {
@@ -189,7 +189,7 @@ export const BackgroundImage = (
             }
 
             if (event.key === "Escape") {
-              props.deleteProperty(property, { isEphemeral: true });
+              props.deleteProperty("backgroundImage", { isEphemeral: true });
               setIntermediateValue(undefined);
               event.preventDefault();
             }

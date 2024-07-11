@@ -7,6 +7,8 @@ import {
   type KeywordValue,
   type UnitValue,
   type StyleProperty,
+  type StyleValue,
+  type TupleValueItem,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -39,9 +41,9 @@ import {
   defaultTransitionTimingFunction,
   defaultTransitionDelay,
   deleteTransitionLayer,
-  parseTransitionShorthandToLayers,
 } from "./transition-utils";
 import type { StyleInfo } from "../../shared/style-info";
+import { parseCssFragment } from "../../shared/parse-css-fragment";
 
 type TransitionContentProps = {
   index: number;
@@ -63,6 +65,9 @@ type TransitionContentProps = {
 // So, we need to use the shorthand property to validate the layer too.
 // We removed transition from properties list to drop support from advanced tab and so the typecasting.
 const shortHandTransitionProperty = "transition" as StyleProperty;
+
+const getLayer = (value: undefined | StyleValue, index: number) =>
+  value?.type === "layers" ? value.value[index] : undefined;
 
 export const TransitionContent = ({
   layer,
@@ -95,19 +100,27 @@ export const TransitionContent = ({
       return;
     }
 
-    const layerValue = parseCssValue(
-      shortHandTransitionProperty,
-      intermediateValue.value
-    );
-    if (layerValue.type === "invalid") {
+    const parsed = parseCssFragment(intermediateValue.value, "transition");
+    const tuple: TupleValue = {
+      type: "tuple",
+      value: [
+        getLayer(parsed.get("transitionProperty"), 0),
+        getLayer(parsed.get("transitionDuration"), 0),
+        getLayer(parsed.get("transitionTimingFunction"), 0),
+        getLayer(parsed.get("transitionDelay"), 0),
+        // @todo getLayer(parsed.get("transitionBehavior"), 0),
+      ].filter(Boolean) as TupleValueItem[],
+    };
+    if (tuple.value.length === 0) {
       setIntermediateValue({
         type: "invalid",
         value: intermediateValue.value,
       });
-      return;
     }
-
-    const layers = parseTransitionShorthandToLayers(intermediateValue.value);
+    const layers: LayersValue = {
+      type: "layers",
+      value: [tuple],
+    };
 
     onEditLayer(index, layers, options);
   };

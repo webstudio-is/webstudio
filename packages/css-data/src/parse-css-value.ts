@@ -14,13 +14,11 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import {
-  parseFilter,
-  parseShadow,
-  parseTranslate,
-  parseTransform,
-  parseScale,
-} from "./property-parsers";
+import { parseTranslate } from "./property-parsers/translate";
+import { parseTransform } from "./property-parsers/transform";
+import { parseScale } from "./property-parsers/scale";
+import { parseFilter } from "./property-parsers/filter";
+import { parseShadow } from "./property-parsers/shadows";
 
 export const cssTryParseValue = (input: string) => {
   try {
