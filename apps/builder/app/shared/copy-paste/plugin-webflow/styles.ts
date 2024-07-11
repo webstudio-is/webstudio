@@ -424,7 +424,7 @@ const mergeComboStyles = (styles: Array<WfStyle>) => {
     mergedStyle.styleLess += style.styleLess;
     mergedStyle.name += "." + style.name;
     for (const key in style.variants) {
-      if (key in style.variants === false) {
+      if (key in mergedStyle.variants === false) {
         mergedStyle.variants[key] = { styleLess: "" };
       }
       mergedStyle.variants[key].styleLess += style.variants[key];
