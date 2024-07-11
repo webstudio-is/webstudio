@@ -1,12 +1,6 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
-  "include": [
-    "app",
-    "**/*.ts",
-    "**/*.tsx",
-    "../../@types/**/*.d.ts",
-    "./middleware.js"
-  ],
+  "include": ["app", "**/*.ts", "**/*.tsx", "../../@types/**/*.d.ts"],
 
   "compilerOptions": {
     "types": ["@remix-run/node", "vite/client"],
