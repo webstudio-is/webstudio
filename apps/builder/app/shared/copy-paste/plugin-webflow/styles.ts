@@ -421,21 +421,11 @@ const mergeComboStyles = (styles: Array<WfStyle>) => {
       mergedStyle = { variants: {}, ...style };
       continue;
     }
-    const mergedStyle = { variants: {}, ...style };
-    mergedStyles.push(mergedStyle);
-    for (const childId of style.children ?? []) {
-      const childStyle = styles.find((style) => style._id === childId);
-      if (childStyle) {
-        mergedClasses.add(style.name);
-        mergedClasses.add(childStyle.name);
-        mergedStyle.styleLess += childStyle.styleLess;
-        for (const key in childStyle.variants) {
-          if (key in mergedStyle.variants === false) {
-            mergedStyle.variants[key] = { styleLess: "" };
-          }
-          mergedStyle.variants[key].styleLess += childStyle.variants[key];
-        }
-        mergedStyle.name += "." + childStyle.name;
+    mergedStyle.styleLess += style.styleLess;
+    mergedStyle.name += "." + style.name;
+    for (const key in style.variants) {
+      if (key in style.variants === false) {
+        mergedStyle.variants[key] = { styleLess: "" };
       }
       mergedStyle.variants[key].styleLess += style.variants[key];
     }
