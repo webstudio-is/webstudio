@@ -2,7 +2,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 // Imported theme https://github.com/tailwindlabs/tailwindcss/blob/e0c52a9332a64ef7eb0ba23d2a0fd5a16fe57ab7/stubs/config.full.js
 import defaultTheme from "tailwindcss/defaultTheme";
 import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
-import { parseCssValue, parseShadow } from "@webstudio-is/css-data";
+import { parseCssValue } from "@webstudio-is/css-data";
 import type { ResolvableTo } from "tailwindcss/types/config";
 import { colors as colorOverrides } from "../src/theme/tailwind-colors";
 
@@ -158,7 +158,7 @@ const generatedThemeData: GeneratedThemeItem[] = [
     values: Object.fromEntries(
       Object.entries(theme.boxShadow).map(([name, value]) => [
         name,
-        parseShadow("boxShadow", value),
+        parseCssValue("boxShadow", value),
       ])
     ),
   },
