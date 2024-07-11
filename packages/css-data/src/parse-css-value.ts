@@ -15,6 +15,7 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 import { parseFilter, parseShadow } from "./property-parsers";
+import { parseTransform } from "./property-parsers/transform";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -153,6 +154,10 @@ export const parseCssValue = (
       `Can't parse css property "${property}" with value "${input}"`
     );
     return invalidValue;
+  }
+
+  if (property === "transform") {
+    return parseTransform(input);
   }
 
   if (property === "filter" || property === "backdropFilter") {

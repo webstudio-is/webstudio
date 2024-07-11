@@ -374,3 +374,86 @@ test("parse unknown properties as unparsed", () => {
     }
   );
 });
+
+test("parse transform property as tuple", () => {
+  expect(
+    parseCssValue("transform", "rotateX(45deg) rotateY(30deg) rotateZ(60deg)")
+  ).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "function",
+        name: "rotateX",
+        args: {
+          type: "tuple",
+          value: [{ type: "unit", value: 45, unit: "deg" }],
+        },
+      },
+      {
+        type: "function",
+        name: "rotateY",
+        args: {
+          type: "tuple",
+          value: [{ type: "unit", value: 30, unit: "deg" }],
+        },
+      },
+      {
+        type: "function",
+        name: "rotateZ",
+        args: {
+          type: "tuple",
+          value: [{ type: "unit", value: 60, unit: "deg" }],
+        },
+      },
+    ],
+  });
+
+  expect(parseCssValue("transform", "skew(30deg, 20deg)")).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "function",
+        name: "skew",
+        args: {
+          type: "layers",
+          value: [
+            { type: "unit", value: 30, unit: "deg" },
+            { type: "unit", value: 20, unit: "deg" },
+          ],
+        },
+      },
+    ],
+  });
+
+  expect(
+    parseCssValue("transform", "translate3d(-100px, 50px, -150px)")
+  ).toEqual({
+    type: "tuple",
+    value: [
+      {
+        type: "function",
+        name: "translate3d",
+        args: {
+          type: "layers",
+          value: [
+            { type: "unit", value: -100, unit: "px" },
+            { type: "unit", value: 50, unit: "px" },
+            { type: "unit", value: -150, unit: "px" },
+          ],
+        },
+      },
+    ],
+  });
+});
+
+test("parses transform values and returns invalid for invalid values", () => {
+  expect(parseCssValue("transform", "scale(1.5, 50px)")).toEqual({
+    type: "invalid",
+    value: "scale(1.5, 50px)",
+  });
+
+  expect(parseCssValue("transform", "matrix(1, 0.5, -0.5, 1, 100)")).toEqual({
+    type: "invalid",
+    value: "matrix(1, 0.5, -0.5, 1, 100)",
+  });
+});
