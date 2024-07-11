@@ -411,33 +411,26 @@ const mapComponentAndPresetStyles = (
   return presetStyles;
 };
 
+// Merges wf styles that are combo classes into a single style.
 const mergeComboStyles = (styles: Array<WfStyle>) => {
-  const mergedStyles: Array<WfStyle> = [];
   const mergedClasses = new Set<string>();
+  let mergedStyle;
   for (const style of styles) {
-    if (style.comb) {
-      // Child style can be skipped, as it will be already merged into parent
+    mergedClasses.add(style.name);
+    if (mergedStyle === undefined) {
+      mergedStyle = { variants: {}, ...style };
       continue;
     }
-    const mergedStyle = { variants: {}, ...style };
-    mergedStyles.push(mergedStyle);
-    for (const childId of style.children ?? []) {
-      const childStyle = styles.find((style) => style._id === childId);
-      if (childStyle) {
-        mergedClasses.add(style.name);
-        mergedClasses.add(childStyle.name);
-        mergedStyle.styleLess += childStyle.styleLess;
-        for (const key in childStyle.variants) {
-          if (key in mergedStyle.variants === false) {
-            mergedStyle.variants[key] = { styleLess: "" };
-          }
-          mergedStyle.variants[key].styleLess += childStyle.variants[key];
-        }
-        mergedStyle.name += "." + childStyle.name;
+    mergedStyle.styleLess += style.styleLess;
+    mergedStyle.name += "." + style.name;
+    for (const key in style.variants) {
+      if (key in style.variants === false) {
+        mergedStyle.variants[key] = { styleLess: "" };
       }
+      mergedStyle.variants[key].styleLess += style.variants[key];
     }
   }
-  return { mergedStyles, mergedClasses };
+  return { mergedStyle, mergedClasses: Array.from(mergedClasses) };
 };
 
 export const addStyles = async ({
@@ -509,48 +502,57 @@ export const addStyles = async ({
       continue;
     }
 
-    let wfNodeStyles = wfNode.classes
+    const wfNodeStyles = wfNode.classes
       .map((classId) => wfStyles.get(classId))
       .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
 
     const comboStylesMerge = mergeComboStyles(wfNodeStyles);
-    wfNodeStyles = comboStylesMerge.mergedStyles;
-
-    for (const wfStyle of wfNodeStyles) {
-      if (instance && instance.label === undefined) {
-        instance.label = wfStyle.name;
-      }
-      const variants = new Map();
-      variants.set(
-        "base",
-        replaceAtImages(replaceAtVariables(wfStyle.styleLess), wfAssets)
-      );
-      const wfVariants = wfStyle.variants ?? {};
-      Object.keys(wfVariants).forEach((breakpointName) => {
-        const variant = wfVariants[breakpointName as keyof typeof wfVariants];
-        if (variant && "styleLess" in variant) {
-          variants.set(
-            breakpointName,
-            replaceAtImages(replaceAtVariables(variant.styleLess), wfAssets)
-          );
-        }
-      });
-
-      // We need to see if the individual classes have already existed in the system
-      // and if so, add them to the selection, because webflow relies on combo class logic and we merge the combo into one.
-      for (const childClass of comboStylesMerge.mergedClasses) {
-        const wsStyleSourceId = await generateStyleSourceId(childClass);
-        if ($styleSources.get().has(wsStyleSourceId)) {
-          addStyleSource(wsStyleSourceId, instanceId, fragment);
-        }
-      }
-      addNodeTokenStyles({
-        styleSourceId: await generateStyleSourceId(wfStyle.name),
-        name: wfStyle.name,
-        variants,
-        instanceId,
-        fragment,
-      });
+    const wfStyle = comboStylesMerge.mergedStyle;
+    if (wfStyle === undefined) {
+      continue;
     }
+    if (instance && instance.label === undefined) {
+      instance.label = wfStyle.name;
+    }
+
+    const variants = new Map();
+    variants.set(
+      "base",
+      replaceAtImages(replaceAtVariables(wfStyle.styleLess), wfAssets)
+    );
+    const wfVariants = wfStyle.variants;
+    Object.keys(wfVariants).forEach((breakpointName) => {
+      const variant = wfVariants[breakpointName as keyof typeof wfVariants];
+      if (variant && "styleLess" in variant) {
+        variants.set(
+          breakpointName,
+          replaceAtImages(replaceAtVariables(variant.styleLess), wfAssets)
+        );
+      }
+    });
+
+    // Produce all possible combinatios of combo classes so we can check later if they alredy exist.
+    // This is needed to achieve the same end-result as with combo-classes in webflow.
+    const allComboClasses = comboStylesMerge.mergedClasses.flatMap((name1) =>
+      comboStylesMerge.mergedClasses.map((name2) => `${name1}.${name2}`)
+    );
+    const allClasses = [...comboStylesMerge.mergedClasses, ...allComboClasses];
+
+    // We need to see if the individual classes have already existed in the system
+    // and if so, add them to the selection, because webflow relies on combo class logic and we merge the combo into one.
+    for (const className of allClasses) {
+      const wsStyleSourceId = await generateStyleSourceId(className);
+      if ($styleSources.get().has(wsStyleSourceId)) {
+        addStyleSource(wsStyleSourceId, instanceId, fragment);
+      }
+    }
+
+    addNodeTokenStyles({
+      styleSourceId: await generateStyleSourceId(wfStyle.name),
+      name: wfStyle.name,
+      variants,
+      instanceId,
+      fragment,
+    });
   }
 };
