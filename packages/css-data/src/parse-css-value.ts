@@ -14,7 +14,13 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { parseFilter, parseScale, parseShadow } from "./property-parsers";
+import {
+  parseFilter,
+  parseShadow,
+  parseTranslate,
+  parseTransform,
+  parseScale,
+} from "./property-parsers";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -157,6 +163,14 @@ export const parseCssValue = (
       `Can't parse css property "${property}" with value "${input}"`
     );
     return invalidValue;
+  }
+
+  if (property === "translate") {
+    return parseTranslate(input);
+  }
+
+  if (property === "transform") {
+    return parseTransform(input);
   }
 
   if (property === "filter" || property === "backdropFilter") {
