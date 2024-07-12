@@ -12,8 +12,6 @@ import {
   deleteTransitionLayer,
   editTransitionLayer,
   getTransitionProperties,
-  hideTransitionLayer,
-  swapTransitionLayers,
 } from "./transition-utils";
 import type { TransitionProperties } from "./transition-utils";
 import type { LayersValue } from "@webstudio-is/css-engine";
@@ -193,71 +191,6 @@ describe("transition-utils", () => {
     expect(published).toBe(true);
     expect(toValue(layers)).toMatchInlineSnapshot(
       `"opacity 0ms ease 0ms, width 0ms ease-in-out 0ms"`
-    );
-  });
-
-  test("hide a layer from transition properties", () => {
-    addDefaultTransitionLayer({
-      createBatchUpdate,
-      currentStyle: styleInfo,
-    });
-
-    addDefaultTransitionLayer({
-      createBatchUpdate,
-      currentStyle: styleInfo,
-    });
-
-    hideTransitionLayer({
-      index: 1,
-      createBatchUpdate,
-      currentStyle: styleInfo,
-    });
-
-    const layers = convertIndividualTransitionToLayers(
-      getTransitionProperties(styleInfo)
-    );
-
-    expect(published).toBe(true);
-    expect(layers.value.length).toBe(2);
-    expect(toValue(layers)).toMatchInlineSnapshot(`"opacity 0ms ease 0ms"`);
-  });
-
-  test("swap layer positions in transitions", () => {
-    addDefaultTransitionLayer({ currentStyle: styleInfo, createBatchUpdate });
-    addDefaultTransitionLayer({ currentStyle: styleInfo, createBatchUpdate });
-    editTransitionLayer({
-      currentStyle: styleInfo,
-      index: 1,
-      createBatchUpdate,
-      layers: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              { type: "keyword", value: "width" },
-              { type: "keyword", value: "ease-in-out" },
-            ],
-          },
-        ],
-      },
-      options: { isEphemeral: false },
-    });
-    swapTransitionLayers({
-      oldIndex: 1,
-      newIndex: 0,
-      currentStyle: styleInfo,
-      createBatchUpdate,
-    });
-
-    const layers = convertIndividualTransitionToLayers(
-      getTransitionProperties(styleInfo)
-    );
-
-    expect(published).toBe(true);
-    expect(layers.value.length).toBe(2);
-    expect(toValue(layers)).toMatchInlineSnapshot(
-      `"width 0ms ease-in-out 0ms, opacity 0ms ease 0ms"`
     );
   });
 });
