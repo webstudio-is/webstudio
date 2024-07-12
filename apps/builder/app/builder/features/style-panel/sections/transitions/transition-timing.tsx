@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import {
+  StyleValue,
   toValue,
   type FunctionValue,
   type KeywordValue,
@@ -26,7 +27,7 @@ import {
 } from "./transition-utils";
 
 type TransitionTimingProps = {
-  timing: KeywordValue | FunctionValue;
+  timing: StyleValue;
   onTimingSelection: (params: { timing: KeywordValue | FunctionValue }) => void;
 };
 
