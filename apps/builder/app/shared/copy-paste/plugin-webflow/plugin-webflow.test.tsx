@@ -2628,9 +2628,9 @@ describe("Styles", () => {
         instanceId: expect.any(String),
         values: [
           "uu1p3Xdvlq_AZOxnzDvAv",
+          "uumXb7vHOnzTr-4SIW-wJ",
           "uuBw1PRC_uE8RhTmwxaH8",
           "uuORexg4BOrRXBJZgB80_",
-          "uumXb7vHOnzTr-4SIW-wJ",
         ],
       },
     ]);
