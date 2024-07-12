@@ -424,7 +424,7 @@ const mergeComboStyles = (styles: Array<WfStyle>) => {
     mergedStyle.styleLess += style.styleLess;
     mergedStyle.name += "." + style.name;
     for (const key in style.variants) {
-      if (key in style.variants === false) {
+      if (key in mergedStyle.variants === false) {
         mergedStyle.variants[key] = { styleLess: "" };
       }
       mergedStyle.variants[key].styleLess += style.variants[key];
@@ -531,6 +531,14 @@ export const addStyles = async ({
       }
     });
 
+    addNodeTokenStyles({
+      styleSourceId: await generateStyleSourceId(wfStyle.name),
+      name: wfStyle.name,
+      variants,
+      instanceId,
+      fragment,
+    });
+
     // Produce all possible combinatios of combo classes so we can check later if they alredy exist.
     // This is needed to achieve the same end-result as with combo-classes in webflow.
     const allComboClasses = comboStylesMerge.mergedClasses.flatMap((name1) =>
@@ -546,13 +554,5 @@ export const addStyles = async ({
         addStyleSource(wsStyleSourceId, instanceId, fragment);
       }
     }
-
-    addNodeTokenStyles({
-      styleSourceId: await generateStyleSourceId(wfStyle.name),
-      name: wfStyle.name,
-      variants,
-      instanceId,
-      fragment,
-    });
   }
 };
