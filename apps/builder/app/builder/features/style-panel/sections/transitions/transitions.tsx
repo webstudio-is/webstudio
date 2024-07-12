@@ -19,6 +19,10 @@ import {
   deleteTransitionProperties,
   addDefaultTransitionLayer,
   findTimingFunctionFromValue,
+  defaultTransitionProperty,
+  defaultTransitionDuration,
+  defaultTransitionTimingFunction,
+  defaultTransitionDelay,
 } from "./transition-utils";
 import {
   toValue,
@@ -45,21 +49,23 @@ const getLayerLabel = ({
   index: number;
 }) => {
   // show label without hidden replacement
-  const propertyLayer = getLayer(style.transitionProperty?.value, index);
-  const property = humanizeString(
-    toValue(propertyLayer ? { ...propertyLayer, hidden: false } : undefined)
+  const propertyLayer =
+    getLayer(style.transitionProperty?.value, index) ??
+    defaultTransitionProperty;
+  const property = humanizeString(toValue({ ...propertyLayer, hidden: false }));
+  const duration = toValue(
+    getLayer(style.transitionDuration?.value, index) ??
+      defaultTransitionDuration
   );
-  const duration = toValue(getLayer(style.transitionDuration?.value, index));
-  const timingFunctionLayer = getLayer(
-    style.transitionTimingFunction?.value,
-    index
-  );
-  const timingFunction = toValue(
-    timingFunctionLayer ? { ...timingFunctionLayer, hidden: false } : undefined
-  );
+  const timingFunctionLayer =
+    getLayer(style.transitionTimingFunction?.value, index) ??
+    defaultTransitionTimingFunction;
+  const timingFunction = toValue({ ...timingFunctionLayer, hidden: false });
   const humanizedTimingFunction =
     findTimingFunctionFromValue(timingFunction) ?? timingFunction;
-  const delay = toValue(getLayer(style.transitionDelay?.value, index));
+  const delay = toValue(
+    getLayer(style.transitionDelay?.value, index) ?? defaultTransitionDelay
+  );
   return `${property}: ${duration} ${humanizedTimingFunction} ${delay}`;
 };
 
