@@ -6,7 +6,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
@@ -15,7 +15,7 @@ import { getStyleSource } from "../../shared/style-info";
 import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
 import { addLayer } from "../../style-layer-utils";
-import { parseShadow } from "@webstudio-is/css-data";
+import { parseCssValue } from "@webstudio-is/css-data";
 import { ShadowContent } from "../../shared/shadow-content";
 
 export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
@@ -48,7 +48,7 @@ export const Section = (props: SectionProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseShadow(property, initialBoxShadow),
+                  parseCssValue(property, initialBoxShadow) as LayersValue,
                   currentStyle,
                   props.createBatchUpdate
                 );

@@ -1,6 +1,6 @@
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import {
   SectionTitle,
@@ -11,7 +11,7 @@ import {
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
-import { parseShadow } from "@webstudio-is/css-data";
+import { parseCssValue } from "@webstudio-is/css-data";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
@@ -48,7 +48,7 @@ export const Section = (props: SectionProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseShadow(property, initialTextShadow),
+                  parseCssValue(property, initialTextShadow) as LayersValue,
                   currentStyle,
                   createBatchUpdate
                 );
