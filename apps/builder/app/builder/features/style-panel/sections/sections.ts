@@ -15,6 +15,7 @@ import * as outline from "./outline/outline";
 import * as advanced from "./advanced/advanced";
 import * as textShadows from "./text-shadows/text-shadows";
 import * as backdropFilter from "./backdrop-filter/backdrop-filter";
+import * as transforms from "./transforms/transforms";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "./shared/section";
 
@@ -25,6 +26,7 @@ export const sections = new Map<
     Section: (props: SectionProps) => ReactNode;
   }
 >([
+  ["transfrom", transforms],
   ["layout", layout],
   ["flexChild", flexChild],
   ["listItem", listItem],
