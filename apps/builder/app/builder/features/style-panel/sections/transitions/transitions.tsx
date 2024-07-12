@@ -21,15 +21,13 @@ import {
   findTimingFunctionFromValue,
 } from "./transition-utils";
 import {
-  FunctionValue,
-  KeywordValue,
-  StyleValue,
   toValue,
+  type StyleValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
+import { humanizeString } from "~/shared/string-utils";
 import { RepeatedStyle } from "../../shared/repeated-style";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
-import { humanizeString } from "~/shared/string-utils";
 
 const label = "Transitions";
 export const properties = (
@@ -47,17 +45,18 @@ const getLayerLabel = ({
   index: number;
 }) => {
   // show label without hidden replacement
+  const propertyLayer = getLayer(style.transitionProperty?.value, index);
   const property = humanizeString(
-    toValue({
-      ...getLayer(style.transitionProperty?.value, index),
-      hidden: false,
-    } as KeywordValue)
+    toValue(propertyLayer ? { ...propertyLayer, hidden: false } : undefined)
   );
   const duration = toValue(getLayer(style.transitionDuration?.value, index));
-  const timingFunction = toValue({
-    ...getLayer(style.transitionTimingFunction?.value, index),
-    hidden: false,
-  } as FunctionValue);
+  const timingFunctionLayer = getLayer(
+    style.transitionTimingFunction?.value,
+    index
+  );
+  const timingFunction = toValue(
+    timingFunctionLayer ? { ...timingFunctionLayer, hidden: false } : undefined
+  );
   const humanizedTimingFunction =
     findTimingFunctionFromValue(timingFunction) ?? timingFunction;
   const delay = toValue(getLayer(style.transitionDelay?.value, index));
