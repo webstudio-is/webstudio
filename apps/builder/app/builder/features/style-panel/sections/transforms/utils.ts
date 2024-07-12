@@ -1,5 +1,19 @@
 import { parseCssValue } from "@webstudio-is/css-data";
 import type { SectionProps } from "../shared/section";
+import type {
+  StyleValue,
+  TupleValue,
+  TupleValueItem,
+} from "@webstudio-is/css-engine";
+import type {
+  SetProperty,
+  StyleUpdateOptions,
+} from "../../shared/use-style-data";
+
+export type TransformFloatingPanelContentProps = {
+  value: TupleValue;
+  setProperty: SetProperty;
+};
 
 export const transformPanels = [
   "translate",
@@ -11,11 +25,6 @@ export const transformPanels = [
 ] as const;
 
 export type TransformPanel = (typeof transformPanels)[number];
-
-export type TransformPropertySectionProps = SectionProps & {
-  panel: TransformPanel;
-  index: number;
-};
 
 export const addDefaultsForTransormSection = (props: {
   createBatchUpdate: SectionProps["createBatchUpdate"];
@@ -39,4 +48,17 @@ export const addDefaultsForTransormSection = (props: {
   batch.setProperty("backfaceVisibility")(backfaceVisibility);
 
   batch.publish();
+};
+
+export const updateTupleProperty = (
+  index: number,
+  newValue: TupleValueItem,
+  value: TupleValue
+): TupleValue => {
+  const newArray: TupleValueItem[] = [...value.value];
+  newArray.splice(index, 1, newValue);
+  return {
+    type: "tuple",
+    value: newArray,
+  };
 };

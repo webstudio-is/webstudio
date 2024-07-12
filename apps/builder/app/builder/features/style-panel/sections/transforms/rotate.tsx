@@ -1,7 +1,13 @@
 import { CssValueListItem, Label } from "@webstudio-is/design-system";
 import { useMemo } from "react";
 import { FunctionValue, toValue } from "@webstudio-is/css-engine";
-import type { TransformPropertySectionProps } from "./utils";
+import type { SectionProps } from "../shared/section";
+import { FloatingPanel } from "~/builder/shared/floating-panel";
+import { TransformPanelContent } from "./transfor-panel";
+import type {
+  TransformFloatingPanelContent,
+  TransformFloatingPanelContentProps,
+} from "./utils";
 
 const defaultRotateValue = (funcName: string): FunctionValue => ({
   type: "function",
@@ -9,9 +15,13 @@ const defaultRotateValue = (funcName: string): FunctionValue => ({
   args: { type: "tuple", value: [{ type: "unit", value: 0, unit: "deg" }] },
 });
 
-export const Rotate = (props: TransformPropertySectionProps) => {
+const label = "rotate";
+const index = 2;
+
+export const Rotate = (props: SectionProps) => {
   const { currentStyle } = props;
   const value = currentStyle["transform"]?.value;
+
   const properties = useMemo(() => {
     if (value?.type !== "tuple") {
       return;
@@ -38,21 +48,32 @@ export const Rotate = (props: TransformPropertySectionProps) => {
       rotateX,
       rotateY,
       rotateZ,
-      label: `Rotate: ${toValue(rotateX.args)} ${toValue(rotateY.args)} ${toValue(rotateZ.args)}`,
+      name: `Rotate: ${toValue(rotateX.args)} ${toValue(rotateY.args)} ${toValue(rotateZ.args)}`,
     };
   }, [value]);
 
-  if (properties === undefined) {
+  if (properties === undefined || value?.type !== "tuple") {
     return;
   }
 
-  const { label } = properties;
+  const { name } = properties;
 
   return (
-    <CssValueListItem
-      id={props.panel}
-      index={props.index}
-      label={<Label truncate>{label}</Label>}
-    ></CssValueListItem>
+    <FloatingPanel
+      title={label}
+      content={<TransformPanelContent panel={label} value={value} />}
+    >
+      <CssValueListItem
+        id={label}
+        index={index}
+        label={<Label truncate>{name}</Label>}
+      ></CssValueListItem>
+    </FloatingPanel>
   );
+};
+
+export const RotatePanelContent = (
+  props: TransformFloatingPanelContentProps
+) => {
+  return <div>Scale panel content</div>;
 };

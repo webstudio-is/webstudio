@@ -1,7 +1,10 @@
 import { CssValueListItem, Label } from "@webstudio-is/design-system";
 import { useMemo } from "react";
 import { FunctionValue, toValue } from "@webstudio-is/css-engine";
-import type { TransformPropertySectionProps } from "./utils";
+import type { TransformFloatingPanelContentProps } from "./utils";
+import type { SectionProps } from "../shared/section";
+import { FloatingPanel } from "~/builder/shared/floating-panel";
+import { TransformPanelContent } from "./transfor-panel";
 
 const defaultSkewValue = (funcName: string): FunctionValue => ({
   type: "function",
@@ -9,7 +12,10 @@ const defaultSkewValue = (funcName: string): FunctionValue => ({
   args: { type: "tuple", value: [{ type: "unit", value: 0, unit: "number" }] },
 });
 
-export const Skew = (props: TransformPropertySectionProps) => {
+const label = "skew";
+const index = 3;
+
+export const Skew = (props: SectionProps) => {
   const { currentStyle } = props;
   const value = currentStyle["transform"]?.value;
   const properties = useMemo(() => {
@@ -33,21 +39,32 @@ export const Skew = (props: TransformPropertySectionProps) => {
     return {
       skewX,
       skewY,
-      label: `Skew: ${toValue(skewX.args)} ${toValue(skewY.args)}`,
+      name: `Skew: ${toValue(skewX.args)} ${toValue(skewY.args)}`,
     };
   }, [value]);
 
-  if (properties === undefined) {
+  if (properties === undefined || value?.type !== "tuple") {
     return;
   }
 
-  const { label } = properties;
+  const { name } = properties;
 
   return (
-    <CssValueListItem
-      id={props.title}
-      index={props.index}
-      label={<Label truncate>{label}</Label>}
-    ></CssValueListItem>
+    <FloatingPanel
+      title={label}
+      content={<TransformPanelContent panel={label} value={value} />}
+    >
+      <CssValueListItem
+        id={label}
+        index={index}
+        label={<Label truncate>{name}</Label>}
+      ></CssValueListItem>
+    </FloatingPanel>
   );
+};
+
+export const SkewFloatingPanelContent = (
+  props: TransformFloatingPanelContentProps
+) => {
+  return <div>Skew floating panel content</div>;
 };

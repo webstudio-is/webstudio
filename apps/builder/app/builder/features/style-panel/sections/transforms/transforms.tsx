@@ -51,10 +51,10 @@ export const Section = (props: SectionProps) => {
       }
     >
       <CssValueListArrowFocus>
-        <Translate {...props} index={0} panel="translate" />
-        <Scale {...props} index={1} panel="scale" />
-        <Rotate {...props} index={2} panel="rotate" />
-        <Skew {...props} index={3} panel="skew" />
+        <Translate {...props} />
+        <Scale {...props} />
+        <Rotate {...props} />
+        <Skew {...props} />
       </CssValueListArrowFocus>
     </CollapsibleSectionRoot>
   );

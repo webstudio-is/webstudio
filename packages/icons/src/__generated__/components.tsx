@@ -4880,6 +4880,35 @@ export const WrapIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 WrapIcon.displayName = "WrapIcon";
 
+export const XAxisIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <g clipPath="url(#a)">
+          <path
+            fill="#231F20"
+            d="m14.857 8.712-2.904-2.925a.506.506 0 0 0-.726 0 .506.506 0 0 0 0 .726l2.055 2.076h-8.21V.511A.506.506 0 0 0 4.56 0a.506.506 0 0 0-.51.511v8.436L.101 14.039a.507.507 0 0 0 .41.818.54.54 0 0 0 .408-.194L4.847 9.6h8.394l-2.055 2.045a.506.506 0 0 0 0 .726.496.496 0 0 0 .716 0l2.945-2.945a.506.506 0 0 0 0-.726l.01.01Z"
+          />
+        </g>
+        <defs>
+          <clipPath id="a">
+            <rect width="16" height="16" fill="#fff" rx="2" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  }
+);
+XAxisIcon.displayName = "XAxisIcon";
+
 export const XIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4924,6 +4953,35 @@ export const XmlIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 XmlIcon.displayName = "XmlIcon";
 
+export const YAxisIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <g clipPath="url(#a)">
+          <path
+            fill="#231F20"
+            d="M14.504 9.67H6.099V2.762l2.015 2.026a.491.491 0 0 0 .709 0 .502.502 0 0 0 0-.72L5.927 1.153a.501.501 0 0 0-.72 0L2.313 4.028a.501.501 0 0 0 0 .72.501.501 0 0 0 .719 0l2.065-2.046v7.272l-3.99 5.216a.502.502 0 1 0 .8.607l3.9-5.114h8.688a.501.501 0 0 0 .506-.507.501.501 0 0 0-.506-.506h.01Z"
+          />
+        </g>
+        <defs>
+          <clipPath id="a">
+            <path fill="#fff" d="M1 1h14v15H1z" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  }
+);
+YAxisIcon.displayName = "YAxisIcon";
+
 export const Youtube1cIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4946,3 +5004,25 @@ export const Youtube1cIcon = forwardRef<SVGSVGElement, IconProps>(
   }
 );
 Youtube1cIcon.displayName = "Youtube1cIcon";
+
+export const ZAxisIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="#231F20"
+          d="M14.668 8.596H6.164V.512A.507.507 0 0 0 5.652 0a.507.507 0 0 0-.513.512v8.545L2.025 13.29v-2.982a.507.507 0 0 0-.513-.512.507.507 0 0 0-.512.512v4.17c0 .287.225.513.502.513h4.13V15a.507.507 0 0 0 .511-.512.507.507 0 0 0-.512-.513H2.793L5.99 9.621h8.668a.507.507 0 0 0 .512-.512.507.507 0 0 0-.512-.513h.01Z"
+        />
+      </svg>
+    );
+  }
+);
+ZAxisIcon.displayName = "ZAxisIcon";
