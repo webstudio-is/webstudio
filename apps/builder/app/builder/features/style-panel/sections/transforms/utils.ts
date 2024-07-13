@@ -4,14 +4,13 @@ import type {
   StyleValue,
   TupleValue,
   TupleValueItem,
+  UnitValue,
 } from "@webstudio-is/css-engine";
-import type {
-  SetProperty,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
+import type { SetProperty } from "../../shared/use-style-data";
+import type { StyleInfo } from "../../shared/style-info";
 
 export type TransformFloatingPanelContentProps = {
-  value: TupleValue;
+  currentStyle: StyleInfo;
   setProperty: SetProperty;
 };
 
@@ -48,6 +47,10 @@ export const addDefaultsForTransormSection = (props: {
   batch.setProperty("backfaceVisibility")(backfaceVisibility);
 
   batch.publish();
+};
+
+export const isUnitValue = (value: StyleValue): value is UnitValue => {
+  return value?.type === "unit" ? true : false;
 };
 
 export const updateTupleProperty = (

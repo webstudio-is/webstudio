@@ -4880,6 +4880,28 @@ export const WrapIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 WrapIcon.displayName = "WrapIcon";
 
+export const XAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="#231F20"
+          d="M6.596 5.843a.5.5 0 0 0-.974-.225l.974.225Zm.667-3.471a.5.5 0 1 0 .69.724l-.69-.724ZM2.658 7.529a.5.5 0 1 0 .684.73l-.684-.73Zm3.303-2.408.366-.34a.5.5 0 0 0-.708-.025l.342.365Zm2.395 3.324a.5.5 0 1 0 .734-.679l-.734.68ZM5.622 5.618c-.17.736-.26 1.545-.26 2.376h1c0-.76.082-1.494.234-2.15l-.974-.226Zm-.26 2.376c0 1.73.392 3.319 1.051 4.493.65 1.158 1.627 2.013 2.818 2.013v-1c-.668 0-1.376-.488-1.946-1.503-.56-.999-.924-2.413-.924-4.003h-1ZM9.23 14.5c1.19 0 2.167-.855 2.817-2.013.66-1.175 1.052-2.764 1.052-4.493h-1c0 1.59-.363 3.004-.924 4.003-.57 1.015-1.278 1.503-1.945 1.503v1ZM13.1 7.994c0-1.73-.393-3.316-1.052-4.488C11.397 2.351 10.42 1.5 9.23 1.5v1c.668 0 1.376.486 1.946 1.497.56.996.923 2.406.923 3.997h1ZM9.23 1.5c-.745 0-1.42.35-1.967.872l.69.724c.419-.4.859-.596 1.278-.596v-1ZM3.343 8.26l2.96-2.774-.683-.73-2.96 2.773.683.73Zm2.252-2.8 2.762 2.985.734-.679-2.763-2.984-.733.679Z"
+        />
+      </svg>
+    );
+  }
+);
+XAxisRotateIcon.displayName = "XAxisRotateIcon";
+
 export const XAxisIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4953,6 +4975,28 @@ export const XmlIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 XmlIcon.displayName = "XmlIcon";
 
+export const YAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="#231F20"
+          d="M10.374 9.875a.5.5 0 0 0-.226-.974l.226.974Zm2.534-2.318a.5.5 0 0 0 .718.697l-.718-.697ZM7.305 6.554a.5.5 0 0 0-.548.836l.548-.836Zm3.13 2.647.418.273a.5.5 0 0 0-.144-.692l-.274.419Zm-2.642 3.125a.5.5 0 1 0 .837.548l-.837-.548Zm2.355-3.425A9.566 9.566 0 0 1 8 9.137v1c.83 0 1.639-.091 2.374-.262l-.226-.974ZM8 9.137c-1.59 0-3.004-.357-4.002-.908C2.982 7.67 2.5 6.974 2.5 6.325h-1c0 1.18.86 2.142 2.015 2.78 1.172.647 2.759 1.032 4.485 1.032v-1ZM2.5 6.325c0-.65.483-1.348 1.499-1.912C4.997 3.86 6.41 3.5 8 3.5v-1c-1.727 0-3.314.388-4.486 1.039C2.358 4.179 1.5 5.145 1.5 6.325h1ZM8 3.5c1.59 0 3.004.356 4.002.907 1.016.561 1.498 1.255 1.498 1.905h1c0-1.18-.86-2.142-2.015-2.78C11.313 2.885 9.726 2.5 8 2.5v1Zm5.5 2.812c0 .407-.194.836-.592 1.245l.718.697c.521-.537.874-1.203.874-1.942h-1ZM6.757 7.39l3.404 2.23.548-.838-3.404-2.228-.548.836Zm3.26 1.537-2.224 3.4.837.547 2.223-3.4-.837-.547Z"
+        />
+      </svg>
+    );
+  }
+);
+YAxisRotateIcon.displayName = "YAxisRotateIcon";
+
 export const YAxisIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -5004,6 +5048,39 @@ export const Youtube1cIcon = forwardRef<SVGSVGElement, IconProps>(
   }
 );
 Youtube1cIcon.displayName = "Youtube1cIcon";
+
+export const ZAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <g stroke="#231F20" strokeLinecap="round" clipPath="url(#a)">
+          <path
+            strokeMiterlimit="10"
+            d="M12.1 9.176a4.291 4.291 0 0 1-4.287 4.287 4.291 4.291 0 0 1-4.287-4.287 4.291 4.291 0 0 1 5.952-3.953"
+          />
+          <path
+            strokeLinejoin="round"
+            d="m9.038 2.537 1.697 3.073-3.073 1.697"
+          />
+        </g>
+        <defs>
+          <clipPath id="a">
+            <path fill="#fff" d="M3 2h9.637v12H3z" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  }
+);
+ZAxisRotateIcon.displayName = "ZAxisRotateIcon";
 
 export const ZAxisIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {

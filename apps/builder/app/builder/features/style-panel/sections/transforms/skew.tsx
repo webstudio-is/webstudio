@@ -1,6 +1,6 @@
 import { CssValueListItem, Label } from "@webstudio-is/design-system";
 import { useMemo } from "react";
-import { FunctionValue, toValue } from "@webstudio-is/css-engine";
+import { FunctionValue, StyleValue, toValue } from "@webstudio-is/css-engine";
 import type { TransformFloatingPanelContentProps } from "./utils";
 import type { SectionProps } from "../shared/section";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
@@ -15,9 +15,7 @@ const defaultSkewValue = (funcName: string): FunctionValue => ({
 const label = "skew";
 const index = 3;
 
-export const Skew = (props: SectionProps) => {
-  const { currentStyle } = props;
-  const value = currentStyle["transform"]?.value;
+const useSkewValue = (value?: StyleValue) => {
   const properties = useMemo(() => {
     if (value?.type !== "tuple") {
       return;
@@ -43,7 +41,15 @@ export const Skew = (props: SectionProps) => {
     };
   }, [value]);
 
-  if (properties === undefined || value?.type !== "tuple") {
+  return properties;
+};
+
+export const Skew = (props: SectionProps) => {
+  const { currentStyle, setProperty } = props;
+  const value = currentStyle["transform"]?.value;
+  const properties = useSkewValue(value);
+
+  if (properties === undefined) {
     return;
   }
 
@@ -52,7 +58,13 @@ export const Skew = (props: SectionProps) => {
   return (
     <FloatingPanel
       title={label}
-      content={<TransformPanelContent panel={label} value={value} />}
+      content={
+        <TransformPanelContent
+          panel={label}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+        />
+      }
     >
       <CssValueListItem
         id={label}
