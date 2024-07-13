@@ -25,6 +25,7 @@ import {
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
 import type { TabName } from "./types";
+import { BugPopOver } from "./bug-popover";
 
 const none = { TabContent: () => null };
 
@@ -72,6 +73,7 @@ const AiTabTrigger = () => {
 
 const HelpTabTrigger = () => {
   const [helpIsOpen, setHelpIsOpen] = useState(false);
+
   return (
     <HelpPopover onOpenChange={setHelpIsOpen}>
       <HelpPopover.Trigger asChild>
@@ -87,17 +89,18 @@ const HelpTabTrigger = () => {
 };
 
 const GithubTabTrigger = () => {
+  const [bugTabOpen, setBugTabOpen] = useState(false);
   return (
-    <SidebarButton
-      label="Report a bug on Github"
-      onClick={() => {
-        window.open(
-          "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
-        );
-      }}
-    >
-      <BugIcon size={rawTheme.spacing[10]} />
-    </SidebarButton>
+    <BugPopOver onOpenChange={setBugTabOpen}>
+      <BugPopOver.Trigger asChild>
+        <SidebarButton
+          label="Report a bug on Github"
+          data-state={bugTabOpen ? "active" : undefined}
+        >
+          <BugIcon size={rawTheme.spacing[10]} />
+        </SidebarButton>
+      </BugPopOver.Trigger>
+    </BugPopOver>
   );
 };
 
