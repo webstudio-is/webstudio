@@ -23,7 +23,6 @@ import { parseTranslate } from "./property-parsers/translate";
 import { parseTransform } from "./property-parsers/transform";
 import { parseScale } from "./property-parsers/scale";
 import { parseFilter } from "./property-parsers/filter";
-import { parseShadow } from "./property-parsers/shadows";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -124,7 +123,11 @@ const repeatedProps = new Set<StyleProperty>([
   "transitionDelay",
   "transitionTimingFunction",
   "transitionBehavior",
+  "boxShadow",
+  "textShadow",
 ]);
+
+const tupleProps = new Set<StyleProperty>(["boxShadow", "textShadow"]);
 
 const availableUnits = new Set<string>(Object.values(units).flat());
 
@@ -281,10 +284,6 @@ export const parseCssValue = (
     return parseFilter(property, input);
   }
 
-  if (property === "boxShadow" || property === "textShadow") {
-    return parseShadow(property, input);
-  }
-
   // prevent infinite splitting into layers for items
   if (repeatedProps.has(property) && topLevel) {
     const nodes = "children" in ast ? ast.children?.toArray() ?? [] : [ast];
@@ -360,8 +359,11 @@ export const parseCssValue = (
     }
   }
 
-  // Probably a tuple like background-size
-  if (ast.type === "Value" && ast.children.size > 1) {
+  // Probably a tuple like background-size or box-shadow
+  if (
+    ast.type === "Value" &&
+    (ast.children.size > 1 || tupleProps.has(property))
+  ) {
     const tuple: TupleValue = {
       type: "tuple",
       value: [],
