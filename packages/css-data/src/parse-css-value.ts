@@ -1,13 +1,17 @@
 import { colord } from "colord";
 import * as csstree from "css-tree";
-import type { CssNode } from "css-tree";
+import { type CssNode, generate } from "css-tree";
 import warnOnce from "warn-once";
 import {
-  LayersValue,
-  TupleValue,
   cssWideKeywords,
   hyphenateProperty,
+  type ImageValue,
+  type KeywordValue,
+  type LayersValue,
+  type TupleValue,
+  type UnitValue,
   type LayerValueItem,
+  type RgbValue,
   type StyleProperty,
   type StyleValue,
   type Unit,
@@ -117,6 +121,86 @@ const repeatedProps = new Set<StyleProperty>([
   "transitionBehavior",
 ]);
 
+const availableUnits = new Set<string>(Object.values(units).flat());
+
+const parseColor = (colorString: string): undefined | RgbValue => {
+  const color = colord(colorString);
+  if (color.isValid()) {
+    const rgb = color.toRgb();
+    return {
+      type: "rgb",
+      alpha: rgb.a,
+      r: rgb.r,
+      g: rgb.g,
+      b: rgb.b,
+    };
+  }
+};
+
+const parseLiteral = (
+  node: undefined | null | CssNode,
+  keywords?: readonly string[]
+): undefined | UnitValue | KeywordValue | ImageValue | RgbValue => {
+  if (node?.type === "Number") {
+    return {
+      type: "unit",
+      unit: "number",
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Dimension" && availableUnits.has(node.unit)) {
+    return {
+      type: "unit",
+      unit: node.unit as Unit,
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Percentage") {
+    return {
+      type: "unit",
+      unit: "%",
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Identifier") {
+    const name = node.name.toLowerCase();
+    if (keywords?.map((keyword) => keyword.toLowerCase()).includes(name)) {
+      return {
+        type: "keyword",
+        value: name,
+      };
+    }
+  }
+  if (node?.type === "Url") {
+    return {
+      type: "image",
+      value: {
+        type: "url",
+        url: node.value,
+      },
+    };
+  }
+  if (node?.type === "Hash") {
+    const color = parseColor(`#${node.value}`);
+    if (color) {
+      return color;
+    }
+  }
+  if (node?.type === "Function") {
+    if (
+      node.name === "hsl" ||
+      node.name === "hsla" ||
+      node.name === "rgb" ||
+      node.name === "rgba"
+    ) {
+      const color = parseColor(generate(node));
+      if (color) {
+        return color;
+      }
+    }
+  }
+};
+
 export const parseCssValue = (
   property: StyleProperty, // Handles only long-hand values.
   input: string,
@@ -207,141 +291,59 @@ export const parseCssValue = (
   // csstree does not support transition-behavior
   // so check keywords manually
   if (property === "transitionBehavior") {
-    return keywordValues[property].includes(potentialKeyword as never)
-      ? { type: "keyword", value: potentialKeyword }
-      : invalidValue;
+    const node = ast.type === "Value" ? ast.children.first : ast;
+    const keyword = parseLiteral(node, keywordValues[property]);
+    if (keyword?.type === "keyword") {
+      return keyword;
+    }
+    return invalidValue;
   }
 
   if (property === "transitionTimingFunction") {
     const node = ast.type === "Value" ? ast.children.first : ast;
-    if (node?.type === "Identifier") {
-      return { type: "keyword", value: node.name };
+    const keyword = parseLiteral(node, keywordValues[property]);
+    if (keyword) {
+      return keyword;
     }
     if (node?.type === "Function") {
       // transition timing function arguments are comma seperated values
       const args: LayersValue = { type: "layers", value: [] };
       for (const arg of node.children) {
-        if (arg.type === "Number") {
-          args.value.push({ type: "keyword", value: arg.value });
+        const matchedValue = parseLiteral(arg);
+        if (matchedValue) {
+          args.value.push(matchedValue);
         }
         if (arg.type === "Identifier") {
           args.value.push({ type: "keyword", value: arg.name });
-        }
-        if (arg.type === "Dimension") {
-          const unit = arg.unit as Unit;
-          args.value.push({ type: "unit", value: Number(arg.value), unit });
         }
       }
       return { type: "function", args, name: node.name };
     }
   }
 
-  if (ast.type === "Value" && ast.children.first === ast.children.last) {
+  if (ast.type === "Value" && ast.children.size === 1) {
     // Try extract units from 1st children
     const first = ast.children.first;
 
-    if (first?.type === "Number") {
-      return {
-        type: "unit",
-        unit: "number",
-        value: Number(first.value),
-      };
-    }
-
-    if (first?.type === "Dimension") {
-      const unit = first.unit as (typeof units)[keyof typeof units][number];
-
-      for (const unitGroup of Object.values(units)) {
-        if (unitGroup.includes(unit as never)) {
-          return {
-            type: "unit",
-            unit: unit as Unit,
-            value: Number(first.value),
-          };
-        }
-      }
-      return invalidValue;
-    }
-
-    if (first?.type === "Percentage") {
-      return {
-        type: "unit",
-        unit: "%",
-        value: Number(first.value),
-      };
-    }
-
-    if (first?.type === "Identifier") {
-      const values = keywordValues[property as keyof typeof keywordValues];
-      if (values === undefined) {
-        return {
-          type: "unparsed",
-          value: input,
-        };
-      }
-      const lettersRegex = /[^a-zA-Z]+/g;
-      const searchValues = values.map((value) =>
-        value.replace(lettersRegex, "").toLowerCase()
-      );
-      const keywordInput = input.replace(lettersRegex, "").toLowerCase();
-
-      const index = searchValues.indexOf(keywordInput);
-
-      if (index > -1) {
-        return {
-          type: "keyword",
-          value: values[index]!,
-        };
-      }
-    }
-
-    if (first?.type === "Url") {
-      return {
-        type: "image",
-        value: {
-          type: "url",
-          url: first.value,
-        },
-      };
+    const matchedValue = parseLiteral(first, keywordValues[property as never]);
+    if (matchedValue) {
+      return matchedValue;
     }
   }
 
-  // Probably a color (we can use csstree.lexer.matchProperty(cssPropertyName, ast) to extract the type but this looks much simpler)
-  if (property.toLocaleLowerCase().includes("color")) {
-    const mayBeColor = colord(input);
-    if (mayBeColor.isValid()) {
-      const rgb = mayBeColor.toRgb();
-      return {
-        type: "rgb",
-        alpha: rgb.a,
-        r: rgb.r,
-        g: rgb.g,
-        b: rgb.b,
-      };
-    }
-  }
-
-  // Probably a tuple like background-position
-  if (ast.type === "Value" && ast.children.size === 2) {
-    const tupleFirst = parseCssValue(
-      property,
-      csstree.generate(ast.children.first!),
-      false
-    );
-    const tupleLast = parseCssValue(
-      property,
-      csstree.generate(ast.children.last!),
-      false
-    );
-
-    const tupleResult = TupleValue.safeParse({
+  // Probably a tuple like background-size
+  if (ast.type === "Value" && ast.children.size > 1) {
+    const tuple: TupleValue = {
       type: "tuple",
-      value: [tupleFirst, tupleLast],
-    });
-
-    if (tupleResult.success) {
-      return tupleResult.data;
+      value: [],
+    };
+    for (const node of ast.children) {
+      const matchedValue = parseLiteral(node, keywordValues[property as never]);
+      if (matchedValue) {
+        tuple.value.push(matchedValue);
+      }
     }
+    return tuple;
   }
 
   return {

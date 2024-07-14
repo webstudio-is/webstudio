@@ -49,7 +49,7 @@ describe("parseTailwindToWebstudio", () => {
       },
       {
         property: "textDecorationColor",
-        value: { type: "keyword", value: "currentColor" },
+        value: { type: "keyword", value: "currentcolor" },
       },
     ]);
   });

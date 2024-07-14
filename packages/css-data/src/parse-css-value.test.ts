@@ -307,10 +307,10 @@ test("parse transition-timing-function property", () => {
         args: {
           type: "layers",
           value: [
-            { type: "keyword", value: "0.68" },
-            { type: "keyword", value: "-0.6" },
-            { type: "keyword", value: ".32" },
-            { type: "keyword", value: "1.6" },
+            { type: "unit", value: 0.68, unit: "number" },
+            { type: "unit", value: -0.6, unit: "number" },
+            { type: "unit", value: 0.32, unit: "number" },
+            { type: "unit", value: 1.6, unit: "number" },
           ],
         },
       },
@@ -320,7 +320,7 @@ test("parse transition-timing-function property", () => {
         args: {
           type: "layers",
           value: [
-            { type: "keyword", value: "4" },
+            { type: "unit", value: 4, unit: "number" },
             { type: "keyword", value: "jump-start" },
           ],
         },
@@ -328,7 +328,7 @@ test("parse transition-timing-function property", () => {
     ],
   });
   expect(toValue(parsedValue)).toMatchInlineSnapshot(
-    `"ease, ease-in, cubic-bezier(0.68, -0.6, .32, 1.6), steps(4, jump-start)"`
+    `"ease, ease-in, cubic-bezier(0.68, -0.6, 0.32, 1.6), steps(4, jump-start)"`
   );
   expect(parseCssValue("transitionTimingFunction", "ease, testing")).toEqual({
     type: "invalid",
