@@ -1,6 +1,5 @@
-import { Flex, Select, theme } from "@webstudio-is/design-system";
+import { Flex, Select, theme, Separator } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { Separator } from "~/builder/shared/assets";
 import { useState } from "react";
 import { TranslatePanelContent } from "./translate";
 import { ScalePanelContent } from "./scale";
