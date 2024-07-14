@@ -1,104 +1,66 @@
+import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
-  CssValueListItem,
-  Flex,
-  Grid,
-  Label,
-} from "@webstudio-is/design-system";
-import { useMemo } from "react";
-import { FunctionValue, StyleValue, toValue } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { TransformPanelContent } from "./transfor-panel";
-import type { TransformFloatingPanelContentProps } from "./utils";
+  isUnitValue,
+  updateTupleProperty,
+  useTransformPropertyValues,
+  type TransformFloatingPanelContentProps,
+} from "./utils";
 import {
   XAxisRotateIcon,
   YAxisRotateIcon,
   ZAxisRotateIcon,
 } from "@webstudio-is/icons";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-
-const defaultRotateValue = (funcName: string): FunctionValue => ({
-  type: "function",
-  name: funcName,
-  args: { type: "tuple", value: [{ type: "unit", value: 0, unit: "deg" }] },
-});
-
-const label = "rotate";
-const index = 2;
-
-const useRotateValues = (value?: StyleValue) => {
-  const properties = useMemo(() => {
-    if (value?.type !== "tuple") {
-      return;
-    }
-
-    let rotateX: FunctionValue = defaultRotateValue("rotateX");
-    let rotateY: FunctionValue = defaultRotateValue("rotateY");
-    let rotateZ: FunctionValue = defaultRotateValue("rotateZ");
-    for (const item of value.value) {
-      if (item.type === "function" && item.name === "rotateX") {
-        rotateX = item;
-      }
-
-      if (item.type === "function" && item.name === "rotateY") {
-        rotateY = item;
-      }
-
-      if (item.type === "function" && item.name === "rotateZ") {
-        rotateZ = item;
-      }
-    }
-
-    return {
-      rotateX,
-      rotateY,
-      rotateZ,
-      name: `Rotate: ${toValue(rotateX.args)} ${toValue(rotateY.args)} ${toValue(rotateZ.args)}`,
-    };
-  }, [value]);
-
-  return properties;
-};
-
-export const Rotate = (props: SectionProps) => {
-  const { currentStyle, setProperty } = props;
-  const value = currentStyle["transform"]?.value;
-  const properties = useRotateValues(value);
-  if (properties === undefined) {
-    return;
-  }
-  const { name } = properties;
-
-  return (
-    <FloatingPanel
-      title={label}
-      content={
-        <TransformPanelContent
-          panel={label}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-        />
-      }
-    >
-      <CssValueListItem
-        id={label}
-        index={index}
-        label={<Label truncate>{name}</Label>}
-      ></CssValueListItem>
-    </FloatingPanel>
-  );
-};
+import {
+  toValue,
+  type FunctionValue,
+  type StyleValue,
+  type TupleValue,
+} from "@webstudio-is/css-engine";
+import type { StyleUpdateOptions } from "../../shared/use-style-data";
+import { parseCssValue } from "@webstudio-is/css-data";
 
 export const RotatePanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
   const { currentStyle } = props;
-  const value = currentStyle["transform"]?.value;
-  const properties = useRotateValues(value);
+  const properties = useTransformPropertyValues({
+    currentStyle: currentStyle,
+    panel: "rotate",
+  });
   if (properties === undefined) {
     return;
   }
-  const { rotateX, rotateY, rotateZ } = properties;
+  const [rotateX, rotateY, rotateZ] = properties.value.value;
+
+  const handlePropertyUpdate = (
+    index: number,
+    prop: string,
+    value: StyleValue,
+    options?: StyleUpdateOptions
+  ) => {
+    if (isUnitValue(value) === false) {
+      return;
+    }
+    const args: TupleValue = { type: "tuple", value: [value] };
+    const newValue: FunctionValue = {
+      type: "function",
+      name: prop,
+      args,
+    };
+    const newPropertyValue = updateTupleProperty(
+      index,
+      newValue,
+      properties.value
+    );
+
+    const rotate = parseCssValue("transform", toValue(newPropertyValue));
+    if (rotate.type === "invalid") {
+      return;
+    }
+
+    props.setProperty("transform")(rotate, options);
+  };
 
   return (
     <Flex direction="column" gap={2}>
@@ -111,15 +73,16 @@ export const RotatePanelContent = (
         <CssValueInputContainer
           key="rotateX"
           styleSource="local"
-          // @todo: this needs to be updated everywhere for all transform properties
-          property="outlineOffset"
+          property="rotate"
           value={
-            rotateX.args.type === "tuple"
+            rotateX.type === "function" && rotateX.args.type === "tuple"
               ? rotateX.args.value[0]
-              : defaultRotateValue("rotateX")
+              : undefined
           }
           keywords={[]}
-          setValue={(newValue, options) => {}}
+          setValue={(value, options) => {
+            handlePropertyUpdate(0, "rotateX", value, options);
+          }}
           deleteProperty={() => {}}
         />
       </Grid>
@@ -132,14 +95,16 @@ export const RotatePanelContent = (
         <CssValueInputContainer
           key="rotateY"
           styleSource="local"
-          property="outlineOffset"
+          property="rotate"
           value={
-            rotateY.args.type === "tuple"
+            rotateY.type === "function" && rotateY.args.type === "tuple"
               ? rotateY.args.value[0]
-              : defaultRotateValue("rotateY")
+              : undefined
           }
           keywords={[]}
-          setValue={(newValue, options) => {}}
+          setValue={(value, options) => {
+            handlePropertyUpdate(1, "rotateY", value, options);
+          }}
           deleteProperty={() => {}}
         />
       </Grid>
@@ -152,14 +117,16 @@ export const RotatePanelContent = (
         <CssValueInputContainer
           key="rotateZ"
           styleSource="local"
-          property="outlineOffset"
+          property="rotate"
           value={
-            rotateZ.args.type === "tuple"
+            rotateZ.type === "function" && rotateZ.args.type === "tuple"
               ? rotateZ.args.value[0]
-              : defaultRotateValue("rotateZ")
+              : undefined
           }
           keywords={[]}
-          setValue={(newValue, options) => {}}
+          setValue={(value, options) => {
+            handlePropertyUpdate(2, "rotateZ", value, options);
+          }}
           deleteProperty={() => {}}
         />
       </Grid>

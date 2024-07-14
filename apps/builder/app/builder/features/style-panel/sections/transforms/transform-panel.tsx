@@ -1,6 +1,4 @@
 import { Flex, Select, theme } from "@webstudio-is/design-system";
-import type { TransformPanel } from "./utils";
-import { transformPanels } from "./utils";
 import { humanizeString } from "~/shared/string-utils";
 import { Separator } from "~/builder/shared/assets";
 import { useState } from "react";
@@ -10,6 +8,7 @@ import { RotatePanelContent } from "./rotate";
 import { SkewFloatingPanelContent } from "./skew";
 import type { SetProperty } from "../../shared/use-style-data";
 import type { StyleInfo } from "../../shared/style-info";
+import { transformPanels, type TransformPanel } from "./transforms";
 
 type TransformPanelContentProps = {
   currentStyle: StyleInfo;

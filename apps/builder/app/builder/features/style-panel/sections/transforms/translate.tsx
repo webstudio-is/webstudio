@@ -1,76 +1,51 @@
+import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
-  CssValueListItem,
-  Flex,
-  Grid,
-  Label,
-} from "@webstudio-is/design-system";
-import {
+  StyleValue,
   toValue,
-  TupleValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
-import { useMemo } from "react";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { TransformPanelContent } from "./transfor-panel";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import type { SectionProps } from "../shared/section";
 import {
   isUnitValue,
   updateTupleProperty,
+  useTransformPropertyValues,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
+import { parseCssValue } from "@webstudio-is/css-data";
 
-const label = "translate";
-const index = 0;
 const property: StyleProperty = "translate";
-
-export const Translate = (props: SectionProps) => {
-  const { currentStyle, setProperty } = props;
-  const value = currentStyle[property]?.value;
-  const layerName = useMemo(() => `Translate: ${toValue(value)}`, [value]);
-
-  if (value?.type !== "tuple") {
-    return;
-  }
-
-  return (
-    <FloatingPanel
-      title={label}
-      content={
-        <TransformPanelContent
-          currentStyle={currentStyle}
-          panel={label}
-          setProperty={setProperty}
-        />
-      }
-    >
-      <CssValueListItem
-        id={label}
-        index={index}
-        label={<Label truncate>{layerName}</Label>}
-      ></CssValueListItem>
-    </FloatingPanel>
-  );
-};
 
 export const TranslatePanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
   const { currentStyle } = props;
-  const value = currentStyle[property]?.value;
-  if (value?.type !== "tuple") {
+  const properties = useTransformPropertyValues({
+    currentStyle,
+    panel: "translate",
+  });
+  if (properties === undefined) {
     return;
   }
 
-  const [translateX, translateY, translateZ] = value.value;
+  const [translateX, translateY, translateZ] = properties.value.value;
 
   const handlePropertyUpdate = (
-    value: TupleValue,
+    index: number,
+    value: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    props.setProperty("translate")(value, options);
+    if (isUnitValue(value) === false) {
+      return value;
+    }
+    const newValue = updateTupleProperty(index, value, properties.value);
+    const translate = parseCssValue(property, toValue(newValue));
+    if (translate.type === "invalid") {
+      return;
+    }
+
+    props.setProperty(property)(translate, options);
   };
 
   return (
@@ -84,17 +59,11 @@ export const TranslatePanelContent = (
         <CssValueInputContainer
           key="translateX"
           styleSource="local"
-          property="outlineOffset"
+          property={property}
           value={translateX}
           keywords={[]}
           setValue={(newValue, options) => {
-            if (isUnitValue(newValue) === false) {
-              return;
-            }
-            handlePropertyUpdate(
-              updateTupleProperty(0, newValue, value),
-              options
-            );
+            handlePropertyUpdate(0, newValue, options);
           }}
           deleteProperty={() => {}}
         />
@@ -108,17 +77,11 @@ export const TranslatePanelContent = (
         <CssValueInputContainer
           key="translateX"
           styleSource="local"
-          property="outlineOffset"
+          property={property}
           value={translateY}
           keywords={[]}
           setValue={(newValue, options) => {
-            if (isUnitValue(newValue) === false) {
-              return;
-            }
-            handlePropertyUpdate(
-              updateTupleProperty(1, newValue, value),
-              options
-            );
+            handlePropertyUpdate(1, newValue, options);
           }}
           deleteProperty={() => {}}
         />
@@ -132,17 +95,11 @@ export const TranslatePanelContent = (
         <CssValueInputContainer
           key="translateX"
           styleSource="local"
-          property="outlineOffset"
+          property={property}
           value={translateZ}
           keywords={[]}
           setValue={(newValue, options) => {
-            if (isUnitValue(newValue) === false) {
-              return;
-            }
-            handlePropertyUpdate(
-              updateTupleProperty(2, newValue, value),
-              options
-            );
+            handlePropertyUpdate(2, newValue, options);
           }}
           deleteProperty={() => {}}
         />

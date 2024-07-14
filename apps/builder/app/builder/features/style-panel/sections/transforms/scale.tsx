@@ -1,77 +1,57 @@
+import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
-  CssValueListItem,
-  Flex,
-  Grid,
-  Label,
-} from "@webstudio-is/design-system";
-import {
+  StyleValue,
   toValue,
-  TupleValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
-import { useMemo } from "react";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { TransformPanelContent } from "./transfor-panel";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import type { SectionProps } from "../shared/section";
 import {
   isUnitValue,
   updateTupleProperty,
+  useTransformPropertyValues,
   type TransformFloatingPanelContentProps,
-  type TransformPanel,
 } from "./utils";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
+import { parseCssValue } from "@webstudio-is/css-data";
 
-const label: TransformPanel = "scale";
-const index = 1;
+// We use fakeProperty to pass for the CssValueInputContainer.
+// As we know during parsing, the syntax for scale is wrong in the css-data package.
+// https://github.com/mdn/data/pull/746
+// https://developer.mozilla.org/en-US/docs/Web/CSS/opacity#syntax
+// number  | percentage
+const fakeProperty = "opacity";
 const property: StyleProperty = "scale";
-
-export const Scale = (props: SectionProps) => {
-  const { currentStyle, setProperty } = props;
-  const value = currentStyle[property]?.value;
-  const layerName = useMemo(() => `Scale: ${toValue(value)}`, [value]);
-
-  if (value?.type !== "tuple") {
-    return;
-  }
-
-  return (
-    <FloatingPanel
-      title={label}
-      content={
-        <TransformPanelContent
-          panel={label}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-        />
-      }
-    >
-      <CssValueListItem
-        id={label}
-        index={index}
-        label={<Label truncate>{layerName}</Label>}
-      ></CssValueListItem>
-    </FloatingPanel>
-  );
-};
 
 export const ScalePanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
   const { currentStyle } = props;
-  const value = currentStyle[property]?.value;
-  if (value?.type !== "tuple") {
+  const properties = useTransformPropertyValues({
+    currentStyle,
+    panel: "scale",
+  });
+  if (properties === undefined) {
     return;
   }
 
-  const [scaleX, scaleY, scaleZ] = value.value;
+  const [scaleX, scaleY, scaleZ] = properties.value.value;
 
   const handlePropertyUpdate = (
-    value: TupleValue,
+    index: number,
+    value: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    props.setProperty("scale")(value, options);
+    if (isUnitValue(value) === false) {
+      return value;
+    }
+    const newValue = updateTupleProperty(index, value, properties.value);
+    const scale = parseCssValue(property, toValue(newValue));
+    if (scale.type === "invalid") {
+      return;
+    }
+
+    props.setProperty(property)(scale, options);
   };
 
   return (
@@ -85,17 +65,11 @@ export const ScalePanelContent = (
         <CssValueInputContainer
           key="scaleX"
           styleSource="local"
-          property="outlineOffset"
+          property={fakeProperty}
           value={scaleX}
           keywords={[]}
           setValue={(newValue, options) => {
-            if (isUnitValue(newValue) === false) {
-              return;
-            }
-            handlePropertyUpdate(
-              updateTupleProperty(0, newValue, value),
-              options
-            );
+            handlePropertyUpdate(0, newValue, options);
           }}
           deleteProperty={() => {}}
         />
@@ -109,17 +83,11 @@ export const ScalePanelContent = (
         <CssValueInputContainer
           key="scaleY"
           styleSource="local"
-          property="outlineOffset"
+          property={fakeProperty}
           value={scaleY}
           keywords={[]}
           setValue={(newValue, options) => {
-            if (isUnitValue(newValue) === false) {
-              return;
-            }
-            handlePropertyUpdate(
-              updateTupleProperty(0, newValue, value),
-              options
-            );
+            handlePropertyUpdate(1, newValue, options);
           }}
           deleteProperty={() => {}}
         />
@@ -133,17 +101,11 @@ export const ScalePanelContent = (
         <CssValueInputContainer
           key="scaleZ"
           styleSource="local"
-          property="outlineOffset"
+          property={fakeProperty}
           value={scaleZ}
           keywords={[]}
           setValue={(newValue, options) => {
-            if (isUnitValue(newValue) === false) {
-              return;
-            }
-            handlePropertyUpdate(
-              updateTupleProperty(0, newValue, value),
-              options
-            );
+            handlePropertyUpdate(2, newValue, options);
           }}
           deleteProperty={() => {}}
         />
