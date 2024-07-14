@@ -374,13 +374,52 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test("parse custom property", () => {
+    expect(parseCss(`a { --my-property: red; }`)).toEqual([
+      {
+        selector: "a",
+        property: "--my-property",
+        value: { type: "unparsed", value: "red" },
+      },
+    ]);
+  });
+
   // @todo https://github.com/webstudio-is/webstudio/issues/3399
-  test("parse variable", () => {
+  test("parse variable as unset default", () => {
     expect(parseCss(`a { color: var(--color) }`)).toEqual([
       {
         selector: "a",
         property: "color",
         value: { type: "keyword", value: "unset" },
+      },
+    ]);
+  });
+
+  test("optionally parse variable as var value", () => {
+    expect(
+      parseCss(
+        `
+        a {
+          color: var(--color);
+          background-color: var(--color, red);
+        }
+        `,
+        { customProperties: true }
+      )
+    ).toEqual([
+      {
+        selector: "a",
+        property: "color",
+        value: { type: "var", value: "color", fallbacks: [] },
+      },
+      {
+        selector: "a",
+        property: "backgroundColor",
+        value: {
+          type: "var",
+          value: "color",
+          fallbacks: [{ type: "unparsed", value: "red" }],
+        },
       },
     ]);
   });

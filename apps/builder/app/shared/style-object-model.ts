@@ -336,7 +336,7 @@ export const getComputedStyleDecl = ({
     computedValue = specifiedValue;
 
     if (computedValue.type === "var") {
-      const customProperty = computedValue.value;
+      const customProperty = `--${computedValue.value}`;
       // https://www.w3.org/TR/css-variables-1/#cycles
       if (usedCustomProperties.has(customProperty)) {
         computedValue = invalidValue;

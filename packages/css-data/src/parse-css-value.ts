@@ -1,6 +1,6 @@
 import { colord } from "colord";
 import * as csstree from "css-tree";
-import { type CssNode, generate } from "css-tree";
+import { type CssNode, generate, List } from "css-tree";
 import warnOnce from "warn-once";
 import {
   cssWideKeywords,
@@ -15,6 +15,7 @@ import {
   type StyleProperty,
   type StyleValue,
   type Unit,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
@@ -52,6 +53,10 @@ export const isValidDeclaration = (
   value: string
 ): boolean => {
   const cssPropertyName = hyphenateProperty(property);
+
+  if (property.startsWith("--") || value.includes("var(")) {
+    return true;
+  }
 
   // these properties have poor support natively and in csstree
   // though rendered styles are merged as shorthand
@@ -140,7 +145,7 @@ const parseColor = (colorString: string): undefined | RgbValue => {
 const parseLiteral = (
   node: undefined | null | CssNode,
   keywords?: readonly string[]
-): undefined | UnitValue | KeywordValue | ImageValue | RgbValue => {
+): undefined | UnitValue | KeywordValue | ImageValue | RgbValue | VarValue => {
   if (node?.type === "Number") {
     return {
       type: "unit",
@@ -196,6 +201,23 @@ const parseLiteral = (
       const color = parseColor(generate(node));
       if (color) {
         return color;
+      }
+    }
+    if (node.name === "var") {
+      const [name, _comma, ...fallback] = node.children;
+      const fallbackString = generate({
+        type: "Value",
+        children: new List<CssNode>().fromArray(fallback),
+      }).trim();
+      if (name.type === "Identifier") {
+        return {
+          type: "var",
+          value: name.name.slice("--".length),
+          fallbacks:
+            fallback.length === 0
+              ? []
+              : [{ type: "unparsed", value: fallbackString }],
+        };
       }
     }
   }
@@ -311,7 +333,7 @@ export const parseCssValue = (
       for (const arg of node.children) {
         const matchedValue = parseLiteral(arg);
         if (matchedValue) {
-          args.value.push(matchedValue);
+          args.value.push(matchedValue as never);
         }
         if (arg.type === "Identifier") {
           args.value.push({ type: "keyword", value: arg.name });
@@ -326,6 +348,13 @@ export const parseCssValue = (
     const first = ast.children.first;
 
     const matchedValue = parseLiteral(first, keywordValues[property as never]);
+    // parse only references in custom properties
+    if (property.startsWith("--")) {
+      if (matchedValue?.type === "var") {
+        return matchedValue;
+      }
+      return { type: "unparsed", value: input };
+    }
     if (matchedValue) {
       return matchedValue;
     }
@@ -340,7 +369,7 @@ export const parseCssValue = (
     for (const node of ast.children) {
       const matchedValue = parseLiteral(node, keywordValues[property as never]);
       if (matchedValue) {
-        tuple.value.push(matchedValue);
+        tuple.value.push(matchedValue as never);
       }
     }
     return tuple;

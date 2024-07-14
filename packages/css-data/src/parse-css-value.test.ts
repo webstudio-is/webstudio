@@ -582,3 +582,40 @@ test("throws error for invalid scale proeprty values", () => {
     value: "5px",
   });
 });
+
+test("support custom properties as unparsed values", () => {
+  expect(parseCssValue("--my-property", "blue")).toEqual({
+    type: "unparsed",
+    value: "blue",
+  });
+  expect(parseCssValue("--my-property", "1px")).toEqual({
+    type: "unparsed",
+    value: "1px",
+  });
+});
+
+test("support custom properties var reference", () => {
+  expect(parseCssValue("color", "var(--color)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [],
+  });
+  expect(parseCssValue("color", "var(--color, red)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [{ type: "unparsed", value: "red" }],
+  });
+});
+
+test("support custom properties var reference in custom property", () => {
+  expect(parseCssValue("--bg", "var(--color)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [],
+  });
+  expect(parseCssValue("--bg", "var(--color, red)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [{ type: "unparsed", value: "red" }],
+  });
+});

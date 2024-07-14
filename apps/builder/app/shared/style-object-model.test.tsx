@@ -1,41 +1,70 @@
 import { expect, test } from "@jest/globals";
-import type { StyleDecl, StyleSource } from "@webstudio-is/sdk";
+import type { Instance, StyleDecl, StyleSource } from "@webstudio-is/sdk";
+import { $, renderJsx } from "@webstudio-is/sdk/testing";
 import {
   type StyleObjectModel,
   type StyleSelector,
   getComputedStyleDecl,
 } from "./style-object-model";
+import { parseCss } from "@webstudio-is/css-data";
+import { mapGroupBy } from "./shim";
 
-const getStyleByStyleSourceId = (styles: StyleDecl[]) => {
-  const styleByStyleSourceId = new Map<
-    `${StyleSource["id"]}:${string}`,
-    StyleDecl[]
-  >();
-  for (const styleDecl of styles) {
-    const key = `${styleDecl.styleSourceId}:${styleDecl.property}` as const;
-    const styleSourceStyles = styleByStyleSourceId.get(key) ?? [];
-    styleByStyleSourceId.set(key, styleSourceStyles);
-    styleSourceStyles.push(styleDecl);
+const createModel = ({
+  css,
+  jsx,
+}: {
+  css: string;
+  jsx: JSX.Element;
+}): StyleObjectModel => {
+  const parsedStyles = parseCss(css, { customProperties: true });
+  const styles: StyleDecl[] = [];
+  for (const { breakpoint, selector, state, property, value } of parsedStyles) {
+    styles.push({
+      styleSourceId: selector,
+      breakpointId: breakpoint ?? "base",
+      state,
+      property,
+      value,
+    });
   }
-  return styleByStyleSourceId;
-};
-
-test("use cascaded style when specified and fallback to initial value", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  const { props } = renderJsx(jsx);
+  const styleSourcesByInstanceId = new Map<
+    Instance["id"],
+    StyleSource["id"][]
+  >();
+  for (const prop of props.values()) {
+    if (prop.name === "class" && prop.type === "string") {
+      styleSourcesByInstanceId.set(prop.instanceId, prop.value.split(" "));
+    }
+  }
+  return {
+    styleSourcesByInstanceId,
+    styleByStyleSourceId: mapGroupBy(
+      styles,
+      (styleDecl) => `${styleDecl.styleSourceId}:${styleDecl.property}` as const
+    ),
     metas: new Map(),
     instanceTags: new Map(),
     instanceComponents: new Map(),
   };
+};
+
+const getStyleByStyleSourceId = (styles: StyleDecl[]) => {
+  return mapGroupBy(
+    styles,
+    (styleDecl) => `${styleDecl.styleSourceId}:${styleDecl.property}` as const
+  );
+};
+
+test("use cascaded style when specified and fallback to initial value", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        width: 10px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -56,21 +85,14 @@ test("use cascaded style when specified and fallback to initial value", () => {
 });
 
 test("support initial keyword", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "keyword", value: "initial" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        width: initial;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -82,43 +104,27 @@ test("support initial keyword", () => {
 });
 
 test("support inherit keyword", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "level2Local",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level3Local",
-      property: "width",
-      value: { type: "keyword", value: "inherit" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level1Local",
-      property: "height",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level3Local",
-      property: "height",
-      value: { type: "keyword", value: "inherit" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["level3", ["level3Local"]],
-      ["level2", ["level2Local"]],
-      ["level1", ["level1Local"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      level1Local {
+        height: 20px;
+      }
+      level2Local {
+        width: 10px;
+      }
+      level3Local {
+        width: inherit;
+        height: inherit;
+      }
+    `,
+    jsx: (
+      <$.Box ws:id="level1" class="level1Local">
+        <$.Box ws:id="level2" class="level2Local">
+          <$.Box ws:id="level3" class="level3Local"></$.Box>
+        </$.Box>
+      </$.Box>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
     matchingBreakpoints: ["base"],
@@ -135,42 +141,23 @@ test("support inherit keyword", () => {
 });
 
 test("support unset keyword", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "level2Local",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level2Local",
-      property: "width",
-      value: { type: "keyword", value: "unset" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level1Local",
-      property: "color",
-      value: { type: "keyword", value: "blue" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level2Local",
-      property: "color",
-      value: { type: "keyword", value: "unset" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["level2", ["level2Local"]],
-      ["level1", ["level1Local"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      level1Local {
+        color: blue;
+        width: 10px;
+      }
+      level2Local {
+        color: unset;
+        width: unset;
+      }
+    `,
+    jsx: (
+      <$.Box ws:id="level1" class="level1Local">
+        <$.Box ws:id="level2" class="level2Local"></$.Box>
+      </$.Box>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["level2", "level1"],
     matchingBreakpoints: ["base"],
@@ -187,31 +174,21 @@ test("support unset keyword", () => {
 });
 
 test("inherit style from ancestors", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "level1Local",
-      property: "color",
-      value: { type: "keyword", value: "blue" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level1Local",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["level3", ["level3Local"]],
-      ["level2", ["level2Local"]],
-      ["level1", ["level1Local"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      level1Local {
+        color: blue;
+        width: 10px;
+      }
+    `,
+    jsx: (
+      <$.Box ws:id="level1" class="level1Local">
+        <$.Box ws:id="level2" class="level2Local">
+          <$.Box ws:id="level3" class="level3Local"></$.Box>
+        </$.Box>
+      </$.Box>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
     matchingBreakpoints: ["base"],
@@ -228,38 +205,24 @@ test("inherit style from ancestors", () => {
 });
 
 test("support currentcolor keyword", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "level1Local",
-      property: "color",
-      value: { type: "keyword", value: "blue" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level2Local",
-      property: "borderTopColor",
-      // support lower case
-      value: { type: "keyword", value: "currentcolor" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level2Local",
-      property: "backgroundColor",
-      // support camel case
-      value: { type: "keyword", value: "currentColor" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["level2", ["level2Local"]],
-      ["level1", ["level1Local"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      level1Local {
+        color: blue;
+      }
+      level2Local {
+        /* support lower case */
+        border-top-color: currentcolor;
+        /* support camel case */
+        background-color: currentColor;
+      }
+    `,
+    jsx: (
+      <$.Box ws:id="level1" class="level1Local">
+        <$.Box ws:id="level2" class="level2Local"></$.Box>
+      </$.Box>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["level2", "level1"],
     matchingBreakpoints: ["base"],
@@ -276,37 +239,24 @@ test("support currentcolor keyword", () => {
 });
 
 test("in color property currentcolor is inherited", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "level1Local",
-      property: "color",
-      value: { type: "keyword", value: "blue" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level2Local",
-      property: "color",
-      value: { type: "keyword", value: "currentcolor" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level3Local",
-      property: "color",
-      value: { type: "keyword", value: "currentcolor" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["level3", ["level3Local"]],
-      ["level2", ["level2Local"]],
-      ["level1", ["level1Local"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      level1Local {
+        color: blue;
+      }
+      level2Local {
+        color: currentcolor;
+      }
+      level3Local {
+        color: currentcolor;
+      }
+    `,
+    jsx: (
+      <$.Box ws:id="level1" class="level1Local">
+        <$.Box ws:id="level2" class="level2Local"></$.Box>
+      </$.Box>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
     matchingBreakpoints: ["base"],
@@ -318,21 +268,14 @@ test("in color property currentcolor is inherited", () => {
 });
 
 test("in root color property currentcolor is initial", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "color",
-      value: { type: "keyword", value: "currentcolor" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        color: currentcolor;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -344,27 +287,15 @@ test("in root color property currentcolor is initial", () => {
 });
 
 test("support custom properties", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "--my-property",
-      value: { type: "keyword", value: "blue" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "color",
-      value: { type: "var", value: "--my-property", fallbacks: [] },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --my-property: blue;
+        color: var(--my-property);
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -373,32 +304,21 @@ test("support custom properties", () => {
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "--my-property" })
       .usedValue
-  ).toEqual({ type: "keyword", value: "blue" });
+  ).toEqual({ type: "unparsed", value: "blue" });
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
-  ).toEqual({ type: "keyword", value: "blue" });
+  ).toEqual({ type: "unparsed", value: "blue" });
 });
 
 test("use fallback value when custom property does not exist", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "color",
-      value: {
-        type: "var",
-        value: "--my-property",
-        fallbacks: [{ type: "keyword", value: "red" }],
-      },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        color: var(--my-property, red);
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -406,25 +326,18 @@ test("use fallback value when custom property does not exist", () => {
   };
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
-  ).toEqual({ type: "keyword", value: "red" });
+  ).toEqual({ type: "unparsed", value: "red" });
 });
 
 test("use initial value when custom property does not exist", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "color",
-      value: { type: "var", value: "--my-property", fallbacks: [] },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        color: var(--my-property);
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -436,42 +349,23 @@ test("use initial value when custom property does not exist", () => {
 });
 
 test("use inherited value when custom property does not exist", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "color",
-      value: { type: "keyword", value: "red" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "keyword", value: "fit-content" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "boxLocal",
-      property: "color",
-      value: { type: "var", value: "--my-property", fallbacks: [] },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "boxLocal",
-      property: "width",
-      value: { type: "var", value: "--my-property", fallbacks: [] },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["body", ["bodyLocal"]],
-      ["box", ["boxLocal"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        color: red;
+        width: fit-content;
+      }
+      boxLocal {
+        color: var(--my-property);
+        width: var(--my-property);
+      }
+    `,
+    jsx: (
+      <$.Body ws:id="body" class="bodyLocal">
+        <$.Box ws:id="box" class="boxLocal"></$.Box>
+      </$.Body>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["box", "body"],
     matchingBreakpoints: ["base"],
@@ -488,31 +382,23 @@ test("use inherited value when custom property does not exist", () => {
 });
 
 test("inherit custom property", () => {
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "level1Local",
-      property: "--my-property",
-      value: { type: "keyword", value: "blue" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "level3Local",
-      property: "color",
-      value: { type: "var", value: "--my-property", fallbacks: [] },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["level3", ["level3Local"]],
-      ["level2", ["level2Local"]],
-      ["level1", ["level1Local"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      level1Local {
+        --my-property: blue;
+      }
+      level3Local {
+        color: var(--my-property);
+      }
+    `,
+    jsx: (
+      <$.Box ws:id="level1" class="level1Local">
+        <$.Box ws:id="level2" class="level2Local">
+          <$.Box ws:id="level3" class="level3Local"></$.Box>
+        </$.Box>
+      </$.Box>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
     matchingBreakpoints: ["base"],
@@ -521,51 +407,30 @@ test("inherit custom property", () => {
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "--my-property" })
       .usedValue
-  ).toEqual({ type: "keyword", value: "blue" });
+  ).toEqual({ type: "unparsed", value: "blue" });
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
-  ).toEqual({ type: "keyword", value: "blue" });
+  ).toEqual({ type: "unparsed", value: "blue" });
 });
 
 test("resolve dependency cycles in custom properties", () => {
-  // .body { --color: red; }
-  // .box { --color: var(--another); --another: var(--color); background-color: var(--color) }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "--color",
-      value: { type: "keyword", value: "red" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "boxLocal",
-      property: "--color",
-      value: { type: "var", value: "--another", fallbacks: [] },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "boxLocal",
-      property: "--another",
-      value: { type: "var", value: "--color", fallbacks: [] },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "boxLocal",
-      property: "color",
-      value: { type: "var", value: "--color", fallbacks: [] },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["body", ["bodyLocal"]],
-      ["box", ["boxLocal"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --color: red;
+      }
+      boxLocal {
+        --color: var(--another);
+        --another: var(--color);
+        color: var(--color);
+      }
+    `,
+    jsx: (
+      <$.Body ws:id="body" class="bodyLocal">
+        <$.Box ws:id="box" class="boxLocal"></$.Box>
+      </$.Body>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["box", "body"],
     matchingBreakpoints: ["base"],
@@ -581,45 +446,23 @@ test("resolve dependency cycles in custom properties", () => {
 });
 
 test("resolve non-cyclic references in custom properties", () => {
-  // .body { --color: red; --another: var(--color); }
-  // .box { --color: var(--another); background-color: var(--color) }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "--color",
-      value: { type: "keyword", value: "red" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "--another",
-      value: { type: "var", value: "--color", fallbacks: [] },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "boxLocal",
-      property: "--color",
-      value: { type: "var", value: "--another", fallbacks: [] },
-    },
-    // same custom property name is defined in parent
-    {
-      breakpointId: "base",
-      styleSourceId: "boxLocal",
-      property: "color",
-      value: { type: "var", value: "--color", fallbacks: [] },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["body", ["bodyLocal"]],
-      ["box", ["boxLocal"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --color: red;
+        --another: var(--color);
+      }
+      boxLocal {
+        --color: var(--another);
+        color: var(--color);
+      }
+    `,
+    jsx: (
+      <$.Body ws:id="body" class="bodyLocal">
+        <$.Box ws:id="box" class="boxLocal"></$.Box>
+      </$.Body>
+    ),
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["box", "body"],
     matchingBreakpoints: ["base"],
@@ -627,11 +470,11 @@ test("resolve non-cyclic references in custom properties", () => {
   };
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
-  ).toEqual({ type: "keyword", value: "red" });
+  ).toEqual({ type: "unparsed", value: "red" });
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "--color" })
       .usedValue
-  ).toEqual({ type: "keyword", value: "red" });
+  ).toEqual({ type: "unparsed", value: "red" });
 });
 
 test("cascade value from matching breakpoints", () => {
