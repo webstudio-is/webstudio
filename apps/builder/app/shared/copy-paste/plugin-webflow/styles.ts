@@ -484,14 +484,14 @@ export const addStyles = async ({
         instanceId,
         fragment,
       });
-
-      addNodeLocalStyles({
-        styleSourceId: await generateStyleSourceId(wfNode._id),
-        style: wfNode.data?.style,
-        instanceId,
-        fragment,
-      });
     }
+
+    addNodeLocalStyles({
+      styleSourceId: await generateStyleSourceId(wfNode._id),
+      style: wfNode.data?.style,
+      instanceId,
+      fragment,
+    });
 
     const instance = fragment.instances.find(
       (instance) => instance.id === instanceId
