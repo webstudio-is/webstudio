@@ -155,7 +155,7 @@ Object.entries(keywordValues)
   // Slice to generate only X - useful for testing.
   // .slice(0, 10)
   .forEach(([keyword, values]) => {
-    return values.forEach((value, index) => {
+    return values.forEach((value) => {
       const descriptionKey = `${keyword}:${value}`;
       if (
         !forceRegenerate &&
@@ -214,7 +214,9 @@ const newDeclarationsDescriptionsEntries = Object.entries(
 for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
   const batch = newDeclarationsDescriptionsEntries.slice(i, i + batchSize);
 
-  const list = batch.map(([descriptionKey, declaration]) => `- ${declaration}`);
+  const list = batch.map(
+    ([_descriptionKey, declaration]) => `- ${declaration}`
+  );
 
   console.info(
     `[${Math.floor(i / batchSize) + 1}/${Math.ceil(

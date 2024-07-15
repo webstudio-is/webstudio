@@ -12,7 +12,7 @@ export const ValueText = (
     <SpaceLayout
       onHover={setHovered}
       onClick={() => null}
-      renderCell={({ property }) => <ValueTextComponent {...args} />}
+      renderCell={() => <ValueTextComponent {...args} />}
     />
   );
 };

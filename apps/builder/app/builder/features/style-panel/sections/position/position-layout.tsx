@@ -68,7 +68,7 @@ export const PositionLayout = ({
         property,
       });
     },
-    onMouseLeave: (e: MouseEvent<HTMLDivElement>) => {
+    onMouseLeave: () => {
       onHover(undefined);
     },
   });

@@ -11,7 +11,7 @@
     "moduleResolution": "bundler",
     "customConditions": ["webstudio"],
     "noUnusedLocals": true,
-    "noUnusedParameters": false,
+    "noUnusedParameters": true,
     "preserveWatchOutput": true,
     "skipLibCheck": true,
     "strict": true,
