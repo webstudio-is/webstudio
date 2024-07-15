@@ -583,7 +583,6 @@ test("throws error for invalid scale proeprty values", () => {
   });
 });
 
-<<<<<<< HEAD
 test("support custom properties as unparsed values", () => {
   expect(parseCssValue("--my-property", "blue")).toEqual({
     type: "unparsed",
