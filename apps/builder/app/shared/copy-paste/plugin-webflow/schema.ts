@@ -341,9 +341,6 @@ const WfStyle = z.object({
     .record(z.string(), z.object({ styleLess: z.string() }))
     .optional(),
   children: z.array(z.string()).optional(),
-  createdBy: z.string().optional(),
-  origin: z.null().optional(),
-  selector: z.null().optional(),
 });
 export type WfStyle = z.infer<typeof WfStyle>;
 
