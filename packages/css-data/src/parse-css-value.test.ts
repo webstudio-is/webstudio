@@ -385,7 +385,7 @@ test("parse transform property as tuple", () => {
         type: "function",
         name: "rotateX",
         args: {
-          type: "tuple",
+          type: "layers",
           value: [{ type: "unit", value: 45, unit: "deg" }],
         },
       },
@@ -393,7 +393,7 @@ test("parse transform property as tuple", () => {
         type: "function",
         name: "rotateY",
         args: {
-          type: "tuple",
+          type: "layers",
           value: [{ type: "unit", value: 30, unit: "deg" }],
         },
       },
@@ -401,7 +401,7 @@ test("parse transform property as tuple", () => {
         type: "function",
         name: "rotateZ",
         args: {
-          type: "tuple",
+          type: "layers",
           value: [{ type: "unit", value: 60, unit: "deg" }],
         },
       },
@@ -461,49 +461,21 @@ test("parses transform values and returns invalid for invalid values", () => {
 test("parses a valid translate value", () => {
   expect(parseCssValue("translate", "100px")).toEqual({
     type: "tuple",
-    value: [
-      {
-        type: "unit",
-        unit: "px",
-        value: 100,
-      },
-    ],
+    value: [{ type: "unit", unit: "px", value: 100 }],
   });
-
   expect(parseCssValue("translate", "100px 200px")).toEqual({
     type: "tuple",
     value: [
-      {
-        type: "unit",
-        unit: "px",
-        value: 100,
-      },
-      {
-        type: "unit",
-        unit: "px",
-        value: 200,
-      },
+      { type: "unit", unit: "px", value: 100 },
+      { type: "unit", unit: "px", value: 200 },
     ],
   });
-
   expect(parseCssValue("translate", "10em 10em 10em")).toEqual({
     type: "tuple",
     value: [
-      {
-        type: "unit",
-        unit: "em",
-        value: 10,
-      },
-      {
-        type: "unit",
-        unit: "em",
-        value: 10,
-      },
-      {
-        type: "unit",
-        unit: "em",
-        value: 10,
-      },
+      { type: "unit", unit: "em", value: 10 },
+      { type: "unit", unit: "em", value: 10 },
+      { type: "unit", unit: "em", value: 10 },
     ],
   });
 });
@@ -513,51 +485,29 @@ test("parses and returns invalid for invalid translate values", () => {
     type: "invalid",
     value: "foo bar",
   });
-
   expect(parseCssValue("translate", "100px 200px 300px 400px")).toEqual({
     type: "invalid",
     value: "100px 200px 300px 400px",
   });
-
   expect(parseCssValue("translate", "100%, 200%")).toEqual({
     type: "invalid",
     value: "100%, 200%",
   });
 });
 
-test("parses a valid translate value", () => {
+test("parses a valid scale value", () => {
   expect(parseCssValue("scale", "1.5")).toEqual({
     type: "tuple",
-    value: [
-      {
-        type: "unit",
-        value: 1.5,
-        unit: "number",
-      },
-    ],
+    value: [{ type: "unit", value: 1.5, unit: "number" }],
   });
-
   expect(parseCssValue("scale", "5 10 15")).toEqual({
     type: "tuple",
     value: [
-      {
-        type: "unit",
-        value: 5,
-        unit: "number",
-      },
-      {
-        type: "unit",
-        value: 10,
-        unit: "number",
-      },
-      {
-        type: "unit",
-        value: 15,
-        unit: "number",
-      },
+      { type: "unit", value: 5, unit: "number" },
+      { type: "unit", value: 10, unit: "number" },
+      { type: "unit", value: 15, unit: "number" },
     ],
   });
-
   expect(parseCssValue("scale", "50%")).toEqual({
     type: "tuple",
     value: [{ type: "unit", value: 50, unit: "%" }],

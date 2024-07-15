@@ -1,6 +1,6 @@
 import { colord } from "colord";
 import * as csstree from "css-tree";
-import { type CssNode, generate, List } from "css-tree";
+import { type CssNode, generate, lexer, List } from "css-tree";
 import warnOnce from "warn-once";
 import {
   cssWideKeywords,
@@ -16,12 +16,10 @@ import {
   type StyleValue,
   type Unit,
   type VarValue,
+  type FunctionValue,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { parseTranslate } from "./property-parsers/translate";
-import { parseTransform } from "./property-parsers/transform";
-import { parseScale } from "./property-parsers/scale";
 import { parseFilter } from "./property-parsers/filter";
 
 export const cssTryParseValue = (input: string) => {
@@ -98,6 +96,15 @@ export const isValidDeclaration = (
     return false;
   }
 
+  // scale css-proeprty accepts both number and percentage.
+  // The syntax from MDN is incorrect and should be updated.
+  // Here is a PR that fixes the same, but it is not merged yet.
+  // https://github.com/mdn/data/pull/746
+  if (cssPropertyName === "scale") {
+    const syntax = "none | [ <number> | <percentage> ]{1,3}";
+    return lexer.match(syntax, ast).matched !== null;
+  }
+
   const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
 
   // allow to parse unknown properties as unparsed
@@ -127,7 +134,14 @@ const repeatedProps = new Set<StyleProperty>([
   "textShadow",
 ]);
 
-const tupleProps = new Set<StyleProperty>(["boxShadow", "textShadow"]);
+const tupleProps = new Set<StyleProperty>([
+  "boxShadow",
+  "textShadow",
+  "scale",
+  "translate",
+  "rotate",
+  "transform",
+]);
 
 const availableUnits = new Set<string>(Object.values(units).flat());
 
@@ -148,7 +162,14 @@ const parseColor = (colorString: string): undefined | RgbValue => {
 const parseLiteral = (
   node: undefined | null | CssNode,
   keywords?: readonly string[]
-): undefined | UnitValue | KeywordValue | ImageValue | RgbValue | VarValue => {
+):
+  | undefined
+  | UnitValue
+  | KeywordValue
+  | ImageValue
+  | RgbValue
+  | VarValue
+  | FunctionValue => {
   if (node?.type === "Number") {
     return {
       type: "unit",
@@ -195,6 +216,7 @@ const parseLiteral = (
     }
   }
   if (node?.type === "Function") {
+    // <color-function>
     if (
       node.name === "hsl" ||
       node.name === "hsla" ||
@@ -223,6 +245,48 @@ const parseLiteral = (
         };
       }
     }
+    if (
+      // <transform-function>
+      // 2d
+      node.name === "matrix" ||
+      node.name === "translate" ||
+      node.name === "translateX" ||
+      node.name === "translateY" ||
+      node.name === "scale" ||
+      node.name === "scaleX" ||
+      node.name === "scaleY" ||
+      node.name === "rotate" ||
+      node.name === "skew" ||
+      node.name === "skewX" ||
+      node.name === "skewY" ||
+      // 3d
+      node.name === "matrix3d" ||
+      node.name === "translate3d" ||
+      node.name === "translateZ" ||
+      node.name === "scale3d" ||
+      node.name === "scaleZ" ||
+      node.name === "rotate3d" ||
+      node.name === "rotateX" ||
+      node.name === "rotateY" ||
+      node.name === "rotateZ" ||
+      node.name === "perspective" ||
+      // <easing-function>
+      node.name === "linear" ||
+      node.name === "cubic-bezier" ||
+      node.name === "steps"
+    ) {
+      const args: LayersValue = { type: "layers", value: [] };
+      for (const arg of node.children) {
+        const matchedValue = parseLiteral(arg);
+        if (matchedValue) {
+          args.value.push(matchedValue as LayerValueItem);
+        }
+        if (arg.type === "Identifier") {
+          args.value.push({ type: "keyword", value: arg.name });
+        }
+      }
+      return { type: "function", args, name: node.name };
+    }
   }
 };
 
@@ -243,10 +307,6 @@ export const parseCssValue = (
       // none is not valid layer keyword
       return { type: "unparsed", value: potentialKeyword };
     }
-  }
-
-  if (property === "scale") {
-    return parseScale(input);
   }
 
   const invalidValue = {
@@ -270,14 +330,6 @@ export const parseCssValue = (
       `Can't parse css property "${property}" with value "${input}"`
     );
     return invalidValue;
-  }
-
-  if (property === "translate") {
-    return parseTranslate(input);
-  }
-
-  if (property === "transform") {
-    return parseTransform(input);
   }
 
   if (property === "filter" || property === "backdropFilter") {
@@ -320,45 +372,6 @@ export const parseCssValue = (
     return invalidValue;
   }
 
-  if (property === "transitionTimingFunction") {
-    const node = ast.type === "Value" ? ast.children.first : ast;
-    const keyword = parseLiteral(node, keywordValues[property]);
-    if (keyword) {
-      return keyword;
-    }
-    if (node?.type === "Function") {
-      // transition timing function arguments are comma seperated values
-      const args: LayersValue = { type: "layers", value: [] };
-      for (const arg of node.children) {
-        const matchedValue = parseLiteral(arg);
-        if (matchedValue) {
-          args.value.push(matchedValue as never);
-        }
-        if (arg.type === "Identifier") {
-          args.value.push({ type: "keyword", value: arg.name });
-        }
-      }
-      return { type: "function", args, name: node.name };
-    }
-  }
-
-  if (ast.type === "Value" && ast.children.size === 1) {
-    // Try extract units from 1st children
-    const first = ast.children.first;
-
-    const matchedValue = parseLiteral(first, keywordValues[property as never]);
-    // parse only references in custom properties
-    if (property.startsWith("--")) {
-      if (matchedValue?.type === "var") {
-        return matchedValue;
-      }
-      return { type: "unparsed", value: input };
-    }
-    if (matchedValue) {
-      return matchedValue;
-    }
-  }
-
   // Probably a tuple like background-size or box-shadow
   if (
     ast.type === "Value" &&
@@ -375,6 +388,22 @@ export const parseCssValue = (
       }
     }
     return tuple;
+  }
+
+  if (ast.type === "Value" && ast.children.size === 1) {
+    // Try extract units from 1st children
+    const first = ast.children.first;
+    const matchedValue = parseLiteral(first, keywordValues[property as never]);
+    // parse only references in custom properties
+    if (property.startsWith("--")) {
+      if (matchedValue?.type === "var") {
+        return matchedValue;
+      }
+      return { type: "unparsed", value: input };
+    }
+    if (matchedValue) {
+      return matchedValue;
+    }
   }
 
   return {
