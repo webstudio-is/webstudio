@@ -23,6 +23,7 @@ import { FloatingPanel } from "~/builder/shared/floating-panel";
 import type { StyleInfo } from "./style-info";
 import type { CreateBatchUpdate } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
+import { repeatUntil } from "~/shared/array-utils";
 
 const createLayersTransformer =
   ({
@@ -36,10 +37,20 @@ const createLayersTransformer =
   }) =>
   (transform: (value: LayersValue) => Partial<LayersValue>) => {
     const batch = createBatchUpdate();
+    const primaryValue = style[properties[0]]?.value;
+    const primaryLayersCount =
+      primaryValue?.type === "layers" ? primaryValue.value.length : 0;
     for (const property of properties) {
       const value = style[property]?.value;
       if (value?.type === "layers") {
-        const newLayers = { ...value, ...transform(value) };
+        const normalizedLayers: LayersValue = {
+          type: "layers",
+          value: repeatUntil(value.value, primaryLayersCount),
+        };
+        const newLayers: LayersValue = {
+          ...normalizedLayers,
+          ...transform(normalizedLayers),
+        };
         // delete empty layers
         if (newLayers.value.length === 0) {
           batch.deleteProperty(property);
