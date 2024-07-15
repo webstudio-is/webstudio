@@ -261,7 +261,7 @@ const SelectBase = <Option,>(
                       onItemHighlight?.(option);
                       setHighlightedItem(option);
                     }}
-                    onBlur={(event) => {
+                    onBlur={() => {
                       onItemHighlight?.(undefined);
                       setHighlightedItem(undefined);
                     }}

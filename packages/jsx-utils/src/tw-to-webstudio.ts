@@ -3,7 +3,7 @@ import { traverseTemplateAsync } from "./traverse-template";
 import { parseTailwindToWebstudio } from "@webstudio-is/css-data";
 
 export const tailwindToWebstudio = async (template: WsEmbedTemplate) => {
-  return traverseTemplateAsync(template, async (node, parent) => {
+  return traverseTemplateAsync(template, async (node) => {
     if (node.type === "instance" && node.props && node.props.length > 0) {
       const classNameProp = node.props.find(
         (prop) => prop.name === "className"

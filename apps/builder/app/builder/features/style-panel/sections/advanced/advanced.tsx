@@ -126,7 +126,7 @@ export const Section = ({
         />
       )}
       <Box>
-        {propertyNames.map((property, index) => {
+        {propertyNames.map((property) => {
           const { items } = styleConfigByName(property);
           const keywords = items.map((item) => ({
             type: "keyword" as const,
