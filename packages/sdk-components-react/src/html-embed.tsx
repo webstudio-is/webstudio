@@ -50,7 +50,12 @@ const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
           type: "text/javascript",
         });
         const url = URL.createObjectURL(blob);
-        import(/* @vite-ignore */ url).then(resolve).catch(reject);
+        import(/* @vite-ignore */ url)
+          .then(resolve)
+          .catch(reject)
+          .finally(() => {
+            URL.revokeObjectURL(url);
+          });
         return;
       }
 
