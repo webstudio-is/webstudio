@@ -88,13 +88,6 @@ const createModel = ({
   };
 };
 
-const getStyleByStyleSourceId = (styles: StyleDecl[]) => {
-  return mapGroupBy(
-    styles,
-    (styleDecl) => `${styleDecl.styleSourceId}:${styleDecl.property}` as const
-  );
-};
-
 test("use cascaded style when specified and fallback to initial value", () => {
   const model = createModel({
     css: `
