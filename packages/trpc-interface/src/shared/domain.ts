@@ -57,7 +57,7 @@ export const domainRouter = router({
   refresh: procedure
     .input(Input)
     .output(createOutput(z.optional(z.undefined())))
-    .mutation(async ({}) => {
+    .mutation(async () => {
       return { success: true };
     }),
   /**
