@@ -17,10 +17,10 @@ import {
   type Unit,
   type VarValue,
   type FunctionValue,
+  type TupleValueItem,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { parseFilter } from "./property-parsers/filter";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -141,6 +141,8 @@ const tupleProps = new Set<StyleProperty>([
   "translate",
   "rotate",
   "transform",
+  "filter",
+  "backdropFilter",
 ]);
 
 const availableUnits = new Set<string>(Object.values(units).flat());
@@ -245,6 +247,8 @@ const parseLiteral = (
         };
       }
     }
+
+    // functions with comma-separated arguments
     if (
       // <transform-function>
       // 2d
@@ -280,6 +284,33 @@ const parseLiteral = (
         const matchedValue = parseLiteral(arg);
         if (matchedValue) {
           args.value.push(matchedValue as LayerValueItem);
+        }
+        if (arg.type === "Identifier") {
+          args.value.push({ type: "keyword", value: arg.name });
+        }
+      }
+      return { type: "function", args, name: node.name };
+    }
+
+    // functions with space separated arguments
+    if (
+      // <filter-function>
+      node.name === "blur" ||
+      node.name === "brightness" ||
+      node.name === "contrast" ||
+      node.name === "drop-shadow" ||
+      node.name === "grayscale" ||
+      node.name === "hue-rotate" ||
+      node.name === "invert" ||
+      node.name === "opacity" ||
+      node.name === "sepia" ||
+      node.name === "saturate"
+    ) {
+      const args: TupleValue = { type: "tuple", value: [] };
+      for (const arg of node.children) {
+        const matchedValue = parseLiteral(arg);
+        if (matchedValue) {
+          args.value.push(matchedValue as TupleValueItem);
         }
         if (arg.type === "Identifier") {
           args.value.push({ type: "keyword", value: arg.name });
@@ -330,10 +361,6 @@ export const parseCssValue = (
       `Can't parse css property "${property}" with value "${input}"`
     );
     return invalidValue;
-  }
-
-  if (property === "filter" || property === "backdropFilter") {
-    return parseFilter(property, input);
   }
 
   // prevent infinite splitting into layers for items

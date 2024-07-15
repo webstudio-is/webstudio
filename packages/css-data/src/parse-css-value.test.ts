@@ -736,3 +736,137 @@ describe("parse shadows", () => {
     });
   });
 });
+
+describe("parse filters", () => {
+  test("parse values and returns the valid style property values", () => {
+    expect(parseCssValue("filter", "blur(4px)")).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "px", value: 4 }],
+          },
+        },
+      ],
+    });
+    expect(
+      parseCssValue("filter", "drop-shadow(10px 10px 25px rgba(0, 0, 255, 1))")
+    ).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "drop-shadow",
+          args: {
+            type: "tuple",
+            value: [
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 25 },
+              { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            ],
+          },
+        },
+      ],
+    });
+    expect(
+      parseCssValue("filter", "drop-shadow(10px 10px 25px  #0000FF)")
+    ).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "drop-shadow",
+          args: {
+            type: "tuple",
+            value: [
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 25 },
+              { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            ],
+          },
+        },
+      ],
+    });
+  });
+
+  test("parse backdrop-filter", () => {
+    expect(parseCssValue("backdropFilter", "blur(4px)")).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "px", value: 4 }],
+          },
+        },
+      ],
+    });
+  });
+
+  test("Multiple valid function values", () => {
+    expect(
+      parseCssValue(
+        "filter",
+        "blur(4px) drop-shadow(16px 16px 20px blue) opacity(25%)"
+      )
+    ).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "px", value: 4 }],
+          },
+        },
+        {
+          type: "function",
+          name: "drop-shadow",
+          args: {
+            type: "tuple",
+            value: [
+              { type: "unit", unit: "px", value: 16 },
+              { type: "unit", unit: "px", value: 16 },
+              { type: "unit", unit: "px", value: 20 },
+              { type: "keyword", value: "blue" },
+            ],
+          },
+        },
+        {
+          type: "function",
+          name: "opacity",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "%", value: 25 }],
+          },
+        },
+      ],
+    });
+  });
+
+  // parsers are used to use copied value. At the moment, we don't have support
+  // for complex functions in the UI like the one below like calc(4px + 16em)
+  test("Using complex functions inside filter function", () => {
+    expect(parseCssValue("filter", "blur(calc(4px + 16em))")).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [],
+          },
+        },
+      ],
+    });
+  });
+});
