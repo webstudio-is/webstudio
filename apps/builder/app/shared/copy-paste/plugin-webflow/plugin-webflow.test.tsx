@@ -2612,12 +2612,12 @@ describe("Styles", () => {
     expect(fragment.styleSources).toEqual([
       {
         type: "token",
-        id: expect.any(String),
+        id: "uu1p3Xdvlq_AZOxnzDvAv",
         name: "a",
       },
       {
         type: "token",
-        id: expect.any(String),
+        id: "uumXb7vHOnzTr-4SIW-wJ",
         name: "button.is-small.is-secondary",
       },
     ]);
@@ -2626,9 +2626,9 @@ describe("Styles", () => {
         instanceId: expect.any(String),
         values: [
           "uu1p3Xdvlq_AZOxnzDvAv",
-          "uumXb7vHOnzTr-4SIW-wJ",
           "uuBw1PRC_uE8RhTmwxaH8",
           "uuORexg4BOrRXBJZgB80_",
+          "uumXb7vHOnzTr-4SIW-wJ",
         ],
       },
     ]);
