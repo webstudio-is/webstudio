@@ -16,6 +16,9 @@ type IntermediateValue = {
   value: string;
 };
 
+const isTransparent = (color: StyleValue) =>
+  color.type === "keyword" && color.value === "transparent";
+
 export const BackgroundGradient = (
   props: Omit<ControlProps, "property" | "items"> & {
     setBackgroundColor: (color: StyleValue) => void;
@@ -73,8 +76,7 @@ export const BackgroundGradient = (
 
     // set invalid state
     if (
-      backgroundColor === undefined ||
-      backgroundColor.type === "invalid" ||
+      backgroundColor?.type === "invalid" ||
       layer === undefined ||
       layer.type === "invalid"
     ) {
@@ -82,8 +84,10 @@ export const BackgroundGradient = (
       props.deleteProperty(property, { isEphemeral: true });
       return;
     }
-    props.setBackgroundColor(backgroundColor);
     setIntermediateValue(undefined);
+    if (backgroundColor && isTransparent(backgroundColor) === false) {
+      props.setBackgroundColor(backgroundColor);
+    }
     props.setProperty(property)(layer);
   };
 
