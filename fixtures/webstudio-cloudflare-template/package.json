@@ -47,13 +47,12 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240405.0",
+    "@cloudflare/workers-types": "^4.20240620.0",
     "@remix-run/dev": "2.10.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "miniflare": "^3.20231030.4",
     "typescript": "5.5.2",
     "vite": "^5.3.2",
-    "wrangler": "^3.48.0"
+    "wrangler": "^3.63.2"
   }
 }
