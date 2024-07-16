@@ -1,7 +1,6 @@
 import type {
   Breakpoint,
   Instance,
-  StyleSources,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
 import type { WfAsset, WfElementNode, WfNode, WfStyle } from "./schema";
