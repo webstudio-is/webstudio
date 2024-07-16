@@ -76,7 +76,7 @@ const extractUrlProps = (data: WebstudioFragment) => {
     // Convert urls to ids in patches and apply them
     const transformedPatched = JSON.parse(
       JSON.stringify(changes),
-      (key, value) => {
+      (_key, value) => {
         if (typeof value === "string") {
           if (urlToId.has(value)) {
             return urlToId.get(value);

@@ -1,8 +1,6 @@
 import {
-  KeywordValue,
   StyleValue,
   toValue,
-  type FunctionValue,
   type InvalidValue,
   type LayersValue,
   type StyleProperty,
@@ -16,8 +14,6 @@ import type {
 } from "./shared/use-style-data";
 import { colord, type RgbaColor } from "colord";
 import { humanizeString } from "~/shared/string-utils";
-import { isAnimatableProperty } from "@webstudio-is/css-data";
-import { findTimingFunctionFromValue } from "./sections/transitions/transition-utils";
 import type { LayerListProperty } from "./style-layers-list";
 
 export const deleteLayer = <Layers extends TupleValue | LayersValue>(
@@ -196,46 +192,6 @@ export const getHumanizedTextFromLayer = (
   layer: StyleValue
 ) => {
   switch (property) {
-    case "transitionProperty":
-      if (layer.type === "tuple") {
-        const properties = [...layer.value];
-
-        let transitionProperty = properties.find(
-          (item): item is KeywordValue =>
-            (item.type === "unparsed" || item.type === "keyword") &&
-            isAnimatableProperty(item.value) === true
-        );
-
-        const transitionTimingFunction = properties.find(
-          (item): item is KeywordValue | FunctionValue =>
-            (item.type === "keyword" || item.type === "function") &&
-            isAnimatableProperty(toValue(item)) === false
-        );
-
-        if (transitionProperty === undefined) {
-          transitionProperty = {
-            type: "keyword",
-            value: "unknown",
-          };
-        }
-
-        properties.splice(properties.indexOf(transitionProperty), 1);
-        if (transitionTimingFunction !== undefined) {
-          properties.splice(properties.indexOf(transitionTimingFunction), 1);
-        }
-
-        const customTimingFunction = findTimingFunctionFromValue(
-          toValue(transitionTimingFunction)
-        );
-
-        return {
-          name: `${humanizeString(transitionProperty.value)}: ${toValue({ type: "tuple", value: properties })} ${customTimingFunction ?? toValue(transitionTimingFunction)}`,
-          value: toValue(layer),
-          color: undefined,
-        };
-      }
-      break;
-
     case "textShadow":
     case "boxShadow":
       if (layer.type === "tuple") {

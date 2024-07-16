@@ -57,7 +57,8 @@ const unprefixProperty = (property: string) => {
 
 const parseCssValue = (
   property: string,
-  value: string
+  value: string,
+  { customProperties }: { customProperties: boolean }
 ): Map<StyleProperty, StyleValue> => {
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
@@ -70,7 +71,7 @@ const parseCssValue = (
     }
 
     // @todo https://github.com/webstudio-is/webstudio/issues/3399
-    if (value.startsWith("var(")) {
+    if (customProperties === false && value.startsWith("var(")) {
       final.set(property, { type: "keyword", value: "unset" });
       continue;
     }
@@ -100,7 +101,12 @@ type Selector = {
   state?: string;
 };
 
-export const parseCss = (css: string) => {
+type ParserOptions = {
+  customProperties?: boolean;
+};
+
+export const parseCss = (css: string, options: ParserOptions = {}) => {
+  const customProperties = options.customProperties ?? false;
   const ast = cssTreeTryParse(css);
   const styles = new Map<string, ParsedStyleDecl>();
 
@@ -200,7 +206,8 @@ export const parseCss = (css: string) => {
 
     const parsedCss = parseCssValue(
       unprefixProperty(node.property),
-      stringValue
+      stringValue,
+      { customProperties }
     );
 
     for (const { name: selector, state } of selectors) {

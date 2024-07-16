@@ -1,24 +1,26 @@
 import { colord } from "colord";
 import * as csstree from "css-tree";
-import type { CssNode } from "css-tree";
+import { type CssNode, generate, lexer, List } from "css-tree";
 import warnOnce from "warn-once";
 import {
-  LayersValue,
-  TupleValue,
   cssWideKeywords,
   hyphenateProperty,
+  type ImageValue,
+  type KeywordValue,
+  type LayersValue,
+  type TupleValue,
+  type UnitValue,
   type LayerValueItem,
+  type RgbValue,
   type StyleProperty,
   type StyleValue,
   type Unit,
+  type VarValue,
+  type FunctionValue,
+  type TupleValueItem,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { parseTranslate } from "./property-parsers/translate";
-import { parseTransform } from "./property-parsers/transform";
-import { parseScale } from "./property-parsers/scale";
-import { parseFilter } from "./property-parsers/filter";
-import { parseShadow } from "./property-parsers/shadows";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -48,6 +50,10 @@ export const isValidDeclaration = (
   value: string
 ): boolean => {
   const cssPropertyName = hyphenateProperty(property);
+
+  if (property.startsWith("--") || value.includes("var(")) {
+    return true;
+  }
 
   // these properties have poor support natively and in csstree
   // though rendered styles are merged as shorthand
@@ -90,6 +96,15 @@ export const isValidDeclaration = (
     return false;
   }
 
+  // scale css-proeprty accepts both number and percentage.
+  // The syntax from MDN is incorrect and should be updated.
+  // Here is a PR that fixes the same, but it is not merged yet.
+  // https://github.com/mdn/data/pull/746
+  if (cssPropertyName === "scale") {
+    const syntax = "none | [ <number> | <percentage> ]{1,3}";
+    return lexer.match(syntax, ast).matched !== null;
+  }
+
   const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
 
   // allow to parse unknown properties as unparsed
@@ -115,7 +130,196 @@ const repeatedProps = new Set<StyleProperty>([
   "transitionDelay",
   "transitionTimingFunction",
   "transitionBehavior",
+  "boxShadow",
+  "textShadow",
 ]);
+
+const tupleProps = new Set<StyleProperty>([
+  "boxShadow",
+  "textShadow",
+  "scale",
+  "translate",
+  "rotate",
+  "transform",
+  "filter",
+  "backdropFilter",
+]);
+
+const availableUnits = new Set<string>(Object.values(units).flat());
+
+const parseColor = (colorString: string): undefined | RgbValue => {
+  const color = colord(colorString);
+  if (color.isValid()) {
+    const rgb = color.toRgb();
+    return {
+      type: "rgb",
+      alpha: rgb.a,
+      r: rgb.r,
+      g: rgb.g,
+      b: rgb.b,
+    };
+  }
+};
+
+const parseLiteral = (
+  node: undefined | null | CssNode,
+  keywords?: readonly string[]
+):
+  | undefined
+  | UnitValue
+  | KeywordValue
+  | ImageValue
+  | RgbValue
+  | VarValue
+  | FunctionValue => {
+  if (node?.type === "Number") {
+    return {
+      type: "unit",
+      unit: "number",
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Dimension" && availableUnits.has(node.unit)) {
+    return {
+      type: "unit",
+      unit: node.unit as Unit,
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Percentage") {
+    return {
+      type: "unit",
+      unit: "%",
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Identifier") {
+    const name = node.name.toLowerCase();
+    if (keywords?.map((keyword) => keyword.toLowerCase()).includes(name)) {
+      return {
+        type: "keyword",
+        value: name,
+      };
+    }
+  }
+  if (node?.type === "Url") {
+    return {
+      type: "image",
+      value: {
+        type: "url",
+        url: node.value,
+      },
+    };
+  }
+  if (node?.type === "Hash") {
+    const color = parseColor(`#${node.value}`);
+    if (color) {
+      return color;
+    }
+  }
+  if (node?.type === "Function") {
+    // <color-function>
+    if (
+      node.name === "hsl" ||
+      node.name === "hsla" ||
+      node.name === "rgb" ||
+      node.name === "rgba"
+    ) {
+      const color = parseColor(generate(node));
+      if (color) {
+        return color;
+      }
+    }
+    if (node.name === "var") {
+      const [name, _comma, ...fallback] = node.children;
+      const fallbackString = generate({
+        type: "Value",
+        children: new List<CssNode>().fromArray(fallback),
+      }).trim();
+      if (name.type === "Identifier") {
+        return {
+          type: "var",
+          value: name.name.slice("--".length),
+          fallbacks:
+            fallback.length === 0
+              ? []
+              : [{ type: "unparsed", value: fallbackString }],
+        };
+      }
+    }
+
+    // functions with comma-separated arguments
+    if (
+      // <transform-function>
+      // 2d
+      node.name === "matrix" ||
+      node.name === "translate" ||
+      node.name === "translateX" ||
+      node.name === "translateY" ||
+      node.name === "scale" ||
+      node.name === "scaleX" ||
+      node.name === "scaleY" ||
+      node.name === "rotate" ||
+      node.name === "skew" ||
+      node.name === "skewX" ||
+      node.name === "skewY" ||
+      // 3d
+      node.name === "matrix3d" ||
+      node.name === "translate3d" ||
+      node.name === "translateZ" ||
+      node.name === "scale3d" ||
+      node.name === "scaleZ" ||
+      node.name === "rotate3d" ||
+      node.name === "rotateX" ||
+      node.name === "rotateY" ||
+      node.name === "rotateZ" ||
+      node.name === "perspective" ||
+      // <easing-function>
+      node.name === "linear" ||
+      node.name === "cubic-bezier" ||
+      node.name === "steps"
+    ) {
+      const args: LayersValue = { type: "layers", value: [] };
+      for (const arg of node.children) {
+        const matchedValue = parseLiteral(arg);
+        if (matchedValue) {
+          args.value.push(matchedValue as LayerValueItem);
+        }
+        if (arg.type === "Identifier") {
+          args.value.push({ type: "keyword", value: arg.name });
+        }
+      }
+      return { type: "function", args, name: node.name };
+    }
+
+    // functions with space separated arguments
+    if (
+      // <filter-function>
+      node.name === "blur" ||
+      node.name === "brightness" ||
+      node.name === "contrast" ||
+      node.name === "drop-shadow" ||
+      node.name === "grayscale" ||
+      node.name === "hue-rotate" ||
+      node.name === "invert" ||
+      node.name === "opacity" ||
+      node.name === "sepia" ||
+      node.name === "saturate"
+    ) {
+      const args: TupleValue = { type: "tuple", value: [] };
+      for (const arg of node.children) {
+        const matchedValue = parseLiteral(arg);
+        if (matchedValue) {
+          args.value.push(matchedValue as TupleValueItem);
+        }
+        if (arg.type === "Identifier") {
+          args.value.push({ type: "keyword", value: arg.name });
+        }
+      }
+      return { type: "function", args, name: node.name };
+    }
+  }
+};
 
 export const parseCssValue = (
   property: StyleProperty, // Handles only long-hand values.
@@ -134,10 +338,6 @@ export const parseCssValue = (
       // none is not valid layer keyword
       return { type: "unparsed", value: potentialKeyword };
     }
-  }
-
-  if (property === "scale") {
-    return parseScale(input);
   }
 
   const invalidValue = {
@@ -161,22 +361,6 @@ export const parseCssValue = (
       `Can't parse css property "${property}" with value "${input}"`
     );
     return invalidValue;
-  }
-
-  if (property === "translate") {
-    return parseTranslate(input);
-  }
-
-  if (property === "transform") {
-    return parseTransform(input);
-  }
-
-  if (property === "filter" || property === "backdropFilter") {
-    return parseFilter(property, input);
-  }
-
-  if (property === "boxShadow" || property === "textShadow") {
-    return parseShadow(property, input);
   }
 
   // prevent infinite splitting into layers for items
@@ -207,140 +391,45 @@ export const parseCssValue = (
   // csstree does not support transition-behavior
   // so check keywords manually
   if (property === "transitionBehavior") {
-    return keywordValues[property].includes(potentialKeyword as never)
-      ? { type: "keyword", value: potentialKeyword }
-      : invalidValue;
-  }
-
-  if (property === "transitionTimingFunction") {
     const node = ast.type === "Value" ? ast.children.first : ast;
-    if (node?.type === "Identifier") {
-      return { type: "keyword", value: node.name };
+    const keyword = parseLiteral(node, keywordValues[property]);
+    if (keyword?.type === "keyword") {
+      return keyword;
     }
-    if (node?.type === "Function") {
-      // transition timing function arguments are comma seperated values
-      const args: LayersValue = { type: "layers", value: [] };
-      for (const arg of node.children) {
-        if (arg.type === "Number") {
-          args.value.push({ type: "keyword", value: arg.value });
-        }
-        if (arg.type === "Identifier") {
-          args.value.push({ type: "keyword", value: arg.name });
-        }
-        if (arg.type === "Dimension") {
-          const unit = arg.unit as Unit;
-          args.value.push({ type: "unit", value: Number(arg.value), unit });
-        }
-      }
-      return { type: "function", args, name: node.name };
-    }
+    return invalidValue;
   }
 
-  if (ast.type === "Value" && ast.children.first === ast.children.last) {
+  // Probably a tuple like background-size or box-shadow
+  if (
+    ast.type === "Value" &&
+    (ast.children.size > 1 || tupleProps.has(property))
+  ) {
+    const tuple: TupleValue = {
+      type: "tuple",
+      value: [],
+    };
+    for (const node of ast.children) {
+      const matchedValue = parseLiteral(node, keywordValues[property as never]);
+      if (matchedValue) {
+        tuple.value.push(matchedValue as never);
+      }
+    }
+    return tuple;
+  }
+
+  if (ast.type === "Value" && ast.children.size === 1) {
     // Try extract units from 1st children
     const first = ast.children.first;
-
-    if (first?.type === "Number") {
-      return {
-        type: "unit",
-        unit: "number",
-        value: Number(first.value),
-      };
-    }
-
-    if (first?.type === "Dimension") {
-      const unit = first.unit as (typeof units)[keyof typeof units][number];
-
-      for (const unitGroup of Object.values(units)) {
-        if (unitGroup.includes(unit as never)) {
-          return {
-            type: "unit",
-            unit: unit as Unit,
-            value: Number(first.value),
-          };
-        }
+    const matchedValue = parseLiteral(first, keywordValues[property as never]);
+    // parse only references in custom properties
+    if (property.startsWith("--")) {
+      if (matchedValue?.type === "var") {
+        return matchedValue;
       }
-      return invalidValue;
+      return { type: "unparsed", value: input };
     }
-
-    if (first?.type === "Percentage") {
-      return {
-        type: "unit",
-        unit: "%",
-        value: Number(first.value),
-      };
-    }
-
-    if (first?.type === "Identifier") {
-      const values = keywordValues[property as keyof typeof keywordValues];
-      if (values === undefined) {
-        return {
-          type: "unparsed",
-          value: input,
-        };
-      }
-      const lettersRegex = /[^a-zA-Z]+/g;
-      const searchValues = values.map((value) =>
-        value.replace(lettersRegex, "").toLowerCase()
-      );
-      const keywordInput = input.replace(lettersRegex, "").toLowerCase();
-
-      const index = searchValues.indexOf(keywordInput);
-
-      if (index > -1) {
-        return {
-          type: "keyword",
-          value: values[index]!,
-        };
-      }
-    }
-
-    if (first?.type === "Url") {
-      return {
-        type: "image",
-        value: {
-          type: "url",
-          url: first.value,
-        },
-      };
-    }
-  }
-
-  // Probably a color (we can use csstree.lexer.matchProperty(cssPropertyName, ast) to extract the type but this looks much simpler)
-  if (property.toLocaleLowerCase().includes("color")) {
-    const mayBeColor = colord(input);
-    if (mayBeColor.isValid()) {
-      const rgb = mayBeColor.toRgb();
-      return {
-        type: "rgb",
-        alpha: rgb.a,
-        r: rgb.r,
-        g: rgb.g,
-        b: rgb.b,
-      };
-    }
-  }
-
-  // Probably a tuple like background-position
-  if (ast.type === "Value" && ast.children.size === 2) {
-    const tupleFirst = parseCssValue(
-      property,
-      csstree.generate(ast.children.first!),
-      false
-    );
-    const tupleLast = parseCssValue(
-      property,
-      csstree.generate(ast.children.last!),
-      false
-    );
-
-    const tupleResult = TupleValue.safeParse({
-      type: "tuple",
-      value: [tupleFirst, tupleLast],
-    });
-
-    if (tupleResult.success) {
-      return tupleResult.data;
+    if (matchedValue) {
+      return matchedValue;
     }
   }
 

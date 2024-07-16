@@ -35,7 +35,7 @@ export const domainRouter = router({
   create: procedure
     .input(CreateInput)
     .output(createOutput(z.optional(z.undefined())))
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       const record = dnsTxtEntries.get(input.domain);
       if (record !== input.txtRecord) {
         // Return an error once then update the record
@@ -57,7 +57,7 @@ export const domainRouter = router({
   refresh: procedure
     .input(Input)
     .output(createOutput(z.optional(z.undefined())))
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async () => {
       return { success: true };
     }),
   /**
@@ -73,7 +73,7 @@ export const domainRouter = router({
         ])
       )
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const domainState = domainStates.get(input.domain);
 
       if (domainState === undefined) {

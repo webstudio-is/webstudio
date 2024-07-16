@@ -21,14 +21,19 @@ import {
   Flex,
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
-import type { KeywordValue, UnparsedValue } from "@webstudio-is/css-engine";
+import {
+  toValue,
+  type KeywordValue,
+  type StyleValue,
+  type UnparsedValue,
+} from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
 import { setUnion } from "~/shared/shim";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
 type TransitionPropertyProps = {
-  property: KeywordValue | UnparsedValue;
+  property: StyleValue;
   onPropertySelection: (params: {
     property: KeywordValue | UnparsedValue;
   }) => void;
@@ -44,8 +49,9 @@ export const TransitionProperty = ({
   property,
   onPropertySelection,
 }: TransitionPropertyProps) => {
-  const [inputValue, setInputValue] = useState(property.value ?? "all");
-  useEffect(() => setInputValue(property.value), [property.value]);
+  const valueString = toValue(property);
+  const [inputValue, setInputValue] = useState(valueString);
+  useEffect(() => setInputValue(valueString), [valueString]);
 
   const {
     items,

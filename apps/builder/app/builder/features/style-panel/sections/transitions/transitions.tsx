@@ -1,56 +1,98 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { PlusIcon } from "@webstudio-is/icons";
 import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
-  Text,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { transitionLongHandProperties } from "@webstudio-is/css-data";
-
+import {
+  properties,
+  transitionLongHandProperties,
+} from "@webstudio-is/css-data";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
-import { LayersList } from "../../style-layers-list";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { TransitionContent } from "./transition-content";
 import {
-  getTransitionProperties,
   deleteTransitionProperties,
-  addDefaultTransitionLayer,
-  deleteTransitionLayer,
-  editTransitionLayer,
-  swapTransitionLayers,
-  hideTransitionLayer,
-  convertIndividualTransitionToLayers,
+  findTimingFunctionFromValue,
+  type TransitionProperty,
 } from "./transition-utils";
-import type { StyleProperty } from "@webstudio-is/css-engine";
-import { getStyleSource } from "../../shared/style-info";
+import { toValue, type LayerValueItem } from "@webstudio-is/css-engine";
+import { humanizeString } from "~/shared/string-utils";
+import { RepeatedStyle } from "../../shared/repeated-style";
+import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import { repeatUntil } from "~/shared/array-utils";
+
+export { transitionLongHandProperties as properties };
 
 const label = "Transitions";
-const initialTransition = "opacity 200ms ease 0s";
-export const properties = (
-  transitionLongHandProperties as unknown as Array<StyleProperty>
-).filter((property) => property !== "transitionBehavior");
+
+const getTransitionLayers = (
+  style: StyleInfo,
+  property: TransitionProperty
+) => {
+  const transitionPropertiesCount =
+    style.transitionProperty?.value?.type === "layers"
+      ? style.transitionProperty.value.value.length
+      : 0;
+  const definedLayers: LayerValueItem[] =
+    style[property]?.value.type === "layers"
+      ? style[property].value.value
+      : [properties[property].initial];
+  return repeatUntil(definedLayers, transitionPropertiesCount);
+};
+
+const getLayerLabel = ({
+  style,
+  index,
+}: {
+  style: StyleInfo;
+  index: number;
+}) => {
+  // show label without hidden replacement
+  const propertyLayer =
+    getTransitionLayers(style, "transitionProperty")[index] ??
+    properties.transitionProperty.initial;
+  const property = humanizeString(toValue({ ...propertyLayer, hidden: false }));
+  const duration = toValue(
+    getTransitionLayers(style, "transitionDuration")[index] ??
+      properties.transitionDuration.initial
+  );
+  const timingFunctionLayer =
+    getTransitionLayers(style, "transitionTimingFunction")[index] ??
+    properties.transitionTimingFunction.initial;
+  const timingFunction = toValue({ ...timingFunctionLayer, hidden: false });
+  const humanizedTimingFunction =
+    findTimingFunctionFromValue(timingFunction) ?? timingFunction;
+  const delay = toValue(
+    getTransitionLayers(style, "transitionDelay")[index] ??
+      properties.transitionDelay.initial
+  );
+  return `${property}: ${duration} ${humanizedTimingFunction} ${delay}`;
+};
+
+const defaultTransitionLayers: Record<TransitionProperty, LayerValueItem> = {
+  transitionProperty: { type: "unparsed", value: "opacity" },
+  transitionDuration: { type: "unit", value: 200, unit: "ms" },
+  transitionTimingFunction: { type: "keyword", value: "ease" },
+  transitionDelay: { type: "unit", value: 0, unit: "ms" },
+  transitionBehavior: { type: "keyword", value: "normal" },
+};
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const extractedProperties = getTransitionProperties(currentStyle);
   const propertyValue = currentStyle?.["transitionProperty"]?.value;
   const sectionStyleSource =
     propertyValue?.type === "unparsed" ||
     propertyValue?.type === "guaranteedInvalid"
       ? undefined
       : getStyleSource(currentStyle["transitionProperty"]);
-
-  const layers = useMemo(
-    () => convertIndividualTransitionToLayers(extractedProperties),
-    [extractedProperties]
-  );
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
@@ -68,7 +110,7 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, properties)}
+          dots={getDots(currentStyle, transitionLongHandProperties)}
           suffix={
             <Tooltip
               content={
@@ -80,12 +122,19 @@ export const Section = (props: SectionProps) => {
               <SectionTitleButton
                 disabled={isStyleInLocalState === false}
                 prefix={<PlusIcon />}
-                onClick={() =>
-                  addDefaultTransitionLayer({
-                    createBatchUpdate,
-                    currentStyle,
-                  })
-                }
+                onClick={() => {
+                  const batch = createBatchUpdate();
+                  for (const property of transitionLongHandProperties) {
+                    batch.setProperty(property)({
+                      type: "layers",
+                      value: [
+                        ...getTransitionLayers(currentStyle, property),
+                        defaultTransitionLayers[property],
+                      ],
+                    });
+                  }
+                  batch.publish();
+                }}
               />
             </Tooltip>
           }
@@ -94,7 +143,7 @@ export const Section = (props: SectionProps) => {
             title={label}
             style={currentStyle}
             description="Animate the transition between states on this instance."
-            properties={properties}
+            properties={transitionLongHandProperties}
             label={
               <SectionTitleLabel color={sectionStyleSource}>
                 {label}
@@ -109,80 +158,28 @@ export const Section = (props: SectionProps) => {
         </SectionTitle>
       }
     >
-      {layers.value.length > 0 && (
-        <LayersList
-          {...props}
-          property={transitionLongHandProperties[0]}
-          value={layers}
-          label={label}
-          deleteProperty={() =>
-            deleteTransitionProperties({
-              createBatchUpdate,
-            })
-          }
-          deleteLayer={(index) =>
-            deleteTransitionLayer({
-              index,
-              createBatchUpdate,
-              currentStyle,
-            })
-          }
-          swapLayers={(oldIndex, newIndex) =>
-            swapTransitionLayers({
-              oldIndex,
-              newIndex,
-              createBatchUpdate,
-              currentStyle,
-            })
-          }
-          hideLayer={(index) => {
-            hideTransitionLayer({
-              index,
-              createBatchUpdate,
-              currentStyle,
-            });
-          }}
-          renderContent={(layerProps) => {
-            if (layerProps.layer.type !== "tuple") {
-              return <></>;
-            }
-
-            return (
-              <TransitionContent
-                {...layerProps}
-                currentStyle={currentStyle}
-                layer={layerProps.layer}
-                createBatchUpdate={createBatchUpdate}
-                onEditLayer={(index, layers, options) =>
-                  editTransitionLayer({
-                    index,
-                    layers,
-                    options,
-                    createBatchUpdate,
-                    currentStyle,
-                  })
-                }
-                tooltip={
-                  <Tooltip
-                    variant="wrapped"
-                    content={
-                      <Text>
-                        Paste CSS code for a transition or part of a transition,
-                        for example:
-                        <br />
-                        <br />
-                        <Text variant="monoBold">{initialTransition}</Text>
-                      </Text>
-                    }
-                  >
-                    <InfoCircleIcon />
-                  </Tooltip>
-                }
-              />
-            );
-          }}
-        />
-      )}
+      <RepeatedStyle
+        label={label}
+        properties={[
+          "transitionProperty",
+          "transitionDuration",
+          "transitionTimingFunction",
+          "transitionDelay",
+          "transitionBehavior",
+        ]}
+        style={currentStyle}
+        createBatchUpdate={createBatchUpdate}
+        getItemProps={(index) => ({
+          label: getLayerLabel({ style: currentStyle, index }),
+        })}
+        renderItemContent={(index) => (
+          <TransitionContent
+            index={index}
+            currentStyle={currentStyle}
+            createBatchUpdate={createBatchUpdate}
+          />
+        )}
+      />
     </CollapsibleSectionRoot>
   );
 };

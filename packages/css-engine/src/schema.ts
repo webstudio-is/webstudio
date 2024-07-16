@@ -114,6 +114,7 @@ export const TupleValueItem = z.union([
   UnitValue,
   KeywordValue,
   UnparsedValue,
+  ImageValue,
   RgbValue,
   FunctionValue,
 ]);
@@ -133,6 +134,7 @@ const LayerValueItem = z.union([
   UnparsedValue,
   ImageValue,
   TupleValue,
+  RgbValue,
   InvalidValue,
   FunctionValue,
 ]);

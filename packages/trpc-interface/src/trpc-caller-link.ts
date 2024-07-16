@@ -20,7 +20,7 @@ export const callerLink = <TemplateRouter extends AnyRouter>(
 ): TRPCLink<TemplateRouter> => {
   const { appRouter, createContext } = opts;
 
-  return (runtime) =>
+  return (_runtime) =>
     ({ op }) =>
       observable((observer) => {
         const caller = appRouter.createCaller(createContext?.() ?? {});

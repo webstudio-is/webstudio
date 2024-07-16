@@ -86,7 +86,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   );
 };
 
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
+export const headers: HeadersFunction = () => {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
   };

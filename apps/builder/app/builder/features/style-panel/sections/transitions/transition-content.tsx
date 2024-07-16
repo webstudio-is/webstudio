@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   toValue,
   type InvalidValue,
@@ -22,41 +22,25 @@ import {
   Grid,
 } from "@webstudio-is/design-system";
 import {
-  extractTransitionProperties,
   parseCssValue,
+  properties,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import type {
   CreateBatchUpdate,
-  DeleteProperty,
   StyleUpdateOptions,
 } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import {
-  defaultTransitionProperty,
-  defaultTransitionDuration,
-  defaultTransitionTimingFunction,
-  defaultTransitionDelay,
-  deleteTransitionLayer,
-} from "./transition-utils";
+import { deleteTransitionLayer, editTransitionLayer } from "./transition-utils";
 import type { StyleInfo } from "../../shared/style-info";
 import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 
 type TransitionContentProps = {
   index: number;
-  property: StyleProperty;
-  layer: TupleValue;
-  propertyValue: string;
-  tooltip: JSX.Element;
-  onEditLayer: (
-    index: number,
-    layer: LayersValue,
-    options: StyleUpdateOptions
-  ) => void;
-  deleteProperty: DeleteProperty;
   currentStyle: StyleInfo;
   createBatchUpdate: CreateBatchUpdate;
 };
@@ -70,23 +54,44 @@ const getLayer = (value: undefined | StyleValue, index: number) =>
   value?.type === "layers" ? value.value[index] : undefined;
 
 export const TransitionContent = ({
-  layer,
   index,
-  tooltip,
-  onEditLayer,
-  propertyValue,
   createBatchUpdate,
   currentStyle,
 }: TransitionContentProps) => {
+  const onEditLayer = (
+    index: number,
+    layers: LayersValue,
+    options: StyleUpdateOptions
+  ) => {
+    editTransitionLayer({
+      index,
+      layers,
+      options,
+      createBatchUpdate,
+      currentStyle,
+    });
+  };
+
+  const property = getLayer(currentStyle.transitionProperty?.value, index);
+  const duration = getLayer(currentStyle.transitionDuration?.value, index);
+  const timingFunction = getLayer(
+    currentStyle.transitionTimingFunction?.value,
+    index
+  );
+  const delay = getLayer(currentStyle.transitionDelay?.value, index);
+  const behavior = getLayer(currentStyle.transitionBehavior?.value, index);
+
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
-  >({ type: "intermediate", value: propertyValue });
-
-  const { property, timing, delay, duration } =
-    useMemo<ExtractedTransitionProperties>(
-      () => extractTransitionProperties(layer),
-      [layer]
-    );
+  >(() => ({
+    type: "intermediate",
+    value: toValue({
+      type: "tuple",
+      value: [property, duration, timingFunction, delay, behavior].filter(
+        Boolean
+      ) as TupleValueItem[],
+    }),
+  }));
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -130,7 +135,7 @@ export const TransitionContent = ({
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     const value: Array<UnitValue | KeywordValue> = Object.values({
-      ...{ property, duration, delay, timing },
+      ...{ property, duration, delay, timingFunction },
       ...params,
     }).filter<UnitValue | KeywordValue>(
       (item): item is UnitValue | KeywordValue => item != null
@@ -169,7 +174,7 @@ export const TransitionContent = ({
         }}
       >
         <TransitionProperty
-          property={property ?? defaultTransitionProperty}
+          property={property ?? properties.transitionProperty.initial}
           onPropertySelection={handlePropertyUpdate}
         />
 
@@ -196,11 +201,9 @@ export const TransitionContent = ({
           key={"transitionDuration"}
           property={"transitionDuration"}
           styleSource="local"
-          value={duration ?? defaultTransitionDuration}
+          value={duration ?? properties.transitionDuration.initial}
           keywords={[]}
-          deleteProperty={() => {
-            handlePropertyUpdate({ duration });
-          }}
+          deleteProperty={() => {}}
           setValue={(value, options) => {
             if (
               value === undefined ||
@@ -236,9 +239,9 @@ export const TransitionContent = ({
           property={"transitionDelay"}
           key={"transitionDelay"}
           styleSource="local"
-          value={delay ?? defaultTransitionDelay}
+          value={delay ?? properties.transitionDelay.initial}
           keywords={[]}
-          deleteProperty={() => handlePropertyUpdate({ delay })}
+          deleteProperty={() => {}}
           setValue={(value, options) => {
             if (
               value === undefined ||
@@ -253,7 +256,7 @@ export const TransitionContent = ({
         />
 
         <TransitionTiming
-          timing={timing ?? defaultTransitionTimingFunction}
+          timing={timingFunction ?? properties.transitionTimingFunction.initial}
           onTimingSelection={handlePropertyUpdate}
         />
       </Grid>
@@ -271,7 +274,20 @@ export const TransitionContent = ({
         <Label>
           <Flex align="center" gap="1">
             Code
-            {tooltip}
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Text>
+                  Paste CSS code for a transition or part of a transition, for
+                  example:
+                  <br />
+                  <br />
+                  <Text variant="monoBold">opacity 200ms ease 0s</Text>
+                </Text>
+              }
+            >
+              <InfoCircleIcon />
+            </Tooltip>
           </Flex>
         </Label>
         <TextArea

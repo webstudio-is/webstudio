@@ -1,13 +1,17 @@
-import type { Meta } from "@storybook/react";
-import { PositionControl } from "./position-control";
+import { styled, theme } from "@webstudio-is/design-system";
+import { useRef, useState } from "react";
+import type { StyleInfo } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
   SetProperty,
 } from "../../shared/use-style-data";
-import { useState, useRef } from "react";
-import type { StyleInfo } from "../../shared/style-info";
-import { Box } from "@webstudio-is/design-system";
+import { Section } from "./transitions";
+
+const Panel = styled("div", {
+  width: theme.spacing[30],
+  boxShadow: theme.shadows.panelSectionDropShadow,
+});
 
 const useStyleInfo = (styleInfoInitial: StyleInfo) => {
   const [styleInfo, setStyleInfo] = useState(() => styleInfoInitial);
@@ -33,11 +37,8 @@ const useStyleInfo = (styleInfoInitial: StyleInfo) => {
     }
 
     setStyleInfo((styleInfo) => {
-      const styleInfoCopy = { ...styleInfo };
-
-      styleInfoCopy[name] = structuredClone(defaultValue);
-
-      return styleInfoCopy;
+      const { [name]: _, ...rest } = styleInfo;
+      return rest;
     });
   };
 
@@ -71,49 +72,34 @@ const useStyleInfo = (styleInfoInitial: StyleInfo) => {
   return { styleInfo, setProperty, deleteProperty, createBatchUpdate };
 };
 
-const defaultValue = {
-  value: {
-    type: "keyword",
-    value: "auto",
-  },
-} as const;
-
-const bigValue = {
-  value: {
-    type: "unit",
-    value: 123.27,
-    unit: "rem",
-  },
-
-  local: {
-    type: "unit",
-    value: 123.27,
-    unit: "rem",
-  },
-} as const;
-
-export const PositionControlComponent = () => {
+export const Transitions = () => {
   const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
     useStyleInfo({
-      left: defaultValue,
-      right: bigValue,
-      top: defaultValue,
-      bottom: defaultValue,
+      transitionProperty: {
+        value: {
+          type: "layers",
+          value: [
+            { type: "unparsed", value: "opacity" },
+            { type: "unparsed", value: "transform" },
+            { type: "keyword", value: "all" },
+          ],
+        },
+      },
     });
 
   return (
-    <Box css={{ marginLeft: 100 }}>
-      <PositionControl
-        createBatchUpdate={createBatchUpdate}
+    <Panel>
+      <Section
         currentStyle={styleInfo}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
+        createBatchUpdate={createBatchUpdate}
       />
-    </Box>
+    </Panel>
   );
 };
 
 export default {
-  title: "Style Panel/Position",
-  component: PositionControlComponent,
-} as Meta<typeof PositionControlComponent>;
+  title: "Style Panel/Transitions",
+  component: Transitions,
+};

@@ -31,7 +31,7 @@ export const deploymentRouter = router({
   publish: procedure
     .input(PublishInput)
     .output(Output)
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       return {
         success: false,
         error: `Not implemented, use buildId=${input.buildId}`,

@@ -35,7 +35,7 @@ const createAuthorizationContext = async (
   return context;
 };
 
-const createDomainContext = (request: Request) => {
+const createDomainContext = (_request: Request) => {
   const context: AppContext["domain"] = {
     domainTrpc: trpcSharedClient.domain,
   };
