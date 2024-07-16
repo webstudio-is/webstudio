@@ -2627,8 +2627,8 @@ describe("Styles", () => {
         values: [
           "uu1p3Xdvlq_AZOxnzDvAv",
           "uuBw1PRC_uE8RhTmwxaH8",
-          "uuORexg4BOrRXBJZgB80_",
           "uumXb7vHOnzTr-4SIW-wJ",
+          "uuORexg4BOrRXBJZgB80_",
         ],
       },
     ]);
