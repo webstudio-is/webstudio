@@ -3075,12 +3075,81 @@ describe("Styles", () => {
     const fragment = await toWebstudioFragment(input);
 
     expect(toCss(fragment)).toMatchInlineSnapshot(`
-"@media all {
-  Div Block {
-    color: black;
-    background-color: red
-  }
-}"
-`);
+      "@media all {
+        Div Block {
+          color: black;
+          background-color: red
+        }
+      }"
+    `);
+  });
+
+  test("append transparent color when background-clip is used", async () => {
+    const input = WfData.parse({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "15c3fb65-b871-abe4-f9a4-3747c8a882e0",
+            type: "Heading",
+            tag: "h2",
+            classes: ["069649be-a33a-1a9a-3763-c0bd9d1f3a3d"],
+            children: ["b69a5869-f046-5a0c-151e-9b134a6852aa"],
+            data: {
+              tag: "h2",
+              devlink: { runtimeProps: {}, slot: "" },
+              displayName: "",
+              attr: { id: "" },
+              xattr: [],
+              search: { exclude: false },
+              visibility: { conditions: [] },
+            },
+          },
+          {
+            _id: "b69a5869-f046-5a0c-151e-9b134a6852aa",
+            text: true,
+            v: "Protect your systems securely with Prism",
+          },
+        ],
+        styles: [
+          {
+            _id: "069649be-a33a-1a9a-3763-c0bd9d1f3a3d",
+            fake: false,
+            type: "class",
+            name: "H2 Heading 2",
+            namespace: "",
+            comb: "",
+            styleLess:
+              "background-image: linear-gradient(350deg, hsla(256.3636363636363, 72.13%, 23.92%, 0.00), hsla(256.2162162162162, 72.55%, 80.00%, 1.00) 49%, #bba7f1); color: hsla(0, 0.00%, 100.00%, 1.00); background-clip: text;",
+            variants: {},
+            children: [],
+            createdBy: "58b4b8186ceb395341fcf640",
+            origin: null,
+            selector: null,
+          },
+        ],
+        assets: [],
+      },
+    });
+
+    const fragment = await toWebstudioFragment(input);
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        h2 {
+          margin-bottom: 10px;
+          font-weight: bold;
+          margin-top: 20px;
+          font-size: 32px;
+          line-height: 36px
+        }
+        H2 Heading 2 {
+          background-image: linear-gradient(350deg,hsla(256.3636363636363,72.13%,23.92%,0.00),hsla(256.2162162162162,72.55%,80.00%,1.00) 49%,#bba7f1);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent
+        }
+      }"
+    `);
   });
 });
