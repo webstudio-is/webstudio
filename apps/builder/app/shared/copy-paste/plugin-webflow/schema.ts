@@ -10,7 +10,7 @@ const stylePseudo = z.string();
 
 const styleProperty = z.string();
 
-const styleValue = z.string();
+const styleValue = z.unknown();
 
 const WfNodeData = z.object({
   attr: Attr.optional(),
