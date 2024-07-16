@@ -412,25 +412,41 @@ const mapComponentAndPresetStyles = (
 };
 
 // Merges wf styles that are combo classes into a single style.
-const mergeComboStyles = (styles: Array<WfStyle>) => {
-  const mergedClasses = new Set<string>();
+// Checks if a style source with that name already exists and the new one has new styles and is not empty - if so, adds a number to a name.
+const mergeComboStyles = (wfStyles: Array<WfStyle>) => {
+  const classes = new Set<string>();
   let mergedStyle;
-  for (const style of styles) {
-    mergedClasses.add(style.name);
+  for (const wfStyle of wfStyles) {
+    const { name } = wfStyle;
+
+    classes.add(name);
     if (mergedStyle === undefined) {
-      mergedStyle = { variants: {}, ...style };
+      mergedStyle = { variants: {}, ...wfStyle, name };
       continue;
     }
-    mergedStyle.styleLess += style.styleLess;
-    mergedStyle.name += "." + style.name;
-    for (const key in style.variants) {
+    mergedStyle.styleLess += wfStyle.styleLess;
+    mergedStyle.name += "." + name;
+    for (const key in wfStyle.variants) {
       if (key in mergedStyle.variants === false) {
         mergedStyle.variants[key] = { styleLess: "" };
       }
-      mergedStyle.variants[key].styleLess += style.variants[key];
+      mergedStyle.variants[key].styleLess += wfStyle.variants[key];
     }
   }
-  return { mergedStyle, mergedClasses: Array.from(mergedClasses) };
+
+  const classesArray = Array.from(classes);
+  // Produce all possible combinations of combo classes so we can check later if they alredy exist.
+  // This is needed to achieve the same end-result as with combo-classes in webflow.
+  // Example .a.b.c -> .a, .b, .c, .a.b, .a.c, .b.c, .a.b.c
+  const comboClasses = classesArray.flatMap((name1) =>
+    classesArray.map((name2) => `${name1}.${name2}`)
+  );
+
+  return {
+    mergedStyle,
+    classes: classesArray,
+    comboClasses,
+  };
 };
 
 export const addStyles = async ({
@@ -506,8 +522,8 @@ export const addStyles = async ({
       .map((classId) => wfStyles.get(classId))
       .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
 
-    const comboStylesMerge = mergeComboStyles(wfNodeStyles);
-    const wfStyle = comboStylesMerge.mergedStyle;
+    const stylesMerge = mergeComboStyles(wfNodeStyles);
+    const wfStyle = stylesMerge.mergedStyle;
     if (wfStyle === undefined) {
       continue;
     }
@@ -531,6 +547,21 @@ export const addStyles = async ({
       }
     });
 
+    // We need to see if the individual classes have already existed in the system
+    // and if so, add them to the selection, because webflow relies on combo class logic and we merge the combo into one.
+    const addExistingStyleSources = async (classes: Array<string>) => {
+      for (const className of classes) {
+        const styleSourceId = await generateStyleSourceId(className);
+        if ($styleSources.get().has(styleSourceId)) {
+          addStyleSource(styleSourceId, instanceId, fragment);
+        }
+      }
+    };
+
+    // First go individual classes: .a, .b, .c
+    await addExistingStyleSources(stylesMerge.classes);
+
+    // Second goes merged combo class .a.b.c
     addNodeTokenStyles({
       styleSourceId: await generateStyleSourceId(wfStyle.name),
       name: wfStyle.name,
@@ -539,20 +570,10 @@ export const addStyles = async ({
       fragment,
     });
 
-    // Produce all possible combinatios of combo classes so we can check later if they alredy exist.
-    // This is needed to achieve the same end-result as with combo-classes in webflow.
-    const allComboClasses = comboStylesMerge.mergedClasses.flatMap((name1) =>
-      comboStylesMerge.mergedClasses.map((name2) => `${name1}.${name2}`)
-    );
-    const allClasses = [...comboStylesMerge.mergedClasses, ...allComboClasses];
-
-    // We need to see if the individual classes have already existed in the system
-    // and if so, add them to the selection, because webflow relies on combo class logic and we merge the combo into one.
-    for (const className of allClasses) {
-      const wsStyleSourceId = await generateStyleSourceId(className);
-      if ($styleSources.get().has(wsStyleSourceId)) {
-        addStyleSource(wsStyleSourceId, instanceId, fragment);
-      }
-    }
+    // Third goes .a.b, .b.c
+    // This worder is arbitrary and seems to be most likely to match webflow,
+    // but it can be wrong sometimes.
+    // Source order specificity in Webflow is a mess.
+    await addExistingStyleSources(stylesMerge.comboClasses);
   }
 };

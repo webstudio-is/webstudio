@@ -2596,7 +2596,6 @@ describe("Styles", () => {
             name: "is-small",
             comb: "&",
             styleLess: "",
-            createdBy: "6075409192d886a671499223",
           },
           {
             _id: "194e7d07-469d-6ffa-3925-1f51bdad7e46",
@@ -2604,7 +2603,6 @@ describe("Styles", () => {
             name: "is-secondary",
             comb: "&",
             styleLess: "background-color: transparent;",
-            createdBy: "6075409192d886a671499223",
           },
         ],
         assets: [],
@@ -2614,12 +2612,12 @@ describe("Styles", () => {
     expect(fragment.styleSources).toEqual([
       {
         type: "token",
-        id: expect.any(String),
+        id: "uu1p3Xdvlq_AZOxnzDvAv",
         name: "a",
       },
       {
         type: "token",
-        id: expect.any(String),
+        id: "uumXb7vHOnzTr-4SIW-wJ",
         name: "button.is-small.is-secondary",
       },
     ]);
@@ -2628,8 +2626,8 @@ describe("Styles", () => {
         instanceId: expect.any(String),
         values: [
           "uu1p3Xdvlq_AZOxnzDvAv",
-          "uumXb7vHOnzTr-4SIW-wJ",
           "uuBw1PRC_uE8RhTmwxaH8",
+          "uumXb7vHOnzTr-4SIW-wJ",
           "uuORexg4BOrRXBJZgB80_",
         ],
       },
@@ -2913,9 +2911,6 @@ describe("Styles", () => {
               "height: 400px; background-image: linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), @img_667d0b7769e0cc3754b584f6, @img_667d0fe180995eadc1534a26, @img_example_bg; background-position: 0px 0px, 550px 0px, 0px 0px,0px 0px; background-size: auto, contain, auto, auto; background-repeat: repeat, no-repeat, repeat,repeat; background-attachment: scroll, fixed, scroll, fixed;",
             variants: {},
             children: [],
-            createdBy: "5b7c48038bdf56493c54eae4",
-            origin: null,
-            selector: null,
           },
         ],
         assets: [
@@ -3071,9 +3066,6 @@ describe("Styles", () => {
             styleLess: "color: @raw<|black|>; background-color: @raw<|red|>;",
             variants: {},
             children: [],
-            createdBy: "635e72dd77408d16b581b4bc",
-            origin: null,
-            selector: null,
           },
         ],
         assets: [],
