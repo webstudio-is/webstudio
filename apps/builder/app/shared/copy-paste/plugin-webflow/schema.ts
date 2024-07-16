@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-const Attr = z.object({ id: z.string(), role: z.string() }).partial();
+const Attr = z
+  .object({ id: z.string(), role: z.string(), href: z.string() })
+  .partial();
 
 const styleBase = z.string();
 
@@ -124,6 +126,7 @@ export const wfNodeTypes = [
   "NavbarButton",
   "NavbarContainer",
   "Icon",
+  "LightboxWrapper",
 ] as const;
 
 const WfElementNode = z.union([
@@ -139,6 +142,7 @@ const WfElementNode = z.union([
     }),
   }),
 
+  WfBaseNode.extend({ type: z.enum(["LightboxWrapper"]) }),
   WfBaseNode.extend({ type: z.enum(["NavbarMenu"]) }),
   WfBaseNode.extend({ type: z.enum(["NavbarContainer"]) }),
 
