@@ -726,12 +726,12 @@ test("QuickStack with instance styles", async () => {
         justify-content: center;
         padding: 20px
       }
+      wf-layout-layout {
+        display: grid
+      }
       Local {
         grid-template-columns: 1fr 1fr;
         grid-template-rows: auto
-      }
-      wf-layout-layout {
-        display: grid
       }
       w-layout-cell {
         flex-direction: column;

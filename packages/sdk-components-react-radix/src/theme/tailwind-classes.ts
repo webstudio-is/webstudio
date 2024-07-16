@@ -108,7 +108,7 @@ type StringEnumToNumeric<T extends string> = T extends `${infer Z extends
   ? Z
   : never;
 
-type NonNumeric<T extends string> = T extends `${infer Z extends number}`
+type NonNumeric<T extends string> = T extends `${infer _Z extends number}`
   ? never
   : T;
 

@@ -1,21 +1,41 @@
 import { expect, test } from "@jest/globals";
+import type { htmlTags as HtmlTags } from "html-tags";
 import type { Instance, StyleDecl, StyleSource } from "@webstudio-is/sdk";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { parseCss } from "@webstudio-is/css-data";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
+import { mapGroupBy, objectGroupBy } from "./shim";
 import {
   type StyleObjectModel,
   type StyleSelector,
   getComputedStyleDecl,
 } from "./style-object-model";
-import { parseCss } from "@webstudio-is/css-data";
-import { mapGroupBy } from "./shim";
 
+/**
+ * Create model fixture with a few features
+ *
+ * presets
+ * - each selector is a tag name
+ *
+ * css
+ * - each selector is style source id
+ * - media prelude is breakpoint id
+ *
+ * jsx
+ * - ws:id - instance id
+ * - ws:tag - instance tag
+ * - class - the list of style source ids
+ */
 const createModel = ({
+  presets,
   css,
   jsx,
 }: {
+  presets?: Record<string, string>;
   css: string;
   jsx: JSX.Element;
 }): StyleObjectModel => {
+  const instanceTags = new Map<Instance["id"], HtmlTags>();
   const parsedStyles = parseCss(css, { customProperties: true });
   const styles: StyleDecl[] = [];
   for (const { breakpoint, selector, state, property, value } of parsedStyles) {
@@ -27,7 +47,7 @@ const createModel = ({
       value,
     });
   }
-  const { props } = renderJsx(jsx);
+  const { instances, props } = renderJsx(jsx);
   const styleSourcesByInstanceId = new Map<
     Instance["id"],
     StyleSource["id"][]
@@ -36,6 +56,25 @@ const createModel = ({
     if (prop.name === "class" && prop.type === "string") {
       styleSourcesByInstanceId.set(prop.instanceId, prop.value.split(" "));
     }
+    if (prop.name === "ws:tag" && prop.type === "string") {
+      instanceTags.set(prop.instanceId, prop.value as HtmlTags);
+    }
+  }
+  const instanceComponents = new Map<string, string>();
+  for (const instance of instances.values()) {
+    instanceComponents.set(instance.id, instance.component);
+  }
+  const metas = new Map<string, WsComponentMeta>();
+  for (const [componentName, css] of Object.entries(presets ?? {})) {
+    const parsedStyles = parseCss(css, { customProperties: true });
+    metas.set(componentName, {
+      type: "control",
+      icon: "",
+      presetStyle: objectGroupBy(
+        parsedStyles,
+        (parsedStyleDecl) => parsedStyleDecl.selector
+      ),
+    });
   }
   return {
     styleSourcesByInstanceId,
@@ -43,17 +82,10 @@ const createModel = ({
       styles,
       (styleDecl) => `${styleDecl.styleSourceId}:${styleDecl.property}` as const
     ),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
+    metas,
+    instanceTags,
+    instanceComponents,
   };
-};
-
-const getStyleByStyleSourceId = (styles: StyleDecl[]) => {
-  return mapGroupBy(
-    styles,
-    (styleDecl) => `${styleDecl.styleSourceId}:${styleDecl.property}` as const
-  );
 };
 
 test("use cascaded style when specified and fallback to initial value", () => {
@@ -478,36 +510,24 @@ test("resolve non-cyclic references in custom properties", () => {
 });
 
 test("cascade value from matching breakpoints", () => {
-  // @media small { body { width: 20px } }
-  // @media large { body { width: 30px } }
-  // @media base { body { width: 10px } }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "small",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "large",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 30, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      @media small {
+        bodyLocal {
+          width: 20px;
+        }
+      }
+      @media large {
+        bodyLocal {
+          width: 30px;
+        }
+      }
+      bodyLocal {
+        width: 10px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base", "small", "large"],
@@ -519,36 +539,24 @@ test("cascade value from matching breakpoints", () => {
 });
 
 test("ignore values from not matching breakpoints", () => {
-  // @media base { body { width: 10px } }
-  // @media small { body { width: 20px } }
-  // @media large { body { width: 30px } }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-    {
-      breakpointId: "small",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "large",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 30, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        width: 10px;
+      }
+      @media small {
+        bodyLocal {
+          width: 20px;
+        }
+      }
+      @media large {
+        bodyLocal {
+          width: 30px;
+        }
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     // large is not matching breakpoint
@@ -561,29 +569,17 @@ test("ignore values from not matching breakpoints", () => {
 });
 
 test("cascade value from matching style sources", () => {
-  // .bodyLocal { width: 20px }
-  // .bodyToken { width: 20px }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyToken",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyToken", "bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        width: 20px;
+      }
+      bodyToken {
+        width: 10px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyToken bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -596,30 +592,17 @@ test("cascade value from matching style sources", () => {
 });
 
 test("cascade values with states as more specific", () => {
-  // body:hover { width: 20px }
-  // body { width: 10px }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      state: ":hover",
-      property: "width",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal:hover {
+        width: 20px;
+      }
+      bodyLocal {
+        width: 10px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -632,38 +615,20 @@ test("cascade values with states as more specific", () => {
 });
 
 test("ignore values from not matching states", () => {
-  // body { width: 10px }
-  // body:hover { width: 20px }
-  // body:focus { width: 30px }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      state: ":hover",
-      property: "width",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      state: ":focus",
-      property: "width",
-      value: { type: "unit", value: 30, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal {
+        width: 10px;
+      }
+      bodyLocal:hover {
+        width: 20px;
+      }
+      bodyLocal:focus {
+        width: 30px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base"],
@@ -677,25 +642,20 @@ test("ignore values from not matching states", () => {
 
 test("support html styles", () => {
   // @layer browser { body { display: block } }
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([
-      ["body", ["bodyLocal"]],
-      ["span", ["spanLocal"]],
-    ]),
-    styleByStyleSourceId: getStyleByStyleSourceId([]),
-    metas: new Map(),
-    instanceTags: new Map([
-      ["body", "body"],
-      ["span", "span"],
-    ]),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: "",
+    jsx: (
+      <$.Body ws:id="bodyId" ws:tag="body">
+        <$.Span ws:id="spanId" ws:tag="span"></$.Span>
+      </$.Body>
+    ),
+  });
   // tag with browser styles
   expect(
     getComputedStyleDecl({
       model,
       styleSelector: {
-        instanceSelector: ["body"],
+        instanceSelector: ["bodyId"],
         matchingBreakpoints: ["base"],
         matchingStates: new Set(),
       },
@@ -707,7 +667,7 @@ test("support html styles", () => {
     getComputedStyleDecl({
       model,
       styleSelector: {
-        instanceSelector: ["span"],
+        instanceSelector: ["spanId"],
         matchingBreakpoints: ["base"],
         matchingStates: new Set(),
       },
@@ -718,29 +678,17 @@ test("support html styles", () => {
 
 test("support preset styles", () => {
   // @layer preset { body:hover { width: 100px } }
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId([]),
-    instanceTags: new Map([["body", "body"]]),
-    instanceComponents: new Map([["body", "Body"]]),
-    metas: new Map([
-      [
-        "Body",
-        {
-          type: "container",
-          icon: "",
-          presetStyle: {
-            body: [
-              {
-                property: "width",
-                value: { type: "unit", value: 100, unit: "px" },
-              },
-            ],
-          },
-        },
-      ],
-    ]),
-  };
+  const model = createModel({
+    presets: {
+      Body: `
+        body {
+          width: 100px;
+        }
+      `,
+    },
+    css: ``,
+    jsx: <$.Body ws:id="body" ws:tag="body"></$.Body>,
+  });
   expect(
     getComputedStyleDecl({
       model,
@@ -759,34 +707,20 @@ test("ignore values from not matching states in preset styles", () => {
   //   body { color: red }
   //   body:focus { color: blue }
   // }
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId([]),
-    instanceTags: new Map([["body", "body"]]),
-    instanceComponents: new Map([["body", "Body"]]),
-    metas: new Map([
-      [
-        "Body",
-        {
-          type: "container",
-          icon: "",
-          presetStyle: {
-            body: [
-              {
-                property: "color",
-                value: { type: "keyword", value: "red" },
-              },
-              {
-                state: ":focus",
-                property: "color",
-                value: { type: "keyword", value: "blue" },
-              },
-            ],
-          },
-        },
-      ],
-    ]),
-  };
+  const model = createModel({
+    presets: {
+      Body: `
+        body {
+          color: red;
+        }
+        body:focus {
+          color: blue;
+        }
+      `,
+    },
+    css: ``,
+    jsx: <$.Body ws:id="body" ws:tag="body"></$.Body>,
+  });
   expect(
     getComputedStyleDecl({
       model,
@@ -801,29 +735,19 @@ test("ignore values from not matching states in preset styles", () => {
 });
 
 test("breakpoints are more specific than style sources", () => {
-  // @media small { body { width: 20px } }
-  // @media base { body { width: 10px } }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "small",
-      styleSourceId: "bodyToken",
-      property: "width",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyToken", "bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      @media small {
+        bodyToken {
+          width: 20px;
+        }
+      }
+      bodyLocal {
+        width: 10px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyToken bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base", "small"],
@@ -837,30 +761,19 @@ test("breakpoints are more specific than style sources", () => {
 });
 
 test("states are more specific than breakpoints", () => {
-  // @media base { body:hover { width: 10px } }
-  // @media small { body { width: 20px } }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      state: ":hover",
-      property: "width",
-      value: { type: "unit", value: 20, unit: "px" },
-    },
-    {
-      breakpointId: "small",
-      styleSourceId: "bodyLocal",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    metas: new Map(),
-    instanceTags: new Map(),
-    instanceComponents: new Map(),
-  };
+  const model = createModel({
+    css: `
+      bodyLocal:hover {
+        width: 20px;
+      }
+      @media small {
+        bodyLocal {
+          width: 10px;
+        }
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
     matchingBreakpoints: ["base", "small"],
@@ -874,41 +787,23 @@ test("states are more specific than breakpoints", () => {
 
 test("user styles are more specific than preset styles", () => {
   // @layer preset { body:hover { color: blue } }
-  // body { color: red }
-  const styles: StyleDecl[] = [
-    {
-      breakpointId: "base",
-      styleSourceId: "bodyLocal",
-      // without state
-      property: "color",
-      value: { type: "keyword", value: "red" },
+  const model = createModel({
+    presets: {
+      Body: `
+        /* with state */
+        body:hover {
+          color: blue;
+        }
+      `,
     },
-  ];
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId(styles),
-    instanceTags: new Map([["body", "body"]]),
-    instanceComponents: new Map([["body", "Body"]]),
-    metas: new Map([
-      [
-        "Body",
-        {
-          type: "container",
-          icon: "",
-          presetStyle: {
-            body: [
-              {
-                // with state
-                state: "hover",
-                property: "color",
-                value: { type: "keyword", value: "blue" },
-              },
-            ],
-          },
-        },
-      ],
-    ]),
-  };
+    css: `
+      /* without state */
+      bodyLocal {
+        color: red;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
   expect(
     getComputedStyleDecl({
       model,
@@ -925,29 +820,17 @@ test("user styles are more specific than preset styles", () => {
 test("preset styles are more specific than browser styles", () => {
   // @layer browser { body { display: block } }
   // @layer preset { body { display: flex } }
-  const model: StyleObjectModel = {
-    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
-    styleByStyleSourceId: getStyleByStyleSourceId([]),
-    instanceTags: new Map([["body", "body"]]),
-    instanceComponents: new Map([["body", "Body"]]),
-    metas: new Map([
-      [
-        "Body",
-        {
-          type: "container",
-          icon: "",
-          presetStyle: {
-            body: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "flex" },
-              },
-            ],
-          },
-        },
-      ],
-    ]),
-  };
+  const model = createModel({
+    presets: {
+      Body: `
+        body {
+          display: flex;
+        }
+      `,
+    },
+    css: ``,
+    jsx: <$.Body ws:id="body" ws:tag="body"></$.Body>,
+  });
   expect(
     getComputedStyleDecl({
       model,

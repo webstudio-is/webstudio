@@ -1,5 +1,4 @@
 import type { Meta } from "@storybook/react";
-import type * as React from "react";
 import { PositionControl } from "./position-control";
 import type {
   CreateBatchUpdate,
@@ -93,9 +92,7 @@ const bigValue = {
   },
 } as const;
 
-export const PositionControlComponent = (
-  args: Omit<React.ComponentProps<typeof PositionControl>, "renderCell">
-) => {
+export const PositionControlComponent = () => {
   const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
     useStyleInfo({
       left: defaultValue,

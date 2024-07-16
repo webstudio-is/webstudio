@@ -154,7 +154,7 @@ const getStatusText = (props: {
       break;
 
     default:
-      ((value: never) => {
+      ((_value: never) => {
         /* exhaustive check */
       })(status);
       break;

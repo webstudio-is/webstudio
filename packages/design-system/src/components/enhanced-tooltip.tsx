@@ -56,7 +56,7 @@ export const useEnhancedTooltipProps = () => useContext(EnhancedTooltipContext);
 export const EnhancedTooltip = forwardRef(
   (
     props: Omit<TooltipProps, "open" | "onOpenChange">,
-    ref: Ref<HTMLDivElement>
+    _ref: Ref<HTMLDivElement>
   ) => {
     const [open, setOpen] = useState(props.defaultOpen ?? false);
     const context = useContext(EnhancedTooltipContext);

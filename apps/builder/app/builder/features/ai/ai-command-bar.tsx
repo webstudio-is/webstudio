@@ -26,12 +26,7 @@ import {
   LargeXIcon,
   AiLoadingIcon,
 } from "@webstudio-is/icons";
-import {
-  useRef,
-  useState,
-  type MouseEvent,
-  type ComponentPropsWithoutRef,
-} from "react";
+import { useRef, useState, type ComponentPropsWithoutRef } from "react";
 import {
   $collaborativeInstanceSelector,
   $selectedInstanceSelector,
@@ -335,7 +330,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
 
     recordButtonTooltipContent = "Cancel";
     recordButtonProps = {
-      onClick: (event: MouseEvent<HTMLButtonElement>) => {
+      onClick: () => {
         // Cancel AI request
         abortController.current?.abort();
       },
@@ -459,7 +454,7 @@ const CommandBarContent = (props: {
         </Text>
         <Grid columns={2} gap={2}>
           <Button
-            onClick={(event) => {
+            onClick={() => {
               const url = new URL("https://wstd.us/learn-webstudio-ai");
               window.open(url.href, "_blank");
             }}
@@ -469,7 +464,7 @@ const CommandBarContent = (props: {
             Learn more
           </Button>
           <Button
-            onClick={(event) => {
+            onClick={() => {
               const url = new URL(
                 `https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=AI`
               );
