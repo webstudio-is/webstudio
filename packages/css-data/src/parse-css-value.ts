@@ -402,13 +402,17 @@ export const parseCssValue = (
   // Probably a tuple like background-size or box-shadow
   if (
     ast.type === "Value" &&
-    (ast.children.size > 1 || tupleProps.has(property))
+    (ast.children.size === 2 || tupleProps.has(property))
   ) {
     const tuple: TupleValue = {
       type: "tuple",
       value: [],
     };
     for (const node of ast.children) {
+      // output any values with unhandled operators like slash or comma as unparsed
+      if (node.type === "Operator") {
+        return { type: "unparsed", value: input };
+      }
       const matchedValue = parseLiteral(node, keywordValues[property as never]);
       if (matchedValue) {
         tuple.value.push(matchedValue as never);
