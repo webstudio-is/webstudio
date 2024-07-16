@@ -102,6 +102,30 @@ const replaceAtImages = (
   });
 };
 
+const processStyles = (parsedStyles: ParsedStyleDecl[]) => {
+  const styles = new Map();
+  for (const parsedStyleDecl of parsedStyles) {
+    const { breakpoint, selector, state, property } = parsedStyleDecl;
+    const key = `${breakpoint}:${selector}:${state}:${property}`;
+    styles.set(key, parsedStyleDecl);
+  }
+  for (const parsedStyleDecl of styles.values()) {
+    const { breakpoint, selector, state, property } = parsedStyleDecl;
+    const key = `${breakpoint}:${selector}:${state}:${property}`;
+    styles.set(key, parsedStyleDecl);
+    if (property === "backgroundClip") {
+      const colorKey = `${breakpoint}:${selector}:${state}:color`;
+      styles.delete(colorKey);
+      styles.set(colorKey, {
+        ...parsedStyleDecl,
+        property: "color",
+        value: { type: "keyword", value: "transparent" },
+      });
+    }
+  }
+  return Array.from(styles.values());
+};
+
 type UnparsedVariants = Map<string, string | Array<ParsedStyleDecl>>;
 
 // Variants value can be wf styleLess string which is a styles block
@@ -114,7 +138,9 @@ const toParsedVariants = (variants: UnparsedVariants) => {
     if (typeof styles === "string") {
       try {
         const sanitizedStyles = styles.replaceAll(/@raw<\|([^@]+)\|>/g, "$1");
-        const parsed = parseCss(`.styles${state} {${sanitizedStyles}}`) ?? [];
+        const parsed = processStyles(
+          parseCss(`.styles${state} {${sanitizedStyles}}`) ?? []
+        );
         const allBreakpointStyles = parsedVariants.get(breakpointName) ?? [];
         allBreakpointStyles.push(...parsed);
         parsedVariants.set(breakpointName, allBreakpointStyles);
