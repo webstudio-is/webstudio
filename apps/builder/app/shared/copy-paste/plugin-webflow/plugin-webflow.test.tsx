@@ -685,6 +685,7 @@ test("QuickStack with instance styles", async () => {
                   noPseudo: {
                     gridTemplateColumns: "1fr 1fr",
                     gridTemplateRows: "auto",
+                    order: 1,
                   },
                 },
               },
@@ -731,7 +732,8 @@ test("QuickStack with instance styles", async () => {
       }
       Local {
         grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto
+        grid-template-rows: auto;
+        order: 1
       }
       w-layout-cell {
         flex-direction: column;
