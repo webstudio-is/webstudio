@@ -202,7 +202,7 @@ const WfElementNode = z.union([
     type: z.enum(["Image"]),
     data: WfNodeData.extend({
       attr: Attr.extend({
-        alt: z.string(),
+        alt: z.string().optional(),
         loading: z.enum(["lazy", "eager", "auto"]),
         src: z.string(),
         width: z.string(),
