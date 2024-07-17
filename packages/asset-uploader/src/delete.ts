@@ -38,8 +38,13 @@ export const deleteAssets = async (
     throw new Error("Assets not found");
   }
 
-  await prisma.project.update({
-    where: { id: props.projectId },
+  await prisma.project.updateMany({
+    where: {
+      id: props.projectId,
+      previewImageAssetId: {
+        in: props.ids,
+      },
+    },
     data: {
       previewImageAssetId: null,
     },
