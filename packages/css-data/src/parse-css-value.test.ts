@@ -58,13 +58,6 @@ describe("Parse CSS value", () => {
         type: "invalid",
         value: "10",
       });
-
-      // This will return number unit, as number is valid for aspectRatio.
-      expect(parseCssValue("aspectRatio", "10")).toEqual({
-        type: "unit",
-        unit: "number",
-        value: 10,
-      });
     });
   });
 
@@ -867,6 +860,28 @@ describe("parse filters", () => {
           },
         },
       ],
+    });
+  });
+});
+
+describe("aspect-ratio", () => {
+  test("support single numeric value", () => {
+    expect(parseCssValue("aspectRatio", "10")).toEqual({
+      type: "unit",
+      unit: "number",
+      value: 10,
+    });
+  });
+  test("support keyword", () => {
+    expect(parseCssValue("aspectRatio", "auto")).toEqual({
+      type: "keyword",
+      value: "auto",
+    });
+  });
+  test("support two values", () => {
+    expect(parseCssValue("aspectRatio", "16 / 9")).toEqual({
+      type: "unparsed",
+      value: "16 / 9",
     });
   });
 });
