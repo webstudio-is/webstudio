@@ -3,7 +3,7 @@ import {
   isUnitValue,
   updateRotateOrSkewPropertyValue,
   type TransformFloatingPanelContentProps,
-} from "./utils";
+} from "./transform-utils";
 import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";

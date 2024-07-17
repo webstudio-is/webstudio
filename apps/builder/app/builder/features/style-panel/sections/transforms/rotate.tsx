@@ -3,7 +3,7 @@ import {
   isUnitValue,
   updateRotateOrSkewPropertyValue,
   type TransformFloatingPanelContentProps,
-} from "./utils";
+} from "./transform-utils";
 import {
   XAxisRotateIcon,
   YAxisRotateIcon,

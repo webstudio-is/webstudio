@@ -10,7 +10,7 @@ import {
   isUnitValue,
   updateTransformTuplePropertyValue,
   type TransformFloatingPanelContentProps,
-} from "./utils";
+} from "./transform-utils";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
 import { parseCssValue } from "@webstudio-is/css-data";
 

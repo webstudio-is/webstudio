@@ -27,6 +27,10 @@ const defaultScale = "1 1 1";
 const defaultRotate = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 const defaultSkew = "skewX(0deg) skewY(0deg)";
 
+export const isUnitValue = (value: StyleValue): value is UnitValue => {
+  return value?.type === "unit" ? true : false;
+};
+
 export const useHumaneTransformPropertyValues = (props: {
   currentStyle: StyleInfo;
   panel: TransformPanel;
@@ -156,10 +160,6 @@ export const addDefaultsForTransormSection = (props: {
       }
     }
   }
-};
-
-export const isUnitValue = (value: StyleValue): value is UnitValue => {
-  return value?.type === "unit" ? true : false;
 };
 
 export const isTransformPanelPropertyExists = (params: {
@@ -368,12 +368,12 @@ export const updateRotateOrSkewPropertyValue = (props: {
     propertyValue
   );
 
-  const existingTransform = props.currentStyle["transform"]?.value;
-  if (existingTransform?.type === "tuple") {
-    const filteredValues = removeRotateOrSkewValues(panel, existingTransform);
+  const existingTransforms = props.currentStyle["transform"]?.value;
+  if (existingTransforms?.type === "tuple") {
+    const filteredValues = removeRotateOrSkewValues(panel, existingTransforms);
     return {
-      ...existingTransform,
-      value: [...filteredValues, ...newPropertyValue.value],
+      ...existingTransforms,
+      value: [...newPropertyValue.value, ...filteredValues],
     };
   }
 

@@ -30,7 +30,7 @@ import {
   isTransformPanelPropertyExists,
   handleDeleteTransformProperty,
   handleHideTransformProperty,
-} from "./utils";
+} from "./transform-utils";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransformPanelContent } from "./transform-panel";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
