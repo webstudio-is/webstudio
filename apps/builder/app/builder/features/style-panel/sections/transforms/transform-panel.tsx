@@ -1,8 +1,8 @@
 import { Flex, theme } from "@webstudio-is/design-system";
-import { TranslatePanelContent } from "./translate";
-import { ScalePanelContent } from "./scale";
-import { RotatePanelContent } from "./rotate";
-import { SkewFloatingPanelContent } from "./skew";
+import { TranslatePanelContent } from "./transform-translate";
+import { ScalePanelContent } from "./transform-scale";
+import { RotatePanelContent } from "./transform-rotate";
+import { SkewFloatingPanelContent } from "./transform-skew";
 import type { SetProperty } from "../../shared/use-style-data";
 import { type TransformPanel } from "./transforms";
 import type { TupleValue } from "@webstudio-is/css-engine";

@@ -37,6 +37,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import { getStyleSource } from "../../shared/style-info";
 import { PropertyName } from "../../shared/property-name";
+import { getDots } from "../../shared/collapsible-section";
 
 export const transformPanels = [
   "translate",
@@ -89,6 +90,7 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
+          dots={getDots(currentStyle, properties)}
           suffix={
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
