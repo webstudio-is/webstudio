@@ -35,6 +35,8 @@ import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransformPanelContent } from "./transform-panel";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
+import { getStyleSource } from "../../shared/style-info";
+import { PropertyName } from "../../shared/property-name";
 
 export const transformPanels = [
   "translate",
@@ -52,15 +54,32 @@ export const properties = [
   "transform",
 ] satisfies Array<StyleProperty>;
 
-// @todo: How do we calculate the styleSource value for showing the blue-label.
-// Should we consider one of the following properties or a common denominator of all the properties.
-
 export const Section = (props: SectionProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
   if (isFeatureEnabled("transforms") === false) {
     return;
   }
+
+  const { currentStyle, createBatchUpdate } = props;
+  const translateStyleSource = getStyleSource(currentStyle["translate"]);
+  const scaleStyleSource = getStyleSource(currentStyle["scale"]);
+  const rotateAndSkewStyleSrouce = getStyleSource(currentStyle["transform"]);
+
+  const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
+    isTransformPanelPropertyExists({
+      currentStyle: props.currentStyle,
+      panel,
+    })
+  );
+
+  const handleResetForAllTransformProperties = () => {
+    const batch = createBatchUpdate();
+    batch.deleteProperty("translate");
+    batch.deleteProperty("scale");
+    batch.deleteProperty("transform");
+    batch.publish();
+  };
 
   return (
     <CollapsibleSectionRoot
@@ -96,6 +115,7 @@ export const Section = (props: SectionProps) => {
                             setProperty: props.setProperty,
                             panel,
                           });
+                          setIsOpen(true);
                         }}
                       >
                         {humanizeString(panel)}
@@ -107,20 +127,38 @@ export const Section = (props: SectionProps) => {
             </DropdownMenu>
           }
         >
-          <SectionTitleLabel>{label}</SectionTitleLabel>
+          <PropertyName
+            title={label}
+            style={currentStyle}
+            properties={properties}
+            label={
+              <SectionTitleLabel
+                color={
+                  translateStyleSource ||
+                  scaleStyleSource ||
+                  rotateAndSkewStyleSrouce
+                }
+              >
+                {label}
+              </SectionTitleLabel>
+            }
+            onReset={handleResetForAllTransformProperties}
+          />
         </SectionTitle>
       }
     >
-      <CssValueListArrowFocus>
-        {transformPanels.map((panel, index) => (
-          <TransformSection
-            {...props}
-            key={panel}
-            index={index}
-            panel={panel}
-          />
-        ))}
-      </CssValueListArrowFocus>
+      {isAnyTransformPropertyAdded === true ? (
+        <CssValueListArrowFocus>
+          {transformPanels.map((panel, index) => (
+            <TransformSection
+              {...props}
+              key={panel}
+              index={index}
+              panel={panel}
+            />
+          ))}
+        </CssValueListArrowFocus>
+      ) : undefined}
     </CollapsibleSectionRoot>
   );
 };
@@ -140,6 +178,7 @@ const TransformSection = (
       content={
         <TransformPanelContent
           panel={panel}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           propertyValue={properties.value}
         />

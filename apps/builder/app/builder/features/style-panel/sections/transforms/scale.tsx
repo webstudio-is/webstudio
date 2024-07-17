@@ -8,7 +8,7 @@ import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import {
   isUnitValue,
-  updateTupleProperty,
+  updateTransformTuplePropertyValue,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
@@ -36,7 +36,12 @@ export const ScalePanelContent = (
     if (isUnitValue(value) === false) {
       return value;
     }
-    const newValue = updateTupleProperty(index, value, propertyValue);
+    const newValue = updateTransformTuplePropertyValue(
+      index,
+      value,
+      propertyValue
+    );
+
     const scale = parseCssValue(property, toValue(newValue));
     if (scale.type === "invalid") {
       return;

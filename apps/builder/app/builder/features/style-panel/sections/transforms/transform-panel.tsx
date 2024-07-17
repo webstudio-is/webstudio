@@ -6,9 +6,11 @@ import { SkewFloatingPanelContent } from "./skew";
 import type { SetProperty } from "../../shared/use-style-data";
 import { type TransformPanel } from "./transforms";
 import type { TupleValue } from "@webstudio-is/css-engine";
+import type { StyleInfo } from "../../shared/style-info";
 
 type TransformPanelContentProps = {
   panel: TransformPanel;
+  currentStyle: StyleInfo;
   propertyValue: TupleValue;
   setProperty: SetProperty;
 };

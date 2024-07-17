@@ -7,7 +7,7 @@ import {
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import {
   isUnitValue,
-  updateTupleProperty,
+  updateTransformTuplePropertyValue,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
@@ -31,7 +31,11 @@ export const TranslatePanelContent = (
     if (isUnitValue(value) === false) {
       return value;
     }
-    const newValue = updateTupleProperty(index, value, propertyValue);
+    const newValue = updateTransformTuplePropertyValue(
+      index,
+      value,
+      propertyValue
+    );
     const translate = parseCssValue(property, toValue(newValue));
     if (translate.type === "invalid") {
       return;

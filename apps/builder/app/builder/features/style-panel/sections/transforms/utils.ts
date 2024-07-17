@@ -4,6 +4,7 @@ import {
   parseCssValue,
 } from "@webstudio-is/css-data";
 import {
+  FunctionValue,
   toValue,
   type StyleValue,
   type TupleValue,
@@ -16,9 +17,15 @@ import type { TransformPanel } from "./transforms";
 import { useMemo } from "react";
 
 export type TransformFloatingPanelContentProps = {
+  currentStyle: StyleInfo;
   propertyValue: TupleValue;
   setProperty: SetProperty;
 };
+
+const defaultTranslate = "0px 0px 0px";
+const defaultScale = "1 1 1";
+const defaultRotate = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+const defaultSkew = "skewX(0deg) skewY(0deg)";
 
 export const useHumaneTransformPropertyValues = (props: {
   currentStyle: StyleInfo;
@@ -115,50 +122,36 @@ export const addDefaultsForTransormSection = (props: {
 
   switch (panel) {
     case "translate": {
-      const translate = parseCssValue("translate", "0px 0px 0px");
+      const translate = parseCssValue("translate", defaultTranslate);
       return setProperty("translate")(translate);
     }
 
     case "scale": {
-      const scale = parseCssValue("scale", "1 1 1");
+      const scale = parseCssValue("scale", defaultScale);
       return setProperty("scale")(scale);
     }
 
-    // @todo: refactor this bit of code
     case "skew":
     case "rotate": {
-      const propertValue =
-        panel === "rotate"
-          ? "rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
-          : "skewX(0) skewY(0)";
-      const propertyKeys =
-        panel === "rotate"
-          ? ["rotateX", "rotateY", "rotateZ"]
-          : ["skewX", "skewY"];
-
       const value = currentStyle["transform"]?.value;
-      const parsedValue = parseCssValue("transform", propertValue);
+      const parsedValue = parseCssValue(
+        "transform",
+        panel === "rotate" ? defaultRotate : defaultSkew
+      );
 
       // rotate and skew are maintained using tuple
-      // If the existing value is anything other than tuple. It needs rewriting
-
-      if (value === undefined || value.type !== "tuple") {
+      // If the existing value is anything other than tuple.
+      // We need to update the property to use tuples
+      if (value?.type !== "tuple") {
         return setProperty("transform")(parsedValue);
       }
 
-      if (
-        value !== undefined &&
-        parsedValue.type === "tuple" &&
-        value.type === "tuple"
-      ) {
-        const existingValues = value.value.filter(
-          (item) =>
-            item.type === "function" &&
-            propertyKeys.includes(item.name) === false
-        );
+      if (parsedValue.type === "tuple" && value.type === "tuple") {
+        const filteredValues = removeRotateOrSkewValues(panel, value);
+
         return setProperty("transform")({
-          type: "tuple",
-          value: [...parsedValue.value, ...existingValues],
+          ...value,
+          value: [...parsedValue.value, ...filteredValues],
         });
       }
     }
@@ -167,19 +160,6 @@ export const addDefaultsForTransormSection = (props: {
 
 export const isUnitValue = (value: StyleValue): value is UnitValue => {
   return value?.type === "unit" ? true : false;
-};
-
-export const updateTupleProperty = (
-  index: number,
-  newValue: TupleValueItem,
-  value: TupleValue
-): TupleValue => {
-  const newArray: TupleValueItem[] = [...value.value];
-  newArray.splice(index, 1, newValue);
-  return {
-    ...value,
-    value: newArray,
-  };
 };
 
 export const isTransformPanelPropertyExists = (params: {
@@ -213,19 +193,14 @@ export const isTransformPanelPropertyExists = (params: {
   }
 };
 
-const filterRotateValues = (value: TupleValue): Array<TupleValueItem> => {
+export const removeRotateOrSkewValues = (
+  panel: TransformPanel,
+  value: TupleValue
+) => {
+  const propKeys =
+    panel === "rotate" ? ["rotateX", "rotateY", "rotateZ"] : ["skewX", "skewY"];
   return value.value.filter(
-    (item) =>
-      item.type === "function" &&
-      ["rotateX", "rotateY", "rotateZ"].includes(item.name) === false
-  );
-};
-
-const filterSkewValues = (value: TupleValue): Array<TupleValueItem> => {
-  return value.value.filter(
-    (item) =>
-      item.type === "function" &&
-      ["skewX", "skewY"].includes(item.name) === false
+    (item) => item.type === "function" && propKeys.includes(item.name) === false
   );
 };
 
@@ -247,7 +222,7 @@ export const handleDeleteTransformProperty = (params: {
       if (value?.type !== "tuple") {
         return;
       }
-      const filteredValues = filterRotateValues(value);
+      const filteredValues = removeRotateOrSkewValues("rotate", value);
       if (filteredValues.length === 0) {
         deleteProperty("transform");
         return;
@@ -264,7 +239,7 @@ export const handleDeleteTransformProperty = (params: {
       if (value?.type !== "tuple") {
         return;
       }
-      const filteredValues = filterSkewValues(value);
+      const filteredValues = removeRotateOrSkewValues("skew", value);
       if (filteredValues.length === 0) {
         deleteProperty("transform");
         return;
@@ -304,7 +279,7 @@ export const handleHideTransformProperty = (params: {
       }
       const newValue: TupleValue = {
         ...value,
-        value: [...filterRotateValues(value)],
+        value: [...removeRotateOrSkewValues("rotate", value)],
       };
       const rotate = extractRotatePropertiesFromTransform(value);
       const { rotateX, rotateY, rotateZ } = rotate;
@@ -341,7 +316,7 @@ export const handleHideTransformProperty = (params: {
       }
       const newValue: TupleValue = {
         ...value,
-        value: [...filterSkewValues(value)],
+        value: [...removeRotateOrSkewValues("skew", value)],
       };
       const skew = extractSkewPropertiesFromTransform(value);
       const { skewX, skewY } = skew;
@@ -364,4 +339,43 @@ export const handleHideTransformProperty = (params: {
       break;
     }
   }
+};
+
+export const updateTransformTuplePropertyValue = (
+  index: number,
+  newValue: TupleValueItem,
+  value: TupleValue
+): TupleValue => {
+  const newArray: TupleValueItem[] = [...value.value];
+  newArray.splice(index, 1, newValue);
+  return {
+    ...value,
+    value: newArray,
+  };
+};
+
+export const updateRotateOrSkewPropertyValue = (props: {
+  index: number;
+  panel: "rotate" | "skew";
+  currentStyle: StyleInfo;
+  value: FunctionValue;
+  propertyValue: TupleValue;
+}): TupleValue => {
+  const { index, value, propertyValue, panel } = props;
+  const newPropertyValue = updateTransformTuplePropertyValue(
+    index,
+    value,
+    propertyValue
+  );
+
+  const existingTransform = props.currentStyle["transform"]?.value;
+  if (existingTransform?.type === "tuple") {
+    const filteredValues = removeRotateOrSkewValues(panel, existingTransform);
+    return {
+      ...existingTransform,
+      value: [...filteredValues, ...newPropertyValue.value],
+    };
+  }
+
+  return newPropertyValue;
 };

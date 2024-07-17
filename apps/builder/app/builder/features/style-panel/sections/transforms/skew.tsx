@@ -1,7 +1,7 @@
 import { Flex, Label, Grid } from "@webstudio-is/design-system";
 import {
   isUnitValue,
-  updateTupleProperty,
+  updateRotateOrSkewPropertyValue,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
@@ -11,7 +11,6 @@ import {
   StyleValue,
   toValue,
   type FunctionValue,
-  type TupleValue,
 } from "@webstudio-is/css-engine";
 import {
   extractSkewPropertiesFromTransform,
@@ -26,7 +25,7 @@ const fakeProperty = "rotate";
 export const SkewFloatingPanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
-  const { propertyValue, setProperty } = props;
+  const { propertyValue, setProperty, currentStyle } = props;
   const { skewX, skewY } = extractSkewPropertiesFromTransform(propertyValue);
 
   const handlePropertyUpdate = (
@@ -38,24 +37,26 @@ export const SkewFloatingPanelContent = (
     if (isUnitValue(value) === false) {
       return;
     }
-    const args: TupleValue = { type: "tuple", value: [value] };
     const newValue: FunctionValue = {
       type: "function",
       name: prop,
-      args,
+      args: { type: "layers", value: [value] },
     };
-    const newPropertyValue = updateTupleProperty(
-      index,
-      newValue,
-      propertyValue
-    );
 
-    const rotate = parseCssValue("transform", toValue(newPropertyValue));
-    if (rotate.type === "invalid") {
+    const newPropertyValue = updateRotateOrSkewPropertyValue({
+      panel: "skew",
+      index,
+      currentStyle,
+      value: newValue,
+      propertyValue,
+    });
+
+    const skew = parseCssValue("transform", toValue(newPropertyValue));
+    if (skew.type === "invalid") {
       return;
     }
 
-    setProperty("transform")(rotate, options);
+    setProperty("transform")(skew, options);
   };
 
   return (
@@ -99,7 +100,7 @@ export const SkewFloatingPanelContent = (
           }
           keywords={[]}
           setValue={(value, options) => {
-            handlePropertyUpdate(0, "skewY", value, options);
+            handlePropertyUpdate(1, "skewY", value, options);
           }}
           deleteProperty={() => {}}
         />

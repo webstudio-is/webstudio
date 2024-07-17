@@ -1,7 +1,7 @@
 import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
   isUnitValue,
-  updateTupleProperty,
+  updateRotateOrSkewPropertyValue,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import {
@@ -14,7 +14,6 @@ import {
   toValue,
   type FunctionValue,
   type StyleValue,
-  type TupleValue,
 } from "@webstudio-is/css-engine";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import {
@@ -25,7 +24,7 @@ import {
 export const RotatePanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
-  const { propertyValue, setProperty } = props;
+  const { propertyValue, setProperty, currentStyle } = props;
   const { rotateX, rotateY, rotateZ } =
     extractRotatePropertiesFromTransform(propertyValue);
 
@@ -38,17 +37,19 @@ export const RotatePanelContent = (
     if (isUnitValue(value) === false) {
       return;
     }
-    const args: TupleValue = { type: "tuple", value: [value] };
     const newValue: FunctionValue = {
       type: "function",
       name: prop,
-      args,
+      args: { type: "layers", value: [value] },
     };
-    const newPropertyValue = updateTupleProperty(
+
+    const newPropertyValue = updateRotateOrSkewPropertyValue({
+      panel: "rotate",
       index,
-      newValue,
-      propertyValue
-    );
+      currentStyle,
+      value: newValue,
+      propertyValue,
+    });
 
     const rotate = parseCssValue("transform", toValue(newPropertyValue));
     if (rotate.type === "invalid") {
