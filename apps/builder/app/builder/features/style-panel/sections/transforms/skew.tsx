@@ -2,7 +2,6 @@ import { Flex, Label, Grid } from "@webstudio-is/design-system";
 import {
   isUnitValue,
   updateTupleProperty,
-  useTransformPropertyValues,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
@@ -14,7 +13,10 @@ import {
   type FunctionValue,
   type TupleValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
+import {
+  extractSkewPropertiesFromTransform,
+  parseCssValue,
+} from "@webstudio-is/css-data";
 
 // We use fakeProperty to pass for the CssValueInputContainer.
 // https://developer.mozilla.org/en-US/docs/Web/CSS/rotate#formal_syntax
@@ -24,15 +26,8 @@ const fakeProperty = "rotate";
 export const SkewFloatingPanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
-  const { currentStyle } = props;
-  const properties = useTransformPropertyValues({
-    currentStyle,
-    panel: "skew",
-  });
-  if (properties === undefined) {
-    return;
-  }
-  const [skewX, skewY] = properties.value.value;
+  const { propertyValue, setProperty } = props;
+  const { skewX, skewY } = extractSkewPropertiesFromTransform(propertyValue);
 
   const handlePropertyUpdate = (
     index: number,
@@ -52,7 +47,7 @@ export const SkewFloatingPanelContent = (
     const newPropertyValue = updateTupleProperty(
       index,
       newValue,
-      properties.value
+      propertyValue
     );
 
     const rotate = parseCssValue("transform", toValue(newPropertyValue));
@@ -60,7 +55,7 @@ export const SkewFloatingPanelContent = (
       return;
     }
 
-    props.setProperty("transform")(rotate, options);
+    setProperty("transform")(rotate, options);
   };
 
   return (
@@ -76,9 +71,9 @@ export const SkewFloatingPanelContent = (
           styleSource="local"
           property={fakeProperty}
           value={
-            skewX.type === "function" && skewX.args.type === "tuple"
+            skewX?.type === "function" && skewX.args.type === "layers"
               ? skewX.args.value[0]
-              : undefined
+              : { type: "unit", value: 0, unit: "deg" }
           }
           keywords={[]}
           setValue={(value, options) => {
@@ -98,9 +93,9 @@ export const SkewFloatingPanelContent = (
           styleSource="local"
           property={fakeProperty}
           value={
-            skewY.type === "function" && skewY.args.type === "tuple"
+            skewY?.type === "function" && skewY.args.type === "layers"
               ? skewY.args.value[0]
-              : undefined
+              : { type: "unit", value: 0, unit: "deg" }
           }
           keywords={[]}
           setValue={(value, options) => {

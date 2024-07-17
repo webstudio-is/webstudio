@@ -9,7 +9,6 @@ import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import {
   isUnitValue,
   updateTupleProperty,
-  useTransformPropertyValues,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
@@ -26,16 +25,8 @@ const property: StyleProperty = "scale";
 export const ScalePanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
-  const { currentStyle } = props;
-  const properties = useTransformPropertyValues({
-    currentStyle,
-    panel: "scale",
-  });
-  if (properties === undefined) {
-    return;
-  }
-
-  const [scaleX, scaleY, scaleZ] = properties.value.value;
+  const { propertyValue, setProperty } = props;
+  const [scaleX, scaleY, scaleZ] = propertyValue.value;
 
   const handlePropertyUpdate = (
     index: number,
@@ -45,13 +36,13 @@ export const ScalePanelContent = (
     if (isUnitValue(value) === false) {
       return value;
     }
-    const newValue = updateTupleProperty(index, value, properties.value);
+    const newValue = updateTupleProperty(index, value, propertyValue);
     const scale = parseCssValue(property, toValue(newValue));
     if (scale.type === "invalid") {
       return;
     }
 
-    props.setProperty(property)(scale, options);
+    setProperty(property)(scale, options);
   };
 
   return (

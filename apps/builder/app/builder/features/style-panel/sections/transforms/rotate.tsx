@@ -2,7 +2,6 @@ import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
   isUnitValue,
   updateTupleProperty,
-  useTransformPropertyValues,
   type TransformFloatingPanelContentProps,
 } from "./utils";
 import {
@@ -18,20 +17,17 @@ import {
   type TupleValue,
 } from "@webstudio-is/css-engine";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import { parseCssValue } from "@webstudio-is/css-data";
+import {
+  extractRotatePropertiesFromTransform,
+  parseCssValue,
+} from "@webstudio-is/css-data";
 
 export const RotatePanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
-  const { currentStyle } = props;
-  const properties = useTransformPropertyValues({
-    currentStyle: currentStyle,
-    panel: "rotate",
-  });
-  if (properties === undefined) {
-    return;
-  }
-  const [rotateX, rotateY, rotateZ] = properties.value.value;
+  const { propertyValue, setProperty } = props;
+  const { rotateX, rotateY, rotateZ } =
+    extractRotatePropertiesFromTransform(propertyValue);
 
   const handlePropertyUpdate = (
     index: number,
@@ -51,7 +47,7 @@ export const RotatePanelContent = (
     const newPropertyValue = updateTupleProperty(
       index,
       newValue,
-      properties.value
+      propertyValue
     );
 
     const rotate = parseCssValue("transform", toValue(newPropertyValue));
@@ -59,7 +55,7 @@ export const RotatePanelContent = (
       return;
     }
 
-    props.setProperty("transform")(rotate, options);
+    setProperty("transform")(rotate, options);
   };
 
   return (
@@ -75,9 +71,9 @@ export const RotatePanelContent = (
           styleSource="local"
           property="rotate"
           value={
-            rotateX.type === "function" && rotateX.args.type === "tuple"
+            rotateX?.type === "function" && rotateX.args.type === "layers"
               ? rotateX.args.value[0]
-              : undefined
+              : { type: "unit", value: 0, unit: "deg" }
           }
           keywords={[]}
           setValue={(value, options) => {
@@ -97,9 +93,9 @@ export const RotatePanelContent = (
           styleSource="local"
           property="rotate"
           value={
-            rotateY.type === "function" && rotateY.args.type === "tuple"
+            rotateY?.type === "function" && rotateY.args.type === "layers"
               ? rotateY.args.value[0]
-              : undefined
+              : { type: "unit", value: 0, unit: "deg" }
           }
           keywords={[]}
           setValue={(value, options) => {
@@ -119,9 +115,9 @@ export const RotatePanelContent = (
           styleSource="local"
           property="rotate"
           value={
-            rotateZ.type === "function" && rotateZ.args.type === "tuple"
+            rotateZ?.type === "function" && rotateZ.args.type === "layers"
               ? rotateZ.args.value[0]
-              : undefined
+              : { type: "unit", value: 0, unit: "deg" }
           }
           keywords={[]}
           setValue={(value, options) => {
