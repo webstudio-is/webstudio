@@ -695,7 +695,7 @@ export const prebuild = async (options: {
     const getTemplates =
       documentType === "html" ? framework.html : framework.xml;
     for (const { file, template } of getTemplates({ pagePath })) {
-      const base = relative(dirname(file), generatedDir);
+      const base = relative(dirname(file), generatedDir).replaceAll("\\", "/");
       const content = template
         .replaceAll("__CLIENT__", `${base}/${generatedBasename}`)
         .replaceAll("__SERVER__", `${base}/${generatedBasename}.server`)
@@ -706,7 +706,7 @@ export const prebuild = async (options: {
 
   // MARK: - Default sitemap.xml
   for (const { file, template } of framework.defaultSitemap()) {
-    const base = relative(dirname(file), generatedDir);
+    const base = relative(dirname(file), generatedDir).replaceAll("\\", "/");
     const content = template.replaceAll(
       "__SITEMAP__",
       `${base}/$resources.sitemap.xml`
@@ -740,7 +740,10 @@ export const prebuild = async (options: {
       for (const { file, template } of framework.redirect({
         pagePath: redirect.old,
       })) {
-        const base = relative(dirname(file), generatedDir);
+        const base = relative(dirname(file), generatedDir).replaceAll(
+          "\\",
+          "/"
+        );
         const content = template.replaceAll(
           "__REDIRECT__",
           `${base}/${generatedBasename}`
