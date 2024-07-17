@@ -41,20 +41,20 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@storybook/addon-actions':
-        specifier: ^8.2.3
-        version: 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+        specifier: ^8.2.4
+        version: 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@storybook/addon-essentials':
-        specifier: ^8.2.3
-        version: 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+        specifier: ^8.2.4
+        version: 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@storybook/addon-links':
-        specifier: ^8.2.3
-        version: 8.2.3(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+        specifier: ^8.2.4
+        version: 8.2.4(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@storybook/react':
-        specifier: ^8.2.3
-        version: 8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)
+        specifier: ^8.2.4
+        version: 8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)
       '@storybook/react-vite':
-        specifier: ^8.2.3
-        version: 8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))
+        specifier: ^8.2.4
+        version: 8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))
       '@types/css-tree':
         specifier: ^2.3.1
         version: 2.3.1(patch_hash=ac22lciodhaj6xmoeignv36gyq)
@@ -89,8 +89,8 @@ importers:
         specifier: ^2.11.1
         version: 2.11.1
       storybook:
-        specifier: ^8.2.3
-        version: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+        specifier: ^8.2.4
+        version: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       tsx:
         specifier: ^4.16.2
         version: 4.16.2
@@ -98,8 +98,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
 
   apps/builder:
     dependencies:
@@ -198,7 +198,7 @@ importers:
         version: 10.38.1
       '@vercel/remix':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/dev@2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.10.0(typescript@5.5.2))(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 2.9.2(@remix-run/dev@2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.10.0(typescript@5.5.2))(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -406,7 +406,7 @@ importers:
         version: 29.7.0
       '@remix-run/dev':
         specifier: ^2.10.0
-        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@testing-library/react-hooks':
         specifier: ^8.0.1
         version: 8.0.1(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react-test-renderer@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -444,8 +444,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
 
   fixtures/webstudio-cloudflare-template:
     dependencies:
@@ -509,7 +509,7 @@ importers:
         version: 4.20240701.0
       '@remix-run/dev':
         specifier: 2.10.0
-        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -520,8 +520,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
       wrangler:
         specifier: ^3.63.2
         version: 3.63.2(@cloudflare/workers-types@4.20240701.0)
@@ -579,7 +579,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.10.0
-        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -590,8 +590,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -603,7 +603,7 @@ importers:
         version: 2.8.1
       '@netlify/remix-edge-adapter':
         specifier: ^3.3.0
-        version: 3.3.0(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(vite@5.3.3(@types/node@20.12.7))
+        version: 3.3.0(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(vite@5.3.4(@types/node@20.12.7))
       '@remix-run/node':
         specifier: 2.10.0
         version: 2.10.0(typescript@5.5.2)
@@ -646,7 +646,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.10.0
-        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -657,8 +657,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -670,7 +670,7 @@ importers:
         version: 2.8.0(@opentelemetry/api@1.8.0)
       '@netlify/remix-adapter':
         specifier: ^2.4.0
-        version: 2.4.0(@netlify/functions@2.8.0(@opentelemetry/api@1.8.0))(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))
+        version: 2.4.0(@netlify/functions@2.8.0(@opentelemetry/api@1.8.0))(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))
       '@remix-run/node':
         specifier: 2.10.0
         version: 2.10.0(typescript@5.5.2)
@@ -713,7 +713,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.10.0
-        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -724,8 +724,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -774,7 +774,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.10.0
-        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -785,8 +785,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -985,10 +985,10 @@ importers:
         version: 29.7.0
       '@netlify/remix-adapter':
         specifier: ^2.4.0
-        version: 2.4.0(@netlify/functions@2.8.0(@opentelemetry/api@1.8.0))(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))
+        version: 2.4.0(@netlify/functions@2.8.0(@opentelemetry/api@1.8.0))(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))
       '@netlify/remix-edge-adapter':
         specifier: 3.3.0
-        version: 3.3.0(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(vite@5.3.3(@types/node@20.12.7))
+        version: 3.3.0(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(vite@5.3.4(@types/node@20.12.7))
       '@remix-run/cloudflare':
         specifier: ^2.10.0
         version: 2.10.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.5.2)
@@ -997,7 +997,7 @@ importers:
         version: 2.10.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.5.2)
       '@remix-run/dev':
         specifier: ^2.10.0
-        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@remix-run/node':
         specifier: ^2.10.0
         version: 2.10.0(typescript@5.5.2)
@@ -1038,8 +1038,8 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
       vite:
-        specifier: ^5.3.3
-        version: 5.3.3(@types/node@20.12.7)
+        specifier: ^5.3.4
+        version: 5.3.4(@types/node@20.12.7)
       wrangler:
         specifier: ^3.63.2
         version: 3.63.2(@cloudflare/workers-types@4.20240701.0)
@@ -4973,82 +4973,82 @@ packages:
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/addon-actions@8.2.3':
-    resolution: {integrity: sha512-7ntW+hK2f0EtEZ08BRYdaMDdeCJY5IyRbaXhclMzo4FK4W3vsRnSMu+t61K42+/3+bJC8z2bnjZPrh2b7gJ34w==}
+  '@storybook/addon-actions@8.2.4':
+    resolution: {integrity: sha512-l1dlzWBBkR/5aullsX8N1ZbYr2bkeHPAaMCRy1jG5BBA8IHbi55JFwmJ8XF2gXkT2GyAZnePzb43RuLXz4KxFQ==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-backgrounds@8.2.3':
-    resolution: {integrity: sha512-u3HMoN42ILpaZN+YWwgQl7togczS8FBX+KkTyxBqeWIsiPgXPWANABcquWARNajtyW3XpjrWzJPEhWehMQl2+Q==}
+  '@storybook/addon-backgrounds@8.2.4':
+    resolution: {integrity: sha512-4oU25rFyr4OgMxHe4RpLJ7lxVwUDfdTi1j/YVyHfYv8koTqjagso8bv0uj0ujP5C3dSsVO0sp3/JOfPDkEUtrA==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-controls@8.2.3':
-    resolution: {integrity: sha512-rylp7QNPS+sUx20YXAROLx7HLF1xRtBmICYBpU7wKOOufmIAM55ol8PvpQQ97J1XE/mH95FWY8bIQ3fXAqnB1g==}
+  '@storybook/addon-controls@8.2.4':
+    resolution: {integrity: sha512-e56aUYhxyR8zJJstRAUP3WILhWTcvgRf5bysTtiyjFAL7U47cuCr043+IYEsxLkXhuZTKX2pcYSrjBtT5bYkVA==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-docs@8.2.3':
-    resolution: {integrity: sha512-5glPip8Oex9npUTfVkkO1WMmbwpwUbu+04Uk6Vr30g+p2svGHH2qlKhWIu4g+Jx6s2ogMV47oj9Zl8jrXjNyPA==}
+  '@storybook/addon-docs@8.2.4':
+    resolution: {integrity: sha512-oyrDw4nGfntu5Hkhr2Qt1wUOyLaVVERQekYyejyir92QhM10UeA7ZarPXNLfCTj7rbTrWmM1Waka9Tsf8TGMrw==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-essentials@8.2.3':
-    resolution: {integrity: sha512-M+43RTtugiqKchs6xjzSO7ZRFzhr6U+xOKaW8tfAdzheTRnT3moXSIoJn6w5rEiqvUAWtpswigKRcsxhbtL2qw==}
+  '@storybook/addon-essentials@8.2.4':
+    resolution: {integrity: sha512-4upNauDJAJxauxnoUpUvzDnLo18C2yTVxgg+Id9wrKpt9C+CYH2oXyXzxoYGucYWZEe7zgCO6rWrGrKEisiLPQ==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-highlight@8.2.3':
-    resolution: {integrity: sha512-uc2dlZv7OkM5DGeN1wR7aZ4hmH1n6B38dlFzVh0rx+kghtSyUcQsaFPKR36Ky6cHHXa1z93TvEXJKkA1KtM7oQ==}
+  '@storybook/addon-highlight@8.2.4':
+    resolution: {integrity: sha512-Ll/2y0m/q9ko9jFt40qsiee4fds6vpcwwxi3mPAVwRV/J7PpMzPkoLxM54bKpeHiWdTeGCXRguXNvyeQMQf3pg==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-links@8.2.3':
-    resolution: {integrity: sha512-PAVj0ArWpW0Mwva4UzKZs1AxaUMmMTKsF5PFzUJ2fpHTfXOAnST59twDRn11XyWlb4QS+Ek0ok3k/scvOYbAyg==}
+  '@storybook/addon-links@8.2.4':
+    resolution: {integrity: sha512-1FgD6YXdXXSEDrp2aO4LxYt/X7LnBYx7cLlFla+xbn1CZLGqWLLeOT+BFd29wxpzs3u1Tap9r1iz1vRYL5ziyg==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
-      storybook: ^8.2.3
+      storybook: ^8.2.4
     peerDependenciesMeta:
       react:
         optional: true
 
-  '@storybook/addon-measure@8.2.3':
-    resolution: {integrity: sha512-IgvGUTLQfTCUBv8k+lRk6Wq550W/g+N1vDUHLw1iAfvvqTf5ZQYG54tDa2ad0wPj+yDIJrL0GwKVXsFnb5o1PA==}
+  '@storybook/addon-measure@8.2.4':
+    resolution: {integrity: sha512-bSyE3mGDaaIKoe6Kt/f20YXKsn8WSoJUHrfKA68gbb+H3tegVQaqeS2KY5YzLqvjHe1qSmrO132NJt8RixLOPQ==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-outline@8.2.3':
-    resolution: {integrity: sha512-AOIxOLxq0I8gp9du8K5w+5ohNwShcTBNxKnwdKel+iOP+mjB0ygVV4cfVa/Z3q1IqW/fMiA+YtRElLkxZaWRoQ==}
+  '@storybook/addon-outline@8.2.4':
+    resolution: {integrity: sha512-1C6NrvSDREgCZ7o/1n7Ca81uDDzrSrzWiOkh4OeA7PPQ/445cAOX2OMvxzNkKDIT9GLCLNi9M5XIVyGxJVS4dQ==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-toolbars@8.2.3':
-    resolution: {integrity: sha512-kRnisYanm+ylch06paBgaIfkaTHeeORra64acGULefDuCpexM9eSakP9lupCNBYS1Q/PaURnoih3IcrWjFhQGQ==}
+  '@storybook/addon-toolbars@8.2.4':
+    resolution: {integrity: sha512-iPnSr+hdz40Uoqg2cimyWf01/Y8GdgdMKB+b47TGIxtn9SEFBXck00ZG8ttwBvEsecu9K9CDt20fIOnr6oK5tQ==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/addon-viewport@8.2.3':
-    resolution: {integrity: sha512-JqR0GNfHC/vq2hsi1UwXI/LHT07BouT2Z6/b+FjKoGZIEs/XiV1Mn58FS6dCAwzgF96TWipDo5J6mJF99BjZQQ==}
+  '@storybook/addon-viewport@8.2.4':
+    resolution: {integrity: sha512-58DcoX0xGpWlJfc0iLDjggkVPYzT4JdCZA2ioK9SQXQMsUzGFwR5PAAJv1tivYp7467tNkXvcM3QTb3Q3g8p4g==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/blocks@8.2.3':
-    resolution: {integrity: sha512-izbyT+6bV2/0dApRh97kJZWEwXKTMIU6zmvI8bD4Ii/cWtd2c8KchKM4s00t11kaCg5yuaqGL60MRs/YT/QHQw==}
+  '@storybook/blocks@8.2.4':
+    resolution: {integrity: sha512-Hl2Dpg41YiJLSVXxjEJPjgPShrDJM3RY6HEEOjqTcAADsheX1IHAWXMJSJGMmne3Sew6VdJXPuHBIOFV4suZxg==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
-      storybook: ^8.2.3
+      storybook: ^8.2.4
     peerDependenciesMeta:
       react:
         optional: true
       react-dom:
         optional: true
 
-  '@storybook/builder-vite@8.2.3':
-    resolution: {integrity: sha512-EGjs3bjvRCmXofC8etbXbhAb+7ahG3c4kmo/wxCeTZPEbPy4WNn4SSoZyxpNDv3OIYGdWQ+SJsjaNCqqPVy1DA==}
+  '@storybook/builder-vite@8.2.4':
+    resolution: {integrity: sha512-hDx0ZLcnFrIJaVoFMu41d9w1uWmwy/DDUuIbSd0T7xHwWyVqgI8lmaQlBIp81/QmSKaUB964UduHcdIjkoWoYA==}
     peerDependencies:
       '@preact/preset-vite': '*'
-      storybook: ^8.2.3
+      storybook: ^8.2.4
       typescript: '>= 4.3.x'
       vite: ^4.0.0 || ^5.0.0
       vite-plugin-glimmerx: '*'
@@ -5060,16 +5060,21 @@ packages:
       vite-plugin-glimmerx:
         optional: true
 
-  '@storybook/codemod@8.2.3':
-    resolution: {integrity: sha512-mAc22OJthMr1oaGVKRbO05sveTUhcWhdgN4nQKf7wLfXjW73mMgrblao+mxiWIfhXIjbOB5xgw3Csi9pcy6Kkw==}
+  '@storybook/codemod@8.2.4':
+    resolution: {integrity: sha512-QcZdqjX4NvkVcWR3yI9it3PfqmBOCR+3iY6j4PmG7p5IE0j9kXMKBbeFrBRprSijHKlwcjbc3bRx2SnKF6AFEg==}
 
-  '@storybook/core@8.2.3':
-    resolution: {integrity: sha512-6CV6P8ES7E+vQZEuJTdLhgC3Lo7iRy+tpc/3przT25EStzNTR3TW2X31KUn7BfY2fuxCFPzftPaSJ/LEi7zHqg==}
-
-  '@storybook/csf-plugin@8.2.3':
-    resolution: {integrity: sha512-j6w9hD/Ze4utK4Hg5ILKsgGkN4QwYaCo67vKsyUB78Y1v7WiWQIM6UsuOVwXGL1SpAtF5NDtu/92/jAJ094zqw==}
+  '@storybook/components@8.2.4':
+    resolution: {integrity: sha512-JLT1RoR/RXX+ZTeFoY85CRHb9Zz3l0PRRUSetEjoIJdnBGeL5C38bs0s9QnYjpCDLUlhdYhTln+GzmbyH8ocpA==}
     peerDependencies:
-      storybook: ^8.2.3
+      storybook: ^8.2.4
+
+  '@storybook/core@8.2.4':
+    resolution: {integrity: sha512-jePmsGZT2hhUNQs8ED6+hFVt2m4hrMseO8kkN7Mcsve1MIujzHUS7Gjo4uguBwHJJOtiXB2fw4OSiQCmsXscZA==}
+
+  '@storybook/csf-plugin@8.2.4':
+    resolution: {integrity: sha512-7V2tmeyAwv4/AQiBpB+7fCpphnY1yhcz+Zv9esUOHKqFn5+7u9FKpEXFFcf6fcbqXr2KoNw2F1EnTv3K/SxXrg==}
+    peerDependencies:
+      storybook: ^8.2.4
 
   '@storybook/csf@0.1.11':
     resolution: {integrity: sha512-dHYFQH3mA+EtnCkHXzicbLgsvzYjcDJ1JWsogbItZogkPHgSJM/Wr71uMkcvw8v9mmCyP4NpXJuu6bPoVsOnzg==}
@@ -5084,33 +5089,48 @@ packages:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/react-dom-shim@8.2.3':
-    resolution: {integrity: sha512-N8AsM6N1S867GGWt2J2q5oY5ryqxohh3y1HqNtjg+wXf5+RkTD6M2Cgqe6p+JHz81nDKyvvVzP60MvvDhY5VOA==}
+  '@storybook/manager-api@8.2.4':
+    resolution: {integrity: sha512-ayiOtcGupSeLCi2doEsRpALNPo4MBWYruc+e3jjkeVJQIg9A1ipSogNQh8unuOmq9rezO4/vcNBd6MxLs3xLWg==}
+    peerDependencies:
+      storybook: ^8.2.4
+
+  '@storybook/preview-api@8.2.4':
+    resolution: {integrity: sha512-IxOiUYYzNnk1OOz3zQBhsa3P1fsgqeMBZcH7TjiQWs9osuWG20oqsFR6+Z3dxoW8IuQHvpnREGKvAbRsDsThcA==}
+    peerDependencies:
+      storybook: ^8.2.4
+
+  '@storybook/react-dom-shim@8.2.4':
+    resolution: {integrity: sha512-p2ypPWuKKFY/ij7yYjvdnrOcfdpxnAJd9D4/2Hm2eVioE4y8HQSND54t9OfkW+498Ez7ph4zW9ez005XqzH/+w==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
-      storybook: ^8.2.3
+      storybook: ^8.2.4
 
-  '@storybook/react-vite@8.2.3':
-    resolution: {integrity: sha512-a7HKCu/rd7GyzG1sr0W13gaOC1kEzJfGxI+Nb8RrH5+yRH5atYEsiBD80hdJNbOGdgp4LInBHZKiq0xE8VJ8xQ==}
+  '@storybook/react-vite@8.2.4':
+    resolution: {integrity: sha512-4nDZC4uJKV6YCVzT/es0abQnd28CuU3cN4nyzxaBbI/XtCvYzkT7KLEo8csaS+1o1uEb8lY3ZLZ2a3jYlVPNJA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
-      storybook: ^8.2.3
+      storybook: ^8.2.4
       vite: ^4.0.0 || ^5.0.0
 
-  '@storybook/react@8.2.3':
-    resolution: {integrity: sha512-818F6pJWFBiwG0r6DiUVrV+qndwbIso2gtgJoituBgIJO2eIzNmkPNSsckbaR7u+FpE4dWiIIhmDVZSnRwvDlA==}
+  '@storybook/react@8.2.4':
+    resolution: {integrity: sha512-tRkEeFhwq2GeRsPwFc8dINI5L4mXanXaa7/JreB6ZcUeOZD8d81TWXCH9QyGvxfe0LW+DeNujA91mx5Yja35Zw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
-      storybook: ^8.2.3
+      storybook: ^8.2.4
       typescript: '>= 4.2.x'
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  '@storybook/theming@8.2.4':
+    resolution: {integrity: sha512-B4HQMzTeg1TgV9uPDIoDkMSnP839Y05I9+Tw60cilAD+jTqrCvMlccHfehsTzJk+gioAflunATcbU05TMZoeIQ==}
+    peerDependencies:
+      storybook: ^8.2.4
 
   '@svgo/jsx@0.4.2':
     resolution: {integrity: sha512-0e4B41q+GnS8TI+SWHQw78ziW6V07Li2TMLS8FwbvKOTIJL0ua1Sat1AI0AFAjHlAePz9b+1VtyJzv1516edJw==}
@@ -9127,8 +9147,8 @@ packages:
     resolution: {integrity: sha512-KXDYZ9dszj6bzvnEMRYvxgeTHU74QBFL54XKtP3nyMuJ81CFYtABZ3bAzL2EdFUaEwJOBOgENyFj3R7oTzDyyw==}
     engines: {node: '>=4', npm: '>=6'}
 
-  storybook@8.2.3:
-    resolution: {integrity: sha512-uGjoFasTDWaeLp+pz8jCdKfSOvBTNEBpGf2C+pwZkJpd5CHrUlq4dkfE0/Kv/MtyQI1W9Fgbinbj7ggNe0D3Cg==}
+  storybook@8.2.4:
+    resolution: {integrity: sha512-ASavW8vIHiWpFY+4M6ngeqK5oL4OkxqdpmQYxvRqH0gA1G1hfq/vmDw4YC4GnqKwyWPQh2kaV5JFurKZVaeaDQ==}
     hasBin: true
 
   stream-shift@1.0.1:
@@ -9662,8 +9682,8 @@ packages:
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
 
-  vite@5.3.3:
-    resolution: {integrity: sha512-NPQdeCU0Dv2z5fu+ULotpuq5yfCS1BzKUIPhNbP3YBfAMGJXbt2nS+sbTFu+qchaqWTD+H3JK++nRwr6XIcp6A==}
+  vite@5.3.4:
+    resolution: {integrity: sha512-Cw+7zL3ZG9/NZBB8C+8QbQZmR54GwqIz+WMI4b3JgdYJvX+ny9AjJXqkGQlDXSXRP9rP0B4tbciRMOVEKulVOA==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -11658,13 +11678,13 @@ snapshots:
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  '@joshwooding/vite-plugin-react-docgen-typescript@0.3.1(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))':
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.3.1(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))':
     dependencies:
       glob: 7.2.3
       glob-promise: 4.2.2(glob@7.2.3)
       magic-string: 0.27.0
       react-docgen-typescript: 2.2.2(typescript@5.5.2)
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.5.2
 
@@ -11928,22 +11948,22 @@ snapshots:
 
   '@netlify/node-cookies@0.1.0': {}
 
-  '@netlify/remix-adapter@2.4.0(@netlify/functions@2.8.0(@opentelemetry/api@1.8.0))(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))':
+  '@netlify/remix-adapter@2.4.0(@netlify/functions@2.8.0(@opentelemetry/api@1.8.0))(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))':
     dependencies:
       '@netlify/functions': 2.8.0(@opentelemetry/api@1.8.0)
       '@remix-run/node': 2.10.0(typescript@5.5.2)
       isbot: 5.1.10
     optionalDependencies:
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
     transitivePeerDependencies:
       - typescript
 
-  '@netlify/remix-edge-adapter@3.3.0(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(vite@5.3.3(@types/node@20.12.7))':
+  '@netlify/remix-edge-adapter@3.3.0(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(vite@5.3.4(@types/node@20.12.7))':
     dependencies:
       '@netlify/remix-runtime': 2.3.0(@remix-run/server-runtime@2.10.0(typescript@5.5.2))
       isbot: 5.1.10
     optionalDependencies:
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@remix-run/server-runtime'
 
@@ -12914,7 +12934,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.5.2
 
-  '@remix-run/dev@2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
+  '@remix-run/dev@2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
     dependencies:
       '@babel/core': 7.24.5
       '@babel/generator': 7.24.5
@@ -12973,7 +12993,7 @@ snapshots:
     optionalDependencies:
       '@remix-run/serve': 2.10.0(typescript@5.5.2)
       typescript: 5.5.2
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
       wrangler: 3.63.2(@cloudflare/workers-types@4.20240701.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -13213,100 +13233,100 @@ snapshots:
     dependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/addon-actions@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-actions@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@storybook/global': 5.0.0
       '@types/uuid': 9.0.8
       dequal: 2.0.3
       polished: 4.2.2
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       uuid: 9.0.1
 
-  '@storybook/addon-backgrounds@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-backgrounds@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@storybook/global': 5.0.0
       memoizerific: 1.11.3
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
 
-  '@storybook/addon-controls@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-controls@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       dequal: 2.0.3
       lodash: 4.17.21
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
 
-  '@storybook/addon-docs@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-docs@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@babel/core': 7.24.5
       '@mdx-js/react': 3.0.1(@types/react@18.2.79)(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/blocks': 8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/csf-plugin': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/blocks': 8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/csf-plugin': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@storybook/global': 5.0.0
-      '@storybook/react-dom-shim': 8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/react-dom-shim': 8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@types/react': 18.2.79
       fs-extra: 11.1.1
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       rehype-external-links: 3.0.0
       rehype-slug: 6.0.0
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/addon-essentials@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-essentials@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
-      '@storybook/addon-actions': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-backgrounds': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-controls': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-docs': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-highlight': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-measure': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-outline': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-toolbars': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      '@storybook/addon-viewport': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      '@storybook/addon-actions': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-backgrounds': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-controls': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-docs': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-highlight': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-measure': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-outline': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-toolbars': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/addon-viewport': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/addon-highlight@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-highlight@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@storybook/global': 5.0.0
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
 
-  '@storybook/addon-links@8.2.3(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-links@8.2.4(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@storybook/csf': 0.1.11
       '@storybook/global': 5.0.0
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
     optionalDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/addon-measure@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-measure@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@storybook/global': 5.0.0
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       tiny-invariant: 1.3.3
 
-  '@storybook/addon-outline@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-outline@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@storybook/global': 5.0.0
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
 
-  '@storybook/addon-toolbars@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-toolbars@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
 
-  '@storybook/addon-viewport@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/addon-viewport@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       memoizerific: 1.11.3
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
 
-  '@storybook/blocks@8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/blocks@8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       '@storybook/csf': 0.1.11
       '@storybook/global': 5.0.0
@@ -13319,7 +13339,7 @@ snapshots:
       memoizerific: 1.11.3
       polished: 4.2.2
       react-colorful: 5.6.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       telejson: 7.2.0
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
@@ -13327,9 +13347,9 @@ snapshots:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@storybook/builder-vite@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))':
+  '@storybook/builder-vite@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))':
     dependencies:
-      '@storybook/csf-plugin': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/csf-plugin': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@types/find-cache-dir': 3.2.1
       browser-assert: 1.2.1
       es-module-lexer: 1.5.0
@@ -13337,20 +13357,20 @@ snapshots:
       find-cache-dir: 3.3.2
       fs-extra: 11.1.1
       magic-string: 0.30.10
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.5.2
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/codemod@8.2.3':
+  '@storybook/codemod@8.2.4':
     dependencies:
       '@babel/core': 7.24.5
       '@babel/preset-env': 7.24.5(@babel/core@7.24.5)
       '@babel/types': 7.24.7
-      '@storybook/core': 8.2.3
+      '@storybook/core': 8.2.4
       '@storybook/csf': 0.1.11
       '@types/cross-spawn': 6.0.2
       cross-spawn: 7.0.3
@@ -13365,7 +13385,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@storybook/core@8.2.3':
+  '@storybook/components@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+    dependencies:
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+
+  '@storybook/core@8.2.4':
     dependencies:
       '@storybook/csf': 0.1.11
       '@types/express': 4.17.21
@@ -13383,9 +13407,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@storybook/csf-plugin@8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/csf-plugin@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       unplugin: 1.4.0
 
   '@storybook/csf@0.1.11':
@@ -13399,27 +13423,35 @@ snapshots:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@storybook/react-dom-shim@8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+  '@storybook/manager-api@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+    dependencies:
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+
+  '@storybook/preview-api@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+    dependencies:
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+
+  '@storybook/react-dom-shim@8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
 
-  '@storybook/react-vite@8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))':
+  '@storybook/react-vite@8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.3.1(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.3.1(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))
       '@rollup/pluginutils': 5.0.2(rollup@4.14.0)
-      '@storybook/builder-vite': 8.2.3(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))
-      '@storybook/react': 8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)
+      '@storybook/builder-vite': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))
+      '@storybook/react': 8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)
       find-up: 5.0.0
       magic-string: 0.30.10
       react: 18.3.0-canary-14898b6a9-20240318
       react-docgen: 7.0.3
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       resolve: 1.22.8
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       tsconfig-paths: 4.2.0
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@preact/preset-vite'
       - rollup
@@ -13427,10 +13459,14 @@ snapshots:
       - typescript
       - vite-plugin-glimmerx
 
-  '@storybook/react@8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)':
+  '@storybook/react@8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))(typescript@5.5.2)':
     dependencies:
+      '@storybook/components': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@storybook/global': 5.0.0
-      '@storybook/react-dom-shim': 8.2.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/manager-api': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/preview-api': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/react-dom-shim': 8.2.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
+      '@storybook/theming': 8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))
       '@types/escodegen': 0.0.6
       '@types/estree': 0.0.51
       '@types/node': 18.17.1
@@ -13445,12 +13481,16 @@ snapshots:
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-element-to-jsx-string: 15.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       semver: 7.6.2
-      storybook: 8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
       ts-dedent: 2.2.0
       type-fest: 2.19.0
       util-deprecate: 1.0.2
     optionalDependencies:
       typescript: 5.5.2
+
+  '@storybook/theming@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
+    dependencies:
+      storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
 
   '@svgo/jsx@0.4.2':
     dependencies:
@@ -13876,7 +13916,7 @@ snapshots:
       lodash: 4.17.21
       mlly: 1.6.1
       outdent: 0.8.0
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
       vite-node: 1.6.0(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@types/node'
@@ -13891,9 +13931,9 @@ snapshots:
 
   '@vanilla-extract/private@1.0.5': {}
 
-  '@vercel/remix@2.9.2(@remix-run/dev@2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.10.0(typescript@5.5.2))(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@vercel/remix@2.9.2(@remix-run/dev@2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.10.0(typescript@5.5.2))(@remix-run/server-runtime@2.10.0(typescript@5.5.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@remix-run/dev': 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.3(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+      '@remix-run/dev': 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@remix-run/node': 2.10.0(typescript@5.5.2)
       '@remix-run/server-runtime': 2.10.0(typescript@5.5.2)
       '@vercel/static-config': 3.0.0
@@ -13930,7 +13970,7 @@ snapshots:
       '@vue/shared': 3.3.4
       estree-walker: 2.0.2
       magic-string: 0.30.10
-      postcss: 8.4.38
+      postcss: 8.4.39
       source-map-js: 1.2.0
 
   '@vue/compiler-ssr@3.3.4':
@@ -18440,12 +18480,12 @@ snapshots:
 
   stoppable@1.1.0: {}
 
-  storybook@8.2.3(@babel/preset-env@7.24.5(@babel/core@7.24.5)):
+  storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)):
     dependencies:
       '@babel/core': 7.24.5
       '@babel/types': 7.24.7
-      '@storybook/codemod': 8.2.3
-      '@storybook/core': 8.2.3
+      '@storybook/codemod': 8.2.4
+      '@storybook/core': 8.2.4
       '@types/semver': 7.5.0
       '@yarnpkg/fslib': 2.10.3
       '@yarnpkg/libzip': 2.3.0
@@ -19051,7 +19091,7 @@ snapshots:
       debug: 4.3.4
       pathe: 1.1.2
       picocolors: 1.0.1
-      vite: 5.3.3(@types/node@20.12.7)
+      vite: 5.3.4(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -19062,7 +19102,7 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.3.3(@types/node@20.12.7):
+  vite@5.3.4(@types/node@20.12.7):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.39
