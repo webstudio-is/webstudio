@@ -9,7 +9,24 @@ export const createClient = (url: string, apiKey: string): Client => {
     headers: {
       apikey: apiKey,
       Authorization: `Bearer ${apiKey}`,
-      "Accept-Encoding": "br, gzip",
+    },
+    fetch: async (input, init) => {
+      // delete init.headers["X-Client-Info"];
+      try {
+        // For unknown reason this allows brotli encoding to work
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        delete init.headers["Accept"];
+      } catch {
+        // do nothing
+      }
+      const res = await fetch(input, init);
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res;
     },
   });
 

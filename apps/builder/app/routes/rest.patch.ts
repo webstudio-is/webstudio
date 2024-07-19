@@ -31,6 +31,7 @@ import {
   serializeData,
   parseConfig,
   serializeConfig,
+  loadRawBuildById,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -78,14 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw Error("You don't have edit access to this project");
     }
 
-    // await new Promise((r) => setTimeout(r, 10000));
-
-    const build = await prisma.build.findUnique({
-      where: { id_projectId: { projectId, id: buildId } },
-    });
-    if (build === null) {
-      throw Error(`Build ${buildId} not found`);
-    }
+    const build = await loadRawBuildById(context, buildId);
 
     const serverVersion = build.version;
     if (clientVersion !== serverVersion) {

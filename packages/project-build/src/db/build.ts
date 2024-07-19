@@ -89,10 +89,10 @@ const parseBuild = async (
   }
 };
 
-export const loadBuildById = async (
+export const loadRawBuildById = async (
   context: AppContext,
   id: Build["id"]
-): Promise<Build | undefined> => {
+) => {
   const build = await context.postgrest.client
     .from("Build")
     .select("*")
@@ -103,7 +103,16 @@ export const loadBuildById = async (
     throw build.error;
   }
 
-  return parseBuild(build.data);
+  return build.data;
+};
+
+export const loadBuildById = async (
+  context: AppContext,
+  id: Build["id"]
+): Promise<Build> => {
+  const build = await loadRawBuildById(context, id);
+
+  return parseBuild(build);
 };
 
 export const loadBuildIdAndVersionByProjectId = async (
