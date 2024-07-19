@@ -530,6 +530,38 @@ test("Section", async () => {
   `);
 });
 
+test("Figure", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "7c6bc1fd-128d-514b-167b-605a910e435c",
+          type: "Block",
+          tag: "figure",
+          classes: [],
+          children: [],
+        },
+      ],
+      styles: [],
+      assets: [],
+    },
+  });
+
+  equalFragment(fragment, <$.Box tag="figure" />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      figure {
+        display: block;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0
+      }
+    }"
+  `);
+});
+
 test("BlockContainer", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
