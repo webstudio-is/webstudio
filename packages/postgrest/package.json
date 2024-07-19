@@ -15,8 +15,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@supabase/postgrest-js": "^1.15.8"
