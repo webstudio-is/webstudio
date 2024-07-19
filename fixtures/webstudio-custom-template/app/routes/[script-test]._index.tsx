@@ -65,11 +65,14 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   // typecheck
   arg.context.EXCLUDE_FROM_SEARCH satisfies boolean;
 
+  if (arg.context.EXCLUDE_FROM_SEARCH) {
+    pageMeta.excludePageFromSearch = arg.context.EXCLUDE_FROM_SEARCH;
+  }
+
   return json(
     {
       host,
       url: url.href,
-      excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
       system,
       resources,
       pageMeta,
@@ -133,7 +136,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     });
   }
 
-  if (pageMeta.excludePageFromSearch || data.excludeFromSearch) {
+  if (pageMeta.excludePageFromSearch) {
     metas.push({
       name: "robots",
       content: "noindex, nofollow",
