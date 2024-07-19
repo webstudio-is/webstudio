@@ -20,7 +20,6 @@ import {
   Page,
   siteName,
   favIconAsset,
-  socialImageAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
 } from "../__generated__/[form]._index";
@@ -152,11 +151,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     });
   }
 
-  if (socialImageAsset) {
+  if (pageMeta.socialImageAssetName) {
     metas.push({
       property: "og:image",
       content: `https://${data.host}${imageLoader({
-        src: socialImageAsset.name,
+        src: pageMeta.socialImageAssetName,
         // Do not transform social image (not enough information do we need to do this)
         format: "raw",
       })}`,

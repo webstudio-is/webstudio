@@ -45,7 +45,7 @@ export const getPageMeta = ({
     description: "",
     excludePageFromSearch: false,
     language: undefined,
-    socialImageAssetId: "",
+    socialImageAssetName: undefined,
     socialImageUrl: undefined,
     status: undefined,
     redirect: undefined,
