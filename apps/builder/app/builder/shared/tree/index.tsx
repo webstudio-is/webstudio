@@ -193,7 +193,7 @@ export const InstanceTree = (
         </TreeItemBody>
       );
     },
-    [metas, updateInstanceLabel, editingItemSelector, propValues]
+    [metas, editingItemSelector, propValues]
   );
 
   return (
