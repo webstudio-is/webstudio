@@ -11,7 +11,7 @@ import {
   json,
 } from "@remix-run/server-runtime";
 
-import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 
@@ -68,7 +68,7 @@ export const loader = async ({
       throw new Error(`Project "${params.projectId}" not found`);
     }
 
-    const devBuild = await loadBuildByProjectId(project.id);
+    const devBuild = await loadBuildIdAndVersionByProjectId(project.id);
 
     const end = Date.now();
 

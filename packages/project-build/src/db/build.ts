@@ -105,6 +105,24 @@ export const loadBuildById = async (
   return parseBuild(build);
 };
 
+export const loadBuildIdAndVersionByProjectId = async (
+  projectId: Build["projectId"]
+): Promise<{ id: string; version: number }> => {
+  const build = await prisma.build.findFirst({
+    select: {
+      id: true,
+      version: true,
+    },
+    where: { projectId, deployment: null },
+  });
+
+  if (build === null) {
+    throw new Error("Dev build not found");
+  }
+
+  return build;
+};
+
 export const loadBuildByProjectId = async (
   projectId: Build["projectId"]
 ): Promise<Build> => {
