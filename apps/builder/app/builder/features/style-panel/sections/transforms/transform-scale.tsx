@@ -7,7 +7,6 @@ import {
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import {
-  isUnitValue,
   updateTransformTuplePropertyValue,
   type TransformFloatingPanelContentProps,
 } from "./transform-utils";
@@ -33,9 +32,10 @@ export const ScalePanelContent = (
     value: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    if (isUnitValue(value) === false) {
-      return value;
+    if (value.type !== "unit") {
+      return;
     }
+
     const newValue = updateTransformTuplePropertyValue(
       index,
       value,
@@ -75,7 +75,7 @@ export const ScalePanelContent = (
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <YAxisIcon />
-        <Label> Scale X</Label>
+        <Label> Scale Y</Label>
         <CssValueInputContainer
           key="scaleY"
           styleSource="local"
@@ -93,7 +93,7 @@ export const ScalePanelContent = (
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <ZAxisIcon />
-        <Label> Scale X</Label>
+        <Label> Scale Z</Label>
         <CssValueInputContainer
           key="scaleZ"
           styleSource="local"

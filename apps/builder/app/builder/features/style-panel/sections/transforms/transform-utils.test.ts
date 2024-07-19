@@ -3,7 +3,7 @@ import {
   addDefaultsForTransormSection,
   handleDeleteTransformProperty,
   handleHideTransformProperty,
-  isTransformPanelPropertyExists,
+  isTransformPanelPropertyUsed,
   updateRotateOrSkewPropertyValue,
   updateTransformTuplePropertyValue,
 } from "./transform-utils";
@@ -115,7 +115,7 @@ describe("Transform utils CRUD operations", () => {
 
   test("checks if any of the transform property exist", () => {
     expect(
-      isTransformPanelPropertyExists({
+      isTransformPanelPropertyUsed({
         currentStyle,
         panel: "translate",
       })
@@ -128,7 +128,7 @@ describe("Transform utils CRUD operations", () => {
     });
 
     expect(
-      isTransformPanelPropertyExists({ currentStyle, panel: "rotate" })
+      isTransformPanelPropertyUsed({ currentStyle, panel: "rotate" })
     ).toBe(true);
   });
 

@@ -6,15 +6,12 @@ import {
 import {
   FunctionValue,
   toValue,
-  type StyleValue,
   type TupleValue,
   type TupleValueItem,
-  type UnitValue,
 } from "@webstudio-is/css-engine";
 import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 import type { StyleInfo } from "../../shared/style-info";
 import type { TransformPanel } from "./transforms";
-import { useMemo } from "react";
 
 export type TransformFloatingPanelContentProps = {
   currentStyle: StyleInfo;
@@ -27,94 +24,62 @@ const defaultScale = "1 1 1";
 const defaultRotate = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 const defaultSkew = "skewX(0deg) skewY(0deg)";
 
-export const isUnitValue = (value: StyleValue): value is UnitValue => {
-  return value?.type === "unit" ? true : false;
-};
+export const getHumanizedTextFromTransformLayer = (
+  panel: TransformPanel,
+  value: TupleValue
+): { label: string; value: TupleValue } | undefined => {
+  switch (panel) {
+    case "translate":
+      return {
+        label: `Translate: ${toValue(value)}`,
+        value,
+      };
 
-export const useHumaneTransformPropertyValues = (props: {
-  currentStyle: StyleInfo;
-  panel: TransformPanel;
-}): { name: string; value: TupleValue } | undefined => {
-  const { currentStyle, panel } = props;
+    case "scale":
+      return {
+        label: `Scale: ${toValue(value)}`,
+        value,
+      };
 
-  const properties: { name: string; value: TupleValue } | undefined =
-    useMemo(() => {
-      switch (panel) {
-        case "translate": {
-          const value = currentStyle["translate"]?.value;
-          if (value?.type !== "tuple") {
-            return;
-          }
-
-          return {
-            name: `Translate: ${toValue(value)}`,
-            value: value,
-          };
-        }
-
-        case "scale": {
-          const value = currentStyle["scale"]?.value;
-          if (value?.type !== "tuple") {
-            return;
-          }
-
-          return {
-            name: `Scale: ${toValue(value)}`,
-            value: value,
-          };
-        }
-
-        case "rotate": {
-          const value = currentStyle["transform"]?.value;
-          if (value === undefined) {
-            return;
-          }
-
-          const rotate = extractRotatePropertiesFromTransform(value);
-          const { rotateX, rotateY, rotateZ } = rotate;
-          if (
-            rotateX === undefined ||
-            rotateY === undefined ||
-            rotateZ === undefined
-          ) {
-            return;
-          }
-
-          return {
-            name: `Rotate: ${toValue(rotateX.args)} ${toValue(rotateY.args)} ${toValue(rotateZ.args)}`,
-            value: {
-              type: "tuple",
-              value: [rotateX, rotateY, rotateZ],
-              hidden: rotateX.hidden || rotateY.hidden || rotateZ.hidden,
-            },
-          };
-        }
-
-        case "skew": {
-          const value = currentStyle["transform"]?.value;
-          if (value === undefined) {
-            return;
-          }
-          const skew = extractSkewPropertiesFromTransform(value);
-          const { skewX, skewY } = skew;
-
-          if (skewX === undefined || skewY === undefined) {
-            return;
-          }
-
-          return {
-            name: `Skew: ${toValue(skewX.args)} ${toValue(skewY.args)}`,
-            value: {
-              type: "tuple",
-              value: [skewX, skewY],
-              hidden: skewX.hidden || skewY.hidden,
-            },
-          };
-        }
+    case "rotate": {
+      const rotate = extractRotatePropertiesFromTransform(value);
+      const { rotateX, rotateY, rotateZ } = rotate;
+      if (
+        rotateX === undefined ||
+        rotateY === undefined ||
+        rotateZ === undefined
+      ) {
+        return;
       }
-    }, [panel, currentStyle]);
 
-  return properties;
+      return {
+        label: `Rotate: ${toValue(rotateX.args)} ${toValue(rotateY.args)} ${toValue(rotateZ.args)}`,
+        value: {
+          type: "tuple",
+          value: [rotateX, rotateY, rotateZ],
+          hidden: rotateX.hidden || rotateY.hidden || rotateZ.hidden,
+        },
+      };
+    }
+
+    case "skew": {
+      const skew = extractSkewPropertiesFromTransform(value);
+      const { skewX, skewY } = skew;
+
+      if (skewX === undefined || skewY === undefined) {
+        return;
+      }
+
+      return {
+        label: `Skew: ${toValue(skewX.args)} ${toValue(skewY.args)}`,
+        value: {
+          type: "tuple",
+          value: [skewX, skewY],
+          hidden: skewX.hidden || skewY.hidden,
+        },
+      };
+    }
+  }
 };
 
 export const addDefaultsForTransormSection = (props: {
@@ -162,7 +127,7 @@ export const addDefaultsForTransormSection = (props: {
   }
 };
 
-export const isTransformPanelPropertyExists = (params: {
+export const isTransformPanelPropertyUsed = (params: {
   currentStyle: StyleInfo;
   panel: TransformPanel;
 }): boolean => {

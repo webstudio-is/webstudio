@@ -1,7 +1,7 @@
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CssValueListArrowFocus,
   CssValueListItem,
@@ -26,10 +26,10 @@ import {
 } from "@webstudio-is/icons";
 import {
   addDefaultsForTransormSection,
-  useHumaneTransformPropertyValues,
-  isTransformPanelPropertyExists,
+  isTransformPanelPropertyUsed,
   handleDeleteTransformProperty,
   handleHideTransformProperty,
+  getHumanizedTextFromTransformLayer,
 } from "./transform-utils";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransformPanelContent } from "./transform-panel";
@@ -68,7 +68,7 @@ export const Section = (props: SectionProps) => {
   const rotateAndSkewStyleSrouce = getStyleSource(currentStyle["transform"]);
 
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
-    isTransformPanelPropertyExists({
+    isTransformPanelPropertyUsed({
       currentStyle: props.currentStyle,
       panel,
     })
@@ -105,7 +105,7 @@ export const Section = (props: SectionProps) => {
                     return (
                       <DropdownMenuItem
                         disabled={
-                          isTransformPanelPropertyExists({
+                          isTransformPanelPropertyUsed({
                             currentStyle: props.currentStyle,
                             panel,
                           }) === true
@@ -169,7 +169,17 @@ const TransformSection = (
   props: SectionProps & { index: number; panel: TransformPanel }
 ) => {
   const { currentStyle, setProperty, deleteProperty, panel, index } = props;
-  const properties = useHumaneTransformPropertyValues({ currentStyle, panel });
+  const properties = useMemo(() => {
+    const property =
+      panel === "rotate" || panel === "skew" ? "transform" : panel;
+    const value = currentStyle[property]?.value;
+    if (value === undefined || value.type !== "tuple") {
+      return;
+    }
+
+    return getHumanizedTextFromTransformLayer(panel, value);
+  }, [currentStyle, panel]);
+
   if (properties === undefined) {
     return;
   }
@@ -187,10 +197,10 @@ const TransformSection = (
       }
     >
       <CssValueListItem
-        id={label}
+        id={panel}
         index={index}
         hidden={properties.value.hidden}
-        label={<Label truncate>{properties.name}</Label>}
+        label={<Label truncate>{properties.label}</Label>}
         buttons={
           <>
             <SmallToggleButton

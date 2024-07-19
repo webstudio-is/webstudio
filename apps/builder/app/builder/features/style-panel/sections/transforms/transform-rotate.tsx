@@ -1,6 +1,5 @@
 import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
-  isUnitValue,
   updateRotateOrSkewPropertyValue,
   type TransformFloatingPanelContentProps,
 } from "./transform-utils";
@@ -34,7 +33,7 @@ export const RotatePanelContent = (
     value: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    if (isUnitValue(value) === false) {
+    if (value.type !== "unit") {
       return;
     }
     const newValue: FunctionValue = {

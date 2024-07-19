@@ -6,12 +6,11 @@ import {
 } from "@webstudio-is/css-engine";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import {
-  isUnitValue,
   updateTransformTuplePropertyValue,
   type TransformFloatingPanelContentProps,
 } from "./transform-utils";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
+import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
 import { parseCssValue } from "@webstudio-is/css-data";
 
 const property: StyleProperty = "translate";
@@ -28,9 +27,10 @@ export const TranslatePanelContent = (
     value: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    if (isUnitValue(value) === false) {
-      return value;
+    if (value.type !== "unit") {
+      return;
     }
+
     const newValue = updateTransformTuplePropertyValue(
       index,
       value,
@@ -86,7 +86,7 @@ export const TranslatePanelContent = (
         gap={1}
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
-        <YAxisIcon />
+        <ZAxisIcon />
         <Label> Translate Z</Label>
         <CssValueInputContainer
           key="translateX"
