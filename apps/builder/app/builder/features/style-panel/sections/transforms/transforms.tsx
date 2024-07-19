@@ -33,7 +33,6 @@ import {
 } from "./transform-utils";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransformPanelContent } from "./transform-panel";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import { getStyleSource } from "../../shared/style-info";
 import { PropertyName } from "../../shared/property-name";
@@ -56,13 +55,8 @@ export const properties = [
 ] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
-  const [isOpen, setIsOpen] = useState(true);
-
-  if (isFeatureEnabled("transforms") === false) {
-    return;
-  }
-
   const { currentStyle, createBatchUpdate } = props;
+  const [isOpen, setIsOpen] = useState(true);
   const translateStyleSource = getStyleSource(currentStyle["translate"]);
   const scaleStyleSource = getStyleSource(currentStyle["scale"]);
   const rotateAndSkewStyleSrouce = getStyleSource(currentStyle["transform"]);

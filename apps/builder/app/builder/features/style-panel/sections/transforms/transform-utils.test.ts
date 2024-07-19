@@ -1,4 +1,4 @@
-import { afterEach, describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "@jest/globals";
 import {
   addDefaultsForTransormSection,
   handleDeleteTransformProperty,
@@ -20,20 +20,22 @@ import {
   parseCssValue,
 } from "@webstudio-is/css-data";
 
-let currentStyle: StyleInfo = {};
-const setProperty = (property: StyleProperty) => (value: StyleValue) => {
-  currentStyle[property] = { value };
-};
-const deleteProperty = (property: StyleProperty) => {
-  delete currentStyle[property];
-};
+const initializeStyleInfo = () => {
+  const currentStyle: StyleInfo = {};
+  const setProperty = (property: StyleProperty) => (value: StyleValue) => {
+    currentStyle[property] = { value };
+  };
+  const deleteProperty = (property: StyleProperty) => {
+    delete currentStyle[property];
+  };
 
-afterEach(() => {
-  currentStyle = {};
-});
+  return { currentStyle, setProperty, deleteProperty };
+};
 
 describe("Transform utils CRUD operations", () => {
   test("adds a default translate property", () => {
+    const { currentStyle, setProperty } = initializeStyleInfo();
+
     addDefaultsForTransormSection({
       panel: "translate",
       currentStyle,
@@ -63,6 +65,8 @@ describe("Transform utils CRUD operations", () => {
   });
 
   test("adds a default scale property", () => {
+    const { currentStyle, setProperty } = initializeStyleInfo();
+
     addDefaultsForTransormSection({
       panel: "scale",
       currentStyle,
@@ -93,6 +97,8 @@ describe("Transform utils CRUD operations", () => {
   });
 
   test("adds a default rotate and scale property", () => {
+    const { currentStyle, setProperty } = initializeStyleInfo();
+
     addDefaultsForTransormSection({
       panel: "rotate",
       currentStyle,
@@ -114,6 +120,8 @@ describe("Transform utils CRUD operations", () => {
   });
 
   test("checks if any of the transform property exist", () => {
+    const { currentStyle, setProperty } = initializeStyleInfo();
+
     expect(
       isTransformPanelPropertyUsed({
         currentStyle,
@@ -133,6 +141,7 @@ describe("Transform utils CRUD operations", () => {
   });
 
   test("deletes rotate property values from the transform", () => {
+    const { currentStyle, setProperty, deleteProperty } = initializeStyleInfo();
     setProperty("transform")(
       parseCssValue(
         "transform",
@@ -153,6 +162,7 @@ describe("Transform utils CRUD operations", () => {
   });
 
   test("delete skew property values from the transform", () => {
+    const { currentStyle, setProperty, deleteProperty } = initializeStyleInfo();
     setProperty("transform")(
       parseCssValue(
         "transform",
@@ -171,6 +181,7 @@ describe("Transform utils CRUD operations", () => {
   });
 
   test("hide translate and rotate properties", () => {
+    const { currentStyle, setProperty } = initializeStyleInfo();
     addDefaultsForTransormSection({
       panel: "translate",
       currentStyle,
@@ -215,6 +226,7 @@ describe("Transform utils CRUD operations", () => {
   });
 
   test("update rotate values in transform property", () => {
+    const { currentStyle, setProperty } = initializeStyleInfo();
     const transform = parseCssValue(
       "transform",
       "rotateX(10deg) rotateY(10deg) rotateZ(10deg) skewX(10deg) skewY(10deg)"

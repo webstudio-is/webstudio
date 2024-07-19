@@ -11,6 +11,7 @@ import {
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import {
   toValue,
+  UnitValue,
   type FunctionValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
@@ -33,20 +34,27 @@ export const RotatePanelContent = (
     value: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    if (value.type !== "unit") {
-      return;
+    let newValue: UnitValue = { type: "unit", value: 0, unit: "deg" };
+
+    if (value.type === "unit") {
+      newValue = value;
     }
-    const newValue: FunctionValue = {
+
+    if (value.type === "tuple" && value.value[0].type === "unit") {
+      newValue = value.value[0];
+    }
+
+    const newFunctionValue: FunctionValue = {
       type: "function",
       name: prop,
-      args: { type: "layers", value: [value] },
+      args: { type: "layers", value: [newValue] },
     };
 
     const newPropertyValue = updateRotateOrSkewPropertyValue({
       panel: "rotate",
       index,
       currentStyle,
-      value: newValue,
+      value: newFunctionValue,
       propertyValue,
     });
 

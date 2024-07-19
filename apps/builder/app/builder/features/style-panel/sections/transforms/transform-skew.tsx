@@ -9,6 +9,7 @@ import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import {
   StyleValue,
   toValue,
+  UnitValue,
   type FunctionValue,
 } from "@webstudio-is/css-engine";
 import {
@@ -33,21 +34,27 @@ export const SkewFloatingPanelContent = (
     value: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    if (value.type !== "unit") {
-      return;
+    let newValue: UnitValue = { type: "unit", value: 0, unit: "deg" };
+
+    if (value.type === "unit") {
+      newValue = value;
     }
 
-    const newValue: FunctionValue = {
+    if (value.type === "tuple" && value.value[0].type === "unit") {
+      newValue = value.value[0];
+    }
+
+    const newFunctionValue: FunctionValue = {
       type: "function",
       name: prop,
-      args: { type: "layers", value: [value] },
+      args: { type: "layers", value: [newValue] },
     };
 
     const newPropertyValue = updateRotateOrSkewPropertyValue({
       panel: "skew",
       index,
       currentStyle,
-      value: newValue,
+      value: newFunctionValue,
       propertyValue,
     });
 

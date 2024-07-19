@@ -2,6 +2,7 @@ import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
   StyleValue,
   toValue,
+  UnitValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -19,24 +20,35 @@ export const TranslatePanelContent = (
   props: TransformFloatingPanelContentProps
 ) => {
   const { propertyValue, setProperty } = props;
-
   const [translateX, translateY, translateZ] = propertyValue.value;
 
   const handlePropertyUpdate = (
     index: number,
-    value: StyleValue,
+    newValue: StyleValue,
     options?: StyleUpdateOptions
   ) => {
-    if (value.type !== "unit") {
+    if (newValue === undefined) {
       return;
     }
 
-    const newValue = updateTransformTuplePropertyValue(
+    // For individual translate properties, we are passing the property as translate.
+    // This is sending back either tuple or a unit value when manually edited and when  scrub is used respectively.
+    let value: UnitValue = { type: "unit", value: 0, unit: "px" };
+    if (newValue.type === "unit") {
+      value = newValue;
+    }
+
+    if (newValue.type === "tuple" && newValue.value[0].type === "unit") {
+      value = newValue.value[0];
+    }
+
+    const translateValue = updateTransformTuplePropertyValue(
       index,
       value,
       propertyValue
     );
-    const translate = parseCssValue(property, toValue(newValue));
+
+    const translate = parseCssValue(property, toValue(translateValue));
     if (translate.type === "invalid") {
       return;
     }
