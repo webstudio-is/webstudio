@@ -9,6 +9,7 @@ export const createClient = (url: string, apiKey: string): Client => {
     headers: {
       apikey: apiKey,
       Authorization: `Bearer ${apiKey}`,
+      "Accept-Encoding": "br, gzip",
     },
   });
 
