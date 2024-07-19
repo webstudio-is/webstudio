@@ -12,7 +12,7 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import { collectionComponent } from "@webstudio-is/react-sdk";
+import { collectionComponent, showAttribute } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
   $editingItemSelector,
@@ -151,12 +151,16 @@ export const InstanceTree = (
       {...props}
       canLeaveParent={canLeaveParent}
       getItemChildren={getItemChildren}
-      getItemProps={(itemData) => {
-        if (itemData.component === "Slot") {
-          return {
-            style: getNodeVars({ color: rawTheme.colors.foregroundReusable }),
-          };
-        }
+      getItemProps={({ itemData, itemSelector }) => {
+        const props = propValues.get(JSON.stringify(itemSelector));
+        const opacity = props?.get(showAttribute) === false ? 0.4 : undefined;
+        const color =
+          itemData.component === "Slot"
+            ? rawTheme.colors.foregroundReusable
+            : undefined;
+        return {
+          style: getNodeVars({ color, opacity }),
+        };
       }}
       renderItem={renderItem}
       editingItemId={editingItemSelector?.[0]}
