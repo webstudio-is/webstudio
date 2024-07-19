@@ -10,7 +10,7 @@ export const loadProductionCanvasData = async (
   buildId: Build["id"],
   context: AppContext
 ): Promise<Data> => {
-  const build = await loadBuildById(buildId);
+  const build = await loadBuildById(context, buildId);
 
   if (build === undefined) {
     throw new Error("The project is not published");

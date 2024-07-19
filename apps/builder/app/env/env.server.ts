@@ -97,6 +97,9 @@ const env = {
 
   // current user plan features (default)
   USER_PLAN: process.env.USER_PLAN ?? "",
+
+  POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
+  POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 };
 
 export type ServerEnv = typeof env;
