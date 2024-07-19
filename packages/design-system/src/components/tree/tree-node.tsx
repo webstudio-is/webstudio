@@ -174,13 +174,26 @@ const hoverStyle: CSS = {
 };
 
 const itemContainerColor: string = "--ws-tree-node-item-container-color";
+const itemContainerOpacity: string = "--ws-tree-node-item-container-opacity";
 
-export const getNodeVars = ({ color }: { color: string }) => ({
-  [itemContainerColor]: color,
-});
+export const getNodeVars = ({
+  color,
+  opacity,
+}: {
+  color?: string;
+  opacity?: number;
+}) => {
+  return {
+    ...(color ? { [itemContainerColor]: color } : undefined),
+    ...(opacity !== undefined
+      ? { [itemContainerOpacity]: opacity }
+      : undefined),
+  };
+};
 
 const ItemContainer = styled(Flex, {
   color: `var(${itemContainerColor}, ${theme.colors.foregroundMain})`,
+  opacity: `var(${itemContainerOpacity}, 1)`,
   alignItems: "center",
   position: "relative",
   ...getItemButtonCssVars({ suffixVisible: false }),
@@ -424,7 +437,10 @@ export const TreeItemLabel = forwardRef(TreeItemLabelBase);
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
   getItemChildren: (itemSelector: ItemSelector) => Data[];
-  getItemProps?: (itemData: Data) => ComponentProps<"div"> | undefined;
+  getItemProps?: (options: {
+    itemData: Data;
+    itemSelector: ItemSelector;
+  }) => ComponentProps<"div"> | undefined;
   isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
@@ -481,7 +497,10 @@ export const TreeNode = <Data extends { id: string }>({
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
   return (
-    <div data-drop-target-id={itemData.id} {...getItemProps?.(itemData)}>
+    <div
+      data-drop-target-id={itemData.id}
+      {...getItemProps?.({ itemData, itemSelector })}
+    >
       {/* optionally prevent rendering root item */}
       {itemIsHidden === false &&
         renderItem({
