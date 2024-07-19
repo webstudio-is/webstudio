@@ -21,6 +21,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
+    "@supabase/postgrest-js": "^1.15.8",
     "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
