@@ -14,8 +14,6 @@ export const siteName = "";
 
 export const favIconAsset: ImageAsset | undefined = undefined;
 
-export const socialImageAsset: ImageAsset | undefined = undefined;
-
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: FontAsset[] = [];
 

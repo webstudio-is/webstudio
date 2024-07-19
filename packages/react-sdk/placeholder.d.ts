@@ -5,8 +5,6 @@ declare module "__CLIENT__" {
 
   export const favIconAsset: ImageAsset | undefined;
 
-  export const socialImageAsset: ImageAsset | undefined;
-
   // Font assets on current page (can be preloaded)
   export const pageFontAssets: FontAsset[];
 

@@ -19,7 +19,8 @@ export const getPageMeta = ({
     description: "Page description f511c297-b44f-4e4b-96bd-d013da06bada",
     excludePageFromSearch: undefined,
     language: undefined,
-    socialImageAssetId: "ff546bd2-9bb1-4717-a180-1a1fc05565dd",
+    socialImageAssetName:
+      "_937084ed-a798-49fe-8664-df93a2af605e_1JqSy_0Wy9fY5mXNZSLJ0.jpeg",
     socialImageUrl: undefined,
     status: undefined,
     redirect: undefined,
