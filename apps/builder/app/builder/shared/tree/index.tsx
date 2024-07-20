@@ -61,7 +61,7 @@ const updateShowProp = (instanceId: Instance["id"], show: boolean) => {
     const { propsByInstanceId } = $propsIndex.get();
     const propsArr = propsByInstanceId.get(instanceId);
     const prop = propsArr?.find((prop) => prop.name === showAttribute);
-    if (prop && prop.type === "boolean") {
+    if (prop?.type === "boolean") {
       props.set(prop.id, {
         ...prop,
         value: show,
