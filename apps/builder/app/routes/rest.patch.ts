@@ -300,7 +300,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const update = await context.postgrest.client
       .from("Build")
-      .update(dbBuildData)
+      .update(dbBuildData, { count: "exact" })
       .match({
         id: buildId,
         projectId,
@@ -308,9 +308,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
 
     if (update.error) {
+      console.error(update.error);
       throw update.error;
     }
     if (update.count == null) {
+      console.error("Update count is null");
       throw new Error("Update count is null");
     }
 
