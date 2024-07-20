@@ -590,9 +590,7 @@ export const prebuild = async (options: {
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
-    const pageMeta = pageData.page.meta;
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
-    const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
 
     const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
 
@@ -609,9 +607,6 @@ export const prebuild = async (options: {
 
       export const favIconAsset: ImageAsset | undefined =
         ${JSON.stringify(favIconAsset)};
-
-      export const socialImageAsset: ImageAsset | undefined =
-        ${JSON.stringify(socialImageAsset)};
 
       // Font assets on current page (can be preloaded)
       export const pageFontAssets: FontAsset[] =
@@ -673,6 +668,7 @@ export const prebuild = async (options: {
         globalScope: scope,
         page: pageData.page,
         dataSources,
+        assets,
       })}
 
       ${generateFormsProperties(props)}
