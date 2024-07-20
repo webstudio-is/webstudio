@@ -9,6 +9,7 @@ import {
   getUserPlanFeatures,
 } from "./db/user-plan-features.server";
 import { staticEnv } from "~/env/env.static.server";
+import { createClient } from "@webstudio-is/postrest/index.server";
 
 const createAuthorizationContext = async (
   request: Request
@@ -107,6 +108,10 @@ const createTrpcCache = () => {
   };
 };
 
+const createPostrestContext = () => {
+  return { client: createClient(env.POSTGREST_URL, env.POSTGREST_API_KEY) };
+};
+
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
@@ -117,6 +122,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const entri = createEntriContext();
   const userPlanFeatures = await createUserPlanContext(request);
   const trpcCache = createTrpcCache();
+  const postgrest = createPostrestContext();
 
   return {
     authorization,
@@ -125,5 +131,6 @@ export const createContext = async (request: Request): Promise<AppContext> => {
     entri,
     userPlanFeatures,
     trpcCache,
+    postgrest,
   };
 };

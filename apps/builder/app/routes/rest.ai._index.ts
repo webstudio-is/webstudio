@@ -41,6 +41,7 @@ export const config = {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const context = await createContext(request);
   // @todo Reinstate isFeatureEnabled('ai')
 
   if (env.OPENAI_KEY === undefined) {
@@ -138,7 +139,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       };
     }
 
-    const { instances } = await loadBuildByProjectId(projectId);
+    const { instances } = await loadBuildByProjectId(context, projectId);
 
     const model = createGptModel({
       apiKey: env.OPENAI_KEY,

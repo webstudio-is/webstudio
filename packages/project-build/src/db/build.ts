@@ -1,12 +1,7 @@
 /* eslint no-console: ["error", { allow: ["time", "timeEnd"] }] */
 
 import { nanoid } from "nanoid";
-import {
-  type Build as DbBuild,
-  type $Enums,
-  prisma,
-  Prisma,
-} from "@webstudio-is/prisma-client";
+import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import {
   AuthorizationError,
   authorizeProject,
@@ -32,6 +27,7 @@ import { parsePages, serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "..";
 import { z } from "zod";
+import type { Database } from "@webstudio-is/postrest/index.server";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -55,7 +51,9 @@ export const serializeConfig = <Type>(data: Type) => {
   return JSON.stringify(data);
 };
 
-const parseBuild = async (build: DbBuild): Promise<Build> => {
+const parseBuild = async (
+  build: Database["public"]["Tables"]["Build"]["Row"]
+): Promise<Build> => {
   console.time("parseBuild");
   try {
     const pages = parsePages(build.pages);
@@ -69,8 +67,8 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       id: build.id,
       projectId: build.projectId,
       version: build.version,
-      createdAt: build.createdAt.toISOString(),
-      updatedAt: build.updatedAt.toISOString(),
+      createdAt: build.createdAt,
+      updatedAt: build.updatedAt,
       pages,
       breakpoints: Array.from(parseData<Breakpoint>(build.breakpoints)),
       styles,
@@ -91,61 +89,74 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   }
 };
 
-export const loadBuildById = async (
+export const loadRawBuildById = async (
+  context: AppContext,
   id: Build["id"]
-): Promise<Build | undefined> => {
-  const build = await prisma.build.findUnique({
-    where: { id },
-  });
+) => {
+  const build = await context.postgrest.client
+    .from("Build")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (build === null) {
-    return;
+  if (build.error) {
+    throw build.error;
   }
+
+  return build.data;
+};
+
+export const loadBuildById = async (
+  context: AppContext,
+  id: Build["id"]
+): Promise<Build> => {
+  const build = await loadRawBuildById(context, id);
 
   return parseBuild(build);
 };
 
 export const loadBuildIdAndVersionByProjectId = async (
+  context: AppContext,
   projectId: Build["projectId"]
 ): Promise<{ id: string; version: number }> => {
-  const build = await prisma.build.findFirst({
-    select: {
-      id: true,
-      version: true,
-    },
-    where: { projectId, deployment: null },
-  });
+  const build = await context.postgrest.client
+    .from("Build")
+    .select("id,version")
+    .eq("projectId", projectId)
+    .is("deployment", null)
+    .single();
 
-  if (build === null) {
-    throw new Error("Dev build not found");
+  if (build.error) {
+    throw build.error;
   }
 
-  return build;
+  return build.data;
 };
 
 export const loadBuildByProjectId = async (
+  context: AppContext,
   projectId: Build["projectId"]
 ): Promise<Build> => {
-  const build = await prisma.build.findFirst({
-    where: { projectId, deployment: null },
-  });
+  const build = await context.postgrest.client
+    .from("Build")
+    .select("*")
+    .eq("projectId", projectId)
+    .is("deployment", null)
+    .single();
 
-  if (build === null) {
-    throw new Error("Dev build not found");
+  if (build.error) {
+    throw build.error;
   }
 
-  return parseBuild(build);
+  return parseBuild(build.data);
 };
 
-export const loadProdBuildByProjectId = async (
-  projectId: Build["projectId"],
-  where: {
-    marketplaceApprovalStatus?: $Enums.MarketplaceApprovalStatus;
-  }
+export const loadApprovedProdBuildByProjectId = async (
+  projectId: Build["projectId"]
 ): Promise<Build> => {
   const projectData = await prisma.project.findUnique({
     where: {
-      ...where,
+      marketplaceApprovalStatus: "APPROVED",
       id_isDeleted: { id: projectId, isDeleted: false },
     },
     select: {
@@ -162,7 +173,11 @@ export const loadProdBuildByProjectId = async (
     throw new Error("Prod build not found");
   }
 
-  return parseBuild(build);
+  return parseBuild({
+    ...build,
+    createdAt: build.createdAt.toISOString(),
+    updatedAt: build.updatedAt.toISOString(),
+  });
 };
 
 const createNewPageInstances = (): Build["instances"] => {

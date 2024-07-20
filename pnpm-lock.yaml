@@ -241,6 +241,9 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
+      '@webstudio-is/postrest':
+        specifier: workspace:*
+        version: link:../../packages/postgrest
       '@webstudio-is/prisma-client':
         specifier: workspace:*
         version: link:../../packages/prisma-client
@@ -1572,6 +1575,22 @@ importers:
         specifier: 5.5.2
         version: 5.5.2
 
+  packages/postgrest:
+    dependencies:
+      '@supabase/postgrest-js':
+        specifier: ^1.15.8
+        version: 1.15.8
+    devDependencies:
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      type-fest:
+        specifier: ^4.3.1
+        version: 4.3.1
+      typescript:
+        specifier: 5.5.2
+        version: 5.5.2
+
   packages/prisma-client:
     dependencies:
       execa:
@@ -1639,6 +1658,9 @@ importers:
 
   packages/project-build:
     dependencies:
+      '@webstudio-is/postrest':
+        specifier: workspace:*
+        version: link:../postgrest
       '@webstudio-is/prisma-client':
         specifier: workspace:*
         version: link:../prisma-client
@@ -2004,6 +2026,9 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../jest-config
+      '@webstudio-is/postrest':
+        specifier: workspace:*
+        version: link:../postgrest
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -4969,6 +4994,13 @@ packages:
     resolution: {integrity: sha512-B4HQMzTeg1TgV9uPDIoDkMSnP839Y05I9+Tw60cilAD+jTqrCvMlccHfehsTzJk+gioAflunATcbU05TMZoeIQ==}
     peerDependencies:
       storybook: ^8.2.4
+
+  '@supabase/node-fetch@2.6.15':
+    resolution: {integrity: sha512-1ibVeYUacxWYi9i0cf5efil6adJ9WRyZBLivgjs+AUpewx1F3xPi7gLgaASI2SmIQxPoCEjAsLAzKPgMJVgOUQ==}
+    engines: {node: 4.x || >=6.0.0}
+
+  '@supabase/postgrest-js@1.15.8':
+    resolution: {integrity: sha512-YunjXpoQjQ0a0/7vGAvGZA2dlMABXFdVI/8TuVKtlePxyT71sl6ERl6ay1fmIeZcqxiuFQuZw/LXUuStUG9bbg==}
 
   '@svgo/jsx@0.4.2':
     resolution: {integrity: sha512-0e4B41q+GnS8TI+SWHQw78ziW6V07Li2TMLS8FwbvKOTIJL0ua1Sat1AI0AFAjHlAePz9b+1VtyJzv1516edJw==}
@@ -13093,6 +13125,14 @@ snapshots:
   '@storybook/theming@8.2.4(storybook@8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5)))':
     dependencies:
       storybook: 8.2.4(@babel/preset-env@7.24.5(@babel/core@7.24.5))
+
+  '@supabase/node-fetch@2.6.15':
+    dependencies:
+      whatwg-url: 5.0.0
+
+  '@supabase/postgrest-js@1.15.8':
+    dependencies:
+      '@supabase/node-fetch': 2.6.15
 
   '@svgo/jsx@0.4.2':
     dependencies:
