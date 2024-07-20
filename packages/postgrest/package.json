@@ -22,8 +22,6 @@
     "@supabase/postgrest-js": "^1.15.8"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
-    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "type-fest": "^4.3.1",
     "typescript": "5.5.2"
