@@ -10,6 +10,8 @@ import {
   theme,
   getNodeVars,
   rawTheme,
+  Tooltip,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { collectionComponent, showAttribute } from "@webstudio-is/react-sdk";
@@ -19,6 +21,8 @@ import {
   getIndexedInstanceId,
   $instances,
   $registeredComponentMetas,
+  $props,
+  $propsIndex,
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
@@ -26,6 +30,64 @@ import { getInstanceLabel } from "~/shared/instance-utils";
 import { serverSyncStore } from "~/shared/sync";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { shallowEqual } from "shallow-equal";
+import { EyeconClosedIcon, EyeconOpenIcon } from "@webstudio-is/icons";
+
+const ShowToggle = ({
+  show,
+  onChange,
+}: {
+  show: boolean;
+  onChange: (show: boolean) => void;
+}) => {
+  return (
+    <Tooltip
+      // If you are changing it, change the other one too
+      content="Removes the instance from the DOM. Breakpoints have no effect on this setting."
+      disableHoverableContent
+      variant="wrapped"
+    >
+      <SmallIconButton
+        aria-label="Show"
+        state={show ? "open" : undefined}
+        onClick={() => onChange(show ? false : true)}
+        icon={show ? <EyeconOpenIcon /> : <EyeconClosedIcon />}
+      />
+    </Tooltip>
+  );
+};
+
+const updateShowProp = (instanceId: Instance["id"], show: boolean) => {
+  serverSyncStore.createTransaction([$props], (props) => {
+    const { propsByInstanceId } = $propsIndex.get();
+    const propsArr = propsByInstanceId.get(instanceId);
+    const prop = propsArr?.find((prop) => prop.name === showAttribute);
+    if (prop?.type === "boolean") {
+      props.set(prop.id, {
+        ...prop,
+        value: show,
+      });
+    }
+  });
+};
+
+const updateInstanceLabel = (instanceId: Instance["id"], value: string) => {
+  serverSyncStore.createTransaction([$instances], (instances) => {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    instance.label = value;
+  });
+};
+
+const canLeaveParent = ([instanceId]: InstanceSelector) => {
+  const instance = $instances.get().get(instanceId);
+  if (instance === undefined) {
+    return false;
+  }
+  const meta = $registeredComponentMetas.get().get(instance.component);
+  return meta?.type !== "rich-text-child";
+};
 
 export const InstanceTree = (
   props: Omit<
@@ -37,18 +99,6 @@ export const InstanceTree = (
   const instances = useStore($instances);
   const editingItemSelector = useStore($editingItemSelector);
   const propValues = useStore($propValuesByInstanceSelector);
-
-  const canLeaveParent = useCallback(
-    ([instanceId]: InstanceSelector) => {
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
-        return false;
-      }
-      const meta = metas.get(instance.component);
-      return meta?.type !== "rich-text-child";
-    },
-    [instances, metas]
-  );
 
   const getItemChildren = useCallback(
     (instanceSelector: InstanceSelector) => {
@@ -101,30 +151,30 @@ export const InstanceTree = (
     [instances, propValues]
   );
 
-  const updateInstanceLabel = useCallback(
-    (instanceId: string, value: string) => {
-      serverSyncStore.createTransaction([$instances], (instances) => {
-        const instance = instances.get(instanceId);
-        if (instance === undefined) {
-          return;
-        }
-        instance.label = value;
-      });
-    },
-    []
-  );
-
   const renderItem = useCallback(
     (props: TreeItemRenderProps<Instance>) => {
-      const meta = metas.get(props.itemData.component);
+      const { itemData, itemSelector } = props;
+      const meta = metas.get(itemData.component);
       if (meta === undefined) {
         return <></>;
       }
-      const label = getInstanceLabel(props.itemData, meta);
-      const isEditing = shallowEqual(props.itemSelector, editingItemSelector);
-
+      const label = getInstanceLabel(itemData, meta);
+      const isEditing = shallowEqual(itemSelector, editingItemSelector);
+      const instanceProps = propValues.get(JSON.stringify(itemSelector));
+      const show = instanceProps?.get(showAttribute) as boolean;
       return (
-        <TreeItemBody {...props} selectionEvent="focus">
+        <TreeItemBody
+          {...props}
+          selectionEvent="focus"
+          suffix={
+            <ShowToggle
+              show={show}
+              onChange={(show) => {
+                updateShowProp(itemData.id, show);
+              }}
+            />
+          }
+        >
           <TreeItem
             isEditable={true}
             isEditing={isEditing}
@@ -143,7 +193,7 @@ export const InstanceTree = (
         </TreeItemBody>
       );
     },
-    [metas, updateInstanceLabel, editingItemSelector]
+    [metas, editingItemSelector, propValues]
   );
 
   return (

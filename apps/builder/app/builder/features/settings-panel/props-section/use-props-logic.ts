@@ -135,6 +135,7 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
       control: "boolean",
       type: "boolean",
       defaultValue: true,
+      // If you are changing it, change the other one too
       description:
         "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
     },
