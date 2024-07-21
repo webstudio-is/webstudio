@@ -42,7 +42,7 @@ module.exports = {
   ignorePatterns: ["*.d.ts"],
   overrides: [
     {
-      files: ["**/app/routes/**/*.{ts,tsx}"],
+      files: ["**/app/routes/**/*.{ts,tsx}", "**/pages/**/*.{ts,tsx}"],
       rules: {
         "unicorn/filename-case": "off",
       },
