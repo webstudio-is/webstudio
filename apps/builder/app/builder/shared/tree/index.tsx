@@ -13,7 +13,7 @@ import {
   Tooltip,
   SmallIconButton,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/sdk";
 import { collectionComponent, showAttribute } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
@@ -31,6 +31,7 @@ import { serverSyncStore } from "~/shared/sync";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { shallowEqual } from "shallow-equal";
 import { EyeconClosedIcon, EyeconOpenIcon } from "@webstudio-is/icons";
+import { nanoid } from "nanoid";
 
 const ShowToggle = ({
   show,
@@ -48,7 +49,6 @@ const ShowToggle = ({
     >
       <SmallIconButton
         aria-label="Show"
-        state={show ? "open" : undefined}
         onClick={() => onChange(show ? false : true)}
         icon={show ? <EyeconOpenIcon /> : <EyeconClosedIcon />}
       />
@@ -56,15 +56,25 @@ const ShowToggle = ({
   );
 };
 
-const updateShowProp = (instanceId: Instance["id"], show: boolean) => {
+const updateShowProp = (instanceId: Instance["id"], value: boolean) => {
   serverSyncStore.createTransaction([$props], (props) => {
     const { propsByInstanceId } = $propsIndex.get();
-    const propsArr = propsByInstanceId.get(instanceId);
-    const prop = propsArr?.find((prop) => prop.name === showAttribute);
-    if (prop?.type === "boolean") {
-      props.set(prop.id, {
-        ...prop,
-        value: show,
+    const instanceProps = propsByInstanceId.get(instanceId);
+    let showProp = instanceProps?.find((prop) => prop.name === showAttribute);
+
+    if (showProp === undefined) {
+      showProp = {
+        id: nanoid(),
+        instanceId,
+        name: showAttribute,
+        type: "boolean",
+        value,
+      };
+    }
+    if (showProp.type === "boolean") {
+      props.set(showProp.id, {
+        ...showProp,
+        value,
       });
     }
   });
@@ -161,7 +171,8 @@ export const InstanceTree = (
       const label = getInstanceLabel(itemData, meta);
       const isEditing = shallowEqual(itemSelector, editingItemSelector);
       const instanceProps = propValues.get(JSON.stringify(itemSelector));
-      const show = instanceProps?.get(showAttribute) as boolean;
+      const show = Boolean(instanceProps?.get(showAttribute) ?? true);
+
       return (
         <TreeItemBody
           {...props}
