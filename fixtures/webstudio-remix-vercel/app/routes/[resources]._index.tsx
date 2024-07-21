@@ -31,9 +31,8 @@ import {
   projectId,
   contactEmail,
 } from "../__generated__/[resources]._index.server";
-
-import css from "../__generated__/index.css?url";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
+import css from "../__generated__/index.css?url";
 
 export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);

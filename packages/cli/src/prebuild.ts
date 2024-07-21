@@ -196,6 +196,10 @@ const copyTemplates = async (template: string = "defaults") => {
   }
 };
 
+const importFrom = (importee: string, importer: string) => {
+  return relative(dirname(importer), importee).replaceAll("\\", "/");
+};
+
 export const prebuild = async (options: {
   /**
    * Use preview (opensource) version of the project
@@ -691,21 +695,29 @@ export const prebuild = async (options: {
     const getTemplates =
       documentType === "html" ? framework.html : framework.xml;
     for (const { file, template } of getTemplates({ pagePath })) {
-      const base = relative(dirname(file), generatedDir).replaceAll("\\", "/");
       const content = template
-        .replaceAll("__CLIENT__", `${base}/${generatedBasename}`)
-        .replaceAll("__SERVER__", `${base}/${generatedBasename}.server`)
-        .replaceAll("__CSS__", `${base}/index.css`);
+        .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
+        .replaceAll(
+          "__CLIENT__",
+          importFrom(`./app/__generated__/${generatedBasename}`, file)
+        )
+        .replaceAll(
+          "__SERVER__",
+          importFrom(`./app/__generated__/${generatedBasename}.server`, file)
+        )
+        .replaceAll(
+          "__CSS__",
+          importFrom(`./app/__generated__/index.css`, file)
+        );
       await createFileIfNotExists(file, content);
     }
   }
 
   // MARK: - Default sitemap.xml
   for (const { file, template } of framework.defaultSitemap()) {
-    const base = relative(dirname(file), generatedDir).replaceAll("\\", "/");
     const content = template.replaceAll(
       "__SITEMAP__",
-      `${base}/$resources.sitemap.xml`
+      importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
     );
     await createFileIfNotExists(file, content);
   }
@@ -736,13 +748,9 @@ export const prebuild = async (options: {
       for (const { file, template } of framework.redirect({
         pagePath: redirect.old,
       })) {
-        const base = relative(dirname(file), generatedDir).replaceAll(
-          "\\",
-          "/"
-        );
         const content = template.replaceAll(
           "__REDIRECT__",
-          `${base}/${generatedBasename}`
+          importFrom(`./app/__generated__/${generatedBasename}`, file)
         );
         await createFileIfNotExists(file, content);
       }

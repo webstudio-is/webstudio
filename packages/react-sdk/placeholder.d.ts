@@ -1,3 +1,10 @@
+declare module "__CONSTANTS__" {
+  import type { ImageLoader } from "@webstudio-is/image";
+  export const assetBaseUrl: string;
+  export const imageBaseUrl: string;
+  export const imageLoader: ImageLoader;
+}
+
 declare module "__CLIENT__" {
   import type { FontAsset, ImageAsset, System } from "@webstudio-is/sdk";
 

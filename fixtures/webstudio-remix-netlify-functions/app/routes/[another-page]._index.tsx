@@ -22,7 +22,7 @@ import {
   favIconAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
-} from "../__generated__/[world]._index";
+} from "../__generated__/[another-page]._index";
 import {
   formsProperties,
   loadResources,
@@ -30,7 +30,7 @@ import {
   getRemixParams,
   projectId,
   contactEmail,
-} from "../__generated__/[world]._index.server";
+} from "../__generated__/[another-page]._index.server";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 import css from "../__generated__/index.css?url";
 
