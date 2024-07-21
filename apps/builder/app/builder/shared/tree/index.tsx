@@ -13,7 +13,7 @@ import {
   Tooltip,
   SmallIconButton,
 } from "@webstudio-is/design-system";
-import { Prop, type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/sdk";
 import { collectionComponent, showAttribute } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
