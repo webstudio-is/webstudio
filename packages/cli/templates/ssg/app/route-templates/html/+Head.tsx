@@ -1,4 +1,4 @@
-import { PageContext } from "vike/types";
+import type { PageContext } from "vike/types";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import {
   favIconAsset,

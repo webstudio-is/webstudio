@@ -1,4 +1,4 @@
-import { PageContextServer } from "vike/types";
+import type { PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
 import { getPageMeta, loadResources } from "__SERVER__";
 

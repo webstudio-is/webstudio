@@ -1,4 +1,4 @@
-import { PageContext } from "vike/types";
+import type { PageContext } from "vike/types";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import {
   assetBaseUrl,
