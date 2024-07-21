@@ -57,7 +57,8 @@ import {
 } from "./fs-utils";
 import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 import { htmlToJsx } from "./html-to-jsx";
-import { createFramework } from "./framework-remix";
+import { createFramework as createRemixFramework } from "./framework-remix";
+import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
 
 const limit = pLimit(10);
 
@@ -179,7 +180,7 @@ const getTemplatePath = async (template: string) => {
   return templatePath;
 };
 
-const copyTemplates = async (template: string = "defaults") => {
+const copyTemplates = async (template: string) => {
   const templatePath = await getTemplatePath(template);
 
   await cp(templatePath, cwd(), {
@@ -231,7 +232,7 @@ export const prebuild = async (options: {
 
   for (const template of options.template) {
     // default template is always applied no need to check
-    if (template === "vanilla") {
+    if (template === "vanilla" || template === "ssg") {
       continue;
     }
 
@@ -258,21 +259,26 @@ export const prebuild = async (options: {
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
 
-  await copyTemplates();
+  await copyTemplates(options.template.includes("ssg") ? "ssg" : "defaults");
 
   // force npm to install with not matching peer dependencies
   await writeFile(join(cwd(), ".npmrc"), "force=true");
 
   for (const template of options.template) {
     // default template is already applied no need to copy twice
-    if (template === "vanilla") {
+    if (template === "vanilla" || template === "ssg") {
       continue;
     }
 
     await copyTemplates(template);
   }
 
-  const framework = await createFramework();
+  let framework;
+  if (options.template.includes("ssg")) {
+    framework = await createVikeSsgFramework();
+  } else {
+    framework = await createRemixFramework();
+  }
 
   const constants: typeof sharedConstants = await import(
     pathToFileURL(join(cwd(), "app/constants.mjs")).href
