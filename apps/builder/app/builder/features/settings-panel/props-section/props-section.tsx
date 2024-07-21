@@ -39,7 +39,7 @@ const matchOrSuggestToCreate = (
   ) {
     matched.unshift({
       name: search.trim(),
-      label: `Create "${search.trim()}"`,
+      label: `Create attribute: "${search.trim()}"`,
     });
   }
   return matched;
@@ -84,7 +84,7 @@ const renderProperty = (
 
 const forbiddenProperties = new Set(["style"]);
 
-const AddProperty = ({
+const AddPropertyOrAttribute = ({
   availableProps,
   onPropSelected,
 }: {
@@ -99,8 +99,9 @@ const AddProperty = ({
       justify="center"
     >
       <Combobox<NameAndLabel>
+        defaultHighlightedIndex={0}
         autoFocus
-        placeholder="Find or create a property"
+        placeholder="Add or create"
         // @todo add descriptions
         items={availableProps}
         itemToString={itemToString}
@@ -145,13 +146,13 @@ export const PropsSection = (props: PropsSectionProps) => {
       <Separator />
 
       <CollapsibleSectionWithAddButton
-        label="Properties"
+        label="Properties & Attributes"
         onAdd={() => setAddingProp(true)}
         hasItems={hasItems}
       >
         <Flex gap="1" direction="column">
           {addingProp && (
-            <AddProperty
+            <AddPropertyOrAttribute
               availableProps={logic.availableProps}
               onPropSelected={(propName) => {
                 setAddingProp(false);
