@@ -448,6 +448,7 @@ export const useCombobox = <Item,>({
 export const Combobox = <Item,>({
   autoFocus,
   getDescription,
+  placeholder,
   ...props
 }: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
   const combobox = useCombobox<Item>(props);
@@ -466,6 +467,7 @@ export const Combobox = <Item,>({
         <ComboboxAnchor>
           <InputField
             {...combobox.getInputProps()}
+            placeholder={placeholder}
             autoFocus={autoFocus}
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
