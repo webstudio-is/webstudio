@@ -1,5 +1,5 @@
 import { basename, dirname, join, normalize, relative } from "node:path";
-import { createWriteStream } from "node:fs";
+import { createWriteStream, existsSync } from "node:fs";
 import {
   rm,
   access,
@@ -54,7 +54,6 @@ import {
   createFileIfNotExists,
   createFolderIfNotExists,
   loadJSONFile,
-  isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 import { htmlToJsx } from "./html-to-jsx";
@@ -137,7 +136,9 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
     }
   );
   const content = JSON.stringify(
-    merge(JSON.parse(destinationJson), JSON.parse(sourceJson)),
+    merge(JSON.parse(destinationJson), JSON.parse(sourceJson), {
+      arrayMerge: (_target, source) => source,
+    }),
     null,
     "  "
   );
@@ -184,14 +185,21 @@ const copyTemplates = async (template: string = "defaults") => {
   await cp(templatePath, cwd(), {
     recursive: true,
     filter: (source) => {
-      return basename(source) !== "package.json";
+      const name = basename(source);
+      return name !== "package.json" && name !== "tsconfig.json";
     },
   });
 
-  if ((await isFileExists(join(templatePath, "package.json"))) === true) {
+  if (existsSync(join(templatePath, "package.json"))) {
     await mergeJsonInto(
       join(templatePath, "package.json"),
       join(cwd(), "package.json")
+    );
+  }
+  if (existsSync(join(templatePath, "tsconfig.json"))) {
+    await mergeJsonInto(
+      join(templatePath, "tsconfig.json"),
+      join(cwd(), "tsconfig.json")
     );
   }
 };
