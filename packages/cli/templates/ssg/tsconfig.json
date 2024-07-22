@@ -12,13 +12,10 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "resolveJsonModule": true,
     "target": "ES2022",
     "strict": true,
     "allowJs": true,
-    "checkJs": true,
     "forceConsistentCasingInFileNames": true,
-    "allowImportingTsExtensions": true,
     "noEmit": true,
     "skipLibCheck": true
   }
