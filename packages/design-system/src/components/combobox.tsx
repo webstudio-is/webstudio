@@ -35,8 +35,10 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { ScrollArea } from "./scroll-area";
-import { Flex, InputField, NestedInputButton } from "..";
 import { Box } from "./box";
+import { Flex } from "./flex";
+import { NestedInputButton } from "./nested-input-button";
+import { InputField } from "./input-field";
 
 export const ComboboxListbox = styled(
   "ul",
@@ -445,12 +447,18 @@ export const useCombobox = <Item,>({
   };
 };
 
+type ComboboxProps<Item> = UseComboboxProps<Item> &
+  Omit<ComponentProps<"input">, "value"> & {
+    color?: ComponentProps<typeof InputField>["color"];
+  };
+
 export const Combobox = <Item,>({
   autoFocus,
   getDescription,
   placeholder,
+  color,
   ...props
-}: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
+}: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
 
   const descriptionItem =
@@ -469,6 +477,7 @@ export const Combobox = <Item,>({
             {...combobox.getInputProps()}
             placeholder={placeholder}
             autoFocus={autoFocus}
+            color={color}
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
         </ComboboxAnchor>

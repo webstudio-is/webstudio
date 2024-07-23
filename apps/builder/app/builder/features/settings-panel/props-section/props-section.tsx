@@ -21,6 +21,7 @@ import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
+import { isAttributeNameSafe } from "~/shared/dom-utils";
 
 type Item = {
   name: string;
@@ -89,7 +90,7 @@ const renderProperty = (
     },
   });
 
-const forbiddenProperties = new Set(["style"]);
+const forbiddenProperties = new Set(["style", "class", "className"]);
 
 const AddPropertyOrAttribute = ({
   availableProps,
@@ -99,6 +100,7 @@ const AddPropertyOrAttribute = ({
   onPropSelected: (propName: string) => void;
 }) => {
   const [value, setValue] = useState("");
+  const [isValid, setIsValid] = useState(true);
   return (
     <Flex
       css={{ height: theme.spacing[13] }}
@@ -108,13 +110,19 @@ const AddPropertyOrAttribute = ({
       <Combobox<Item>
         defaultHighlightedIndex={0}
         autoFocus
+        color={isValid ? undefined : "error"}
         placeholder="Select or create"
         items={availableProps}
         itemToString={itemToString}
         onItemSelect={(item) => {
-          if (forbiddenProperties.has(item.name)) {
+          if (
+            forbiddenProperties.has(item.name) ||
+            isAttributeNameSafe(value) === false
+          ) {
+            setIsValid(false);
             return;
           }
+          setIsValid(true);
           onPropSelected(item.name);
         }}
         match={matchOrSuggestToCreate}
