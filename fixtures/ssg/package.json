@@ -1,0 +1,43 @@
+{
+  "name": "ssg",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "typecheck": "tsc",
+    "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
+    "fixtures:link": "pnpm cli link --link \"https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93\"",
+    "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "pnpm cli build --template ssg --template internal --preview && pnpm prettier --write ./app/ ./package.json tsconfig.json"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "sideEffects": false,
+  "devDependencies": {
+    "webstudio": "workspace:*",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "5.5.2",
+    "vite": "^5.3.4"
+  },
+  "dependencies": {
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react-radix": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
+    "@webstudio-is/form-handlers": "workspace:*",
+    "@webstudio-is/image": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "vike": "^0.4.180",
+    "@webstudio-is/sdk-components-react-remix": "workspace:*"
+  }
+}
