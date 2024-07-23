@@ -142,7 +142,7 @@ export const ComboboxItemDescription = ({
           order: "var(--ws-combobox-description-order)",
         }}
       >
-        {descriptions.map((descr, index) => (
+        {descriptions.map((description, index) => (
           <Box
             css={{
               gridColumn: "1",
@@ -151,7 +151,7 @@ export const ComboboxItemDescription = ({
             }}
             key={index}
           >
-            {descr}
+            {description}
           </Box>
         ))}
         <Box
