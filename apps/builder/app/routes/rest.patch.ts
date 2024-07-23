@@ -38,6 +38,8 @@ import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
 import { db } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
+import { nanoid } from "nanoid";
+import { prisma } from "@webstudio-is/prisma-client";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -50,6 +52,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   enableMapSet();
   enablePatches();
 
+  const logId = nanoid();
+
+  console.info("PATCH START", logId);
+
+  const metrics = await prisma.$metrics.json();
+  console.info("METRICS", metrics.gauges, logId);
+
   try {
     const {
       buildId,
@@ -57,6 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       transactions,
       version: clientVersion,
     }: PatchData = await request.json();
+
     if (buildId === undefined) {
       return { errors: "Build id required" };
     }
@@ -70,7 +80,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { errors: "Transaction array must not be empty." };
     }
 
+    console.info("BEFORE CONTEXT", logId);
     const context = await createContext(request);
+
+    console.info("BEFORE PERMIT", logId);
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId, permit: "edit" },
       context
@@ -79,6 +92,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw Error("You don't have edit access to this project");
     }
 
+    console.info("BEFORE RAW LOAD", logId);
     const build = await loadRawBuildById(context, buildId);
 
     const serverVersion = build.version;
@@ -113,8 +127,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
     const patchedStyleDeclKeysSet = new Set<string>();
 
-    for await (const transaction of transactions) {
-      for await (const change of transaction.changes) {
+    console.info("BEFORE TRANSACTIONS", logId);
+
+    for (const transaction of transactions) {
+      for (const change of transaction.changes) {
         const { namespace, patches } = change;
         if (patches.length === 0) {
           continue;
@@ -199,11 +215,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
 
         if (namespace === "assets") {
+          console.info("BEFORE PATCH ASSETS", logId);
           // assets implements own patching
           // @todo parallelize the updates
           // currently not possible because we fetch the entire tree
           // and parallelized updates will cause unpredictable side effects
           await patchAssets({ projectId }, patches, context);
+          console.info("AFTER PATCH ASSETS", logId);
           continue;
         }
 
@@ -223,6 +241,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return { errors: `Unknown namespace "${namespace}"` };
       }
     }
+    console.info("AFTER TRANSACTIONS", logId);
 
     // save build data when all patches applied
     const dbBuildData: Database["public"]["Tables"]["Build"]["Update"] = {
@@ -298,6 +317,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
+    console.info("BEFORE UPDATE", logId);
     const update = await context.postgrest.client
       .from("Build")
       .update(dbBuildData, { count: "exact" })
@@ -306,6 +326,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         projectId,
         version: clientVersion,
       });
+    console.info("AFTER UPDATE", logId);
 
     if (update.error) {
       console.error(update.error);
@@ -327,14 +348,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     if (previewImageAssetId !== undefined) {
+      console.info("BEFORE updatePreviewImage", logId);
       await db.project.updatePreviewImage(
         { assetId: previewImageAssetId, projectId },
         context
       );
+      console.info("AFTER updatePreviewImage", logId);
     }
 
     return { status: "ok" };
   } catch (e) {
+    console.error(e, logId);
     return { errors: e instanceof Error ? e.message : JSON.stringify(e) };
   }
 };
