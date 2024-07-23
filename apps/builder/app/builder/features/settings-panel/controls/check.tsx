@@ -1,6 +1,5 @@
 import { useStore } from "@nanostores/react";
 import { Checkbox, CheckboxAndLabel, useId } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 import {
   BindingControl,
   BindingPopover,
@@ -45,7 +44,7 @@ export const CheckControl = ({
   const options = Array.from(new Set([...meta.options, ...value]));
 
   const id = useId();
-  const label = humanizeString(meta.label || propName);
+  const label = meta.label || propName;
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -85,7 +84,7 @@ export const CheckControl = ({
               }}
               id={`${id}:${option}`}
             />
-            <Label htmlFor={`${id}:${option}`}>{humanizeString(option)}</Label>
+            <Label htmlFor={`${id}:${option}`}>{option}</Label>
           </CheckboxAndLabel>
         ))}
         <BindingPopover

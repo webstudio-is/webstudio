@@ -12,7 +12,6 @@ import {
   updateExpressionValue,
   useBindingState,
 } from "../shared";
-import { humanizeString } from "~/shared/string-utils";
 
 export const BooleanControl = ({
   meta,
@@ -23,7 +22,7 @@ export const BooleanControl = ({
   onChange,
   onDelete,
 }: ControlProps<"boolean">) => {
-  const label = humanizeString(meta.label || propName);
+  const label = meta.label || propName;
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

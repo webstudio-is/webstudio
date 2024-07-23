@@ -56,8 +56,8 @@ const renderProperty = (
   { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
   { deletable, autoFocus }: { deletable?: boolean; autoFocus?: boolean } = {}
-) =>
-  renderControl({
+) => {
+  return renderControl({
     autoFocus,
     key: propName,
     instanceId,
@@ -88,6 +88,7 @@ const renderProperty = (
       }
     },
   });
+};
 
 const forbiddenProperties = new Set(["style"]);
 
@@ -228,7 +229,7 @@ export const PropsSectionContainer = ({
   const hasMetaProps = Object.keys(logic.meta.props).length !== 0;
 
   if (hasMetaProps === false) {
-    return null;
+    return;
   }
 
   return (
