@@ -117,7 +117,7 @@ const AddPropertyOrAttribute = ({
         onItemSelect={(item) => {
           if (
             forbiddenProperties.has(item.name) ||
-            isAttributeNameSafe(value) === false
+            isAttributeNameSafe(item.name) === false
           ) {
             setIsValid(false);
             return;
