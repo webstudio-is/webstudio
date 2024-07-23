@@ -1402,6 +1402,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
+      nanoid:
+        specifier: ^5.0.1
+        version: 5.0.1
       zod:
         specifier: ^3.22.4
         version: 3.22.4

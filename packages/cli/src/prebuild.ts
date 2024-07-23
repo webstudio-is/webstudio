@@ -296,11 +296,6 @@ export const prebuild = async (options: {
     );
   }
 
-  const domain = siteData.build.deployment?.projectDomain;
-  if (domain === undefined) {
-    throw new Error(`Project domain is missing from the project data`);
-  }
-
   // collect all possible component metas
   const metas = new Map<string, WsComponentMeta>();
   const componentSources = new Map<string, string>();
@@ -448,6 +443,15 @@ export const prebuild = async (options: {
   const assetsToDownload: Promise<void>[] = [];
 
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
+
+  const domain =
+    siteData.build.deployment?.destination === "static"
+      ? siteData.build.deployment?.assetsDomain
+      : siteData.build.deployment?.projectDomain;
+  if (domain === undefined) {
+    throw new Error(`Project domain is missing from the project data`);
+  }
+
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
   const imageLoader = createImageLoader({

@@ -23,7 +23,7 @@ export const RemixForm = forwardRef<
   if (
     props.action === undefined ||
     props.action === "" ||
-    props.action?.startsWith("/")
+    (typeof props.action === "string" && props.action?.startsWith("/"))
   ) {
     // remix forms specifies own action instead of provided one
     // which makes it hard to handle intercepted submit events

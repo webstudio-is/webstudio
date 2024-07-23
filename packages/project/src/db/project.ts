@@ -25,6 +25,7 @@ export const loadById = async (
     where: { id_isDeleted: { id: projectId, isDeleted: false } },
     include: {
       latestBuild: true,
+      latestStaticBuild: true,
       previewImageAsset: true,
     },
   });

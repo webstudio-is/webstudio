@@ -7,6 +7,7 @@ const PublishInput = z.object({
   builderOrigin: z.string(),
   githubSha: z.string().optional(),
 
+  destination: z.enum(["saas", "static"]),
   // preview support
   branchName: z.string(),
   // action log helper (not used for deployment, but for action logs readablity)

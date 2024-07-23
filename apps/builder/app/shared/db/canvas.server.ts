@@ -35,14 +35,17 @@ export const loadProductionCanvasData = async (
 
   // Check that build deployment domains are still active and verified
   // for examle: redeploy created few days later
-  const domains = deployment.domains.filter((domain) =>
-    currentProjectDomains.some(
-      (projectDomain) =>
-        projectDomain.domain.domain === domain &&
-        projectDomain.domain.status === "ACTIVE" &&
-        projectDomain.verified
-    )
-  );
+  const domains =
+    deployment.destination === "static"
+      ? []
+      : deployment.domains.filter((domain) =>
+          currentProjectDomains.some(
+            (projectDomain) =>
+              projectDomain.domain.domain === domain &&
+              projectDomain.domain.status === "ACTIVE" &&
+              projectDomain.verified
+          )
+        );
 
   const page = findPageByIdOrPath("/", build.pages);
 
