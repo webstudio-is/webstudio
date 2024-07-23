@@ -6,7 +6,7 @@ import { panels } from "./panels";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
+import { AiIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
@@ -83,21 +83,6 @@ const HelpTabTrigger = () => {
         </SidebarButton>
       </HelpPopover.Trigger>
     </HelpPopover>
-  );
-};
-
-const GithubTabTrigger = () => {
-  return (
-    <SidebarButton
-      label="Report a bug on Github"
-      onClick={() => {
-        window.open(
-          "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
-        );
-      }}
-    >
-      <BugIcon size={rawTheme.spacing[10]} />
-    </SidebarButton>
   );
 };
 
@@ -197,7 +182,6 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             <Box css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}>
               <AiTabTrigger />
               <HelpTabTrigger />
-              <GithubTabTrigger />
             </Box>
           </>
         )}
