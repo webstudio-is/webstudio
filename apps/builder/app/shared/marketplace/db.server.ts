@@ -2,7 +2,7 @@ import { prisma } from "@webstudio-is/prisma-client";
 import { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { BuildData, MarketplaceOverviewItem } from "./types";
 import {
-  loadProdBuildByProjectId,
+  loadApprovedProdBuildByProjectId,
   parseConfig,
 } from "@webstudio-is/project-build/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -13,9 +13,7 @@ export const getBuildProdData = async (
   { projectId }: { projectId: Project["id"] },
   context: AppContext
 ): Promise<BuildData> => {
-  const build = await loadProdBuildByProjectId(projectId, {
-    marketplaceApprovalStatus: "APPROVED",
-  });
+  const build = await loadApprovedProdBuildByProjectId(projectId);
 
   const assets = await loadAssetsByProject(projectId, context, {
     skipPermissionsCheck: true,

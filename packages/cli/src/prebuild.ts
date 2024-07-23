@@ -1,5 +1,5 @@
-import { basename, dirname, join, normalize } from "node:path";
-import { createWriteStream } from "node:fs";
+import { basename, dirname, join, normalize, relative } from "node:path";
+import { createWriteStream, existsSync } from "node:fs";
 import {
   rm,
   access,
@@ -19,7 +19,6 @@ import {
   generateCss,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
-  namespaceMeta,
   type Params,
   type WsComponentMeta,
   normalizeProps,
@@ -50,18 +49,15 @@ import {
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
-import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
   createFolderIfNotExists,
   loadJSONFile,
-  isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 import { htmlToJsx } from "./html-to-jsx";
+import { createFramework } from "./framework-remix";
 
 const limit = pLimit(10);
 
@@ -140,7 +136,9 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
     }
   );
   const content = JSON.stringify(
-    merge(JSON.parse(destinationJson), JSON.parse(sourceJson)),
+    merge(JSON.parse(destinationJson), JSON.parse(sourceJson), {
+      arrayMerge: (_target, source) => source,
+    }),
     null,
     "  "
   );
@@ -187,16 +185,27 @@ const copyTemplates = async (template: string = "defaults") => {
   await cp(templatePath, cwd(), {
     recursive: true,
     filter: (source) => {
-      return basename(source) !== "package.json";
+      const name = basename(source);
+      return name !== "package.json" && name !== "tsconfig.json";
     },
   });
 
-  if ((await isFileExists(join(templatePath, "package.json"))) === true) {
+  if (existsSync(join(templatePath, "package.json"))) {
     await mergeJsonInto(
       join(templatePath, "package.json"),
       join(cwd(), "package.json")
     );
   }
+  if (existsSync(join(templatePath, "tsconfig.json"))) {
+    await mergeJsonInto(
+      join(templatePath, "tsconfig.json"),
+      join(cwd(), "tsconfig.json")
+    );
+  }
+};
+
+const importFrom = (importee: string, importer: string) => {
+  return relative(dirname(importer), importee).replaceAll("\\", "/");
 };
 
 export const prebuild = async (options: {
@@ -263,6 +272,8 @@ export const prebuild = async (options: {
     await copyTemplates(template);
   }
 
+  const framework = await createFramework();
+
   const constants: typeof sharedConstants = await import(
     pathToFileURL(join(cwd(), "app/constants.mjs")).href
   );
@@ -284,28 +295,15 @@ export const prebuild = async (options: {
     throw new Error(`Project domain is missing from the project data`);
   }
 
-  const radixComponentNamespacedMetas = Object.entries(
-    radixComponentMetas
-  ).reduce(
-    (r, [name, meta]) => {
-      const namespace = "@webstudio-is/sdk-components-react-radix";
-      r[`${namespace}:${name}`] = namespaceMeta(
-        meta,
-        namespace,
-        new Set(Object.keys(radixComponentMetas))
-      );
-      return r;
-    },
-    {} as Record<string, WsComponentMeta>
-  );
-
-  const metas = new Map(
-    Object.entries({
-      ...baseComponentMetas,
-      ...radixComponentNamespacedMetas,
-      ...remixComponentMetas,
-    })
-  );
+  // collect all possible component metas
+  const metas = new Map<string, WsComponentMeta>();
+  const componentSources = new Map<string, string>();
+  for (const entry of framework.components) {
+    for (const [componentName, meta] of Object.entries(entry.metas)) {
+      metas.set(componentName, meta);
+      componentSources.set(componentName, entry.source);
+    }
+  }
 
   const projectMetas = new Map<Instance["component"], WsComponentMeta>();
   const componentsByPage: ComponentsByPage = {};
@@ -494,22 +492,6 @@ export const prebuild = async (options: {
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
 
-  // MARK: - Route templates read
-  const routeTemplatesDir = join(cwd(), "app/route-templates");
-
-  const routeTemplatePath = normalize(join(routeTemplatesDir, "html.tsx"));
-  const routeXmlTemplatePath = normalize(join(routeTemplatesDir, "xml.tsx"));
-  const defaultSiteMapXmlPath = normalize(
-    join(routeTemplatesDir, "default-sitemap.tsx")
-  );
-  const redirectPath = normalize(join(routeTemplatesDir, "redirect.tsx"));
-
-  const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
-  const routeXmlFileTemplate = await readFile(routeXmlTemplatePath, "utf8");
-  const defaultSiteMapTemplate = await readFile(defaultSiteMapXmlPath, "utf8");
-  const redirectTemplate = await readFile(redirectPath, "utf8");
-  await rm(routeTemplatesDir, { recursive: true, force: true });
-
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
@@ -524,30 +506,18 @@ export const prebuild = async (options: {
       string,
       Set<[shortName: string, componentName: string]>
     >();
-
-    const BASE_NAMESPACE = "@webstudio-is/sdk-components-react";
-    const REMIX_NAMESPACE = "@webstudio-is/sdk-components-react-remix";
-
     for (const component of pageComponents) {
-      const parsed = parseComponentName(component);
-      let [namespace] = parsed;
-      const [_namespace, shortName] = parsed;
-
+      const namespace = componentSources.get(component);
       if (namespace === undefined) {
-        // use base as fallback namespace and consider remix overrides
-        if (shortName in remixComponentMetas) {
-          namespace = REMIX_NAMESPACE;
-        } else {
-          namespace = BASE_NAMESPACE;
-        }
+        continue;
       }
-
       if (namespaces.has(namespace) === false) {
         namespaces.set(
           namespace,
           new Set<[shortName: string, componentName: string]>()
         );
       }
+      const [_namespace, shortName] = parseComponentName(component);
       namespaces.get(namespace)?.add([shortName, component]);
     }
 
@@ -632,9 +602,7 @@ export const prebuild = async (options: {
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
-    const pageMeta = pageData.page.meta;
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
-    const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
 
     const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
 
@@ -651,9 +619,6 @@ export const prebuild = async (options: {
 
       export const favIconAsset: ImageAsset | undefined =
         ${JSON.stringify(favIconAsset)};
-
-      export const socialImageAsset: ImageAsset | undefined =
-        ${JSON.stringify(socialImageAsset)};
 
       // Font assets on current page (can be preloaded)
       export const pageFontAssets: FontAsset[] =
@@ -715,6 +680,7 @@ export const prebuild = async (options: {
         globalScope: scope,
         page: pageData.page,
         dataSources,
+        assets,
       })}
 
       ${generateFormsProperties(props)}
@@ -728,37 +694,41 @@ export const prebuild = async (options: {
 
     const generatedBasename = generateRemixRoute(pagePath);
 
-    const routeFileContent = (
-      documentType === "html" ? routeFileTemplate : routeXmlFileTemplate
-    )
-      .replaceAll("__CLIENT__", `../__generated__/${generatedBasename}`)
-      .replaceAll("__SERVER__", `../__generated__/${generatedBasename}.server`)
-      .replaceAll("__CSS__", `../__generated__/index.css`);
+    const clientFile = join(generatedDir, `${generatedBasename}.tsx`);
+    await createFileIfNotExists(clientFile, pageExports);
 
-    await createFileIfNotExists(
-      join(routesDir, `${generateRemixRoute(pagePath)}.tsx`),
-      routeFileContent
-    );
+    const serverFile = join(generatedDir, `${generatedBasename}.server.tsx`);
+    await createFileIfNotExists(serverFile, serverExports);
 
-    await createFileIfNotExists(
-      join(generatedDir, `${generatedBasename}.tsx`),
-      pageExports
-    );
-
-    await createFileIfNotExists(
-      join(generatedDir, `${generatedBasename}.server.tsx`),
-      serverExports
-    );
+    const getTemplates =
+      documentType === "html" ? framework.html : framework.xml;
+    for (const { file, template } of getTemplates({ pagePath })) {
+      const content = template
+        .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
+        .replaceAll(
+          "__CLIENT__",
+          importFrom(`./app/__generated__/${generatedBasename}`, file)
+        )
+        .replaceAll(
+          "__SERVER__",
+          importFrom(`./app/__generated__/${generatedBasename}.server`, file)
+        )
+        .replaceAll(
+          "__CSS__",
+          importFrom(`./app/__generated__/index.css`, file)
+        );
+      await createFileIfNotExists(file, content);
+    }
   }
 
   // MARK: - Default sitemap.xml
-  await createFileIfNotExists(
-    join(routesDir, `${generateRemixRoute("/sitemap.xml")}.tsx`),
-    defaultSiteMapTemplate.replaceAll(
+  for (const { file, template } of framework.defaultSitemap()) {
+    const content = template.replaceAll(
       "__SITEMAP__",
-      `../__generated__/$resources.sitemap.xml`
-    )
-  );
+      importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
+    );
+    await createFileIfNotExists(file, content);
+  }
 
   await createFileIfNotExists(
     join(generatedDir, "$resources.sitemap.xml.ts"),
@@ -783,13 +753,15 @@ export const prebuild = async (options: {
         `
       );
 
-      await createFileIfNotExists(
-        join(routesDir, `${generateRemixRoute(redirect.old)}.ts`),
-        redirectTemplate.replaceAll(
+      for (const { file, template } of framework.redirect({
+        pagePath: redirect.old,
+      })) {
+        const content = template.replaceAll(
           "__REDIRECT__",
-          `../__generated__/${generatedBasename}`
-        )
-      );
+          importFrom(`./app/__generated__/${generatedBasename}`, file)
+        );
+        await createFileIfNotExists(file, content);
+      }
     }
   }
 

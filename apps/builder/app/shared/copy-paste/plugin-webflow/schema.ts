@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-const Attr = z.object({ id: z.string(), role: z.string() }).partial();
+const Attr = z
+  .object({ id: z.string(), role: z.string(), href: z.string() })
+  .partial();
 
 const styleBase = z.string();
 
@@ -10,7 +12,7 @@ const stylePseudo = z.string();
 
 const styleProperty = z.string();
 
-const styleValue = z.string();
+const styleValue = z.unknown();
 
 const WfNodeData = z.object({
   attr: Attr.optional(),
@@ -124,6 +126,7 @@ export const wfNodeTypes = [
   "NavbarButton",
   "NavbarContainer",
   "Icon",
+  "LightboxWrapper",
 ] as const;
 
 const WfElementNode = z.union([
@@ -139,6 +142,7 @@ const WfElementNode = z.union([
     }),
   }),
 
+  WfBaseNode.extend({ type: z.enum(["LightboxWrapper"]) }),
   WfBaseNode.extend({ type: z.enum(["NavbarMenu"]) }),
   WfBaseNode.extend({ type: z.enum(["NavbarContainer"]) }),
 
@@ -202,7 +206,7 @@ const WfElementNode = z.union([
     type: z.enum(["Image"]),
     data: WfNodeData.extend({
       attr: Attr.extend({
-        alt: z.string(),
+        alt: z.string().optional(),
         loading: z.enum(["lazy", "eager", "auto"]),
         src: z.string(),
         width: z.string(),
@@ -341,9 +345,6 @@ const WfStyle = z.object({
     .record(z.string(), z.object({ styleLess: z.string() }))
     .optional(),
   children: z.array(z.string()).optional(),
-  createdBy: z.string().optional(),
-  origin: z.null().optional(),
-  selector: z.null().optional(),
 });
 export type WfStyle = z.infer<typeof WfStyle>;
 

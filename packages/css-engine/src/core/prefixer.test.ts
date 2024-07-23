@@ -37,3 +37,16 @@ test("prefix text-size-adjust", () => {
     ])
   );
 });
+
+test("prefix backdrop-filter", () => {
+  expect(
+    prefixStyles(
+      new Map([["backdrop-filter", { type: "unparsed", value: "blur(4px)" }]])
+    )
+  ).toEqual(
+    new Map([
+      ["-webkit-backdrop-filter", { type: "unparsed", value: "blur(4px)" }],
+      ["backdrop-filter", { type: "unparsed", value: "blur(4px)" }],
+    ])
+  );
+});

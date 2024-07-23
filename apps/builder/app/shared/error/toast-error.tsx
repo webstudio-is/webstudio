@@ -23,7 +23,7 @@ export const useToastErrors = () => {
   }, []);
 };
 
-export const toastError = (error: string) => {
+export const toastError = (_error: string) => {
   $toastErrors.set([
     ...$toastErrors.get(),
     "Copying has been disabled by the project owner",

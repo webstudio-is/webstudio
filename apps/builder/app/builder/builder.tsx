@@ -288,7 +288,7 @@ const ProgressIndicator = ({ value }: { value: number }) => {
 
   useEffect(() => {
     const id = setTimeout(() => {
-      setFakeValue((fakeValue) => {
+      setFakeValue((_fakeValue) => {
         // Fetching data is the slowest part and we don't want to get stuck at 0% visually
         return Math.max(value, 50);
       });

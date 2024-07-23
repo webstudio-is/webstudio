@@ -22,6 +22,8 @@ const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
     const script = document.createElement("script");
     const hasSrc = sourceScript.hasAttribute("src");
 
+    const isTypeModule = sourceScript.type === "module";
+
     // Copy all attributes from the source script to the new script, because we are going to replace the source script with the new one
     // and the user might rely on some attributes.
     for (const { name, value } of sourceScript.attributes) {
@@ -39,6 +41,24 @@ const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
       });
       script.addEventListener("error", reject);
     } else {
+      // Module scripts are deferred by default, and there's no direct 'load' event for inline scripts.
+      // By creating a Blob and using dynamic import(), we can detect when the script has been
+      // loaded, parsed, and executed. This approach allows us to handle inline module scripts
+      // in a way that preserves execution order and provides a mechanism to know when execution is complete.
+      if (isTypeModule) {
+        const blob = new Blob([sourceScript.innerText], {
+          type: "text/javascript",
+        });
+        const url = URL.createObjectURL(blob);
+        import(/* @vite-ignore */ url)
+          .then(resolve)
+          .catch(reject)
+          .finally(() => {
+            URL.revokeObjectURL(url);
+          });
+        return;
+      }
+
       script.textContent = sourceScript.innerText;
     }
 

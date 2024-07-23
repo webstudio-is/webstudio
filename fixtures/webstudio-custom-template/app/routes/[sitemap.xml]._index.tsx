@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import { renderToString } from "react-dom/server";
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { Page } from "../__generated__/[sitemap.xml]._index";
@@ -8,7 +9,6 @@ import {
   getRemixParams,
 } from "../__generated__/[sitemap.xml]._index.server";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
-import { renderToString } from "react-dom/server";
 
 export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);

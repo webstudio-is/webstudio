@@ -110,6 +110,9 @@ const toFragment = (
     }
     case "Block": {
       const component = wfNode.data?.text ? "Text" : "Box";
+      if (wfNode.tag !== "div") {
+        addProp("tag", wfNode.tag);
+      }
       addInstance(component);
       return fragment;
     }
@@ -345,7 +348,12 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
-
+    case "LightboxWrapper": {
+      addProp("tag", wfNode.tag);
+      addProp("href", wfNode.data?.attr?.href);
+      addInstance("Box", [], component);
+      return fragment;
+    }
     case "NavbarMenu": {
       addProp("tag", wfNode.tag);
       addProp("role", wfNode.data?.attr?.role);

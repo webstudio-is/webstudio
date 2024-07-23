@@ -74,6 +74,16 @@ html {
     outline-width: 1px;
     min-height: 1em;
   }
+  a:where([data-ws-component="Link"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+    display: inline-block;
+  }
 }
 @media all {
   .c1jaw2zx {
@@ -87,5 +97,8 @@ html {
   }
   .ctgx88l {
     flex-direction: column;
+  }
+  .cn3rfux {
+    margin-bottom: 1em;
   }
 }

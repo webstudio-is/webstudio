@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { removeByMutable } from "./array-utils";
+import { removeByMutable, repeatUntil } from "./array-utils";
 
 test("removeByMutable", () => {
   const array = [
@@ -32,4 +32,8 @@ test("removeByMutable", () => {
       },
     ]
   `);
+});
+
+test("repeatUntil", () => {
+  expect(repeatUntil([1, 2, 3], 5)).toEqual([1, 2, 3, 1, 2]);
 });

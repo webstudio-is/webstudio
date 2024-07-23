@@ -24,6 +24,7 @@
     "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
+    "@webstudio-is/postrest": "workspace:*",
     "nanoid": "^5.0.1",
     "zod": "^3.22.4"
   },

@@ -58,13 +58,6 @@ describe("Parse CSS value", () => {
         type: "invalid",
         value: "10",
       });
-
-      // This will return number unit, as number is valid for aspectRatio.
-      expect(parseCssValue("aspectRatio", "10")).toEqual({
-        type: "unit",
-        unit: "number",
-        value: 10,
-      });
     });
   });
 
@@ -307,10 +300,10 @@ test("parse transition-timing-function property", () => {
         args: {
           type: "layers",
           value: [
-            { type: "keyword", value: "0.68" },
-            { type: "keyword", value: "-0.6" },
-            { type: "keyword", value: ".32" },
-            { type: "keyword", value: "1.6" },
+            { type: "unit", value: 0.68, unit: "number" },
+            { type: "unit", value: -0.6, unit: "number" },
+            { type: "unit", value: 0.32, unit: "number" },
+            { type: "unit", value: 1.6, unit: "number" },
           ],
         },
       },
@@ -320,7 +313,7 @@ test("parse transition-timing-function property", () => {
         args: {
           type: "layers",
           value: [
-            { type: "keyword", value: "4" },
+            { type: "unit", value: 4, unit: "number" },
             { type: "keyword", value: "jump-start" },
           ],
         },
@@ -328,7 +321,7 @@ test("parse transition-timing-function property", () => {
     ],
   });
   expect(toValue(parsedValue)).toMatchInlineSnapshot(
-    `"ease, ease-in, cubic-bezier(0.68, -0.6, .32, 1.6), steps(4, jump-start)"`
+    `"ease, ease-in, cubic-bezier(0.68, -0.6, 0.32, 1.6), steps(4, jump-start)"`
   );
   expect(parseCssValue("transitionTimingFunction", "ease, testing")).toEqual({
     type: "invalid",
@@ -385,7 +378,7 @@ test("parse transform property as tuple", () => {
         type: "function",
         name: "rotateX",
         args: {
-          type: "tuple",
+          type: "layers",
           value: [{ type: "unit", value: 45, unit: "deg" }],
         },
       },
@@ -393,7 +386,7 @@ test("parse transform property as tuple", () => {
         type: "function",
         name: "rotateY",
         args: {
-          type: "tuple",
+          type: "layers",
           value: [{ type: "unit", value: 30, unit: "deg" }],
         },
       },
@@ -401,7 +394,7 @@ test("parse transform property as tuple", () => {
         type: "function",
         name: "rotateZ",
         args: {
-          type: "tuple",
+          type: "layers",
           value: [{ type: "unit", value: 60, unit: "deg" }],
         },
       },
@@ -461,49 +454,21 @@ test("parses transform values and returns invalid for invalid values", () => {
 test("parses a valid translate value", () => {
   expect(parseCssValue("translate", "100px")).toEqual({
     type: "tuple",
-    value: [
-      {
-        type: "unit",
-        unit: "px",
-        value: 100,
-      },
-    ],
+    value: [{ type: "unit", unit: "px", value: 100 }],
   });
-
   expect(parseCssValue("translate", "100px 200px")).toEqual({
     type: "tuple",
     value: [
-      {
-        type: "unit",
-        unit: "px",
-        value: 100,
-      },
-      {
-        type: "unit",
-        unit: "px",
-        value: 200,
-      },
+      { type: "unit", unit: "px", value: 100 },
+      { type: "unit", unit: "px", value: 200 },
     ],
   });
-
   expect(parseCssValue("translate", "10em 10em 10em")).toEqual({
     type: "tuple",
     value: [
-      {
-        type: "unit",
-        unit: "em",
-        value: 10,
-      },
-      {
-        type: "unit",
-        unit: "em",
-        value: 10,
-      },
-      {
-        type: "unit",
-        unit: "em",
-        value: 10,
-      },
+      { type: "unit", unit: "em", value: 10 },
+      { type: "unit", unit: "em", value: 10 },
+      { type: "unit", unit: "em", value: 10 },
     ],
   });
 });
@@ -513,51 +478,29 @@ test("parses and returns invalid for invalid translate values", () => {
     type: "invalid",
     value: "foo bar",
   });
-
   expect(parseCssValue("translate", "100px 200px 300px 400px")).toEqual({
     type: "invalid",
     value: "100px 200px 300px 400px",
   });
-
   expect(parseCssValue("translate", "100%, 200%")).toEqual({
     type: "invalid",
     value: "100%, 200%",
   });
 });
 
-test("parses a valid translate value", () => {
+test("parses a valid scale value", () => {
   expect(parseCssValue("scale", "1.5")).toEqual({
     type: "tuple",
-    value: [
-      {
-        type: "unit",
-        value: 1.5,
-        unit: "number",
-      },
-    ],
+    value: [{ type: "unit", value: 1.5, unit: "number" }],
   });
-
   expect(parseCssValue("scale", "5 10 15")).toEqual({
     type: "tuple",
     value: [
-      {
-        type: "unit",
-        value: 5,
-        unit: "number",
-      },
-      {
-        type: "unit",
-        value: 10,
-        unit: "number",
-      },
-      {
-        type: "unit",
-        value: 15,
-        unit: "number",
-      },
+      { type: "unit", value: 5, unit: "number" },
+      { type: "unit", value: 10, unit: "number" },
+      { type: "unit", value: 15, unit: "number" },
     ],
   });
-
   expect(parseCssValue("scale", "50%")).toEqual({
     type: "tuple",
     value: [{ type: "unit", value: 50, unit: "%" }],
@@ -580,5 +523,365 @@ test("throws error for invalid scale proeprty values", () => {
   expect(parseCssValue("scale", "5px")).toEqual({
     type: "invalid",
     value: "5px",
+  });
+});
+
+test("support custom properties as unparsed values", () => {
+  expect(parseCssValue("--my-property", "blue")).toEqual({
+    type: "unparsed",
+    value: "blue",
+  });
+  expect(parseCssValue("--my-property", "1px")).toEqual({
+    type: "unparsed",
+    value: "1px",
+  });
+});
+
+test("support custom properties var reference", () => {
+  expect(parseCssValue("color", "var(--color)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [],
+  });
+  expect(parseCssValue("color", "var(--color, red)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [{ type: "unparsed", value: "red" }],
+  });
+});
+
+test("support custom properties var reference in custom property", () => {
+  expect(parseCssValue("--bg", "var(--color)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [],
+  });
+  expect(parseCssValue("--bg", "var(--color, red)")).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [{ type: "unparsed", value: "red" }],
+  });
+});
+
+describe("parse shadows", () => {
+  test("parses value and returns invalid when used a invalid boxShadow is passed", () => {
+    expect(parseCssValue("boxShadow", `10px 10px 5px foo`)).toEqual({
+      type: "invalid",
+      value: "10px 10px 5px foo",
+    });
+  });
+
+  test("parses value and returns invalid when a invalid textShadow is passed", () => {
+    expect(parseCssValue("textShadow", `10px 10px 5px foo`)).toEqual({
+      type: "invalid",
+      value: "10px 10px 5px foo",
+    });
+  });
+
+  test("throws error when passed a value without a unit", () => {
+    expect(parseCssValue("boxShadow", `10 10px 5px red`)).toEqual({
+      type: "invalid",
+      value: "10 10px 5px red",
+    });
+  });
+
+  test("parses values and returns a layer when a valid textShadow is passes", () => {
+    expect(parseCssValue("textShadow", "1px 1px 2px black")).toEqual({
+      type: "layers",
+      value: [
+        {
+          type: "tuple",
+          value: [
+            { type: "unit", unit: "px", value: 1 },
+            { type: "unit", unit: "px", value: 1 },
+            { type: "unit", unit: "px", value: 2 },
+            { type: "keyword", value: "black" },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("inset and color values can be interchanged", () => {
+    expect(parseCssValue("boxShadow", `inset 10px 10px 5px black`)).toEqual({
+      type: "layers",
+      value: [
+        {
+          type: "tuple",
+          value: [
+            { type: "keyword", value: "inset" },
+            { type: "unit", unit: "px", value: 10 },
+            { type: "unit", unit: "px", value: 10 },
+            { type: "unit", unit: "px", value: 5 },
+            { type: "keyword", value: "black" },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("parses value when inset is used but missing blur-radius", () => {
+    expect(parseCssValue("boxShadow", `inset 5em 1em gold`)).toEqual({
+      type: "layers",
+      value: [
+        {
+          type: "tuple",
+          value: [
+            { type: "keyword", value: "inset" },
+            { type: "unit", unit: "em", value: 5 },
+            { type: "unit", unit: "em", value: 1 },
+            { type: "keyword", value: "gold" },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("parses value when offsetX and offsetY are used", () => {
+    expect(parseCssValue("boxShadow", `60px -16px teal`)).toEqual({
+      type: "layers",
+      value: [
+        {
+          type: "tuple",
+          value: [
+            { type: "unit", unit: "px", value: 60 },
+            { type: "unit", unit: "px", value: -16 },
+            { type: "keyword", value: "teal" },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("parses value from figma", () => {
+    expect(
+      parseCssValue(
+        "boxShadow",
+        "0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14)"
+      )
+    ).toEqual({
+      type: "layers",
+      value: [
+        {
+          type: "tuple",
+          value: [
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "px", value: 60 },
+            { type: "unit", unit: "px", value: 80 },
+            { alpha: 0.6, b: 0, g: 0, r: 0, type: "rgb" },
+          ],
+        },
+        {
+          type: "tuple",
+          value: [
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "px", value: 45 },
+            { type: "unit", unit: "px", value: 26 },
+            { alpha: 0.14, b: 0, g: 0, r: 0, type: "rgb" },
+          ],
+        },
+      ],
+    });
+  });
+
+  test(`parses multiple layers of box-shadow property`, () => {
+    expect(
+      parseCssValue(
+        "boxShadow",
+        `
+        0 0 5px rgba(0, 0, 0, 0.2),
+        inset 0 0 10px rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(0, 0, 0, 0.4)
+        `
+      )
+    ).toEqual({
+      type: "layers",
+      value: [
+        {
+          type: "tuple",
+          value: [
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "px", value: 5 },
+            { alpha: 0.2, b: 0, g: 0, r: 0, type: "rgb" },
+          ],
+        },
+        {
+          type: "tuple",
+          value: [
+            { type: "keyword", value: "inset" },
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "px", value: 10 },
+            { alpha: 0.3, b: 0, g: 0, r: 0, type: "rgb" },
+          ],
+        },
+        {
+          type: "tuple",
+          value: [
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "number", value: 0 },
+            { type: "unit", unit: "px", value: 15 },
+            { alpha: 0.4, b: 0, g: 0, r: 0, type: "rgb" },
+          ],
+        },
+      ],
+    });
+  });
+});
+
+describe("parse filters", () => {
+  test("parse values and returns the valid style property values", () => {
+    expect(parseCssValue("filter", "blur(4px)")).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "px", value: 4 }],
+          },
+        },
+      ],
+    });
+    expect(
+      parseCssValue("filter", "drop-shadow(10px 10px 25px rgba(0, 0, 255, 1))")
+    ).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "drop-shadow",
+          args: {
+            type: "tuple",
+            value: [
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 25 },
+              { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            ],
+          },
+        },
+      ],
+    });
+    expect(
+      parseCssValue("filter", "drop-shadow(10px 10px 25px  #0000FF)")
+    ).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "drop-shadow",
+          args: {
+            type: "tuple",
+            value: [
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 10 },
+              { type: "unit", unit: "px", value: 25 },
+              { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            ],
+          },
+        },
+      ],
+    });
+  });
+
+  test("parse backdrop-filter", () => {
+    expect(parseCssValue("backdropFilter", "blur(4px)")).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "px", value: 4 }],
+          },
+        },
+      ],
+    });
+  });
+
+  test("Multiple valid function values", () => {
+    expect(
+      parseCssValue(
+        "filter",
+        "blur(4px) drop-shadow(16px 16px 20px blue) opacity(25%)"
+      )
+    ).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "px", value: 4 }],
+          },
+        },
+        {
+          type: "function",
+          name: "drop-shadow",
+          args: {
+            type: "tuple",
+            value: [
+              { type: "unit", unit: "px", value: 16 },
+              { type: "unit", unit: "px", value: 16 },
+              { type: "unit", unit: "px", value: 20 },
+              { type: "keyword", value: "blue" },
+            ],
+          },
+        },
+        {
+          type: "function",
+          name: "opacity",
+          args: {
+            type: "tuple",
+            value: [{ type: "unit", unit: "%", value: 25 }],
+          },
+        },
+      ],
+    });
+  });
+
+  // parsers are used to use copied value. At the moment, we don't have support
+  // for complex functions in the UI like the one below like calc(4px + 16em)
+  test("Using complex functions inside filter function", () => {
+    expect(parseCssValue("filter", "blur(calc(4px + 16em))")).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "blur",
+          args: {
+            type: "tuple",
+            value: [],
+          },
+        },
+      ],
+    });
+  });
+});
+
+describe("aspect-ratio", () => {
+  test("support single numeric value", () => {
+    expect(parseCssValue("aspectRatio", "10")).toEqual({
+      type: "unit",
+      unit: "number",
+      value: 10,
+    });
+  });
+  test("support keyword", () => {
+    expect(parseCssValue("aspectRatio", "auto")).toEqual({
+      type: "keyword",
+      value: "auto",
+    });
+  });
+  test("support two values", () => {
+    expect(parseCssValue("aspectRatio", "16 / 9")).toEqual({
+      type: "unparsed",
+      value: "16 / 9",
+    });
   });
 });

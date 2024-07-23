@@ -40,3 +40,10 @@ export const mapGroupBy = <Item, Key>(
   }
   return groups;
 };
+
+export const objectGroupBy = <Item, Key>(
+  array: Item[] | Iterable<Item>,
+  getKey: (item: Item) => Key
+) => {
+  return Object.fromEntries(mapGroupBy(array, getKey));
+};

@@ -3,7 +3,6 @@ import {
   UnparsedValue,
   type KeywordValue,
   type LayersValue,
-  type TupleValue,
   type UnitValue,
 } from "@webstudio-is/css-engine";
 import type { StyleInfo } from "../../shared/style-info";
@@ -13,32 +12,11 @@ import type {
 } from "../../shared/use-style-data";
 import {
   extractTransitionProperties,
-  isValidTransitionValue,
+  properties,
   transitionLongHandProperties,
 } from "@webstudio-is/css-data";
 
-export const defaultTransitionProperty: UnparsedValue = {
-  type: "unparsed",
-  value: "opacity",
-};
-export const defaultTransitionDuration: UnitValue = {
-  type: "unit",
-  value: 0,
-  unit: "ms",
-};
-export const defaultTransitionDelay: UnitValue = {
-  type: "unit",
-  value: 0,
-  unit: "ms",
-};
-export const defaultTransitionTimingFunction: KeywordValue = {
-  type: "keyword",
-  value: "ease",
-};
-export const defaultTransitionBehavior: KeywordValue = {
-  type: "keyword",
-  value: "normal",
-};
+export type TransitionProperty = (typeof transitionLongHandProperties)[number];
 
 export const defaultFunctions = {
   linear: "linear",
@@ -108,13 +86,10 @@ export const findTimingFunctionFromValue = (
   );
 };
 
-export type TransitionProperties =
-  (typeof transitionLongHandProperties)[number];
-
 export const getTransitionProperties = (
   currentyStyle: StyleInfo
-): Record<TransitionProperties, LayersValue> => {
-  const properties: Record<TransitionProperties, LayersValue> = {
+): Record<TransitionProperty, LayersValue> => {
+  const properties: Record<TransitionProperty, LayersValue> = {
     transitionProperty: { type: "layers", value: [] },
     transitionTimingFunction: { type: "layers", value: [] },
     transitionDelay: { type: "layers", value: [] },
@@ -132,107 +107,12 @@ export const getTransitionProperties = (
   return properties;
 };
 
-const getValueOrRepeatLast = (arr: LayersValue["value"], index: number) => {
-  return arr[index % arr.length];
-};
-
-export const convertIndividualTransitionToLayers = (
-  properties: Record<TransitionProperties, LayersValue>
-) => {
-  const layers: { type: "layers"; value: Array<TupleValue> } = {
-    type: "layers",
-    value: [],
-  };
-
-  const {
-    transitionProperty,
-    transitionDuration,
-    transitionDelay,
-    transitionTimingFunction,
-    transitionBehavior,
-  } = properties;
-
-  // https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function
-  // You may specify multiple easing, duration and delay values;
-  // each one will be applied to the corresponding property as specified by the transition-property property,
-  // which acts as a transition-property list. If there are fewer easing, duration and transition values specified than in the transition-property list,
-  // the user agent must calculate which value is used by repeating the list of values until there is one for each transition property.
-  // If there are more values, the list is truncated to the right size. In both cases, the CSS declaration stays valid.
-  // And so, we take the lenght of the transiton-property as the base length of the layers
-
-  for (let index = 0; index < transitionProperty.value.length; index++) {
-    const property = getValueOrRepeatLast(transitionProperty.value, index);
-    const duration =
-      getValueOrRepeatLast(transitionDuration.value, index) ??
-      defaultTransitionDuration;
-    const timingFunction =
-      getValueOrRepeatLast(transitionTimingFunction.value, index) ??
-      defaultTransitionTimingFunction;
-    const delay =
-      getValueOrRepeatLast(transitionDelay.value, index) ??
-      defaultTransitionDelay;
-    const behavior =
-      getValueOrRepeatLast(transitionBehavior.value, index) ??
-      defaultTransitionBehavior;
-
-    if (
-      isValidTransitionValue(property) &&
-      isValidTransitionValue(duration) &&
-      isValidTransitionValue(timingFunction) &&
-      isValidTransitionValue(delay) &&
-      isValidTransitionValue(behavior)
-    ) {
-      const layer: TupleValue = {
-        type: "tuple",
-        value: [property, duration, timingFunction, delay],
-        hidden: property.hidden ?? false,
-      };
-      layers.value.push(layer);
-    }
-  }
-
-  return layers;
-};
-
 export const deleteTransitionProperties = (props: {
   createBatchUpdate: CreateBatchUpdate;
 }) => {
   const batch = props.createBatchUpdate();
   transitionLongHandProperties.forEach((property) => {
     batch.deleteProperty(property);
-  });
-  batch.publish();
-};
-
-export const addDefaultTransitionLayer = (props: {
-  createBatchUpdate: CreateBatchUpdate;
-  currentStyle: StyleInfo;
-}) => {
-  const { createBatchUpdate, currentStyle } = props;
-  const properties = getTransitionProperties(currentStyle);
-  const batch = createBatchUpdate();
-  batch.setProperty("transitionProperty")({
-    type: "layers",
-    value: [...properties.transitionProperty.value, defaultTransitionProperty],
-  });
-  batch.setProperty("transitionTimingFunction")({
-    type: "layers",
-    value: [
-      ...properties.transitionTimingFunction.value,
-      defaultTransitionTimingFunction,
-    ],
-  });
-  batch.setProperty("transitionDuration")({
-    type: "layers",
-    value: [...properties.transitionDuration.value, defaultTransitionDuration],
-  });
-  batch.setProperty("transitionDelay")({
-    type: "layers",
-    value: [...properties.transitionDelay.value, defaultTransitionDelay],
-  });
-  batch.setProperty("transitionBehavior")({
-    type: "layers",
-    value: [...properties.transitionBehavior.value, defaultTransitionBehavior],
   });
   batch.publish();
 };
@@ -285,9 +165,9 @@ export const editTransitionLayer = (props: {
 
     const {
       property,
-      duration = defaultTransitionDuration,
-      timing = defaultTransitionTimingFunction,
-      delay = defaultTransitionDelay,
+      duration = properties.transitionDuration.initial,
+      timing = properties.transitionTimingFunction.initial,
+      delay = properties.transitionDelay.initial,
     } = extractTransitionProperties(layer);
 
     // transition-property can't be undefined

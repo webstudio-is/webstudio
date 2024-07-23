@@ -22,6 +22,7 @@
     "@types/node": "^20.12.7",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "@webstudio-is/postrest": "workspace:*",
     "typescript": "5.5.2"
   },
   "exports": {

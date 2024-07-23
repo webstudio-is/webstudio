@@ -1,4 +1,5 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
+import type { Client } from "@webstudio-is/postrest/index.server";
 
 /**
  * All necessary parameters for Authorization
@@ -68,6 +69,10 @@ type TrpcCache = {
   getMaxAge: (path: string) => number | undefined;
 };
 
+type PostgrestContext = {
+  client: Client;
+};
+
 /**
  * AppContext is a global context that is passed to all trpc/api queries/mutations
  * "authorization" is made inside the namespace because eventually there will be
@@ -80,4 +85,5 @@ export type AppContext = {
   entri: EntriContext;
   userPlanFeatures: UserPlanFeatures | undefined;
   trpcCache: TrpcCache;
+  postgrest: PostgrestContext;
 };

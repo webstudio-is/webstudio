@@ -1,11 +1,16 @@
+declare module "__CONSTANTS__" {
+  import type { ImageLoader } from "@webstudio-is/image";
+  export const assetBaseUrl: string;
+  export const imageBaseUrl: string;
+  export const imageLoader: ImageLoader;
+}
+
 declare module "__CLIENT__" {
   import type { FontAsset, ImageAsset, System } from "@webstudio-is/sdk";
 
   export const siteName: string;
 
   export const favIconAsset: ImageAsset | undefined;
-
-  export const socialImageAsset: ImageAsset | undefined;
 
   // Font assets on current page (can be preloaded)
   export const pageFontAssets: FontAsset[];

@@ -1,0 +1,29 @@
+{
+  "name": "@webstudio-is/postrest",
+  "version": "0.0.0",
+  "description": "Webstudio Project Build",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./index.server": {
+      "webstudio": "./src/index.server.ts",
+      "import": "./src/index.server.ts"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc",
+    "generate-types": "pnpx supabase gen types --lang=typescript --db-url postgresql://postgres:pass@localhost/webstudio > ./src/__generated__/db-types.ts"
+  },
+  "dependencies": {
+    "@supabase/postgrest-js": "^1.15.8"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "type-fest": "^4.3.1",
+    "typescript": "5.5.2"
+  }
+}

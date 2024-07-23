@@ -16,7 +16,7 @@ const client = createTRPCProxyClient<AppRouter>({
     httpBatchLink({
       url: "/trpc",
       // You can pass any HTTP headers you wish here
-      async headers(opts) {
+      async headers(_opts) {
         const authToken = $authToken.get();
 
         // Pass token to api call

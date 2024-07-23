@@ -23,6 +23,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   parseCssValue,
+  properties,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import type {
@@ -33,14 +34,7 @@ import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import {
-  defaultTransitionProperty,
-  defaultTransitionDuration,
-  defaultTransitionTimingFunction,
-  defaultTransitionDelay,
-  deleteTransitionLayer,
-  editTransitionLayer,
-} from "./transition-utils";
+import { deleteTransitionLayer, editTransitionLayer } from "./transition-utils";
 import type { StyleInfo } from "../../shared/style-info";
 import { parseCssFragment } from "../../shared/parse-css-fragment";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -180,7 +174,7 @@ export const TransitionContent = ({
         }}
       >
         <TransitionProperty
-          property={property ?? defaultTransitionProperty}
+          property={property ?? properties.transitionProperty.initial}
           onPropertySelection={handlePropertyUpdate}
         />
 
@@ -207,7 +201,7 @@ export const TransitionContent = ({
           key={"transitionDuration"}
           property={"transitionDuration"}
           styleSource="local"
-          value={duration ?? defaultTransitionDuration}
+          value={duration ?? properties.transitionDuration.initial}
           keywords={[]}
           deleteProperty={() => {}}
           setValue={(value, options) => {
@@ -245,7 +239,7 @@ export const TransitionContent = ({
           property={"transitionDelay"}
           key={"transitionDelay"}
           styleSource="local"
-          value={delay ?? defaultTransitionDelay}
+          value={delay ?? properties.transitionDelay.initial}
           keywords={[]}
           deleteProperty={() => {}}
           setValue={(value, options) => {
@@ -262,7 +256,7 @@ export const TransitionContent = ({
         />
 
         <TransitionTiming
-          timing={timingFunction ?? defaultTransitionTimingFunction}
+          timing={timingFunction ?? properties.transitionTimingFunction.initial}
           onTimingSelection={handlePropertyUpdate}
         />
       </Grid>
