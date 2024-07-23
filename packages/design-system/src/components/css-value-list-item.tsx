@@ -40,12 +40,12 @@ const IconButtonsWrapper = styled(Flex, {
   top: 0,
   bottom: 0,
   paddingRight: sharedPaddingRight,
-  visibility: "hidden",
+  display: "none",
 });
 
 const FakeIconButtonsWrapper = styled(Flex, {
   paddingLeft: theme.spacing[5],
-  visibility: "hidden",
+  display: "none",
 });
 
 /**
@@ -69,10 +69,10 @@ const ItemButton = styled("button", {
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
     [`& ${FakeIconButtonsWrapper}`]: {
-      visibility: "visible",
+      display: "flex",
     },
     [`~ ${IconButtonsWrapper}`]: {
-      visibility: "visible",
+      display: "flex",
     },
 
     "&:after": {
@@ -127,10 +127,10 @@ const ItemWrapper = styled("div", {
       },
     },
     [`& ${IconButtonsWrapper}`]: {
-      visibility: "visible",
+      display: "flex",
     },
     [`& ${FakeIconButtonsWrapper}`]: {
-      visibility: "hidden",
+      display: "flex",
     },
   },
 });
