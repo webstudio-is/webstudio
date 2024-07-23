@@ -1,0 +1,372 @@
+{
+  "build": {
+    "id": "af283f08-b808-4cf6-9cb3-4a4470065c66",
+    "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
+    "version": 29,
+    "createdAt": "2024-07-21T11:48:14.097",
+    "updatedAt": "2024-07-21T11:48:14.097",
+    "pages": {
+      "meta": {
+        "siteName": "",
+        "faviconAssetId": "",
+        "code": ""
+      },
+      "homePage": {
+        "id": "9di_L14CzctvSruIoKVvE",
+        "name": "Home",
+        "title": "\"Home\"",
+        "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
+        "systemDataSourceId": "2KT4-bRzToj9cAGAN_woK",
+        "meta": {},
+        "path": ""
+      },
+      "pages": [
+        {
+          "id": "WPPAbLFyJD_02vhjRd8P4",
+          "name": "Another page",
+          "title": "\"Another page\"",
+          "rootInstanceId": "n_VBMr7klpx25buS0NV7R",
+          "systemDataSourceId": "tdXe9gFf83hSo9BLWU6xl",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "200",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": [
+              {
+                "property": "",
+                "content": "\"\""
+              }
+            ]
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/another-page"
+        }
+      ],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": ["9di_L14CzctvSruIoKVvE", "WPPAbLFyJD_02vhjRd8P4"]
+        }
+      ]
+    },
+    "breakpoints": [
+      [
+        "rKj-wYctg3-GnqL3WHN9I",
+        {
+          "id": "rKj-wYctg3-GnqL3WHN9I",
+          "label": "Base"
+        }
+      ],
+      [
+        "yH9RXhqCyeaVkrOt8MzLc",
+        {
+          "id": "yH9RXhqCyeaVkrOt8MzLc",
+          "label": "Tablet",
+          "maxWidth": 991
+        }
+      ],
+      [
+        "8nSCZbeS002IVwkTdoIes",
+        {
+          "id": "8nSCZbeS002IVwkTdoIes",
+          "label": "Mobile landscape",
+          "maxWidth": 767
+        }
+      ],
+      [
+        "7gBD25KrrbBdJYNDlhPz7",
+        {
+          "id": "7gBD25KrrbBdJYNDlhPz7",
+          "label": "Mobile portrait",
+          "maxWidth": 479
+        }
+      ]
+    ],
+    "styles": [
+      [
+        "7_QL45cpvP-zG8Hkgf4cr:rKj-wYctg3-GnqL3WHN9I:display:",
+        {
+          "breakpointId": "rKj-wYctg3-GnqL3WHN9I",
+          "styleSourceId": "7_QL45cpvP-zG8Hkgf4cr",
+          "property": "display",
+          "value": {
+            "type": "keyword",
+            "value": "flex"
+          }
+        }
+      ],
+      [
+        "7_QL45cpvP-zG8Hkgf4cr:rKj-wYctg3-GnqL3WHN9I:alignItems:",
+        {
+          "breakpointId": "rKj-wYctg3-GnqL3WHN9I",
+          "styleSourceId": "7_QL45cpvP-zG8Hkgf4cr",
+          "property": "alignItems",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
+      ],
+      [
+        "7_QL45cpvP-zG8Hkgf4cr:rKj-wYctg3-GnqL3WHN9I:justifyContent:",
+        {
+          "breakpointId": "rKj-wYctg3-GnqL3WHN9I",
+          "styleSourceId": "7_QL45cpvP-zG8Hkgf4cr",
+          "property": "justifyContent",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
+      ],
+      [
+        "7_QL45cpvP-zG8Hkgf4cr:rKj-wYctg3-GnqL3WHN9I:flexDirection:",
+        {
+          "breakpointId": "rKj-wYctg3-GnqL3WHN9I",
+          "styleSourceId": "7_QL45cpvP-zG8Hkgf4cr",
+          "property": "flexDirection",
+          "value": {
+            "type": "keyword",
+            "value": "column"
+          }
+        }
+      ],
+      [
+        "0KA68BwP9gdTzE1ESO2Zp:rKj-wYctg3-GnqL3WHN9I:marginBottom:",
+        {
+          "breakpointId": "rKj-wYctg3-GnqL3WHN9I",
+          "styleSourceId": "0KA68BwP9gdTzE1ESO2Zp",
+          "property": "marginBottom",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 1
+          }
+        }
+      ]
+    ],
+    "styleSources": [
+      [
+        "7_QL45cpvP-zG8Hkgf4cr",
+        {
+          "type": "local",
+          "id": "7_QL45cpvP-zG8Hkgf4cr"
+        }
+      ],
+      [
+        "0KA68BwP9gdTzE1ESO2Zp",
+        {
+          "type": "local",
+          "id": "0KA68BwP9gdTzE1ESO2Zp"
+        }
+      ]
+    ],
+    "styleSourceSelections": [
+      [
+        "MMimeobf_zi4ZkRGXapju",
+        {
+          "instanceId": "MMimeobf_zi4ZkRGXapju",
+          "values": ["7_QL45cpvP-zG8Hkgf4cr"]
+        }
+      ],
+      [
+        "BMJfjOzunWs8XkQgvvx1e",
+        {
+          "instanceId": "BMJfjOzunWs8XkQgvvx1e",
+          "values": ["0KA68BwP9gdTzE1ESO2Zp"]
+        }
+      ]
+    ],
+    "props": [
+      [
+        "1p34InvRgqoKVqeNZ1uBb",
+        {
+          "id": "1p34InvRgqoKVqeNZ1uBb",
+          "instanceId": "pjkZo5EiBqaeUXBcyHf_O",
+          "name": "href",
+          "type": "page",
+          "value": "WPPAbLFyJD_02vhjRd8P4"
+        }
+      ]
+    ],
+    "dataSources": [
+      [
+        "2KT4-bRzToj9cAGAN_woK",
+        {
+          "type": "parameter",
+          "id": "2KT4-bRzToj9cAGAN_woK",
+          "scopeInstanceId": "MMimeobf_zi4ZkRGXapju",
+          "name": "system"
+        }
+      ],
+      [
+        "tdXe9gFf83hSo9BLWU6xl",
+        {
+          "type": "parameter",
+          "id": "tdXe9gFf83hSo9BLWU6xl",
+          "scopeInstanceId": "n_VBMr7klpx25buS0NV7R",
+          "name": "system"
+        }
+      ]
+    ],
+    "resources": [],
+    "instances": [
+      [
+        "MMimeobf_zi4ZkRGXapju",
+        {
+          "type": "instance",
+          "id": "MMimeobf_zi4ZkRGXapju",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "MYDt0guk1-vzc7yzqyN6A"
+            },
+            {
+              "type": "id",
+              "value": "BMJfjOzunWs8XkQgvvx1e"
+            },
+            {
+              "type": "id",
+              "value": "pjkZo5EiBqaeUXBcyHf_O"
+            }
+          ]
+        }
+      ],
+      [
+        "MYDt0guk1-vzc7yzqyN6A",
+        {
+          "type": "instance",
+          "id": "MYDt0guk1-vzc7yzqyN6A",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Simple Project to test CLI"
+            }
+          ]
+        }
+      ],
+      [
+        "BMJfjOzunWs8XkQgvvx1e",
+        {
+          "type": "instance",
+          "id": "BMJfjOzunWs8XkQgvvx1e",
+          "component": "Text",
+          "children": [
+            {
+              "type": "text",
+              "value": "Please don't change directly in the fixture"
+            }
+          ]
+        }
+      ],
+      [
+        "pjkZo5EiBqaeUXBcyHf_O",
+        {
+          "type": "instance",
+          "id": "pjkZo5EiBqaeUXBcyHf_O",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Test another page link"
+            }
+          ]
+        }
+      ],
+      [
+        "n_VBMr7klpx25buS0NV7R",
+        {
+          "type": "instance",
+          "id": "n_VBMr7klpx25buS0NV7R",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "wthNByqb3RPmheb-56VYI"
+            }
+          ]
+        }
+      ],
+      [
+        "wthNByqb3RPmheb-56VYI",
+        {
+          "type": "instance",
+          "id": "wthNByqb3RPmheb-56VYI",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Another page"
+            }
+          ]
+        }
+      ]
+    ],
+    "deployment": {
+      "domains": [],
+      "projectDomain": "cli-basic-test-d0osr"
+    },
+    "marketplaceProduct": {}
+  },
+  "page": {
+    "id": "9di_L14CzctvSruIoKVvE",
+    "name": "Home",
+    "title": "\"Home\"",
+    "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
+    "systemDataSourceId": "2KT4-bRzToj9cAGAN_woK",
+    "meta": {},
+    "path": ""
+  },
+  "pages": [
+    {
+      "id": "9di_L14CzctvSruIoKVvE",
+      "name": "Home",
+      "title": "\"Home\"",
+      "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
+      "systemDataSourceId": "2KT4-bRzToj9cAGAN_woK",
+      "meta": {},
+      "path": ""
+    },
+    {
+      "id": "WPPAbLFyJD_02vhjRd8P4",
+      "name": "Another page",
+      "title": "\"Another page\"",
+      "rootInstanceId": "n_VBMr7klpx25buS0NV7R",
+      "systemDataSourceId": "tdXe9gFf83hSo9BLWU6xl",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/another-page"
+    }
+  ],
+  "assets": [],
+  "user": {
+    "email": "hello@webstudio.is"
+  },
+  "projectDomain": "cli-basic-test-d0osr"
+}

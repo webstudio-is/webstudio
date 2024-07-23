@@ -1,5 +1,5 @@
 import { basename, dirname, join, normalize, relative } from "node:path";
-import { createWriteStream } from "node:fs";
+import { createWriteStream, existsSync } from "node:fs";
 import {
   rm,
   access,
@@ -54,11 +54,11 @@ import {
   createFileIfNotExists,
   createFolderIfNotExists,
   loadJSONFile,
-  isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 import { htmlToJsx } from "./html-to-jsx";
-import { createFramework } from "./framework-remix";
+import { createFramework as createRemixFramework } from "./framework-remix";
+import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
 
 const limit = pLimit(10);
 
@@ -137,7 +137,9 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
     }
   );
   const content = JSON.stringify(
-    merge(JSON.parse(destinationJson), JSON.parse(sourceJson)),
+    merge(JSON.parse(destinationJson), JSON.parse(sourceJson), {
+      arrayMerge: (_target, source) => source,
+    }),
     null,
     "  "
   );
@@ -178,20 +180,27 @@ const getTemplatePath = async (template: string) => {
   return templatePath;
 };
 
-const copyTemplates = async (template: string = "defaults") => {
+const copyTemplates = async (template: string) => {
   const templatePath = await getTemplatePath(template);
 
   await cp(templatePath, cwd(), {
     recursive: true,
     filter: (source) => {
-      return basename(source) !== "package.json";
+      const name = basename(source);
+      return name !== "package.json" && name !== "tsconfig.json";
     },
   });
 
-  if ((await isFileExists(join(templatePath, "package.json"))) === true) {
+  if (existsSync(join(templatePath, "package.json"))) {
     await mergeJsonInto(
       join(templatePath, "package.json"),
       join(cwd(), "package.json")
+    );
+  }
+  if (existsSync(join(templatePath, "tsconfig.json"))) {
+    await mergeJsonInto(
+      join(templatePath, "tsconfig.json"),
+      join(cwd(), "tsconfig.json")
     );
   }
 };
@@ -223,7 +232,7 @@ export const prebuild = async (options: {
 
   for (const template of options.template) {
     // default template is always applied no need to check
-    if (template === "vanilla") {
+    if (template === "vanilla" || template === "ssg") {
       continue;
     }
 
@@ -250,21 +259,26 @@ export const prebuild = async (options: {
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
 
-  await copyTemplates();
+  await copyTemplates(options.template.includes("ssg") ? "ssg" : "defaults");
 
   // force npm to install with not matching peer dependencies
   await writeFile(join(cwd(), ".npmrc"), "force=true");
 
   for (const template of options.template) {
     // default template is already applied no need to copy twice
-    if (template === "vanilla") {
+    if (template === "vanilla" || template === "ssg") {
       continue;
     }
 
     await copyTemplates(template);
   }
 
-  const framework = await createFramework();
+  let framework;
+  if (options.template.includes("ssg")) {
+    framework = await createVikeSsgFramework();
+  } else {
+    framework = await createRemixFramework();
+  }
 
   const constants: typeof sharedConstants = await import(
     pathToFileURL(join(cwd(), "app/constants.mjs")).href
