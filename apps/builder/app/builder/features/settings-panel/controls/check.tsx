@@ -85,7 +85,7 @@ export const CheckControl = ({
               }}
               id={`${id}:${option}`}
             />
-            <Label htmlFor={`${id}:${option}`}>{humanizeString(option)}</Label>
+            <Label htmlFor={`${id}:${option}`}>{option}</Label>
           </CheckboxAndLabel>
         ))}
         <BindingPopover

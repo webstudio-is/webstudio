@@ -70,7 +70,7 @@ export const RadioControl = ({
           {options.map((value) => (
             <RadioAndLabel key={value}>
               <Radio value={value} id={`${id}:${value}`} />
-              <Label htmlFor={`${id}:${value}`}>{humanizeString(value)}</Label>
+              <Label htmlFor={`${id}:${value}`}>{value}</Label>
             </RadioAndLabel>
           ))}
         </RadioGroup>
