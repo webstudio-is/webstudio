@@ -7,17 +7,11 @@ const cache: Map<string, string> = new Map([
   ["url", "URL"],
 ]);
 
-export const humanizeString = (
-  string: string,
-  customHumanize?: (string: string) => string | undefined
-): string => {
+export const humanizeString = (string: string): string => {
   let result = cache.get(string);
-  if (result === undefined && customHumanize) {
-    result = customHumanize(string);
-  }
   if (result === undefined) {
     result = titleCase(noCase(string));
+    cache.set(string, result);
   }
-  cache.set(string, result);
   return result;
 };

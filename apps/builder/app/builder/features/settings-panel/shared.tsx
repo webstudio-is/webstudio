@@ -37,6 +37,7 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
+import { humanizeString } from "~/shared/string-utils";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -393,4 +394,5 @@ export const humanizeAttribute = (string: string) => {
   if (string === "className") {
     return "Class";
   }
+  return humanizeString(string);
 };
