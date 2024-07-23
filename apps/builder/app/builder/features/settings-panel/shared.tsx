@@ -391,6 +391,6 @@ export const humanizeAttribute = (string: string) => {
     return string;
   }
   if (string === "className") {
-    return "class";
+    return "Class";
   }
 };
