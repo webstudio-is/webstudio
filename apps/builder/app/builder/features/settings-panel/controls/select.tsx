@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { Select } from "@webstudio-is/design-system";
+import { humanizeString } from "~/shared/string-utils";
 import {
   BindingControl,
   BindingPopover,
@@ -32,7 +33,7 @@ export const SelectControl = ({
       ? meta.options
       : [value, ...meta.options];
 
-  const label = meta.label || propName;
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

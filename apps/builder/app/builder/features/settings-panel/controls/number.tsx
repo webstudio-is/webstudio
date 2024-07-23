@@ -14,6 +14,7 @@ import {
   $selectedInstanceScope,
   useBindingState,
 } from "../shared";
+import { humanizeString } from "~/shared/string-utils";
 
 export const NumberControl = ({
   meta,
@@ -44,7 +45,7 @@ export const NumberControl = ({
     }
   );
 
-  const label = meta.label || propName;
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

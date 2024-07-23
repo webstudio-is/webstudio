@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { RadioGroup, Radio, RadioAndLabel } from "@webstudio-is/design-system";
+import { humanizeString } from "~/shared/string-utils";
 import {
   BindingControl,
   BindingPopover,
@@ -31,7 +32,7 @@ export const RadioControl = ({
       : [value, ...meta.options];
 
   const id = useId();
-  const label = meta.label || propName;
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -69,7 +70,7 @@ export const RadioControl = ({
           {options.map((value) => (
             <RadioAndLabel key={value}>
               <Radio value={value} id={`${id}:${value}`} />
-              <Label htmlFor={`${id}:${value}`}>{value}</Label>
+              <Label htmlFor={`${id}:${value}`}>{humanizeString(value)}</Label>
             </RadioAndLabel>
           ))}
         </RadioGroup>
