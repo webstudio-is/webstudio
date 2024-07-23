@@ -39,10 +39,10 @@ import {
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
+  humanizeAttribute,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 import { createRootFolder } from "@webstudio-is/project-build";
-import { humanizeString } from "~/shared/string-utils";
 
 type UrlControlProps = ControlProps<"url">;
 
@@ -476,7 +476,7 @@ export const UrlControl = ({
 
   const BaseControl = modes[mode].control;
 
-  const label = humanizeString(meta.label || propName);
+  const label = humanizeAttribute(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

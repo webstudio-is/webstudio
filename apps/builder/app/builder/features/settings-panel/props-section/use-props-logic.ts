@@ -19,7 +19,6 @@ export type PropAndMeta = {
   propName: string;
   meta: PropMeta;
 };
-export type NameAndLabel = { name: string; label?: string };
 
 // The value we set prop to when it's added
 //
@@ -317,7 +316,7 @@ export const usePropsLogic = ({
     /** List of remaining props still available to add */
     availableProps: Array.from(
       unprocessedKnown.entries(),
-      ([name, { label }]) => ({ name, label })
+      ([name, { label, description }]) => ({ name, label, description })
     ),
   };
 };
