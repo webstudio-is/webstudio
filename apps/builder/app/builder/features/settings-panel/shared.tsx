@@ -385,3 +385,12 @@ export const useBindingState = (expression: undefined | string) => {
   }, [expression]);
   return useStore($bindingState);
 };
+
+export const humanizeAttribute = (string: string) => {
+  if (string.includes("-")) {
+    return string;
+  }
+  if (string === "className") {
+    return "class";
+  }
+};

@@ -5,14 +5,15 @@ import { titleCase } from "title-case";
 const cache: Map<string, string> = new Map([
   ["id", "ID"],
   ["url", "URL"],
-  ["className", "Class"],
 ]);
 
-export const humanizeString = (string: string): string => {
+export const humanizeString = (
+  string: string,
+  customHumanize?: (string: string) => string | undefined
+): string => {
   let result = cache.get(string);
-  // We don't want to change casing for strings like data- or aria-
-  if (string.includes("-")) {
-    result = string;
+  if (result === undefined && customHumanize) {
+    result = customHumanize(string);
   }
   if (result === undefined) {
     result = titleCase(noCase(string));

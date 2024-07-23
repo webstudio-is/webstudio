@@ -13,6 +13,7 @@ import {
   $selectedInstanceScope,
   updateExpressionValue,
   useBindingState,
+  humanizeAttribute,
 } from "../shared";
 
 export const RadioControl = ({
@@ -32,7 +33,7 @@ export const RadioControl = ({
       : [value, ...meta.options];
 
   const id = useId();
-  const label = humanizeString(meta.label || propName);
+  const label = humanizeString(meta.label || propName, humanizeAttribute);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

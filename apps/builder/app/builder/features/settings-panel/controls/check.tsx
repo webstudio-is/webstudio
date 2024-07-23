@@ -12,6 +12,7 @@ import {
   $selectedInstanceScope,
   updateExpressionValue,
   useBindingState,
+  humanizeAttribute,
 } from "../shared";
 
 const add = (array: string[], item: string) => {
@@ -45,7 +46,7 @@ export const CheckControl = ({
   const options = Array.from(new Set([...meta.options, ...value]));
 
   const id = useId();
-  const label = humanizeString(meta.label || propName);
+  const label = humanizeString(meta.label || propName, humanizeAttribute);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

@@ -17,6 +17,7 @@ import {
   Label,
   updateExpressionValue,
   useBindingState,
+  humanizeAttribute,
 } from "../shared";
 import { humanizeString } from "~/shared/string-utils";
 
@@ -58,7 +59,7 @@ export const TextContent = ({
     }
   });
   const id = useId();
-  const label = humanizeString(meta.label || propName);
+  const label = humanizeString(meta.label || propName, humanizeAttribute);
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   let expression: undefined | string;

@@ -12,6 +12,7 @@ import {
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
+  humanizeAttribute,
 } from "../shared";
 import { useEffect, useRef } from "react";
 import { humanizeString } from "~/shared/string-utils";
@@ -34,7 +35,7 @@ export const TextControl = ({
     }
   });
   const id = useId();
-  const label = humanizeString(meta.label || propName);
+  const label = humanizeString(meta.label || propName, humanizeAttribute);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =

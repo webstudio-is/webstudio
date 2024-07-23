@@ -12,6 +12,7 @@ import {
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
+  humanizeAttribute,
 } from "../shared";
 import { useState } from "react";
 import {
@@ -120,7 +121,10 @@ export const CodeControl = ({
       onChange({ type: "string", value });
     }
   });
-  const label = humanizeString(metaOverride.label || propName);
+  const label = humanizeString(
+    metaOverride.label || propName,
+    humanizeAttribute
+  );
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
