@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuTrigger,
+  Flex,
   Label,
   SectionTitle,
   SectionTitleButton,
@@ -30,9 +31,13 @@ import {
   handleDeleteTransformProperty,
   handleHideTransformProperty,
   getHumanizedTextFromTransformLayer,
+  type TransformPanelProps,
 } from "./transform-utils";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { TransformPanelContent } from "./transform-panel";
+import { TranslatePanelContent } from "./transform-translate";
+import { ScalePanelContent } from "./transform-scale";
+import { RotatePanelContent } from "./transform-rotate";
+import { SkewPanelContent } from "./transform-skew";
 import { humanizeString } from "~/shared/string-utils";
 import { getStyleSource } from "../../shared/style-info";
 import { PropertyName } from "../../shared/property-name";
@@ -178,16 +183,24 @@ const TransformSection = (
     return;
   }
 
+  const contentPanelProps: TransformPanelProps = {
+    currentStyle,
+    setProperty,
+    propertyValue: properties.value,
+  };
+
   return (
     <FloatingPanel
       title={humanizeString(panel)}
       content={
-        <TransformPanelContent
-          panel={panel}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          propertyValue={properties.value}
-        />
+        <Flex direction="column" css={{ p: theme.spacing[9] }}>
+          {panel === "translate" && (
+            <TranslatePanelContent {...contentPanelProps} />
+          )}
+          {panel === "scale" && <ScalePanelContent {...contentPanelProps} />}
+          {panel === "rotate" && <RotatePanelContent {...contentPanelProps} />}
+          {panel === "skew" && <SkewPanelContent {...contentPanelProps} />}
+        </Flex>
       }
     >
       <CssValueListItem

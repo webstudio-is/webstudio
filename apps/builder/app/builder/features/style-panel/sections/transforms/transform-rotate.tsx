@@ -1,7 +1,7 @@
 import { Flex, Grid, Label } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
-  type TransformFloatingPanelContentProps,
+  type TransformPanelProps,
 } from "./transform-utils";
 import {
   XAxisRotateIcon,
@@ -21,9 +21,7 @@ import {
   parseCssValue,
 } from "@webstudio-is/css-data";
 
-export const RotatePanelContent = (
-  props: TransformFloatingPanelContentProps
-) => {
+export const RotatePanelContent = (props: TransformPanelProps) => {
   const { propertyValue, setProperty, currentStyle } = props;
   const { rotateX, rotateY, rotateZ } =
     extractRotatePropertiesFromTransform(propertyValue);

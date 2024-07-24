@@ -22,9 +22,7 @@ import {
 // angle
 const fakeProperty = "rotate";
 
-export const SkewFloatingPanelContent = (
-  props: TransformFloatingPanelContentProps
-) => {
+export const SkewPanelContent = (props: TransformFloatingPanelContentProps) => {
   const { propertyValue, setProperty, currentStyle } = props;
   const { skewX, skewY } = extractSkewPropertiesFromTransform(propertyValue);
 

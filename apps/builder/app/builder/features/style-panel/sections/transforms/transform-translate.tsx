@@ -8,7 +8,7 @@ import {
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import {
   updateTransformTuplePropertyValue,
-  type TransformFloatingPanelContentProps,
+  type TransformPanelProps,
 } from "./transform-utils";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
@@ -16,9 +16,7 @@ import { parseCssValue } from "@webstudio-is/css-data";
 
 const property: StyleProperty = "translate";
 
-export const TranslatePanelContent = (
-  props: TransformFloatingPanelContentProps
-) => {
+export const TranslatePanelContent = (props: TransformPanelProps) => {
   const { propertyValue, setProperty } = props;
   const [translateX, translateY, translateZ] = propertyValue.value;
 

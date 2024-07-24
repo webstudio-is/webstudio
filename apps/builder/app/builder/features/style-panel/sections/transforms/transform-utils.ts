@@ -13,7 +13,7 @@ import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 import type { StyleInfo } from "../../shared/style-info";
 import type { TransformPanel } from "./transforms";
 
-export type TransformFloatingPanelContentProps = {
+export type TransformPanelProps = {
   currentStyle: StyleInfo;
   propertyValue: TupleValue;
   setProperty: SetProperty;
