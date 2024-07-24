@@ -95,7 +95,9 @@ const createUserPlanContext = async (request: Request) => {
   console.info("createUserPlanContext after isAuthenticated");
 
   console.info("createUserPlanContext before getUserPlanFeatures");
-  const planFeatures = user?.id ? getUserPlanFeatures(user.id) : undefined;
+  const planFeatures = user?.id
+    ? await getUserPlanFeatures(user.id)
+    : undefined;
   console.info("createUserPlanContext after getUserPlanFeatures");
   return planFeatures;
 };
