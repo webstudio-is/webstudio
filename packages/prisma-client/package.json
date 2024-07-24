@@ -18,7 +18,7 @@
     "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
-    "@prisma/client": "^5.12.1",
+    "@prisma/client": "^5.17.0",
     "@types/node": "^20.12.7",
     "@webstudio-is/tsconfig": "workspace:*",
     "prisma": "^5.12.1",

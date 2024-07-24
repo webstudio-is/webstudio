@@ -82,8 +82,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     console.info("BEFORE CONTEXT", logId);
     const context = await createContext(request);
+    console.info("AFTER CONTEXT", logId);
+
+    // Allow logs to be flushed before proceeding
+    await new Promise((resolve) => setTimeout(resolve, 1));
 
     console.info("BEFORE PERMIT", logId);
+
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId, permit: "edit" },
       context

@@ -1604,8 +1604,8 @@ importers:
         version: 3.2.1
     devDependencies:
       '@prisma/client':
-        specifier: ^5.12.1
-        version: 5.12.1(prisma@5.12.1)
+        specifier: ^5.17.0
+        version: 5.17.0(prisma@5.12.1)
       '@types/node':
         specifier: ^20.12.7
         version: 20.12.7
@@ -3964,8 +3964,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@prisma/client@5.12.1':
-    resolution: {integrity: sha512-6/JnizEdlSBxDIdiLbrBdMW5NqDxOmhXAJaNXiPpgzAPr/nLZResT6MMpbOHLo5yAbQ1Vv5UU8PTPRzb0WIxdA==}
+  '@prisma/client@5.17.0':
+    resolution: {integrity: sha512-N2tnyKayT0Zf7mHjwEyE8iG7FwTmXDHFZ1GnNhQp0pJUObsuel4ZZ1XwfuAYkq5mRIiC/Kot0kt0tGCfLJ70Jw==}
     engines: {node: '>=16.13'}
     peerDependencies:
       prisma: '*'
@@ -11845,7 +11845,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@prisma/client@5.12.1(prisma@5.12.1)':
+  '@prisma/client@5.17.0(prisma@5.12.1)':
     optionalDependencies:
       prisma: 5.12.1
 
