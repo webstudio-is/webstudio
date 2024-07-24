@@ -21,7 +21,9 @@ const createAuthorizationContext = async (
     request.headers.get("x-auth-token") ??
     url.hostname;
 
+  console.info("createAuthorizationContext before authenticator");
   const user = await authenticator.isAuthenticated(request);
+  console.info("createAuthorizationContext after authenticator");
 
   const isServiceCall =
     request.headers.has("Authorization") &&
@@ -82,12 +84,19 @@ const createUserPlanContext = async (request: Request) => {
   // When a shared link is accessed, identified by the presence of an authToken,
   // the system retrieves the plan features associated with the project owner's account.
   if (authToken !== null) {
+    console.info("createUserPlanContext before getTokenPlanFeatures");
     const planFeatures = await getTokenPlanFeatures(authToken);
+    console.info("createUserPlanContext after getTokenPlanFeatures");
     return planFeatures;
   }
 
+  console.info("createUserPlanContext before isAuthenticated");
   const user = await authenticator.isAuthenticated(request);
+  console.info("createUserPlanContext after isAuthenticated");
+
+  console.info("createUserPlanContext before getUserPlanFeatures");
   const planFeatures = user?.id ? getUserPlanFeatures(user.id) : undefined;
+  console.info("createUserPlanContext after getUserPlanFeatures");
   return planFeatures;
 };
 
