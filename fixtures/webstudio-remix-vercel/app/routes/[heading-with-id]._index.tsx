@@ -20,7 +20,6 @@ import {
   Page,
   siteName,
   favIconAsset,
-  socialImageAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
 } from "../__generated__/[heading-with-id]._index";
@@ -32,9 +31,8 @@ import {
   projectId,
   contactEmail,
 } from "../__generated__/[heading-with-id]._index.server";
-
-import css from "../__generated__/index.css?url";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
+import css from "../__generated__/index.css?url";
 
 export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);
@@ -66,11 +64,14 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   // typecheck
   arg.context.EXCLUDE_FROM_SEARCH satisfies boolean;
 
+  if (arg.context.EXCLUDE_FROM_SEARCH) {
+    pageMeta.excludePageFromSearch = arg.context.EXCLUDE_FROM_SEARCH;
+  }
+
   return json(
     {
       host,
       url: url.href,
-      excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
       system,
       resources,
       pageMeta,
@@ -134,7 +135,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     });
   }
 
-  if (pageMeta.excludePageFromSearch || data.excludeFromSearch) {
+  if (pageMeta.excludePageFromSearch) {
     metas.push({
       name: "robots",
       content: "noindex, nofollow",
@@ -152,11 +153,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     });
   }
 
-  if (socialImageAsset) {
+  if (pageMeta.socialImageAssetName) {
     metas.push({
       property: "og:image",
       content: `https://${data.host}${imageLoader({
-        src: socialImageAsset.name,
+        src: pageMeta.socialImageAssetName,
         // Do not transform social image (not enough information do we need to do this)
         format: "raw",
       })}`,

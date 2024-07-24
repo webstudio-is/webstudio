@@ -441,17 +441,28 @@ const mapComponentAndPresetStyles = (
 // Checks if a style source with that name already exists and the new one has new styles and is not empty - if so, adds a number to a name.
 const mergeComboStyles = (wfStyles: Array<WfStyle>) => {
   const classes = new Set<string>();
+  const skip = new Set<string>();
   let mergedStyle;
   for (const wfStyle of wfStyles) {
     const { name } = wfStyle;
 
     classes.add(name);
+
     if (mergedStyle === undefined) {
       mergedStyle = { variants: {}, ...wfStyle, name };
       continue;
     }
+
+    const comboClass = mergedStyle.name + "." + name;
+
+    // We need to avoid creating combo classes when they have no additional styles.
+    if (wfStyle.comb === "&" && wfStyle.styleLess === "") {
+      skip.add(comboClass);
+      continue;
+    }
+
     mergedStyle.styleLess += wfStyle.styleLess;
-    mergedStyle.name += "." + name;
+    mergedStyle.name = comboClass;
     for (const key in wfStyle.variants) {
       if (key in mergedStyle.variants === false) {
         mergedStyle.variants[key] = { styleLess: "" };
@@ -464,9 +475,9 @@ const mergeComboStyles = (wfStyles: Array<WfStyle>) => {
   // Produce all possible combinations of combo classes so we can check later if they alredy exist.
   // This is needed to achieve the same end-result as with combo-classes in webflow.
   // Example .a.b.c -> .a, .b, .c, .a.b, .a.c, .b.c, .a.b.c
-  const comboClasses = classesArray.flatMap((name1) =>
-    classesArray.map((name2) => `${name1}.${name2}`)
-  );
+  const comboClasses = classesArray
+    .flatMap((name1) => classesArray.map((name2) => `${name1}.${name2}`))
+    .filter((name) => skip.has(name) === false);
 
   return {
     mergedStyle,

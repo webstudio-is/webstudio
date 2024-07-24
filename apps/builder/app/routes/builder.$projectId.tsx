@@ -68,7 +68,10 @@ export const loader = async ({
       throw new Error(`Project "${params.projectId}" not found`);
     }
 
-    const devBuild = await loadBuildIdAndVersionByProjectId(project.id);
+    const devBuild = await loadBuildIdAndVersionByProjectId(
+      context,
+      project.id
+    );
 
     const end = Date.now();
 

@@ -1,7 +1,6 @@
 import { applyPatches, enableMapSet, enablePatches } from "immer";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { SyncItem } from "immerhin";
-import { prisma } from "@webstudio-is/prisma-client";
 import {
   Breakpoints,
   Breakpoint,
@@ -31,12 +30,14 @@ import {
   serializeData,
   parseConfig,
   serializeConfig,
+  loadRawBuildById,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
 import { db } from "@webstudio-is/project/index.server";
+import type { Database } from "@webstudio-is/postrest/index.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -78,14 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw Error("You don't have edit access to this project");
     }
 
-    // await new Promise((r) => setTimeout(r, 10000));
-
-    const build = await prisma.build.findUnique({
-      where: { id_projectId: { projectId, id: buildId } },
-    });
-    if (build === null) {
-      throw Error(`Build ${buildId} not found`);
-    }
+    const build = await loadRawBuildById(context, buildId);
 
     const serverVersion = build.version;
     if (clientVersion !== serverVersion) {
@@ -231,7 +225,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     // save build data when all patches applied
-    const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {
+    const dbBuildData: Database["public"]["Tables"]["Build"]["Update"] = {
       version: clientVersion + 1,
       lastTransactionId,
     };
@@ -304,18 +298,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
-    const { count } = await prisma.build.updateMany({
-      data: dbBuildData,
-      where: {
-        projectId,
+    const update = await context.postgrest.client
+      .from("Build")
+      .update(dbBuildData, { count: "exact" })
+      .match({
         id: buildId,
+        projectId,
         version: clientVersion,
-      },
-    });
+      });
+
+    if (update.error) {
+      console.error(update.error);
+      throw update.error;
+    }
+    if (update.count == null) {
+      console.error("Update count is null");
+      throw new Error("Update count is null");
+    }
 
     // ensure only build with client version is updated
     // to avoid race conditions
-    if (count === 0) {
+    if (update.count === 0) {
       // We don't validate if lastTransactionId matches the user's transaction ID here, as we've already done so earlier.
       // Given the sequential nature of messages from a single client, this situation is deemed improbable.
       return {

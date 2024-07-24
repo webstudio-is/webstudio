@@ -13,9 +13,9 @@ import {
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
+  humanizeAttribute,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
-import { humanizeString } from "~/shared/string-utils";
 
 const UrlInput = ({
   id,
@@ -72,7 +72,7 @@ export const FileControl = ({
     }
   );
 
-  const label = humanizeString(meta.label || propName);
+  const label = humanizeAttribute(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

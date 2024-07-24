@@ -530,6 +530,38 @@ test("Section", async () => {
   `);
 });
 
+test("Figure", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "7c6bc1fd-128d-514b-167b-605a910e435c",
+          type: "Block",
+          tag: "figure",
+          classes: [],
+          children: [],
+        },
+      ],
+      styles: [],
+      assets: [],
+    },
+  });
+
+  equalFragment(fragment, <$.Box tag="figure" />);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      figure {
+        display: block;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0
+      }
+    }"
+  `);
+});
+
 test("BlockContainer", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
@@ -2597,7 +2629,7 @@ describe("Styles", () => {
             type: "class",
             name: "is-small",
             comb: "&",
-            styleLess: "",
+            styleLess: "padding: 1rem;",
           },
           {
             _id: "194e7d07-469d-6ffa-3925-1f51bdad7e46",
@@ -2648,7 +2680,92 @@ describe("Styles", () => {
         }
         button.is-small.is-secondary {
           text-align: center;
-          background-color: transparent
+          background-color: transparent;
+          padding: 1rem
+        }
+      }"
+    `);
+  });
+
+  test("Skip empty combo class", async () => {
+    const fragment = await toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "56ede23d-6dcc-a320-0af4-3a803d8efd88",
+            type: "Block",
+            tag: "div",
+            classes: ["08c3532a-4e88-1106-9fda-e4dcd66f93f0"],
+            children: [
+              "d06c01f8-da59-b31e-a910-55a6d33898f0",
+              "b67fb4c4-ce52-b441-1d89-55b165282c99",
+            ],
+          },
+          {
+            _id: "d06c01f8-da59-b31e-a910-55a6d33898f0",
+            type: "Block",
+            tag: "div",
+            classes: ["6569b562-7de4-bd09-3d2d-59d7c11ec988"],
+            children: [],
+          },
+          {
+            _id: "b67fb4c4-ce52-b441-1d89-55b165282c99",
+            type: "Block",
+            tag: "div",
+            classes: [
+              "08c3532a-4e88-1106-9fda-e4dcd66f93f0",
+              "c4851546-799d-c6bf-fb17-0b5765f48d72",
+            ],
+            children: [],
+          },
+        ],
+        styles: [
+          {
+            _id: "08c3532a-4e88-1106-9fda-e4dcd66f93f0",
+            fake: false,
+            type: "class",
+            name: "d1",
+            namespace: "",
+            comb: "",
+            styleLess: "color: hsla(0, 70.45%, 48.11%, 1.00);",
+            variants: {},
+            children: ["c4851546-799d-c6bf-fb17-0b5765f48d72"],
+          },
+          {
+            _id: "6569b562-7de4-bd09-3d2d-59d7c11ec988",
+            fake: false,
+            type: "class",
+            name: "d2",
+            namespace: "",
+            comb: "",
+            styleLess: "font-size: 200px;",
+            variants: {},
+            children: [],
+          },
+          {
+            _id: "c4851546-799d-c6bf-fb17-0b5765f48d72",
+            fake: false,
+            type: "class",
+            name: "d2",
+            namespace: "",
+            comb: "&",
+            styleLess: "",
+            variants: {},
+            children: [],
+          },
+        ],
+        assets: [],
+      },
+    });
+
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        d1 {
+          color: rgba(209, 36, 36, 1)
+        }
+        d2 {
+          font-size: 200px
         }
       }"
     `);

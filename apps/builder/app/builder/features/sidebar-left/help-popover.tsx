@@ -9,10 +9,10 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import {
+  BugIcon,
   DiscordIcon,
   GithubIcon,
   Webstudio1cIcon,
-  XIcon,
   Youtube1cIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
@@ -74,11 +74,15 @@ export const HelpPopover = ({
               Discuss on GitHub
             </Button>
             <Button
-              formAction="https://x.com/getwebstudio"
-              prefix={<XIcon />}
+              prefix={<BugIcon />}
               color="dark"
+              onClick={() => {
+                window.open(
+                  "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
+                );
+              }}
             >
-              Follow us on X
+              Report a bug
             </Button>
           </Flex>
         </PopoverContent>

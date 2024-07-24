@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
 import type { Instance } from "@webstudio-is/sdk";
-import { theme, Combobox, Separator, Flex } from "@webstudio-is/design-system";
+import {
+  theme,
+  Combobox,
+  Separator,
+  Flex,
+  Box,
+} from "@webstudio-is/design-system";
 import { descendantComponent } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
@@ -12,22 +18,24 @@ import {
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { renderControl } from "../controls/combined";
-import {
-  usePropsLogic,
-  type NameAndLabel,
-  type PropAndMeta,
-} from "./use-props-logic";
+import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
+import { isAttributeNameSafe } from "~/shared/dom-utils";
 
-const itemToString = (item: NameAndLabel | null) =>
-  item?.label || item?.name || "";
+type Item = {
+  name: string;
+  label?: string;
+  description?: string;
+};
+
+const itemToString = (item: Item | null) => item?.label || item?.name || "";
 
 const matchOrSuggestToCreate = (
   search: string,
-  items: Array<NameAndLabel>,
-  itemToString: (item: NameAndLabel) => string
-): Array<NameAndLabel> => {
+  items: Array<Item>,
+  itemToString: (item: Item) => string
+): Array<Item> => {
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
@@ -39,7 +47,7 @@ const matchOrSuggestToCreate = (
   ) {
     matched.unshift({
       name: search.trim(),
-      label: `Create "${search.trim()}"`,
+      label: `Create attribute: "${search.trim()}"`,
     });
   }
   return matched;
@@ -82,38 +90,52 @@ const renderProperty = (
     },
   });
 
-const forbiddenProperties = new Set(["style"]);
+const forbiddenProperties = new Set(["style", "class", "className"]);
 
-const AddProperty = ({
+const AddPropertyOrAttribute = ({
   availableProps,
   onPropSelected,
 }: {
-  availableProps: NameAndLabel[];
+  availableProps: Item[];
   onPropSelected: (propName: string) => void;
 }) => {
   const [value, setValue] = useState("");
+  const [isValid, setIsValid] = useState(true);
   return (
     <Flex
       css={{ height: theme.spacing[13] }}
       direction="column"
       justify="center"
     >
-      <Combobox<NameAndLabel>
+      <Combobox<Item>
+        defaultHighlightedIndex={0}
         autoFocus
-        placeholder="Find or create a property"
-        // @todo add descriptions
+        color={isValid ? undefined : "error"}
+        placeholder="Select or create"
         items={availableProps}
         itemToString={itemToString}
         onItemSelect={(item) => {
-          if (forbiddenProperties.has(item.name)) {
+          if (
+            forbiddenProperties.has(item.name) ||
+            isAttributeNameSafe(item.name) === false
+          ) {
+            setIsValid(false);
             return;
           }
+          setIsValid(true);
           onPropSelected(item.name);
         }}
         match={matchOrSuggestToCreate}
         value={{ name: "", label: value }}
         onInputChange={(value) => {
           setValue(value ?? "");
+        }}
+        getDescription={(item) => {
+          return (
+            <Box css={{ width: theme.spacing[28] }}>
+              {item?.description ?? "No description available"}
+            </Box>
+          );
         }}
       />
     </Flex>
@@ -145,13 +167,13 @@ export const PropsSection = (props: PropsSectionProps) => {
       <Separator />
 
       <CollapsibleSectionWithAddButton
-        label="Properties"
+        label="Properties & Attributes"
         onAdd={() => setAddingProp(true)}
         hasItems={hasItems}
       >
         <Flex gap="1" direction="column">
           {addingProp && (
-            <AddProperty
+            <AddPropertyOrAttribute
               availableProps={logic.availableProps}
               onPropSelected={(propName) => {
                 setAddingProp(false);

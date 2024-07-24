@@ -16,7 +16,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (project.userId === null) {
     throw new Error("Project must have project userId defined");
   }
-  const devBuild = await loadBuildByProjectId(project.id);
+  const devBuild = await loadBuildByProjectId(context, project.id);
   const assets = await loadAssetsByProject(project.id, context);
   return {
     build: devBuild,

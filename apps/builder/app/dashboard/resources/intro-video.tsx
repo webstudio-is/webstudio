@@ -31,7 +31,7 @@ export const IntroVideoDialog = ({
       >
         <iframe
           className={iframeStyle()}
-          src="https://www.youtube-nocookie.com/embed/aL2sBSb3ghg?si=siExeIRt-YI_ypuA&autoplay=true"
+          src="https://www.youtube-nocookie.com/embed/videoseries?si=fk5L11IcnVErQRRS&list=PL4vVqpngzeT4Bfs_D25xNi_qNMY99R928&autoplay=true"
           allowFullScreen
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         />
