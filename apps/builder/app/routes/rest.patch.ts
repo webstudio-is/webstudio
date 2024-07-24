@@ -54,7 +54,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const logId = nanoid();
 
-  console.info("DEBUG", process.env.NODE_ENV, logId);
+  console.info("DEBUG", process.env.DEBUG, logId);
   console.info("PATCH START", logId);
 
   const metrics = await prisma.$metrics.json();
