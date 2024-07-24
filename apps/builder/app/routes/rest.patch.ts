@@ -335,6 +335,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return { status: "ok" };
   } catch (e) {
+    console.error(e);
     return { errors: e instanceof Error ? e.message : JSON.stringify(e) };
   }
 };
