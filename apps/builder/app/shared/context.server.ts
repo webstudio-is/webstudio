@@ -87,7 +87,9 @@ const createUserPlanContext = async (request: Request) => {
   }
 
   const user = await authenticator.isAuthenticated(request);
-  const planFeatures = user?.id ? getUserPlanFeatures(user.id) : undefined;
+  const planFeatures = user?.id
+    ? await getUserPlanFeatures(user.id)
+    : undefined;
   return planFeatures;
 };
 

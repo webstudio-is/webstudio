@@ -81,7 +81,22 @@ export const prisma =
             },
           ],
         }
-      : {}),
+      : {
+          log: [
+            {
+              emit: "stdout",
+              level: "error",
+            },
+            {
+              emit: "stdout",
+              level: "info",
+            },
+            {
+              emit: "stdout",
+              level: "warn",
+            },
+          ],
+        }),
   });
 
 prisma.$on("query", (e) => {
