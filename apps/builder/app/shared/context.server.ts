@@ -75,13 +75,14 @@ const createEntriContext = () => {
   };
 };
 
-const createUserPlanContext = async (request: Request) => {
-  const url = new URL(request.url);
-
-  const authToken = url.searchParams.get("authToken");
+const createUserPlanContext = async (
+  request: Request,
+  authorization: AppContext["authorization"]
+) => {
+  const { authToken } = authorization;
   // When a shared link is accessed, identified by the presence of an authToken,
   // the system retrieves the plan features associated with the project owner's account.
-  if (authToken !== null) {
+  if (authToken != null) {
     const planFeatures = await getTokenPlanFeatures(authToken);
     return planFeatures;
   }
@@ -119,10 +120,11 @@ const createPostrestContext = () => {
  */
 export const createContext = async (request: Request): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request);
+
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
   const entri = createEntriContext();
-  const userPlanFeatures = await createUserPlanContext(request);
+  const userPlanFeatures = await createUserPlanContext(request, authorization);
   const trpcCache = createTrpcCache();
   const postgrest = createPostrestContext();
 
