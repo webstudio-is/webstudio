@@ -2,6 +2,8 @@ version: "3.8"
 
 services:
   app:
+    init: true
+    privileged: true
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,7 +12,9 @@ services:
       - ..:/workspaces/webstudio:cached
       # preserve history
       - ./.local:/home/node/.local
+      - docker-data:/var/lib/docker
 
+    entrypoint: ["/usr/local/share/docker-init.sh"]
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
@@ -64,3 +68,4 @@ services:
 
 volumes:
   postgres-data:
+  docker-data:

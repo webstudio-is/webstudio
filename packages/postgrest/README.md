@@ -10,6 +10,14 @@
 pnpm generate-types
 ```
 
+or in case of non devcontainer environment
+
+```bash
+docker compose exec -iT app bash
+cd /workspaces/webstudio/packages/postgrest
+pnpm generate-types
+```
+
 ## Next steps.
 
 Use https://supabase.com/docs/reference/cli/supabase-db-start or directly https://github.com/djrobstep/migra for migrations.
