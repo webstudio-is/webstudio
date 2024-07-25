@@ -144,11 +144,6 @@ export const createSchema = async ({ name }: { name: string }) => {
 
   const sqlScript = await prismaMigrations.cliDiff();
 
-  if (isNoopSql(sqlScript ?? "")) {
-    logger.info("No changes to apply");
-    process.exit(0);
-  }
-
   const migrationName = prismaMigrations.generateMigrationName(name);
 
   const filePath = prismaMigrations.getMigrationFilePath(migrationName, "sql");

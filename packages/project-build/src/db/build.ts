@@ -265,7 +265,7 @@ const zBuildCloneResult = z
   .length(1)
   .transform((result) => result[0]);
 
-export const cloneBuild = async (
+const cloneBuild = async (
   props: {
     fromProjectId: Build["projectId"];
     toProjectId: Build["projectId"];
