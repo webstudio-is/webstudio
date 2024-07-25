@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/css-data";
 import { kebabCase } from "change-case";
 import { equalMedia, hyphenateProperty } from "@webstudio-is/css-engine";
-import type { Styles as WfStylePresets } from "./__generated__/style-presets";
+import type { WfStylePresets } from "./style-presets-overrides";
 import { builderApi } from "~/shared/builder-api";
 import { url } from "css-tree";
 import { mapGroupBy } from "~/shared/shim";
@@ -501,9 +501,7 @@ export const addStyles = async ({
   fragment: WebstudioFragment;
   generateStyleSourceId: (sourceData: string) => Promise<string>;
 }) => {
-  const { styles: stylePresets } = await import(
-    "./__generated__/style-presets"
-  );
+  const { stylePresets } = await import("./style-presets-overrides");
 
   for (const wfNode of wfNodes.values()) {
     if ("text" in wfNode) {
