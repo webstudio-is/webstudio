@@ -28,12 +28,16 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body data-ws-id="EDEfpMPRqDejthtwkH7ws" data-ws-component="Body">
+    <Body
+      data-ws-id="EDEfpMPRqDejthtwkH7ws"
+      data-ws-component="Body"
+      className="ws-p-body"
+    >
       <Image
         data-ws-id="AdXSAYCx4QDo5QN6nLoGs"
         data-ws-component="Image"
         src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
-        className="c1czoo99"
+        className="ws-p-image c1czoo99"
       />
     </Body>
   );

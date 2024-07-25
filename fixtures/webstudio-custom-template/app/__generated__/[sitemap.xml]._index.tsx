@@ -30,12 +30,17 @@ const Body = (props: any) => props.children;
 const Page = ({ system: system }: { system: any }) => {
   let sitemapxml = useResource("sitemapxml_1");
   return (
-    <Body data-ws-id="rve0BYRbzAkSCr3Lq-wzi" data-ws-component="Body">
+    <Body
+      data-ws-id="rve0BYRbzAkSCr3Lq-wzi"
+      data-ws-component="Body"
+      className="ws-p-body"
+    >
       <XmlNode
         data-ws-id="cgaMXxOMMAh4H-u-MB3_0"
         data-ws-component="XmlNode"
         tag={"urlset"}
         xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
+        className="ws-p-xml-node"
       >
         {sitemapxml?.data?.map((url: any, index: number) => (
           <Fragment key={index}>
@@ -43,11 +48,13 @@ const Page = ({ system: system }: { system: any }) => {
               data-ws-id="SKzEKWw1VtVVFvUcIWuUp"
               data-ws-component="XmlNode"
               tag={"url"}
+              className="ws-p-xml-node"
             >
               <XmlNode
                 data-ws-id="9NJGnzZG3iPZs78XPTHhH"
                 data-ws-component="XmlNode"
                 tag={"loc"}
+                className="ws-p-xml-node"
               >
                 {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
               </XmlNode>
@@ -55,6 +62,7 @@ const Page = ({ system: system }: { system: any }) => {
                 data-ws-id="IjNaHLHI4gWStV8GvhijX"
                 data-ws-component="XmlNode"
                 tag={"lastmod"}
+                className="ws-p-xml-node"
               >
                 {url?.lastModified}
               </XmlNode>
