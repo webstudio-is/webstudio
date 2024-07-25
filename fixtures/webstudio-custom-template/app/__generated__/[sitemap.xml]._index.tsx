@@ -40,7 +40,6 @@ const Page = ({ system: system }: { system: any }) => {
         data-ws-component="XmlNode"
         tag={"urlset"}
         xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
-        className="w-xml-node"
       >
         {sitemapxml?.data?.map((url: any, index: number) => (
           <Fragment key={index}>
@@ -48,13 +47,11 @@ const Page = ({ system: system }: { system: any }) => {
               data-ws-id="SKzEKWw1VtVVFvUcIWuUp"
               data-ws-component="XmlNode"
               tag={"url"}
-              className="w-xml-node"
             >
               <XmlNode
                 data-ws-id="9NJGnzZG3iPZs78XPTHhH"
                 data-ws-component="XmlNode"
                 tag={"loc"}
-                className="w-xml-node"
               >
                 {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
               </XmlNode>
@@ -62,7 +59,6 @@ const Page = ({ system: system }: { system: any }) => {
                 data-ws-id="IjNaHLHI4gWStV8GvhijX"
                 data-ws-component="XmlNode"
                 tag={"lastmod"}
-                className="w-xml-node"
               >
                 {url?.lastModified}
               </XmlNode>

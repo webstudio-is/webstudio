@@ -82,8 +82,12 @@ export const generateCss = ({
   for (const [component, meta] of componentMetas) {
     const [_namespace, componentName] = parseComponentName(component);
     const className = `w-${scope.getName(component, componentName)}`;
-    presetClasses.set(component, className);
-    for (const [tag, styles] of Object.entries(meta.presetStyle ?? {})) {
+    const presetStyle = Object.entries(meta.presetStyle ?? {});
+    if (presetStyle.length > 0) {
+      // add preset class only when at least one style is defined
+      presetClasses.set(component, className);
+    }
+    for (const [tag, styles] of presetStyle) {
       // use :where() to reset specificity of preset selector
       // and let user styles completely override it
       // ideally switch to @layer when better supported
