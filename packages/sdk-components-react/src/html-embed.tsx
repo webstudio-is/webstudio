@@ -129,6 +129,7 @@ type ChildProps = {
   innerRef: ForwardedRef<HTMLDivElement>;
   // code can be actually undefined when prop is not provided
   code?: string;
+  className?: string;
 };
 
 const Placeholder = (props: ChildProps) => {
@@ -214,6 +215,7 @@ type HtmlEmbedProps = {
   code: string;
   executeScriptOnCanvas?: boolean;
   clientOnly?: boolean;
+  className?: string;
   // avoid builder passing it to dom
   children?: never;
 };
