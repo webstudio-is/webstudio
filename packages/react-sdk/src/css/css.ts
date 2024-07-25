@@ -59,6 +59,8 @@ export const createImageValueTransformer =
     }
   };
 
+const normalizeClassName = (name: string) => kebabCase(name);
+
 export const generateCss = ({
   assets,
   instances,
@@ -76,10 +78,10 @@ export const generateCss = ({
   addGlobalRules(globalSheet, { assets, assetBaseUrl });
   globalSheet.addMediaRule("presets");
   const presetClasses = new Map<Instance["component"], string>();
-  const scope = createScope([], (name) => name);
+  const scope = createScope([], normalizeClassName, "-");
   for (const [component, meta] of componentMetas) {
     const [_namespace, componentName] = parseComponentName(component);
-    const className = `ws-p-${scope.getName(component, kebabCase(componentName))}`;
+    const className = `w-${scope.getName(component, componentName)}`;
     presetClasses.set(component, className);
     for (const [tag, styles] of Object.entries(meta.presetStyle ?? {})) {
       // use :where() to reset specificity of preset selector

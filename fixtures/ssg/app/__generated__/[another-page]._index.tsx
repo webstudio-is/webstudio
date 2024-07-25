@@ -23,12 +23,12 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="n_VBMr7klpx25buS0NV7R"
       data-ws-component="Body"
-      className="ws-p-body"
+      className="w-body"
     >
       <Heading
         data-ws-id="wthNByqb3RPmheb-56VYI"
         data-ws-component="Heading"
-        className="ws-p-heading"
+        className="w-heading"
       >
         {"Another page"}
       </Heading>

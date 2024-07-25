@@ -31,13 +31,13 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="EDEfpMPRqDejthtwkH7ws"
       data-ws-component="Body"
-      className="ws-p-body"
+      className="w-body"
     >
       <Image
         data-ws-id="AdXSAYCx4QDo5QN6nLoGs"
         data-ws-component="Image"
         src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
-        className="ws-p-image c1czoo99"
+        className="w-image c1czoo99"
       />
     </Body>
   );

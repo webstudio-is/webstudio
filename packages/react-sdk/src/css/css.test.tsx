@@ -214,10 +214,10 @@ test("generate component presets with multiple tags", () => {
   expect(cssText).toMatchInlineSnapshot(`
 "html {margin: 0; display: grid; min-height: 100%}
 @media all {
-  :where(div.ws-p-list-item) {
+  :where(div.w-list-item) {
     display: block
   }
-  :where(a.ws-p-list-item) {
+  :where(a.w-list-item) {
     -webkit-user-select: none;
     user-select: none
   }
@@ -289,13 +289,13 @@ test("deduplicate component presets for similarly named components", () => {
   expect(cssText).toMatchInlineSnapshot(`
 "html {margin: 0; display: grid; min-height: 100%}
 @media all {
-  :where(div.ws-p-list-item) {
+  :where(div.w-list-item) {
     display: block
   }
-  :where(div.ws-p-list-item_1) {
+  :where(div.w-list-item-1) {
     display: flex
   }
-  :where(div.ws-p-list-item_2) {
+  :where(div.w-list-item-2) {
     display: grid
   }
 }
@@ -376,10 +376,10 @@ test("expose preset classes to instances", () => {
   expect(atomicCssText).toMatchInlineSnapshot(`
 "html {margin: 0; display: grid; min-height: 100%}
 @media all {
-  :where(div.ws-p-body) {
+  :where(div.w-body) {
     display: block
   }
-  :where(div.ws-p-box) {
+  :where(div.w-box) {
     display: flex
   }
 }
@@ -388,21 +388,21 @@ test("expose preset classes to instances", () => {
   expect(classes).toMatchInlineSnapshot(`
 Map {
   "body" => [
-    "ws-p-body",
+    "w-body",
   ],
   "box" => [
-    "ws-p-box",
+    "w-box",
   ],
 }
 `);
   expect(atomicClasses).toMatchInlineSnapshot(`
 Map {
   "body" => [
-    "ws-p-body",
+    "w-body",
     "c17hlgoh",
   ],
   "box" => [
-    "ws-p-box",
+    "w-box",
     "cawkhls",
   ],
 }

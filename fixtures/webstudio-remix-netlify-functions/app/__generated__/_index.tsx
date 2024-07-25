@@ -31,19 +31,19 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="MMimeobf_zi4ZkRGXapju"
       data-ws-component="Body"
-      className="ws-p-body c1jaw2zx cbipm55 ctniqj4 ctgx88l"
+      className="w-body c1jaw2zx cbipm55 ctniqj4 ctgx88l"
     >
       <Heading
         data-ws-id="MYDt0guk1-vzc7yzqyN6A"
         data-ws-component="Heading"
-        className="ws-p-heading"
+        className="w-heading"
       >
         {"Simple Project to test CLI"}
       </Heading>
       <Text
         data-ws-id="BMJfjOzunWs8XkQgvvx1e"
         data-ws-component="Text"
-        className="ws-p-text cn3rfux"
+        className="w-text cn3rfux"
       >
         {"Please don't change directly in the fixture"}
       </Text>
@@ -51,7 +51,7 @@ const Page = ({}: { system: any }) => {
         data-ws-id="pjkZo5EiBqaeUXBcyHf_O"
         data-ws-component="Link"
         href={"/another-page"}
-        className="ws-p-link"
+        className="w-link"
       >
         {"Test another page link"}
       </Link>

@@ -12,7 +12,7 @@ html {
   min-height: 100%;
 }
 @media all {
-  :where(body.ws-p-body) {
+  :where(body.w-body) {
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -25,7 +25,7 @@ html {
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
   }
-  :where(h1.ws-p-heading) {
+  :where(h1.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -33,7 +33,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h2.ws-p-heading) {
+  :where(h2.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -41,7 +41,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h3.ws-p-heading) {
+  :where(h3.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -49,7 +49,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h4.ws-p-heading) {
+  :where(h4.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -57,7 +57,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h5.ws-p-heading) {
+  :where(h5.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -65,7 +65,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h6.ws-p-heading) {
+  :where(h6.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -73,7 +73,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(a.ws-p-link) {
+  :where(a.w-link) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -83,7 +83,7 @@ html {
     min-height: 1em;
     display: inline-block;
   }
-  :where(div.ws-p-vimeo) {
+  :where(div.w-vimeo) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -91,7 +91,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(img.ws-p-vimeo-preview-image) {
+  :where(img.w-vimeo-preview-image) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -102,7 +102,7 @@ html {
     display: block;
     height: auto;
   }
-  :where(button.ws-p-vimeo-play-button) {
+  :where(button.w-vimeo-play-button) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -118,7 +118,7 @@ html {
     text-transform: none;
     margin: 0;
   }
-  :where(div.ws-p-box) {
+  :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -126,7 +126,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(address.ws-p-box) {
+  :where(address.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -134,7 +134,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(article.ws-p-box) {
+  :where(article.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -142,7 +142,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(aside.ws-p-box) {
+  :where(aside.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -150,7 +150,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(figure.ws-p-box) {
+  :where(figure.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -158,7 +158,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(footer.ws-p-box) {
+  :where(footer.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -166,7 +166,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(header.ws-p-box) {
+  :where(header.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -174,7 +174,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(main.ws-p-box) {
+  :where(main.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -182,7 +182,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(nav.ws-p-box) {
+  :where(nav.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -190,7 +190,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(section.ws-p-box) {
+  :where(section.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -198,10 +198,10 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(div.ws-p-html-embed) {
+  :where(div.w-html-embed) {
     display: contents;
   }
-  :where(div.ws-p-vimeo-spinner) {
+  :where(div.w-vimeo-spinner) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -209,7 +209,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(img.ws-p-image) {
+  :where(img.w-image) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

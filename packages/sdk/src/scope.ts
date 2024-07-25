@@ -32,7 +32,8 @@ const normalizeJsName = (name: string) => {
  */
 export const createScope = (
   occupiedIdentifiers: string[] = [],
-  normalizeName = normalizeJsName
+  normalizeName = normalizeJsName,
+  separator = "_"
 ): Scope => {
   const freeIndexByPreferredName = new Map<string, number>();
   const scopedNameByIdMap = new Map<string, string>();
@@ -50,7 +51,7 @@ export const createScope = (
     freeIndexByPreferredName.set(preferredName, (index ?? 0) + 1);
     let scopedName = preferredName;
     if (index !== undefined) {
-      scopedName = `${preferredName}_${index}`;
+      scopedName = `${preferredName}${separator}${index}`;
     }
     scopedNameByIdMap.set(id, scopedName);
     return scopedName;

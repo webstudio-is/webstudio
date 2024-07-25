@@ -35,20 +35,20 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="AWY2qZfpbykoiWELeJhse"
       data-ws-component="Body"
-      className="ws-p-body"
+      className="w-body"
     >
       {list?.data?.map((collectionItem: any, index: number) => (
         <Fragment key={index}>
           <Box
             data-ws-id="-F-b3eIEZ8WKW_F-Aw8nN"
             data-ws-component="Box"
-            className="ws-p-box"
+            className="w-box"
           >
             <HtmlEmbed
               data-ws-id="05oK4Ks0ocFv3w8MJOcNR"
               data-ws-component="HtmlEmbed"
               code={collectionItem?.name}
-              className="ws-p-html-embed"
+              className="w-html-embed"
             />
           </Box>
         </Fragment>

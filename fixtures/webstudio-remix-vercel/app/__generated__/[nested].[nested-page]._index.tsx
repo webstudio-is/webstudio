@@ -31,12 +31,12 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="L0ZXd5F9xk9Rsl9ORzIkJ"
       data-ws-component="Body"
-      className="ws-p-body"
+      className="w-body"
     >
       <Heading
         data-ws-id="VFPjLwt6Caq4l9PPJSiyI"
         data-ws-component="Heading"
-        className="ws-p-heading"
+        className="w-heading"
       >
         {"Nested page"}
       </Heading>

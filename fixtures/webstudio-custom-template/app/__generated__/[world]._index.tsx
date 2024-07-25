@@ -31,12 +31,12 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="jDb2FuSK2-azIZxkH5XNv"
       data-ws-component="Body"
-      className="ws-p-body"
+      className="w-body"
     >
       <Heading
         data-ws-id="D7kQxgXxrjei-MS_KzUa2"
         data-ws-component="Heading"
-        className="ws-p-heading"
+        className="w-heading"
       >
         {"Привет Мир"}
       </Heading>

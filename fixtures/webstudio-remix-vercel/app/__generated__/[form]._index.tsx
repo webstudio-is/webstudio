@@ -42,7 +42,7 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="a-4nDFkaWy4px1fn38XWJ"
       data-ws-component="Body"
-      className="ws-p-body"
+      className="w-body"
     >
       <Form
         data-ws-id="-1RvizaBcVpHsjvnYxn1c"
@@ -52,26 +52,26 @@ const Page = ({}: { system: any }) => {
           formState = state;
           set$formState(formState);
         }}
-        className="ws-p-form"
+        className="w-form"
       >
         {(formState === "initial" || formState === "error") && (
           <Box
             data-ws-id="qhnVrmYGlyrMZi3UzqSQA"
             data-ws-component="Box"
-            className="ws-p-box"
+            className="w-box"
           >
             <Heading
               data-ws-id="YdHHf4u3jrdbRIWpB_VfH"
               data-ws-component="Heading"
               tag={"h3"}
-              className="ws-p-heading"
+              className="w-heading"
             >
               {"Default form"}
             </Heading>
             <Label
               data-ws-id="A0RNI1WVwOGGDbwYnoZia"
               data-ws-component="Label"
-              className="ws-p-label"
+              className="w-label"
             >
               {"Name"}
             </Label>
@@ -79,12 +79,12 @@ const Page = ({}: { system: any }) => {
               data-ws-id="e035xi9fcwYtrn9La49Eh"
               data-ws-component="Input"
               name={"name"}
-              className="ws-p-input"
+              className="w-input"
             />
             <Label
               data-ws-id="LImtuVzw5R9yQsG4faiGV"
               data-ws-component="Label"
-              className="ws-p-label"
+              className="w-label"
             >
               {"Email"}
             </Label>
@@ -92,12 +92,12 @@ const Page = ({}: { system: any }) => {
               data-ws-id="dcHjdeW_HXPkyQlx3ZiL7"
               data-ws-component="Input"
               name={"email"}
-              className="ws-p-input"
+              className="w-input"
             />
             <Button
               data-ws-id="ZAtG6JgK4sbTnOAZlp2rU"
               data-ws-component="Button"
-              className="ws-p-button"
+              className="w-button"
             >
               {"Submit"}
             </Button>
@@ -107,7 +107,7 @@ const Page = ({}: { system: any }) => {
           <Box
             data-ws-id="966cjxuqP_T99N27-mqWE"
             data-ws-component="Box"
-            className="ws-p-box"
+            className="w-box"
           >
             {"Thank you for getting in touch!"}
           </Box>
@@ -116,7 +116,7 @@ const Page = ({}: { system: any }) => {
           <Box
             data-ws-id="SYG5hhOz31xFJUN_v9zq6"
             data-ws-component="Box"
-            className="ws-p-box"
+            className="w-box"
           >
             {"Sorry, something went wrong."}
           </Box>
@@ -132,26 +132,26 @@ const Page = ({}: { system: any }) => {
         }}
         method={"get"}
         action={"/custom"}
-        className="ws-p-form"
+        className="w-form"
       >
         {(formState_1 === "initial" || formState_1 === "error") && (
           <Box
             data-ws-id="a5YPRc19IJyhTrjjasA_R"
             data-ws-component="Box"
-            className="ws-p-box"
+            className="w-box"
           >
             <Heading
               data-ws-id="y4pceTmziuBRIDgUBQNLD"
               data-ws-component="Heading"
               tag={"h3"}
-              className="ws-p-heading"
+              className="w-heading"
             >
               {"Form with custom action and method"}
             </Heading>
             <Label
               data-ws-id="_gLjS0enBOV8KW9Ykz_es"
               data-ws-component="Label"
-              className="ws-p-label"
+              className="w-label"
             >
               {"Name"}
             </Label>
@@ -159,12 +159,12 @@ const Page = ({}: { system: any }) => {
               data-ws-id="ydR5B_9uMS4PXFS76TmBh"
               data-ws-component="Input"
               name={"name"}
-              className="ws-p-input"
+              className="w-input"
             />
             <Label
               data-ws-id="8RU1FyL2QRyqhNUKELGrb"
               data-ws-component="Label"
-              className="ws-p-label"
+              className="w-label"
             >
               {"Email"}
             </Label>
@@ -172,12 +172,12 @@ const Page = ({}: { system: any }) => {
               data-ws-id="TsqGP49hjgEW41ReCwrpZ"
               data-ws-component="Input"
               name={"email"}
-              className="ws-p-input"
+              className="w-input"
             />
             <Button
               data-ws-id="5GWjwVdapuGdn443GIKDW"
               data-ws-component="Button"
-              className="ws-p-button"
+              className="w-button"
             >
               {"Submit"}
             </Button>
@@ -187,7 +187,7 @@ const Page = ({}: { system: any }) => {
           <Box
             data-ws-id="Gw-ta0R4FNFAGBTVRWKep"
             data-ws-component="Box"
-            className="ws-p-box"
+            className="w-box"
           >
             {"Thank you for getting in touch!"}
           </Box>
@@ -196,7 +196,7 @@ const Page = ({}: { system: any }) => {
           <Box
             data-ws-id="ewk_WKpu4syHLPABMmvUz"
             data-ws-component="Box"
-            className="ws-p-box"
+            className="w-box"
           >
             {"Sorry, something went wrong."}
           </Box>

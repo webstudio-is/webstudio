@@ -4,7 +4,7 @@ html {
   min-height: 100%;
 }
 @media all {
-  :where(body.ws-p-body) {
+  :where(body.w-body) {
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -17,7 +17,7 @@ html {
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
   }
-  :where(h1.ws-p-heading) {
+  :where(h1.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -25,7 +25,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h2.ws-p-heading) {
+  :where(h2.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -33,7 +33,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h3.ws-p-heading) {
+  :where(h3.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -41,7 +41,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h4.ws-p-heading) {
+  :where(h4.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -49,7 +49,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h5.ws-p-heading) {
+  :where(h5.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -57,7 +57,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h6.ws-p-heading) {
+  :where(h6.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -65,7 +65,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(div.ws-p-text) {
+  :where(div.w-text) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -74,7 +74,7 @@ html {
     outline-width: 1px;
     min-height: 1em;
   }
-  :where(a.ws-p-link) {
+  :where(a.w-link) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

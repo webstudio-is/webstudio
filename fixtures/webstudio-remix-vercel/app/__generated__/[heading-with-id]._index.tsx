@@ -31,13 +31,13 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="O-ljaGZQ0iRNTlEshMkgE"
       data-ws-component="Body"
-      className="ws-p-body"
+      className="w-body"
     >
       <Heading
         data-ws-id="qmxnOlSxUGpuhuonVArWJ"
         data-ws-component="Heading"
         id={"my-heading"}
-        className="ws-p-heading"
+        className="w-heading"
       >
         {"Heading you can edit"}
       </Heading>
