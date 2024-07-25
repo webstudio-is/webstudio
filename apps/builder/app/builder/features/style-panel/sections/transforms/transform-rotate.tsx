@@ -16,10 +16,8 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import {
-  extractRotatePropertiesFromTransform,
-  parseCssValue,
-} from "@webstudio-is/css-data";
+import { parseCssValue } from "@webstudio-is/css-data";
+import { extractRotatePropertiesFromTransform } from "./transform-utils";
 
 export const RotatePanelContent = (props: TransformPanelProps) => {
   const { propertyValue, setProperty, currentStyle } = props;

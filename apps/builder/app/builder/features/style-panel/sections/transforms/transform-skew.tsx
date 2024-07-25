@@ -1,7 +1,7 @@
 import { Flex, Label, Grid } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
-  type TransformFloatingPanelContentProps,
+  type TransformPanelProps,
 } from "./transform-utils";
 import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -22,7 +22,7 @@ import {
 // angle
 const fakeProperty = "rotate";
 
-export const SkewPanelContent = (props: TransformFloatingPanelContentProps) => {
+export const SkewPanelContent = (props: TransformPanelProps) => {
   const { propertyValue, setProperty, currentStyle } = props;
   const { skewX, skewY } = extractSkewPropertiesFromTransform(propertyValue);
 

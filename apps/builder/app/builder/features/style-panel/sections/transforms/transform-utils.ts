@@ -1,10 +1,10 @@
 import {
-  extractRotatePropertiesFromTransform,
   extractSkewPropertiesFromTransform,
   parseCssValue,
 } from "@webstudio-is/css-data";
 import {
   FunctionValue,
+  StyleValue,
   toValue,
   type TupleValue,
   type TupleValueItem,
@@ -343,4 +343,30 @@ export const updateRotateOrSkewPropertyValue = (props: {
   }
 
   return newPropertyValue;
+};
+
+export const extractRotatePropertiesFromTransform = (transform: StyleValue) => {
+  let rotateX: FunctionValue | undefined;
+  let rotateY: FunctionValue | undefined;
+  let rotateZ: FunctionValue | undefined;
+
+  if (transform.type !== "tuple") {
+    return { rotateX, rotateY, rotateZ };
+  }
+
+  for (const item of transform.value) {
+    if (item.type === "function" && item.name === "rotateX") {
+      rotateX = item;
+    }
+
+    if (item.type === "function" && item.name === "rotateY") {
+      rotateY = item;
+    }
+
+    if (item.type === "function" && item.name === "rotateZ") {
+      rotateZ = item;
+    }
+  }
+
+  return { rotateX, rotateY, rotateZ };
 };
