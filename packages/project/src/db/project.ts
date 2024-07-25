@@ -165,7 +165,6 @@ export const clone = async (
     domain: generateDomain(project.title),
   });
   if (clonedProject.error) {
-    console.log(clonedProject.error);
     throw clonedProject.error;
   }
 
