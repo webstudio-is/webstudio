@@ -739,13 +739,23 @@ export type Database = {
       };
     };
     Functions: {
-      patch_map: {
+      clone_project: {
         Args: {
-          data_str: string;
-          input_type: string;
-          patches_str: string;
+          project_id: string;
+          user_id: string;
+          title: string;
+          domain: string;
         };
-        Returns: string;
+        Returns: {
+          createdAt: string;
+          domain: string;
+          id: string;
+          isDeleted: boolean;
+          marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
+          previewImageAssetId: string | null;
+          title: string;
+          userId: string | null;
+        };
       };
     };
     Enums: {

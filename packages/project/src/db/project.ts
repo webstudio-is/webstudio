@@ -1,14 +1,10 @@
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
-import { cloneAssets } from "@webstudio-is/asset-uploader/index.server";
 import {
   authorizeProject,
   type AppContext,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import {
-  createBuild,
-  cloneBuild,
-} from "@webstudio-is/project-build/index.server";
+import { createBuild } from "@webstudio-is/project-build/index.server";
 import { MarketplaceApprovalStatus, Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 
@@ -158,54 +154,21 @@ export const clone = async (
   }
 
   const { userId } = context.authorization;
-
   if (userId === undefined) {
     throw new Error("The user must be authenticated to clone the project");
   }
 
-  const newProjectId = crypto.randomUUID();
-
-  const clonedProject = await prisma.$transaction(async (client) => {
-    await cloneAssets(
-      {
-        fromProjectId: project.id,
-        toProjectId: newProjectId,
-
-        // Permission check on newProjectId will fail until this transaction is committed.
-        // We have to skip it, but it's ok because registerProjectOwner is right above
-        checkPermissions: false,
-      },
-      context,
-      client
-    );
-
-    const clonedProject = await client.project.create({
-      data: {
-        id: newProjectId,
-        userId: userId,
-        title: title ?? `${project.title} (copy)`,
-        domain: generateDomain(project.title),
-        previewImageAssetId: project.previewImageAsset?.id,
-      },
-      include: {
-        previewImageAsset: true,
-      },
-    });
-
-    await cloneBuild(
-      {
-        fromProjectId: project.id,
-        toProjectId: newProjectId,
-        deployment: undefined,
-      },
-      context,
-      client
-    );
-
-    return clonedProject;
+  const clonedProject = await context.postgrest.client.rpc("clone_project", {
+    project_id: projectId,
+    user_id: userId,
+    title: title ?? `${project.title} (copy)`,
+    domain: generateDomain(project.title),
   });
+  if (clonedProject.error) {
+    throw clonedProject.error;
+  }
 
-  return Project.parse(clonedProject);
+  return { id: clonedProject.data.id };
 };
 
 export const updateDomain = async (
