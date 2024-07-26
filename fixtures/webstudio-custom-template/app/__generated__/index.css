@@ -91,7 +91,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(img.w-vimeo-preview-image) {
+  :where(img.w-preview-image) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -102,7 +102,7 @@ html {
     display: block;
     height: auto;
   }
-  :where(button.w-vimeo-play-button) {
+  :where(button.w-play-button) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -201,7 +201,7 @@ html {
   :where(div.w-html-embed) {
     display: contents;
   }
-  :where(div.w-vimeo-spinner) {
+  :where(div.w-spinner) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

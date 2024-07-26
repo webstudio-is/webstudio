@@ -52,7 +52,7 @@ const Page = ({}: { system: any }) => {
           formState = state;
           set$formState(formState);
         }}
-        className="w-form"
+        className="w-webhook-form"
       >
         {(formState === "initial" || formState === "error") && (
           <Box
@@ -71,7 +71,7 @@ const Page = ({}: { system: any }) => {
             <Label
               data-ws-id="A0RNI1WVwOGGDbwYnoZia"
               data-ws-component="Label"
-              className="w-label"
+              className="w-input-label"
             >
               {"Name"}
             </Label>
@@ -79,12 +79,12 @@ const Page = ({}: { system: any }) => {
               data-ws-id="e035xi9fcwYtrn9La49Eh"
               data-ws-component="Input"
               name={"name"}
-              className="w-input"
+              className="w-text-input"
             />
             <Label
               data-ws-id="LImtuVzw5R9yQsG4faiGV"
               data-ws-component="Label"
-              className="w-label"
+              className="w-input-label"
             >
               {"Email"}
             </Label>
@@ -92,7 +92,7 @@ const Page = ({}: { system: any }) => {
               data-ws-id="dcHjdeW_HXPkyQlx3ZiL7"
               data-ws-component="Input"
               name={"email"}
-              className="w-input"
+              className="w-text-input"
             />
             <Button
               data-ws-id="ZAtG6JgK4sbTnOAZlp2rU"
@@ -132,7 +132,7 @@ const Page = ({}: { system: any }) => {
         }}
         method={"get"}
         action={"/custom"}
-        className="w-form"
+        className="w-webhook-form"
       >
         {(formState_1 === "initial" || formState_1 === "error") && (
           <Box
@@ -151,7 +151,7 @@ const Page = ({}: { system: any }) => {
             <Label
               data-ws-id="_gLjS0enBOV8KW9Ykz_es"
               data-ws-component="Label"
-              className="w-label"
+              className="w-input-label"
             >
               {"Name"}
             </Label>
@@ -159,12 +159,12 @@ const Page = ({}: { system: any }) => {
               data-ws-id="ydR5B_9uMS4PXFS76TmBh"
               data-ws-component="Input"
               name={"name"}
-              className="w-input"
+              className="w-text-input"
             />
             <Label
               data-ws-id="8RU1FyL2QRyqhNUKELGrb"
               data-ws-component="Label"
-              className="w-label"
+              className="w-input-label"
             >
               {"Email"}
             </Label>
@@ -172,7 +172,7 @@ const Page = ({}: { system: any }) => {
               data-ws-id="TsqGP49hjgEW41ReCwrpZ"
               data-ws-component="Input"
               name={"email"}
-              className="w-input"
+              className="w-text-input"
             />
             <Button
               data-ws-id="5GWjwVdapuGdn443GIKDW"

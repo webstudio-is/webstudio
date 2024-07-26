@@ -191,7 +191,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(div.w-accordion-item) {
+  :where(div.w-item) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -199,7 +199,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h3.w-accordion-header) {
+  :where(h3.w-item-header) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -209,7 +209,7 @@ html {
     margin-top: 0px;
     margin-bottom: 0px;
   }
-  :where(button.w-accordion-trigger) {
+  :where(button.w-item-trigger) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -224,7 +224,7 @@ html {
   :where(div.w-html-embed) {
     display: contents;
   }
-  :where(div.w-accordion-content) {
+  :where(div.w-item-content) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -232,7 +232,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(form.w-form) {
+  :where(form.w-webhook-form) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -241,7 +241,7 @@ html {
     outline-width: 1px;
     min-height: 20px;
   }
-  :where(label.w-label) {
+  :where(label.w-input-label) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -250,7 +250,7 @@ html {
     outline-width: 1px;
     display: block;
   }
-  :where(input.w-input) {
+  :where(input.w-text-input) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;

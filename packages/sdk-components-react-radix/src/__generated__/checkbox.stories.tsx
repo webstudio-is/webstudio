@@ -14,7 +14,11 @@ const Component = () => {
   let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
   return (
     <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Label data-ws-id="1" data-ws-component="Label" className="w-label">
+      <Label
+        data-ws-id="1"
+        data-ws-component="Label"
+        className="w-label w-checkbox-field"
+      >
         <Checkbox
           data-ws-id="3"
           data-ws-component="Checkbox"
@@ -23,12 +27,12 @@ const Component = () => {
             checkboxChecked = checked;
             set$checkboxChecked(checkboxChecked);
           }}
-          className="w-checkbox"
+          className="w-checkbox w-checkbox-1"
         >
           <CheckboxIndicator
             data-ws-id="8"
             data-ws-component="CheckboxIndicator"
-            className="w-checkbox-indicator"
+            className="w-checkbox-indicator w-checkbox-indicator-1"
           >
             <HtmlEmbed
               data-ws-id="10"
@@ -200,13 +204,13 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="1"] {
+  .w-checkbox-field {
     display: flex;
     row-gap: 0.5rem;
     column-gap: 0.5rem;
     align-items: center
   }
-  [data-ws-id="3"] {
+  .w-checkbox-1 {
     height: 1rem;
     width: 1rem;
     flex-grow: 0;
@@ -216,20 +220,20 @@ html {margin: 0; display: grid; min-height: 100%}
     border-bottom-left-radius: 0.125rem;
     border: 1px solid rgba(15, 23, 42, 1)
   }
-  [data-ws-id="3"]:disabled {
+  .w-checkbox-1:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="3"]:focus-visible {
+  .w-checkbox-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="3"][data-state=checked] {
+  .w-checkbox-1[data-state=checked] {
     background-color: rgba(15, 23, 42, 1);
     color: rgba(248, 250, 252, 1)
   }
-  [data-ws-id="8"] {
+  .w-checkbox-indicator-1 {
     display: flex;
     align-items: center;
     justify-content: center;

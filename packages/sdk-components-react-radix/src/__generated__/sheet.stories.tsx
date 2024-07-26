@@ -22,7 +22,7 @@ const Component = () => {
           <Button
             data-ws-id="3"
             data-ws-component="Button"
-            className="w-button"
+            className="w-button w-button-1"
           >
             <HtmlEmbed
               data-ws-id="5"
@@ -37,12 +37,12 @@ const Component = () => {
         <DialogOverlay
           data-ws-id="7"
           data-ws-component="DialogOverlay"
-          className="w-dialog-overlay"
+          className="w-dialog-overlay w-sheet-overlay"
         >
           <DialogContent
             data-ws-id="9"
             data-ws-component="DialogContent"
-            className="w-dialog-content"
+            className="w-dialog-content w-sheet-content"
           >
             <Box
               data-ws-id="11"
@@ -51,18 +51,22 @@ const Component = () => {
               role={"navigation"}
               className="w-box"
             >
-              <Box data-ws-id="14" data-ws-component="Box" className="w-box">
+              <Box
+                data-ws-id="14"
+                data-ws-component="Box"
+                className="w-box w-sheet-header"
+              >
                 <DialogTitle
                   data-ws-id="16"
                   data-ws-component="DialogTitle"
-                  className="w-dialog-title"
+                  className="w-dialog-title w-sheet-title"
                 >
                   {"Sheet Title"}
                 </DialogTitle>
                 <DialogDescription
                   data-ws-id="18"
                   data-ws-component="DialogDescription"
-                  className="w-dialog-description"
+                  className="w-dialog-description w-sheet-description"
                 >
                   {"Sheet description text you can edit"}
                 </DialogDescription>
@@ -74,7 +78,7 @@ const Component = () => {
             <DialogClose
               data-ws-id="21"
               data-ws-component="DialogClose"
-              className="w-dialog-close"
+              className="w-close-button w-close-button-1"
             >
               <HtmlEmbed
                 data-ws-id="23"
@@ -257,7 +261,7 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px;
     min-height: 1em
   }
-  :where(button.w-dialog-close) {
+  :where(button.w-close-button) {
     background-color: transparent;
     background-image: none;
     font-family: inherit;
@@ -271,7 +275,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="3"] {
+  .w-button-1 {
     background-color: transparent;
     display: inline-flex;
     align-items: center;
@@ -292,20 +296,20 @@ html {margin: 0; display: grid; min-height: 100%}
     padding-bottom: 0px;
     border: 0px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="3"]:disabled {
+  .w-button-1:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="3"]:focus-visible {
+  .w-button-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="3"]:hover {
+  .w-button-1:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="7"] {
+  .w-sheet-overlay {
     position: fixed;
     left: 0px;
     right: 0px;
@@ -320,7 +324,7 @@ html {margin: 0; display: grid; min-height: 100%}
     overflow-x: auto;
     overflow-y: auto
   }
-  [data-ws-id="9"] {
+  .w-sheet-content {
     width: 100%;
     z-index: 50;
     display: flex;
@@ -336,27 +340,27 @@ html {margin: 0; display: grid; min-height: 100%}
     border: 1px solid rgba(226, 232, 240, 1);
     padding: 1.5rem
   }
-  [data-ws-id="14"] {
+  .w-sheet-header {
     display: flex;
     flex-direction: column;
     row-gap: 0.25rem;
     column-gap: 0.25rem
   }
-  [data-ws-id="16"] {
+  .w-sheet-title {
     margin-top: 0px;
     margin-bottom: 0px;
     line-height: 1.75rem;
     font-size: 1.125rem;
     letter-spacing: -0.025em
   }
-  [data-ws-id="18"] {
+  .w-sheet-description {
     margin-top: 0px;
     margin-bottom: 0px;
     font-size: 0.875rem;
     line-height: 1.25rem;
     color: rgba(100, 116, 139, 1)
   }
-  [data-ws-id="21"] {
+  .w-close-button-1 {
     position: absolute;
     right: 1rem;
     top: 1rem;
@@ -375,10 +379,10 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     border: 0px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="21"]:focus {
+  .w-close-button-1:focus {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="21"]:hover {
+  .w-close-button-1:hover {
     opacity: 1
   }
 }

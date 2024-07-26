@@ -4,7 +4,11 @@ import { Label as Label } from "../components";
 const Component = () => {
   return (
     <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Label data-ws-id="1" data-ws-component="Label" className="w-label">
+      <Label
+        data-ws-id="1"
+        data-ws-component="Label"
+        className="w-label w-label-1"
+      >
         {"Form Label"}
       </Label>
     </Box>
@@ -126,7 +130,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="1"] {
+  .w-label-1 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
