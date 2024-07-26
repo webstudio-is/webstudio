@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "af283f08-b808-4cf6-9cb3-4a4470065c66",
+    "id": "2b8a9d28-3a0e-48c9-9aa2-b26db7926a22",
     "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
-    "version": 29,
-    "createdAt": "2024-07-21T11:48:14.097",
-    "updatedAt": "2024-07-21T11:48:14.097",
+    "version": 33,
+    "createdAt": "2024-07-26T13:42:42.816",
+    "updatedAt": "2024-07-26T13:42:42.816",
     "pages": {
       "meta": {
         "siteName": "",
@@ -151,6 +151,19 @@
             "value": 1
           }
         }
+      ],
+      [
+        "mf2C07UBmGT7y_G4Du3yg:rKj-wYctg3-GnqL3WHN9I:width:",
+        {
+          "breakpointId": "rKj-wYctg3-GnqL3WHN9I",
+          "styleSourceId": "mf2C07UBmGT7y_G4Du3yg",
+          "property": "width",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 400
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -166,6 +179,13 @@
         {
           "type": "local",
           "id": "0KA68BwP9gdTzE1ESO2Zp"
+        }
+      ],
+      [
+        "mf2C07UBmGT7y_G4Du3yg",
+        {
+          "type": "local",
+          "id": "mf2C07UBmGT7y_G4Du3yg"
         }
       ]
     ],
@@ -183,6 +203,13 @@
           "instanceId": "BMJfjOzunWs8XkQgvvx1e",
           "values": ["0KA68BwP9gdTzE1ESO2Zp"]
         }
+      ],
+      [
+        "uHB3Fjb7-NELG-bnH7bXB",
+        {
+          "instanceId": "uHB3Fjb7-NELG-bnH7bXB",
+          "values": ["mf2C07UBmGT7y_G4Du3yg"]
+        }
       ]
     ],
     "props": [
@@ -194,6 +221,36 @@
           "name": "href",
           "type": "page",
           "value": "WPPAbLFyJD_02vhjRd8P4"
+        }
+      ],
+      [
+        "su3ag3OxH9WTBjJg5eIyg",
+        {
+          "id": "su3ag3OxH9WTBjJg5eIyg",
+          "instanceId": "uHB3Fjb7-NELG-bnH7bXB",
+          "name": "src",
+          "type": "asset",
+          "value": "1d8bf4398f643f5333d415091507d778aaed62f28883642636cbed0be156a0ee"
+        }
+      ],
+      [
+        "vGCYpBBB1QUPIPPIdyexn",
+        {
+          "id": "vGCYpBBB1QUPIPPIdyexn",
+          "instanceId": "uHB3Fjb7-NELG-bnH7bXB",
+          "name": "width",
+          "type": "asset",
+          "value": "1d8bf4398f643f5333d415091507d778aaed62f28883642636cbed0be156a0ee"
+        }
+      ],
+      [
+        "JKAGY7DWpciEl0UdnWuKL",
+        {
+          "id": "JKAGY7DWpciEl0UdnWuKL",
+          "instanceId": "uHB3Fjb7-NELG-bnH7bXB",
+          "name": "height",
+          "type": "asset",
+          "value": "1d8bf4398f643f5333d415091507d778aaed62f28883642636cbed0be156a0ee"
         }
       ]
     ],
@@ -237,6 +294,10 @@
             {
               "type": "id",
               "value": "pjkZo5EiBqaeUXBcyHf_O"
+            },
+            {
+              "type": "id",
+              "value": "uHB3Fjb7-NELG-bnH7bXB"
             }
           ]
         }
@@ -310,6 +371,15 @@
             }
           ]
         }
+      ],
+      [
+        "uHB3Fjb7-NELG-bnH7bXB",
+        {
+          "type": "instance",
+          "id": "uHB3Fjb7-NELG-bnH7bXB",
+          "component": "Image",
+          "children": []
+        }
       ]
     ],
     "deployment": {
@@ -364,7 +434,22 @@
       "path": "/another-page"
     }
   ],
-  "assets": [],
+  "assets": [
+    {
+      "id": "1d8bf4398f643f5333d415091507d778aaed62f28883642636cbed0be156a0ee",
+      "name": "iconly_svg_converted-converted_zMaMiAAutUl8XrITgz7d1.svg",
+      "description": null,
+      "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
+      "size": 999,
+      "type": "image",
+      "format": "svg",
+      "createdAt": "2024-07-26T13:39:48.678Z",
+      "meta": {
+        "width": 14,
+        "height": 16
+      }
+    }
+  ],
   "user": {
     "email": "hello@webstudio.is"
   },

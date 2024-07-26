@@ -11,6 +11,7 @@ import {
 import {
   Heading as Heading,
   Text as Text,
+  Image as Image,
 } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "";
@@ -55,6 +56,14 @@ const Page = ({}: { system: any }) => {
       >
         {"Test another page link"}
       </Link>
+      <Image
+        data-ws-id="uHB3Fjb7-NELG-bnH7bXB"
+        data-ws-component="Image"
+        src={"/assets/iconly_svg_converted-converted_zMaMiAAutUl8XrITgz7d1.svg"}
+        width={14}
+        height={16}
+        className="w-image c161qeci"
+      />
     </Body>
   );
 };
