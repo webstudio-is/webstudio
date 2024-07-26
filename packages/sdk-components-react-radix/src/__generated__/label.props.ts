@@ -421,6 +421,7 @@ export const props: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",

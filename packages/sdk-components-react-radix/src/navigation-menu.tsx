@@ -10,7 +10,6 @@ import {
   Children,
   forwardRef,
   type ComponentPropsWithoutRef,
-  type ReactNode,
   useContext,
 } from "react";
 
@@ -53,7 +52,7 @@ export const NavigationMenuItem = forwardRef<
 
 export const NavigationMenuLink = forwardRef<
   HTMLAnchorElement,
-  { children: ReactNode }
+  ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
 
@@ -66,7 +65,7 @@ export const NavigationMenuLink = forwardRef<
 
 export const NavigationMenuTrigger = forwardRef<
   HTMLButtonElement,
-  { children: ReactNode }
+  ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Trigger>
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
 

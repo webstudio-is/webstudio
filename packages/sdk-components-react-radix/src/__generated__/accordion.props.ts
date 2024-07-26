@@ -429,6 +429,13 @@ export const propsAccordion: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: {
+    description:
+      "The value of the item whose content is expanded when the accordion is initially rendered. Use\n`defaultValue` if you do not need to control the state of an accordion.",
+    required: false,
+    control: "text",
+    type: "string",
+  },
   dir: {
     description: "The language read direction.",
     required: false,
@@ -580,11 +587,11 @@ export const propsAccordion: Record<string, PropMeta> = {
     options: ["on", "off"],
   },
   value: {
-    required: true,
+    description:
+      "The controlled stateful value of the accordion item whose content is expanded.",
+    required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
   },
   vocab: { required: false, control: "text", type: "string" },
 };
@@ -1009,6 +1016,7 @@ export const propsAccordionItem: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -1581,6 +1589,7 @@ export const propsAccordionHeader: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -2139,6 +2148,7 @@ export const propsAccordionTrigger: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -2334,6 +2344,13 @@ export const propsAccordionTrigger: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["on", "off"],
+  },
+  value: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines a default value which will be displayed in the element on pageload.",
   },
   vocab: { required: false, control: "text", type: "string" },
 };
@@ -2758,6 +2775,7 @@ export const propsAccordionContent: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",

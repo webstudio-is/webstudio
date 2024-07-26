@@ -159,7 +159,7 @@ export const generateStories = async () => {
       ),
       componentMetas: usedMetas,
       assetBaseUrl: "/",
-      atomic: true,
+      atomic: false,
     });
     const scope = createScope(["Component", "Story", "props", "useState"]);
     let content = "";
