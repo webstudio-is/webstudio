@@ -14,8 +14,7 @@ import {
 } from "@webstudio-is/react-sdk";
 
 export const Tabs: ForwardRefExoticComponent<
-  Omit<ComponentProps<typeof Root>, "asChild" | "defaultValue"> &
-    RefAttributes<HTMLDivElement>
+  Omit<ComponentProps<typeof Root>, "asChild"> & RefAttributes<HTMLDivElement>
 > = Root;
 
 export const TabsList = List;

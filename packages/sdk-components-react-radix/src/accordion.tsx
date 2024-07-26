@@ -23,11 +23,8 @@ export const Accordion = forwardRef<
   HTMLDivElement,
   Omit<
     Extract<ComponentPropsWithoutRef<typeof Root>, { type: "single" }>,
-    "type" | "asChild" | "defaultValue" | "value" | "onValueChange"
-  > & {
-    value: string;
-    onValueChange: (value: string) => void;
-  }
+    "type" | "asChild"
+  >
 >((props, ref) => {
   return <Root ref={ref} type="single" {...props} />;
 });
