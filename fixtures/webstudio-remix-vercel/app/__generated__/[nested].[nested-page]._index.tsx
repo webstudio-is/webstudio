@@ -28,8 +28,16 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body data-ws-id="L0ZXd5F9xk9Rsl9ORzIkJ" data-ws-component="Body">
-      <Heading data-ws-id="VFPjLwt6Caq4l9PPJSiyI" data-ws-component="Heading">
+    <Body
+      data-ws-id="L0ZXd5F9xk9Rsl9ORzIkJ"
+      data-ws-component="Body"
+      className="w-body"
+    >
+      <Heading
+        data-ws-id="VFPjLwt6Caq4l9PPJSiyI"
+        data-ws-component="Heading"
+        className="w-heading"
+      >
         {"Nested page"}
       </Heading>
     </Body>

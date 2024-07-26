@@ -483,7 +483,7 @@ export const prebuild = async (options: {
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
 
-  const { cssText, classesMap } = generateCss({
+  const { cssText, classes } = generateCss({
     instances: new Map(siteData.build.instances),
     props: new Map(siteData.build.props),
     assets,
@@ -596,7 +596,7 @@ export const prebuild = async (options: {
       instances,
       props,
       dataSources,
-      classesMap,
+      classesMap: classes,
       indexesWithinAncestors: getIndexesWithinAncestors(
         projectMetas,
         instances,

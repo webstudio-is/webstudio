@@ -8,7 +8,7 @@ export type Scope = {
 };
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers
-const normalizeName = (name: string) => {
+const normalizeJsName = (name: string) => {
   // only letters, digits, underscores and dollar signs allowed in names
   // delete everything else
   name = name.replaceAll(/[^\w$]/g, "");
@@ -30,7 +30,11 @@ const normalizeName = (name: string) => {
  * occupiedIdentifiers parameter prevents collision with hardcoded
  * identifiers.
  */
-export const createScope = (occupiedIdentifiers: string[] = []): Scope => {
+export const createScope = (
+  occupiedIdentifiers: string[] = [],
+  normalizeName = normalizeJsName,
+  separator = "_"
+): Scope => {
   const freeIndexByPreferredName = new Map<string, number>();
   const scopedNameByIdMap = new Map<string, string>();
   for (const identifier of occupiedIdentifiers) {
@@ -47,7 +51,7 @@ export const createScope = (occupiedIdentifiers: string[] = []): Scope => {
     freeIndexByPreferredName.set(preferredName, (index ?? 0) + 1);
     let scopedName = preferredName;
     if (index !== undefined) {
-      scopedName = `${preferredName}_${index}`;
+      scopedName = `${preferredName}${separator}${index}`;
     }
     scopedNameByIdMap.set(id, scopedName);
     return scopedName;

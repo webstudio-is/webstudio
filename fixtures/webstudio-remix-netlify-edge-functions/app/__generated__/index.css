@@ -4,7 +4,7 @@ html {
   min-height: 100%;
 }
 @media all {
-  body:where([data-ws-component="Body"]) {
+  :where(body.w-body) {
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -17,7 +17,7 @@ html {
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
   }
-  h1:where([data-ws-component="Heading"]) {
+  :where(h1.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -25,7 +25,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h2:where([data-ws-component="Heading"]) {
+  :where(h2.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -33,7 +33,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h3:where([data-ws-component="Heading"]) {
+  :where(h3.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -41,7 +41,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h4:where([data-ws-component="Heading"]) {
+  :where(h4.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -49,7 +49,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h5:where([data-ws-component="Heading"]) {
+  :where(h5.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -57,7 +57,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h6:where([data-ws-component="Heading"]) {
+  :where(h6.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -65,7 +65,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  div:where([data-ws-component="Text"]) {
+  :where(div.w-text) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -74,7 +74,7 @@ html {
     outline-width: 1px;
     min-height: 1em;
   }
-  a:where([data-ws-component="Link"]) {
+  :where(a.w-link) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

@@ -146,7 +146,7 @@ export const generateStories = async () => {
         usedMetas.set(instance.component, meta);
       }
     }
-    const { cssText, classesMap } = generateCss({
+    const { cssText, classes } = generateCss({
       instances,
       props,
       assets: new Map(),
@@ -175,7 +175,7 @@ export const generateStories = async () => {
     });
     content += `\n`;
     content += generateWebstudioComponent({
-      classesMap,
+      classesMap: classes,
       scope,
       name: `Component`,
       rootInstanceId,

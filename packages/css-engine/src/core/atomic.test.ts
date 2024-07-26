@@ -67,10 +67,10 @@ test("added classes", () => {
     value: { type: "keyword", value: "block" },
   });
   const instances = new Map([[rule, "instanceId"]]);
-  const { classesMap } = generateAtomic(sheet, {
+  const { classes } = generateAtomic(sheet, {
     getKey: (rule) => instances.get(rule) ?? "",
   });
-  expect(classesMap.get("instanceId")).toEqual(["ccqp4le"]);
+  expect(classes.get("instanceId")).toEqual(["ccqp4le"]);
 });
 
 test("rule with multiple properties", () => {
@@ -129,7 +129,7 @@ test("share atomic rules", () => {
     [rule1, "1"],
     [rule2, "2"],
   ]);
-  const { cssText, classesMap } = generateAtomic(sheet, {
+  const { cssText, classes } = generateAtomic(sheet, {
     getKey: (rule) => instances.get(rule) ?? "",
   });
   expect(cssText).toMatchInlineSnapshot(`
@@ -142,8 +142,8 @@ test("share atomic rules", () => {
   }
 }"
 `);
-  expect(classesMap.get("1")).toEqual(["ccqp4le", "cen0ymu"]);
-  expect(classesMap.get("2")).toEqual(["ccqp4le"]);
+  expect(classes.get("1")).toEqual(["ccqp4le", "cen0ymu"]);
+  expect(classes.get("2")).toEqual(["ccqp4le"]);
 });
 
 test("distinct similar declarations from different breakpoints", () => {

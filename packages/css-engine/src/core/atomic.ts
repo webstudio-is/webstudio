@@ -6,21 +6,22 @@ import { toValue, type TransformValue } from "./to-value";
 type Options = {
   getKey: (rule: NestingRule) => string;
   transformValue?: TransformValue;
+  classes?: Map<string, string[]>;
 };
 
 export const generateAtomic = (sheet: StyleSheet, options: Options) => {
   const { getKey, transformValue } = options;
   const atomicRules = new Map<string, NestingRule>();
-  const classesMap = new Map<string, string[]>();
+  const classes = options.classes ?? new Map<string, string[]>();
   for (const rule of sheet.nestingRules.values()) {
     const descendantSuffix = rule.getDescendantSuffix();
     const groupKey = getKey(rule);
     // a few rules can be in the same group
     // when rule have descendant suffix
-    let classList = classesMap.get(groupKey);
+    let classList = classes.get(groupKey);
     if (classList === undefined) {
       classList = [];
-      classesMap.set(groupKey, classList);
+      classes.set(groupKey, classList);
     }
     // convert each declaration into separate rule
     for (const declaration of rule.getMergedDeclarations()) {
@@ -51,5 +52,5 @@ export const generateAtomic = (sheet: StyleSheet, options: Options) => {
     nestingRules: Array.from(atomicRules.values()),
     transformValue,
   });
-  return { cssText, classesMap };
+  return { cssText, classes };
 };
