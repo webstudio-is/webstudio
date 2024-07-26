@@ -213,6 +213,7 @@ const TransformSection = (
             <SmallToggleButton
               variant="normal"
               pressed={properties.value.hidden}
+              tabIndex={-1}
               onPressedChange={() =>
                 handleHideTransformProperty({
                   currentStyle,

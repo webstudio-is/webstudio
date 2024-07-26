@@ -103,6 +103,12 @@ export const toValue = (
   }
 
   if (value.type === "tuple") {
+    // Properties ike translate and scale are handled as tuples directly.
+    // When the layer is hidden, the value goes as none.
+    if (value.hidden === true) {
+      return "none";
+    }
+
     return value.value
       .filter((value) => value.hidden !== true)
       .map((value) => toValue(value, transformValue))
