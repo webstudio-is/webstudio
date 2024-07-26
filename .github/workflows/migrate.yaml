@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: ${{ endsWith(github.ref_name, '.staging') && 'postgres_production' || 'postgres_development' }}
+      name: ${{ (startsWith(github.ref_name, 'release') && endsWith(github.ref_name, '.staging')) && 'postgres_production' || 'postgres_development' }}
 
     timeout-minutes: 20
 
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: ${{ endsWith(github.ref_name, '.staging') && 'postgres_production' || 'postgres_development' }}
+      name: ${{ (startsWith(github.ref_name, 'release') && endsWith(github.ref_name, '.staging')) && 'postgres_production' || 'postgres_development' }}
 
     steps:
       - uses: actions/checkout@v4
