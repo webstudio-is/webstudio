@@ -16,7 +16,6 @@ import {
   type Styles,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
-import { idAttribute } from "../props";
 import { descendantComponent } from "../core-components";
 import { addGlobalRules } from "./global-rules";
 import { kebabCase } from "change-case";
