@@ -2,9 +2,9 @@ import type { ResourceRequest } from "./schema/resources";
 
 export const loadResource = async (
   customFetch: typeof fetch,
-  resourceData: ResourceRequest
+  resourceRequest: ResourceRequest
 ) => {
-  const { url, method, headers, body } = resourceData;
+  const { url, method, headers, body } = resourceRequest;
   const requestHeaders = new Headers(
     headers.map(({ name, value }): [string, string] => [name, value])
   );
@@ -48,4 +48,19 @@ export const loadResource = async (
       statusText: message,
     };
   }
+};
+
+export const loadResources = async (
+  customFetch: typeof fetch,
+  requests: Map<string, ResourceRequest>
+) => {
+  return Object.fromEntries(
+    await Promise.all(
+      Array.from(
+        requests,
+        async ([name, request]) =>
+          [name, await loadResource(customFetch, request)] as const
+      )
+    )
+  );
 };
