@@ -11,7 +11,6 @@ import {
   collapsedAttribute,
   idAttribute,
   addGlobalRules,
-  addPresetRules,
   createImageValueTransformer,
   descendantComponent,
   type Params,
@@ -324,7 +323,22 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
 
   useLayoutEffect(() => {
     presetSheet.clear();
-    addPresetRules(presetSheet, metas);
+    presetSheet.addMediaRule("presets");
+    for (const [component, meta] of metas) {
+      for (const [tag, styles] of Object.entries(meta.presetStyle ?? {})) {
+        const rule = presetSheet.addNestingRule(
+          `${tag}:where([data-ws-component="${component}"])`
+        );
+        for (const declaration of styles) {
+          rule.setDeclaration({
+            breakpoint: "presets",
+            selector: declaration.state ?? "",
+            property: declaration.property,
+            value: declaration.value,
+          });
+        }
+      }
+    }
     presetSheet.render();
   }, [metas]);
 

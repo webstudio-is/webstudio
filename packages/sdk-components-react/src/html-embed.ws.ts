@@ -45,5 +45,5 @@ export const propsMeta: WsComponentPropsMeta = {
       type: "string",
     },
   },
-  initialProps: ["clientOnly", "executeScriptOnCanvas"],
+  initialProps: ["className", "clientOnly", "executeScriptOnCanvas"],
 };

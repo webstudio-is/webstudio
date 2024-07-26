@@ -37,15 +37,20 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="LW98_-srDnnagkR10lsk4"
       data-ws-component="Body"
-      className="cjrgi00"
+      className="w-body cjrgi00"
     >
-      <Heading data-ws-id="SHXddDLFWST_sy44UfGQO" data-ws-component="Heading">
+      <Heading
+        data-ws-id="SHXddDLFWST_sy44UfGQO"
+        data-ws-component="Heading"
+        className="w-heading"
+      >
         {"Script Test"}
       </Heading>
       <Link
         data-ws-id="8MXByradrqVRiGSyHI0aH"
         data-ws-component="Link"
         href={"/"}
+        className="w-link"
       >
         {"Go Home"}
       </Link>
@@ -55,6 +60,7 @@ const Page = ({}: { system: any }) => {
         code={
           "<br>\n<script>console.log('SCRIPT TEST SSR')</script>\n<script>console.log('SCRIPT TEST SSR 2')</script>\nSCRIPTS ARE HERE 2<br>"
         }
+        className="w-html-embed"
       />
       <HtmlEmbed
         data-ws-id="evFyHvPu9rGzKojoj723b"
@@ -63,6 +69,7 @@ const Page = ({}: { system: any }) => {
           "<script>console.log('SCRIPTS TEST Client')</script>\n<script>console.log('SCRIPTS TEST 2 Client')</script>\nSCRIPTS ARE HERE <br>"
         }
         clientOnly={true}
+        className="w-html-embed"
       />
     </Body>
   );

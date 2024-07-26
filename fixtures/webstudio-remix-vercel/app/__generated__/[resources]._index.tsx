@@ -32,14 +32,23 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 const Page = ({}: { system: any }) => {
   let list = useResource("list_1");
   return (
-    <Body data-ws-id="AWY2qZfpbykoiWELeJhse" data-ws-component="Body">
+    <Body
+      data-ws-id="AWY2qZfpbykoiWELeJhse"
+      data-ws-component="Body"
+      className="w-body"
+    >
       {list?.data?.map((collectionItem: any, index: number) => (
         <Fragment key={index}>
-          <Box data-ws-id="-F-b3eIEZ8WKW_F-Aw8nN" data-ws-component="Box">
+          <Box
+            data-ws-id="-F-b3eIEZ8WKW_F-Aw8nN"
+            data-ws-component="Box"
+            className="w-box"
+          >
             <HtmlEmbed
               data-ws-id="05oK4Ks0ocFv3w8MJOcNR"
               data-ws-component="HtmlEmbed"
               code={collectionItem?.name}
+              className="w-html-embed"
             />
           </Box>
         </Fragment>

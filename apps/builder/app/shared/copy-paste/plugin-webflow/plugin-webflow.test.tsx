@@ -185,10 +185,10 @@ test("Link Block, Button, Text Link", async () => {
         background-color: rgba(0, 0, 0, 0)
       }
       a:active {
-        outline: 0 none currentColor
+        outline: 0 none currentcolor
       }
       a:hover {
-        outline: 0 none currentColor
+        outline: 0 none currentcolor
       }
     }"
   `);
@@ -941,7 +941,7 @@ test("Image", async () => {
         vertical-align: middle;
         max-width: 100%;
         display: inline-block;
-        border: 0 none currentColor
+        border: 0 none currentcolor
       }
     }"
   `);
@@ -968,6 +968,9 @@ test("HtmlEmbed", async () => {
   equalFragment(fragment, <$.HtmlEmbed code="some html" clientOnly={true} />);
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
+      w-embed {
+        display: block
+      }
       w-embed:after {
         content: " ";
         grid-row-start: 1;
@@ -1501,10 +1504,10 @@ test("RichText", async () => {
         background-color: rgba(0, 0, 0, 0)
       }
       a:active {
-        outline: 0 none currentColor
+        outline: 0 none currentcolor
       }
       a:hover {
-        outline: 0 none currentColor
+        outline: 0 none currentcolor
       }
       strong {
         font-weight: bold
@@ -1655,7 +1658,7 @@ test("Form", async () => {
         padding: 0
       }
       input::-moz-focus-inner {
-        border: 0 none currentColor;
+        border: 0 none currentcolor;
         padding: 0
       }
       w-input {
@@ -1690,7 +1693,7 @@ test("Form", async () => {
         border-right-color: rgba(56, 152, 236, 1);
         border-bottom-color: rgba(56, 152, 236, 1);
         border-left-color: rgba(56, 152, 236, 1);
-        outline: 0 none currentColor
+        outline: 0 none currentcolor
       }
     }"
   `);
@@ -1739,7 +1742,7 @@ test("FormButton", async () => {
         padding: 0
       }
       input::-moz-focus-inner {
-        border: 0 none currentColor;
+        border: 0 none currentcolor;
         padding: 0
       }
       w-button {
@@ -1755,11 +1758,11 @@ test("FormButton", async () => {
         padding-bottom: 9px;
         padding-left: 15px;
         text-decoration-line: none;
-        text-decoration-style: initial;
-        text-decoration-color: initial;
+        text-decoration-style: solid;
+        text-decoration-color: currentcolor;
         display: inline-block;
         appearance: button;
-        border: 0 none currentColor
+        border: 0 none currentcolor
       }
     }"
   `);
@@ -1827,7 +1830,7 @@ test("FormTextInput", async () => {
         padding: 0
       }
       input::-moz-focus-inner {
-        border: 0 none currentColor;
+        border: 0 none currentcolor;
         padding: 0
       }
       w-input {
@@ -1862,7 +1865,7 @@ test("FormTextInput", async () => {
         border-right-color: rgba(56, 152, 236, 1);
         border-bottom-color: rgba(56, 152, 236, 1);
         border-left-color: rgba(56, 152, 236, 1);
-        outline: 0 none currentColor
+        outline: 0 none currentcolor
       }
     }"
   `);
@@ -1996,7 +1999,7 @@ test("FormTextarea", async () => {
         border-right-color: rgba(56, 152, 236, 1);
         border-bottom-color: rgba(56, 152, 236, 1);
         border-left-color: rgba(56, 152, 236, 1);
-        outline: 0 none currentColor
+        outline: 0 none currentcolor
       }
     }"
   `);
@@ -2146,7 +2149,7 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         padding: 0
       }
       input::-moz-focus-inner {
-        border: 0 none currentColor;
+        border: 0 none currentcolor;
         padding: 0
       }
       w-checkbox-input {
@@ -2271,7 +2274,7 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
         padding: 0
       }
       input::-moz-focus-inner {
-        border: 0 none currentColor;
+        border: 0 none currentcolor;
         padding: 0
       }
       w-radio-input {
@@ -2673,10 +2676,10 @@ describe("Styles", () => {
           background-color: rgba(0, 0, 0, 0)
         }
         a:active {
-          outline: 0 none currentColor
+          outline: 0 none currentcolor
         }
         a:hover {
-          outline: 0 none currentColor
+          outline: 0 none currentcolor
         }
         button.is-small.is-secondary {
           text-align: center;
@@ -2884,10 +2887,10 @@ describe("Styles", () => {
           background-color: rgba(0, 0, 0, 0)
         }
         a:active {
-          outline: 0 none currentColor
+          outline: 0 none currentcolor
         }
         a:hover {
-          outline: 0 none currentColor
+          outline: 0 none currentcolor
         }
         x {
           transform: translate3d(7px, 74px, 16px)

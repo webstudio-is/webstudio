@@ -139,6 +139,7 @@ export const renderJsx = (root: JSX.Element) => {
 type ComponentProps = Record<string, unknown> &
   Record<`${string}:expression`, string> & {
     "ws:id"?: string;
+    "ws:label"?: string;
     children?: ReactNode;
   };
 

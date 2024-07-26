@@ -30,7 +30,11 @@ const Body = (props: any) => props.children;
 const Page = ({ system: system }: { system: any }) => {
   let sitemapxml = useResource("sitemapxml_1");
   return (
-    <Body data-ws-id="rve0BYRbzAkSCr3Lq-wzi" data-ws-component="Body">
+    <Body
+      data-ws-id="rve0BYRbzAkSCr3Lq-wzi"
+      data-ws-component="Body"
+      className="w-body"
+    >
       <XmlNode
         data-ws-id="cgaMXxOMMAh4H-u-MB3_0"
         data-ws-component="XmlNode"

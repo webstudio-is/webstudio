@@ -15,3 +15,8 @@ ENV PATH=/usr/local/bin:${PATH}
 # [Optional] Uncomment if you want to install more global node modules
 # RUN su node -c "npm install -g <your-package-list-here>"
 
+COPY library-scripts/*.sh /tmp/library-scripts/
+
+ENV DOCKER_BUILDKIT=1
+RUN apt-get update
+RUN /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh

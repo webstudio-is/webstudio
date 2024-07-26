@@ -429,6 +429,12 @@ export const propsTabs: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: {
+    description: "The value of the tab to select by default, if uncontrolled",
+    required: false,
+    control: "text",
+    type: "string",
+  },
   dir: {
     description: "The direction of navigation between toolbar items.",
     required: false,
@@ -1001,6 +1007,7 @@ export const propsTabsList: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -1566,6 +1573,7 @@ export const propsTabsTrigger: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -2192,6 +2200,7 @@ export const propsTabsContent: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",

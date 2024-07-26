@@ -12,7 +12,7 @@ html {
   min-height: 100%;
 }
 @media all {
-  body:where([data-ws-component="Body"]) {
+  :where(body.w-body) {
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -25,7 +25,7 @@ html {
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
   }
-  h1:where([data-ws-component="Heading"]) {
+  :where(h1.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -33,7 +33,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h2:where([data-ws-component="Heading"]) {
+  :where(h2.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -41,7 +41,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h3:where([data-ws-component="Heading"]) {
+  :where(h3.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -49,7 +49,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h4:where([data-ws-component="Heading"]) {
+  :where(h4.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -57,7 +57,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h5:where([data-ws-component="Heading"]) {
+  :where(h5.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -65,7 +65,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  h6:where([data-ws-component="Heading"]) {
+  :where(h6.w-heading) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -73,7 +73,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  a:where([data-ws-component="Link"]) {
+  :where(a.w-link) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -83,7 +83,7 @@ html {
     min-height: 1em;
     display: inline-block;
   }
-  div:where([data-ws-component="Vimeo"]) {
+  :where(div.w-vimeo) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -91,7 +91,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  img:where([data-ws-component="VimeoPreviewImage"]) {
+  :where(img.w-preview-image) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -102,7 +102,7 @@ html {
     display: block;
     height: auto;
   }
-  button:where([data-ws-component="VimeoPlayButton"]) {
+  :where(button.w-play-button) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -118,7 +118,7 @@ html {
     text-transform: none;
     margin: 0;
   }
-  div:where([data-ws-component="Box"]) {
+  :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -126,7 +126,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  address:where([data-ws-component="Box"]) {
+  :where(address.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -134,7 +134,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  article:where([data-ws-component="Box"]) {
+  :where(article.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -142,7 +142,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  aside:where([data-ws-component="Box"]) {
+  :where(aside.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -150,7 +150,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  figure:where([data-ws-component="Box"]) {
+  :where(figure.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -158,7 +158,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  footer:where([data-ws-component="Box"]) {
+  :where(footer.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -166,7 +166,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  header:where([data-ws-component="Box"]) {
+  :where(header.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -174,7 +174,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  main:where([data-ws-component="Box"]) {
+  :where(main.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -182,7 +182,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  nav:where([data-ws-component="Box"]) {
+  :where(nav.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -190,7 +190,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  section:where([data-ws-component="Box"]) {
+  :where(section.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -198,10 +198,10 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  div:where([data-ws-component="HtmlEmbed"]) {
+  :where(div.w-html-embed) {
     display: contents;
   }
-  div:where([data-ws-component="VimeoSpinner"]) {
+  :where(div.w-spinner) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -209,7 +209,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  img:where([data-ws-component="Image"]) {
+  :where(img.w-image) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

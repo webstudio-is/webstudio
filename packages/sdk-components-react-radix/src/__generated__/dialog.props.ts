@@ -431,6 +431,7 @@ export const propsDialogOverlay: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -989,6 +990,7 @@ export const propsDialogContent: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -1547,6 +1549,7 @@ export const propsDialogClose: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -1742,6 +1745,13 @@ export const propsDialogClose: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["on", "off"],
+  },
+  value: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines a default value which will be displayed in the element on pageload.",
   },
   vocab: { required: false, control: "text", type: "string" },
 };
@@ -2166,6 +2176,7 @@ export const propsDialogTitle: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",
@@ -2730,6 +2741,7 @@ export const propsDialogDescription: Record<string, PropMeta> = {
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
   datatype: { required: false, control: "text", type: "string" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
     required: false,
     control: "text",

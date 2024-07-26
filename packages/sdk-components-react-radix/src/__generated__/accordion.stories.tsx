@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Box as Box,
   Text as Text,
@@ -13,99 +12,97 @@ import {
 } from "../components";
 
 const Component = () => {
-  let [accordionValue, set$accordionValue] = useState<any>("0");
   return (
-    <Box data-ws-id="root" data-ws-component="Box">
+    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
       <Accordion
         data-ws-id="1"
         data-ws-component="Accordion"
         collapsible={true}
-        value={accordionValue}
-        onValueChange={(value: any) => {
-          accordionValue = value;
-          set$accordionValue(accordionValue);
-        }}
+        defaultValue={"0"}
+        className="w-accordion"
       >
         <AccordionItem
-          data-ws-id="6"
+          data-ws-id="4"
           data-ws-component="AccordionItem"
           data-ws-index="0"
-          className="caktpzb c17gos5d c102tttv"
+          className="w-item w-item-1"
         >
           <AccordionHeader
-            data-ws-id="8"
+            data-ws-id="6"
             data-ws-component="AccordionHeader"
-            className="c11xgi9i"
+            className="w-item-header w-item-header-1"
           >
             <AccordionTrigger
-              data-ws-id="10"
+              data-ws-id="8"
               data-ws-component="AccordionTrigger"
-              className="c11xgi9i c1yubncr c1iq6hwp cv7p8tf clo3r8o cqq29ax c17g8s4n c657y94 c1qjvju3 ceoyg4u cd7z43l c1f6k8wq"
+              className="w-item-trigger w-item-trigger-1"
             >
-              <Text data-ws-id="12" data-ws-component="Text">
+              <Text data-ws-id="10" data-ws-component="Text" className="w-text">
                 {"Is it accessible?"}
               </Text>
               <Box
-                data-ws-id="13"
+                data-ws-id="11"
                 data-ws-component="Box"
-                className="c1tvigim c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
+                className="w-box w-icon-container"
               >
                 <HtmlEmbed
-                  data-ws-id="15"
+                  data-ws-id="13"
                   data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                   }
+                  className="w-html-embed"
                 />
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
           <AccordionContent
-            data-ws-id="17"
+            data-ws-id="15"
             data-ws-component="AccordionContent"
-            className="c1p3lwwv c1qx3pju cut8gip c657y94"
+            className="w-item-content w-item-content-1"
           >
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
         </AccordionItem>
         <AccordionItem
-          data-ws-id="19"
+          data-ws-id="17"
           data-ws-component="AccordionItem"
           data-ws-index="1"
-          className="caktpzb c17gos5d c102tttv"
+          className="w-item w-item-2"
         >
           <AccordionHeader
-            data-ws-id="21"
+            data-ws-id="19"
             data-ws-component="AccordionHeader"
-            className="c11xgi9i"
+            className="w-item-header w-item-header-2"
           >
             <AccordionTrigger
-              data-ws-id="23"
+              data-ws-id="21"
               data-ws-component="AccordionTrigger"
-              className="c11xgi9i c1yubncr c1iq6hwp cv7p8tf clo3r8o cqq29ax c17g8s4n c657y94 c1qjvju3 ceoyg4u cd7z43l c1f6k8wq"
+              className="w-item-trigger w-item-trigger-2"
             >
-              <Text data-ws-id="25" data-ws-component="Text">
+              <Text data-ws-id="23" data-ws-component="Text" className="w-text">
                 {"Is it styled?"}
               </Text>
               <Box
-                data-ws-id="26"
+                data-ws-id="24"
                 data-ws-component="Box"
-                className="c1tvigim c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
+                className="w-box w-icon-container-1"
               >
                 <HtmlEmbed
-                  data-ws-id="28"
+                  data-ws-id="26"
                   data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                   }
+                  className="w-html-embed"
                 />
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
           <AccordionContent
-            data-ws-id="30"
+            data-ws-id="28"
             data-ws-component="AccordionContent"
-            className="c1p3lwwv c1qx3pju cut8gip c657y94"
+            className="w-item-content w-item-content-2"
           >
             {
               "Yes. It comes with default styles that matches the other components' aesthetic."
@@ -113,43 +110,44 @@ const Component = () => {
           </AccordionContent>
         </AccordionItem>
         <AccordionItem
-          data-ws-id="32"
+          data-ws-id="30"
           data-ws-component="AccordionItem"
           data-ws-index="2"
-          className="caktpzb c17gos5d c102tttv"
+          className="w-item w-item-3"
         >
           <AccordionHeader
-            data-ws-id="34"
+            data-ws-id="32"
             data-ws-component="AccordionHeader"
-            className="c11xgi9i"
+            className="w-item-header w-item-header-3"
           >
             <AccordionTrigger
-              data-ws-id="36"
+              data-ws-id="34"
               data-ws-component="AccordionTrigger"
-              className="c11xgi9i c1yubncr c1iq6hwp cv7p8tf clo3r8o cqq29ax c17g8s4n c657y94 c1qjvju3 ceoyg4u cd7z43l c1f6k8wq"
+              className="w-item-trigger w-item-trigger-3"
             >
-              <Text data-ws-id="38" data-ws-component="Text">
+              <Text data-ws-id="36" data-ws-component="Text" className="w-text">
                 {"Is it animated?"}
               </Text>
               <Box
-                data-ws-id="39"
+                data-ws-id="37"
                 data-ws-component="Box"
-                className="c1tvigim c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
+                className="w-box w-icon-container-2"
               >
                 <HtmlEmbed
-                  data-ws-id="41"
+                  data-ws-id="39"
                   data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                   }
+                  className="w-html-embed"
                 />
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
           <AccordionContent
-            data-ws-id="43"
+            data-ws-id="41"
             data-ws-component="AccordionContent"
-            className="c1p3lwwv c1qx3pju cut8gip c657y94"
+            className="w-item-content w-item-content-3"
           >
             {
               "Yes. It's animated by default, but you can disable it if you prefer."
@@ -173,11 +171,7 @@ const Story = {
           {`
 html {margin: 0; display: grid; min-height: 100%}
 @media all {
-  body:where([data-ws-component="Body"]) {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
+  :where(body.w-body) {
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
@@ -187,9 +181,10 @@ html {margin: 0; display: grid; min-height: 100%}
     border-bottom-width: 1px;
     border-left-width: 1px;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0
   }
-  div:where([data-ws-component="Box"]) {
+  :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -197,7 +192,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  address:where([data-ws-component="Box"]) {
+  :where(address.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -205,7 +200,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  article:where([data-ws-component="Box"]) {
+  :where(article.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -213,7 +208,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  aside:where([data-ws-component="Box"]) {
+  :where(aside.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -221,7 +216,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  figure:where([data-ws-component="Box"]) {
+  :where(figure.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -229,7 +224,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  footer:where([data-ws-component="Box"]) {
+  :where(footer.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -237,7 +232,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  header:where([data-ws-component="Box"]) {
+  :where(header.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -245,7 +240,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  main:where([data-ws-component="Box"]) {
+  :where(main.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -253,7 +248,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  nav:where([data-ws-component="Box"]) {
+  :where(nav.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -261,7 +256,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  section:where([data-ws-component="Box"]) {
+  :where(section.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -269,7 +264,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  div:where([data-ws-component="Accordion"]) {
+  :where(div.w-accordion) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -277,7 +272,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  div:where([data-ws-component="AccordionItem"]) {
+  :where(div.w-item) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -285,7 +280,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  h3:where([data-ws-component="AccordionHeader"]) {
+  :where(h3.w-item-header) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -295,36 +290,19 @@ html {margin: 0; display: grid; min-height: 100%}
     margin-top: 0px;
     margin-bottom: 0px
   }
-  button:where([data-ws-component="AccordionTrigger"]) {
+  :where(button.w-item-trigger) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
     box-sizing: border-box;
-    border-top-width: 0px;
-    border-right-width: 0px;
-    border-bottom-width: 0px;
-    border-left-width: 0px;
     text-transform: none;
     background-color: transparent;
     background-image: none;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(226, 232, 240, 1);
-    border-right-color: rgba(226, 232, 240, 1);
-    border-bottom-color: rgba(226, 232, 240, 1);
-    border-left-color: rgba(226, 232, 240, 1);
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px
+    border: 0px solid rgba(226, 232, 240, 1);
+    margin: 0;
+    padding: 0px
   }
-  div:where([data-ws-component="Text"]) {
+  :where(div.w-text) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -333,7 +311,10 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px;
     min-height: 1em
   }
-  div:where([data-ws-component="AccordionContent"]) {
+  :where(div.w-html-embed) {
+    display: contents
+  }
+  :where(div.w-item-content) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -341,81 +322,127 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-}@media all {
-  .caktpzb {
-    border-bottom-width: 1px
+}
+@media all {
+  .w-item-1 {
+    border-bottom: 1px solid rgba(226, 232, 240, 1)
   }
-  .c17gos5d {
-    border-bottom-style: solid
-  }
-  .c102tttv {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .c11xgi9i {
+  .w-item-header-1 {
     display: flex
   }
-  .c1yubncr {
-    flex-grow: 1
-  }
-  .c1iq6hwp {
-    flex-shrink: 1
-  }
-  .cv7p8tf {
-    flex-basis: 0%
-  }
-  .clo3r8o {
-    align-items: center
-  }
-  .cqq29ax {
-    justify-content: space-between
-  }
-  .c17g8s4n {
-    padding-top: 1rem
-  }
-  .c657y94 {
-    padding-bottom: 1rem
-  }
-  .c1qjvju3 {
-    font-weight: 500
-  }
-  .ceoyg4u {
+  .w-item-trigger-1 {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-weight: 500;
     --accordion-trigger-icon-transform: 0deg
   }
-  .cd7z43l:hover {
+  .w-item-trigger-1:hover {
     text-decoration-line: underline
   }
-  .c1f6k8wq[data-state=open] {
+  .w-item-trigger-1[data-state=open] {
     --accordion-trigger-icon-transform: 180deg
   }
-  .c1tvigim {
-    rotate: var(--accordion-trigger-icon-transform)
-  }
-  .c1pmpq0f {
-    height: 1rem
-  }
-  .c1yafs04 {
-    width: 1rem
-  }
-  .c11hichb {
-    flex-grow: 0
-  }
-  .cpr3ke2 {
-    transition-property: all
-  }
-  .c1wmnqxw {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
-  }
-  .c1aw50j7 {
+  .w-icon-container {
+    rotate: var(--accordion-trigger-icon-transform);
+    height: 1rem;
+    width: 1rem;
+    flex-grow: 0;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms
   }
-  .c1p3lwwv {
-    overflow: hidden
+  .w-item-content-1 {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding-bottom: 1rem
   }
-  .c1qx3pju {
-    font-size: 0.875rem
+  .w-item-2 {
+    border-bottom: 1px solid rgba(226, 232, 240, 1)
   }
-  .cut8gip {
-    line-height: 1.25rem
+  .w-item-header-2 {
+    display: flex
+  }
+  .w-item-trigger-2 {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-weight: 500;
+    --accordion-trigger-icon-transform: 0deg
+  }
+  .w-item-trigger-2:hover {
+    text-decoration-line: underline
+  }
+  .w-item-trigger-2[data-state=open] {
+    --accordion-trigger-icon-transform: 180deg
+  }
+  .w-icon-container-1 {
+    rotate: var(--accordion-trigger-icon-transform);
+    height: 1rem;
+    width: 1rem;
+    flex-grow: 0;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms
+  }
+  .w-item-content-2 {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding-bottom: 1rem
+  }
+  .w-item-3 {
+    border-bottom: 1px solid rgba(226, 232, 240, 1)
+  }
+  .w-item-header-3 {
+    display: flex
+  }
+  .w-item-trigger-3 {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-weight: 500;
+    --accordion-trigger-icon-transform: 0deg
+  }
+  .w-item-trigger-3:hover {
+    text-decoration-line: underline
+  }
+  .w-item-trigger-3[data-state=open] {
+    --accordion-trigger-icon-transform: 180deg
+  }
+  .w-icon-container-2 {
+    rotate: var(--accordion-trigger-icon-transform);
+    height: 1rem;
+    width: 1rem;
+    flex-grow: 0;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms
+  }
+  .w-item-content-3 {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding-bottom: 1rem
   }
 }
       `}
