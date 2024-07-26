@@ -18,13 +18,13 @@ const Component = () => {
         <TabsList
           data-ws-id="3"
           data-ws-component="TabsList"
-          className="w-tabs-list"
+          className="w-tabs-list w-tabs-list-1"
         >
           <TabsTrigger
             data-ws-id="5"
             data-ws-component="TabsTrigger"
             data-ws-index="0"
-            className="w-tabs-trigger"
+            className="w-tab-trigger w-tab-trigger-1"
           >
             {"Account"}
           </TabsTrigger>
@@ -32,7 +32,7 @@ const Component = () => {
             data-ws-id="7"
             data-ws-component="TabsTrigger"
             data-ws-index="1"
-            className="w-tabs-trigger"
+            className="w-tab-trigger w-tab-trigger-2"
           >
             {"Password"}
           </TabsTrigger>
@@ -41,7 +41,7 @@ const Component = () => {
           data-ws-id="9"
           data-ws-component="TabsContent"
           data-ws-index="0"
-          className="w-tabs-content"
+          className="w-tab-content w-tab-content-1"
         >
           {"Make changes to your account here."}
         </TabsContent>
@@ -49,7 +49,7 @@ const Component = () => {
           data-ws-id="11"
           data-ws-component="TabsContent"
           data-ws-index="1"
-          className="w-tabs-content"
+          className="w-tab-content w-tab-content-2"
         >
           {"Change your password here."}
         </TabsContent>
@@ -179,7 +179,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(button.w-tabs-trigger) {
+  :where(button.w-tab-trigger) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -191,7 +191,7 @@ html {margin: 0; display: grid; min-height: 100%}
     margin: 0;
     padding: 0px
   }
-  :where(div.w-tabs-content) {
+  :where(div.w-tab-content) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -201,7 +201,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="3"] {
+  .w-tabs-list-1 {
     display: inline-flex;
     height: 2.5rem;
     align-items: center;
@@ -214,7 +214,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     padding: 0.25rem
   }
-  [data-ws-id="5"] {
+  .w-tab-trigger-1 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -235,21 +235,21 @@ html {margin: 0; display: grid; min-height: 100%}
     white-space: normal;
     white-space-collapse: collapse
   }
-  [data-ws-id="5"]:disabled {
+  .w-tab-trigger-1:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="5"]:focus-visible {
+  .w-tab-trigger-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="5"][data-state=active] {
+  .w-tab-trigger-1[data-state=active] {
     background-color: rgba(255, 255, 255, 0.8);
     color: rgba(2, 8, 23, 1);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
   }
-  [data-ws-id="7"] {
+  .w-tab-trigger-2 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -270,32 +270,32 @@ html {margin: 0; display: grid; min-height: 100%}
     white-space: normal;
     white-space-collapse: collapse
   }
-  [data-ws-id="7"]:disabled {
+  .w-tab-trigger-2:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="7"]:focus-visible {
+  .w-tab-trigger-2:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="7"][data-state=active] {
+  .w-tab-trigger-2[data-state=active] {
     background-color: rgba(255, 255, 255, 0.8);
     color: rgba(2, 8, 23, 1);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
   }
-  [data-ws-id="9"] {
+  .w-tab-content-1 {
     margin-top: 0.5rem
   }
-  [data-ws-id="9"]:focus-visible {
+  .w-tab-content-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="11"] {
+  .w-tab-content-2 {
     margin-top: 0.5rem
   }
-  [data-ws-id="11"]:focus-visible {
+  .w-tab-content-2:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent

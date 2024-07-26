@@ -14,12 +14,12 @@ const Component = () => {
           switchChecked = checked;
           set$switchChecked(switchChecked);
         }}
-        className="w-switch"
+        className="w-switch w-switch-1"
       >
         <SwitchThumb
           data-ws-id="6"
           data-ws-component="SwitchThumb"
-          className="w-switch-thumb"
+          className="w-switch-thumb w-switch-thumb-1"
         />
       </Switch>
     </Box>
@@ -153,7 +153,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="1"] {
+  .w-switch-1 {
     display: inline-flex;
     height: 24px;
     width: 44px;
@@ -169,22 +169,22 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-duration: 150ms;
     border: 2px solid transparent
   }
-  [data-ws-id="1"]:disabled {
+  .w-switch-1:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="1"]:focus-visible {
+  .w-switch-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="1"][data-state=checked] {
+  .w-switch-1[data-state=checked] {
     background-color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="1"][data-state=unchecked] {
+  .w-switch-1[data-state=unchecked] {
     background-color: rgba(226, 232, 240, 1)
   }
-  [data-ws-id="6"] {
+  .w-switch-thumb-1 {
     pointer-events: none;
     display: block;
     height: 1.25rem;
@@ -199,10 +199,10 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms
   }
-  [data-ws-id="6"][data-state=checked] {
+  .w-switch-thumb-1[data-state=checked] {
     transform: translateX(20px)
   }
-  [data-ws-id="6"][data-state=unchecked] {
+  .w-switch-thumb-1[data-state=unchecked] {
     transform: translateX(0px)
   }
 }

@@ -16,7 +16,6 @@ import {
   type Styles,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
-import { idAttribute } from "../props";
 import { descendantComponent } from "../core-components";
 import { addGlobalRules } from "./global-rules";
 import { kebabCase } from "change-case";
@@ -81,7 +80,7 @@ export const generateCss = ({
   const scope = createScope([], normalizeClassName, "-");
   for (const [component, meta] of componentMetas) {
     const [_namespace, componentName] = parseComponentName(component);
-    const className = `w-${scope.getName(component, componentName)}`;
+    const className = `w-${scope.getName(component, meta.label ?? componentName)}`;
     const presetStyle = Object.entries(meta.presetStyle ?? {});
     if (presetStyle.length > 0) {
       // add preset class only when at least one style is defined
@@ -158,10 +157,19 @@ export const generateCss = ({
         instanceId = parentId;
       }
     }
-    const rule = sheet.addNestingRule(
-      `[${idAttribute}="${instanceId}"]`,
-      descendantSuffix
-    );
+    const meta = instance ? componentMetas.get(instance.component) : undefined;
+    const baseName =
+      instance?.label ?? meta?.label ?? instance?.component ?? instanceId;
+    const className = `w-${scope.getName(instanceId, baseName)}`;
+    if (atomic === false) {
+      let classList = classes.get(instanceId);
+      if (classList === undefined) {
+        classList = [];
+        classes.set(instanceId, classList);
+      }
+      classList.push(className);
+    }
+    const rule = sheet.addNestingRule(`.${className}`, descendantSuffix);
     rule.applyMixins(values);
     instanceByRule.set(rule, instanceId);
   }

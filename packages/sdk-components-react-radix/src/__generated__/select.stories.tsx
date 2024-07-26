@@ -30,35 +30,35 @@ const Component = () => {
         <SelectTrigger
           data-ws-id="5"
           data-ws-component="SelectTrigger"
-          className="w-select-trigger"
+          className="w-select-trigger w-select-trigger-1"
         >
           <SelectValue
             data-ws-id="7"
             data-ws-component="SelectValue"
             placeholder={"Theme"}
-            className="w-select-value"
+            className="w-value"
           />
         </SelectTrigger>
         <SelectContent
           data-ws-id="9"
           data-ws-component="SelectContent"
-          className="w-select-content"
+          className="w-select-content w-select-content-1"
         >
           <SelectViewport
             data-ws-id="11"
             data-ws-component="SelectViewport"
-            className="w-select-viewport"
+            className="w-select-viewport w-select-viewport-1"
           >
             <SelectItem
               data-ws-id="13"
               data-ws-component="SelectItem"
               value={"light"}
-              className="w-select-item"
+              className="w-select-item w-select-item-1"
             >
               <SelectItemIndicator
                 data-ws-id="16"
                 data-ws-component="SelectItemIndicator"
-                className="w-select-item-indicator"
+                className="w-indicator w-indicator-1"
               >
                 <HtmlEmbed
                   data-ws-id="18"
@@ -72,7 +72,7 @@ const Component = () => {
               <SelectItemText
                 data-ws-id="20"
                 data-ws-component="SelectItemText"
-                className="w-select-item-text"
+                className="w-item-text"
               >
                 {"Light"}
               </SelectItemText>
@@ -81,12 +81,12 @@ const Component = () => {
               data-ws-id="21"
               data-ws-component="SelectItem"
               value={"dark"}
-              className="w-select-item"
+              className="w-select-item w-select-item-2"
             >
               <SelectItemIndicator
                 data-ws-id="24"
                 data-ws-component="SelectItemIndicator"
-                className="w-select-item-indicator"
+                className="w-indicator w-indicator-2"
               >
                 <HtmlEmbed
                   data-ws-id="26"
@@ -100,7 +100,7 @@ const Component = () => {
               <SelectItemText
                 data-ws-id="28"
                 data-ws-component="SelectItemText"
-                className="w-select-item-text"
+                className="w-item-text"
               >
                 {"Dark"}
               </SelectItemText>
@@ -109,12 +109,12 @@ const Component = () => {
               data-ws-id="29"
               data-ws-component="SelectItem"
               value={"system"}
-              className="w-select-item"
+              className="w-select-item w-select-item-3"
             >
               <SelectItemIndicator
                 data-ws-id="32"
                 data-ws-component="SelectItemIndicator"
-                className="w-select-item-indicator"
+                className="w-indicator w-indicator-3"
               >
                 <HtmlEmbed
                   data-ws-id="34"
@@ -128,7 +128,7 @@ const Component = () => {
               <SelectItemText
                 data-ws-id="36"
                 data-ws-component="SelectItemText"
-                className="w-select-item-text"
+                className="w-item-text"
               >
                 {"System"}
               </SelectItemText>
@@ -261,7 +261,7 @@ html {margin: 0; display: grid; min-height: 100%}
     text-transform: none;
     margin: 0
   }
-  :where(span.w-select-value) {
+  :where(span.w-value) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -293,7 +293,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(span.w-select-item-indicator) {
+  :where(span.w-indicator) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -304,7 +304,7 @@ html {margin: 0; display: grid; min-height: 100%}
   :where(div.w-html-embed) {
     display: contents
   }
-  :where(span.w-select-item-text) {
+  :where(span.w-item-text) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -314,7 +314,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="5"] {
+  .w-select-trigger-1 {
     display: flex;
     height: 2.5rem;
     width: 100%;
@@ -333,19 +333,19 @@ html {margin: 0; display: grid; min-height: 100%}
     line-height: 1.25rem;
     border: 1px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="5"]::placeholder {
+  .w-select-trigger-1::placeholder {
     color: rgba(100, 116, 139, 1)
   }
-  [data-ws-id="5"]:disabled {
+  .w-select-trigger-1:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="5"]:focus {
+  .w-select-trigger-1:focus {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="9"] {
+  .w-select-content-1 {
     position: relative;
     z-index: 50;
     min-width: 8rem;
@@ -360,13 +360,13 @@ html {margin: 0; display: grid; min-height: 100%}
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="11"] {
+  .w-select-viewport-1 {
     height: var(--radix-select-trigger-height);
     width: 100%;
     min-width: var(--radix-select-trigger-width);
     padding: 0.25rem
   }
-  [data-ws-id="13"] {
+  .w-select-item-1 {
     position: relative;
     display: flex;
     width: 100%;
@@ -387,15 +387,15 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-offset: 2px;
     outline: 2px solid transparent
   }
-  [data-ws-id="13"]:focus {
+  .w-select-item-1:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="13"][data-disabled] {
+  .w-select-item-1[data-disabled] {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="16"] {
+  .w-indicator-1 {
     position: absolute;
     left: 0.5rem;
     display: flex;
@@ -404,7 +404,7 @@ html {margin: 0; display: grid; min-height: 100%}
     align-items: center;
     justify-content: center
   }
-  [data-ws-id="21"] {
+  .w-select-item-2 {
     position: relative;
     display: flex;
     width: 100%;
@@ -425,15 +425,15 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-offset: 2px;
     outline: 2px solid transparent
   }
-  [data-ws-id="21"]:focus {
+  .w-select-item-2:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="21"][data-disabled] {
+  .w-select-item-2[data-disabled] {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="24"] {
+  .w-indicator-2 {
     position: absolute;
     left: 0.5rem;
     display: flex;
@@ -442,7 +442,7 @@ html {margin: 0; display: grid; min-height: 100%}
     align-items: center;
     justify-content: center
   }
-  [data-ws-id="29"] {
+  .w-select-item-3 {
     position: relative;
     display: flex;
     width: 100%;
@@ -463,15 +463,15 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-offset: 2px;
     outline: 2px solid transparent
   }
-  [data-ws-id="29"]:focus {
+  .w-select-item-3:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="29"][data-disabled] {
+  .w-select-item-3[data-disabled] {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="32"] {
+  .w-indicator-3 {
     position: absolute;
     left: 0.5rem;
     display: flex;

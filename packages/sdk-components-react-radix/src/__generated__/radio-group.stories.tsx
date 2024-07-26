@@ -23,14 +23,18 @@ const Component = () => {
           radioGroupValue = value;
           set$radioGroupValue(radioGroupValue);
         }}
-        className="w-radio-group"
+        className="w-radio-group w-radio-group-1"
       >
-        <Label data-ws-id="6" data-ws-component="Label" className="w-label">
+        <Label
+          data-ws-id="6"
+          data-ws-component="Label"
+          className="w-label w-label-1"
+        >
           <RadioGroupItem
             data-ws-id="8"
             data-ws-component="RadioGroupItem"
             value={"default"}
-            className="w-radio-group-item"
+            className="w-radio-group-item w-radio-group-item-1"
           >
             <RadioGroupIndicator
               data-ws-id="11"
@@ -51,12 +55,16 @@ const Component = () => {
             {"Default"}
           </Text>
         </Label>
-        <Label data-ws-id="15" data-ws-component="Label" className="w-label">
+        <Label
+          data-ws-id="15"
+          data-ws-component="Label"
+          className="w-label w-label-2"
+        >
           <RadioGroupItem
             data-ws-id="17"
             data-ws-component="RadioGroupItem"
             value={"comfortable"}
-            className="w-radio-group-item"
+            className="w-radio-group-item w-radio-group-item-2"
           >
             <RadioGroupIndicator
               data-ws-id="20"
@@ -77,12 +85,16 @@ const Component = () => {
             {"Comfortable"}
           </Text>
         </Label>
-        <Label data-ws-id="24" data-ws-component="Label" className="w-label">
+        <Label
+          data-ws-id="24"
+          data-ws-component="Label"
+          className="w-label w-label-3"
+        >
           <RadioGroupItem
             data-ws-id="26"
             data-ws-component="RadioGroupItem"
             value={"compact"}
-            className="w-radio-group-item"
+            className="w-radio-group-item w-radio-group-item-3"
           >
             <RadioGroupIndicator
               data-ws-id="29"
@@ -263,19 +275,19 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="1"] {
+  .w-radio-group-1 {
     display: flex;
     flex-direction: column;
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="6"] {
+  .w-label-1 {
     display: flex;
     align-items: center;
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="8"] {
+  .w-radio-group-item-1 {
     aspect-ratio: 1 / 1;
     height: 1rem;
     width: 1rem;
@@ -286,22 +298,22 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(15, 23, 42, 1);
     border: 1px solid rgba(15, 23, 42, 1)
   }
-  [data-ws-id="8"]:disabled {
+  .w-radio-group-item-1:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="8"]:focus-visible {
+  .w-radio-group-item-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="15"] {
+  .w-label-2 {
     display: flex;
     align-items: center;
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="17"] {
+  .w-radio-group-item-2 {
     aspect-ratio: 1 / 1;
     height: 1rem;
     width: 1rem;
@@ -312,22 +324,22 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(15, 23, 42, 1);
     border: 1px solid rgba(15, 23, 42, 1)
   }
-  [data-ws-id="17"]:disabled {
+  .w-radio-group-item-2:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="17"]:focus-visible {
+  .w-radio-group-item-2:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="24"] {
+  .w-label-3 {
     display: flex;
     align-items: center;
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="26"] {
+  .w-radio-group-item-3 {
     aspect-ratio: 1 / 1;
     height: 1rem;
     width: 1rem;
@@ -338,11 +350,11 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(15, 23, 42, 1);
     border: 1px solid rgba(15, 23, 42, 1)
   }
-  [data-ws-id="26"]:disabled {
+  .w-radio-group-item-3:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="26"]:focus-visible {
+  .w-radio-group-item-3:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent

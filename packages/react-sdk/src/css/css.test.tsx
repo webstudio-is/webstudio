@@ -55,7 +55,7 @@ test("generate css for one instance with two tokens", () => {
   expect(cssText).toMatchInlineSnapshot(`
 "html {margin: 0; display: grid; min-height: 100%}
 @media all {
-  [data-ws-id="box"] {
+  .w-box {
     color: red
   }
 }"
@@ -135,16 +135,16 @@ test("generate descendant selector", () => {
   expect(cssText).toMatchInlineSnapshot(`
 "html {margin: 0; display: grid; min-height: 100%}
 @media all {
-  [data-ws-id="root"] {
+  .w-body {
     color: blue
   }
-  [data-ws-id="root"]:hover {
+  .w-body:hover {
     color: red
   }
-  [data-ws-id="root"] a {
+  .w-body a {
     color: blue
   }
-  [data-ws-id="root"] a:hover {
+  .w-body a:hover {
     color: red
   }
 }"
@@ -314,7 +314,7 @@ test("expose preset classes to instances", () => {
         <$.Box ws:id="box"></$.Box>
       </$.Body>
     ),
-    breakpoints: new Map(),
+    breakpoints: toMap([{ id: "base", label: "" }]),
     styleSourceSelections: new Map([
       ["body", { instanceId: "body", values: ["localBody"] }],
       ["box", { instanceId: "box", values: ["localBox"] }],
@@ -383,15 +383,24 @@ test("expose preset classes to instances", () => {
     display: flex
   }
 }
-"
+@media all {
+  .c17hlgoh {
+    color: blue
+  }
+  .cawkhls {
+    color: red
+  }
+}"
 `);
   expect(classes).toMatchInlineSnapshot(`
 Map {
   "body" => [
     "w-body",
+    "w-body-1",
   ],
   "box" => [
     "w-box",
+    "w-box-1",
   ],
 }
 `);
@@ -404,6 +413,108 @@ Map {
   "box" => [
     "w-box",
     "cawkhls",
+  ],
+}
+`);
+});
+
+test("generate classes with instance and meta label", () => {
+  const { cssText, classes } = generateAllCss({
+    assets: new Map(),
+    ...renderJsx(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box" ws:label="box%instance#label"></$.Box>
+      </$.Body>
+    ),
+    breakpoints: toMap([{ id: "base", label: "" }]),
+    styleSourceSelections: new Map([
+      ["body", { instanceId: "body", values: ["localBody"] }],
+      ["box", { instanceId: "box", values: ["localBox"] }],
+    ]),
+    styles: new Map([
+      [
+        "localBody:base:color",
+        {
+          styleSourceId: "localBody",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "blue" },
+        },
+      ],
+      [
+        "localBox:base:color::hover",
+        {
+          styleSourceId: "localBox",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    ]),
+    componentMetas: new Map([
+      [
+        "Body",
+        {
+          type: "container",
+          icon: "",
+          label: "body meta label",
+          presetStyle: {
+            div: [
+              {
+                property: "display",
+                value: { type: "keyword", value: "block" },
+              },
+            ],
+          },
+        },
+      ],
+      [
+        "Box",
+        {
+          type: "container",
+          icon: "",
+          label: "box meta label",
+          presetStyle: {
+            div: [
+              {
+                property: "display",
+                value: { type: "keyword", value: "flex" },
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+    assetBaseUrl: "",
+  });
+  expect(cssText).toMatchInlineSnapshot(`
+"html {margin: 0; display: grid; min-height: 100%}
+@media all {
+  :where(div.w-body-meta-label) {
+    display: block
+  }
+  :where(div.w-box-meta-label) {
+    display: flex
+  }
+}
+@media all {
+  .w-body-meta-label-1 {
+    color: blue
+  }
+  .w-box-instance-label {
+    color: red
+  }
+}"
+`);
+  expect(classes).toMatchInlineSnapshot(`
+Map {
+  "body" => [
+    "w-body-meta-label",
+    "w-body-meta-label-1",
+  ],
+  "box" => [
+    "w-box-meta-label",
+    "w-box-instance-label",
   ],
 }
 `);

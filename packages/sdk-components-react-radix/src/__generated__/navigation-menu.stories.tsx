@@ -22,28 +22,28 @@ const Component = () => {
       <NavigationMenu
         data-ws-id="1"
         data-ws-component="NavigationMenu"
-        className="w-navigation-menu"
+        className="w-navigation-menu w-navigation-menu-1"
       >
         <NavigationMenuList
           data-ws-id="3"
           data-ws-component="NavigationMenuList"
-          className="w-navigation-menu-list"
+          className="w-menu-list w-menu-list-1"
         >
           <NavigationMenuItem
             data-ws-id="5"
             data-ws-component="NavigationMenuItem"
             data-ws-index="0"
-            className="w-navigation-menu-item"
+            className="w-menu-item"
           >
             <NavigationMenuTrigger
               data-ws-id="6"
               data-ws-component="NavigationMenuTrigger"
-              className="w-navigation-menu-trigger"
+              className="w-menu-trigger"
             >
               <Button
                 data-ws-id="7"
                 data-ws-component="Button"
-                className="w-button"
+                className="w-button w-button-1"
               >
                 <Text
                   data-ws-id="9"
@@ -52,7 +52,11 @@ const Component = () => {
                 >
                   {"About"}
                 </Text>
-                <Box data-ws-id="10" data-ws-component="Box" className="w-box">
+                <Box
+                  data-ws-id="10"
+                  data-ws-component="Box"
+                  className="w-box w-icon-container"
+                >
                   <HtmlEmbed
                     data-ws-id="12"
                     data-ws-component="HtmlEmbed"
@@ -68,35 +72,47 @@ const Component = () => {
               data-ws-id="14"
               data-ws-component="NavigationMenuContent"
               data-ws-index="0"
-              className="w-navigation-menu-content"
+              className="w-menu-content w-menu-content-1"
             >
-              <Box data-ws-id="16" data-ws-component="Box" className="w-box">
-                <Box data-ws-id="18" data-ws-component="Box" className="w-box">
+              <Box
+                data-ws-id="16"
+                data-ws-component="Box"
+                className="w-box w-content"
+              >
+                <Box
+                  data-ws-id="18"
+                  data-ws-component="Box"
+                  className="w-box w-box-1"
+                >
                   {""}
                 </Box>
-                <Box data-ws-id="20" data-ws-component="Box" className="w-box">
+                <Box
+                  data-ws-id="20"
+                  data-ws-component="Box"
+                  className="w-box w-flex-column"
+                >
                   <NavigationMenuLink
                     data-ws-id="22"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="23"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/sheet"}
-                      className="w-link"
+                      className="w-link w-link-1"
                     >
                       <Text
                         data-ws-id="26"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-1"
                       >
                         {"Sheet"}
                       </Text>
                       <Paragraph
                         data-ws-id="28"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-1"
                       >
                         {
                           "Extends the Dialog component to display content that complements the main content of the screen."
@@ -107,7 +123,7 @@ const Component = () => {
                   <NavigationMenuLink
                     data-ws-id="30"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="31"
@@ -115,19 +131,19 @@ const Component = () => {
                       href={
                         "https://ui.shadcn.com/docs/components/navigation-menu"
                       }
-                      className="w-link"
+                      className="w-link w-link-2"
                     >
                       <Text
                         data-ws-id="34"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-2"
                       >
                         {"Navigation Menu"}
                       </Text>
                       <Paragraph
                         data-ws-id="36"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-2"
                       >
                         {"A collection of links for navigating websites."}
                       </Paragraph>
@@ -136,25 +152,25 @@ const Component = () => {
                   <NavigationMenuLink
                     data-ws-id="38"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="39"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/tabs"}
-                      className="w-link"
+                      className="w-link w-link-3"
                     >
                       <Text
                         data-ws-id="42"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-3"
                       >
                         {"Tabs"}
                       </Text>
                       <Paragraph
                         data-ws-id="44"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-3"
                       >
                         {
                           "A set of layered sections of content—known as tab panels—that are displayed one at a time."
@@ -170,17 +186,17 @@ const Component = () => {
             data-ws-id="46"
             data-ws-component="NavigationMenuItem"
             data-ws-index="1"
-            className="w-navigation-menu-item"
+            className="w-menu-item"
           >
             <NavigationMenuTrigger
               data-ws-id="47"
               data-ws-component="NavigationMenuTrigger"
-              className="w-navigation-menu-trigger"
+              className="w-menu-trigger"
             >
               <Button
                 data-ws-id="48"
                 data-ws-component="Button"
-                className="w-button"
+                className="w-button w-button-2"
               >
                 <Text
                   data-ws-id="50"
@@ -189,7 +205,11 @@ const Component = () => {
                 >
                   {"Components"}
                 </Text>
-                <Box data-ws-id="51" data-ws-component="Box" className="w-box">
+                <Box
+                  data-ws-id="51"
+                  data-ws-component="Box"
+                  className="w-box w-icon-container-1"
+                >
                   <HtmlEmbed
                     data-ws-id="53"
                     data-ws-component="HtmlEmbed"
@@ -205,32 +225,40 @@ const Component = () => {
               data-ws-id="55"
               data-ws-component="NavigationMenuContent"
               data-ws-index="1"
-              className="w-navigation-menu-content"
+              className="w-menu-content w-menu-content-2"
             >
-              <Box data-ws-id="57" data-ws-component="Box" className="w-box">
-                <Box data-ws-id="59" data-ws-component="Box" className="w-box">
+              <Box
+                data-ws-id="57"
+                data-ws-component="Box"
+                className="w-box w-content-1"
+              >
+                <Box
+                  data-ws-id="59"
+                  data-ws-component="Box"
+                  className="w-box w-flex-column-1"
+                >
                   <NavigationMenuLink
                     data-ws-id="61"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="62"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/accordion"}
-                      className="w-link"
+                      className="w-link w-link-4"
                     >
                       <Text
                         data-ws-id="65"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-4"
                       >
                         {"Accordion"}
                       </Text>
                       <Paragraph
                         data-ws-id="67"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-4"
                       >
                         {
                           "A vertically stacked set of interactive headings that each reveal a section of content."
@@ -241,25 +269,25 @@ const Component = () => {
                   <NavigationMenuLink
                     data-ws-id="69"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="70"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/dialog"}
-                      className="w-link"
+                      className="w-link w-link-5"
                     >
                       <Text
                         data-ws-id="73"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-5"
                       >
                         {"Dialog"}
                       </Text>
                       <Paragraph
                         data-ws-id="75"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-5"
                       >
                         {
                           "A window overlaid on either the primary window or another dialog window, rendering the content underneath inert."
@@ -270,25 +298,25 @@ const Component = () => {
                   <NavigationMenuLink
                     data-ws-id="77"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="78"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/collapsible"}
-                      className="w-link"
+                      className="w-link w-link-6"
                     >
                       <Text
                         data-ws-id="81"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-6"
                       >
                         {"Collapsible"}
                       </Text>
                       <Paragraph
                         data-ws-id="83"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-6"
                       >
                         {
                           "An interactive component which expands/collapses a panel."
@@ -297,29 +325,33 @@ const Component = () => {
                     </Link>
                   </NavigationMenuLink>
                 </Box>
-                <Box data-ws-id="85" data-ws-component="Box" className="w-box">
+                <Box
+                  data-ws-id="85"
+                  data-ws-component="Box"
+                  className="w-box w-flex-column-2"
+                >
                   <NavigationMenuLink
                     data-ws-id="87"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="88"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/popover"}
-                      className="w-link"
+                      className="w-link w-link-7"
                     >
                       <Text
                         data-ws-id="91"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-7"
                       >
                         {"Popover"}
                       </Text>
                       <Paragraph
                         data-ws-id="93"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-7"
                       >
                         {
                           "Displays rich content in a portal, triggered by a button."
@@ -330,25 +362,25 @@ const Component = () => {
                   <NavigationMenuLink
                     data-ws-id="95"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="96"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/tooltip"}
-                      className="w-link"
+                      className="w-link w-link-8"
                     >
                       <Text
                         data-ws-id="99"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-8"
                       >
                         {"Tooltip"}
                       </Text>
                       <Paragraph
                         data-ws-id="101"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-8"
                       >
                         {
                           "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it."
@@ -359,25 +391,25 @@ const Component = () => {
                   <NavigationMenuLink
                     data-ws-id="103"
                     data-ws-component="NavigationMenuLink"
-                    className="w-navigation-menu-link"
+                    className="w-accessible-link-wrapper"
                   >
                     <Link
                       data-ws-id="104"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/button"}
-                      className="w-link"
+                      className="w-link w-link-9"
                     >
                       <Text
                         data-ws-id="107"
                         data-ws-component="Text"
-                        className="w-text"
+                        className="w-text w-text-9"
                       >
                         {"Button"}
                       </Text>
                       <Paragraph
                         data-ws-id="109"
                         data-ws-component="Paragraph"
-                        className="w-paragraph"
+                        className="w-paragraph w-paragraph-9"
                       >
                         {
                           "Displays a button or a component that looks like a button."
@@ -393,28 +425,32 @@ const Component = () => {
             data-ws-id="111"
             data-ws-component="NavigationMenuItem"
             data-ws-index="2"
-            className="w-navigation-menu-item"
+            className="w-menu-item"
           >
             <NavigationMenuLink
               data-ws-id="112"
               data-ws-component="NavigationMenuLink"
-              className="w-navigation-menu-link"
+              className="w-accessible-link-wrapper"
             >
               <Link
                 data-ws-id="113"
                 data-ws-component="Link"
-                className="w-link"
+                className="w-link w-link-10"
               >
                 {"Standalone"}
               </Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
-        <Box data-ws-id="115" data-ws-component="Box" className="w-box">
+        <Box
+          data-ws-id="115"
+          data-ws-component="Box"
+          className="w-box w-viewport-container"
+        >
           <NavigationMenuViewport
             data-ws-id="117"
             data-ws-component="NavigationMenuViewport"
-            className="w-navigation-menu-viewport"
+            className="w-menu-viewport w-menu-viewport-1"
           />
         </Box>
       </NavigationMenu>
@@ -535,7 +571,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-navigation-menu-list) {
+  :where(div.w-menu-list) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -543,7 +579,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-navigation-menu-item) {
+  :where(div.w-menu-item) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -551,7 +587,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-navigation-menu-trigger) {
+  :where(div.w-menu-trigger) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -587,7 +623,7 @@ html {margin: 0; display: grid; min-height: 100%}
   :where(div.w-html-embed) {
     display: contents
   }
-  :where(div.w-navigation-menu-content) {
+  :where(div.w-menu-content) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -595,7 +631,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-navigation-menu-link) {
+  :where(div.w-accessible-link-wrapper) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -621,7 +657,7 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-navigation-menu-viewport) {
+  :where(div.w-menu-viewport) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -631,11 +667,11 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="1"] {
+  .w-navigation-menu-1 {
     position: relative;
     max-width: max-content
   }
-  [data-ws-id="3"] {
+  .w-menu-list-1 {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
@@ -648,7 +684,7 @@ html {margin: 0; display: grid; min-height: 100%}
     margin: 0px;
     padding: 0px
   }
-  [data-ws-id="7"] {
+  .w-button-1 {
     background-color: transparent;
     display: inline-flex;
     align-items: center;
@@ -667,23 +703,23 @@ html {margin: 0; display: grid; min-height: 100%}
     --navigation-menu-trigger-icon-transform: 0deg;
     border: 0px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="7"]:disabled {
+  .w-button-1:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="7"]:focus-visible {
+  .w-button-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="7"]:hover {
+  .w-button-1:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="7"][data-state=open] {
+  .w-button-1[data-state=open] {
     --navigation-menu-trigger-icon-transform: 180deg
   }
-  [data-ws-id="10"] {
+  .w-icon-container {
     margin-left: 0.25rem;
     rotate: var(--navigation-menu-trigger-icon-transform);
     height: 1rem;
@@ -693,20 +729,20 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms
   }
-  [data-ws-id="14"] {
+  .w-menu-content-1 {
     left: 0px;
     top: 0px;
     position: absolute;
     width: max-content;
     padding: 1rem
   }
-  [data-ws-id="16"] {
+  .w-content {
     display: flex;
     row-gap: 1rem;
     column-gap: 1rem;
     padding: 0.5rem
   }
-  [data-ws-id="18"] {
+  .w-box-1 {
     background-color: rgba(226, 232, 240, 1);
     width: 12rem;
     border-top-left-radius: 0.375rem;
@@ -715,14 +751,14 @@ html {margin: 0; display: grid; min-height: 100%}
     border-bottom-left-radius: 0.375rem;
     padding: 1rem
   }
-  [data-ws-id="20"] {
+  .w-flex-column {
     width: 16rem;
     display: flex;
     row-gap: 1rem;
     column-gap: 1rem;
     flex-direction: column
   }
-  [data-ws-id="23"] {
+  .w-link-1 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -740,20 +776,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="23"]:focus {
+  .w-link-1:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="23"]:hover {
+  .w-link-1:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="26"] {
+  .w-text-1 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="28"] {
+  .w-paragraph-1 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -764,7 +800,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="31"] {
+  .w-link-2 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -782,20 +818,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="31"]:focus {
+  .w-link-2:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="31"]:hover {
+  .w-link-2:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="34"] {
+  .w-text-2 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="36"] {
+  .w-paragraph-2 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -806,7 +842,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="39"] {
+  .w-link-3 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -824,20 +860,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="39"]:focus {
+  .w-link-3:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="39"]:hover {
+  .w-link-3:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="42"] {
+  .w-text-3 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="44"] {
+  .w-paragraph-3 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -848,7 +884,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="48"] {
+  .w-button-2 {
     background-color: transparent;
     display: inline-flex;
     align-items: center;
@@ -867,23 +903,23 @@ html {margin: 0; display: grid; min-height: 100%}
     --navigation-menu-trigger-icon-transform: 0deg;
     border: 0px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="48"]:disabled {
+  .w-button-2:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="48"]:focus-visible {
+  .w-button-2:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="48"]:hover {
+  .w-button-2:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="48"][data-state=open] {
+  .w-button-2[data-state=open] {
     --navigation-menu-trigger-icon-transform: 180deg
   }
-  [data-ws-id="51"] {
+  .w-icon-container-1 {
     margin-left: 0.25rem;
     rotate: var(--navigation-menu-trigger-icon-transform);
     height: 1rem;
@@ -893,27 +929,27 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms
   }
-  [data-ws-id="55"] {
+  .w-menu-content-2 {
     left: 0px;
     top: 0px;
     position: absolute;
     width: max-content;
     padding: 1rem
   }
-  [data-ws-id="57"] {
+  .w-content-1 {
     display: flex;
     row-gap: 1rem;
     column-gap: 1rem;
     padding: 0px
   }
-  [data-ws-id="59"] {
+  .w-flex-column-1 {
     width: 16rem;
     display: flex;
     row-gap: 1rem;
     column-gap: 1rem;
     flex-direction: column
   }
-  [data-ws-id="62"] {
+  .w-link-4 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -931,20 +967,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="62"]:focus {
+  .w-link-4:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="62"]:hover {
+  .w-link-4:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="65"] {
+  .w-text-4 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="67"] {
+  .w-paragraph-4 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -955,7 +991,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="70"] {
+  .w-link-5 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -973,20 +1009,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="70"]:focus {
+  .w-link-5:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="70"]:hover {
+  .w-link-5:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="73"] {
+  .w-text-5 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="75"] {
+  .w-paragraph-5 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -997,7 +1033,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="78"] {
+  .w-link-6 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -1015,20 +1051,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="78"]:focus {
+  .w-link-6:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="78"]:hover {
+  .w-link-6:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="81"] {
+  .w-text-6 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="83"] {
+  .w-paragraph-6 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -1039,14 +1075,14 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="85"] {
+  .w-flex-column-2 {
     width: 16rem;
     display: flex;
     row-gap: 1rem;
     column-gap: 1rem;
     flex-direction: column
   }
-  [data-ws-id="88"] {
+  .w-link-7 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -1064,20 +1100,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="88"]:focus {
+  .w-link-7:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="88"]:hover {
+  .w-link-7:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="91"] {
+  .w-text-7 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="93"] {
+  .w-paragraph-7 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -1088,7 +1124,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="96"] {
+  .w-link-8 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -1106,20 +1142,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="96"]:focus {
+  .w-link-8:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="96"]:hover {
+  .w-link-8:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="99"] {
+  .w-text-8 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="101"] {
+  .w-paragraph-8 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -1130,7 +1166,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="104"] {
+  .w-link-9 {
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -1148,20 +1184,20 @@ html {margin: 0; display: grid; min-height: 100%}
     outline: 2px solid transparent;
     padding: 0.75rem
   }
-  [data-ws-id="104"]:focus {
+  .w-link-9:focus {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="104"]:hover {
+  .w-link-9:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="107"] {
+  .w-text-9 {
     font-size: 0.875rem;
     line-height: 1;
     font-weight: 500
   }
-  [data-ws-id="109"] {
+  .w-paragraph-9 {
     overflow-x: hidden;
     overflow-y: hidden;
     display: -webkit-box;
@@ -1172,7 +1208,7 @@ html {margin: 0; display: grid; min-height: 100%}
     color: rgba(100, 116, 139, 1);
     margin: 0px
   }
-  [data-ws-id="113"] {
+  .w-link-10 {
     background-color: transparent;
     display: inline-flex;
     align-items: center;
@@ -1191,27 +1227,27 @@ html {margin: 0; display: grid; min-height: 100%}
     text-decoration-line: none;
     border: 0px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="113"]:disabled {
+  .w-link-10:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="113"]:focus-visible {
+  .w-link-10:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="113"]:hover {
+  .w-link-10:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="115"] {
+  .w-viewport-container {
     position: absolute;
     left: 0px;
     top: 100%;
     display: flex;
     justify-content: center
   }
-  [data-ws-id="117"] {
+  .w-menu-viewport-1 {
     position: relative;
     margin-top: 0.375rem;
     overflow-x: hidden;

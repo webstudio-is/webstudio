@@ -24,7 +24,7 @@ const Component = () => {
           <Button
             data-ws-id="3"
             data-ws-component="Button"
-            className="w-button"
+            className="w-button w-button-1"
           >
             {"Click to toggle content"}
           </Button>
@@ -191,7 +191,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="3"] {
+  .w-button-1 {
     background-color: rgba(255, 255, 255, 0.8);
     display: inline-flex;
     align-items: center;
@@ -211,16 +211,16 @@ html {margin: 0; display: grid; min-height: 100%}
     padding-bottom: 0.5rem;
     border: 1px solid rgba(226, 232, 240, 1)
   }
-  [data-ws-id="3"]:disabled {
+  .w-button-1:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="3"]:focus-visible {
+  .w-button-1:focus-visible {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  [data-ws-id="3"]:hover {
+  .w-button-1:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
