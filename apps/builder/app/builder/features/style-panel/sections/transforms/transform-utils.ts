@@ -28,13 +28,13 @@ export const getHumanizedTextFromTransformLayer = (
   switch (panel) {
     case "translate":
       return {
-        label: `Translate: ${toValue(value)}`,
+        label: `Translate: ${toValue({ ...value, hidden: false })}`,
         value,
       };
 
     case "scale":
       return {
-        label: `Scale: ${toValue(value)}`,
+        label: `Scale: ${toValue({ ...value, hidden: false })}`,
         value,
       };
 
