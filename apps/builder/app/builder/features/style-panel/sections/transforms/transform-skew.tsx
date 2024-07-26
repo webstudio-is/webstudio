@@ -1,6 +1,7 @@
 import { Flex, Label, Grid } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
+  extractSkewPropertiesFromTransform,
   type TransformPanelProps,
 } from "./transform-utils";
 import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
@@ -12,10 +13,7 @@ import {
   UnitValue,
   type FunctionValue,
 } from "@webstudio-is/css-engine";
-import {
-  extractSkewPropertiesFromTransform,
-  parseCssValue,
-} from "@webstudio-is/css-data";
+import { parseCssValue } from "@webstudio-is/css-data";
 
 // We use fakeProperty to pass for the CssValueInputContainer.
 // https://developer.mozilla.org/en-US/docs/Web/CSS/rotate#formal_syntax

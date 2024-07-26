@@ -1,7 +1,4 @@
-import {
-  extractSkewPropertiesFromTransform,
-  parseCssValue,
-} from "@webstudio-is/css-data";
+import { parseCssValue } from "@webstudio-is/css-data";
 import {
   FunctionValue,
   StyleValue,
@@ -369,4 +366,25 @@ export const extractRotatePropertiesFromTransform = (transform: StyleValue) => {
   }
 
   return { rotateX, rotateY, rotateZ };
+};
+
+export const extractSkewPropertiesFromTransform = (skew: StyleValue) => {
+  let skewX: FunctionValue | undefined = undefined;
+  let skewY: FunctionValue | undefined = undefined;
+
+  if (skew.type !== "tuple") {
+    return { skewX, skewY };
+  }
+
+  for (const item of skew.value) {
+    if (item.type === "function" && item.name === "skewX") {
+      skewX = item;
+    }
+
+    if (item.type === "function" && item.name === "skewY") {
+      skewY = item;
+    }
+  }
+
+  return { skewX, skewY };
 };
