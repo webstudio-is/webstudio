@@ -13,10 +13,11 @@ export const loadResource = async (
     headers: requestHeaders,
   };
   if (method !== "get" && body !== undefined) {
-    if (typeof body === "string") {
+    if (body instanceof FormData) {
       requestInit.body = body;
-    }
-    if (typeof body === "object") {
+    } else if (typeof body === "string") {
+      requestInit.body = body;
+    } else if (typeof body === "object") {
       requestInit.body = JSON.stringify(body);
     }
   }

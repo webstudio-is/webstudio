@@ -131,6 +131,9 @@ const generatePropValue = ({
   if (prop.type === "action") {
     return generateAction({ scope, prop, dataSources, usedDataSources });
   }
+  if (prop.type === "resource") {
+    return JSON.stringify(scope.getName(prop.value, prop.name));
+  }
   prop satisfies never;
 };
 

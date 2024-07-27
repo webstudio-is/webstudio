@@ -42,10 +42,10 @@ import {
   findTreeInstanceIds,
   getPagePath,
   parseComponentName,
-  generateFormsProperties,
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
+  replaceFormActionsWithResources,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -580,6 +580,11 @@ export const prebuild = async (options: {
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
+    replaceFormActionsWithResources({
+      instances,
+      resources,
+      props,
+    });
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
@@ -679,6 +684,7 @@ export const prebuild = async (options: {
         scope,
         page: pageData.page,
         dataSources,
+        props,
         resources,
       })}
 
@@ -688,8 +694,6 @@ export const prebuild = async (options: {
         dataSources,
         assets,
       })}
-
-      ${generateFormsProperties(props)}
 
       ${generateRemixParams(pageData.page.path)}
 

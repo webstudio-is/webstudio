@@ -130,8 +130,7 @@ const Page = ({}: { system: any }) => {
           formState_1 = state;
           set$formState_1(formState_1);
         }}
-        method={"get"}
-        action={"/custom"}
+        action={"action"}
         className="w-webhook-form"
       >
         {(formState_1 === "initial" || formState_1 === "error") && (

@@ -4,7 +4,9 @@
 import type { PageMeta } from "@webstudio-is/sdk";
 import type { System, ResourceRequest } from "@webstudio-is/sdk";
 export const getResources = (_props: { system: System }) => {
-  return new Map<string, ResourceRequest>([]);
+  const _data = new Map<string, ResourceRequest>([]);
+  const _action = new Map<string, ResourceRequest>([]);
+  return { data: _data, action: _action };
 };
 
 export const getPageMeta = ({
@@ -33,9 +35,6 @@ export const getPageMeta = ({
     ],
   };
 };
-
-type FormProperties = { method?: string; action?: string };
-export const formsProperties = new Map<string, FormProperties>([]);
 
 type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
