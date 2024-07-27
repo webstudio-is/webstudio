@@ -16,7 +16,6 @@ export * from "./page-utils";
 export * from "./scope";
 export * from "./resource-loader";
 export * from "./expression";
-export * from "./forms-generator";
 export * from "./resources-generator";
 export * from "./page-meta-generator";
 export * from "./url-pattern";

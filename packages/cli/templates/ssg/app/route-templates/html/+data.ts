@@ -17,7 +17,7 @@ export const data = async (pageContext: PageContextServer) => {
     origin: url.origin,
   };
 
-  const resources = await loadResources(fetch, getResources({ system }));
+  const resources = await loadResources(fetch, getResources({ system }).data);
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {

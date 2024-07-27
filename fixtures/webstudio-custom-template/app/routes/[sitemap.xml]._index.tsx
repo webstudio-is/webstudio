@@ -44,7 +44,10 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     origin: url.origin,
   };
 
-  const resources = await loadResources(customFetch, getResources({ system }));
+  const resources = await loadResources(
+    customFetch,
+    getResources({ system }).data
+  );
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {

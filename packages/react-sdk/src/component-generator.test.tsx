@@ -8,6 +8,7 @@ import {
   ExpressionValue,
   PageValue,
   ParameterValue,
+  ResourceValue,
   createProxy,
   renderJsx,
   ws,
@@ -839,4 +840,46 @@ test("generate conditional collection", () => {
     }
     "
     `);
+});
+
+test("generate resource prop", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <$.Form
+            ws:id="form1"
+            action={new ResourceValue("https://my-url.com?with-secret")}
+          ></$.Form>
+          <$.Form
+            ws:id="form2"
+            action={new ResourceValue("https://another-url.com?with-secret")}
+          ></$.Form>
+        </$.Body>
+      ),
+    })
+  ).toMatchInlineSnapshot(`
+    "const Page = () => {
+    return <Body
+    data-ws-id="body"
+    data-ws-component="Body">
+    <Form
+    data-ws-id="form1"
+    data-ws-component="Form"
+    action={"action"} />
+    <Form
+    data-ws-id="form2"
+    data-ws-component="Form"
+    action={"action_1"} />
+    </Body>
+    }
+    "
+  `);
 });

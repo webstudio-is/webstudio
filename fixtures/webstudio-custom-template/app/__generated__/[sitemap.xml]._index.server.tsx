@@ -11,7 +11,11 @@ export const getResources = (_props: { system: System }) => {
     method: "get",
     headers: [],
   };
-  return new Map<string, ResourceRequest>([["sitemapxml_1", sitemapxml_1]]);
+  const _data = new Map<string, ResourceRequest>([
+    ["sitemapxml_1", sitemapxml_1],
+  ]);
+  const _action = new Map<string, ResourceRequest>([]);
+  return { data: _data, action: _action };
 };
 
 export const getPageMeta = ({
@@ -33,9 +37,6 @@ export const getPageMeta = ({
     custom: [],
   };
 };
-
-type FormProperties = { method?: string; action?: string };
-export const formsProperties = new Map<string, FormProperties>([]);
 
 type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {

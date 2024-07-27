@@ -25,7 +25,6 @@ import {
   pageBackgroundImageAssets,
 } from "../__generated__/[resources]._index";
 import {
-  formsProperties,
   getResources,
   getPageMeta,
   getRemixParams,
@@ -67,7 +66,10 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     origin: url.origin,
   };
 
-  const resources = await loadResources(customFetch, getResources({ system }));
+  const resources = await loadResources(
+    customFetch,
+    getResources({ system }).data
+  );
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {
@@ -258,13 +260,24 @@ export const action = async ({
   { success: true } | { success: false; errors: string[] }
 > => {
   try {
+    const pageUrl = new URL(request.url);
+    pageUrl.host = getRequestHost(request);
+
     const formData = await request.formData();
 
-    const formId = formData.get(formIdFieldName);
+    const system = {
+      params: {},
+      search: {},
+      origin: pageUrl.origin,
+    };
 
-    if (formId == null || typeof formId !== "string") {
+    const resourceName = formData.get(formIdFieldName);
+
+    if (resourceName == null || typeof resourceName !== "string") {
       throw new Error("No form id in FormData");
     }
+
+    const resource = getResources({ system }).action.get(resourceName);
 
     const formBotValue = formData.get(formBotFieldName);
 
@@ -284,34 +297,15 @@ export const action = async ({
       throw new Error(`Form bot value invalid ${formBotValue}`);
     }
 
-    const formProperties = formsProperties.get(formId);
-
-    // form properties are not defined when defaults are used
-    const { action, method } = formProperties ?? {};
-
     if (contactEmail === undefined) {
       throw new Error("Contact email not found");
-    }
-
-    const pageUrl = new URL(request.url);
-    pageUrl.host = getRequestHost(request);
-
-    if (action !== undefined) {
-      try {
-        // Test that action is full URL
-        new URL(action);
-      } catch {
-        throw new Error(
-          "Invalid action URL, must be valid http/https protocol"
-        );
-      }
     }
 
     const formInfo = {
       formData,
       projectId,
-      action: action ?? null,
-      method: getMethod(method),
+      action: resource?.url ?? null,
+      method: getMethod(resource?.method),
       pageUrl: pageUrl.toString(),
       toEmail: contactEmail,
       fromEmail: pageUrl.hostname + "@webstudio.email",

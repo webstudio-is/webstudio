@@ -30,11 +30,12 @@ test("generate resources loader", () => {
           body: `{ body: true }`,
         },
       ]),
+      props: new Map(),
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
-      const variableName: ResourceRequest = {
+      const resourceName: ResourceRequest = {
         id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com",
@@ -44,9 +45,12 @@ test("generate resources loader", () => {
         ],
         body: { body: true },
       }
-      return new Map<string, ResourceRequest>([
-        ["variableName", variableName],
+      const _data = new Map<string, ResourceRequest>([
+        ["resourceName", resourceName],
       ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
     }
     "
   `);
@@ -91,12 +95,13 @@ test("generate variable and use in resources loader", () => {
           body: `{ body: true }`,
         },
       ]),
+      props: new Map(),
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
       let AccessToken = "my-token"
-      const variableName: ResourceRequest = {
+      const resourceName: ResourceRequest = {
         id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com/",
@@ -106,9 +111,12 @@ test("generate variable and use in resources loader", () => {
         ],
         body: { body: true },
       }
-      return new Map<string, ResourceRequest>([
-        ["variableName", variableName],
+      const _data = new Map<string, ResourceRequest>([
+        ["resourceName", resourceName],
       ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
     }
     "
   `);
@@ -147,12 +155,13 @@ test("generate system variable and use in resources loader", () => {
           body: `{ body: true }`,
         },
       ]),
+      props: new Map(),
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
       const system = _props.system
-      const variableName: ResourceRequest = {
+      const resourceName: ResourceRequest = {
         id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com/" + system?.params?.slug,
@@ -162,9 +171,12 @@ test("generate system variable and use in resources loader", () => {
         ],
         body: { body: true },
       }
-      return new Map<string, ResourceRequest>([
-        ["variableName", variableName],
+      const _data = new Map<string, ResourceRequest>([
+        ["resourceName", resourceName],
       ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
     }
     "
   `);
@@ -177,12 +189,16 @@ test("generate empty resources loader", () => {
       page: { rootInstanceId: "body" } as Page,
       dataSources: new Map(),
       resources: new Map(),
+      props: new Map(),
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
-      return new Map<string, ResourceRequest>([
+      const _data = new Map<string, ResourceRequest>([
       ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
     }
     "
   `);
@@ -203,12 +219,16 @@ test("prevent generating unused variables", () => {
         },
       ]),
       resources: new Map(),
+      props: new Map(),
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
-      return new Map<string, ResourceRequest>([
+      const _data = new Map<string, ResourceRequest>([
       ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
     }
     "
   `);
@@ -231,12 +251,66 @@ test("prevent generating unused system variable", () => {
         },
       ]),
       resources: new Map(),
+      props: new Map(),
     })
   ).toMatchInlineSnapshot(`
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
-      return new Map<string, ResourceRequest>([
+      const _data = new Map<string, ResourceRequest>([
       ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
+    }
+    "
+  `);
+});
+
+test("generate action resource", () => {
+  expect(
+    generateResources({
+      scope: createScope(),
+      page: {
+        rootInstanceId: "body",
+        systemDataSourceId: "variableParamsId",
+      } as Page,
+      dataSources: new Map(),
+      resources: toMap([
+        {
+          id: "resourceId",
+          name: "resourceName",
+          url: `"https://my-url.com"`,
+          method: "post",
+          headers: [],
+        },
+      ]),
+      props: toMap([
+        {
+          id: "propId",
+          instanceId: "body",
+          name: "myProp",
+          type: "resource",
+          value: "resourceId",
+        },
+      ]),
+    })
+  ).toMatchInlineSnapshot(`
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      const resourceName: ResourceRequest = {
+        id: "resourceId",
+        name: "resourceName",
+        url: "https://my-url.com",
+        method: "post",
+        headers: [
+        ],
+      }
+      const _data = new Map<string, ResourceRequest>([
+      ])
+      const _action = new Map<string, ResourceRequest>([
+        ["resourceName", resourceName],
+      ])
+      return { data: _data, action: _action }
     }
     "
   `);
