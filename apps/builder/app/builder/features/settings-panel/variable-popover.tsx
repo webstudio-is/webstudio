@@ -35,6 +35,7 @@ import {
   TextArea,
   Tooltip,
   theme,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   type DataSource,
@@ -68,6 +69,7 @@ import {
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
+import type { letterSpacing } from "node_modules/@webstudio-is/design-system/src/__generated__/figma-design-tokens";
 
 const validateName = (value: string) =>
   value.trim().length === 0 ? "Name is required" : "";
@@ -196,6 +198,7 @@ const TypeField = ({
           </Box>
         )}
         value={value}
+        name="type"
         onChange={onChange}
       />
     </Grid>
@@ -687,14 +690,18 @@ export const VariablePopoverTrigger = forwardRef<
               onSubmit={(event) => {
                 event.preventDefault();
                 if (event.currentTarget.checkValidity()) {
-                  const formData = new FormData(event.currentTarget);
+                  let formData = new FormData(event.currentTarget);
 
-                  // User can have a Resource after downgrading to a free plan or from the marketplace
                   if (
                     allowDynamicData === false &&
-                    formData.get("type") === "resource"
+                    String(formData.get("type")).includes("resource")
                   ) {
-                    return;
+                    toast.warn(
+                      'Resource is part of the CMS functionality. Please upgrade to "Pro".'
+                    );
+                    // User can have a Resource after downgrading to a free plan or from the marketplace,
+                    // we just prevent from saving any changes but we keep it functional
+                    formData = new FormData();
                   }
 
                   panelRef.current?.save(formData);
