@@ -1,5 +1,4 @@
 import { type Patch, applyPatches } from "immer";
-import { type Project, prisma } from "@webstudio-is/prisma-client";
 import {
   type AppContext,
   authorizeProject,
@@ -13,7 +12,7 @@ import { loadAssetsByProject } from "./db/load";
  * update patches are ignored
  */
 export const patchAssets = async (
-  { projectId }: { projectId: Project["id"] },
+  { projectId }: { projectId: string },
   patches: Array<Patch>,
   context: AppContext
 ) => {
@@ -51,29 +50,31 @@ export const patchAssets = async (
     }
   }
   if (addedAssets.length !== 0) {
-    const files = await prisma.file.findMany({
-      where: { name: { in: addedAssets.map((asset) => asset.name) } },
-    });
+    const files = await context.postgrest.client
+      .from("File")
+      .select()
+      .in(
+        "name",
+        addedAssets.map((asset) => asset.name)
+      );
 
-    const fileNames = new Set(files.map((file) => file.name));
+    const fileNames = new Set(files.data?.map((file) => file.name));
 
     // restore file when undo is triggered
-    await prisma.file.updateMany({
-      where: { name: { in: Array.from(fileNames) } },
-      data: {
-        isDeleted: false,
-      },
-    });
+    await context.postgrest.client
+      .from("File")
+      .update({ isDeleted: false })
+      .in("name", Array.from(fileNames));
 
-    await prisma.asset.createMany({
-      data: addedAssets
+    await context.postgrest.client.from("Asset").insert(
+      addedAssets
         // making sure corresponding file exist before creating an asset that references it
         .filter((asset) => fileNames.has(asset.name))
         .map((asset) => ({
           id: asset.id,
           projectId,
           name: asset.name,
-        })),
-    });
+        }))
+    );
   }
 };

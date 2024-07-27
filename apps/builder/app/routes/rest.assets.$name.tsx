@@ -1,9 +1,10 @@
+import { z } from "zod";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import type { ActionData } from "~/builder/shared/assets";
 import { createAssetClient } from "~/shared/asset-client";
-import { z } from "zod";
+import { createContext } from "~/shared/context.server";
 
 const UrlBody = z.object({
   url: z.string(),
@@ -50,7 +51,13 @@ export const action = async (
         body = imageRequest.body;
       }
 
-      const asset = await uploadFile(params.name, body, createAssetClient());
+      const context = await createContext(request);
+      const asset = await uploadFile(
+        params.name,
+        body,
+        createAssetClient(),
+        context
+      );
       return {
         uploadedAssets: [asset],
       };
