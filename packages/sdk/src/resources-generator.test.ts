@@ -1,14 +1,14 @@
 import { expect, test } from "@jest/globals";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
-import { generateResourcesLoader } from "./resources-generator";
+import { generateResources } from "./resources-generator";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
 
 test("generate resources loader", () => {
   expect(
-    generateResourcesLoader({
+    generateResources({
       scope: createScope(),
       page: { rootInstanceId: "body" } as Page,
       dataSources: toMap([
@@ -32,49 +32,29 @@ test("generate resources loader", () => {
       ]),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./$resources.sitemap.xml";
-export const loadResources = async (_props: { system: System }) => {
-
-    const customFetch: typeof fetch = (input, init) => {
-      if (typeof input !== "string") {
-        return fetch(input, init);
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      const variableName: ResourceRequest = {
+        id: "resourceId",
+        name: "resourceName",
+        url: "https://my-json.com",
+        method: "post",
+        headers: [
+          { name: "Content-Type", value: "application/json" },
+        ],
+        body: { body: true },
       }
-
-      if (isLocalResource(input, "sitemap.xml")) {
-        // @todo: dynamic import sitemap ???
-        const response = new Response(JSON.stringify(sitemap));
-        response.headers.set('content-type',  'application/json; charset=utf-8');
-        return Promise.resolve(response);
-      }
-
-      return fetch(input, init);
-    };
-    const [
-variableName,
-] = await Promise.all([
-loadResource(customFetch, {
-id: "resourceId",
-name: "resourceName",
-url: "https://my-json.com",
-method: "post",
-headers: [
-{ name: "Content-Type", value: "application/json" },
-],
-body: { body: true },
-}),
-])
-return {
-variableName,
-} as Record<string, unknown>
-}
-"
-`);
+      return new Map<string, ResourceRequest>([
+        ["variableName", variableName],
+      ])
+    }
+    "
+  `);
 });
 
 test("generate variable and use in resources loader", () => {
   expect(
-    generateResourcesLoader({
+    generateResources({
       scope: createScope(),
       page: {
         rootInstanceId: "body",
@@ -108,56 +88,35 @@ test("generate variable and use in resources loader", () => {
               value: `"Token " + $ws$dataSource$variableTokenId`,
             },
           ],
-
           body: `{ body: true }`,
         },
       ]),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./$resources.sitemap.xml";
-export const loadResources = async (_props: { system: System }) => {
-let AccessToken = "my-token"
-
-    const customFetch: typeof fetch = (input, init) => {
-      if (typeof input !== "string") {
-        return fetch(input, init);
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      let AccessToken = "my-token"
+      const variableName: ResourceRequest = {
+        id: "resourceId",
+        name: "resourceName",
+        url: "https://my-json.com/",
+        method: "post",
+        headers: [
+          { name: "Authorization", value: "Token " + AccessToken },
+        ],
+        body: { body: true },
       }
-
-      if (isLocalResource(input, "sitemap.xml")) {
-        // @todo: dynamic import sitemap ???
-        const response = new Response(JSON.stringify(sitemap));
-        response.headers.set('content-type',  'application/json; charset=utf-8');
-        return Promise.resolve(response);
-      }
-
-      return fetch(input, init);
-    };
-    const [
-variableName,
-] = await Promise.all([
-loadResource(customFetch, {
-id: "resourceId",
-name: "resourceName",
-url: "https://my-json.com/",
-method: "post",
-headers: [
-{ name: "Authorization", value: "Token " + AccessToken },
-],
-body: { body: true },
-}),
-])
-return {
-variableName,
-} as Record<string, unknown>
-}
-"
-`);
+      return new Map<string, ResourceRequest>([
+        ["variableName", variableName],
+      ])
+    }
+    "
+  `);
 });
 
 test("generate system variable and use in resources loader", () => {
   expect(
-    generateResourcesLoader({
+    generateResources({
       scope: createScope(),
       page: {
         rootInstanceId: "body",
@@ -190,68 +149,48 @@ test("generate system variable and use in resources loader", () => {
       ]),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./$resources.sitemap.xml";
-export const loadResources = async (_props: { system: System }) => {
-const system = _props.system
-
-    const customFetch: typeof fetch = (input, init) => {
-      if (typeof input !== "string") {
-        return fetch(input, init);
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      const system = _props.system
+      const variableName: ResourceRequest = {
+        id: "resourceId",
+        name: "resourceName",
+        url: "https://my-json.com/" + system?.params?.slug,
+        method: "post",
+        headers: [
+          { name: "Content-Type", value: "application/json" },
+        ],
+        body: { body: true },
       }
-
-      if (isLocalResource(input, "sitemap.xml")) {
-        // @todo: dynamic import sitemap ???
-        const response = new Response(JSON.stringify(sitemap));
-        response.headers.set('content-type',  'application/json; charset=utf-8');
-        return Promise.resolve(response);
-      }
-
-      return fetch(input, init);
-    };
-    const [
-variableName,
-] = await Promise.all([
-loadResource(customFetch, {
-id: "resourceId",
-name: "resourceName",
-url: "https://my-json.com/" + system?.params?.slug,
-method: "post",
-headers: [
-{ name: "Content-Type", value: "application/json" },
-],
-body: { body: true },
-}),
-])
-return {
-variableName,
-} as Record<string, unknown>
-}
-"
-`);
+      return new Map<string, ResourceRequest>([
+        ["variableName", variableName],
+      ])
+    }
+    "
+  `);
 });
 
 test("generate empty resources loader", () => {
   expect(
-    generateResourcesLoader({
+    generateResources({
       scope: createScope(),
       page: { rootInstanceId: "body" } as Page,
       dataSources: new Map(),
       resources: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-export const loadResources = async (_props: { system: System }) => {
-return {
-} as Record<string, unknown>
-}
-"
-`);
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      return new Map<string, ResourceRequest>([
+      ])
+    }
+    "
+  `);
 });
 
 test("prevent generating unused variables", () => {
   expect(
-    generateResourcesLoader({
+    generateResources({
       scope: createScope(),
       page: { rootInstanceId: "body" } as Page,
       dataSources: toMap([
@@ -266,18 +205,18 @@ test("prevent generating unused variables", () => {
       resources: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-export const loadResources = async (_props: { system: System }) => {
-return {
-} as Record<string, unknown>
-}
-"
-`);
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      return new Map<string, ResourceRequest>([
+      ])
+    }
+    "
+  `);
 });
 
 test("prevent generating unused system variable", () => {
   expect(
-    generateResourcesLoader({
+    generateResources({
       scope: createScope(),
       page: {
         rootInstanceId: "body",
@@ -294,11 +233,11 @@ test("prevent generating unused system variable", () => {
       resources: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-export const loadResources = async (_props: { system: System }) => {
-return {
-} as Record<string, unknown>
-}
-"
-`);
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      return new Map<string, ResourceRequest>([
+      ])
+    }
+    "
+  `);
 });
