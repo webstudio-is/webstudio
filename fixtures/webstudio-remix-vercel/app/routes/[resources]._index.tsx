@@ -10,6 +10,7 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
+import { isLocalResource, loadResources } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import {
   n8nHandler,
@@ -25,7 +26,7 @@ import {
 } from "../__generated__/[resources]._index";
 import {
   formsProperties,
-  loadResources,
+  getResources,
   getPageMeta,
   getRemixParams,
   projectId,
@@ -33,6 +34,22 @@ import {
 } from "../__generated__/[resources]._index.server";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 import css from "../__generated__/index.css?url";
+import { sitemap } from "../__generated__/$resources.sitemap.xml";
+
+const customFetch: typeof fetch = (input, init) => {
+  if (typeof input !== "string") {
+    return fetch(input, init);
+  }
+
+  if (isLocalResource(input, "sitemap.xml")) {
+    // @todo: dynamic import sitemap ???
+    const response = new Response(JSON.stringify(sitemap));
+    response.headers.set("content-type", "application/json; charset=utf-8");
+    return Promise.resolve(response);
+  }
+
+  return fetch(input, init);
+};
 
 export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);
@@ -50,7 +67,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     origin: url.origin,
   };
 
-  const resources = await loadResources({ system });
+  const resources = await loadResources(customFetch, getResources({ system }));
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {
