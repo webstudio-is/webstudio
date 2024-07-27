@@ -634,6 +634,7 @@ export const VariablePopoverTrigger = forwardRef<
   const panelRef = useRef<undefined | PanelApi>();
   const formRef = useRef<HTMLFormElement>(null);
   const resources = useStore($resources);
+  const { allowDynamicData } = useStore($userPlanFeatures);
 
   return (
     <FloatingPanelPopover
@@ -690,6 +691,15 @@ export const VariablePopoverTrigger = forwardRef<
                 event.preventDefault();
                 if (event.currentTarget.checkValidity()) {
                   const formData = new FormData(event.currentTarget);
+
+                  // User can have a Resource after downgrading to a free plan or from the marketplace
+                  if (
+                    allowDynamicData === false &&
+                    formData.get("type") === "resource"
+                  ) {
+                    return;
+                  }
+
                   panelRef.current?.save(formData);
                   // close popover whenever new variable is created
                   // to prevent creating duplicated variable
