@@ -148,7 +148,6 @@ const TypeField = ({
     },
     {
       value: "resource",
-      disabled: allowDynamicData === false,
       label: (
         <Flex direction="row" gap="2" align="center">
           Resource
@@ -160,7 +159,6 @@ const TypeField = ({
     },
     {
       value: "graphql-resource",
-      disabled: allowDynamicData === false,
       label: (
         <Flex direction="row" gap="2" align="center">
           GraphQL
@@ -172,7 +170,6 @@ const TypeField = ({
     },
     {
       value: "system-resource",
-      disabled: allowDynamicData === false,
       label: (
         <Flex direction="row" gap="2" align="center">
           System Resource
