@@ -20,18 +20,8 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body
-      data-ws-id="n_VBMr7klpx25buS0NV7R"
-      data-ws-component="Body"
-      className="w-body"
-    >
-      <Heading
-        data-ws-id="wthNByqb3RPmheb-56VYI"
-        data-ws-component="Heading"
-        className="w-heading"
-      >
-        {"Another page"}
-      </Heading>
+    <Body className="w-body">
+      <Heading className="w-heading">{"Another page"}</Heading>
     </Body>
   );
 };

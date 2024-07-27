@@ -13,41 +13,14 @@ import {
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Accordion
-        data-ws-id="1"
-        data-ws-component="Accordion"
-        collapsible={true}
-        defaultValue={"0"}
-        className="w-accordion"
-      >
-        <AccordionItem
-          data-ws-id="4"
-          data-ws-component="AccordionItem"
-          data-ws-index="0"
-          className="w-item w-item-1"
-        >
-          <AccordionHeader
-            data-ws-id="6"
-            data-ws-component="AccordionHeader"
-            className="w-item-header w-item-header-1"
-          >
-            <AccordionTrigger
-              data-ws-id="8"
-              data-ws-component="AccordionTrigger"
-              className="w-item-trigger w-item-trigger-1"
-            >
-              <Text data-ws-id="10" data-ws-component="Text" className="w-text">
-                {"Is it accessible?"}
-              </Text>
-              <Box
-                data-ws-id="11"
-                data-ws-component="Box"
-                className="w-box w-icon-container"
-              >
+    <Box className="w-box">
+      <Accordion collapsible={true} defaultValue={"0"} className="w-accordion">
+        <AccordionItem data-ws-index="0" className="w-item w-item-1">
+          <AccordionHeader className="w-item-header w-item-header-1">
+            <AccordionTrigger className="w-item-trigger w-item-trigger-1">
+              <Text className="w-text">{"Is it accessible?"}</Text>
+              <Box className="w-box w-icon-container">
                 <HtmlEmbed
-                  data-ws-id="13"
-                  data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                   }
@@ -56,41 +29,16 @@ const Component = () => {
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
-          <AccordionContent
-            data-ws-id="15"
-            data-ws-component="AccordionContent"
-            className="w-item-content w-item-content-1"
-          >
+          <AccordionContent className="w-item-content w-item-content-1">
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem
-          data-ws-id="17"
-          data-ws-component="AccordionItem"
-          data-ws-index="1"
-          className="w-item w-item-2"
-        >
-          <AccordionHeader
-            data-ws-id="19"
-            data-ws-component="AccordionHeader"
-            className="w-item-header w-item-header-2"
-          >
-            <AccordionTrigger
-              data-ws-id="21"
-              data-ws-component="AccordionTrigger"
-              className="w-item-trigger w-item-trigger-2"
-            >
-              <Text data-ws-id="23" data-ws-component="Text" className="w-text">
-                {"Is it styled?"}
-              </Text>
-              <Box
-                data-ws-id="24"
-                data-ws-component="Box"
-                className="w-box w-icon-container-1"
-              >
+        <AccordionItem data-ws-index="1" className="w-item w-item-2">
+          <AccordionHeader className="w-item-header w-item-header-2">
+            <AccordionTrigger className="w-item-trigger w-item-trigger-2">
+              <Text className="w-text">{"Is it styled?"}</Text>
+              <Box className="w-box w-icon-container-1">
                 <HtmlEmbed
-                  data-ws-id="26"
-                  data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                   }
@@ -99,43 +47,18 @@ const Component = () => {
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
-          <AccordionContent
-            data-ws-id="28"
-            data-ws-component="AccordionContent"
-            className="w-item-content w-item-content-2"
-          >
+          <AccordionContent className="w-item-content w-item-content-2">
             {
               "Yes. It comes with default styles that matches the other components' aesthetic."
             }
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem
-          data-ws-id="30"
-          data-ws-component="AccordionItem"
-          data-ws-index="2"
-          className="w-item w-item-3"
-        >
-          <AccordionHeader
-            data-ws-id="32"
-            data-ws-component="AccordionHeader"
-            className="w-item-header w-item-header-3"
-          >
-            <AccordionTrigger
-              data-ws-id="34"
-              data-ws-component="AccordionTrigger"
-              className="w-item-trigger w-item-trigger-3"
-            >
-              <Text data-ws-id="36" data-ws-component="Text" className="w-text">
-                {"Is it animated?"}
-              </Text>
-              <Box
-                data-ws-id="37"
-                data-ws-component="Box"
-                className="w-box w-icon-container-2"
-              >
+        <AccordionItem data-ws-index="2" className="w-item w-item-3">
+          <AccordionHeader className="w-item-header w-item-header-3">
+            <AccordionTrigger className="w-item-trigger w-item-trigger-3">
+              <Text className="w-text">{"Is it animated?"}</Text>
+              <Box className="w-box w-icon-container-2">
                 <HtmlEmbed
-                  data-ws-id="39"
-                  data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                   }
@@ -144,11 +67,7 @@ const Component = () => {
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
-          <AccordionContent
-            data-ws-id="41"
-            data-ws-component="AccordionContent"
-            className="w-item-content w-item-content-3"
-          >
+          <AccordionContent className="w-item-content w-item-content-3">
             {
               "Yes. It's animated by default, but you can disable it if you prefer."
             }

@@ -13,12 +13,7 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
-import {
-  componentAttribute,
-  idAttribute,
-  indexAttribute,
-  showAttribute,
-} from "./props";
+import { indexAttribute, showAttribute } from "./props";
 import { collectionComponent, descendantComponent } from "./core-components";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
@@ -164,11 +159,6 @@ export const generateJsxElement = ({
 
   let generatedProps = "";
 
-  // id and component props are always defined for styles
-  generatedProps += `\n${idAttribute}=${JSON.stringify(instance.id)}`;
-  generatedProps += `\n${componentAttribute}=${JSON.stringify(
-    instance.component
-  )}`;
   const index = indexesWithinAncestors.get(instance.id);
   if (index !== undefined) {
     generatedProps += `\n${indexAttribute}="${index}"`;
