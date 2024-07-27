@@ -80,7 +80,7 @@ export const getHumanizedTextFromTransformLayer = (
 };
 
 export const addDefaultsForTransormSection = (props: {
-  panel: TransformPanel | "backfaceVisibility";
+  panel: TransformPanel;
   currentStyle: StyleInfo;
   setProperty: SetProperty;
 }) => {
@@ -133,7 +133,7 @@ export const addDefaultsForTransormSection = (props: {
 
 export const isTransformPanelPropertyUsed = (params: {
   currentStyle: StyleInfo;
-  panel: TransformPanel | "backfaceVisibility";
+  panel: TransformPanel;
 }): boolean => {
   const { currentStyle, panel } = params;
   switch (panel) {

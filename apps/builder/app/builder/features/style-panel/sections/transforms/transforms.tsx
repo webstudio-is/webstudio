@@ -49,6 +49,7 @@ export const transformPanels = [
   "scale",
   "rotate",
   "skew",
+  "backfaceVisibility",
 ] as const;
 
 export type TransformPanel = (typeof transformPanels)[number];
@@ -70,12 +71,8 @@ export const Section = (props: SectionProps) => {
   const backfaceVisibilityStyleSource = getStyleSource(
     currentStyle["backfaceVisibility"]
   );
-  const transformPropertiesList = [
-    ...transformPanels,
-    "backfaceVisibility" as const,
-  ];
 
-  const isAnyTransformPropertyAdded = transformPropertiesList.some((panel) =>
+  const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
     isTransformPanelPropertyUsed({
       currentStyle: props.currentStyle,
       panel,
@@ -110,7 +107,7 @@ export const Section = (props: SectionProps) => {
                   collisionPadding={16}
                   css={{ width: theme.spacing[20] }}
                 >
-                  {transformPropertiesList.map((panel) => {
+                  {transformPanels.map((panel) => {
                     return (
                       <DropdownMenuItem
                         disabled={
@@ -161,15 +158,22 @@ export const Section = (props: SectionProps) => {
     >
       {isAnyTransformPropertyAdded === true ? (
         <CssValueListArrowFocus>
-          {transformPanels.map((panel, index) => (
-            <TransformSection
-              {...props}
-              key={panel}
-              index={index}
-              panel={panel}
-            />
-          ))}
-          <BackfaceVisibility {...props} />
+          <Flex direction="column">
+            {transformPanels.map((panel, index) => {
+              if (panel === "backfaceVisibility") {
+                return <BackfaceVisibility key={panel} {...props} />;
+              }
+
+              return (
+                <TransformSection
+                  {...props}
+                  key={panel}
+                  index={index}
+                  panel={panel}
+                />
+              );
+            })}
+          </Flex>
         </CssValueListArrowFocus>
       ) : undefined}
     </CollapsibleSectionRoot>
