@@ -21,50 +21,51 @@ export const generateResources = ({
   const usedDataSources: DataSources = new Map();
 
   for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "resource") {
-      const resource = resources.get(dataSource.resourceId);
-      if (resource === undefined) {
-        continue;
-      }
-      let generatedRequest = "";
-      // call resource by bound variable name
-      const resourceName = scope.getName(resource.id, dataSource.name);
-      generatedRequest += `  const ${resourceName}: ResourceRequest = {\n`;
-      generatedRequest += `    id: "${resource.id}",\n`;
-      generatedRequest += `    name: ${JSON.stringify(resource.name)},\n`;
-      const url = generateExpression({
-        expression: resource.url,
+    if (dataSource.type !== "resource") {
+      continue;
+    }
+    const resource = resources.get(dataSource.resourceId);
+    if (resource === undefined) {
+      continue;
+    }
+    let generatedRequest = "";
+    // call resource by bound variable name
+    const resourceName = scope.getName(resource.id, dataSource.name);
+    generatedRequest += `  const ${resourceName}: ResourceRequest = {\n`;
+    generatedRequest += `    id: "${resource.id}",\n`;
+    generatedRequest += `    name: ${JSON.stringify(resource.name)},\n`;
+    const url = generateExpression({
+      expression: resource.url,
+      dataSources,
+      usedDataSources,
+      scope,
+    });
+    generatedRequest += `    url: ${url},\n`;
+    generatedRequest += `    method: "${resource.method}",\n`;
+    generatedRequest += `    headers: [\n`;
+    for (const header of resource.headers) {
+      const value = generateExpression({
+        expression: header.value,
         dataSources,
         usedDataSources,
         scope,
       });
-      generatedRequest += `    url: ${url},\n`;
-      generatedRequest += `    method: "${resource.method}",\n`;
-      generatedRequest += `    headers: [\n`;
-      for (const header of resource.headers) {
-        const value = generateExpression({
-          expression: header.value,
-          dataSources,
-          usedDataSources,
-          scope,
-        });
-        generatedRequest += `      { name: "${header.name}", value: ${value} },\n`;
-      }
-      generatedRequest += `    ],\n`;
-      // prevent computing empty expression
-      if (resource.body !== undefined && resource.body.length > 0) {
-        const body = generateExpression({
-          expression: resource.body,
-          dataSources,
-          usedDataSources,
-          scope,
-        });
-        generatedRequest += `    body: ${body},\n`;
-      }
-      generatedRequest += `  }\n`;
-      generatedRequests += generatedRequest;
-      generatedPairs += `    ["${resourceName}", ${resourceName}],\n`;
+      generatedRequest += `      { name: "${header.name}", value: ${value} },\n`;
     }
+    generatedRequest += `    ],\n`;
+    // prevent computing empty expression
+    if (resource.body !== undefined && resource.body.length > 0) {
+      const body = generateExpression({
+        expression: resource.body,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generatedRequest += `    body: ${body},\n`;
+    }
+    generatedRequest += `  }\n`;
+    generatedRequests += generatedRequest;
+    generatedPairs += `    ["${resourceName}", ${resourceName}],\n`;
   }
 
   let generatedVariables = "";
