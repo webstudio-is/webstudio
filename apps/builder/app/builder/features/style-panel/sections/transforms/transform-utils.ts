@@ -80,7 +80,7 @@ export const getHumanizedTextFromTransformLayer = (
 };
 
 export const addDefaultsForTransormSection = (props: {
-  panel: TransformPanel;
+  panel: TransformPanel | "backfaceVisibility";
   currentStyle: StyleInfo;
   setProperty: SetProperty;
 }) => {
@@ -95,6 +95,13 @@ export const addDefaultsForTransormSection = (props: {
     case "scale": {
       const scale = parseCssValue("scale", defaultScale);
       return setProperty("scale")(scale);
+    }
+
+    case "backfaceVisibility": {
+      return setProperty("backfaceVisibility")({
+        type: "keyword",
+        value: "visible",
+      });
     }
 
     case "skew":
@@ -126,13 +133,21 @@ export const addDefaultsForTransormSection = (props: {
 
 export const isTransformPanelPropertyUsed = (params: {
   currentStyle: StyleInfo;
-  panel: TransformPanel;
+  panel: TransformPanel | "backfaceVisibility";
 }): boolean => {
   const { currentStyle, panel } = params;
   switch (panel) {
     case "scale":
     case "translate":
       return currentStyle[panel]?.value.type === "tuple";
+
+    /*
+      backface-visibility takes only two values, either `hidden` / `visible`
+      And it's not inherited. So, we need to check with the local value.
+      If we check with the computed value, it will always return true.
+    */
+    case "backfaceVisibility":
+      return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
 
     case "rotate": {
       const rotate = currentStyle["transform"]?.value;
