@@ -43,7 +43,7 @@ import {
   getPagePath,
   parseComponentName,
   generateFormsProperties,
-  generateResourcesLoader,
+  generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
 } from "@webstudio-is/sdk";
@@ -675,7 +675,7 @@ export const prebuild = async (options: {
       /* This is a auto generated file for building the project */ \n
 
       import type { PageMeta } from "@webstudio-is/sdk";
-      ${generateResourcesLoader({
+      ${generateResources({
         scope,
         page: pageData.page,
         dataSources,
@@ -711,6 +711,10 @@ export const prebuild = async (options: {
     for (const { file, template } of getTemplates({ pagePath })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
+        .replaceAll(
+          "__SITEMAP__",
+          importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
+        )
         .replaceAll(
           "__CLIENT__",
           importFrom(`./app/__generated__/${generatedBasename}`, file)

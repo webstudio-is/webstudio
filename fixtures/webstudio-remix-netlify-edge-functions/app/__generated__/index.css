@@ -84,6 +84,17 @@ html {
     min-height: 1em;
     display: inline-block;
   }
+  :where(img.w-image) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    max-width: 100%;
+    display: block;
+    height: auto;
+  }
 }
 @media all {
   .c1jaw2zx {
@@ -100,5 +111,8 @@ html {
   }
   .cn3rfux {
     margin-bottom: 1em;
+  }
+  .c161qeci {
+    width: 400px;
   }
 }

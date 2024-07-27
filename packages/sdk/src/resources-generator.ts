@@ -4,7 +4,7 @@ import type { Resources } from "./schema/resources";
 import type { Scope } from "./scope";
 import { generateExpression } from "./expression";
 
-export const generateResourcesLoader = ({
+export const generateResources = ({
   scope,
   page,
   dataSources,
@@ -15,56 +15,57 @@ export const generateResourcesLoader = ({
   dataSources: DataSources;
   resources: Resources;
 }) => {
-  let generatedOutput = "";
-  let generatedLoaders = "";
-  let hasResources = false;
+  let generatedRequests = "";
+  let generatedPairs = "";
 
   const usedDataSources: DataSources = new Map();
 
   for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "resource") {
-      const resource = resources.get(dataSource.resourceId);
-      if (resource === undefined) {
-        continue;
-      }
-      hasResources = true;
-      // call resource by bound variable name
-      const resourceName = scope.getName(resource.id, dataSource.name);
-      generatedOutput += `${resourceName},\n`;
-      generatedLoaders += `loadResource(customFetch, {\n`;
-      generatedLoaders += `id: "${resource.id}",\n`;
-      generatedLoaders += `name: ${JSON.stringify(resource.name)},\n`;
-      const url = generateExpression({
-        expression: resource.url,
+    if (dataSource.type !== "resource") {
+      continue;
+    }
+    const resource = resources.get(dataSource.resourceId);
+    if (resource === undefined) {
+      continue;
+    }
+    let generatedRequest = "";
+    // call resource by bound variable name
+    const resourceName = scope.getName(resource.id, dataSource.name);
+    generatedRequest += `  const ${resourceName}: ResourceRequest = {\n`;
+    generatedRequest += `    id: "${resource.id}",\n`;
+    generatedRequest += `    name: ${JSON.stringify(resource.name)},\n`;
+    const url = generateExpression({
+      expression: resource.url,
+      dataSources,
+      usedDataSources,
+      scope,
+    });
+    generatedRequest += `    url: ${url},\n`;
+    generatedRequest += `    method: "${resource.method}",\n`;
+    generatedRequest += `    headers: [\n`;
+    for (const header of resource.headers) {
+      const value = generateExpression({
+        expression: header.value,
         dataSources,
         usedDataSources,
         scope,
       });
-      generatedLoaders += `url: ${url},\n`;
-      generatedLoaders += `method: "${resource.method}",\n`;
-      generatedLoaders += `headers: [\n`;
-      for (const header of resource.headers) {
-        const value = generateExpression({
-          expression: header.value,
-          dataSources,
-          usedDataSources,
-          scope,
-        });
-        generatedLoaders += `{ name: "${header.name}", value: ${value} },\n`;
-      }
-      generatedLoaders += `],\n`;
-      // prevent computing empty expression
-      if (resource.body !== undefined && resource.body.length > 0) {
-        const body = generateExpression({
-          expression: resource.body,
-          dataSources,
-          usedDataSources,
-          scope,
-        });
-        generatedLoaders += `body: ${body},\n`;
-      }
-      generatedLoaders += `}),\n`;
+      generatedRequest += `      { name: "${header.name}", value: ${value} },\n`;
     }
+    generatedRequest += `    ],\n`;
+    // prevent computing empty expression
+    if (resource.body !== undefined && resource.body.length > 0) {
+      const body = generateExpression({
+        expression: resource.body,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generatedRequest += `    body: ${body},\n`;
+    }
+    generatedRequest += `  }\n`;
+    generatedRequests += generatedRequest;
+    generatedPairs += `    ["${resourceName}", ${resourceName}],\n`;
   }
 
   let generatedVariables = "";
@@ -72,7 +73,7 @@ export const generateResourcesLoader = ({
     if (dataSource.type === "variable") {
       const name = scope.getName(dataSource.id, dataSource.name);
       const value = JSON.stringify(dataSource.value.value);
-      generatedVariables += `let ${name} = ${value}\n`;
+      generatedVariables += `  let ${name} = ${value}\n`;
     }
 
     if (dataSource.type === "parameter") {
@@ -81,45 +82,18 @@ export const generateResourcesLoader = ({
         continue;
       }
       const name = scope.getName(dataSource.id, dataSource.name);
-      generatedVariables += `const ${name} = _props.system\n`;
+      generatedVariables += `  const ${name} = _props.system\n`;
     }
   }
 
   let generated = "";
-  generated += `import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";\n`;
-
-  if (hasResources) {
-    generated += `import { sitemap } from "./$resources.sitemap.xml";\n`;
-  }
-
-  generated += `export const loadResources = async (_props: { system: System }) => {\n`;
+  generated += `import type { System, ResourceRequest } from "@webstudio-is/sdk";\n`;
+  generated += `export const getResources = (_props: { system: System }) => {\n`;
   generated += generatedVariables;
-  if (hasResources) {
-    generated += `
-    const customFetch: typeof fetch = (input, init) => {
-      if (typeof input !== "string") {
-        return fetch(input, init);
-      }
-
-      if (isLocalResource(input, "sitemap.xml")) {
-        // @todo: dynamic import sitemap ???
-        const response = new Response(JSON.stringify(sitemap));
-        response.headers.set('content-type',  'application/json; charset=utf-8');
-        return Promise.resolve(response);
-      }
-
-      return fetch(input, init);
-    };
-    `;
-    generated += `const [\n`;
-    generated += generatedOutput;
-    generated += `] = await Promise.all([\n`;
-    generated += generatedLoaders;
-    generated += `])\n`;
-  }
-  generated += `return {\n`;
-  generated += generatedOutput;
-  generated += `} as Record<string, unknown>\n`;
+  generated += generatedRequests;
+  generated += `  return new Map<string, ResourceRequest>([\n`;
+  generated += generatedPairs;
+  generated += `  ])\n`;
   generated += `}\n`;
   return generated;
 };
