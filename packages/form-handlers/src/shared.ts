@@ -43,6 +43,9 @@ export const formToEmail = ({
   html += "<table><tbody>";
 
   for (const [key, value] of formData) {
+    if (typeof value !== "string") {
+      continue;
+    }
     html += `<tr><td><strong>${key}:</strong></td><td>${value}</td></tr>`;
     txt += `${key}: ${value}\n`;
   }
