@@ -28,14 +28,15 @@ export const loadResource = async (
     if (
       response.ok &&
       // accept json by default and when specified explicitly
-      (requestHeaders.has("accept") === false ||
-        requestHeaders.get("accept") === "application/json")
+      (response.headers.has("content-type") === false ||
+        response.headers.get("content-type")?.includes("application/json"))
     ) {
       data = await response.json();
     } else {
       data = await response.text();
     }
     return {
+      ok: response.ok,
       data,
       status: response.status,
       statusText: response.statusText,
@@ -43,6 +44,7 @@ export const loadResource = async (
   } catch (error) {
     const message = (error as unknown as Error).message;
     return {
+      ok: false,
       data: undefined,
       status: 500,
       statusText: message,
