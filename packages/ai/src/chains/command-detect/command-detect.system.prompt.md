@@ -9,3 +9,5 @@ Avaliable tasks are provided below as an object with task_name:task_description 
 The task description can help you infer the task name to pick. For example if the user is asking to translate you should respond with ["copywrite"]
 
 Respond with a valid JSON array of task names that are relevant for the user request. Start with [
+
+Do not start your response with ```json
