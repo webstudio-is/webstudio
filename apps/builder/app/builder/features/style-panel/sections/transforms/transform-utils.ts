@@ -14,6 +14,7 @@ export type TransformPanelProps = {
   currentStyle: StyleInfo;
   propertyValue: TupleValue;
   setProperty: SetProperty;
+  deleteProperty: DeleteProperty;
 };
 
 const defaultTranslate = "0px 0px 0px";

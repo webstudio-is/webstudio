@@ -3269,6 +3269,30 @@ export const LocalStyleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 LocalStyleIcon.displayName = "LocalStyleIcon";
 
+export const LockIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="#11181C"
+          fillRule="evenodd"
+          d="M4.508 7.313V5.938A3.41 3.41 0 0 1 5.53 3.506 3.52 3.52 0 0 1 8 2.5a3.52 3.52 0 0 1 2.47 1.007 3.41 3.41 0 0 1 1.022 2.43v1.375c.37 0 .726.145.988.403s.409.608.409.973v3.437c0 .365-.147.714-.41.972a1.408 1.408 0 0 1-.987.403H4.508c-.37 0-.726-.145-.988-.403a1.364 1.364 0 0 1-.409-.972V8.687c0-.364.147-.714.41-.972.261-.258.616-.402.987-.402Zm5.587-1.375v1.375h-4.19V5.938c0-.548.22-1.072.613-1.459A2.112 2.112 0 0 1 8 3.875c.556 0 1.089.217 1.482.604.392.387.613.911.613 1.458Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+LockIcon.displayName = "LockIcon";
+
 export const MaximizeIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4359,6 +4383,28 @@ export const TriggerIcon = forwardRef<SVGSVGElement, IconProps>(
   }
 );
 TriggerIcon.displayName = "TriggerIcon";
+
+export const UnlockIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="#11181C"
+          d="M4.508 5.938v1.375c-.37 0-.726.144-.988.402s-.409.608-.409.973v3.437c0 .365.147.714.41.972.261.258.616.403.987.403h6.984c.37 0 .726-.145.988-.403s.409-.607.409-.972V8.687c0-.364-.147-.714-.41-.972a1.408 1.408 0 0 0-.987-.402H5.905V5.938c0-.548.22-1.072.613-1.459A2.112 2.112 0 0 1 8 3.875c.556 0 1.089.217 1.482.604.067.067.085.079.188.212.488.583 1.483-.024 1.222-.616-.124-.28-.2-.349-.423-.568A3.52 3.52 0 0 0 8 2.5a3.52 3.52 0 0 0-2.47 1.007 3.41 3.41 0 0 0-1.022 2.43Z"
+        />
+      </svg>
+    );
+  }
+);
+UnlockIcon.displayName = "UnlockIcon";
 
 export const UploadIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
