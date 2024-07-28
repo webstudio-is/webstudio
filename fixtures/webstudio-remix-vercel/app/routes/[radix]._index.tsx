@@ -244,19 +244,6 @@ export const links: LinksFunction = () => {
 const getRequestHost = (request: Request): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
-const getMethod = (value: string | undefined) => {
-  if (value === undefined) {
-    return "post";
-  }
-
-  switch (value.toLowerCase()) {
-    case "get":
-      return "get";
-    default:
-      return "post";
-  }
-};
-
 export const action = async ({
   request,
   context,
