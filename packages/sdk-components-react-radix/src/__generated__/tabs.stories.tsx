@@ -8,29 +8,16 @@ import {
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Tabs
-        data-ws-id="1"
-        data-ws-component="Tabs"
-        defaultValue={"0"}
-        className="w-tabs"
-      >
-        <TabsList
-          data-ws-id="3"
-          data-ws-component="TabsList"
-          className="w-tabs-list w-tabs-list-1"
-        >
+    <Box className="w-box">
+      <Tabs defaultValue={"0"} className="w-tabs">
+        <TabsList className="w-tabs-list w-tabs-list-1">
           <TabsTrigger
-            data-ws-id="5"
-            data-ws-component="TabsTrigger"
             data-ws-index="0"
             className="w-tab-trigger w-tab-trigger-1"
           >
             {"Account"}
           </TabsTrigger>
           <TabsTrigger
-            data-ws-id="7"
-            data-ws-component="TabsTrigger"
             data-ws-index="1"
             className="w-tab-trigger w-tab-trigger-2"
           >
@@ -38,16 +25,12 @@ const Component = () => {
           </TabsTrigger>
         </TabsList>
         <TabsContent
-          data-ws-id="9"
-          data-ws-component="TabsContent"
           data-ws-index="0"
           className="w-tab-content w-tab-content-1"
         >
           {"Make changes to your account here."}
         </TabsContent>
         <TabsContent
-          data-ws-id="11"
-          data-ws-component="TabsContent"
           data-ws-index="1"
           className="w-tab-content w-tab-content-2"
         >

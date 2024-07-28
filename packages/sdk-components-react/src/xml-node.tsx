@@ -20,8 +20,8 @@ type Props = {
   xmlns?: string;
   children: ReactNode;
   // xxxAttribute is used for typings only
-  [idAttribute]: string;
-  [componentAttribute]: string;
+  [idAttribute]?: string;
+  [componentAttribute]?: string;
 };
 
 export const XmlNode = forwardRef<ElementRef<"div">, Props>(
