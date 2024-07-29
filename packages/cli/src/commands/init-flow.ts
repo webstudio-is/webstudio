@@ -11,7 +11,6 @@ import {
   text,
 } from "@clack/prompts";
 import { $ } from "execa";
-import { titleCase } from "title-case";
 import { createFolderIfNotExists, isFileExists } from "../fs-utils";
 import { PROJECT_TEMPALTES } from "../config";
 import { link, validateShareLink } from "./link";
@@ -19,7 +18,7 @@ import { sync } from "./sync";
 import { build, buildOptions } from "./build";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
 
-type ProjectTemplates = (typeof PROJECT_TEMPALTES)[number];
+type ProjectTemplates = (typeof PROJECT_TEMPALTES)[number]["value"];
 
 const exitIfCancelled = <Value>(value: Value | symbol): Value => {
   if (isCancel(value)) {
@@ -74,10 +73,7 @@ export const initFlow = async (
     projectTemplate = exitIfCancelled(
       await select({
         message: "Where would you like to deploy your project?",
-        options: PROJECT_TEMPALTES.map((template) => ({
-          value: template,
-          label: titleCase(template),
-        })),
+        options: PROJECT_TEMPALTES,
       })
     );
 
@@ -98,10 +94,7 @@ export const initFlow = async (
     projectTemplate = exitIfCancelled(
       await select({
         message: "Where would you like to deploy your project?",
-        options: PROJECT_TEMPALTES.map((template) => ({
-          value: template,
-          label: titleCase(template),
-        })),
+        options: PROJECT_TEMPALTES,
       })
     );
   }

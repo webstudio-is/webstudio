@@ -24,9 +24,9 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
       type: "array",
       string: true,
       default: [] as string[],
-      describe: `Template to use for the build [choices: ${PROJECT_TEMPALTES.join(
-        ", "
-      )}]`,
+      describe: `Template to use for the build [choices: ${PROJECT_TEMPALTES.map(
+        (item) => item.value
+      ).join(", ")}]`,
     });
 
 // @todo: use options.assets to define if we need to download assets
