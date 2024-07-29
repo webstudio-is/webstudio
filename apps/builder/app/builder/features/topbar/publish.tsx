@@ -670,7 +670,7 @@ const Content = (props: {
       )}
       {projectData?.success !== true && (
         <Box css={{ height: theme.spacing[8] }} />
-      )}{" "}
+      )}
     </>
   );
 };
@@ -710,20 +710,21 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
     >
       <Grid columns={1} gap={1}>
         {isFeatureEnabled("staticExport") && (
-          <PublishStatic projectId={props.projectId} />
+          <>
+            <PublishStatic projectId={props.projectId} />
+            <Grid
+              gap={2}
+              align={"center"}
+              css={{
+                gridTemplateColumns: `1fr auto 1fr`,
+              }}
+            >
+              <Separator css={{ alignSelf: "unset" }} />
+              <Text color="main">OR</Text>
+              <Separator css={{ alignSelf: "unset" }} />
+            </Grid>
+          </>
         )}
-
-        <Grid
-          gap={2}
-          align={"center"}
-          css={{
-            gridTemplateColumns: `1fr auto 1fr`,
-          }}
-        >
-          <Separator css={{ alignSelf: "unset" }} />
-          <Text color="main">OR</Text>
-          <Separator css={{ alignSelf: "unset" }} />
-        </Grid>
 
         <Text color="main" variant="labelsTitleCase">
           Step 1
