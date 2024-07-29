@@ -73,7 +73,7 @@ export const domainRouter = router({
                   }
                 : {
                     destination: input.destination,
-                    name: `${project.id}.zip`,
+                    name,
                     assetsDomain: project.domain,
                     templates: ["ssg"],
                   },
