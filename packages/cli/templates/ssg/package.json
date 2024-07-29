@@ -8,12 +8,12 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@webstudio-is/react-sdk": "0.168.0",
-    "@webstudio-is/sdk-components-react-radix": "0.168.0",
-    "@webstudio-is/sdk-components-react": "0.168.0",
-    "@webstudio-is/form-handlers": "0.168.0",
-    "@webstudio-is/image": "0.168.0",
-    "@webstudio-is/sdk": "0.168.0",
+    "@webstudio-is/react-sdk": "0.173.0",
+    "@webstudio-is/sdk-components-react-radix": "0.173.0",
+    "@webstudio-is/sdk-components-react": "0.173.0",
+    "@webstudio-is/form-handlers": "0.173.0",
+    "@webstudio-is/image": "0.173.0",
+    "@webstudio-is/sdk": "0.173.0",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "vike": "^0.4.180"
