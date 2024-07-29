@@ -9,5 +9,9 @@ export const imageBaseUrl = "/assets/";
  * @type {import("@webstudio-is/image").ImageLoader}
  */
 export const imageLoader = ({ src }) => {
+  if (URL.canParse(src)) {
+    return src;
+  }
+
   return imageBaseUrl + src;
 };

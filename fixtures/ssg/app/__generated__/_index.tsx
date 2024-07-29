@@ -41,6 +41,10 @@ const Page = ({}: { system: any }) => {
         height={16}
         className="w-image c161qeci"
       />
+      <Image
+        src={"https://picsum.photos/id/237/100/100.jpg?blur=4&grayscale"}
+        className="w-image"
+      />
     </Body>
   );
 };
