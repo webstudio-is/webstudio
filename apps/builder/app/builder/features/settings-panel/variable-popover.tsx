@@ -13,9 +13,10 @@ import {
   createContext,
   useContext,
   useEffect,
+  type FormEvent,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
+import { CopyIcon, RefreshIcon, UploadIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
@@ -28,14 +29,16 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
+  Link,
+  PanelBanner,
   ProBadge,
   ScrollArea,
   Select,
   Switch,
+  Text,
   TextArea,
   Tooltip,
   theme,
-  toast,
 } from "@webstudio-is/design-system";
 import {
   type DataSource,
@@ -635,6 +638,8 @@ export const VariablePopoverTrigger = forwardRef<
   const formRef = useRef<HTMLFormElement>(null);
   const resources = useStore($resources);
   const { allowDynamicData } = useStore($userPlanFeatures);
+  const [isResource, setIsResource] = useState(variable?.type === "resource");
+  const requiresUpgrade = allowDynamicData === false && isResource;
 
   return (
     <FloatingPanelPopover
@@ -677,33 +682,43 @@ export const VariablePopoverTrigger = forwardRef<
             css={{
               overflow: "hidden",
               gap: theme.spacing[9],
-              pt: theme.spacing[5],
-              px: theme.spacing[9],
-              pb: theme.spacing[9],
+              p: theme.spacing[9],
             }}
           >
+            {requiresUpgrade && (
+              <PanelBanner>
+                <Text>Resource fetching is part of the CMS functionality.</Text>
+                <Flex align="center" gap={1}>
+                  <UploadIcon />
+                  <Link
+                    color="inherit"
+                    target="_blank"
+                    href="https://webstudio.is/pricing"
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </Flex>
+              </PanelBanner>
+            )}
             <form
               ref={formRef}
               noValidate={true}
               // exclude from the flow
               style={{ display: "contents" }}
+              onChange={(event) => {
+                const { name, value } = event.target as HTMLSelectElement;
+                // When type is changing, we need to show the upgrade banner.
+                if (name === "type") {
+                  setIsResource(value.includes("resource"));
+                }
+              }}
               onSubmit={(event) => {
                 event.preventDefault();
+                if (requiresUpgrade) {
+                  return;
+                }
                 if (event.currentTarget.checkValidity()) {
-                  let formData = new FormData(event.currentTarget);
-
-                  if (
-                    allowDynamicData === false &&
-                    String(formData.get("type")).includes("resource")
-                  ) {
-                    toast.warn(
-                      'Resource is part of the CMS functionality. Please upgrade to "Pro".'
-                    );
-                    // User can have a Resource after downgrading to a free plan or from the marketplace,
-                    // we just prevent from saving any changes but we keep it functional
-                    formData = new FormData();
-                  }
-
+                  const formData = new FormData(event.currentTarget);
                   panelRef.current?.save(formData);
                   // close popover whenever new variable is created
                   // to prevent creating duplicated variable
