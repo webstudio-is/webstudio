@@ -112,6 +112,12 @@ export const WebhookForm = forwardRef<
       event.currentTarget.appendChild(hiddenInput);
     };
 
+    if (action instanceof Function) {
+      throw new Error(
+        "Function actions are not supported, use string action instead"
+      );
+    }
+
     return (
       <fetcher.Form
         {...rest}
