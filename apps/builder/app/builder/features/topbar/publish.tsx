@@ -59,6 +59,7 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type ProjectData =
   | {
@@ -694,20 +695,6 @@ type DeployTargets = keyof typeof deployTargets;
 const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
-/*
-{projectData?.success === true && (
-  <PublishStatic
-    project={projectData.project}
-    refresh={() => {
-      projectLoad({ projectId: props.projectId });
-      domainRefresh({ projectId: props.projectId });
-    }}
-    isPublishing={isPreparingStaticBuild}
-    setIsPublishing={setIsPreparingStaticBuild}
-  />
-)}
-  */
-
 const ExportContent = (props: { projectId: Project["id"] }) => {
   const npxCommand = "npx webstudio@latest";
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
@@ -722,7 +709,9 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
       }}
     >
       <Grid columns={1} gap={1}>
-        <PublishStatic projectId={props.projectId} />
+        {isFeatureEnabled("staticExport") && (
+          <PublishStatic projectId={props.projectId} />
+        )}
 
         <Grid
           gap={2}
