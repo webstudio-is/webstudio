@@ -11,25 +11,13 @@ import {
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Popover data-ws-id="1" data-ws-component="Popover">
-        <PopoverTrigger data-ws-id="2" data-ws-component="PopoverTrigger">
-          <Button
-            data-ws-id="3"
-            data-ws-component="Button"
-            className="w-button w-button-1"
-          >
-            {"Button"}
-          </Button>
+    <Box className="w-box">
+      <Popover>
+        <PopoverTrigger>
+          <Button className="w-button w-button-1">{"Button"}</Button>
         </PopoverTrigger>
-        <PopoverContent
-          data-ws-id="5"
-          data-ws-component="PopoverContent"
-          className="w-popover-content w-popover-content-1"
-        >
-          <Text data-ws-id="7" data-ws-component="Text" className="w-text">
-            {"The text you can edit"}
-          </Text>
+        <PopoverContent className="w-popover-content w-popover-content-1">
+          <Text className="w-text">{"The text you can edit"}</Text>
         </PopoverContent>
       </Popover>
     </Box>

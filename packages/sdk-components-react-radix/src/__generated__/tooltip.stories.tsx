@@ -11,25 +11,13 @@ import {
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Tooltip data-ws-id="1" data-ws-component="Tooltip">
-        <TooltipTrigger data-ws-id="2" data-ws-component="TooltipTrigger">
-          <Button
-            data-ws-id="3"
-            data-ws-component="Button"
-            className="w-button w-button-1"
-          >
-            {"Button"}
-          </Button>
+    <Box className="w-box">
+      <Tooltip>
+        <TooltipTrigger>
+          <Button className="w-button w-button-1">{"Button"}</Button>
         </TooltipTrigger>
-        <TooltipContent
-          data-ws-id="5"
-          data-ws-component="TooltipContent"
-          className="w-tooltip-content w-tooltip-content-1"
-        >
-          <Text data-ws-id="7" data-ws-component="Text" className="w-text">
-            {"The text you can edit"}
-          </Text>
+        <TooltipContent className="w-tooltip-content w-tooltip-content-1">
+          <Text className="w-text">{"The text you can edit"}</Text>
         </TooltipContent>
       </Tooltip>
     </Box>
