@@ -4,35 +4,40 @@ import { PropsSectionContainer } from "./props-section/props-section";
 import { VariablesSection } from "./variables-section";
 import { Flex, Link, PanelBanner, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
+import { useStore } from "@nanostores/react";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 export const SettingsPanelContainer = ({
   selectedInstance,
 }: {
   selectedInstance: Instance;
 }) => {
+  const { allowDynamicData } = useStore($userPlanFeatures);
   return (
     <>
       <SettingsSection />
       <PropsSectionContainer selectedInstance={selectedInstance} />
       <VariablesSection />
-      <PanelBanner>
-        <div dangerouslySetInnerHTML={{ __html: cmsUpgradeSvg }} />
-        <Text variant="regularBold">Upgrade for CMS</Text>
-        <Text>
-          Integrate content from other tools to create blogs, directories, and
-          any other structured content.
-        </Text>
-        <Flex align="center" gap={1}>
-          <UploadIcon />
-          <Link
-            color="inherit"
-            target="_blank"
-            href="https://webstudio.is/pricing"
-          >
-            Upgrade to Pro
-          </Link>
-        </Flex>
-      </PanelBanner>
+      {allowDynamicData === false && (
+        <PanelBanner>
+          <div dangerouslySetInnerHTML={{ __html: cmsUpgradeSvg }} />
+          <Text variant="regularBold">Upgrade for CMS</Text>
+          <Text>
+            Integrate content from other tools to create blogs, directories, and
+            any other structured content.
+          </Text>
+          <Flex align="center" gap={1}>
+            <UploadIcon />
+            <Link
+              color="inherit"
+              target="_blank"
+              href="https://webstudio.is/pricing"
+            >
+              Upgrade to Pro
+            </Link>
+          </Flex>
+        </PanelBanner>
+      )}
     </>
   );
 };
