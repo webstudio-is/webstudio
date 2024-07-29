@@ -6,11 +6,7 @@ import {
   SmallIconButton,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  StyleValue,
-  toValue,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import { CssValueInput } from "../../shared/css-value-input";
 import { type TransformPanelProps } from "./transform-utils";
 import {
@@ -22,7 +18,12 @@ import {
   UnlockIcon,
 } from "@webstudio-is/icons";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import type {
+  CssValueInputValue,
+  IntermediateStyleValue,
+} from "../../shared/css-value-input/css-value-input";
+import type { StyleUpdateOptions } from "../../shared/use-style-data";
 
 // We use fakeProperty to pass for the CssValueInputContainer.
 // As we know during parsing, the syntax for scale is wrong in the css-data package.
@@ -37,25 +38,87 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
   const [scaleX, scaleY, scaleZ] = propertyValue.value;
   const [isScalingLocked, setScalingLock] = useState(true);
   const [intermediateScalingX, setIntermediateScalingX] =
-    useState<StyleValue>(scaleX);
+    useState<IntermediateStyleValue>({
+      type: "intermediate",
+      value: toValue(scaleX),
+    });
   const [intermediateScalingY, setIntermediateScalingY] =
-    useState<StyleValue>(scaleY);
+    useState<IntermediateStyleValue>({
+      type: "intermediate",
+      value: toValue(scaleY),
+    });
   const [intermediateScalingZ, setIntermediateScalingZ] =
-    useState<StyleValue>(scaleZ);
+    useState<IntermediateStyleValue>({
+      type: "intermediate",
+      value: toValue(scaleZ),
+    });
 
   const handleToggleScaling = () => {
     setScalingLock(isScalingLocked === true ? false : true);
   };
 
-  const handleScalingPropertyUpdate = () => {
-    const parsedValue = parseCssValue(
-      "scale",
-      `${toValue(intermediateScalingX)} ${toValue(intermediateScalingY)} ${toValue(intermediateScalingZ)}`
-    );
-    if (parsedValue.type === "invalid") {
-      return;
+  const updateIntermediateValues = useCallback(
+    (
+      prop: "scaleX" | "scaleY" | "scaleZ",
+      value: IntermediateStyleValue,
+      options: StyleUpdateOptions
+    ) => {
+      if (prop === "scaleX") {
+        setIntermediateScalingX(value);
+        if (isScalingLocked === true) {
+          setIntermediateScalingY(value);
+        }
+      }
+
+      if (prop === "scaleY") {
+        setIntermediateScalingY(value);
+        if (isScalingLocked === true) {
+          setIntermediateScalingX(value);
+        }
+      }
+
+      if (prop === "scaleZ") {
+        setIntermediateScalingZ(value);
+      }
+
+      const parsedValue = parseCssValue(
+        property,
+        [
+          intermediateScalingX.value,
+          intermediateScalingY.value,
+          intermediateScalingZ.value,
+        ].join(" ")
+      );
+      if (parsedValue.type === "invalid" || parsedValue.type !== "tuple") {
+        return;
+      }
+      setProperty(property)(parsedValue, options);
+    },
+    [
+      isScalingLocked,
+      intermediateScalingX,
+      intermediateScalingY,
+      intermediateScalingZ,
+      setProperty,
+    ]
+  );
+
+  const handleOnChange = (
+    prop: "scaleX" | "scaleY" | "scaleZ",
+    value: CssValueInputValue,
+    options: StyleUpdateOptions
+  ) => {
+    if (value.type === "unit") {
+      updateIntermediateValues(
+        prop,
+        { type: "intermediate", value: toValue(value), unit: value.unit },
+        options
+      );
     }
-    setProperty(property)(parsedValue);
+
+    if (value.type === "intermediate") {
+      updateIntermediateValues(prop, value, options);
+    }
   };
 
   return (
@@ -72,26 +135,30 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
             styleSource="local"
             property={fakeProperty}
             keywords={[]}
-            value={intermediateScalingX}
+            value={scaleX}
             intermediateValue={intermediateScalingX}
-            onChange={(newValue) => {
-              if (newValue === undefined || newValue.type !== "unit") {
+            onChange={(value) => {
+              if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
                 return;
               }
-
-              setIntermediateScalingX(newValue);
-              if (isScalingLocked === true) {
-                setIntermediateScalingY(newValue);
-              }
+              handleOnChange("scaleX", value, { isEphemeral: true });
             }}
-            onChangeComplete={handleScalingPropertyUpdate}
+            onChangeComplete={(value) => {
+              if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
+                return;
+              }
+              handleOnChange("scaleX", value.value, { isEphemeral: false });
+            }}
             onHighlight={(value) => {
               if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
                 return;
               }
-              handleScalingPropertyUpdate();
+              handleOnChange("scaleX", value, { isEphemeral: true });
             }}
-            onAbort={() => deleteProperty("scale", { isEphemeral: true })}
+            onAbort={() => deleteProperty(property, { isEphemeral: true })}
           />
         </Grid>
         <Grid
@@ -105,26 +172,30 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
             styleSource="local"
             property={fakeProperty}
             keywords={[]}
-            value={intermediateScalingY}
+            value={scaleY}
             intermediateValue={intermediateScalingY}
-            onChange={(newValue) => {
-              if (newValue === undefined || newValue.type !== "unit") {
+            onChange={(value) => {
+              if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
                 return;
               }
-
-              setIntermediateScalingY(newValue);
-              if (isScalingLocked === true) {
-                setIntermediateScalingX(newValue);
-              }
+              handleOnChange("scaleY", value, { isEphemeral: true });
             }}
-            onChangeComplete={handleScalingPropertyUpdate}
+            onChangeComplete={(value) => {
+              if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
+                return;
+              }
+              handleOnChange("scaleY", value.value, { isEphemeral: false });
+            }}
             onHighlight={(value) => {
               if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
                 return;
               }
-              handleScalingPropertyUpdate();
+              handleOnChange("scaleY", value, { isEphemeral: true });
             }}
-            onAbort={() => deleteProperty("scale", { isEphemeral: true })}
+            onAbort={() => deleteProperty(property, { isEphemeral: true })}
           />
         </Grid>
         <Grid
@@ -138,23 +209,30 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
             styleSource="local"
             property={fakeProperty}
             keywords={[]}
-            value={intermediateScalingZ}
+            value={scaleZ}
             intermediateValue={intermediateScalingZ}
-            onChange={(newValue) => {
-              if (newValue === undefined || newValue.type !== "unit") {
+            onChange={(value) => {
+              if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
                 return;
               }
-
-              setIntermediateScalingZ(newValue);
+              handleOnChange("scaleZ", value, { isEphemeral: true });
             }}
-            onChangeComplete={handleScalingPropertyUpdate}
+            onChangeComplete={(value) => {
+              if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
+                return;
+              }
+              handleOnChange("scaleZ", value.value, { isEphemeral: false });
+            }}
             onHighlight={(value) => {
               if (value === undefined) {
+                deleteProperty(property, { isEphemeral: true });
                 return;
               }
-              handleScalingPropertyUpdate();
+              handleOnChange("scaleZ", value, { isEphemeral: true });
             }}
-            onAbort={() => deleteProperty("scale", { isEphemeral: true })}
+            onAbort={() => deleteProperty(property, { isEphemeral: true })}
           />
         </Grid>
       </Flex>
