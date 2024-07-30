@@ -3,10 +3,16 @@ import {
   Flex,
   Grid,
   Label,
-  SmallIconButton,
+  SmallToggleButton,
   theme,
 } from "@webstudio-is/design-system";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import {
+  toValue,
+  TupleValueItem,
+  UnitValue,
+  type StyleProperty,
+  type Unit,
+} from "@webstudio-is/css-engine";
 import { CssValueInput } from "../../shared/css-value-input";
 import { type TransformPanelProps } from "./transform-utils";
 import {
@@ -14,23 +20,14 @@ import {
   XAxisIcon,
   YAxisIcon,
   ZAxisIcon,
-  LockIcon,
-  UnlockIcon,
+  Link2Icon,
+  Link2UnlinkedIcon,
 } from "@webstudio-is/icons";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { useCallback, useState } from "react";
-import type {
-  CssValueInputValue,
-  IntermediateStyleValue,
-} from "../../shared/css-value-input/css-value-input";
+import { useState } from "react";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
+import type { CssValueInputValue } from "../../shared/css-value-input/css-value-input";
 
-// We use fakeProperty to pass for the CssValueInputContainer.
-// As we know during parsing, the syntax for scale is wrong in the css-data package.
-// https://github.com/mdn/data/pull/746
-// https://developer.mozilla.org/en-US/docs/Web/CSS/opacity#syntax
-// number  | percentage
-const fakeProperty = "opacity";
 const property: StyleProperty = "scale";
 
 export const ScalePanelContent = (props: TransformPanelProps) => {
@@ -38,86 +35,88 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
   const [scaleX, scaleY, scaleZ] = propertyValue.value;
   const [isScalingLocked, setScalingLock] = useState(true);
   const [intermediateScalingX, setIntermediateScalingX] =
-    useState<IntermediateStyleValue>({
-      type: "intermediate",
-      value: toValue(scaleX),
-    });
+    useState<TupleValueItem>(scaleX);
   const [intermediateScalingY, setIntermediateScalingY] =
-    useState<IntermediateStyleValue>({
-      type: "intermediate",
-      value: toValue(scaleY),
-    });
+    useState<TupleValueItem>(scaleY);
   const [intermediateScalingZ, setIntermediateScalingZ] =
-    useState<IntermediateStyleValue>({
-      type: "intermediate",
-      value: toValue(scaleZ),
-    });
+    useState<TupleValueItem>(scaleZ);
 
   const handleToggleScaling = () => {
-    setScalingLock(isScalingLocked === true ? false : true);
+    const lockScaling = isScalingLocked === true ? false : true;
+    setScalingLock(lockScaling);
+    if (lockScaling === true) {
+      setIntermediateScalingY(intermediateScalingX);
+      updateScalingValues(
+        [intermediateScalingX, intermediateScalingX, intermediateScalingZ],
+        { isEphemeral: false }
+      );
+    }
   };
 
-  const updateIntermediateValues = useCallback(
-    (
-      prop: "scaleX" | "scaleY" | "scaleZ",
-      value: IntermediateStyleValue,
-      options: StyleUpdateOptions
-    ) => {
-      if (prop === "scaleX") {
-        setIntermediateScalingX(value);
-        if (isScalingLocked === true) {
-          setIntermediateScalingY(value);
-        }
-      }
-
-      if (prop === "scaleY") {
+  const updateIndividualScaleValues = (
+    prop: "scaleX" | "scaleY" | "scaleZ",
+    value: UnitValue,
+    options: StyleUpdateOptions
+  ) => {
+    if (prop === "scaleX") {
+      setIntermediateScalingX(value);
+      if (isScalingLocked === true) {
         setIntermediateScalingY(value);
-        if (isScalingLocked === true) {
-          setIntermediateScalingX(value);
-        }
       }
+    }
+    if (prop === "scaleY") {
+      setIntermediateScalingY(value);
+      if (isScalingLocked === true) {
+        setIntermediateScalingX(value);
+      }
+    }
+    if (prop === "scaleZ") {
+      setIntermediateScalingZ(value);
+    }
 
-      if (prop === "scaleZ") {
-        setIntermediateScalingZ(value);
-      }
+    updateScalingValues(
+      [intermediateScalingX, intermediateScalingY, intermediateScalingZ],
+      options
+    );
+  };
 
-      const parsedValue = parseCssValue(
-        property,
-        [
-          intermediateScalingX.value,
-          intermediateScalingY.value,
-          intermediateScalingZ.value,
-        ].join(" ")
-      );
-      if (parsedValue.type === "invalid" || parsedValue.type !== "tuple") {
-        return;
-      }
-      setProperty(property)(parsedValue, options);
-    },
-    [
-      isScalingLocked,
-      intermediateScalingX,
-      intermediateScalingY,
-      intermediateScalingZ,
-      setProperty,
-    ]
-  );
+  const updateScalingValues = (
+    values: Array<TupleValueItem>,
+    options: StyleUpdateOptions
+  ) => {
+    const parsedValue = parseCssValue(
+      "scale",
+      toValue({
+        type: "tuple",
+        value: values,
+      })
+    );
+
+    if (parsedValue.type === "invalid") {
+      return;
+    }
+
+    setProperty(property)(parsedValue, options);
+  };
 
   const handleOnChange = (
     prop: "scaleX" | "scaleY" | "scaleZ",
-    value: CssValueInputValue,
+    value: TupleValueItem | CssValueInputValue,
     options: StyleUpdateOptions
   ) => {
-    if (value.type === "unit") {
-      updateIntermediateValues(
-        prop,
-        { type: "intermediate", value: toValue(value), unit: value.unit },
-        options
-      );
+    if (value.type === "intermediate") {
+      const unitValue: UnitValue = {
+        type: "unit",
+        value: value.unit
+          ? Number(value.value.replace(value.unit, ""))
+          : Number(value.value),
+        unit: value.unit as Unit,
+      };
+      updateIndividualScaleValues(prop, unitValue, options);
     }
 
-    if (value.type === "intermediate") {
-      updateIntermediateValues(prop, value, options);
+    if (value.type === "unit") {
+      updateIndividualScaleValues(prop, value, options);
     }
   };
 
@@ -133,7 +132,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <CssValueInput
             key="scaleX"
             styleSource="local"
-            property={fakeProperty}
+            property={property}
             keywords={[]}
             value={scaleX}
             intermediateValue={intermediateScalingX}
@@ -142,6 +141,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleX", value, { isEphemeral: true });
             }}
             onChangeComplete={(value) => {
@@ -149,6 +149,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleX", value.value, { isEphemeral: false });
             }}
             onHighlight={(value) => {
@@ -156,6 +157,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleX", value, { isEphemeral: true });
             }}
             onAbort={() => deleteProperty(property, { isEphemeral: true })}
@@ -170,7 +172,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <CssValueInput
             key="scaleY"
             styleSource="local"
-            property={fakeProperty}
+            property={property}
             keywords={[]}
             value={scaleY}
             intermediateValue={intermediateScalingY}
@@ -179,6 +181,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleY", value, { isEphemeral: true });
             }}
             onChangeComplete={(value) => {
@@ -186,6 +189,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleY", value.value, { isEphemeral: false });
             }}
             onHighlight={(value) => {
@@ -193,6 +197,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleY", value, { isEphemeral: true });
             }}
             onAbort={() => deleteProperty(property, { isEphemeral: true })}
@@ -207,7 +212,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <CssValueInput
             key="scaleZ"
             styleSource="local"
-            property={fakeProperty}
+            property={property}
             keywords={[]}
             value={scaleZ}
             intermediateValue={intermediateScalingZ}
@@ -223,6 +228,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleZ", value.value, { isEphemeral: false });
             }}
             onHighlight={(value) => {
@@ -230,6 +236,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
                 deleteProperty(property, { isEphemeral: true });
                 return;
               }
+
               handleOnChange("scaleZ", value, { isEphemeral: true });
             }}
             onAbort={() => deleteProperty(property, { isEphemeral: true })}
@@ -243,18 +250,13 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
         <Box css={{ rotate: "90deg" }}>
           <BorderRadiusIcon size="12" />
         </Box>
-        {isScalingLocked === true && (
-          <SmallIconButton
-            icon={<LockIcon size="16" />}
-            onClick={handleToggleScaling}
-          />
-        )}
-        {isScalingLocked === false && (
-          <SmallIconButton
-            icon={<UnlockIcon size="16" />}
-            onClick={handleToggleScaling}
-          />
-        )}
+        <SmallToggleButton
+          css={{ rotate: "90deg" }}
+          pressed={isScalingLocked}
+          onPressedChange={handleToggleScaling}
+          variant="normal"
+          icon={isScalingLocked ? <Link2Icon /> : <Link2UnlinkedIcon />}
+        />
         <Box css={{ rotate: "180deg" }}>
           <BorderRadiusIcon size="12" />
         </Box>

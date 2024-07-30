@@ -18,7 +18,7 @@ export type TransformPanelProps = {
 };
 
 const defaultTranslate = "0px 0px 0px";
-const defaultScale = "1 1 1";
+const defaultScale = "100% 100% 100%";
 const defaultRotate = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 const defaultSkew = "skewX(0deg) skewY(0deg)";
 
