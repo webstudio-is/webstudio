@@ -26,6 +26,8 @@ export const loadAssetsByProject = async (
 
   const assets = await context.postgrest.client
     .from("Asset")
+    // use inner to filter out assets without file
+    // when file is not uploaded
     .select(
       `
         assetId:id,
