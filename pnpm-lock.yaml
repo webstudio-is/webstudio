@@ -595,9 +595,6 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.10.3
         version: 2.10.3(typescript@5.5.2)
-      '@size-limit/file':
-        specifier: ^9.0.0
-        version: 9.0.0(size-limit@9.0.0)
       '@webstudio-is/form-handlers':
         specifier: workspace:*
         version: link:../../packages/form-handlers
@@ -628,9 +625,6 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
-      size-limit:
-        specifier: ^9.0.0
-        version: 9.0.0
       web-vitals:
         specifier: ^3.5.2
         version: 3.5.2
@@ -5014,12 +5008,6 @@ packages:
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
 
-  '@size-limit/file@9.0.0':
-    resolution: {integrity: sha512-oM2UaH2FRq4q22k+R+P6xCpzET10T94LFdSjb9svVu/vOD7NaB9LGcG6se8TW1BExXiyXO4GEhLsBt3uMKM3qA==}
-    engines: {node: ^18.0.0 || >=20.0.0}
-    peerDependencies:
-      size-limit: 9.0.0
-
   '@smithy/is-array-buffer@2.0.0':
     resolution: {integrity: sha512-z3PjFjMyZNI98JFRJi/U0nGoLWMSJlDjAW4QUX2WNZLas5C0CmVV6LJ01JI0k90l7FvpmixjWxPFmENSClQ7ug==}
     engines: {node: '>=14.0.0'}
@@ -5933,10 +5921,6 @@ packages:
 
   builtins@5.0.1:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
-
-  bytes-iec@3.1.1:
-    resolution: {integrity: sha512-fey6+4jDK7TFtFg/klGSvNKJctyU7n2aQdnM+CO0ruLPbqqMOM8Tio0Pc+deqUeVKX1tL5DQep1zQ7+37aTAsA==}
-    engines: {node: '>= 0.8'}
 
   bytes@3.0.0:
     resolution: {integrity: sha512-pMhOfFDPiv9t5jjIXkHosWmkSyQbvsgEVNkz0ERHbuLh2T/7j4Mqqpz523Fe8MVY89KC6Sh/QfS2sM+SjgFDcw==}
@@ -8153,9 +8137,6 @@ packages:
     engines: {node: ^18 || >=20}
     hasBin: true
 
-  nanospinner@1.1.0:
-    resolution: {integrity: sha512-yFvNYMig4AthKYfHFl1sLj7B2nkHL4lzdig4osvl9/LdGbXwrdFRoqBS98gsEsOakr0yH+r5NZ/1Y9gdVB8trA==}
-
   nanostores@0.9.3:
     resolution: {integrity: sha512-KobZjcVyNndNrb5DAjfs0WG0lRcZu5Q1BOrfTOxokFLi25zFrWPjg+joXC6kuDqNfSt9fQwppyjUBkRPtsL+8w==}
     engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
@@ -9147,11 +9128,6 @@ packages:
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
-
-  size-limit@9.0.0:
-    resolution: {integrity: sha512-DrA7o2DeRN3s+vwCA9nn7Ck9Y4pn9t0GNUwQRpKqBtBmNkl6LA2s/NlNCdtKHrEkRTeYA1ZQ65mnYveo9rUqgA==}
-    engines: {node: ^18.0.0 || >=20.0.0}
-    hasBin: true
 
   slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
@@ -13175,11 +13151,6 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.0
 
-  '@size-limit/file@9.0.0(size-limit@9.0.0)':
-    dependencies:
-      semver: 7.5.4
-      size-limit: 9.0.0
-
   '@smithy/is-array-buffer@2.0.0':
     dependencies:
       tslib: 2.6.2
@@ -14387,8 +14358,6 @@ snapshots:
   builtins@5.0.1:
     dependencies:
       semver: 7.6.2
-
-  bytes-iec@3.1.1: {}
 
   bytes@3.0.0: {}
 
@@ -17354,10 +17323,6 @@ snapshots:
 
   nanoid@5.0.1: {}
 
-  nanospinner@1.1.0:
-    dependencies:
-      picocolors: 1.0.1
-
   nanostores@0.9.3: {}
 
   natural-compare@1.4.0: {}
@@ -18414,15 +18379,6 @@ snapshots:
       totalist: 3.0.1
 
   sisteransi@1.0.5: {}
-
-  size-limit@9.0.0:
-    dependencies:
-      bytes-iec: 3.1.1
-      chokidar: 3.5.3
-      globby: 11.1.0
-      lilconfig: 2.1.0
-      nanospinner: 1.1.0
-      picocolors: 1.0.1
 
   slash@3.0.0: {}
 
