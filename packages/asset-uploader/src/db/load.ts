@@ -1,4 +1,3 @@
-import { prisma, type Project } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
@@ -8,7 +7,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import { formatAsset } from "../utils/format-asset";
 
 export const loadAssetsByProject = async (
-  projectId: Project["id"],
+  projectId: string,
   context: AppContext,
   { skipPermissionsCheck = false }: { skipPermissionsCheck?: boolean } = {}
 ): Promise<Asset[]> => {
@@ -25,26 +24,26 @@ export const loadAssetsByProject = async (
     );
   }
 
-  const assets = await prisma.asset.findMany({
-    select: {
-      file: true,
-      id: true,
-      projectId: true,
-    },
-    where: {
-      projectId,
-      file: { status: "UPLOADED" },
-    },
-    orderBy: {
-      file: { createdAt: "desc" },
-    },
-  });
+  const assets = await context.postgrest.client
+    .from("Asset")
+    // use inner to filter out assets without file
+    // when file is not uploaded
+    .select(
+      `
+        assetId:id,
+        projectId,
+        file:File!inner (*)
+      `
+    )
+    .eq("projectId", projectId)
+    .eq("file.status", "UPLOADED");
 
-  return assets.map((asset) =>
-    formatAsset({
-      assetId: asset.id,
-      projectId: asset.projectId,
-      file: asset.file,
-    })
-  );
+  const result: Asset[] = [];
+  for (const { assetId, projectId, file } of assets.data ?? []) {
+    if (file) {
+      result.push(formatAsset({ assetId, projectId, file }));
+    }
+  }
+
+  return result;
 };
