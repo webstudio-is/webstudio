@@ -1,5 +1,6 @@
 import {
   Box,
+  EnhancedTooltip,
   Flex,
   Grid,
   Label,
@@ -263,13 +264,21 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
         <Box css={{ rotate: "90deg" }}>
           <BorderRadiusIcon size="12" />
         </Box>
-        <SmallToggleButton
-          css={{ rotate: "90deg" }}
-          pressed={isScalingLocked}
-          onPressedChange={handleToggleScaling}
-          variant="normal"
-          icon={isScalingLocked ? <Link2Icon /> : <Link2UnlinkedIcon />}
-        />
+        <EnhancedTooltip
+          content={
+            isScalingLocked === true
+              ? "Unlink scale-x and scale-y values"
+              : "Link scale-x and scale-y values"
+          }
+        >
+          <SmallToggleButton
+            css={{ rotate: "90deg" }}
+            pressed={isScalingLocked}
+            onPressedChange={handleToggleScaling}
+            variant="normal"
+            icon={isScalingLocked ? <Link2Icon /> : <Link2UnlinkedIcon />}
+          />
+        </EnhancedTooltip>
         <Box css={{ rotate: "180deg" }}>
           <BorderRadiusIcon size="12" />
         </Box>
