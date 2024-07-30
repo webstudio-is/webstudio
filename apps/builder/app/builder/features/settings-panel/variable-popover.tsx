@@ -13,7 +13,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  type FormEvent,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { CopyIcon, RefreshIcon, UploadIcon } from "@webstudio-is/icons";
@@ -72,7 +71,6 @@ import {
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
-import type { letterSpacing } from "node_modules/@webstudio-is/design-system/src/__generated__/figma-design-tokens";
 
 const validateName = (value: string) =>
   value.trim().length === 0 ? "Name is required" : "";
