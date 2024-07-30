@@ -14,13 +14,11 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
-} from "@webstudio-is/sdk";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
-import {
-  n8nHandler,
   formIdFieldName,
   formBotFieldName,
-} from "@webstudio-is/form-handlers";
+} from "@webstudio-is/sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { n8nHandler } from "@webstudio-is/form-handlers";
 import {
   Page,
   siteName,
