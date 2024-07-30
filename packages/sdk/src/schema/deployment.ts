@@ -6,6 +6,8 @@ export const Templates = z.enum([
   "netlify-functions",
   "netlify-edge-functions",
   "ssg",
+  "ssg-netlify",
+  "ssg-vercel",
 ]);
 
 export type Templates = z.infer<typeof Templates>;
