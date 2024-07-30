@@ -39,14 +39,8 @@ const Page = ({}: { system: any }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
   return (
-    <Body
-      data-ws-id="a-4nDFkaWy4px1fn38XWJ"
-      data-ws-component="Body"
-      className="w-body"
-    >
+    <Body className="w-body">
       <Form
-        data-ws-id="-1RvizaBcVpHsjvnYxn1c"
-        data-ws-component="Form"
         state={formState}
         onStateChange={(state: any) => {
           formState = state;
@@ -55,76 +49,25 @@ const Page = ({}: { system: any }) => {
         className="w-webhook-form"
       >
         {(formState === "initial" || formState === "error") && (
-          <Box
-            data-ws-id="qhnVrmYGlyrMZi3UzqSQA"
-            data-ws-component="Box"
-            className="w-box"
-          >
-            <Heading
-              data-ws-id="YdHHf4u3jrdbRIWpB_VfH"
-              data-ws-component="Heading"
-              tag={"h3"}
-              className="w-heading"
-            >
+          <Box className="w-box">
+            <Heading tag={"h3"} className="w-heading">
               {"Default form"}
             </Heading>
-            <Label
-              data-ws-id="A0RNI1WVwOGGDbwYnoZia"
-              data-ws-component="Label"
-              className="w-input-label"
-            >
-              {"Name"}
-            </Label>
-            <Input
-              data-ws-id="e035xi9fcwYtrn9La49Eh"
-              data-ws-component="Input"
-              name={"name"}
-              className="w-text-input"
-            />
-            <Label
-              data-ws-id="LImtuVzw5R9yQsG4faiGV"
-              data-ws-component="Label"
-              className="w-input-label"
-            >
-              {"Email"}
-            </Label>
-            <Input
-              data-ws-id="dcHjdeW_HXPkyQlx3ZiL7"
-              data-ws-component="Input"
-              name={"email"}
-              className="w-text-input"
-            />
-            <Button
-              data-ws-id="ZAtG6JgK4sbTnOAZlp2rU"
-              data-ws-component="Button"
-              className="w-button"
-            >
-              {"Submit"}
-            </Button>
+            <Label className="w-input-label">{"Name"}</Label>
+            <Input name={"name"} className="w-text-input" />
+            <Label className="w-input-label">{"Email"}</Label>
+            <Input name={"email"} className="w-text-input" />
+            <Button className="w-button">{"Submit"}</Button>
           </Box>
         )}
         {formState === "success" && (
-          <Box
-            data-ws-id="966cjxuqP_T99N27-mqWE"
-            data-ws-component="Box"
-            className="w-box"
-          >
-            {"Thank you for getting in touch!"}
-          </Box>
+          <Box className="w-box">{"Thank you for getting in touch!"}</Box>
         )}
         {formState === "error" && (
-          <Box
-            data-ws-id="SYG5hhOz31xFJUN_v9zq6"
-            data-ws-component="Box"
-            className="w-box"
-          >
-            {"Sorry, something went wrong."}
-          </Box>
+          <Box className="w-box">{"Sorry, something went wrong."}</Box>
         )}
       </Form>
       <Form
-        data-ws-id="isNSM3wXcnHFikwNPlEOL"
-        data-ws-component="Form"
         state={formState_1}
         onStateChange={(state: any) => {
           formState_1 = state;
@@ -134,71 +77,22 @@ const Page = ({}: { system: any }) => {
         className="w-webhook-form"
       >
         {(formState_1 === "initial" || formState_1 === "error") && (
-          <Box
-            data-ws-id="a5YPRc19IJyhTrjjasA_R"
-            data-ws-component="Box"
-            className="w-box"
-          >
-            <Heading
-              data-ws-id="y4pceTmziuBRIDgUBQNLD"
-              data-ws-component="Heading"
-              tag={"h3"}
-              className="w-heading"
-            >
+          <Box className="w-box">
+            <Heading tag={"h3"} className="w-heading">
               {"Form with custom action and method"}
             </Heading>
-            <Label
-              data-ws-id="_gLjS0enBOV8KW9Ykz_es"
-              data-ws-component="Label"
-              className="w-input-label"
-            >
-              {"Name"}
-            </Label>
-            <Input
-              data-ws-id="ydR5B_9uMS4PXFS76TmBh"
-              data-ws-component="Input"
-              name={"name"}
-              className="w-text-input"
-            />
-            <Label
-              data-ws-id="8RU1FyL2QRyqhNUKELGrb"
-              data-ws-component="Label"
-              className="w-input-label"
-            >
-              {"Email"}
-            </Label>
-            <Input
-              data-ws-id="TsqGP49hjgEW41ReCwrpZ"
-              data-ws-component="Input"
-              name={"email"}
-              className="w-text-input"
-            />
-            <Button
-              data-ws-id="5GWjwVdapuGdn443GIKDW"
-              data-ws-component="Button"
-              className="w-button"
-            >
-              {"Submit"}
-            </Button>
+            <Label className="w-input-label">{"Name"}</Label>
+            <Input name={"name"} className="w-text-input" />
+            <Label className="w-input-label">{"Email"}</Label>
+            <Input name={"email"} className="w-text-input" />
+            <Button className="w-button">{"Submit"}</Button>
           </Box>
         )}
         {formState_1 === "success" && (
-          <Box
-            data-ws-id="Gw-ta0R4FNFAGBTVRWKep"
-            data-ws-component="Box"
-            className="w-box"
-          >
-            {"Thank you for getting in touch!"}
-          </Box>
+          <Box className="w-box">{"Thank you for getting in touch!"}</Box>
         )}
         {formState_1 === "error" && (
-          <Box
-            data-ws-id="ewk_WKpu4syHLPABMmvUz"
-            data-ws-component="Box"
-            className="w-box"
-          >
-            {"Sorry, something went wrong."}
-          </Box>
+          <Box className="w-box">{"Sorry, something went wrong."}</Box>
         )}
       </Form>
     </Body>

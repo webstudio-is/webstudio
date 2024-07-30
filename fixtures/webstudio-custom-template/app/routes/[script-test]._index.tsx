@@ -10,7 +10,11 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk";
+import {
+  isLocalResource,
+  loadResource,
+  loadResources,
+} from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import {
   n8nHandler,
@@ -240,19 +244,6 @@ export const links: LinksFunction = () => {
 const getRequestHost = (request: Request): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
-const getMethod = (value: string | undefined) => {
-  if (value === undefined) {
-    return "post";
-  }
-
-  switch (value.toLowerCase()) {
-    case "get":
-      return "get";
-    default:
-      return "post";
-  }
-};
-
 export const action = async ({
   request,
   context,
@@ -297,22 +288,32 @@ export const action = async ({
       throw new Error(`Form bot value invalid ${formBotValue}`);
     }
 
+    formData.delete(formIdFieldName);
+    formData.delete(formBotFieldName);
+
+    if (resource) {
+      const { ok, statusText } = await loadResource(fetch, {
+        ...resource,
+        body: Object.fromEntries(formData),
+      });
+      if (ok) {
+        return { success: true };
+      }
+      return { success: false, errors: [statusText] };
+    }
+
     if (contactEmail === undefined) {
       throw new Error("Contact email not found");
     }
 
-    const formInfo = {
-      formData,
-      projectId,
-      action: resource?.url ?? null,
-      method: getMethod(resource?.method),
-      pageUrl: pageUrl.toString(),
-      toEmail: contactEmail,
-      fromEmail: pageUrl.hostname + "@webstudio.email",
-    } as const;
-
     const result = await n8nHandler({
-      formInfo,
+      formInfo: {
+        formId: [projectId, resourceName].join("--"),
+        formData,
+        pageUrl: pageUrl.toString(),
+        toEmail: contactEmail,
+        fromEmail: pageUrl.hostname + "@webstudio.email",
+      },
       hookUrl: context.N8N_FORM_EMAIL_HOOK,
     });
 

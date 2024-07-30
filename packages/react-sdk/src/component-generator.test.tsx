@@ -36,9 +36,7 @@ test("generate jsx element with children and without them", () => {
     })
   ).toEqual(
     clear(`
-      <Body
-      data-ws-id="body"
-      data-ws-component="Body">
+      <Body>
       {"Children"}
       </Body>
     `)
@@ -54,9 +52,7 @@ test("generate jsx element with children and without them", () => {
     })
   ).toEqual(
     clear(`
-      <Image
-      data-ws-id="image"
-      data-ws-component="Image" />
+      <Image />
     `)
   );
 });
@@ -74,9 +70,7 @@ test("generate jsx element with namespaces components", () => {
     })
   ).toEqual(
     clear(`
-      <Body
-      data-ws-id="body"
-      data-ws-component="@webstudio-is/library:Body" />
+      <Body />
     `)
   );
   expect(
@@ -90,9 +84,7 @@ test("generate jsx element with namespaces components", () => {
     })
   ).toEqual(
     clear(`
-      <Image
-      data-ws-id="image"
-      data-ws-component="@webstudio-is/library:Image" />
+      <Image />
     `)
   );
 });
@@ -110,8 +102,6 @@ test("generate jsx element with literal props", () => {
   ).toEqual(
     clear(`
       <Body
-      data-ws-id="body"
-      data-ws-component="Body"
       string={"string"}
       number={0} />
     `)
@@ -134,8 +124,6 @@ test("generate jsx element with literal props", () => {
   ).toEqual(
     clear(`
       <Image
-      data-ws-id="image"
-      data-ws-component="Image"
       boolean={true}
       stringArray={["value1","value2"]} />
     `)
@@ -160,9 +148,7 @@ test("ignore asset and page props", () => {
     })
   ).toEqual(
     clear(`
-      <Box
-      data-ws-id="box"
-      data-ws-component="Box" />
+      <Box />
     `)
   );
 });
@@ -196,8 +182,6 @@ test("generate jsx element with data sources and action", () => {
   ).toEqual(
     clear(`
       <Box
-      data-ws-id="box"
-      data-ws-component="Box"
       variable={variableName}
       expression={variableName + 1}
       onChange={(value: any) => {
@@ -220,9 +204,7 @@ test("generate jsx element with condition based on show prop", () => {
     })
   ).toEqual(
     clear(`
-      <Box
-      data-ws-id="box"
-      data-ws-component="Box" />
+      <Box />
     `)
   );
   expect(
@@ -259,9 +241,7 @@ test("generate jsx element with condition based on show prop", () => {
   ).toEqual(
     clear(`
       {(conditionName) &&
-      <Box
-      data-ws-id="box"
-      data-ws-component="Box" />
+      <Box />
       }
     `)
   );
@@ -280,8 +260,6 @@ test("generate jsx element with index prop", () => {
   ).toEqual(
     clear(`
       <Box
-      data-ws-id="box"
-      data-ws-component="Box"
       data-ws-index="5" />
     `)
   );
@@ -379,15 +357,9 @@ test("generate jsx children with nested instances", () => {
   ).toEqual(
     clear(`
     <Form
-    data-ws-id="form"
-    data-ws-component="Form"
     prop={"value"}>
-    <Input
-    data-ws-id="0"
-    data-ws-component="Input" />
-    <Button
-    data-ws-id="1"
-    data-ws-component="Button" />
+    <Input />
+    <Button />
     </Form>
     `)
   );
@@ -414,12 +386,8 @@ test("deduplicate base and namespaced components with same short name", () => {
     })
   ).toEqual(
     clear(`
-    <Button
-    data-ws-id="button1"
-    data-ws-component="Button" />
-    <Button_1
-    data-ws-id="button2"
-    data-ws-component="@webstudio-is/sdk-component-react-radix:Button" />
+    <Button />
+    <Button_1 />
     `)
   );
 });
@@ -464,12 +432,8 @@ test("generate collection component as map", () => {
     clear(`
     {data?.map((element: any, index: number) =>
     <Fragment key={index}>
-    <Label
-    data-ws-id="0"
-    data-ws-component="Label" />
+    <Label />
     <Button
-    data-ws-id="1"
-    data-ws-component="Button"
     aria-label={element} />
     </Fragment>
     )}
@@ -509,12 +473,8 @@ test("generate component with variables and actions", () => {
     clear(`
       const Page = () => {
       let [variableName, set$variableName] = useState<any>("initial")
-      return <Body
-      data-ws-id="body"
-      data-ws-component="Body">
+      return <Body>
       <Input
-      data-ws-id="0"
-      data-ws-component="Input"
       value={variableName}
       onChange={(value: any) => {
       variableName = value
@@ -542,8 +502,6 @@ test("add classes and merge classes", () => {
     clear(`
     const Page = () => {
     return <Body
-    data-ws-id="body"
-    data-ws-component="Body"
     className="cls1 cls2 \\"cls3\\"" />
     }
     `)
@@ -588,9 +546,7 @@ test("avoid generating collection parameter variable as state", () => {
     clear(`
     const Page = () => {
     let [data, set$data] = useState<any>(["apple","orange","mango"])
-    return <Body
-    data-ws-id="body"
-    data-ws-component="Body">
+    return <Body>
     {data?.map((element: any, index: number) =>
     <Fragment key={index}>
     </Fragment>
@@ -637,8 +593,6 @@ test("generate system variable when present", () => {
     clear(`
     const Page = ({ system: system_1, }: { system: any; }) => {
     return <Body
-    data-ws-id="body"
-    data-ws-component="Body"
     data-slug={system_1?.params?.slug} />
     }
     `)
@@ -686,8 +640,6 @@ test("generate resources loading", () => {
     let [data, set$data] = useState<any>("data")
     let data_1 = useResource("data_2")
     return <Body
-    data-ws-id="body"
-    data-ws-component="Body"
     data-data={data}
     data-resource={data_1} />
     }
@@ -752,8 +704,6 @@ test("avoid generating unused variables", () => {
 "const Page = ({ }: { system: any; }) => {
 let [UsedVariableName, set$UsedVariableName] = useState<any>("initial")
 return <Body
-data-ws-id="body"
-data-ws-component="Body"
 data-data={UsedVariableName} />
 }
 "
@@ -778,9 +728,7 @@ test("avoid generating descendant component", () => {
     })
   ).toMatchInlineSnapshot(`
 "const Page = () => {
-return <Body
-data-ws-id="body"
-data-ws-component="Body">
+return <Body>
 </Body>
 }
 "
@@ -825,9 +773,7 @@ test("generate conditional collection", () => {
   ).toMatchInlineSnapshot(`
     "const Page = () => {
     let [conditionName, set$conditionName] = useState<any>(false)
-    return <Body
-    data-ws-id="body"
-    data-ws-component="Body">
+    return <Body>
     {(conditionName) &&
     <>
     {[]?.map((collectionItemName: any, index: number) =>
@@ -867,16 +813,10 @@ test("generate resource prop", () => {
     })
   ).toMatchInlineSnapshot(`
     "const Page = () => {
-    return <Body
-    data-ws-id="body"
-    data-ws-component="Body">
+    return <Body>
     <Form
-    data-ws-id="form1"
-    data-ws-component="Form"
     action={"action"} />
     <Form
-    data-ws-id="form2"
-    data-ws-component="Form"
     action={"action_1"} />
     </Body>
     }

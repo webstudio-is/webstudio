@@ -53,8 +53,9 @@ export const jsonToGlobalConfig = (json: unknown) => {
 export type GlobalConfig = z.infer<typeof zGlobalConfig>;
 
 export const PROJECT_TEMPALTES = [
-  "vanilla",
-  "vercel",
-  "netlify-functions",
-  "netlify-edge-functions",
-] as const;
+  { value: "vanilla" as const, label: "Vanilla" },
+  { value: "vercel" as const, label: "Vercel" },
+  { value: "netlify-functions" as const, label: "Netlify Functions" },
+  { value: "netlify-edge-functions" as const, label: "Netlify Edge Functions" },
+  { value: "ssg" as const, label: "Static Site Generation (SSG)" },
+];

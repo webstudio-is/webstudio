@@ -5,10 +5,8 @@ import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 const Component = () => {
   let [switchChecked, set$switchChecked] = useState<any>(false);
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
+    <Box className="w-box">
       <Switch
-        data-ws-id="1"
-        data-ws-component="Switch"
         checked={switchChecked}
         onCheckedChange={(checked: any) => {
           switchChecked = checked;
@@ -16,11 +14,7 @@ const Component = () => {
         }}
         className="w-switch w-switch-1"
       >
-        <SwitchThumb
-          data-ws-id="6"
-          data-ws-component="SwitchThumb"
-          className="w-switch-thumb w-switch-thumb-1"
-        />
+        <SwitchThumb className="w-switch-thumb w-switch-thumb-1" />
       </Switch>
     </Box>
   );
