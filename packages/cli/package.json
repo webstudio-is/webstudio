@@ -1,6 +1,6 @@
 {
   "name": "webstudio",
-  "version": "0.168.0",
+  "version": "0.173.0",
   "description": "Webstudio CLI",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -47,7 +47,6 @@
     "parse5": "7.1.2",
     "picocolors": "^1.0.1",
     "strip-indent": "^4.0.0",
-    "title-case": "^4.1.0",
     "yargs": "^17.7.2",
     "zod": "^3.22.4"
   },

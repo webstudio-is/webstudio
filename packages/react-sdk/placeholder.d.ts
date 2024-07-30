@@ -6,7 +6,12 @@ declare module "__CONSTANTS__" {
 }
 
 declare module "__CLIENT__" {
-  import type { FontAsset, ImageAsset, System } from "@webstudio-is/sdk";
+  import type {
+    FontAsset,
+    ImageAsset,
+    ResourceRequest,
+    System,
+  } from "@webstudio-is/sdk";
 
   export const siteName: string;
 
@@ -23,21 +28,17 @@ declare module "__CLIENT__" {
 }
 
 declare module "__SERVER__" {
-  import type { PageMeta, System } from "@webstudio-is/sdk";
+  import type { PageMeta, System, ResourceRequest } from "@webstudio-is/sdk";
 
-  export const loadResources: (props: {
-    system: System;
-  }) => Promise<Record<string, unknown>>;
+  export const getResources: (props: { system: System }) => {
+    data: Map<string, ResourceRequest>;
+    action: Map<string, ResourceRequest>;
+  };
 
   export const getPageMeta: (props: {
     system: System;
     resources: Record<string, any>;
   }) => PageMeta;
-
-  export const formsProperties: Map<
-    string,
-    { method?: string; action?: string }
-  >;
 
   type Params = Record<string, string | undefined>;
   export const getRemixParams: ({ ...params }: Params) => Params;

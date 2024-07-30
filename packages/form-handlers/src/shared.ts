@@ -5,14 +5,11 @@ export const formBotFieldName = `${formHiddenFieldPrefix}-bot`;
 
 // Input data common for all handlers
 export type FormInfo = {
-  projectId: string;
+  formId: string;
   pageUrl: string;
   formData: FormData;
   toEmail: string;
   fromEmail: string;
-  // null as serializable
-  action: string | null;
-  method: "get" | "post";
 };
 
 export type EmailInfo = {
@@ -25,14 +22,6 @@ export type EmailInfo = {
 };
 
 export type Result = { success: true } | { success: false; errors: string[] };
-
-/** Returns form entries that should be send in email: removes `File` entries and `formId` */
-export const getFormEntries = (formData: FormData): [string, string][] =>
-  [...formData.entries()].flatMap(([key, value]) =>
-    key.startsWith(formHiddenFieldPrefix) === false && typeof value === "string"
-      ? [[key, value]]
-      : []
-  );
 
 const getDomain = (url: string) => {
   try {
@@ -53,7 +42,10 @@ export const formToEmail = ({
 
   html += "<table><tbody>";
 
-  for (const [key, value] of getFormEntries(formData)) {
+  for (const [key, value] of formData) {
+    if (typeof value !== "string") {
+      continue;
+    }
     html += `<tr><td><strong>${key}:</strong></td><td>${value}</td></tr>`;
     txt += `${key}: ${value}\n`;
   }

@@ -2,35 +2,18 @@
 /* This is a auto generated file for building the project */
 
 import type { PageMeta } from "@webstudio-is/sdk";
-import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./$resources.sitemap.xml";
-export const loadResources = async (_props: { system: System }) => {
-  const customFetch: typeof fetch = (input, init) => {
-    if (typeof input !== "string") {
-      return fetch(input, init);
-    }
-
-    if (isLocalResource(input, "sitemap.xml")) {
-      // @todo: dynamic import sitemap ???
-      const response = new Response(JSON.stringify(sitemap));
-      response.headers.set("content-type", "application/json; charset=utf-8");
-      return Promise.resolve(response);
-    }
-
-    return fetch(input, init);
+import type { System, ResourceRequest } from "@webstudio-is/sdk";
+export const getResources = (_props: { system: System }) => {
+  const list_1: ResourceRequest = {
+    id: "1vX6SQdaCjJN6MvJlG_cQ",
+    name: "list",
+    url: "https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json",
+    method: "get",
+    headers: [],
   };
-  const [list_1] = await Promise.all([
-    loadResource(customFetch, {
-      id: "1vX6SQdaCjJN6MvJlG_cQ",
-      name: "list",
-      url: "https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json",
-      method: "get",
-      headers: [],
-    }),
-  ]);
-  return {
-    list_1,
-  } as Record<string, unknown>;
+  const _data = new Map<string, ResourceRequest>([["list_1", list_1]]);
+  const _action = new Map<string, ResourceRequest>([]);
+  return { data: _data, action: _action };
 };
 
 export const getPageMeta = ({
@@ -52,9 +35,6 @@ export const getPageMeta = ({
     custom: [],
   };
 };
-
-type FormProperties = { method?: string; action?: string };
-export const formsProperties = new Map<string, FormProperties>([]);
 
 type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {

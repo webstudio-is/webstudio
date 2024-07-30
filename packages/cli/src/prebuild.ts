@@ -42,10 +42,10 @@ import {
   findTreeInstanceIds,
   getPagePath,
   parseComponentName,
-  generateFormsProperties,
-  generateResourcesLoader,
+  generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
+  replaceFormActionsWithResources,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -580,6 +580,11 @@ export const prebuild = async (options: {
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
+    replaceFormActionsWithResources({
+      instances,
+      resources,
+      props,
+    });
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
@@ -675,10 +680,11 @@ export const prebuild = async (options: {
       /* This is a auto generated file for building the project */ \n
 
       import type { PageMeta } from "@webstudio-is/sdk";
-      ${generateResourcesLoader({
+      ${generateResources({
         scope,
         page: pageData.page,
         dataSources,
+        props,
         resources,
       })}
 
@@ -688,8 +694,6 @@ export const prebuild = async (options: {
         dataSources,
         assets,
       })}
-
-      ${generateFormsProperties(props)}
 
       ${generateRemixParams(pageData.page.path)}
 
@@ -711,6 +715,10 @@ export const prebuild = async (options: {
     for (const { file, template } of getTemplates({ pagePath })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
+        .replaceAll(
+          "__SITEMAP__",
+          importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
+        )
         .replaceAll(
           "__CLIENT__",
           importFrom(`./app/__generated__/${generatedBasename}`, file)

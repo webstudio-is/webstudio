@@ -2,10 +2,8 @@ import {
   type FormInfo,
   type Result,
   formToEmail,
-  getFormEntries,
   getErrors,
   getResponseBody,
-  formIdFieldName,
 } from "./shared";
 
 const getAuth = (hookUrl: string) => {
@@ -40,19 +38,13 @@ export const n8nHandler = async ({
     headers["Authorization"] = `Basic ${btoa([username, password].join(":"))}`;
   }
 
-  const formId = formInfo.formData.get(formIdFieldName);
-
-  if (formId === undefined) {
-    return { success: false, errors: ["No form id in FormData"] };
-  }
-
   const payload = {
     email: formToEmail(formInfo),
     // globally unique form id (can be used for unsubscribing)
-    formId: [formInfo.projectId, formId].join("--"),
-    action: formInfo.action,
-    method: formInfo.method,
-    formData: Object.fromEntries(getFormEntries(formInfo.formData)),
+    formId: formInfo.formId,
+    action: null,
+    method: "post",
+    formData: formInfo.formData,
   };
 
   let response: Response;

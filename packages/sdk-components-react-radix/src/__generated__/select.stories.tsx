@@ -17,119 +17,60 @@ import {
 const Component = () => {
   let [selectValue, set$selectValue] = useState<any>("");
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
+    <Box className="w-box">
       <Select
-        data-ws-id="1"
-        data-ws-component="Select"
         value={selectValue}
         onValueChange={(value: any) => {
           selectValue = value;
           set$selectValue(selectValue);
         }}
       >
-        <SelectTrigger
-          data-ws-id="5"
-          data-ws-component="SelectTrigger"
-          className="w-select-trigger w-select-trigger-1"
-        >
-          <SelectValue
-            data-ws-id="7"
-            data-ws-component="SelectValue"
-            placeholder={"Theme"}
-            className="w-value"
-          />
+        <SelectTrigger className="w-select-trigger w-select-trigger-1">
+          <SelectValue placeholder={"Theme"} className="w-value" />
         </SelectTrigger>
-        <SelectContent
-          data-ws-id="9"
-          data-ws-component="SelectContent"
-          className="w-select-content w-select-content-1"
-        >
-          <SelectViewport
-            data-ws-id="11"
-            data-ws-component="SelectViewport"
-            className="w-select-viewport w-select-viewport-1"
-          >
+        <SelectContent className="w-select-content w-select-content-1">
+          <SelectViewport className="w-select-viewport w-select-viewport-1">
             <SelectItem
-              data-ws-id="13"
-              data-ws-component="SelectItem"
               value={"light"}
               className="w-select-item w-select-item-1"
             >
-              <SelectItemIndicator
-                data-ws-id="16"
-                data-ws-component="SelectItemIndicator"
-                className="w-indicator w-indicator-1"
-              >
+              <SelectItemIndicator className="w-indicator w-indicator-1">
                 <HtmlEmbed
-                  data-ws-id="18"
-                  data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
                   }
                   className="w-html-embed"
                 />
               </SelectItemIndicator>
-              <SelectItemText
-                data-ws-id="20"
-                data-ws-component="SelectItemText"
-                className="w-item-text"
-              >
-                {"Light"}
-              </SelectItemText>
+              <SelectItemText className="w-item-text">{"Light"}</SelectItemText>
             </SelectItem>
             <SelectItem
-              data-ws-id="21"
-              data-ws-component="SelectItem"
               value={"dark"}
               className="w-select-item w-select-item-2"
             >
-              <SelectItemIndicator
-                data-ws-id="24"
-                data-ws-component="SelectItemIndicator"
-                className="w-indicator w-indicator-2"
-              >
+              <SelectItemIndicator className="w-indicator w-indicator-2">
                 <HtmlEmbed
-                  data-ws-id="26"
-                  data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
                   }
                   className="w-html-embed"
                 />
               </SelectItemIndicator>
-              <SelectItemText
-                data-ws-id="28"
-                data-ws-component="SelectItemText"
-                className="w-item-text"
-              >
-                {"Dark"}
-              </SelectItemText>
+              <SelectItemText className="w-item-text">{"Dark"}</SelectItemText>
             </SelectItem>
             <SelectItem
-              data-ws-id="29"
-              data-ws-component="SelectItem"
               value={"system"}
               className="w-select-item w-select-item-3"
             >
-              <SelectItemIndicator
-                data-ws-id="32"
-                data-ws-component="SelectItemIndicator"
-                className="w-indicator w-indicator-3"
-              >
+              <SelectItemIndicator className="w-indicator w-indicator-3">
                 <HtmlEmbed
-                  data-ws-id="34"
-                  data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
                   }
                   className="w-html-embed"
                 />
               </SelectItemIndicator>
-              <SelectItemText
-                data-ws-id="36"
-                data-ws-component="SelectItemText"
-                className="w-item-text"
-              >
+              <SelectItemText className="w-item-text">
                 {"System"}
               </SelectItemText>
             </SelectItem>

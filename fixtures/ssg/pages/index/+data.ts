@@ -1,8 +1,9 @@
 import type { PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
+import { loadResources } from "@webstudio-is/sdk";
 import {
   getPageMeta,
-  loadResources,
+  getResources,
 } from "../../app/__generated__/_index.server";
 
 export const data = async (pageContext: PageContextServer) => {
@@ -19,7 +20,7 @@ export const data = async (pageContext: PageContextServer) => {
     origin: url.origin,
   };
 
-  const resources = await loadResources({ system });
+  const resources = await loadResources(fetch, getResources({ system }).data);
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {

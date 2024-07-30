@@ -2,35 +2,20 @@
 /* This is a auto generated file for building the project */
 
 import type { PageMeta } from "@webstudio-is/sdk";
-import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./$resources.sitemap.xml";
-export const loadResources = async (_props: { system: System }) => {
-  const customFetch: typeof fetch = (input, init) => {
-    if (typeof input !== "string") {
-      return fetch(input, init);
-    }
-
-    if (isLocalResource(input, "sitemap.xml")) {
-      // @todo: dynamic import sitemap ???
-      const response = new Response(JSON.stringify(sitemap));
-      response.headers.set("content-type", "application/json; charset=utf-8");
-      return Promise.resolve(response);
-    }
-
-    return fetch(input, init);
+import type { System, ResourceRequest } from "@webstudio-is/sdk";
+export const getResources = (_props: { system: System }) => {
+  const sitemapxml_1: ResourceRequest = {
+    id: "Y_ZBU-mHnSXigZ1IXI02s",
+    name: "sitemap.xml",
+    url: "/$resources/sitemap.xml",
+    method: "get",
+    headers: [],
   };
-  const [sitemapxml_1] = await Promise.all([
-    loadResource(customFetch, {
-      id: "Y_ZBU-mHnSXigZ1IXI02s",
-      name: "sitemap.xml",
-      url: "/$resources/sitemap.xml",
-      method: "get",
-      headers: [],
-    }),
+  const _data = new Map<string, ResourceRequest>([
+    ["sitemapxml_1", sitemapxml_1],
   ]);
-  return {
-    sitemapxml_1,
-  } as Record<string, unknown>;
+  const _action = new Map<string, ResourceRequest>([]);
+  return { data: _data, action: _action };
 };
 
 export const getPageMeta = ({
@@ -52,9 +37,6 @@ export const getPageMeta = ({
     custom: [],
   };
 };
-
-type FormProperties = { method?: string; action?: string };
-export const formsProperties = new Map<string, FormProperties>([]);
 
 type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {

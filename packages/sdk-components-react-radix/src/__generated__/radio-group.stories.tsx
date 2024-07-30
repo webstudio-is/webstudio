@@ -14,10 +14,8 @@ import {
 const Component = () => {
   let [radioGroupValue, set$radioGroupValue] = useState<any>("");
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
+    <Box className="w-box">
       <RadioGroup
-        data-ws-id="1"
-        data-ws-component="RadioGroup"
         value={radioGroupValue}
         onValueChange={(value: any) => {
           radioGroupValue = value;
@@ -25,25 +23,13 @@ const Component = () => {
         }}
         className="w-radio-group w-radio-group-1"
       >
-        <Label
-          data-ws-id="6"
-          data-ws-component="Label"
-          className="w-label w-label-1"
-        >
+        <Label className="w-label w-label-1">
           <RadioGroupItem
-            data-ws-id="8"
-            data-ws-component="RadioGroupItem"
             value={"default"}
             className="w-radio-group-item w-radio-group-item-1"
           >
-            <RadioGroupIndicator
-              data-ws-id="11"
-              data-ws-component="RadioGroupIndicator"
-              className="w-radio-group-indicator"
-            >
+            <RadioGroupIndicator className="w-radio-group-indicator">
               <HtmlEmbed
-                data-ws-id="12"
-                data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
                 }
@@ -51,29 +37,15 @@ const Component = () => {
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text data-ws-id="14" data-ws-component="Text" className="w-text">
-            {"Default"}
-          </Text>
+          <Text className="w-text">{"Default"}</Text>
         </Label>
-        <Label
-          data-ws-id="15"
-          data-ws-component="Label"
-          className="w-label w-label-2"
-        >
+        <Label className="w-label w-label-2">
           <RadioGroupItem
-            data-ws-id="17"
-            data-ws-component="RadioGroupItem"
             value={"comfortable"}
             className="w-radio-group-item w-radio-group-item-2"
           >
-            <RadioGroupIndicator
-              data-ws-id="20"
-              data-ws-component="RadioGroupIndicator"
-              className="w-radio-group-indicator"
-            >
+            <RadioGroupIndicator className="w-radio-group-indicator">
               <HtmlEmbed
-                data-ws-id="21"
-                data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
                 }
@@ -81,29 +53,15 @@ const Component = () => {
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text data-ws-id="23" data-ws-component="Text" className="w-text">
-            {"Comfortable"}
-          </Text>
+          <Text className="w-text">{"Comfortable"}</Text>
         </Label>
-        <Label
-          data-ws-id="24"
-          data-ws-component="Label"
-          className="w-label w-label-3"
-        >
+        <Label className="w-label w-label-3">
           <RadioGroupItem
-            data-ws-id="26"
-            data-ws-component="RadioGroupItem"
             value={"compact"}
             className="w-radio-group-item w-radio-group-item-3"
           >
-            <RadioGroupIndicator
-              data-ws-id="29"
-              data-ws-component="RadioGroupIndicator"
-              className="w-radio-group-indicator"
-            >
+            <RadioGroupIndicator className="w-radio-group-indicator">
               <HtmlEmbed
-                data-ws-id="30"
-                data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
                 }
@@ -111,9 +69,7 @@ const Component = () => {
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text data-ws-id="32" data-ws-component="Text" className="w-text">
-            {"Compact"}
-          </Text>
+          <Text className="w-text">{"Compact"}</Text>
         </Label>
       </RadioGroup>
     </Box>

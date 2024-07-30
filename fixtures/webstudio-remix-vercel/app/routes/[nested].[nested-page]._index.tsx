@@ -10,6 +10,11 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
+import {
+  isLocalResource,
+  loadResource,
+  loadResources,
+} from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import {
   n8nHandler,
@@ -24,8 +29,7 @@ import {
   pageBackgroundImageAssets,
 } from "../__generated__/[nested].[nested-page]._index";
 import {
-  formsProperties,
-  loadResources,
+  getResources,
   getPageMeta,
   getRemixParams,
   projectId,
@@ -33,6 +37,22 @@ import {
 } from "../__generated__/[nested].[nested-page]._index.server";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 import css from "../__generated__/index.css?url";
+import { sitemap } from "../__generated__/$resources.sitemap.xml";
+
+const customFetch: typeof fetch = (input, init) => {
+  if (typeof input !== "string") {
+    return fetch(input, init);
+  }
+
+  if (isLocalResource(input, "sitemap.xml")) {
+    // @todo: dynamic import sitemap ???
+    const response = new Response(JSON.stringify(sitemap));
+    response.headers.set("content-type", "application/json; charset=utf-8");
+    return Promise.resolve(response);
+  }
+
+  return fetch(input, init);
+};
 
 export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);
@@ -50,7 +70,10 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     origin: url.origin,
   };
 
-  const resources = await loadResources({ system });
+  const resources = await loadResources(
+    customFetch,
+    getResources({ system }).data
+  );
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {
@@ -221,19 +244,6 @@ export const links: LinksFunction = () => {
 const getRequestHost = (request: Request): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
-const getMethod = (value: string | undefined) => {
-  if (value === undefined) {
-    return "post";
-  }
-
-  switch (value.toLowerCase()) {
-    case "get":
-      return "get";
-    default:
-      return "post";
-  }
-};
-
 export const action = async ({
   request,
   context,
@@ -241,13 +251,24 @@ export const action = async ({
   { success: true } | { success: false; errors: string[] }
 > => {
   try {
+    const pageUrl = new URL(request.url);
+    pageUrl.host = getRequestHost(request);
+
     const formData = await request.formData();
 
-    const formId = formData.get(formIdFieldName);
+    const system = {
+      params: {},
+      search: {},
+      origin: pageUrl.origin,
+    };
 
-    if (formId == null || typeof formId !== "string") {
+    const resourceName = formData.get(formIdFieldName);
+
+    if (resourceName == null || typeof resourceName !== "string") {
       throw new Error("No form id in FormData");
     }
+
+    const resource = getResources({ system }).action.get(resourceName);
 
     const formBotValue = formData.get(formBotFieldName);
 
@@ -267,41 +288,32 @@ export const action = async ({
       throw new Error(`Form bot value invalid ${formBotValue}`);
     }
 
-    const formProperties = formsProperties.get(formId);
+    formData.delete(formIdFieldName);
+    formData.delete(formBotFieldName);
 
-    // form properties are not defined when defaults are used
-    const { action, method } = formProperties ?? {};
+    if (resource) {
+      const { ok, statusText } = await loadResource(fetch, {
+        ...resource,
+        body: Object.fromEntries(formData),
+      });
+      if (ok) {
+        return { success: true };
+      }
+      return { success: false, errors: [statusText] };
+    }
 
     if (contactEmail === undefined) {
       throw new Error("Contact email not found");
     }
 
-    const pageUrl = new URL(request.url);
-    pageUrl.host = getRequestHost(request);
-
-    if (action !== undefined) {
-      try {
-        // Test that action is full URL
-        new URL(action);
-      } catch {
-        throw new Error(
-          "Invalid action URL, must be valid http/https protocol"
-        );
-      }
-    }
-
-    const formInfo = {
-      formData,
-      projectId,
-      action: action ?? null,
-      method: getMethod(method),
-      pageUrl: pageUrl.toString(),
-      toEmail: contactEmail,
-      fromEmail: pageUrl.hostname + "@webstudio.email",
-    } as const;
-
     const result = await n8nHandler({
-      formInfo,
+      formInfo: {
+        formId: [projectId, resourceName].join("--"),
+        formData,
+        pageUrl: pageUrl.toString(),
+        toEmail: contactEmail,
+        fromEmail: pageUrl.hostname + "@webstudio.email",
+      },
       hookUrl: context.N8N_FORM_EMAIL_HOOK,
     });
 

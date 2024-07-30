@@ -16,58 +16,24 @@ import {
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Dialog data-ws-id="1" data-ws-component="Dialog">
-        <DialogTrigger data-ws-id="2" data-ws-component="DialogTrigger">
-          <Button
-            data-ws-id="3"
-            data-ws-component="Button"
-            className="w-button w-button-1"
-          >
-            {"Button"}
-          </Button>
+    <Box className="w-box">
+      <Dialog>
+        <DialogTrigger>
+          <Button className="w-button w-button-1">{"Button"}</Button>
         </DialogTrigger>
-        <DialogOverlay
-          data-ws-id="5"
-          data-ws-component="DialogOverlay"
-          className="w-dialog-overlay w-dialog-overlay-1"
-        >
-          <DialogContent
-            data-ws-id="7"
-            data-ws-component="DialogContent"
-            className="w-dialog-content w-dialog-content-1"
-          >
-            <Box
-              data-ws-id="9"
-              data-ws-component="Box"
-              className="w-box w-dialog-header"
-            >
-              <DialogTitle
-                data-ws-id="11"
-                data-ws-component="DialogTitle"
-                className="w-dialog-title w-dialog-title-1"
-              >
+        <DialogOverlay className="w-dialog-overlay w-dialog-overlay-1">
+          <DialogContent className="w-dialog-content w-dialog-content-1">
+            <Box className="w-box w-dialog-header">
+              <DialogTitle className="w-dialog-title w-dialog-title-1">
                 {"Dialog Title you can edit"}
               </DialogTitle>
-              <DialogDescription
-                data-ws-id="13"
-                data-ws-component="DialogDescription"
-                className="w-dialog-description w-dialog-description-1"
-              >
+              <DialogDescription className="w-dialog-description w-dialog-description-1">
                 {"Dialog description text you can edit"}
               </DialogDescription>
             </Box>
-            <Text data-ws-id="15" data-ws-component="Text" className="w-text">
-              {"The text you can edit"}
-            </Text>
-            <DialogClose
-              data-ws-id="16"
-              data-ws-component="DialogClose"
-              className="w-close-button w-close-button-1"
-            >
+            <Text className="w-text">{"The text you can edit"}</Text>
+            <DialogClose className="w-close-button w-close-button-1">
               <HtmlEmbed
-                data-ws-id="18"
-                data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M13.566 2.434a.8.8 0 0 1 0 1.132L9.13 8l4.435 4.434a.8.8 0 0 1-1.132 1.132L8 9.13l-4.434 4.435a.8.8 0 0 1-1.132-1.132L6.87 8 2.434 3.566a.8.8 0 0 1 1.132-1.132L8 6.87l4.434-4.435a.8.8 0 0 1 1.132 0Z" clip-rule="evenodd"/></svg>'
                 }
