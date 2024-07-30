@@ -120,7 +120,11 @@ export const WebhookForm = forwardRef<
         ref={ref}
         onSubmit={handleSubmitAndAddHiddenJsField}
       >
-        <input type="hidden" name={formIdFieldName} value={action} />
+        <input
+          type="hidden"
+          name={formIdFieldName}
+          value={action?.toString()}
+        />
         {children}
       </fetcher.Form>
     );

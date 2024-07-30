@@ -3,7 +3,7 @@
   "include": ["app", "**/*.ts", "**/*.tsx", "../../@types/**/*.d.ts"],
 
   "compilerOptions": {
-    "types": ["@remix-run/node", "vite/client"],
+    "types": ["@remix-run/node", "vite/client", "react/canary"],
     "paths": {
       "~/*": ["app/*"]
     },

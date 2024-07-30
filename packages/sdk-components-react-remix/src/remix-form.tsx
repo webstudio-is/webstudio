@@ -17,19 +17,19 @@ export const RemixForm = forwardRef<
       // resulting in our UI displaying a list that encompasses both variants.
       method?: Lowercase<NonNullable<FormProps["method"]>>;
     }
->((props, ref) => {
+>(({ action, ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
   // remix casts action to relative url
   if (
-    props.action === undefined ||
-    props.action === "" ||
-    props.action?.startsWith("/")
+    action === undefined ||
+    action === "" ||
+    (typeof action === "string" && action?.startsWith("/"))
   ) {
     // remix forms specifies own action instead of provided one
     // which makes it hard to handle intercepted submit events
     // render remix form only in published sites
     if (renderer !== "canvas" && renderer !== "preview") {
-      return <Form {...props} ref={ref} />;
+      return <Form action={action} {...props} ref={ref} />;
     }
   }
   return <form {...props} ref={ref} />;
