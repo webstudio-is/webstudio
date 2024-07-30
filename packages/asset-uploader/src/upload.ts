@@ -49,6 +49,7 @@ export const createUploadName = async (
     .from("File")
     .select("*", { count: "exact", head: true })
     .eq("isDeleted", false)
+    .eq("uploaderProjectId", projectId)
     .eq("status", "UPLOADING")
     .gt(
       "createdAt",
