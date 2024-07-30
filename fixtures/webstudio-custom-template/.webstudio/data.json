@@ -2285,27 +2285,13 @@
   ],
   "assets": [
     {
-      "id": "ff546bd2-9bb1-4717-a180-1a1fc05565dd",
-      "name": "_937084ed-a798-49fe-8664-df93a2af605e_1JqSy_0Wy9fY5mXNZSLJ0.jpeg",
-      "description": null,
-      "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-      "size": 210614,
-      "type": "image",
-      "format": "jpg",
-      "createdAt": "2024-03-26T18:31:04.086Z",
-      "meta": {
-        "width": 1024,
-        "height": 1024
-      }
-    },
-    {
       "id": "a8fb692a-5970-4014-ad4d-45c6f1edea36",
       "name": "CormorantGaramond-Medium_-nWJ-OtHncaW9xDHQ9hSA_CBl88Oo59QKH_z9pCWva2.woff2",
       "description": null,
       "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
       "size": 156212,
       "type": "font",
-      "createdAt": "2024-02-22T05:36:52.004Z",
+      "createdAt": "2024-02-22T05:36:52.004",
       "format": "woff2",
       "meta": {
         "family": "Cormorant Garamond",
@@ -2321,10 +2307,24 @@
       "size": 3350,
       "type": "image",
       "format": "svg",
-      "createdAt": "2023-10-30T20:35:47.113Z",
+      "createdAt": "2023-10-30T20:35:47.113",
       "meta": {
         "width": 16,
         "height": 16
+      }
+    },
+    {
+      "id": "ff546bd2-9bb1-4717-a180-1a1fc05565dd",
+      "name": "_937084ed-a798-49fe-8664-df93a2af605e_1JqSy_0Wy9fY5mXNZSLJ0.jpeg",
+      "description": null,
+      "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
+      "size": 210614,
+      "type": "image",
+      "format": "jpg",
+      "createdAt": "2024-03-26T18:31:04.086",
+      "meta": {
+        "width": 1024,
+        "height": 1024
       }
     }
   ],
