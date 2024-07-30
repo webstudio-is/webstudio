@@ -63,6 +63,30 @@ export const domainRouter = router({
 
         const name = `${project.id}-${nanoid()}.zip`;
 
+        let domains: string[] = [];
+
+        if (input.destination === "saas") {
+          const currentProjectDomainsResult = await db.findMany(
+            { projectId: input.projectId },
+            ctx
+          );
+
+          if (currentProjectDomainsResult.success === false) {
+            throw new Error(currentProjectDomainsResult.error);
+          }
+
+          const currentProjectDomains = currentProjectDomainsResult.data;
+
+          domains = input.domains.filter((domain) =>
+            currentProjectDomains.some(
+              (projectDomain) =>
+                projectDomain.domain.domain === domain &&
+                projectDomain.domain.status === "ACTIVE" &&
+                projectDomain.verified
+            )
+          );
+        }
+
         const build = await createProductionBuild(
           {
             projectId: input.projectId,
@@ -70,14 +94,14 @@ export const domainRouter = router({
               input.destination === "saas"
                 ? {
                     destination: input.destination,
-                    domains: input.domains,
+                    domains: domains,
                     projectDomain: project.domain,
                   }
                 : {
                     destination: input.destination,
                     name,
                     assetsDomain: project.domain,
-                    templates: ["ssg"],
+                    templates: input.templates,
                   },
           },
           ctx
