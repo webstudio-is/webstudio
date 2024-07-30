@@ -4,6 +4,7 @@ import { db as projectDb } from "@webstudio-is/project/index.server";
 import { db } from "../db";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
+import { nanoid } from "nanoid";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -41,34 +42,64 @@ export const domainRouter = router({
       }
     }),
   publish: procedure
-    .input(z.object({ projectId: z.string(), domains: z.array(z.string()) }))
+    .input(
+      z.discriminatedUnion("destination", [
+        z.object({
+          projectId: z.string(),
+          domains: z.array(z.string()),
+          destination: z.literal("saas"),
+        }),
+        z.object({
+          projectId: z.string(),
+          destination: z.literal("static"),
+        }),
+      ])
+    )
     .mutation(async ({ input, ctx }) => {
       try {
         const project = await projectDb.project.loadById(input.projectId, ctx);
 
+        const name = `${project.id}-${nanoid()}.zip`;
+
         const build = await createProductionBuild(
           {
             projectId: input.projectId,
-            deployment: {
-              domains: input.domains,
-              projectDomain: project.domain,
-            },
+            deployment:
+              input.destination === "saas"
+                ? {
+                    destination: input.destination,
+                    domains: input.domains,
+                    projectDomain: project.domain,
+                  }
+                : {
+                    destination: input.destination,
+                    name,
+                    assetsDomain: project.domain,
+                    templates: ["ssg"],
+                  },
           },
           ctx
         );
 
         const { deploymentTrpc, env } = ctx.deployment;
 
-        const result = deploymentTrpc.publish.mutate({
+        console.info("input.destination", input.destination);
+
+        const result = await deploymentTrpc.publish.mutate({
           // used to load build data from the builder see routes/rest.build.$buildId.ts
           builderOrigin: env.BUILDER_ORIGIN,
           githubSha: env.GITHUB_SHA,
           buildId: build.id,
           // preview support
           branchName: env.GITHUB_REF_NAME,
+          destination: input.destination,
           // action log helper (not used for deployment, but for action logs readablity)
           projectDomainName: project.domain,
         });
+
+        if (input.destination === "static" && result.success) {
+          return { success: true as const, name };
+        }
 
         return result;
       } catch (error) {

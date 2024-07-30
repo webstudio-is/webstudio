@@ -11,7 +11,7 @@ import { createRecursiveProxy } from "@trpc/server/shared";
 import { useMemo, useState } from "react";
 import { $authToken } from "../nano-states";
 
-const client = createTRPCProxyClient<AppRouter>({
+export const nativeClient = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({
       url: "/trpc",
@@ -99,9 +99,9 @@ export const trpcClient: {
         // await new Promise((resolve) => setTimeout(resolve, 1000));
         // }
 
-        const result = await (client as unknown as Client)[namespace][method][
-          hook === "useMutation" ? "mutate" : "query"
-        ](input);
+        const result = await (nativeClient as unknown as Client)[namespace][
+          method
+        ][hook === "useMutation" ? "mutate" : "query"](input);
 
         // Newer request has been made, ignore this one
         // In the future to support optimistic updates we can call onComplete with the requestId order

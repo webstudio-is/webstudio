@@ -65,6 +65,15 @@ export const Image = forwardRef<
       assetName = src.slice(assetBaseUrl.length);
     }
 
+    console.info(
+      "assetName",
+      assetName,
+      "src",
+      src,
+      "assetBaseUrl",
+      assetBaseUrl
+    );
+
     return (
       <WebstudioImage
         /**
