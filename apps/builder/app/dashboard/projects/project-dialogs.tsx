@@ -76,7 +76,7 @@ const DialogContent = ({
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget as HTMLFormElement);
-        const title = String(formData.get("title") ?? "");
+        const title = String(formData.get("title") ?? "").trim();
         onSubmit({ title });
       }}
     >
@@ -285,7 +285,10 @@ const useDeleteProject = ({
   };
 
   const handleChange = ({ title: currentTitle }: { title: string }) => {
-    setIsMatch(currentTitle.trim().toLowerCase() === title.toLowerCase());
+    setIsMatch(
+      currentTitle.trim().toLocaleLowerCase() ===
+        title.trim().toLocaleLowerCase()
+    );
   };
 
   return {
