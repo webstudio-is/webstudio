@@ -1,7 +1,12 @@
 import { expect, test } from "@jest/globals";
+import { renderJsx, $ } from "./jsx";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
-import { generateResources } from "./resources-generator";
+import {
+  generateResources,
+  replaceFormActionsWithResources,
+} from "./resources-generator";
+import type { Resource } from "./schema/resources";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -314,4 +319,54 @@ test("generate action resource", () => {
     }
     "
   `);
+});
+
+test("replace form action with resource", () => {
+  const data = {
+    resources: toMap<Resource>([]),
+    ...renderJsx(<$.Form ws:id="formId" action="https://my-url.com"></$.Form>),
+  };
+  replaceFormActionsWithResources(data);
+  expect(data.props).toEqual(
+    toMap([
+      {
+        id: "formId:action",
+        instanceId: "formId",
+        name: "action",
+        type: "resource",
+        value: "formId",
+      },
+    ])
+  );
+  expect(data.resources).toEqual(
+    toMap([
+      {
+        headers: [],
+        id: "formId",
+        method: "post",
+        name: "action",
+        url: `"https://my-url.com"`,
+      },
+    ])
+  );
+});
+
+test("ignore empty form action", () => {
+  const data = {
+    resources: toMap<Resource>([]),
+    ...renderJsx(<$.Form ws:id="formId" action=""></$.Form>),
+  };
+  replaceFormActionsWithResources(data);
+  expect(data.props).toEqual(
+    toMap([
+      {
+        id: "formId:action",
+        instanceId: "formId",
+        name: "action",
+        type: "string",
+        value: "",
+      },
+    ])
+  );
+  expect(data.resources).toEqual(new Map());
 });

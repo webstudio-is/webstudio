@@ -157,6 +157,7 @@ export const replaceFormActionsWithResources = ({
     if (
       prop.name === "action" &&
       prop.type === "string" &&
+      prop.value &&
       instances.get(prop.instanceId)?.component === "Form"
     ) {
       let data = formProps.get(prop.instanceId);
