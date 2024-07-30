@@ -45,7 +45,6 @@ jobs:
 
       - run: pnpm eslint . --ext .ts,.tsx --max-warnings 0 --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
 
-      - run: pnpm -r build
-      - run: pnpm -r size-test
       - run: pnpm -r test
+      - run: pnpm --filter=@webstudio-is/prisma-client build
       - run: pnpm -r typecheck
