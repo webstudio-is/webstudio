@@ -7,8 +7,8 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import {
+  StyleValue,
   toValue,
-  TupleValueItem,
   UnitValue,
   type StyleProperty,
   type Unit,
@@ -24,38 +24,92 @@ import {
   Link2UnlinkedIcon,
 } from "@webstudio-is/icons";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import type { CssValueInputValue } from "../../shared/css-value-input/css-value-input";
+import type { IntermediateStyleValue } from "../../shared/css-value-input/css-value-input";
 
 const property: StyleProperty = "scale";
+// When a scale shorthand proeprty is used, we can't set keywords.
+// i.e scale: none 50% 100% is invalid.
+// So we use a fake property which don't have any initial keywords.
+// scale proeprties initial value is none. So, the individual scaleX, scaleY, scaleZ proeprties
+// will show none in the input field if used scale directly.
+const fakeProperty: StyleProperty = "opacity";
+
+const convertToUnitValue = (
+  value: StyleValue | IntermediateStyleValue
+): UnitValue | undefined => {
+  if (value.type === "unit") {
+    return value;
+  }
+
+  if (value.type === "intermediate") {
+    let propValue;
+    if (value.unit === "number") {
+      propValue = value.value;
+    } else if (value.unit !== undefined) {
+      propValue = value.value.replace(value.unit, "");
+    }
+
+    return {
+      type: "unit",
+      value: Number(propValue),
+      unit: value.unit as Unit,
+    };
+  }
+};
 
 export const ScalePanelContent = (props: TransformPanelProps) => {
   const { propertyValue, setProperty, deleteProperty } = props;
   const [scaleX, scaleY, scaleZ] = propertyValue.value;
   const [isScalingLocked, setScalingLock] = useState(true);
-  const [intermediateScalingX, setIntermediateScalingX] =
-    useState<TupleValueItem>(scaleX);
-  const [intermediateScalingY, setIntermediateScalingY] =
-    useState<TupleValueItem>(scaleY);
-  const [intermediateScalingZ, setIntermediateScalingZ] =
-    useState<TupleValueItem>(scaleZ);
+  const [intermediateScalingX, setIntermediateScalingX] = useState<
+    StyleValue | IntermediateStyleValue
+  >(scaleX);
+  const [intermediateScalingY, setIntermediateScalingY] = useState<
+    StyleValue | IntermediateStyleValue
+  >(scaleY);
+  const [intermediateScalingZ, setIntermediateScalingZ] = useState<
+    StyleValue | IntermediateStyleValue
+  >(scaleZ);
 
   const handleToggleScaling = () => {
     const lockScaling = isScalingLocked === true ? false : true;
     setScalingLock(lockScaling);
     if (lockScaling === true) {
       setIntermediateScalingY(intermediateScalingX);
-      updateScalingValues(
-        [intermediateScalingX, intermediateScalingX, intermediateScalingZ],
-        { isEphemeral: false }
-      );
+      updateScaleValues({ isEphemeral: false });
     }
   };
 
-  const updateIndividualScaleValues = (
+  const updateScaleValues = useCallback(
+    (options: StyleUpdateOptions) => {
+      const scaleX = convertToUnitValue(intermediateScalingX);
+      const scaleY = convertToUnitValue(intermediateScalingY);
+      const scaleZ = convertToUnitValue(intermediateScalingZ);
+
+      const result = parseCssValue(
+        "scale",
+        `${toValue(scaleX)} ${toValue(scaleY)} ${toValue(scaleZ)}`
+      );
+
+      if (result.type === "invalid" || result.type !== "tuple") {
+        return;
+      }
+
+      setProperty(property)(result, options);
+    },
+    [
+      intermediateScalingX,
+      intermediateScalingY,
+      intermediateScalingZ,
+      setProperty,
+    ]
+  );
+
+  const handleOnChange = (
     prop: "scaleX" | "scaleY" | "scaleZ",
-    value: UnitValue,
+    value: StyleValue | IntermediateStyleValue,
     options: StyleUpdateOptions
   ) => {
     if (prop === "scaleX") {
@@ -64,60 +118,19 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
         setIntermediateScalingY(value);
       }
     }
+
     if (prop === "scaleY") {
       setIntermediateScalingY(value);
       if (isScalingLocked === true) {
         setIntermediateScalingX(value);
       }
     }
+
     if (prop === "scaleZ") {
       setIntermediateScalingZ(value);
     }
 
-    updateScalingValues(
-      [intermediateScalingX, intermediateScalingY, intermediateScalingZ],
-      options
-    );
-  };
-
-  const updateScalingValues = (
-    values: Array<TupleValueItem>,
-    options: StyleUpdateOptions
-  ) => {
-    const parsedValue = parseCssValue(
-      "scale",
-      toValue({
-        type: "tuple",
-        value: values,
-      })
-    );
-
-    if (parsedValue.type === "invalid") {
-      return;
-    }
-
-    setProperty(property)(parsedValue, options);
-  };
-
-  const handleOnChange = (
-    prop: "scaleX" | "scaleY" | "scaleZ",
-    value: TupleValueItem | CssValueInputValue,
-    options: StyleUpdateOptions
-  ) => {
-    if (value.type === "intermediate") {
-      const unitValue: UnitValue = {
-        type: "unit",
-        value: value.unit
-          ? Number(value.value.replace(value.unit, ""))
-          : Number(value.value),
-        unit: value.unit as Unit,
-      };
-      updateIndividualScaleValues(prop, unitValue, options);
-    }
-
-    if (value.type === "unit") {
-      updateIndividualScaleValues(prop, value, options);
-    }
+    updateScaleValues(options);
   };
 
   return (
@@ -132,7 +145,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <CssValueInput
             key="scaleX"
             styleSource="local"
-            property={property}
+            property={fakeProperty}
             keywords={[]}
             value={scaleX}
             intermediateValue={intermediateScalingX}
@@ -172,7 +185,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <CssValueInput
             key="scaleY"
             styleSource="local"
-            property={property}
+            property={fakeProperty}
             keywords={[]}
             value={scaleY}
             intermediateValue={intermediateScalingY}
@@ -212,7 +225,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <CssValueInput
             key="scaleZ"
             styleSource="local"
-            property={property}
+            property={fakeProperty}
             keywords={[]}
             value={scaleZ}
             intermediateValue={intermediateScalingZ}
