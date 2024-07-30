@@ -249,19 +249,19 @@ export const action = async ({
   { success: true } | { success: false; errors: string[] }
 > => {
   try {
-    const pageUrl = new URL(request.url);
-    pageUrl.host = getRequestHost(request);
+    const url = new URL(request.url);
+    url.host = getRequestHost(request);
 
     const formData = await request.formData();
 
     const system = {
       params: {},
       search: {},
-      origin: pageUrl.origin,
+      origin: url.origin,
     };
 
     const resourceName = formData.get(formIdFieldName);
-    const resource =
+    let resource =
       typeof resourceName === "string"
         ? getResources({ system }).action.get(resourceName)
         : undefined;
@@ -288,16 +288,32 @@ export const action = async ({
     formData.delete(formBotFieldName);
 
     if (resource) {
-      const { ok, statusText } = await loadResource(fetch, {
+      resource = {
         ...resource,
         body: Object.fromEntries(formData),
+      };
+    } else {
+      if (contactEmail === undefined) {
+        throw new Error("Contact email not found");
+      }
+
+      resource = context.getDefaultActionResource?.({
+        url,
+        projectId,
+        contactEmail,
+        formData,
       });
+    }
+
+    if (resource) {
+      const { ok, statusText } = await loadResource(fetch, resource);
       if (ok) {
         return { success: true };
       }
       return { success: false, errors: [statusText] };
     }
 
+    // @todo remove n8n handler after saas implement default resource
     if (contactEmail === undefined) {
       throw new Error("Contact email not found");
     }
@@ -306,9 +322,9 @@ export const action = async ({
       formInfo: {
         formId: projectId,
         formData,
-        pageUrl: pageUrl.toString(),
+        pageUrl: url.toString(),
         toEmail: contactEmail,
-        fromEmail: pageUrl.hostname + "@webstudio.email",
+        fromEmail: url.hostname + "@webstudio.email",
       },
       hookUrl: context.N8N_FORM_EMAIL_HOOK,
     });
