@@ -4,12 +4,10 @@ import { authenticator } from "~/services/auth.server";
 import { trpcSharedClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
 
-import {
-  getTokenPlanFeatures,
-  getUserPlanFeatures,
-} from "./db/user-plan-features.server";
+import { getUserPlanFeatures } from "./db/user-plan-features.server";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postrest/index.server";
+import { prisma } from "@webstudio-is/prisma-client";
 
 const createAuthorizationContext = async (
   request: Request
@@ -19,7 +17,7 @@ const createAuthorizationContext = async (
   const authToken =
     url.searchParams.get("authToken") ??
     request.headers.get("x-auth-token") ??
-    url.hostname;
+    undefined;
 
   const user = await authenticator.isAuthenticated(request);
 
@@ -27,10 +25,41 @@ const createAuthorizationContext = async (
     request.headers.has("Authorization") &&
     request.headers.get("Authorization") === env.TRPC_SERVER_API_TOKEN;
 
+  let ownerId = user?.id;
+
+  if (authToken != null) {
+    const projectOwnerIdByToken = await prisma.authorizationToken.findUnique({
+      where: {
+        token: authToken,
+      },
+      select: {
+        project: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (projectOwnerIdByToken === null) {
+      throw new Error(`Project owner can't be found for token ${authToken}`);
+    }
+
+    const projectOwnerId = projectOwnerIdByToken.project.userId;
+    if (projectOwnerId === null) {
+      throw new Error(
+        `Project ${projectOwnerIdByToken.project.id} has null userId`
+      );
+    }
+    ownerId = projectOwnerId;
+  }
+
   const context: AppContext["authorization"] = {
     userId: user?.id,
     authToken,
     isServiceCall,
+    ownerId,
   };
 
   return context;
@@ -75,20 +104,11 @@ const createEntriContext = () => {
   };
 };
 
-const createUserPlanContext = async (request: Request) => {
-  const url = new URL(request.url);
-
-  const authToken = url.searchParams.get("authToken");
-  // When a shared link is accessed, identified by the presence of an authToken,
-  // the system retrieves the plan features associated with the project owner's account.
-  if (authToken !== null) {
-    const planFeatures = await getTokenPlanFeatures(authToken);
-    return planFeatures;
-  }
-
-  const user = await authenticator.isAuthenticated(request);
-  const planFeatures = user?.id
-    ? await getUserPlanFeatures(user.id)
+const createUserPlanContext = async (
+  authorization: AppContext["authorization"]
+) => {
+  const planFeatures = authorization.ownerId
+    ? await getUserPlanFeatures(authorization.ownerId)
     : undefined;
   return planFeatures;
 };
@@ -119,10 +139,11 @@ const createPostrestContext = () => {
  */
 export const createContext = async (request: Request): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request);
+
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
   const entri = createEntriContext();
-  const userPlanFeatures = await createUserPlanContext(request);
+  const userPlanFeatures = await createUserPlanContext(authorization);
   const trpcCache = createTrpcCache();
   const postgrest = createPostrestContext();
 

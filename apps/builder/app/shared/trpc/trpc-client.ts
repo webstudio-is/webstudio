@@ -19,6 +19,9 @@ export const nativeClient = createTRPCProxyClient<AppRouter>({
       async headers(_opts) {
         const authToken = $authToken.get();
 
+        if (authToken == null) {
+          return {};
+        }
         // Pass token to api call
         return {
           "x-auth-token": authToken,

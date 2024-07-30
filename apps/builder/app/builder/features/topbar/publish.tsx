@@ -513,6 +513,11 @@ const useCanAddDomain = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  if (data?.success === false) {
+    return { canAddDomain: false, maxDomainsAllowedPerUser };
+  }
+
   const withinFreeLimit = data
     ? data.success && data.data < maxDomainsAllowedPerUser
     : true;
