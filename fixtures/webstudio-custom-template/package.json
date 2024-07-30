@@ -4,7 +4,6 @@
     "build": "remix vite:build",
     "dev": "remix vite:dev",
     "typecheck": "tsc",
-    "size-test": "rm -rf ./public && remix build && size-limit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link \"https://main.development.webstudio.is/builder/0d856812-61d8-4014-a20a-82e01c0eb8ee?authToken=d225fafb-4f20-4340-9359-c21df7c49a3f\"",
     "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
@@ -16,7 +15,6 @@
     "@remix-run/node": "2.10.3",
     "@remix-run/react": "2.10.3",
     "@remix-run/server-runtime": "2.10.3",
-    "@size-limit/file": "^9.0.0",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -27,7 +25,6 @@
     "isbot": "^5.1.13",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "size-limit": "^9.0.0",
     "web-vitals": "^3.5.2"
   },
   "devDependencies": {
