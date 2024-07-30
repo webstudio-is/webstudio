@@ -2016,15 +2016,15 @@ importers:
 
   packages/sdk-components-react-remix:
     dependencies:
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../form-handlers
       '@webstudio-is/icons':
         specifier: workspace:*
         version: link:../icons
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../sdk-components-react

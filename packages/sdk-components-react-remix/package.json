@@ -41,9 +41,9 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "dependencies": {
-    "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*"
   },
   "devDependencies": {
