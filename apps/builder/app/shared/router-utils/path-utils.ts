@@ -1,6 +1,7 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Project } from "@webstudio-is/project";
 import { $authToken } from "../nano-states";
+import { publicStaticEnv } from "~/env/env.static";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
@@ -138,6 +139,8 @@ export const restPatchPath = (props: { authToken?: string }) => {
   if (props.authToken !== undefined) {
     urlSearchParams.set("authToken", props.authToken);
   }
+
+  urlSearchParams.set("client-version", publicStaticEnv.VERSION);
 
   const urlSearchParamsString = urlSearchParams.toString();
 
