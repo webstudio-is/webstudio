@@ -82,13 +82,11 @@ export const PROJECT_TEMPLATES = [
   },
 ];
 
+// This feature will be made public eventually; currently, it’s only used for internal tasks.
 export const INTERNAL_TEMPLATES = [
-  { value: "internal", label: "Internal" },
-  { value: "defaults", label: "Defaults" },
   {
     value: "cloudflare",
     label: "Cloudflare",
     expand: ["defaults", "cloudflare"],
   },
-  { value: "saas-helpers", label: "SaaS Helpers" },
 ];
