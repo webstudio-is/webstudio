@@ -1028,9 +1028,6 @@ importers:
       strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
-      ts-expect:
-        specifier: ^1.3.0
-        version: 1.3.0
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -1095,6 +1092,9 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      ts-expect:
+        specifier: ^1.3.0
+        version: 1.3.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
