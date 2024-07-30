@@ -37,15 +37,16 @@ import { rightPanelWidth, sectionSpacing } from "./utils";
 
 const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: theme.colors.borderMain,
+  outlineWidth: 1,
+  outlineStyle: "solid",
+  outlineColor: theme.colors.borderMain,
   width: theme.spacing[28],
   aspectRatio: "1.91",
   background: "#DFE3E6",
 });
 
 const thumbnailImageStyle = css({
+  display: "block",
   width: "100%",
   height: "100%",
   variants: {
