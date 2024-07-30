@@ -43,8 +43,5 @@ export const loadAssetsByProject = async (
     }
   }
 
-  // order by createdAt desc
-  result.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-
   return result;
 };
