@@ -263,12 +263,10 @@ export const action = async ({
     };
 
     const resourceName = formData.get(formIdFieldName);
-
-    if (resourceName == null || typeof resourceName !== "string") {
-      throw new Error("No form id in FormData");
-    }
-
-    const resource = getResources({ system }).action.get(resourceName);
+    const resource =
+      typeof resourceName === "string"
+        ? getResources({ system }).action.get(resourceName)
+        : undefined;
 
     const formBotValue = formData.get(formBotFieldName);
 
@@ -308,7 +306,7 @@ export const action = async ({
 
     const result = await n8nHandler({
       formInfo: {
-        formId: [projectId, resourceName].join("--"),
+        formId: projectId,
         formData,
         pageUrl: pageUrl.toString(),
         toEmail: contactEmail,
