@@ -1,6 +1,8 @@
 import { join } from "node:path";
 import envPaths from "env-paths";
 import { z } from "zod";
+import { expectType, type TypeEqual } from "ts-expect";
+import { Templates } from "@webstudio-is/sdk";
 
 const GLOBAL_CONFIG_FOLDER = envPaths("webstudio").config;
 const GLOBAL_CONFIG_FILE_NAME = "webstudio-config.json";
@@ -59,3 +61,10 @@ export const PROJECT_TEMPALTES = [
   { value: "netlify-edge-functions" as const, label: "Netlify Edge Functions" },
   { value: "ssg" as const, label: "Static Site Generation (SSG)" },
 ];
+
+// We must ensure the validated template type always matches the CLI-supported templates.
+// This is crucial for security, as template names can be used in CLI/bash environments.
+// A TypeScript failure here means the Templates type is not consistent with the CLI templates.
+expectType<TypeEqual<(typeof PROJECT_TEMPALTES)[number]["value"], Templates>>(
+  true
+);

@@ -5,6 +5,7 @@ import { db } from "../db";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { nanoid } from "nanoid";
+import { Templates } from "@webstudio-is/sdk";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -52,6 +53,7 @@ export const domainRouter = router({
         z.object({
           projectId: z.string(),
           destination: z.literal("static"),
+          templates: z.array(Templates),
         }),
       ])
     )

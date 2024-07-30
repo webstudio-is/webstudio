@@ -433,6 +433,7 @@ const PublishStatic = ({ projectId }: { projectId: Project["id"] }) => {
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,
                   destination: "static",
+                  templates: ["ssg"],
                 });
 
                 if (result.success === false) {
