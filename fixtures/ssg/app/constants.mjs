@@ -8,26 +8,10 @@ export const imageBaseUrl = "/assets/";
 /**
  * @type {import("@webstudio-is/image").ImageLoader}
  */
-export const imageLoader = (props) => {
-  if (URL.canParse(props.src)) {
-    return props.src;
+export const imageLoader = ({ src }) => {
+  if (URL.canParse(src)) {
+    return src;
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    return imageBaseUrl + props.src;
-  }
-
-  if (props.format === "raw") {
-    return imageBaseUrl + props.src;
-  }
-
-  // https://docs.netlify.com/image-cdn/overview/
-  return (
-    "/.netlify/images?url=" +
-    encodeURIComponent(imageBaseUrl + props.src) +
-    "&w=" +
-    props.width +
-    "&q=" +
-    props.quality
-  );
+  return imageBaseUrl + src;
 };
