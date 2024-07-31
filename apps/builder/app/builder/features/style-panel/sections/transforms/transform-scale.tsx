@@ -79,19 +79,33 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
     setScalingLock(lockScaling);
     if (lockScaling === true) {
       setIntermediateScalingY(intermediateScalingX);
-      updateScaleValues({ isEphemeral: false });
+      updateScaleValues(
+        {
+          scaleX: intermediateScalingX,
+          scaleY: intermediateScalingX,
+          scaleZ: intermediateScalingZ,
+        },
+        { isEphemeral: false }
+      );
     }
   };
 
   const updateScaleValues = useCallback(
-    (options: StyleUpdateOptions) => {
-      const scaleX = convertToUnitValue(intermediateScalingX);
-      const scaleY = convertToUnitValue(intermediateScalingY);
-      const scaleZ = convertToUnitValue(intermediateScalingZ);
+    (
+      params: {
+        scaleX: StyleValue | IntermediateStyleValue;
+        scaleY: StyleValue | IntermediateStyleValue;
+        scaleZ: StyleValue | IntermediateStyleValue;
+      },
+      options: StyleUpdateOptions
+    ) => {
+      const x = convertToUnitValue(params.scaleX);
+      const y = convertToUnitValue(params.scaleY);
+      const z = convertToUnitValue(params.scaleZ);
 
       const result = parseCssValue(
         "scale",
-        `${toValue(scaleX)} ${toValue(scaleY)} ${toValue(scaleZ)}`
+        `${toValue(x)} ${toValue(y)} ${toValue(z)}`
       );
 
       if (result.type === "invalid" || result.type !== "tuple") {
@@ -100,39 +114,52 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
 
       setProperty(property)(result, options);
     },
+    [setProperty]
+  );
+
+  const handleOnChange = useCallback(
+    (
+      prop: "scaleX" | "scaleY" | "scaleZ",
+      value: StyleValue | IntermediateStyleValue,
+      options: StyleUpdateOptions
+    ) => {
+      let x = intermediateScalingX;
+      let y = intermediateScalingY;
+      let z = intermediateScalingZ;
+
+      if (prop === "scaleX") {
+        setIntermediateScalingX(value);
+        x = value;
+        if (isScalingLocked === true) {
+          setIntermediateScalingY(value);
+          y = value;
+        }
+      }
+
+      if (prop === "scaleY") {
+        setIntermediateScalingY(value);
+        y = value;
+        if (isScalingLocked === true) {
+          setIntermediateScalingX(value);
+          x = value;
+        }
+      }
+
+      if (prop === "scaleZ") {
+        setIntermediateScalingZ(value);
+        z = value;
+      }
+
+      updateScaleValues({ scaleX: x, scaleY: y, scaleZ: z }, options);
+    },
     [
       intermediateScalingX,
       intermediateScalingY,
       intermediateScalingZ,
-      setProperty,
+      isScalingLocked,
+      updateScaleValues,
     ]
   );
-
-  const handleOnChange = (
-    prop: "scaleX" | "scaleY" | "scaleZ",
-    value: StyleValue | IntermediateStyleValue,
-    options: StyleUpdateOptions
-  ) => {
-    if (prop === "scaleX") {
-      setIntermediateScalingX(value);
-      if (isScalingLocked === true) {
-        setIntermediateScalingY(value);
-      }
-    }
-
-    if (prop === "scaleY") {
-      setIntermediateScalingY(value);
-      if (isScalingLocked === true) {
-        setIntermediateScalingX(value);
-      }
-    }
-
-    if (prop === "scaleZ") {
-      setIntermediateScalingZ(value);
-    }
-
-    updateScaleValues(options);
-  };
 
   return (
     <Flex>
