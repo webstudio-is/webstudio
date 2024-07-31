@@ -3479,17 +3479,8 @@
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 268326,
       "type": "image",
-<<<<<<< HEAD
       "format": "png",
-<<<<<<< HEAD
       "createdAt": "2023-10-30T13:51:08.416",
-=======
-      "createdAt": "2023-10-30T13:51:08.416Z",
->>>>>>> 440dfae16 (Fix Date)
-=======
-      "format": "jpeg",
-      "createdAt": "2023-09-06T11:28:43.031",
->>>>>>> 7b7e337b8 (merge)
       "meta": {
         "width": 790,
         "height": 786
@@ -3516,17 +3507,8 @@
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 210614,
       "type": "image",
-<<<<<<< HEAD
       "format": "jpeg",
-<<<<<<< HEAD
       "createdAt": "2023-09-06T11:28:43.031",
-=======
-      "createdAt": "2023-09-06T11:28:43.031Z",
->>>>>>> 440dfae16 (Fix Date)
-=======
-      "format": "png",
-      "createdAt": "2023-10-30T13:51:08.416",
->>>>>>> 7b7e337b8 (merge)
       "meta": {
         "width": 1024,
         "height": 1024
