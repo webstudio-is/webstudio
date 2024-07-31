@@ -35,25 +35,26 @@ export const createScope = (
   normalizeName = normalizeJsName,
   separator = "_"
 ): Scope => {
-  const freeIndexByPreferredName = new Map<string, number>();
-  const scopedNameByIdMap = new Map<string, string>();
+  const nameById = new Map<string, string>();
+  const usedNames = new Set<string>();
   for (const identifier of occupiedIdentifiers) {
-    freeIndexByPreferredName.set(identifier, 1);
+    usedNames.add(identifier);
   }
 
   const getName = (id: string, preferredName: string) => {
-    const cachedName = scopedNameByIdMap.get(id);
+    const cachedName = nameById.get(id);
     if (cachedName !== undefined) {
       return cachedName;
     }
     preferredName = normalizeName(preferredName);
-    const index = freeIndexByPreferredName.get(preferredName);
-    freeIndexByPreferredName.set(preferredName, (index ?? 0) + 1);
+    let index = 0;
     let scopedName = preferredName;
-    if (index !== undefined) {
+    while (usedNames.has(scopedName)) {
+      index += 1;
       scopedName = `${preferredName}${separator}${index}`;
     }
-    scopedNameByIdMap.set(id, scopedName);
+    nameById.set(id, scopedName);
+    usedNames.add(scopedName);
     return scopedName;
   };
 
