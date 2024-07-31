@@ -1,4 +1,8 @@
-import type { InvalidValue, StyleValue } from "@webstudio-is/css-engine";
+import type {
+  InvalidValue,
+  LayersValue,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -69,16 +73,17 @@ export const BackgroundGradient = (
     const parsed = parseCssFragment(intermediateValue.value, "background");
     const backgroundImage = parsed.get("backgroundImage");
     const backgroundColor = parsed.get("backgroundColor");
-    const [layer] =
+    const layers: LayersValue =
       backgroundImage?.type === "layers"
-        ? backgroundImage.value
-        : [backgroundImage];
+        ? backgroundImage
+        : { type: "layers", value: [] };
+    const [firstLayer] = layers.value;
 
     // set invalid state
     if (
       backgroundColor?.type === "invalid" ||
-      layer === undefined ||
-      layer.type === "invalid"
+      layers.value.length === 0 ||
+      firstLayer.type === "invalid"
     ) {
       setIntermediateValue({ type: "invalid", value: intermediateValue.value });
       props.deleteProperty(property, { isEphemeral: true });
@@ -88,7 +93,8 @@ export const BackgroundGradient = (
     if (backgroundColor && isTransparent(backgroundColor) === false) {
       props.setBackgroundColor(backgroundColor);
     }
-    props.setProperty(property)(layer);
+    // insert all new layers at current position
+    props.setProperty(property)(layers);
   };
 
   const handleOnCompleteRef = useRef(handleOnComplete);
