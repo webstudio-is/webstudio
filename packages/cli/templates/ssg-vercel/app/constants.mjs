@@ -21,9 +21,9 @@ export const imageLoader = (props) => {
     return imageBaseUrl + props.src;
   }
 
-  // https://docs.netlify.com/image-cdn/overview/
+  // https://vercel.com/blog/build-your-own-web-framework#automatic-image-optimization
   return (
-    "/.netlify/images?url=" +
+    "/_vercel/image?url=" +
     encodeURIComponent(imageBaseUrl + props.src) +
     "&w=" +
     props.width +
