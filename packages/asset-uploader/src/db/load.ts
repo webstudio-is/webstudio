@@ -36,7 +36,10 @@ export const loadAssetsByProject = async (
       `
     )
     .eq("projectId", projectId)
-    .eq("file.status", "UPLOADED");
+    .eq("file.status", "UPLOADED")
+    // always sort by primary key to get stable list
+    // required to not break fixtures
+    .order("id");
 
   const result: Asset[] = [];
   for (const { assetId, projectId, file } of assets.data ?? []) {
