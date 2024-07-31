@@ -52,10 +52,41 @@ export const jsonToGlobalConfig = (json: unknown) => {
 
 export type GlobalConfig = z.infer<typeof zGlobalConfig>;
 
-export const PROJECT_TEMPALTES = [
-  { value: "vanilla" as const, label: "Vanilla" },
-  { value: "vercel" as const, label: "Vercel" },
-  { value: "netlify-functions" as const, label: "Netlify Functions" },
-  { value: "netlify-edge-functions" as const, label: "Netlify Edge Functions" },
+export const PROJECT_TEMPLATES = [
+  {
+    value: "vanilla" as const,
+    label: "Vanilla",
+    expand: ["defaults"],
+  },
+  { value: "vercel" as const, label: "Vercel", expand: ["defaults", "vercel"] },
+  {
+    value: "netlify-functions" as const,
+    label: "Netlify Functions",
+    expand: ["defaults", "netlify-functions"],
+  },
+  {
+    value: "netlify-edge-functions" as const,
+    label: "Netlify Edge Functions",
+    expand: ["defaults", "netlify-edge-functions"],
+  },
   { value: "ssg" as const, label: "Static Site Generation (SSG)" },
+  {
+    value: "ssg-netlify" as const,
+    label: "Static Site Generation (SSG) Netlify",
+    expand: ["ssg", "ssg-netlify"],
+  },
+  {
+    value: "ssg-vercel" as const,
+    label: "Static Site Generation (SSG) Vercel",
+    expand: ["ssg", "ssg-vercel"],
+  },
+];
+
+// This feature will be made public eventually; currently, it’s only used for internal tasks.
+export const INTERNAL_TEMPLATES = [
+  {
+    value: "cloudflare",
+    label: "Cloudflare",
+    expand: ["defaults", "cloudflare"],
+  },
 ];
