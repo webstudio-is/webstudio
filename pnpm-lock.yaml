@@ -452,9 +452,6 @@ importers:
 
   fixtures/ssg:
     dependencies:
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../../packages/form-handlers
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -522,9 +519,6 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.10.3
         version: 2.10.3(typescript@5.5.2)
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../../packages/form-handlers
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -595,9 +589,6 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.10.3
         version: 2.10.3(typescript@5.5.2)
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../../packages/form-handlers
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -665,9 +656,6 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.10.3
         version: 2.10.3(typescript@5.5.2)
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../../packages/form-handlers
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -732,9 +720,6 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.10.3
         version: 2.10.3(typescript@5.5.2)
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../../packages/form-handlers
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -793,9 +778,6 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.10.3
         version: 2.10.3(typescript@5.5.2)
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../../packages/form-handlers
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -1068,9 +1050,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.1
         version: 4.3.1(vite@5.3.4(@types/node@20.12.7))
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../form-handlers
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../jest-config
@@ -1466,12 +1445,6 @@ importers:
       zod:
         specifier: ^3.22.4
         version: 3.22.4
-
-  packages/form-handlers:
-    devDependencies:
-      '@webstudio-is/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
 
   packages/generate-arg-types:
     dependencies:

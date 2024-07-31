@@ -34,7 +34,6 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
-    "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",

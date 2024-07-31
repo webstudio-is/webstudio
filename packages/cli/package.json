@@ -65,7 +65,6 @@
     "@types/react-dom": "^18.2.25",
     "@types/yargs": "^17.0.32",
     "@vitejs/plugin-react": "^4.3.1",
-    "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
