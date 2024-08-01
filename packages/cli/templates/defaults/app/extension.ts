@@ -6,8 +6,6 @@ import { ResourceRequest } from "@webstudio-is/sdk";
 declare module "@remix-run/server-runtime" {
   interface AppLoadContext {
     EXCLUDE_FROM_SEARCH: boolean;
-    // @todo remove n8n hook after saas implement default resource
-    N8N_FORM_EMAIL_HOOK: string;
     getDefaultActionResource?: (options: {
       url: URL;
       projectId: string;
