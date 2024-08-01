@@ -9,7 +9,7 @@ import {
   Text,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { UploadIcon } from "@webstudio-is/icons";
+import { UpgradeIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import cmsUpgradeBanner from "./cms-upgrade-banner.svg?url";
@@ -39,7 +39,7 @@ export const SettingsPanelContainer = ({
             any other structured content.
           </Text>
           <Flex align="center" gap={1}>
-            <UploadIcon />
+            <UpgradeIcon />
             <Link
               color="inherit"
               target="_blank"

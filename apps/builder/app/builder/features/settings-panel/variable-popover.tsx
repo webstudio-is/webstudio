@@ -15,7 +15,7 @@ import {
   useEffect,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { CopyIcon, RefreshIcon, UploadIcon } from "@webstudio-is/icons";
+import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
@@ -687,7 +687,7 @@ export const VariablePopoverTrigger = forwardRef<
               <PanelBanner>
                 <Text>Resource fetching is part of the CMS functionality.</Text>
                 <Flex align="center" gap={1}>
-                  <UploadIcon />
+                  <UpgradeIcon />
                   <Link
                     color="inherit"
                     target="_blank"
