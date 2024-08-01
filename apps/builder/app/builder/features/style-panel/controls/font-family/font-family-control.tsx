@@ -32,13 +32,11 @@ const matchOrSuggestToCreate = (
   ) {
     matched.unshift({
       value: search.trim(),
-      label: `Custom: "${search.trim()}"`,
+      label: `Custom Font: "${search.trim()}"`,
     });
   }
   return matched;
 };
-
-const itemToString = (item?: Item | null) => item?.label ?? item?.value ?? "";
 
 export const FontFamilyControl = ({
   property,
@@ -55,7 +53,6 @@ export const FontFamilyControl = ({
     () => toItems(assetContainers).map(({ label }) => ({ value: label })),
     [assetContainers]
   );
-
   const itemValue = useMemo(() => {
     // Replacing the quotes just to make it look cleaner in the UI
     return toValue(value, (value) => value).replace(/"/g, "");
@@ -81,17 +78,16 @@ export const FontFamilyControl = ({
         }
         defaultHighlightedIndex={0}
         items={items}
-        itemToString={itemToString}
+        itemToString={(item) => item?.label ?? item?.value ?? ""}
         onItemHighlight={(item) => {
-          const value = item === null ? itemValue : itemToString(item);
+          const value = item === null ? itemValue : item.value;
           setValue(
             { type: "fontFamily", value: [value] },
             { isEphemeral: true }
           );
         }}
         onItemSelect={(item) => {
-          const value = itemToString(item);
-          setValue({ type: "fontFamily", value: [value] });
+          setValue({ type: "fontFamily", value: [item.value] });
           setIntermediateValue(undefined);
         }}
         value={{ value: intermediateValue ?? itemValue }}
