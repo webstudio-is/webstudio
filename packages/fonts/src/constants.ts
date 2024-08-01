@@ -5,6 +5,8 @@ export const SYSTEM_FONTS = new Map([
   ["Times New Roman", ["sans"]],
   ["Courier New", ["monospace"]],
   ["system-ui", []],
+  ["SimSun", ["Songti SC, sans-serif"]],
+  ["PingFang SC", ["Microsoft Ya Hei", "sans-serif"]],
 ]);
 
 export const DEFAULT_FONT_FALLBACK = "sans-serif";

@@ -27,7 +27,7 @@ import { $authPermit, $authTokenPermissions } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
-import { UploadIcon } from "@webstudio-is/icons";
+import { UpgradeIcon } from "@webstudio-is/icons";
 
 const ViewMenuItem = () => {
   const [clientSettings, setClientSetting] = useClientSettings();
@@ -213,7 +213,7 @@ export const Menu = () => {
                 }}
                 css={{ gap: theme.spacing[3] }}
               >
-                <UploadIcon />
+                <UpgradeIcon />
                 <div>Upgrade to Pro</div>
               </DropdownMenuItem>
             </>
