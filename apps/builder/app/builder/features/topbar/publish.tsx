@@ -751,7 +751,7 @@ const isDeployTargets = (value: string): value is DeployTargets =>
 
 const ExportContent = (props: { projectId: Project["id"] }) => {
   const npxCommand = "npx webstudio@latest";
-  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vanilla");
 
   return (
     <Grid
