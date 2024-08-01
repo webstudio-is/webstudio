@@ -399,6 +399,23 @@ export const parseCssValue = (
     return invalidValue;
   }
 
+  if (property === "fontFamily") {
+    const nodes = "children" in ast ? ast.children?.toArray() ?? [] : [ast];
+    return {
+      type: "fontFamily",
+      value: splitRepeated(nodes).map((nodes) => {
+        // unquote values
+        if (nodes.length === 1 && nodes[0].type === "String") {
+          return nodes[0].value;
+        }
+        return generate({
+          type: "Value",
+          children: new List<CssNode>().fromArray(nodes),
+        });
+      }),
+    };
+  }
+
   // Probably a tuple like background-size or box-shadow
   if (
     ast.type === "Value" &&

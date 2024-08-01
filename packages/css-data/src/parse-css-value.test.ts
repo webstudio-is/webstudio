@@ -885,3 +885,38 @@ describe("aspect-ratio", () => {
     });
   });
 });
+
+describe("font-family", () => {
+  test("support single value", () => {
+    expect(parseCssValue("fontFamily", "sans-serif")).toEqual({
+      type: "fontFamily",
+      value: ["sans-serif"],
+    });
+  });
+
+  test("support multiple values", () => {
+    expect(parseCssValue("fontFamily", "serif, sans-serif")).toEqual({
+      type: "fontFamily",
+      value: ["serif", "sans-serif"],
+    });
+  });
+
+  test("support space separated values", () => {
+    expect(parseCssValue("fontFamily", "Song Ti, Hei Ti")).toEqual({
+      type: "fontFamily",
+      value: ["Song Ti", "Hei Ti"],
+    });
+    // only two keywords
+    expect(parseCssValue("fontFamily", "Song Ti")).toEqual({
+      type: "fontFamily",
+      value: ["Song Ti"],
+    });
+  });
+
+  test("support quoted values", () => {
+    expect(parseCssValue("fontFamily", "\"Song Ti\", 'Hei Ti'")).toEqual({
+      type: "fontFamily",
+      value: ["Song Ti", "Hei Ti"],
+    });
+  });
+});
