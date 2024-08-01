@@ -37,6 +37,10 @@ const property: StyleProperty = "scale";
 // will show none in the input field if used scale directly.
 const fakeProperty: StyleProperty = "opacity";
 
+// We need to have a custom conversion function for unit values.
+// Unlike individual proeprties, here all three goes under a single scale proeprty
+// So, whne we try to save for x, the other two y and z should be updated as well.
+// And we need to make sure they are saved as unit values and not intermediate values.
 const convertToUnitValue = (
   value: StyleValue | IntermediateStyleValue
 ): UnitValue | undefined => {
@@ -150,7 +154,9 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
         z = value;
       }
 
-      updateScaleValues({ scaleX: x, scaleY: y, scaleZ: z }, options);
+      if (value.type !== "intermediate") {
+        updateScaleValues({ scaleX: x, scaleY: y, scaleZ: z }, options);
+      }
     },
     [
       intermediateScalingX,
