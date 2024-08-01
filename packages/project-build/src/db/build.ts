@@ -1,7 +1,6 @@
 /* eslint no-console: ["error", { allow: ["time", "timeEnd"] }] */
 
 import { nanoid } from "nanoid";
-import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import type { Database } from "@webstudio-is/postrest/index.server";
 import {
   AuthorizationError,
@@ -151,32 +150,36 @@ export const loadBuildByProjectId = async (
 };
 
 export const loadApprovedProdBuildByProjectId = async (
+  context: AppContext,
   projectId: Build["projectId"]
 ): Promise<Build> => {
-  const projectData = await prisma.project.findUnique({
-    where: {
-      marketplaceApprovalStatus: "APPROVED",
-      id_isDeleted: { id: projectId, isDeleted: false },
-    },
-    select: {
-      latestBuild: {
-        select: {
-          build: true,
-        },
-      },
-    },
-  });
-
-  const build = projectData?.latestBuild?.build;
-  if (build === undefined) {
-    throw new Error("Prod build not found");
+  const latestBuild = await context.postgrest.client
+    .from("LatestBuildPerProject")
+    .select(
+      `
+        buildId,
+        project:Project!inner (id)
+      `
+    )
+    .eq("projectId", projectId)
+    .eq("project.isDeleted", false)
+    .eq("project.marketplaceApprovalStatus", "APPROVED")
+    .single();
+  if (latestBuild.error) {
+    throw latestBuild.error;
   }
-
-  return parseBuild({
-    ...build,
-    createdAt: build.createdAt.toISOString(),
-    updatedAt: build.updatedAt.toISOString(),
-  });
+  if (latestBuild.data.buildId === null) {
+    throw Error("Build not found");
+  }
+  const build = await context.postgrest.client
+    .from("Build")
+    .select()
+    .eq("id", latestBuild.data.buildId)
+    .single();
+  if (build.error) {
+    throw build.error;
+  }
+  return parseBuild(build.data);
 };
 
 const createNewPageInstances = (): Build["instances"] => {
@@ -217,17 +220,8 @@ export const createBuild = async (
   props: {
     projectId: Build["projectId"];
   },
-  _context: AppContext,
-  client: Prisma.TransactionClient
+  context: AppContext
 ): Promise<void> => {
-  const count = await client.build.count({
-    where: { projectId: props.projectId, deployment: null },
-  });
-
-  if (count > 0) {
-    throw new Error("Dev build already exists");
-  }
-
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
   const systemDataSource: DataSource = {
@@ -244,19 +238,19 @@ export const createBuild = async (
     })
   );
 
-  await client.build.create({
-    data: {
-      projectId: props.projectId,
-      pages: serializePages(defaultPages),
-      breakpoints: serializeData<Breakpoint>(
-        new Map(createInitialBreakpoints())
-      ),
-      instances: serializeData<Instance>(new Map(newInstances)),
-      dataSources: serializeData<DataSource>(
-        new Map([[systemDataSource.id, systemDataSource]])
-      ),
-    },
+  const newBuild = await context.postgrest.client.from("Build").insert({
+    id: crypto.randomUUID(),
+    projectId: props.projectId,
+    pages: serializePages(defaultPages),
+    breakpoints: serializeData<Breakpoint>(new Map(createInitialBreakpoints())),
+    instances: serializeData<Instance>(new Map(newInstances)),
+    dataSources: serializeData<DataSource>(
+      new Map([[systemDataSource.id, systemDataSource]])
+    ),
   });
+  if (newBuild.error) {
+    throw newBuild.error;
+  }
 };
 
 export const createProductionBuild = async (

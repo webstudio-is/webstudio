@@ -21,7 +21,6 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "@webstudio-is/postrest": "workspace:*",
