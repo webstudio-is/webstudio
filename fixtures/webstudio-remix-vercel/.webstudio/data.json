@@ -3518,5 +3518,6 @@
   "user": {
     "email": "hello@webstudio.is"
   },
-  "projectDomain": "webstudio-fixture-project-a-0su3o"
+  "projectDomain": "webstudio-fixture-project-a-0su3o",
+  "projectTitle": "webstudio-fixture-project-a"
 }
