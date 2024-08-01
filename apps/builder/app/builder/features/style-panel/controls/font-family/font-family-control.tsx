@@ -13,6 +13,7 @@ import { matchSorter } from "match-sorter";
 import { useAssets } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager/item-utils";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
+import { styleConfigByName } from "../../shared/configs";
 
 type Item = { value: string; label?: string };
 
@@ -49,10 +50,12 @@ export const FontFamilyControl = ({
     string | undefined
   >();
   const { assetContainers } = useAssets("font");
-  const items = useMemo(
-    () => toItems(assetContainers).map(({ label }) => ({ value: label })),
-    [assetContainers]
-  );
+  const items = useMemo(() => {
+    const fallbacks = styleConfigByName("fontFamily").items;
+    return [...toItems(assetContainers), ...fallbacks].map(({ label }) => ({
+      value: label,
+    }));
+  }, [assetContainers]);
   const itemValue = useMemo(() => {
     // Replacing the quotes just to make it look cleaner in the UI
     return toValue(value, (value) => value).replace(/"/g, "");
