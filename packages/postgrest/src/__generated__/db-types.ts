@@ -781,6 +781,13 @@ export type Database = {
           userId: string | null;
         };
       };
+      create_production_build: {
+        Args: {
+          project_id: string;
+          deployment: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       AuthorizationRelation:
