@@ -5,6 +5,7 @@ import { db } from "../db";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { nanoid } from "nanoid";
+import { Templates } from "@webstudio-is/sdk";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -52,6 +53,7 @@ export const domainRouter = router({
         z.object({
           projectId: z.string(),
           destination: z.literal("static"),
+          templates: z.array(Templates),
         }),
       ])
     )
@@ -61,6 +63,30 @@ export const domainRouter = router({
 
         const name = `${project.id}-${nanoid()}.zip`;
 
+        let domains: string[] = [];
+
+        if (input.destination === "saas") {
+          const currentProjectDomainsResult = await db.findMany(
+            { projectId: input.projectId },
+            ctx
+          );
+
+          if (currentProjectDomainsResult.success === false) {
+            throw new Error(currentProjectDomainsResult.error);
+          }
+
+          const currentProjectDomains = currentProjectDomainsResult.data;
+
+          domains = input.domains.filter((domain) =>
+            currentProjectDomains.some(
+              (projectDomain) =>
+                projectDomain.domain.domain === domain &&
+                projectDomain.domain.status === "ACTIVE" &&
+                projectDomain.verified
+            )
+          );
+        }
+
         const build = await createProductionBuild(
           {
             projectId: input.projectId,
@@ -68,14 +94,14 @@ export const domainRouter = router({
               input.destination === "saas"
                 ? {
                     destination: input.destination,
-                    domains: input.domains,
+                    domains: domains,
                     projectDomain: project.domain,
                   }
                 : {
                     destination: input.destination,
                     name,
                     assetsDomain: project.domain,
-                    templates: ["ssg"],
+                    templates: input.templates,
                   },
           },
           ctx
@@ -103,6 +129,7 @@ export const domainRouter = router({
 
         return result;
       } catch (error) {
+        console.error(error);
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
@@ -237,10 +264,10 @@ export const domainRouter = router({
 
   countTotalDomains: procedure.query(async ({ ctx }) => {
     try {
-      if (ctx.authorization.userId === undefined) {
+      if (ctx.authorization.ownerId === undefined) {
         throw new Error("Not authorized");
       }
-      const data = await db.countTotalDomains(ctx.authorization.userId);
+      const data = await db.countTotalDomains(ctx.authorization.ownerId);
       return { success: true, data } as const;
     } catch (error) {
       return {

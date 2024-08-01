@@ -7,7 +7,3 @@ export const parseDeployment = (deployment: string | null) => {
 
   return JSON.parse(deployment) as Deployment;
 };
-
-export const serializeDeployment = (deployment: Deployment) => {
-  return JSON.stringify(deployment);
-};

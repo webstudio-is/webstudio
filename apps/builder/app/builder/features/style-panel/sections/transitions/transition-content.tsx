@@ -205,15 +205,18 @@ export const TransitionContent = ({
           keywords={[]}
           deleteProperty={() => {}}
           setValue={(value, options) => {
-            if (
-              value === undefined ||
-              value.type !== "layers" ||
-              value.value[0].type !== "unit"
-            ) {
+            if (value === undefined) {
               return;
             }
 
-            handlePropertyUpdate({ duration: value.value[0] }, options);
+            if (value.type === "unit") {
+              handlePropertyUpdate({ duration: value }, options);
+              return;
+            }
+
+            if (value.type === "layers" && value.value[0].type === "unit") {
+              handlePropertyUpdate({ duration: value.value[0] }, options);
+            }
           }}
         />
 
@@ -243,15 +246,18 @@ export const TransitionContent = ({
           keywords={[]}
           deleteProperty={() => {}}
           setValue={(value, options) => {
-            if (
-              value === undefined ||
-              value.type !== "layers" ||
-              value.value[0].type !== "unit"
-            ) {
+            if (value === undefined) {
               return;
             }
 
-            handlePropertyUpdate({ delay: value.value[0] }, options);
+            if (value.type === "unit") {
+              handlePropertyUpdate({ delay: value }, options);
+              return;
+            }
+
+            if (value.type === "layers" && value.value[0].type === "unit") {
+              handlePropertyUpdate({ delay: value.value[0] }, options);
+            }
           }}
         />
 

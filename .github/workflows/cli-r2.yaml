@@ -30,7 +30,7 @@ jobs:
         with:
           ref: ${{ github.sha }} # HEAD commit instead of merge commit
 
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -81,7 +81,7 @@ jobs:
     needs: build
 
     steps:
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v4
         with:
           version: "9"
 

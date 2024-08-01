@@ -433,6 +433,7 @@ const PublishStatic = ({ projectId }: { projectId: Project["id"] }) => {
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,
                   destination: "static",
+                  templates: ["ssg"],
                 });
 
                 if (result.success === false) {
@@ -513,6 +514,11 @@ const useCanAddDomain = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  if (data?.success === false) {
+    return { canAddDomain: false, maxDomainsAllowedPerUser };
+  }
+
   const withinFreeLimit = data
     ? data.success && data.data < maxDomainsAllowedPerUser
     : true;

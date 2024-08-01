@@ -38,6 +38,7 @@ import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
 import { db } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
+import { publicStaticEnv } from "~/env/env.static";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -46,7 +47,13 @@ type PatchData = {
   version: number;
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): Promise<
+  | { status: "ok" }
+  | { status: "version_mismatched"; errors: string }
+  | { status: "error"; errors: string }
+> => {
   enableMapSet();
   enablePatches();
 
@@ -57,17 +64,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       transactions,
       version: clientVersion,
     }: PatchData = await request.json();
+
+    const version = new URL(request.url).searchParams.get("client-version");
+
+    if (publicStaticEnv.VERSION !== version) {
+      return {
+        status: "version_mismatched",
+        errors: `The client and server versions do not match. Please reload to continue.`,
+      };
+    }
+
     if (buildId === undefined) {
-      return { errors: "Build id required" };
+      return { status: "error", errors: "Build id required" };
     }
     if (projectId === undefined) {
-      return { errors: "Project id required" };
+      return { status: "error", errors: "Project id required" };
     }
 
     const lastTransactionId = transactions.at(-1)?.transactionId;
 
     if (lastTransactionId === undefined) {
-      return { errors: "Transaction array must not be empty." };
+      return {
+        status: "error",
+        errors: "Transaction array must not be empty.",
+      };
     }
 
     const context = await createContext(request);
@@ -92,6 +112,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       return {
         status: "version_mismatched",
+        errors: `You are currently in single-player mode. The project has been edited in a different tab, browser, or by another user. Please reload the page to get the latest version.`,
       };
     }
 
@@ -220,7 +241,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           continue;
         }
 
-        return { errors: `Unknown namespace "${namespace}"` };
+        return { status: "error", errors: `Unknown namespace "${namespace}"` };
       }
     }
 
@@ -323,6 +344,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // Given the sequential nature of messages from a single client, this situation is deemed improbable.
       return {
         status: "version_mismatched",
+        errors: `You are currently in single-player mode. The project has been edited in a different tab, browser, or by another user. Please reload the page to get the latest version.`,
       };
     }
 
@@ -337,6 +359,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } catch (error) {
     console.error(error);
     return {
+      status: "error",
       errors: error instanceof Error ? error.message : JSON.stringify(error),
     };
   }
