@@ -129,6 +129,7 @@ export const domainRouter = router({
 
         return result;
       } catch (error) {
+        console.error(error);
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
