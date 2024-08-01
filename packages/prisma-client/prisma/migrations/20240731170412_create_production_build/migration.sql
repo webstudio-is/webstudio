@@ -39,7 +39,7 @@ BEGIN
     "marketplaceProduct",
     "publishStatus",
     "projectId",
-    uuid_generate_v4() as id,
+    extensions.uuid_generate_v4() as id,
     create_production_build.deployment as deployment
   FROM "Build"
   WHERE "projectId" = project_id AND "Build"."deployment" IS NULL
