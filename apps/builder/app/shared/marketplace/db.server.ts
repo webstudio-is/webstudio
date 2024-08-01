@@ -13,7 +13,7 @@ export const getBuildProdData = async (
   { projectId }: { projectId: Project["id"] },
   context: AppContext
 ): Promise<BuildData> => {
-  const build = await loadApprovedProdBuildByProjectId(projectId);
+  const build = await loadApprovedProdBuildByProjectId(context, projectId);
 
   const assets = await loadAssetsByProject(projectId, context, {
     skipPermissionsCheck: true,

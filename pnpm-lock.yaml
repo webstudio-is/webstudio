@@ -1716,9 +1716,6 @@ importers:
       '@webstudio-is/postrest':
         specifier: workspace:*
         version: link:../postgrest
-      '@webstudio-is/prisma-client':
-        specifier: workspace:*
-        version: link:../prisma-client
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
