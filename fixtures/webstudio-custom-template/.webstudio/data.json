@@ -2331,5 +2331,6 @@
   "user": {
     "email": "hello@webstudio.is"
   },
-  "projectDomain": "webstudio-custom-template-cochj"
+  "projectDomain": "webstudio-custom-template-cochj",
+  "projectTitle": "webstudio-custom-template"
 }

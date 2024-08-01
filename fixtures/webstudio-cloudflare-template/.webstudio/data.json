@@ -479,5 +479,6 @@
   "user": {
     "email": "hello@webstudio.is"
   },
-  "projectDomain": "cli-basic-test-d0osr"
+  "projectDomain": "cli-basic-test-d0osr",
+  "projectTitle": "cli-basic-test"
 }
