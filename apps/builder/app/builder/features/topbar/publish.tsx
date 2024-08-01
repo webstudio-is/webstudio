@@ -5,7 +5,6 @@ import {
   useState,
   useOptimistic,
   useTransition,
-  useRef,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -60,6 +59,7 @@ import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import type { Templates } from "@webstudio-is/sdk";
 
 type ProjectData =
   | {
@@ -362,7 +362,7 @@ const fetchProjectDataStatus = async (projectId: Project["id"]) => {
 
   if (projectData.project.latestStaticBuild == null) {
     return {
-      status: "INITIAL" as const,
+      status: "LOADED" as const,
       statusText: "Not published",
     };
   }
@@ -374,24 +374,37 @@ const fetchProjectDataStatus = async (projectId: Project["id"]) => {
   return { status, statusText };
 };
 
-type StaticProjectStatus = Awaited<ReturnType<typeof fetchProjectDataStatus>>;
+type StaticProjectStatus =
+  | Awaited<ReturnType<typeof fetchProjectDataStatus>>
+  | { status: "INITIAL"; statusText: string };
 
-const PublishStatic = ({ projectId }: { projectId: Project["id"] }) => {
+const PublishStatic = ({
+  projectId,
+}: {
+  projectId: Project["id"];
+  templates: readonly Templates[];
+}) => {
   const [_, startTransition] = useTransition();
-
-  const isCanceledRef = useRef(false);
-  useEffect(() => {
-    isCanceledRef.current = false;
-    return () => {
-      isCanceledRef.current = true;
-    };
-  }, []);
 
   const [projectDataStatus, setProjectDataStatus] =
     useState<StaticProjectStatus>({
       status: "INITIAL",
-      statusText: "Not published",
+      statusText: "Loading",
     });
+
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const projectDataStatus = await fetchProjectDataStatus(projectId);
+        setProjectDataStatus(projectDataStatus);
+      } catch (e) {
+        setProjectDataStatus({
+          status: "FAILED",
+          statusText: e instanceof Error ? e.message : "Unknown error",
+        });
+      }
+    });
+  }, [projectId]);
 
   const [optimisticPendingStatus, setOptimisticPendingStatus] = useOptimistic(
     projectDataStatus,
@@ -400,18 +413,12 @@ const PublishStatic = ({ projectId }: { projectId: Project["id"] }) => {
     }
   );
 
-  const isPublishInProgress = optimisticPendingStatus.status === "PENDING";
+  const isPublishInProgress =
+    optimisticPendingStatus.status === "PENDING" ||
+    optimisticPendingStatus.status === "INITIAL";
 
   return (
-    <Flex
-      css={{
-        paddingBottom: theme.spacing[5],
-        paddingTop: theme.spacing[5],
-      }}
-      gap={2}
-      shrink={false}
-      direction={"column"}
-    >
+    <Flex gap={2} shrink={false} direction={"column"}>
       {optimisticPendingStatus.status === "FAILED" && (
         <Text color="destructive">{optimisticPendingStatus.statusText}</Text>
       )}
@@ -458,15 +465,7 @@ const PublishStatic = ({ projectId }: { projectId: Project["id"] }) => {
                 for (let i = 0; i !== repeat; i++) {
                   await new Promise((resolve) => setTimeout(resolve, timeout));
 
-                  if (isCanceledRef.current) {
-                    break;
-                  }
-
                   projectDataStatus = await fetchProjectDataStatus(projectId);
-
-                  if (isCanceledRef.current) {
-                    break;
-                  }
 
                   if (projectDataStatus.status !== "PENDING") {
                     break;
@@ -682,9 +681,18 @@ const Content = (props: {
 };
 
 const deployTargets = {
+  vanilla: {
+    command: `
+      npm install
+      npm run dev
+    `,
+    docs: "https://remix.run/",
+    ssgTemplates: ["ssg"],
+  },
   vercel: {
     command: "npx vercel@latest",
     docs: "https://vercel.com/docs/cli",
+    ssgTemplates: ["ssg-vercel"],
   },
   netlify: {
     command: `
@@ -693,6 +701,7 @@ npx netlify-cli sites:create
 npx netlify-cli build
 npx netlify-cli deploy`,
     docs: "https://docs.netlify.com/cli/get-started/",
+    ssgTemplates: ["ssg-netlify"],
   },
 } as const;
 
@@ -714,10 +723,36 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
         marginTop: theme.spacing[5],
       }}
     >
+      <Grid columns={1} gap={2}>
+        <div />
+        <Grid columns={2} gap={2} align={"center"}>
+          <Text color="main" variant="labelsTitleCase">
+            Destination
+          </Text>
+
+          <Select
+            fullWidth
+            value={deployTarget}
+            options={Object.keys(deployTargets)}
+            getLabel={(value) => humanizeString(value)}
+            onChange={(value) => {
+              if (isDeployTargets(value)) {
+                setDeployTarget(value);
+              }
+            }}
+          />
+        </Grid>
+      </Grid>
+
       <Grid columns={1} gap={1}>
         {isFeatureEnabled("staticExport") && (
           <>
-            <PublishStatic projectId={props.projectId} />
+            <PublishStatic
+              projectId={props.projectId}
+              templates={deployTargets[deployTarget].ssgTemplates}
+            />
+            <div />
+            <div />
             <Grid
               gap={2}
               align={"center"}
@@ -726,7 +761,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
               }}
             >
               <Separator css={{ alignSelf: "unset" }} />
-              <Text color="main">OR</Text>
+              <Text color="main">CLI</Text>
               <Separator css={{ alignSelf: "unset" }} />
             </Grid>
           </>
@@ -811,18 +846,6 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           </Text>
         </Grid>
 
-        <Select
-          fullWidth
-          value={deployTarget}
-          options={Object.keys(deployTargets)}
-          getLabel={(value) => humanizeString(value)}
-          onChange={(value) => {
-            if (isDeployTargets(value)) {
-              setDeployTarget(value);
-            }
-          }}
-        />
-
         <Flex gap={2} align="end">
           <TextArea
             css={{ flex: 1 }}
@@ -854,7 +877,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           <Link
             variant="inherit"
             color="inherit"
-            href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
+            href="https://wstd.us/cli"
             target="_blank"
             rel="noreferrer"
           >
