@@ -78,18 +78,18 @@ describe("Transform utils CRUD operations", () => {
       value: [
         {
           type: "unit",
-          unit: "number",
-          value: 1,
+          unit: "%",
+          value: 100,
         },
         {
           type: "unit",
-          unit: "number",
-          value: 1,
+          unit: "%",
+          value: 100,
         },
         {
           type: "unit",
-          unit: "number",
-          value: 1,
+          unit: "%",
+          value: 100,
         },
       ],
     });
