@@ -8,12 +8,13 @@ const fallbackTransform: TransformValue = (styleValue) => {
   if (styleValue.type === "fontFamily") {
     const firstFontFamily = styleValue.value[0];
 
-    const fallbacks = SYSTEM_FONTS.get(firstFontFamily ?? "Arial");
     const fontFamily: string[] = [...styleValue.value];
-    if (Array.isArray(fallbacks)) {
+    // If font family has more than one font, we assume it already has a fallback
+    if (fontFamily.length < 2) {
+      const fallbacks = SYSTEM_FONTS.get(firstFontFamily) ?? [
+        DEFAULT_FONT_FALLBACK,
+      ];
       fontFamily.push(...fallbacks);
-    } else {
-      fontFamily.push(DEFAULT_FONT_FALLBACK);
     }
     return {
       type: "fontFamily",

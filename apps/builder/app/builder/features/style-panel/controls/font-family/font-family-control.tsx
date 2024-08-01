@@ -56,6 +56,7 @@ export const FontFamilyControl = ({
       value: label,
     }));
   }, [assetContainers]);
+
   const itemValue = useMemo(() => {
     // Replacing the quotes just to make it look cleaner in the UI
     return toValue(value, (value) => value).replace(/"/g, "");
@@ -90,7 +91,11 @@ export const FontFamilyControl = ({
           );
         }}
         onItemSelect={(item) => {
-          setValue({ type: "fontFamily", value: [item.value] });
+          setValue({
+            type: "fontFamily",
+            // Allows user to enter fonts like `Arial, sans-serif` or `A b c, D e f` where each font can have multiple words
+            value: item.value.split(",").map((value) => value.trim()),
+          });
           setIntermediateValue(undefined);
         }}
         value={{ value: intermediateValue ?? itemValue }}
