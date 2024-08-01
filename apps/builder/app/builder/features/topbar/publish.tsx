@@ -792,7 +792,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
             />
             <div />
             <Text color="subtle">
-              Read the detailed documentation{" "}
+              Learn about deploying static sites{" "}
               <Link
                 variant="inherit"
                 color="inherit"
