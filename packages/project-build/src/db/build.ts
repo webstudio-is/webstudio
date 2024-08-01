@@ -26,7 +26,6 @@ import { parseDeployment } from "./deployment";
 import { parsePages, serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "../shared//marketplace";
-import { randomUUID } from "crypto";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -240,7 +239,7 @@ export const createBuild = async (
   );
 
   const newBuild = await context.postgrest.client.from("Build").insert({
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     projectId: props.projectId,
     pages: serializePages(defaultPages),
     breakpoints: serializeData<Breakpoint>(new Map(createInitialBreakpoints())),
