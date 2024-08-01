@@ -12,7 +12,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
 import { useAssets } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager";
-import { GearIcon, MagnifyingGlassIcon, UploadIcon } from "@webstudio-is/icons";
+import { UploadIcon } from "@webstudio-is/icons";
 import { styleConfigByName } from "../../shared/configs";
 import { parseCssValue } from "@webstudio-is/css-data";
 
