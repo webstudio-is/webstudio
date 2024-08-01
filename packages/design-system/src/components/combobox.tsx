@@ -471,7 +471,7 @@ export const Combobox = <Item,>({
 
   return (
     <ComboboxRoot open={combobox.isOpen}>
-      <div {...combobox.getComboboxProps()}>
+      <Box {...combobox.getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
             {...combobox.getInputProps()}
@@ -504,7 +504,7 @@ export const Combobox = <Item,>({
             )}
           </ComboboxListbox>
         </ComboboxContent>
-      </div>
+      </Box>
     </ComboboxRoot>
   );
 };
