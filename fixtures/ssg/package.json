@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build": "vite build",
-    "postbuild": "prettier --write .",
+    "postbuild": "prettier --write . || true",
     "dev": "vite dev",
     "typecheck": "tsc",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
