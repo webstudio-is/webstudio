@@ -450,6 +450,7 @@ export const useCombobox = <Item,>({
 type ComboboxProps<Item> = UseComboboxProps<Item> &
   Omit<ComponentProps<"input">, "value"> & {
     color?: ComponentProps<typeof InputField>["color"];
+    suffix?: ComponentProps<typeof InputField>["suffix"];
   };
 
 export const Combobox = <Item,>({
@@ -457,6 +458,7 @@ export const Combobox = <Item,>({
   getDescription,
   placeholder,
   color,
+  suffix,
   ...props
 }: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
@@ -478,7 +480,11 @@ export const Combobox = <Item,>({
             placeholder={placeholder}
             autoFocus={autoFocus}
             color={color}
-            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
+            suffix={
+              suffix ?? (
+                <NestedInputButton {...combobox.getToggleButtonProps()} />
+              )
+            }
           />
         </ComboboxAnchor>
         <ComboboxContent>

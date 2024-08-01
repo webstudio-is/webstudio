@@ -1,17 +1,18 @@
 import {
   Combobox,
-  DeprecatedTextField,
+  EnhancedTooltip,
   Flex,
-  InputField,
+  NestedInputButton,
 } from "@webstudio-is/design-system";
 import { FontsManager } from "~/builder/shared/fonts-manager";
 import type { ControlProps } from "../types";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { useMemo, useState } from "react";
+import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import { toValue } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
 import { useAssets } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager/item-utils";
+import { ChevronLeftIcon } from "@webstudio-is/icons";
 
 type Item = { value: string; label?: string };
 
@@ -37,8 +38,7 @@ const matchOrSuggestToCreate = (
   return matched;
 };
 
-const itemToString = (item: Item | null) =>
-  item === null ? "" : item.label ?? item.value;
+const itemToString = (item?: Item | null) => item?.label ?? item?.value ?? "";
 
 export const FontFamilyControl = ({
   property,
@@ -47,7 +47,6 @@ export const FontFamilyControl = ({
 }: ControlProps) => {
   const value = currentStyle[property]?.value;
   const setValue = setProperty(property);
-  const [isOpen, setIsOpen] = useState(false);
   const [intermediateValue, setIntermediateValue] = useState<
     string | undefined
   >();
@@ -65,6 +64,21 @@ export const FontFamilyControl = ({
   return (
     <Flex>
       <Combobox<Item>
+        suffix={
+          <FloatingPanel
+            title="Fonts"
+            content={
+              <FontsManager
+                value={toValue(value)}
+                onChange={(newValue) => {
+                  setValue({ type: "fontFamily", value: [newValue] });
+                }}
+              />
+            }
+          >
+            <FontsManagerButton />
+          </FloatingPanel>
+        }
         defaultHighlightedIndex={0}
         items={items}
         itemToString={itemToString}
@@ -89,3 +103,19 @@ export const FontFamilyControl = ({
     </Flex>
   );
 };
+
+const FontsManagerButton = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<typeof NestedInputButton>
+>((props, ref) => {
+  return (
+    <Flex>
+      <EnhancedTooltip content="Open Font Manager">
+        <NestedInputButton {...props} ref={ref} tabIndex={-1}>
+          <ChevronLeftIcon />
+        </NestedInputButton>
+      </EnhancedTooltip>
+    </Flex>
+  );
+});
+FontsManagerButton.displayName = "FontsManagerButton";
