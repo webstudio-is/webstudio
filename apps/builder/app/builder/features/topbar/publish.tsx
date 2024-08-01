@@ -60,6 +60,7 @@ import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { Templates } from "@webstudio-is/sdk";
+import { formatDistance } from "date-fns/formatDistance";
 
 type ProjectData =
   | {
@@ -351,6 +352,37 @@ const Publish = ({
   );
 };
 
+const getStaticPublishStatusAndText = ({
+  updatedAt,
+  publishStatus,
+}: Pick<NonNullable<Domain["latestBuid"]>, "updatedAt" | "publishStatus">) => {
+  let status = publishStatus;
+
+  const delta = Date.now() - new Date(updatedAt).getTime();
+  // Assume build failed after 3 minutes
+
+  if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
+    status = "FAILED";
+  }
+
+  const textStart =
+    status === "PUBLISHED"
+      ? "Downloaded"
+      : status === "FAILED"
+        ? "Download failed"
+        : "Download started";
+
+  const statusText = `${textStart} ${formatDistance(
+    new Date(updatedAt),
+    new Date(),
+    {
+      addSuffix: true,
+    }
+  )}`;
+
+  return { statusText, status };
+};
+
 const fetchProjectDataStatus = async (projectId: Project["id"]) => {
   const projectData = await nativeClient.domain.project.query({
     projectId,
@@ -367,7 +399,7 @@ const fetchProjectDataStatus = async (projectId: Project["id"]) => {
     };
   }
 
-  const { status, statusText } = getPublishStatusAndText(
+  const { status, statusText } = getStaticPublishStatusAndText(
     projectData.project.latestStaticBuild
   );
 
