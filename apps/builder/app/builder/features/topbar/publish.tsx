@@ -492,6 +492,8 @@ const PublishStatic = ({
                 // Repeat few more times than timeout
                 const repeat = PENDING_TIMEOUT / timeout + 5;
 
+                console.info({ PENDING_TIMEOUT });
+
                 let projectDataStatus: StaticProjectStatus | undefined;
 
                 for (let i = 0; i !== repeat; i++) {
@@ -509,6 +511,12 @@ const PublishStatic = ({
                 }
 
                 setProjectDataStatus(projectDataStatus);
+
+                if (projectDataStatus.status === "FAILED") {
+                  // Report if Export failed
+                  toast.error(projectDataStatus.statusText);
+                }
+
                 if (projectDataStatus.status === "PUBLISHED") {
                   window.location.href = `/cgi/static/ssg/${name}`;
                 }
