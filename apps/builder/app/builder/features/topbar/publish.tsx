@@ -791,6 +791,20 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
               templates={deployTargets[deployTarget].ssgTemplates}
             />
             <div />
+            <Text color="subtle">
+              Read the detailed documentation{" "}
+              <Link
+                variant="inherit"
+                color="inherit"
+                href="https://wstd.us/ssg"
+                target="_blank"
+                rel="noreferrer"
+              >
+                here
+              </Link>
+            </Text>
+
+            <div />
             <div />
             <Grid
               gap={2}
