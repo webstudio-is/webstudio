@@ -412,6 +412,7 @@ type StaticProjectStatus =
 
 const PublishStatic = ({
   projectId,
+  templates,
 }: {
   projectId: Project["id"];
   templates: readonly Templates[];
@@ -472,7 +473,7 @@ const PublishStatic = ({
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,
                   destination: "static",
-                  templates: ["ssg"],
+                  templates: [...templates],
                 });
 
                 if (result.success === false) {
@@ -491,8 +492,6 @@ const PublishStatic = ({
 
                 // Repeat few more times than timeout
                 const repeat = PENDING_TIMEOUT / timeout + 5;
-
-                console.info({ PENDING_TIMEOUT });
 
                 let projectDataStatus: StaticProjectStatus | undefined;
 
