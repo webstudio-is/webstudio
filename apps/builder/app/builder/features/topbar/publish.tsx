@@ -751,7 +751,7 @@ const isDeployTargets = (value: string): value is DeployTargets =>
 
 const ExportContent = (props: { projectId: Project["id"] }) => {
   const npxCommand = "npx webstudio@latest";
-  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vanilla");
 
   return (
     <Grid
@@ -790,6 +790,20 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
               projectId={props.projectId}
               templates={deployTargets[deployTarget].ssgTemplates}
             />
+            <div />
+            <Text color="subtle">
+              Learn about deploying static sites{" "}
+              <Link
+                variant="inherit"
+                color="inherit"
+                href="https://wstd.us/ssg"
+                target="_blank"
+                rel="noreferrer"
+              >
+                here
+              </Link>
+            </Text>
+
             <div />
             <div />
             <Grid
