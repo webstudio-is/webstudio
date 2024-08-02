@@ -34,7 +34,6 @@ jobs:
       - run: pnpm --filter "{./fixtures/*}..." build
 
       - uses: actions/github-script@v7
-        working-directory: ./fixtures/ssg
         with:
           script: |
-            console.log(await exec.exec('du', ['-sk', 'dist/client']));
+            console.log(await exec.exec('du', ['-sk', './fixtures/ssg/dist/client']));
