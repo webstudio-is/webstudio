@@ -1,0 +1,122 @@
+{
+  "build": {
+    "id": "af2fcd7f-b2b9-4b3d-953e-96e147d466d3",
+    "projectId": "35c8da0d-c024-46eb-96fc-c29b8452672a",
+    "version": 0,
+    "createdAt": "2024-08-02T15:49:04.383",
+    "updatedAt": "2024-08-02T15:49:04.383",
+    "pages": {
+      "meta": {},
+      "homePage": {
+        "id": "vOYJR3GfyS0NzWhjcdkZA",
+        "name": "Home",
+        "title": "\"Home\"",
+        "rootInstanceId": "_Ub9eckodQm48EDpjh8zc",
+        "systemDataSourceId": "lJE45x44v_vVYyIlDFOy3",
+        "meta": {},
+        "path": ""
+      },
+      "pages": [],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": ["vOYJR3GfyS0NzWhjcdkZA"]
+        }
+      ]
+    },
+    "breakpoints": [
+      [
+        "0W0FyAIzyXf1a39M8Tf0-",
+        {
+          "id": "0W0FyAIzyXf1a39M8Tf0-",
+          "label": "Base"
+        }
+      ],
+      [
+        "hetbFLp2t8rhpWkHGvnQF",
+        {
+          "id": "hetbFLp2t8rhpWkHGvnQF",
+          "label": "Tablet",
+          "maxWidth": 991
+        }
+      ],
+      [
+        "qo-PIDYwmJmGYMeZ1RdRD",
+        {
+          "id": "qo-PIDYwmJmGYMeZ1RdRD",
+          "label": "Mobile landscape",
+          "maxWidth": 767
+        }
+      ],
+      [
+        "FfP-GkkVABUCiXQ7L_56U",
+        {
+          "id": "FfP-GkkVABUCiXQ7L_56U",
+          "label": "Mobile portrait",
+          "maxWidth": 479
+        }
+      ]
+    ],
+    "styles": [],
+    "styleSources": [],
+    "styleSourceSelections": [],
+    "props": [],
+    "dataSources": [
+      [
+        "lJE45x44v_vVYyIlDFOy3",
+        {
+          "id": "lJE45x44v_vVYyIlDFOy3",
+          "scopeInstanceId": "_Ub9eckodQm48EDpjh8zc",
+          "name": "system",
+          "type": "parameter"
+        }
+      ]
+    ],
+    "resources": [],
+    "instances": [
+      [
+        "_Ub9eckodQm48EDpjh8zc",
+        {
+          "type": "instance",
+          "id": "_Ub9eckodQm48EDpjh8zc",
+          "component": "Body",
+          "children": []
+        }
+      ]
+    ],
+    "deployment": {
+      "destination": "saas",
+      "domains": [],
+      "projectDomain": "fixture-empty-dont-touch-this-pp0r4"
+    },
+    "marketplaceProduct": {}
+  },
+  "page": {
+    "id": "vOYJR3GfyS0NzWhjcdkZA",
+    "name": "Home",
+    "title": "\"Home\"",
+    "rootInstanceId": "_Ub9eckodQm48EDpjh8zc",
+    "systemDataSourceId": "lJE45x44v_vVYyIlDFOy3",
+    "meta": {},
+    "path": ""
+  },
+  "pages": [
+    {
+      "id": "vOYJR3GfyS0NzWhjcdkZA",
+      "name": "Home",
+      "title": "\"Home\"",
+      "rootInstanceId": "_Ub9eckodQm48EDpjh8zc",
+      "systemDataSourceId": "lJE45x44v_vVYyIlDFOy3",
+      "meta": {},
+      "path": ""
+    }
+  ],
+  "assets": [],
+  "user": {
+    "email": "hello@webstudio.is"
+  },
+  "projectDomain": "fixture-empty-dont-touch-this-pp0r4",
+  "projectTitle": "fixture-empty (don't touch this)"
+}
