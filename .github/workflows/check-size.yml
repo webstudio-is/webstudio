@@ -46,14 +46,23 @@ jobs:
                 }
               })
               const size = Number.parseInt(result, 10)
-              if (size > maxSize) {
-                return `${directory} exceeded size limit: ${size}kB`
+              return {
+                passed: size > maxSize,
+                size,
+                diff: size - maxSize,
+                directory,
               }
-              console.log('directory', directory, 'size in kB', size)
             }
-            const errors = [
+            const results = [
               await assertSize('./fixtures/ssg/dist/client', 470),
-            ].filter(Boolean)
-            if (errors.length > 0) {
-              throw Error(errors.join('\n'))
+            ]
+            for (const result of results) {
+              if (result.passed) {
+                console.info(`${result.directory}: ${result.size}kB`)
+              } else {
+                console.error(`${result.directory}: ${result.size}kB (+${result.diff}kB)`)
+              }
+            }
+            if (results.some(result => result.passed === false)) {
+              throw Error('Some fixtures exceeded limits')
             }
