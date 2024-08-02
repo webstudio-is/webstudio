@@ -615,7 +615,7 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-      import { useResource } from "@webstudio-is/react-sdk";
+      import { useResource } from "@webstudio-is/react-sdk/runtime";
       ${componentImports}
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};

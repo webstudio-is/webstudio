@@ -9,7 +9,7 @@ import {
   getClosestInstance,
   getInstanceSelectorById,
   type Hook,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/react-sdk/runtime";
 
 // wrap in forwardRef because Root is functional component without ref
 export const Popover = forwardRef<

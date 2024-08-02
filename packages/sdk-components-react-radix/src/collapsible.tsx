@@ -11,7 +11,7 @@ import {
   type Hook,
   getClosestInstance,
   getInstanceSelectorById,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/react-sdk/runtime";
 
 export const Collapsible: ForwardRefExoticComponent<
   Omit<ComponentProps<typeof Root>, "defaultOpen" | "asChild"> &

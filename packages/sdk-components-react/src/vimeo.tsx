@@ -15,7 +15,7 @@ import {
   createContext,
   type ContextType,
 } from "react";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
 // https://developer.vimeo.com/player/sdk/embed
 type VimeoPlayerOptions = {

@@ -17,7 +17,7 @@ import {
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
   Page,
   siteName,

@@ -5,8 +5,8 @@ import * as React from "react";
 import ReactDOMServer from "react-dom/server";
 import { test, expect, describe } from "@jest/globals";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { __testing__, HtmlEmbed } from "./html-embed";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { cartesian } from "./test-utils/cartesian";
 
 const scriptTestIdPrefix = __testing__.scriptTestIdPrefix;
