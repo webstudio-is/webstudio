@@ -1,0 +1,34 @@
+name: Main workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  checks:
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - uses: ./.github/actions/ci-setup
+
+      - run: pnpm --filter "{./fixtures/*}..." build
