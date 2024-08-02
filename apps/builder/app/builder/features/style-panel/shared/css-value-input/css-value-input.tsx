@@ -284,7 +284,6 @@ export type ChangeReason =
 type CssValueInputProps = Pick<
   ComponentProps<typeof InputField>,
   | "variant"
-  | "size"
   | "text"
   | "autoFocus"
   | "disabled"
@@ -292,6 +291,7 @@ type CssValueInputProps = Pick<
   | "prefix"
   | "inputRef"
 > & {
+  size?: "1" | "2";
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -458,7 +458,7 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
-    size,
+    size: size === "2" ? "1" : "2",
     property,
     value,
     onChange: (unitOrKeyword) => {
@@ -624,7 +624,7 @@ export const CssValueInput = ({
       {...getToggleButtonProps()}
       data-state={isOpen ? "open" : "closed"}
       tabIndex={-1}
-      size={size}
+      size={size === "2" ? "1" : "2"}
     />
   );
 

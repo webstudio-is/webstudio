@@ -34,7 +34,6 @@ import {
   SelectGroup,
 } from "./select";
 import { MenuCheckedAndSetIcon, MenuSetDotIcon } from "./menu";
-import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
 import { Button } from "./button";
 import {
   ChevronDownIcon,
@@ -45,6 +44,7 @@ import {
 import { useState } from "react";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { StorySection } from "./storybook";
+import { InputField } from "./input-field";
 
 const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   const [isApple, setIsApple] = useState(true);
@@ -180,7 +180,7 @@ const ComboboxDemo = () => {
     <ComboboxRoot open={isOpen}>
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
-          <DeprecatedTextField
+          <InputField
             {...getInputProps()}
             placeholder="Enter: Apple"
             suffix={
