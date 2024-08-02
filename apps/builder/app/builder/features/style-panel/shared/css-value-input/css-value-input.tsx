@@ -458,7 +458,7 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
-    size,
+    size: size === "2" ? "1" : "2",
     property,
     value,
     onChange: (unitOrKeyword) => {
