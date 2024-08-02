@@ -13,9 +13,9 @@
   "dependencies": {
     "@netlify/edge-functions": "^2.10.0",
     "@netlify/remix-edge-adapter": "^3.3.0",
-    "@remix-run/node": "2.10.3",
-    "@remix-run/react": "2.10.3",
-    "@remix-run/server-runtime": "2.10.3",
+    "@remix-run/node": "2.11.0",
+    "@remix-run/react": "2.11.0",
+    "@remix-run/server-runtime": "2.11.0",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -29,11 +29,11 @@
   "private": true,
   "sideEffects": false,
   "devDependencies": {
-    "@remix-run/dev": "2.10.3",
+    "@remix-run/dev": "2.11.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.5.2",
-    "vite": "^5.3.4",
+    "vite": "^5.3.5",
     "webstudio": "workspace:*"
   },
   "engines": {
