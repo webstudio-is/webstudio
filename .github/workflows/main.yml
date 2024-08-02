@@ -48,3 +48,53 @@ jobs:
       - run: pnpm -r test
       - run: pnpm --filter=@webstudio-is/prisma-client build
       - run: pnpm -r typecheck
+
+  check-size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - uses: ./.github/actions/ci-setup
+
+      - run: pnpm --filter "{./fixtures/*}..." build
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const assertSize = async (directory, maxSize) => {
+              let result = ''
+              await exec.exec('du', ['-sk', directory], {
+                silent: true,
+                listeners: {
+                  stdout: (data) => {
+                    result += data.toString()
+                  }
+                }
+              })
+              const size = Number.parseInt(result, 10)
+              return {
+                passed: size <= maxSize,
+                size,
+                diff: size - maxSize,
+                directory,
+              }
+            }
+            const results = [
+              await assertSize('./fixtures/ssg/dist/client', 480),
+              await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 560),
+            ]
+            for (const result of results) {
+              if (result.passed) {
+                console.info(`${result.directory}: ${result.size}kB (${result.diff}kB)`)
+              } else {
+                console.info('')
+                console.error(`${result.directory}: ${result.size}kB (+${result.diff}kB)`)
+              }
+            }
+            if (results.some(result => result.passed === false)) {
+              console.error('Some fixtures exceeded limits')
+              process.exit(1)
+            }
