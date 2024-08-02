@@ -47,7 +47,7 @@ jobs:
               })
               const size = Number.parseInt(result, 10)
               return {
-                passed: size > maxSize,
+                passed: size <= maxSize,
                 size,
                 diff: size - maxSize,
                 directory,
@@ -55,6 +55,7 @@ jobs:
             }
             const results = [
               await assertSize('./fixtures/ssg/dist/client', 470),
+              await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 500),
             ]
             for (const result of results) {
               if (result.passed) {
@@ -64,5 +65,6 @@ jobs:
               }
             }
             if (results.some(result => result.passed === false)) {
-              throw Error('Some fixtures exceeded limits')
+              console.error('Some fixtures exceeded limits')
+              process.exit(1)
             }
