@@ -1,4 +1,4 @@
-name: Main workflow
+name: Size checks
 
 on:
   push:
@@ -32,3 +32,9 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - run: pnpm --filter "{./fixtures/*}..." build
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            console.log(await exec.exec('du', ['-sk', 'dist/client']));
+        working-directory: ./fixtures/ssg
