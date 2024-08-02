@@ -9,6 +9,7 @@
     "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "rm -rf pages && pnpm cli build --template ssg --template internal --preview && prettier --write .",
     "build": "vite build",
+    "postbuild": "prettier --write \"**/*.html\" || true",
     "dev": "vite dev",
     "typecheck": "tsc"
   },
