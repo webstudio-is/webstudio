@@ -76,7 +76,6 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         red4: red.red4,
         red9: red.red9,
         red11: red.red11,
-        red10: red.red10,
         green3: green.green3,
         green4: green.green4,
         green9: green.green9,
