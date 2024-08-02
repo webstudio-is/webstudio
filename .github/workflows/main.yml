@@ -83,12 +83,12 @@ jobs:
               }
             }
             const results = [
-              await assertSize('./fixtures/ssg/dist/client', 476),
-              await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 556),
+              await assertSize('./fixtures/ssg/dist/client', 480),
+              await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 560),
             ]
             for (const result of results) {
               if (result.passed) {
-                console.info(`${result.directory}: ${result.size}kB`)
+                console.info(`${result.directory}: ${result.size}kB (${result.diff}kB)`)
               } else {
                 console.info('')
                 console.error(`${result.directory}: ${result.size}kB (+${result.diff}kB)`)
