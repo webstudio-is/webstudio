@@ -73,7 +73,11 @@ export const DeprecatedListItem = forwardRef<
       {...props}
     >
       {prefix}
-      <Flex css={{ gridColumn: 2, cursor: "default" }} align="center">
+      <Flex
+        css={{ gridColumn: 2, cursor: "default" }}
+        align="center"
+        justify="between"
+      >
         <Text
           variant="labelsSentenceCase"
           truncate
