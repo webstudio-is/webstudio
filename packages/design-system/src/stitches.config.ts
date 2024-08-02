@@ -10,6 +10,7 @@ import {
   slate,
   slateA,
   yellow,
+  mint,
 } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
@@ -75,12 +76,14 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         slateA8: slateA.slateA8,
         gray2: gray.gray2,
         blue8: blue.blue8,
+        blue9: blue.blue9,
         blue10: blue.blue10,
         blue11: blue.blue11,
         blueA3: blueA.blueA3,
         blueA4: blueA.blueA4,
         red4: red.red4,
         red8: red.red8,
+        red9: red.red9,
         red11: red.red11,
         red10: red.red10,
         redA3: redA.redA3,
@@ -91,11 +94,15 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         green4: green.green4,
         green7: green.green7,
         green8: green.green8,
+        green9: green.green9,
         green11: green.green11,
         greenA3: greenA.greenA3,
         greenA4: greenA.greenA4,
         greenA8: greenA.greenA8,
+        yellow9: yellow.yellow9,
         yellow10: yellow.yellow10,
+        mint5: mint.mint5,
+        mint9: mint.mint9,
         // Semantic colors
         hiContrast: slate.slate12,
         loContrast: slate.slate1,
