@@ -1,5 +1,5 @@
 import type { PageContext } from "vike/types";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "__CONSTANTS__";
 import { Page } from "__CLIENT__";
 

@@ -5,7 +5,7 @@ import {
   useContext,
 } from "react";
 import { Form, type FormProps } from "@remix-run/react";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
 export const defaultTag = "form";
 

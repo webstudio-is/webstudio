@@ -10,7 +10,7 @@ import {
   useMemo,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { executeDomEvents, patchDomEvents } from "./html-embed-patchers";
 
 export const __testing__ = {

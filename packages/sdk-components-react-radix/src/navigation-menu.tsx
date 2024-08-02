@@ -5,7 +5,7 @@ import {
   getInstanceSelectorById,
   ReactSdkContext,
   type Hook,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Children,
   forwardRef,

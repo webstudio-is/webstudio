@@ -1,8 +1,4 @@
-import {
-  idAttribute,
-  componentAttribute,
-  ReactSdkContext,
-} from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
   Children,
   createElement,
@@ -19,9 +15,6 @@ type Props = {
   tag: string;
   xmlns?: string;
   children: ReactNode;
-  // xxxAttribute is used for typings only
-  [idAttribute]?: string;
-  [componentAttribute]?: string;
 };
 
 export const XmlNode = forwardRef<ElementRef<"div">, Props>(
