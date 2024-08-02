@@ -1,6 +1,6 @@
 import { css, styled, theme } from "../../stitches.config";
 
-export const deprecatedTextStyle = css({
+const deprecatedTextStyle = css({
   // Reset
   margin: 0,
   lineHeight: 1,

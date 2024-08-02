@@ -75,7 +75,7 @@ const containerStyle = css({
   borderRadius: theme.borderRadius[4],
   border: `solid 1px ${theme.colors.borderMain}`,
   backgroundColor: theme.colors.backgroundControls,
-  "&:has([data-input-field-input]:focus), &:focus": {
+  "&:focus-within": {
     outline: `solid 2px ${theme.colors.borderFocus}`,
     outlineOffset: "-1px",
   },
@@ -83,10 +83,9 @@ const containerStyle = css({
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
-  "&:has([data-input-field-input][data-color=error]:focus), &[data-color=error]:focus":
-    {
-      outlineColor: theme.colors.borderDestructiveMain,
-    },
+  "&:focus-within:has([data-color=error])": {
+    outlineColor: theme.colors.borderDestructiveMain,
+  },
 
   "&:has([data-input-field-input]:disabled)": {
     backgroundColor: theme.colors.backgroundInputDisabled,
@@ -102,15 +101,18 @@ const containerStyle = css({
     },
     size: {
       1: {
-        height: theme.spacing[11],
+        height: theme.spacing[9],
       },
       2: {
+        height: theme.spacing[11],
+      },
+      3: {
         height: theme.spacing[12],
       },
     },
   },
   defaultVariants: {
-    size: 2,
+    size: 3,
   },
 });
 
@@ -221,7 +223,7 @@ type InputFieldProps = {
   onFocus?: FocusEventHandler;
   onBlur?: FocusEventHandler;
   variant?: "chromeless";
-  size?: "1" | "2";
+  size?: "1" | "2" | "3";
 };
 
 export const InputField = forwardRef(
