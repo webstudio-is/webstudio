@@ -284,7 +284,6 @@ export type ChangeReason =
 type CssValueInputProps = Pick<
   ComponentProps<typeof InputField>,
   | "variant"
-  | "size"
   | "text"
   | "autoFocus"
   | "disabled"
@@ -292,6 +291,7 @@ type CssValueInputProps = Pick<
   | "prefix"
   | "inputRef"
 > & {
+  size?: "1" | "2";
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
