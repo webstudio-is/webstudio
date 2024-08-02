@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
-  DeprecatedButton,
   DeprecatedPopover,
   DeprecatedPopoverTrigger,
   DeprecatedPopoverContent,
   DeprecatedPopoverPortal,
   DeprecatedPopoverHeader,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import type { Asset } from "@webstudio-is/sdk";
@@ -29,8 +29,7 @@ export const ImageInfoTrigger = ({
   return (
     <DeprecatedPopover open={isInfoOpen} onOpenChange={setInfoOpen}>
       <DeprecatedPopoverTrigger asChild>
-        <DeprecatedButton
-          variant="raw"
+        <SmallIconButton
           title="Options"
           onClick={() => setInfoOpen(true)}
           css={{
@@ -46,9 +45,8 @@ export const ImageInfoTrigger = ({
             },
             ...gearIconCssVars({ fill: theme.colors.loContrast }),
           }}
-        >
-          <GearIcon />
-        </DeprecatedButton>
+          icon={<GearIcon />}
+        />
       </DeprecatedPopoverTrigger>
       <DeprecatedPopoverPortal>
         <DeprecatedPopoverContent>
