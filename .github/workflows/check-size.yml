@@ -36,7 +36,7 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            const assertSize = async (directory) => {
+            const assertSize = async (directory, maxSize) => {
               let result = ''
               await exec.exec('du', ['-sk', directory], {
                 listeners: {
@@ -46,6 +46,14 @@ jobs:
                 }
               })
               const size = Number.parseInt(result, 10)
+              if (size > maxSize) {
+                return `${directory} exceeded size limit: ${size}kB`
+              }
               console.log('directory', directory, 'size in kB', size)
             }
-            await assertSize('./fixtures/ssg/dist/client')
+            const errors = [
+              await assertSize('./fixtures/ssg/dist/client', 470),
+            ].filter(Boolean)
+            if (errors.length > 0) {
+              throw Error(errors.join('\n'))
+            }
