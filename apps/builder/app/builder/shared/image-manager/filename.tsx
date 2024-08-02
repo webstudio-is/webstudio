@@ -1,4 +1,4 @@
-import { Flex, DeprecatedText2, Text } from "@webstudio-is/design-system";
+import { Flex, Text } from "@webstudio-is/design-system";
 import type { ComponentProps } from "react";
 
 type FilenameProps = Omit<ComponentProps<typeof Text>, "children"> & {

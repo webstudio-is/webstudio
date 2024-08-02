@@ -62,7 +62,6 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         slate4: slate.slate4,
         slate5: slate.slate5,
         slate7: slate.slate7,
-        slate6: slate.slate6,
         slate8: slate.slate8,
         slate11: slate.slate11,
         slate12: slate.slate12,
