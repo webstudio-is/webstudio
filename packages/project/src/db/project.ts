@@ -7,6 +7,7 @@ import {
 import { createBuild } from "@webstudio-is/project-build/index.server";
 import { MarketplaceApprovalStatus, Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
+import { nanoid } from "nanoid";
 
 export const loadById = async (
   projectId: Project["id"],
@@ -93,7 +94,11 @@ export const markAsDeleted = async (
 
   return await prisma.project.update({
     where: { id: projectId },
-    data: { isDeleted: true },
+    data: {
+      isDeleted: true,
+      // Free up the subdomain
+      domain: nanoid(),
+    },
   });
 };
 
