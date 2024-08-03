@@ -197,6 +197,11 @@ const StyleSourceContainer = styled(Box, {
       },
       false: {},
     },
+    hasError: {
+      true: {
+        backgroundColor: theme.colors.backgroundDestructiveMain,
+      },
+    },
   },
 });
 
@@ -240,8 +245,11 @@ const StyleSourceState = styled(Text, {
   },
 });
 
+export type StyleSourceError = { name: "minlength" | "duplicate"; id: string };
+
 type StyleSourceProps = {
   id: string;
+  error?: StyleSourceError;
   children: ReactNode;
   menuItems: ReactNode;
   selected: boolean;
@@ -262,6 +270,7 @@ export const StyleSource = ({
   selected,
   state,
   stateLabel,
+  error,
   disabled,
   isEditing,
   isDragging,
@@ -281,6 +290,7 @@ export const StyleSource = ({
       disabled={disabled}
       aria-current={selected && state === undefined}
       role="button"
+      hasError={error !== undefined}
     >
       <Flex css={{ flexGrow: 1, py: theme.spacing[2], px: theme.spacing[3] }}>
         <StyleSourceButton

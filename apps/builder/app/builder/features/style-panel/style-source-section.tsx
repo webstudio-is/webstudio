@@ -21,7 +21,11 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { type ItemSource, StyleSourceInput } from "./style-source";
+import {
+  type ItemSource,
+  StyleSourceInput,
+  type StyleSourceError,
+} from "./style-source";
 import {
   $breakpoints,
   $instances,
@@ -363,11 +367,27 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   );
 };
 
-const renameStyleSource = (id: StyleSource["id"], label: string) => {
+const renameStyleSource = (
+  id: StyleSource["id"],
+  name: string
+): StyleSourceError | undefined => {
+  const styleSources = $styleSources.get();
+  if (name.trim().length === 0) {
+    return { name: "minlength", id };
+  }
+  for (const styleSource of styleSources.values()) {
+    if (
+      styleSource.type === "token" &&
+      styleSource.name === name &&
+      styleSource.id !== id
+    ) {
+      return { name: "duplicate", id };
+    }
+  }
   serverSyncStore.createTransaction([$styleSources], (styleSources) => {
     const styleSource = styleSources.get(id);
     if (styleSource?.type === "token") {
-      styleSource.name = label;
+      styleSource.name = name;
     }
   });
 };
@@ -486,10 +506,20 @@ export const StyleSourcesSection = () => {
   >(undefined);
 
   const [tokenToDelete, setTokenToDelete] = useState<StyleSourceToken>();
+  const [error, setError] = useState<StyleSourceError>();
+
+  const setEditingItem = (id?: StyleSource["id"]) => {
+    setEditingItemId(id);
+    // User finished editing or started editing a different token
+    if (error && (id === undefined || id !== error.id)) {
+      setError(undefined);
+    }
+  };
 
   return (
     <>
       <StyleSourceInput
+        error={error}
         items={availableStyleSources}
         value={value}
         selectedItemSelector={selectedOrLastStyleSourceSelector}
@@ -501,12 +531,12 @@ export const StyleSourcesSection = () => {
         onDuplicateItem={(id) => {
           const newId = duplicateStyleSource(id);
           if (newId !== undefined) {
-            setEditingItemId(newId);
+            setEditingItem(newId);
           }
         }}
         onConvertToToken={(id) => {
           convertLocalStyleSourceToToken(id);
-          setEditingItemId(id);
+          setEditingItem(id);
         }}
         onClearStyles={clearStyles}
         onRemoveItem={(id) => {
@@ -531,14 +561,20 @@ export const StyleSourcesSection = () => {
         // style source renaming
         editingItemId={editingItemId}
         onEditItem={(id) => {
-          setEditingItemId(id);
+          setEditingItem(id);
           // prevent deselect after renaming
           if (id !== undefined) {
             selectStyleSource(id);
           }
         }}
         onChangeItem={(item) => {
-          renameStyleSource(item.id, item.label);
+          const error = renameStyleSource(item.id, item.label);
+          if (error) {
+            setError(error);
+            setEditingItem(item.id);
+            return;
+          }
+          setError(undefined);
         }}
       />
       <DeleteConfirmationDialog
