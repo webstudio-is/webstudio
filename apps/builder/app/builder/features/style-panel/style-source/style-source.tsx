@@ -8,6 +8,7 @@ import {
   Box,
   theme,
   Flex,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import { type ReactNode } from "react";
@@ -245,7 +246,12 @@ const StyleSourceState = styled(Text, {
   },
 });
 
-export type StyleSourceError = { name: "minlength" | "duplicate"; id: string };
+const errors = {
+  minlength: "Token must be at least 1 character long",
+  duplicate: "Token already exists",
+} as const;
+
+export type StyleSourceError = { name: keyof typeof errors; id: string };
 
 type StyleSourceProps = {
   id: string;
@@ -283,40 +289,45 @@ export const StyleSource = ({
   const showMenu = isEditing === false && isDragging === false;
 
   return (
-    <StyleSourceContainer
-      data-id={id}
-      source={source}
-      selected={selected && state === undefined}
-      disabled={disabled}
-      aria-current={selected && state === undefined}
-      role="button"
-      hasError={error !== undefined}
+    <Tooltip
+      content={error ? errors[error.name] : ""}
+      open={error !== undefined}
     >
-      <Flex css={{ flexGrow: 1, py: theme.spacing[2], px: theme.spacing[3] }}>
-        <StyleSourceButton
-          disabled={disabled || isEditing}
-          isEditing={isEditing}
-          onClick={onSelect}
-          tabIndex={-1}
-        >
-          {typeof children === "string" ? (
-            <EditableText
-              isEditing={isEditing}
-              onChangeEditing={onChangeEditing}
-              onChangeValue={onChangeValue}
-              label={children}
-            />
-          ) : (
-            children
-          )}
-        </StyleSourceButton>
-      </Flex>
-      {stateLabel !== undefined && (
-        <StyleSourceState source={source} css={{ lineHeight: 1 }}>
-          {stateLabel}
-        </StyleSourceState>
-      )}
-      {showMenu && <Menu>{menuItems}</Menu>}
-    </StyleSourceContainer>
+      <StyleSourceContainer
+        data-id={id}
+        source={source}
+        selected={selected && state === undefined}
+        disabled={disabled}
+        aria-current={selected && state === undefined}
+        role="button"
+        hasError={error !== undefined}
+      >
+        <Flex css={{ flexGrow: 1, py: theme.spacing[2], px: theme.spacing[3] }}>
+          <StyleSourceButton
+            disabled={disabled || isEditing}
+            isEditing={isEditing}
+            onClick={onSelect}
+            tabIndex={-1}
+          >
+            {typeof children === "string" ? (
+              <EditableText
+                isEditing={isEditing}
+                onChangeEditing={onChangeEditing}
+                onChangeValue={onChangeValue}
+                label={children}
+              />
+            ) : (
+              children
+            )}
+          </StyleSourceButton>
+        </Flex>
+        {stateLabel !== undefined && (
+          <StyleSourceState source={source} css={{ lineHeight: 1 }}>
+            {stateLabel}
+          </StyleSourceState>
+        )}
+        {showMenu && <Menu>{menuItems}</Menu>}
+      </StyleSourceContainer>
+    </Tooltip>
   );
 };
