@@ -5,7 +5,7 @@ import {
   Box,
   Flex,
   Grid,
-  DeprecatedText2,
+  Text,
   Button,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -39,13 +39,11 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
       <Box css={{ p: `${theme.spacing[5]} ${theme.spacing[9]}` }}>
         <Grid columns={2} align="center" gap={2}>
           <Box css={{ width: 100 }}>
-            <Filename variant="label">{name}</Filename>
+            <Filename variant="labelsSentenceCase">{name}</Filename>
           </Box>
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <CloudIcon />
-            <DeprecatedText2 variant="label">
-              {prettyBytes(size)}
-            </DeprecatedText2>
+            <Text variant="labelsSentenceCase">{prettyBytes(size)}</Text>
           </Flex>
         </Grid>
       </Box>
@@ -54,15 +52,15 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
           <Grid columns={2} gap={2} align="center">
             <Flex align="center" css={{ gap: theme.spacing[3] }}>
               <SizeIcon />
-              <DeprecatedText2 variant="label">
+              <Text variant="labelsSentenceCase">
                 {meta.width} x {meta.height}
-              </DeprecatedText2>
+              </Text>
             </Flex>{" "}
             <Flex align="center" css={{ gap: theme.spacing[3] }}>
               <AspectRatioIcon />
-              <DeprecatedText2 variant="label">
+              <Text variant="labelsSentenceCase">
                 {getFormattedAspectRatio(meta)}
-              </DeprecatedText2>
+              </Text>
             </Flex>
           </Grid>
         </Box>
