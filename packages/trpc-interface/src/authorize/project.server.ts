@@ -26,6 +26,9 @@ const check = async (context: AppContext, input: CheckInput) => {
       .eq("id", input.id)
       .eq("userId", subjectSet.id)
       .maybeSingle();
+    if (row.error) {
+      throw row.error;
+    }
 
     return { allowed: row.data !== null };
   }
@@ -44,6 +47,9 @@ const check = async (context: AppContext, input: CheckInput) => {
       .eq("token", subjectSet.id)
       .in("relation", [...permitToRelationRewrite[input.permit]])
       .maybeSingle();
+    if (row.error) {
+      throw row.error;
+    }
 
     return { allowed: row.data !== null };
   }
