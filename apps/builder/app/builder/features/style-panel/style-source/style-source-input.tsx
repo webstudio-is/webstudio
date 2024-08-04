@@ -193,49 +193,47 @@ const TextFieldBase: ForwardRefRenderFunction<
           aria-label="New Style Source Input"
         />
       )}
-      {value.map((item) => {
-        return (
-          <StyleSourceControl
-            key={item.id}
-            menuItems={renderStyleSourceMenuItems(item)}
-            id={item.id}
-            selected={item.id === selectedItemSelector?.styleSourceId}
-            state={
-              item.id === selectedItemSelector?.styleSourceId
-                ? selectedItemSelector.state
-                : undefined
-            }
-            stateLabel={
-              item.id === selectedItemSelector?.styleSourceId
-                ? states.find(
-                    (state) => state.selector === selectedItemSelector.state
-                  )?.label
-                : undefined
-            }
-            error={item.id === error?.id ? error : undefined}
-            disabled={item.disabled}
-            isDragging={item.id === dragItemId}
-            isEditing={item.id === editingItemId}
-            source={item.source}
-            onChangeEditing={(isEditing) => {
-              onEditItem?.(isEditing ? item.id : undefined);
-            }}
-            onSelect={() => onSelectItem?.({ styleSourceId: item.id })}
-            onChangeValue={(label) => {
-              onEditItem?.();
-              onChangeItem?.({ ...item, label });
-            }}
-          >
-            {item.source === "local" ? (
-              <Flex align="center" justify="center">
-                <LocalStyleIcon />
-              </Flex>
-            ) : (
-              item.label
-            )}
-          </StyleSourceControl>
-        );
-      })}
+      {value.map((item) => (
+        <StyleSourceControl
+          key={item.id}
+          menuItems={renderStyleSourceMenuItems(item)}
+          id={item.id}
+          selected={item.id === selectedItemSelector?.styleSourceId}
+          state={
+            item.id === selectedItemSelector?.styleSourceId
+              ? selectedItemSelector.state
+              : undefined
+          }
+          stateLabel={
+            item.id === selectedItemSelector?.styleSourceId
+              ? states.find(
+                  (state) => state.selector === selectedItemSelector.state
+                )?.label
+              : undefined
+          }
+          error={item.id === error?.id ? error : undefined}
+          disabled={item.disabled}
+          isDragging={item.id === dragItemId}
+          isEditing={item.id === editingItemId}
+          source={item.source}
+          onChangeEditing={(isEditing) => {
+            onEditItem?.(isEditing ? item.id : undefined);
+          }}
+          onSelect={() => onSelectItem?.({ styleSourceId: item.id })}
+          onChangeValue={(label) => {
+            onEditItem?.();
+            onChangeItem?.({ ...item, label });
+          }}
+        >
+          {item.source === "local" ? (
+            <Flex align="center" justify="center">
+              <LocalStyleIcon />
+            </Flex>
+          ) : (
+            item.label
+          )}
+        </StyleSourceControl>
+      ))}
       {placementIndicator}
     </TextFieldContainer>
   );
