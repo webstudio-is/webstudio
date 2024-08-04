@@ -48,7 +48,7 @@ const matchers = {
 export const getArgType = (propItem: PropItem): PropMeta | undefined => {
   const { type, name, description, defaultValue } = propItem;
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   const makePropMeta = (type: string, control: string, extra?: {}) => {
     let value = defaultValue?.value;
     // react-docgen-typescript incorrectly parse jsdoc default values as strings

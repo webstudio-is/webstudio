@@ -151,7 +151,6 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
       deepestAtTheBottomItemSelector
     );
     let deepestAtTheBottomPosition = indexWithinChildren - 1;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       deepestAtTheBottomParentId = getLastChild(
         deepestAtTheBottomChildren,
