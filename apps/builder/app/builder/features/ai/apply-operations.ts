@@ -35,7 +35,6 @@ export const applyOperations = (operations: operations.WsOperations) => {
         break;
       default:
         if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
           console.warn(`Not supported operation: ${operation}`);
         }
     }

@@ -332,7 +332,6 @@ export const VimeoContext = createContext<{
   onInitPlayer: () => void;
   status: PlayerStatus;
 }>({
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   onInitPlayer: () => {},
   status: "initial",
 });

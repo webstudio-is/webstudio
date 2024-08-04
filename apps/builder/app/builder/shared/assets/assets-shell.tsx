@@ -132,7 +132,6 @@ export const AssetsShell = ({
                 return true;
               }
 
-              // eslint-disable-next-line no-console
               console.warn(
                 `Unsupported file dropped for type=${type}, accept=${accept} and file.type=${file.type}, file.name=${file.name}`
               );

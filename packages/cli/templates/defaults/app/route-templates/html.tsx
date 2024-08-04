@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import {
   type ServerRuntimeMetaFunction as MetaFunction,
   type LinksFunction,
