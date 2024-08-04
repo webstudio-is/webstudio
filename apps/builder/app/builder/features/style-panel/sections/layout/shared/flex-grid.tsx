@@ -1,10 +1,5 @@
 import type { CSSProperties } from "react";
-import {
-  Box,
-  Flex,
-  Grid,
-  DeprecatedIconButton,
-} from "@webstudio-is/design-system";
+import { Box, Flex, Grid, IconButton } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { DotIcon } from "@webstudio-is/icons";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
@@ -124,7 +119,7 @@ export const FlexGrid = ({
               gridRow,
             }}
           >
-            <DeprecatedIconButton
+            <IconButton
               tabIndex={-1}
               css={{
                 width: "100%",
@@ -150,7 +145,7 @@ export const FlexGrid = ({
             >
               {shouldHideDot({ x, y, justifyContent, alignItems }) ===
                 false && <DotIcon />}
-            </DeprecatedIconButton>
+            </IconButton>
           </Flex>
         );
       })}

@@ -1,10 +1,7 @@
-import { Flex, DeprecatedText2 } from "@webstudio-is/design-system";
+import { Flex, Text } from "@webstudio-is/design-system";
 import type { ComponentProps } from "react";
 
-type FilenameProps = Omit<
-  ComponentProps<typeof DeprecatedText2>,
-  "children"
-> & {
+type FilenameProps = Omit<ComponentProps<typeof Text>, "children"> & {
   children: string;
 };
 
@@ -15,10 +12,10 @@ export const Filename = ({ children, ...props }: FilenameProps) => {
 
   return (
     <Flex>
-      <DeprecatedText2 truncate {...props}>
+      <Text truncate {...props}>
         {baseName}
-      </DeprecatedText2>
-      <DeprecatedText2 {...props}>{extension}</DeprecatedText2>
+      </Text>
+      <Text {...props}>{extension}</Text>
     </Flex>
   );
 };

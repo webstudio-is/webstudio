@@ -84,7 +84,4 @@ export * from "./components/primitives/list";
 export * from "./components/kbd";
 
 // Deprecated
-
-export * from "./components/__DEPRECATED__/text2";
-export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export * from "./components/__DEPRECATED__/list";
