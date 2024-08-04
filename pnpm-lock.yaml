@@ -191,11 +191,11 @@ importers:
         specifier: ^2.10.3
         version: 2.10.3(typescript@5.5.2)
       '@trpc/client':
-        specifier: ^10.38.1
-        version: 10.38.1(@trpc/server@10.38.1)
+        specifier: ^10.45.2
+        version: 10.45.2(@trpc/server@10.45.2)
       '@trpc/server':
-        specifier: ^10.38.1
-        version: 10.38.1
+        specifier: ^10.45.2
+        version: 10.45.2
       '@vercel/remix':
         specifier: 2.10.2
         version: 2.10.2(@remix-run/dev@2.10.3(@remix-run/react@2.10.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.10.3(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.3.4(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.10.3(typescript@5.5.2))(@remix-run/server-runtime@2.10.3(typescript@5.5.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -1653,8 +1653,8 @@ importers:
   packages/project:
     dependencies:
       '@trpc/server':
-        specifier: ^10.38.1
-        version: 10.38.1
+        specifier: ^10.45.2
+        version: 10.45.2
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
         version: link:../asset-uploader
@@ -2024,14 +2024,11 @@ importers:
   packages/trpc-interface:
     dependencies:
       '@trpc/client':
-        specifier: ^10.38.1
-        version: 10.38.1(@trpc/server@10.38.1)
+        specifier: ^10.45.2
+        version: 10.45.2(@trpc/server@10.45.2)
       '@trpc/server':
-        specifier: ^10.38.1
-        version: 10.38.1
-      '@webstudio-is/prisma-client':
-        specifier: workspace:*
-        version: link:../prisma-client
+        specifier: ^10.45.2
+        version: 10.45.2
       memoize:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5323,13 +5320,13 @@ packages:
     resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}
     engines: {node: '>= 10'}
 
-  '@trpc/client@10.38.1':
-    resolution: {integrity: sha512-kY7ZV7Eco5SeFIGJX6OBg7AAKkiMt5+1N+GC7N1lTZszrw95ZiNgtkZ5TI6+Un4O+RqrOcqqast6MeExCoyZhQ==}
+  '@trpc/client@10.45.2':
+    resolution: {integrity: sha512-ykALM5kYWTLn1zYuUOZ2cPWlVfrXhc18HzBDyRhoPYN0jey4iQHEFSEowfnhg1RvYnrAVjNBgHNeSAXjrDbGwg==}
     peerDependencies:
-      '@trpc/server': 10.38.1
+      '@trpc/server': 10.45.2
 
-  '@trpc/server@10.38.1':
-    resolution: {integrity: sha512-59mM0Jk3cnWBExSv4Z4cw/776MPwa+rcVNywnV5gyHyK/p5qHtis1b1JPYdTEQZ0zhR+6zeto14rTR51hg+Nuw==}
+  '@trpc/server@10.45.2':
+    resolution: {integrity: sha512-wOrSThNNE4HUnuhJG6PfDRp4L2009KDVxsd+2VYH8ro6o/7/jwYZ8Uu5j+VaW+mOmc8EHerHzGcdbGNQSAUPgg==}
 
   '@trysound/sax@0.2.0':
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
@@ -13607,11 +13604,11 @@ snapshots:
 
   '@tootallnate/once@2.0.0': {}
 
-  '@trpc/client@10.38.1(@trpc/server@10.38.1)':
+  '@trpc/client@10.45.2(@trpc/server@10.45.2)':
     dependencies:
-      '@trpc/server': 10.38.1
+      '@trpc/server': 10.45.2
 
-  '@trpc/server@10.38.1': {}
+  '@trpc/server@10.45.2': {}
 
   '@trysound/sax@0.2.0': {}
 
