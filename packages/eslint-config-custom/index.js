@@ -19,7 +19,7 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "unicorn"],
   rules: {
-    "no-console": ["error", { allow: ["info", "error"] }],
+    "no-console": ["error", { allow: ["info", "error", "warn"] }],
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "func-style": ["error", "expression", { allowArrowFunctions: true }],

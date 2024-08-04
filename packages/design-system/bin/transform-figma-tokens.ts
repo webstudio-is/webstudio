@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { camelCase } from "change-case";

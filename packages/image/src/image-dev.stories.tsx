@@ -7,7 +7,7 @@ import { Image as ImagePrimitive, createImageLoader } from "./";
 // to not allow include local assets everywhere, just enable it for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import localLogoImage from "../storybook-assets/logo.webp"; // eslint-disable-line
+import localLogoImage from "../storybook-assets/logo.webp";
 
 export default {
   title: "Components/ImageDev",

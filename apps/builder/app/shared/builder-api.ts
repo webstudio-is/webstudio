@@ -63,7 +63,6 @@ export const builderApi = createRecursiveProxy((options) => {
       return false;
     }
 
-    // eslint-disable-next-line no-console
     console.warn(
       `API not found in the iframe, skipping ${options.path.join(".")} call, iframe probably not loaded yet`
     );

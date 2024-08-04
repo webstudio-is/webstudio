@@ -54,7 +54,6 @@ export const getTokenPermissions = async (
 ): Promise<TokenPermissions> => {
   const dbToken = await prisma.authorizationToken.findUnique({
     where: {
-      // eslint-disable-next-line camelcase
       token_projectId: {
         projectId: props.projectId,
         token: props.token,
@@ -132,7 +131,6 @@ export const update = async (
 
   const previousToken = await prisma.authorizationToken.findUnique({
     where: {
-      // eslint-disable-next-line camelcase
       token_projectId: {
         projectId,
         token: props.token,
@@ -146,7 +144,6 @@ export const update = async (
 
   const dbToken = await prisma.authorizationToken.update({
     where: {
-      // eslint-disable-next-line camelcase
       token_projectId: {
         projectId: projectId,
         token: props.token,
@@ -184,7 +181,6 @@ export const remove = async (
 
   const dbToken = await prisma.authorizationToken.delete({
     where: {
-      // eslint-disable-next-line camelcase
       token_projectId: {
         projectId: props.projectId,
         token: props.token,
