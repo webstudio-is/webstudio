@@ -12,7 +12,6 @@ const contentStyle = css({
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
   background: theme.colors.backgroundMenu,
   borderRadius: theme.borderRadius[6],
-  padding: `${theme.spacing[5]} 0`,
   display: "flex",
   flexDirection: "column",
   maxWidth: "max-content",
@@ -84,6 +83,4 @@ export const PopoverMenuItemRightSlot = styled("span", {
   display: "flex",
 });
 
-export const PopoverSeparator = styled(Separator, {
-  margin: `${theme.spacing[5]} 0`,
-});
+export const PopoverSeparator = styled(Separator);

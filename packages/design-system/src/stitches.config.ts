@@ -79,7 +79,7 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         4: "6px",
         5: "8px",
         6: "10px",
-        7: 12,
+        7: "12px",
         8: "14px",
         9: "16px",
         10: "20px",
