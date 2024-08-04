@@ -11,6 +11,7 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
+import type { StyleSource } from "@webstudio-is/sdk";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
@@ -254,10 +255,13 @@ const errors = {
   duplicate: "Token already exists",
 } as const;
 
-export type StyleSourceError = { name: keyof typeof errors; id: string };
+export type StyleSourceError = {
+  type: keyof typeof errors;
+  id: StyleSource["id"];
+};
 
 type StyleSourceControlProps = {
-  id: string;
+  id: StyleSource["id"];
   error?: StyleSourceError;
   children: ReactNode;
   menuItems: ReactNode;
