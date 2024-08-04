@@ -297,7 +297,7 @@ export const StyleSourceControl = ({
 
   return (
     <Tooltip
-      content={error ? errors[error.name] : ""}
+      content={error ? errors[error.type] : ""}
       open={error !== undefined}
     >
       <StyleSourceContainer

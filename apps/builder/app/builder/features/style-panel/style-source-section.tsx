@@ -373,7 +373,7 @@ const renameStyleSource = (
 ): StyleSourceError | undefined => {
   const styleSources = $styleSources.get();
   if (name.trim().length === 0) {
-    return { name: "minlength", id };
+    return { type: "minlength", id };
   }
   for (const styleSource of styleSources.values()) {
     if (
@@ -381,7 +381,7 @@ const renameStyleSource = (
       styleSource.name === name &&
       styleSource.id !== id
     ) {
-      return { name: "duplicate", id };
+      return { type: "duplicate", id };
     }
   }
   serverSyncStore.createTransaction([$styleSources], (styleSources) => {
