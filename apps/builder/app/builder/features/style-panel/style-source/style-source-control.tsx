@@ -153,7 +153,10 @@ const StyleSourceContainer = styled(Box, {
   borderRadius: theme.borderRadius[3],
   minWidth: theme.spacing[14],
   maxWidth: "100%",
+  height: theme.spacing[10],
   position: "relative",
+  overflow: "hidden",
+  alignItems: "center",
   color: theme.colors.foregroundContrastMain,
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
@@ -302,7 +305,7 @@ export const StyleSourceControl = ({
         role="button"
         hasError={error !== undefined}
       >
-        <Flex css={{ flexGrow: 1, py: theme.spacing[2], px: theme.spacing[3] }}>
+        <Flex grow css={{ py: theme.spacing[2], px: theme.spacing[3] }}>
           <StyleSourceButton
             disabled={disabled || isEditing}
             isEditing={isEditing}
@@ -322,9 +325,7 @@ export const StyleSourceControl = ({
           </StyleSourceButton>
         </Flex>
         {stateLabel !== undefined && (
-          <StyleSourceState source={source} css={{ lineHeight: 1 }}>
-            {stateLabel}
-          </StyleSourceState>
+          <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
         )}
         {showMenu && <Menu>{menuItems}</Menu>}
       </StyleSourceContainer>
