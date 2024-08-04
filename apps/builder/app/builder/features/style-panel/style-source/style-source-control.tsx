@@ -253,7 +253,7 @@ const errors = {
 
 export type StyleSourceError = { name: keyof typeof errors; id: string };
 
-type StyleSourceProps = {
+type StyleSourceControlProps = {
   id: string;
   error?: StyleSourceError;
   children: ReactNode;
@@ -270,7 +270,7 @@ type StyleSourceProps = {
   onChangeEditing: (isEditing: boolean) => void;
 };
 
-export const StyleSource = ({
+export const StyleSourceControl = ({
   id,
   menuItems,
   selected,
@@ -285,7 +285,7 @@ export const StyleSource = ({
   onChangeValue,
   onChangeEditing,
   onSelect,
-}: StyleSourceProps) => {
+}: StyleSourceControlProps) => {
   const showMenu = isEditing === false && isDragging === false;
 
   return (

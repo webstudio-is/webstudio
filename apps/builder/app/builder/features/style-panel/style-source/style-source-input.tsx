@@ -51,8 +51,8 @@ import {
   type ItemSource,
   type StyleSourceError,
   menuCssVars,
-  StyleSource,
-} from "./style-source";
+  StyleSourceControl,
+} from "./style-source-control";
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
@@ -195,7 +195,7 @@ const TextFieldBase: ForwardRefRenderFunction<
       )}
       {value.map((item) => {
         return (
-          <StyleSource
+          <StyleSourceControl
             key={item.id}
             menuItems={renderStyleSourceMenuItems(item)}
             id={item.id}
@@ -233,7 +233,7 @@ const TextFieldBase: ForwardRefRenderFunction<
             ) : (
               item.label
             )}
-          </StyleSource>
+          </StyleSourceControl>
         );
       })}
       {placementIndicator}
