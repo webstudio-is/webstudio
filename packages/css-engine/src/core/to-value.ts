@@ -55,6 +55,15 @@ export const toValue = (
   }
 
   if (value.type === "keyword") {
+    // The hidden property is used to hide values in the builder
+    // But we can't use none here like its done for image.
+    // As none is not valid in all cases.
+    // Eg: backface-visibility
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/backface-visibility#syntax
+    if (value.hidden === true) {
+      return "";
+    }
+
     return value.value;
   }
 
