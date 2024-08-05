@@ -43,7 +43,7 @@ jobs:
 
       - run: pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
 
-      - run: pnpm eslint . --ext .ts,.tsx --max-warnings 0 --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
+      - run: pnpm lint --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
 
       - run: pnpm -r test
       - run: pnpm --filter=@webstudio-is/prisma-client build
