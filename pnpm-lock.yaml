@@ -952,9 +952,9 @@ importers:
 
   packages/authorization-token:
     dependencies:
-      '@webstudio-is/prisma-client':
+      '@webstudio-is/postrest':
         specifier: workspace:*
-        version: link:../prisma-client
+        version: link:../postgrest
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
@@ -1606,8 +1606,8 @@ importers:
   packages/postgrest:
     dependencies:
       '@supabase/postgrest-js':
-        specifier: ^1.15.8
-        version: 1.15.8
+        specifier: ^1.16.0
+        version: 1.16.0
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -5137,8 +5137,8 @@ packages:
     resolution: {integrity: sha512-1ibVeYUacxWYi9i0cf5efil6adJ9WRyZBLivgjs+AUpewx1F3xPi7gLgaASI2SmIQxPoCEjAsLAzKPgMJVgOUQ==}
     engines: {node: 4.x || >=6.0.0}
 
-  '@supabase/postgrest-js@1.15.8':
-    resolution: {integrity: sha512-YunjXpoQjQ0a0/7vGAvGZA2dlMABXFdVI/8TuVKtlePxyT71sl6ERl6ay1fmIeZcqxiuFQuZw/LXUuStUG9bbg==}
+  '@supabase/postgrest-js@1.16.0':
+    resolution: {integrity: sha512-HQkldynOiKQMwD7ZhRsXyt777hE26YQ2UANx7SKux+io4VzMwC5DxwxKZwp7ceI4qAJ28DsuRx2HqCGJfjZTiw==}
 
   '@svgo/jsx@0.4.2':
     resolution: {integrity: sha512-0e4B41q+GnS8TI+SWHQw78ziW6V07Li2TMLS8FwbvKOTIJL0ua1Sat1AI0AFAjHlAePz9b+1VtyJzv1516edJw==}
@@ -13340,7 +13340,7 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
-  '@supabase/postgrest-js@1.15.8':
+  '@supabase/postgrest-js@1.16.0':
     dependencies:
       '@supabase/node-fetch': 2.6.15
 
