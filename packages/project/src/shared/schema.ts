@@ -43,6 +43,15 @@ export const Project = z.object({
       })
       .nullable()
   ),
+  latestStaticBuild: z.optional(
+    z
+      .object({
+        buildId: z.string(),
+        publishStatus: z.enum(["PENDING", "PUBLISHED", "FAILED"]),
+        updatedAt: z.date().transform((date) => date.toISOString()),
+      })
+      .nullable()
+  ),
   marketplaceApprovalStatus: MarketplaceApprovalStatus,
 });
 

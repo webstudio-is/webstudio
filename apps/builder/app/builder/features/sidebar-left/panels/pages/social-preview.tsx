@@ -15,7 +15,7 @@ const imgStyle = css({
   borderTopLeftRadius: theme.borderRadius[4],
   borderTopRightRadius: theme.borderRadius[4],
   width: "100%",
-  aspectRatio: "1.91 / 1",
+  aspectRatio: "1.91",
   background: "#DFE3E6",
   borderBottom: `1px solid ${theme.colors.borderMain}`,
   variants: {
@@ -51,7 +51,8 @@ export const SocialPreview = ({
           src={ogImageUrl}
           loader={imageLoader}
           className={imgStyle({
-            hasImage: ogImageUrl !== undefined ? true : undefined,
+            hasImage:
+              ogImageUrl === undefined || ogImageUrl === "" ? false : true,
           })}
         />
 

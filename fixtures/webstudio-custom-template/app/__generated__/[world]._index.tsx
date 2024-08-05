@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-import { useResource } from "@webstudio-is/react-sdk";
+import { useResource } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
@@ -17,7 +17,7 @@ export const favIconAsset: ImageAsset | undefined = {
   size: 3350,
   type: "image",
   format: "svg",
-  createdAt: "2023-10-30T20:35:47.113Z",
+  createdAt: "2023-10-30T20:35:47.113",
   meta: { width: 16, height: 16 },
 };
 
@@ -28,18 +28,8 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body
-      data-ws-id="jDb2FuSK2-azIZxkH5XNv"
-      data-ws-component="Body"
-      className="w-body"
-    >
-      <Heading
-        data-ws-id="D7kQxgXxrjei-MS_KzUa2"
-        data-ws-component="Heading"
-        className="w-heading"
-      >
-        {"Привет Мир"}
-      </Heading>
+    <Body className="w-body">
+      <Heading className="w-heading">{"Привет Мир"}</Heading>
     </Body>
   );
 };

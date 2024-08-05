@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useOptimistic,
+  useTransition,
+} from "react";
 import { useStore } from "@nanostores/react";
 import {
   Button,
@@ -25,6 +32,7 @@ import {
   Link,
   PanelBanner,
   buttonStyle,
+  toast,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
 import {
@@ -49,7 +57,10 @@ import {
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
-import { trpcClient } from "~/shared/trpc/trpc-client";
+import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import type { Templates } from "@webstudio-is/sdk";
+import { formatDistance } from "date-fns/formatDistance";
 
 type ProjectData =
   | {
@@ -326,6 +337,7 @@ const Publish = ({
                 domains: domainsToPublish.map(
                   (projectDomain) => projectDomain.domain.domain
                 ),
+                destination: "saas",
               },
               () => {
                 refresh();
@@ -334,6 +346,186 @@ const Publish = ({
           }}
         >
           Publish
+        </Button>
+      </Tooltip>
+    </Flex>
+  );
+};
+
+const getStaticPublishStatusAndText = ({
+  updatedAt,
+  publishStatus,
+}: Pick<NonNullable<Domain["latestBuid"]>, "updatedAt" | "publishStatus">) => {
+  let status = publishStatus;
+
+  const delta = Date.now() - new Date(updatedAt).getTime();
+  // Assume build failed after 3 minutes
+
+  if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
+    status = "FAILED";
+  }
+
+  const textStart =
+    status === "PUBLISHED"
+      ? "Downloaded"
+      : status === "FAILED"
+        ? "Download failed"
+        : "Download started";
+
+  const statusText = `${textStart} ${formatDistance(
+    new Date(updatedAt),
+    new Date(),
+    {
+      addSuffix: true,
+    }
+  )}`;
+
+  return { statusText, status };
+};
+
+const fetchProjectDataStatus = async (projectId: Project["id"]) => {
+  const projectData = await nativeClient.domain.project.query({
+    projectId,
+  });
+
+  if (projectData.success === false) {
+    throw new Error(projectData.error);
+  }
+
+  if (projectData.project.latestStaticBuild == null) {
+    return {
+      status: "LOADED" as const,
+      statusText: "Not published",
+    };
+  }
+
+  const { status, statusText } = getStaticPublishStatusAndText(
+    projectData.project.latestStaticBuild
+  );
+
+  return { status, statusText };
+};
+
+type StaticProjectStatus =
+  | Awaited<ReturnType<typeof fetchProjectDataStatus>>
+  | { status: "INITIAL"; statusText: string };
+
+const PublishStatic = ({
+  projectId,
+  templates,
+}: {
+  projectId: Project["id"];
+  templates: readonly Templates[];
+}) => {
+  const [_, startTransition] = useTransition();
+
+  const [projectDataStatus, setProjectDataStatus] =
+    useState<StaticProjectStatus>({
+      status: "INITIAL",
+      statusText: "Loading",
+    });
+
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const projectDataStatus = await fetchProjectDataStatus(projectId);
+        setProjectDataStatus(projectDataStatus);
+      } catch (e) {
+        setProjectDataStatus({
+          status: "FAILED",
+          statusText: e instanceof Error ? e.message : "Unknown error",
+        });
+      }
+    });
+  }, [projectId]);
+
+  const [optimisticPendingStatus, setOptimisticPendingStatus] = useOptimistic(
+    projectDataStatus,
+    (_currentState, optimisticValue: StaticProjectStatus) => {
+      return optimisticValue;
+    }
+  );
+
+  const isPublishInProgress =
+    optimisticPendingStatus.status === "PENDING" ||
+    optimisticPendingStatus.status === "INITIAL";
+
+  return (
+    <Flex gap={2} shrink={false} direction={"column"}>
+      {optimisticPendingStatus.status === "FAILED" && (
+        <Text color="destructive">{optimisticPendingStatus.statusText}</Text>
+      )}
+
+      <Tooltip
+        content={isPublishInProgress ? "Preparing static site" : undefined}
+      >
+        <Button
+          color="positive"
+          state={isPublishInProgress ? "pending" : undefined}
+          onClick={() => {
+            startTransition(async () => {
+              try {
+                setOptimisticPendingStatus({
+                  status: "PENDING",
+                  statusText: "Publishing",
+                });
+
+                const result = await nativeClient.domain.publish.mutate({
+                  projectId,
+                  destination: "static",
+                  templates: [...templates],
+                });
+
+                if (result.success === false) {
+                  toast.error(result.error);
+                  return;
+                }
+
+                const name = "name" in result ? result.name : undefined;
+
+                if (name == null) {
+                  toast.error('File name must be defined in "result"');
+                  return;
+                }
+
+                const timeout = 10000;
+
+                // Repeat few more times than timeout
+                const repeat = PENDING_TIMEOUT / timeout + 5;
+
+                let projectDataStatus: StaticProjectStatus | undefined;
+
+                for (let i = 0; i !== repeat; i++) {
+                  await new Promise((resolve) => setTimeout(resolve, timeout));
+
+                  projectDataStatus = await fetchProjectDataStatus(projectId);
+
+                  if (projectDataStatus.status !== "PENDING") {
+                    break;
+                  }
+                }
+
+                if (projectDataStatus == null) {
+                  return;
+                }
+
+                setProjectDataStatus(projectDataStatus);
+
+                if (projectDataStatus.status === "FAILED") {
+                  // Report if Export failed
+                  toast.error(projectDataStatus.statusText);
+                }
+
+                if (projectDataStatus.status === "PUBLISHED") {
+                  window.location.href = `/cgi/static/ssg/${name}`;
+                }
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Unknown error");
+              }
+            });
+          }}
+        >
+          Build and download static site
         </Button>
       </Tooltip>
     </Flex>
@@ -360,6 +552,11 @@ const useCanAddDomain = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  if (data?.success === false) {
+    return { canAddDomain: false, maxDomainsAllowedPerUser };
+  }
+
   const withinFreeLimit = data
     ? data.success && data.data < maxDomainsAllowedPerUser
     : true;
@@ -372,6 +569,7 @@ const Content = (props: {
   onExportClick: () => void;
 }) => {
   const [newDomains, setNewDomains] = useState(new Set<string>());
+
   const {
     data: domainsResult,
     load: domainRefresh,
@@ -487,11 +685,9 @@ const Content = (props: {
           <ErrorText>{domainsResult.error}</ErrorText>
         )}
       </ScrollArea>
-
       <Flex direction="column" justify="end" css={{ height: 0 }}>
         <Separator />
       </Flex>
-
       <AddDomain
         projectId={props.projectId}
         refreshDomainResult={domainRefresh}
@@ -504,8 +700,7 @@ const Content = (props: {
         isPublishing={isPublishing}
         onExportClick={props.onExportClick}
       />
-
-      {projectData?.success === true ? (
+      {projectData?.success === true && (
         <Publish
           project={projectData.project}
           domainsToPublish={domainsToPublish}
@@ -516,7 +711,8 @@ const Content = (props: {
           isPublishing={isPublishing}
           setIsPublishing={setIsPublishing}
         />
-      ) : (
+      )}
+      {projectData?.success !== true && (
         <Box css={{ height: theme.spacing[8] }} />
       )}
     </>
@@ -524,9 +720,18 @@ const Content = (props: {
 };
 
 const deployTargets = {
+  vanilla: {
+    command: `
+      npm install
+      npm run dev
+    `,
+    docs: "https://remix.run/",
+    ssgTemplates: ["ssg"],
+  },
   vercel: {
     command: "npx vercel@latest",
     docs: "https://vercel.com/docs/cli",
+    ssgTemplates: ["ssg-vercel"],
   },
   netlify: {
     command: `
@@ -535,6 +740,7 @@ npx netlify-cli sites:create
 npx netlify-cli build
 npx netlify-cli deploy`,
     docs: "https://docs.netlify.com/cli/get-started/",
+    ssgTemplates: ["ssg-netlify"],
   },
 } as const;
 
@@ -543,9 +749,9 @@ type DeployTargets = keyof typeof deployTargets;
 const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
-const ExportContent = () => {
+const ExportContent = (props: { projectId: Project["id"] }) => {
   const npxCommand = "npx webstudio@latest";
-  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vanilla");
 
   return (
     <Grid
@@ -556,7 +762,64 @@ const ExportContent = () => {
         marginTop: theme.spacing[5],
       }}
     >
+      <Grid columns={1} gap={2}>
+        <div />
+        <Grid columns={2} gap={2} align={"center"}>
+          <Text color="main" variant="labelsTitleCase">
+            Destination
+          </Text>
+
+          <Select
+            fullWidth
+            value={deployTarget}
+            options={Object.keys(deployTargets)}
+            getLabel={(value) => humanizeString(value)}
+            onChange={(value) => {
+              if (isDeployTargets(value)) {
+                setDeployTarget(value);
+              }
+            }}
+          />
+        </Grid>
+      </Grid>
+
       <Grid columns={1} gap={1}>
+        {isFeatureEnabled("staticExport") && (
+          <>
+            <PublishStatic
+              projectId={props.projectId}
+              templates={deployTargets[deployTarget].ssgTemplates}
+            />
+            <div />
+            <Text color="subtle">
+              Learn about deploying static sites{" "}
+              <Link
+                variant="inherit"
+                color="inherit"
+                href="https://wstd.us/ssg"
+                target="_blank"
+                rel="noreferrer"
+              >
+                here
+              </Link>
+            </Text>
+
+            <div />
+            <div />
+            <Grid
+              gap={2}
+              align={"center"}
+              css={{
+                gridTemplateColumns: `1fr auto 1fr`,
+              }}
+            >
+              <Separator css={{ alignSelf: "unset" }} />
+              <Text color="main">CLI</Text>
+              <Separator css={{ alignSelf: "unset" }} />
+            </Grid>
+          </>
+        )}
+
         <Text color="main" variant="labelsTitleCase">
           Step 1
         </Text>
@@ -636,18 +899,6 @@ const ExportContent = () => {
           </Text>
         </Grid>
 
-        <Select
-          fullWidth
-          value={deployTarget}
-          options={Object.keys(deployTargets)}
-          getLabel={(value) => humanizeString(value)}
-          onChange={(value) => {
-            if (isDeployTargets(value)) {
-              setDeployTarget(value);
-            }
-          }}
-        />
-
         <Flex gap={2} align="end">
           <TextArea
             css={{ flex: 1 }}
@@ -679,7 +930,7 @@ const ExportContent = () => {
           <Link
             variant="inherit"
             color="inherit"
-            href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
+            href="https://wstd.us/cli"
             target="_blank"
             rel="noreferrer"
           >
@@ -750,7 +1001,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
         {dialogContentType === "export" && (
           <>
             <FloatingPanelPopoverTitle>Export</FloatingPanelPopoverTitle>
-            <ExportContent />
+            <ExportContent projectId={projectId} />
           </>
         )}
 

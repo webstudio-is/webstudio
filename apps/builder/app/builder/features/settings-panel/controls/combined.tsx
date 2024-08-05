@@ -210,6 +210,12 @@ export const renderControl = ({
       );
     }
 
+    if (prop.type === "resource") {
+      throw new Error(
+        `Cannot render a fallback control for prop "${rest.propName}" with type resource`
+      );
+    }
+
     prop satisfies never;
   }
 

@@ -3,14 +3,8 @@ import { Label as Label } from "../components";
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Label
-        data-ws-id="1"
-        data-ws-component="Label"
-        className="w-label w-label-1"
-      >
-        {"Form Label"}
-      </Label>
+    <Box className="w-box">
+      <Label className="w-label w-label-1">{"Form Label"}</Label>
     </Box>
   );
 };

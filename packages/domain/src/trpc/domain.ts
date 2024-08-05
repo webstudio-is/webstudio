@@ -4,6 +4,8 @@ import { db as projectDb } from "@webstudio-is/project/index.server";
 import { db } from "../db";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
+import { nanoid } from "nanoid";
+import { Templates } from "@webstudio-is/sdk";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -41,37 +43,93 @@ export const domainRouter = router({
       }
     }),
   publish: procedure
-    .input(z.object({ projectId: z.string(), domains: z.array(z.string()) }))
+    .input(
+      z.discriminatedUnion("destination", [
+        z.object({
+          projectId: z.string(),
+          domains: z.array(z.string()),
+          destination: z.literal("saas"),
+        }),
+        z.object({
+          projectId: z.string(),
+          destination: z.literal("static"),
+          templates: z.array(Templates),
+        }),
+      ])
+    )
     .mutation(async ({ input, ctx }) => {
       try {
         const project = await projectDb.project.loadById(input.projectId, ctx);
 
+        const name = `${project.id}-${nanoid()}.zip`;
+
+        let domains: string[] = [];
+
+        if (input.destination === "saas") {
+          const currentProjectDomainsResult = await db.findMany(
+            { projectId: input.projectId },
+            ctx
+          );
+
+          if (currentProjectDomainsResult.success === false) {
+            throw new Error(currentProjectDomainsResult.error);
+          }
+
+          const currentProjectDomains = currentProjectDomainsResult.data;
+
+          domains = input.domains.filter((domain) =>
+            currentProjectDomains.some(
+              (projectDomain) =>
+                projectDomain.domain.domain === domain &&
+                projectDomain.domain.status === "ACTIVE" &&
+                projectDomain.verified
+            )
+          );
+        }
+
         const build = await createProductionBuild(
           {
             projectId: input.projectId,
-            deployment: {
-              domains: input.domains,
-              projectDomain: project.domain,
-            },
+            deployment:
+              input.destination === "saas"
+                ? {
+                    destination: input.destination,
+                    domains: domains,
+                    projectDomain: project.domain,
+                  }
+                : {
+                    destination: input.destination,
+                    name,
+                    assetsDomain: project.domain,
+                    templates: input.templates,
+                  },
           },
           ctx
         );
 
         const { deploymentTrpc, env } = ctx.deployment;
 
-        const result = deploymentTrpc.publish.mutate({
+        console.info("input.destination", input.destination);
+
+        const result = await deploymentTrpc.publish.mutate({
           // used to load build data from the builder see routes/rest.build.$buildId.ts
           builderOrigin: env.BUILDER_ORIGIN,
           githubSha: env.GITHUB_SHA,
           buildId: build.id,
           // preview support
           branchName: env.GITHUB_REF_NAME,
+          destination: input.destination,
           // action log helper (not used for deployment, but for action logs readablity)
           projectDomainName: project.domain,
         });
 
+        if (input.destination === "static" && result.success) {
+          return { success: true as const, name };
+        }
+
         return result;
       } catch (error) {
+        console.error(error);
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
@@ -206,10 +264,10 @@ export const domainRouter = router({
 
   countTotalDomains: procedure.query(async ({ ctx }) => {
     try {
-      if (ctx.authorization.userId === undefined) {
+      if (ctx.authorization.ownerId === undefined) {
         throw new Error("Not authorized");
       }
-      const data = await db.countTotalDomains(ctx.authorization.userId);
+      const data = await db.countTotalDomains(ctx.authorization.ownerId);
       return { success: true, data } as const;
     } catch (error) {
       return {

@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-import { useResource } from "@webstudio-is/react-sdk";
+import { useResource } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Box as Box,
@@ -20,7 +20,7 @@ export const favIconAsset: ImageAsset | undefined = {
   size: 268326,
   type: "image",
   format: "png",
-  createdAt: "2023-10-30T13:51:08.416Z",
+  createdAt: "2023-10-30T13:51:08.416",
   meta: { width: 790, height: 786 },
 };
 
@@ -32,24 +32,11 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 const Page = ({}: { system: any }) => {
   let list = useResource("list_1");
   return (
-    <Body
-      data-ws-id="AWY2qZfpbykoiWELeJhse"
-      data-ws-component="Body"
-      className="w-body"
-    >
+    <Body className="w-body">
       {list?.data?.map((collectionItem: any, index: number) => (
         <Fragment key={index}>
-          <Box
-            data-ws-id="-F-b3eIEZ8WKW_F-Aw8nN"
-            data-ws-component="Box"
-            className="w-box"
-          >
-            <HtmlEmbed
-              data-ws-id="05oK4Ks0ocFv3w8MJOcNR"
-              data-ws-component="HtmlEmbed"
-              code={collectionItem?.name}
-              className="w-html-embed"
-            />
+          <Box className="w-box">
+            <HtmlEmbed code={collectionItem?.name} className="w-html-embed" />
           </Box>
         </Fragment>
       ))}

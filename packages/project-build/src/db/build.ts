@@ -1,7 +1,7 @@
 /* eslint no-console: ["error", { allow: ["time", "timeEnd"] }] */
 
 import { nanoid } from "nanoid";
-import { prisma, Prisma } from "@webstudio-is/prisma-client";
+import type { Database } from "@webstudio-is/postrest/index.server";
 import {
   AuthorizationError,
   authorizeProject,
@@ -22,12 +22,10 @@ import type { Data } from "@webstudio-is/http-client";
 import type { Build } from "../types";
 import { parseStyles } from "./styles";
 import { parseStyleSourceSelections } from "./style-source-selections";
-import { parseDeployment, serializeDeployment } from "./deployment";
+import { parseDeployment } from "./deployment";
 import { parsePages, serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
-import type { MarketplaceProduct } from "..";
-import { z } from "zod";
-import type { Database } from "@webstudio-is/postrest/index.server";
+import type { MarketplaceProduct } from "../shared//marketplace";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -152,32 +150,36 @@ export const loadBuildByProjectId = async (
 };
 
 export const loadApprovedProdBuildByProjectId = async (
+  context: AppContext,
   projectId: Build["projectId"]
 ): Promise<Build> => {
-  const projectData = await prisma.project.findUnique({
-    where: {
-      marketplaceApprovalStatus: "APPROVED",
-      id_isDeleted: { id: projectId, isDeleted: false },
-    },
-    select: {
-      latestBuild: {
-        select: {
-          build: true,
-        },
-      },
-    },
-  });
-
-  const build = projectData?.latestBuild?.build;
-  if (build === undefined) {
-    throw new Error("Prod build not found");
+  const latestBuild = await context.postgrest.client
+    .from("LatestBuildPerProject")
+    .select(
+      `
+        buildId,
+        project:Project!inner (id)
+      `
+    )
+    .eq("projectId", projectId)
+    .eq("project.isDeleted", false)
+    .eq("project.marketplaceApprovalStatus", "APPROVED")
+    .single();
+  if (latestBuild.error) {
+    throw latestBuild.error;
   }
-
-  return parseBuild({
-    ...build,
-    createdAt: build.createdAt.toISOString(),
-    updatedAt: build.updatedAt.toISOString(),
-  });
+  if (latestBuild.data.buildId === null) {
+    throw Error("Build not found");
+  }
+  const build = await context.postgrest.client
+    .from("Build")
+    .select()
+    .eq("id", latestBuild.data.buildId)
+    .single();
+  if (build.error) {
+    throw build.error;
+  }
+  return parseBuild(build.data);
 };
 
 const createNewPageInstances = (): Build["instances"] => {
@@ -218,17 +220,8 @@ export const createBuild = async (
   props: {
     projectId: Build["projectId"];
   },
-  _context: AppContext,
-  client: Prisma.TransactionClient
+  context: AppContext
 ): Promise<void> => {
-  const count = await client.build.count({
-    where: { projectId: props.projectId, deployment: null },
-  });
-
-  if (count > 0) {
-    throw new Error("Dev build already exists");
-  }
-
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
   const systemDataSource: DataSource = {
@@ -245,72 +238,19 @@ export const createBuild = async (
     })
   );
 
-  await client.build.create({
-    data: {
-      projectId: props.projectId,
-      pages: serializePages(defaultPages),
-      breakpoints: serializeData<Breakpoint>(
-        new Map(createInitialBreakpoints())
-      ),
-      instances: serializeData<Instance>(new Map(newInstances)),
-      dataSources: serializeData<DataSource>(
-        new Map([[systemDataSource.id, systemDataSource]])
-      ),
-    },
+  const newBuild = await context.postgrest.client.from("Build").insert({
+    id: crypto.randomUUID(),
+    projectId: props.projectId,
+    pages: serializePages(defaultPages),
+    breakpoints: serializeData<Breakpoint>(new Map(createInitialBreakpoints())),
+    instances: serializeData<Instance>(new Map(newInstances)),
+    dataSources: serializeData<DataSource>(
+      new Map([[systemDataSource.id, systemDataSource]])
+    ),
   });
-};
-
-const zBuildCloneResult = z
-  .array(z.object({ id: z.string() }))
-  .length(1)
-  .transform((result) => result[0]);
-
-const cloneBuild = async (
-  props: {
-    fromProjectId: Build["projectId"];
-    toProjectId: Build["projectId"];
-    deployment: Deployment | undefined;
-  },
-  _context: AppContext,
-  client: Prisma.TransactionClient
-): Promise<{ id: string }> => {
-  const deployment = props.deployment
-    ? serializeDeployment(props.deployment)
-    : null;
-
-  const notCopiedFields = [
-    "id",
-    "createdAt",
-    "updatedAt",
-    "deployment",
-    "projectId",
-  ];
-  const fieldsToCopy = Object.keys(client.build.fields)
-    .filter((field) => notCopiedFields.includes(field) === false)
-    .map((field) => `"${field}"`)
-    .join(", ");
-
-  const selectQuery = Prisma.sql`
-    SELECT ${Prisma.raw(
-      fieldsToCopy
-    )}, uuid_generate_v4() as id, ${deployment} as deployment, ${
-      props.toProjectId
-    } as "projectId"
-    FROM "Build"
-    WHERE "projectId" = ${props.fromProjectId} AND "deployment" IS NULL`;
-
-  const insertQuery = Prisma.sql`
-    INSERT INTO "Build"(${Prisma.raw(
-      fieldsToCopy
-    )}, "id", "deployment", "projectId")
-    ${selectQuery}
-    RETURNING "id"`;
-
-  const rawResult = await client.$queryRaw(insertQuery);
-
-  const result = zBuildCloneResult.parse(rawResult);
-
-  return result;
+  if (newBuild.error) {
+    throw newBuild.error;
+  }
 };
 
 export const createProductionBuild = async (
@@ -329,13 +269,19 @@ export const createProductionBuild = async (
     throw new AuthorizationError("You don't have access to build this project");
   }
 
-  return await cloneBuild(
-    {
-      fromProjectId: props.projectId,
-      toProjectId: props.projectId,
-      deployment: props.deployment,
-    },
-    context,
-    prisma
-  );
+  const build = await context.postgrest.client.rpc("create_production_build", {
+    project_id: props.projectId,
+    deployment: JSON.stringify(props.deployment),
+  });
+  const buildId = build.data;
+  if (build.error) {
+    throw build.error;
+  }
+  if (buildId === null) {
+    throw Error(`Project ${props.projectId} not found`);
+  }
+
+  return {
+    id: build.data,
+  };
 };

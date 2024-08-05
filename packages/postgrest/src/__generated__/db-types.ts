@@ -679,6 +679,30 @@ export type Database = {
           },
         ];
       };
+      LatestStaticBuildPerProject: {
+        Row: {
+          buildId: string | null;
+          projectId: string | null;
+          publishStatus: Database["public"]["Enums"]["PublishStatus"] | null;
+          updatedAt: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "Build_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "Project";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "Build_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "DashboardProject";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ProjectWithDomain: {
         Row: {
           cname: string | null;
@@ -756,6 +780,13 @@ export type Database = {
           title: string;
           userId: string | null;
         };
+      };
+      create_production_build: {
+        Args: {
+          project_id: string;
+          deployment: string;
+        };
+        Returns: string;
       };
     };
     Enums: {

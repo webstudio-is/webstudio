@@ -1,0 +1,104 @@
+name: CLI R2 SSG
+
+on:
+  push:
+    branches:
+      - "*.staging"
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: vercel-cli-r2-static-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+  statuses: write # This is required for the GitHub Script createCommitStatus to work
+  packages: write
+
+jobs:
+  build:
+    env:
+      COMPATIBILITY_DATE: 2024-04-10
+
+    environment:
+      name: "staging"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: pnpm instal
+        run: pnpm install --ignore-scripts
+
+      - name: pnpm build
+        run: pnpm --filter 'ssg^...' run build
+
+      # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
+      # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
+      # TODO: Minimize artefact size due to frequent downloads on each publish.
+      - name: pnpm deploy
+        run: pnpm --filter 'ssg' deploy "${{ github.workspace }}/../ssg-template"
+
+      - name: Make archive
+        run: |
+          tar --use-compress-program="zstd -19" -cf ssg-template.tar.zst ssg-template
+        working-directory: ${{ github.workspace }}/..
+
+      - name: Copy artifact
+        run: |
+          # For staging
+          aws s3 cp ssg-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/ssg-template/${{ github.ref_name }}.tar.zst"
+
+          # For production can be cached forever
+          aws s3 cp \
+          --metadata-directive REPLACE --cache-control "public,max-age=31536102,immutable" \
+          ssg-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/ssg-template/${{ github.sha }}.tar.zst"
+
+        working-directory: ${{ github.workspace }}/..
+        env:
+          AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ARTEFACT_BUCKET_NAME: ${{ secrets.ARTEFACT_BUCKET_NAME }}
+
+  checks:
+    environment:
+      name: "staging"
+
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    steps:
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Copy atrifact via http
+        run: curl -o ssg-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/ssg-template/${{ github.ref_name }}.tar.zst
+
+      - name: Extract archive
+        run: tar --use-compress-program="zstd -d" -xf ssg-template.tar.zst -C .
+
+      - name: Webstudio Build
+        run: pnpm webstudio build --template ssg --template internal --preview
+        working-directory: ${{ github.workspace }}/ssg-template
+
+      - name: Build
+        run: pnpm build
+        working-directory: ${{ github.workspace }}/ssg-template

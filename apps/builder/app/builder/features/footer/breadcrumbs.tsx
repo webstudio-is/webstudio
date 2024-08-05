@@ -1,11 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import {
-  theme,
-  DeprecatedButton,
-  Flex,
-  Text,
-} from "@webstudio-is/design-system";
+import { theme, Button, Flex, Text } from "@webstudio-is/design-system";
 import {
   $instances,
   $registeredComponentMetas,
@@ -41,14 +36,9 @@ export const Breadcrumbs = () => {
             }
             return (
               <Fragment key={index}>
-                <DeprecatedButton
-                  ghost
-                  css={{
-                    px: theme.spacing[5],
-                    borderRadius: "100vh",
-                    height: "100%",
-                    color: "inherit",
-                  }}
+                <Button
+                  color="dark-ghost"
+                  css={{ color: "inherit" }}
                   key={instance.id}
                   onClick={() => {
                     $selectedInstanceSelector.set(
@@ -61,7 +51,7 @@ export const Breadcrumbs = () => {
                   }}
                 >
                   {getInstanceLabel(instance, meta)}
-                </DeprecatedButton>
+                </Button>
                 {index < selectedInstanceSelector.length - 1 ? (
                   <ChevronRightIcon />
                 ) : null}

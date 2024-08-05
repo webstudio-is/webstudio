@@ -1,10 +1,11 @@
 import { toastError } from "../error/toast-error";
 import { $authTokenPermissions } from "../nano-states";
 
-const isValidClipboardEvent = (event: ClipboardEvent) => {
+const isTextEditing = (event: ClipboardEvent) => {
   const selection = document.getSelection();
-  if (selection?.type === "Range") {
-    return false;
+
+  if (selection?.type === "Range" || selection?.type === "Caret") {
+    return true;
   }
 
   // Note on event.target:
@@ -25,9 +26,20 @@ const isValidClipboardEvent = (event: ClipboardEvent) => {
     (event.target instanceof HTMLElement &&
       event.target.closest("[contenteditable]"))
   ) {
-    return false;
+    return true;
   }
 
+  return false;
+};
+
+const validateClipboardEvent = (event: ClipboardEvent) => {
+  if (event.clipboardData === null || isTextEditing(event)) {
+    return false;
+  }
+  if ($authTokenPermissions.get().canCopy === false) {
+    toastError("Copying has been disabled by the project owner");
+    return false;
+  }
   return true;
 };
 
@@ -42,16 +54,7 @@ type Plugin = {
 
 export const initCopyPaste = (plugins: Plugin[]) => {
   const handleCopy = async (event: ClipboardEvent) => {
-    if ($authTokenPermissions.get().canCopy === false) {
-      toastError("Copying has been disabled by the project owner");
-      event.preventDefault();
-      return;
-    }
-
-    if (
-      event.clipboardData === null ||
-      isValidClipboardEvent(event) === false
-    ) {
+    if (validateClipboardEvent(event) === false) {
       return;
     }
     for (const { mimeType = defaultMimeType, onCopy } of plugins) {
@@ -59,17 +62,14 @@ export const initCopyPaste = (plugins: Plugin[]) => {
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();
-        event.clipboardData.setData(mimeType, data);
+        event.clipboardData?.setData(mimeType, data);
         break;
       }
     }
   };
 
   const handleCut = (event: ClipboardEvent) => {
-    if (
-      event.clipboardData === null ||
-      isValidClipboardEvent(event) === false
-    ) {
+    if (validateClipboardEvent(event) === false) {
       return;
     }
     for (const { mimeType = defaultMimeType, onCut } of plugins) {
@@ -77,26 +77,21 @@ export const initCopyPaste = (plugins: Plugin[]) => {
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();
-        event.clipboardData.setData(mimeType, data);
+        event.clipboardData?.setData(mimeType, data);
         break;
       }
     }
   };
 
   const handlePaste = (event: ClipboardEvent) => {
-    if (
-      event.clipboardData === null ||
-      // we might want a separate predicate for paste,
-      // but for now the logic is the same
-      isValidClipboardEvent(event) === false
-    ) {
+    if (validateClipboardEvent(event) === false) {
       return;
     }
 
     for (const { mimeType = defaultMimeType, onPaste } of plugins) {
       // this shouldn't matter, but just in case
       event.preventDefault();
-      const data = event.clipboardData.getData(mimeType).trim();
+      const data = event.clipboardData?.getData(mimeType).trim();
       if (data && onPaste?.(data)) {
         break;
       }

@@ -6,7 +6,7 @@ import {
   Flex,
   Label,
   Text,
-  DeprecatedTextField,
+  InputField,
   DialogActions,
   Dialog as BaseDialog,
   DialogTrigger,
@@ -76,7 +76,7 @@ const DialogContent = ({
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget as HTMLFormElement);
-        const title = String(formData.get("title") ?? "");
+        const title = String(formData.get("title") ?? "").trim();
         onSubmit({ title });
       }}
     >
@@ -95,11 +95,11 @@ const DialogContent = ({
           </DialogDescription>
         )}
         {typeof label === "string" ? <Label>{label}</Label> : label}
-        <DeprecatedTextField
+        <InputField
           placeholder={placeholder}
           name="title"
           defaultValue={title}
-          state={errors ? "invalid" : undefined}
+          color={errors ? "error" : undefined}
           onChange={(event) => {
             onChange?.({ title: event.currentTarget.value });
           }}
@@ -285,7 +285,10 @@ const useDeleteProject = ({
   };
 
   const handleChange = ({ title: currentTitle }: { title: string }) => {
-    setIsMatch(currentTitle.trim().toLowerCase() === title.toLowerCase());
+    setIsMatch(
+      currentTitle.trim().toLocaleLowerCase() ===
+        title.trim().toLocaleLowerCase()
+    );
   };
 
   return {

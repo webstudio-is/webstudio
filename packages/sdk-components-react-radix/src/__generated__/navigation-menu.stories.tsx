@@ -18,48 +18,15 @@ import {
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <NavigationMenu
-        data-ws-id="1"
-        data-ws-component="NavigationMenu"
-        className="w-navigation-menu w-navigation-menu-1"
-      >
-        <NavigationMenuList
-          data-ws-id="3"
-          data-ws-component="NavigationMenuList"
-          className="w-menu-list w-menu-list-1"
-        >
-          <NavigationMenuItem
-            data-ws-id="5"
-            data-ws-component="NavigationMenuItem"
-            data-ws-index="0"
-            className="w-menu-item"
-          >
-            <NavigationMenuTrigger
-              data-ws-id="6"
-              data-ws-component="NavigationMenuTrigger"
-              className="w-menu-trigger"
-            >
-              <Button
-                data-ws-id="7"
-                data-ws-component="Button"
-                className="w-button w-button-1"
-              >
-                <Text
-                  data-ws-id="9"
-                  data-ws-component="Text"
-                  className="w-text"
-                >
-                  {"About"}
-                </Text>
-                <Box
-                  data-ws-id="10"
-                  data-ws-component="Box"
-                  className="w-box w-icon-container"
-                >
+    <Box className="w-box">
+      <NavigationMenu className="w-navigation-menu w-navigation-menu-1">
+        <NavigationMenuList className="w-menu-list w-menu-list-1">
+          <NavigationMenuItem data-ws-index="0" className="w-menu-item">
+            <NavigationMenuTrigger className="w-menu-trigger">
+              <Button className="w-button w-button-1">
+                <Text className="w-text">{"About"}</Text>
+                <Box className="w-box w-icon-container">
                   <HtmlEmbed
-                    data-ws-id="12"
-                    data-ws-component="HtmlEmbed"
                     code={
                       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                     }
@@ -69,109 +36,47 @@ const Component = () => {
               </Button>
             </NavigationMenuTrigger>
             <NavigationMenuContent
-              data-ws-id="14"
-              data-ws-component="NavigationMenuContent"
               data-ws-index="0"
               className="w-menu-content w-menu-content-1"
             >
-              <Box
-                data-ws-id="16"
-                data-ws-component="Box"
-                className="w-box w-content"
-              >
-                <Box
-                  data-ws-id="18"
-                  data-ws-component="Box"
-                  className="w-box w-box-1"
-                >
-                  {""}
-                </Box>
-                <Box
-                  data-ws-id="20"
-                  data-ws-component="Box"
-                  className="w-box w-flex-column"
-                >
-                  <NavigationMenuLink
-                    data-ws-id="22"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+              <Box className="w-box w-content">
+                <Box className="w-box w-box-1">{""}</Box>
+                <Box className="w-box w-flex-column">
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="23"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/sheet"}
                       className="w-link w-link-1"
                     >
-                      <Text
-                        data-ws-id="26"
-                        data-ws-component="Text"
-                        className="w-text w-text-1"
-                      >
-                        {"Sheet"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="28"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-1"
-                      >
+                      <Text className="w-text w-text-1">{"Sheet"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-1">
                         {
                           "Extends the Dialog component to display content that complements the main content of the screen."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink
-                    data-ws-id="30"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="31"
-                      data-ws-component="Link"
                       href={
                         "https://ui.shadcn.com/docs/components/navigation-menu"
                       }
                       className="w-link w-link-2"
                     >
-                      <Text
-                        data-ws-id="34"
-                        data-ws-component="Text"
-                        className="w-text w-text-2"
-                      >
+                      <Text className="w-text w-text-2">
                         {"Navigation Menu"}
                       </Text>
-                      <Paragraph
-                        data-ws-id="36"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-2"
-                      >
+                      <Paragraph className="w-paragraph w-paragraph-2">
                         {"A collection of links for navigating websites."}
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink
-                    data-ws-id="38"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="39"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/tabs"}
                       className="w-link w-link-3"
                     >
-                      <Text
-                        data-ws-id="42"
-                        data-ws-component="Text"
-                        className="w-text w-text-3"
-                      >
-                        {"Tabs"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="44"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-3"
-                      >
+                      <Text className="w-text w-text-3">{"Tabs"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-3">
                         {
                           "A set of layered sections of content—known as tab panels—that are displayed one at a time."
                         }
@@ -182,37 +87,12 @@ const Component = () => {
               </Box>
             </NavigationMenuContent>
           </NavigationMenuItem>
-          <NavigationMenuItem
-            data-ws-id="46"
-            data-ws-component="NavigationMenuItem"
-            data-ws-index="1"
-            className="w-menu-item"
-          >
-            <NavigationMenuTrigger
-              data-ws-id="47"
-              data-ws-component="NavigationMenuTrigger"
-              className="w-menu-trigger"
-            >
-              <Button
-                data-ws-id="48"
-                data-ws-component="Button"
-                className="w-button w-button-2"
-              >
-                <Text
-                  data-ws-id="50"
-                  data-ws-component="Text"
-                  className="w-text"
-                >
-                  {"Components"}
-                </Text>
-                <Box
-                  data-ws-id="51"
-                  data-ws-component="Box"
-                  className="w-box w-icon-container-1"
-                >
+          <NavigationMenuItem data-ws-index="1" className="w-menu-item">
+            <NavigationMenuTrigger className="w-menu-trigger">
+              <Button className="w-button w-button-2">
+                <Text className="w-text">{"Components"}</Text>
+                <Box className="w-box w-icon-container-1">
                   <HtmlEmbed
-                    data-ws-id="53"
-                    data-ws-component="HtmlEmbed"
                     code={
                       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                     }
@@ -222,102 +102,44 @@ const Component = () => {
               </Button>
             </NavigationMenuTrigger>
             <NavigationMenuContent
-              data-ws-id="55"
-              data-ws-component="NavigationMenuContent"
               data-ws-index="1"
               className="w-menu-content w-menu-content-2"
             >
-              <Box
-                data-ws-id="57"
-                data-ws-component="Box"
-                className="w-box w-content-1"
-              >
-                <Box
-                  data-ws-id="59"
-                  data-ws-component="Box"
-                  className="w-box w-flex-column-1"
-                >
-                  <NavigationMenuLink
-                    data-ws-id="61"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+              <Box className="w-box w-content-1">
+                <Box className="w-box w-flex-column-1">
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="62"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/accordion"}
                       className="w-link w-link-4"
                     >
-                      <Text
-                        data-ws-id="65"
-                        data-ws-component="Text"
-                        className="w-text w-text-4"
-                      >
-                        {"Accordion"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="67"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-4"
-                      >
+                      <Text className="w-text w-text-4">{"Accordion"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-4">
                         {
                           "A vertically stacked set of interactive headings that each reveal a section of content."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink
-                    data-ws-id="69"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="70"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/dialog"}
                       className="w-link w-link-5"
                     >
-                      <Text
-                        data-ws-id="73"
-                        data-ws-component="Text"
-                        className="w-text w-text-5"
-                      >
-                        {"Dialog"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="75"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-5"
-                      >
+                      <Text className="w-text w-text-5">{"Dialog"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-5">
                         {
                           "A window overlaid on either the primary window or another dialog window, rendering the content underneath inert."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink
-                    data-ws-id="77"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="78"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/collapsible"}
                       className="w-link w-link-6"
                     >
-                      <Text
-                        data-ws-id="81"
-                        data-ws-component="Text"
-                        className="w-text w-text-6"
-                      >
-                        {"Collapsible"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="83"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-6"
-                      >
+                      <Text className="w-text w-text-6">{"Collapsible"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-6">
                         {
                           "An interactive component which expands/collapses a panel."
                         }
@@ -325,92 +147,40 @@ const Component = () => {
                     </Link>
                   </NavigationMenuLink>
                 </Box>
-                <Box
-                  data-ws-id="85"
-                  data-ws-component="Box"
-                  className="w-box w-flex-column-2"
-                >
-                  <NavigationMenuLink
-                    data-ws-id="87"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+                <Box className="w-box w-flex-column-2">
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="88"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/popover"}
                       className="w-link w-link-7"
                     >
-                      <Text
-                        data-ws-id="91"
-                        data-ws-component="Text"
-                        className="w-text w-text-7"
-                      >
-                        {"Popover"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="93"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-7"
-                      >
+                      <Text className="w-text w-text-7">{"Popover"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-7">
                         {
                           "Displays rich content in a portal, triggered by a button."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink
-                    data-ws-id="95"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="96"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/tooltip"}
                       className="w-link w-link-8"
                     >
-                      <Text
-                        data-ws-id="99"
-                        data-ws-component="Text"
-                        className="w-text w-text-8"
-                      >
-                        {"Tooltip"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="101"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-8"
-                      >
+                      <Text className="w-text w-text-8">{"Tooltip"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-8">
                         {
                           "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink
-                    data-ws-id="103"
-                    data-ws-component="NavigationMenuLink"
-                    className="w-accessible-link-wrapper"
-                  >
+                  <NavigationMenuLink className="w-accessible-link-wrapper">
                     <Link
-                      data-ws-id="104"
-                      data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/button"}
                       className="w-link w-link-9"
                     >
-                      <Text
-                        data-ws-id="107"
-                        data-ws-component="Text"
-                        className="w-text w-text-9"
-                      >
-                        {"Button"}
-                      </Text>
-                      <Paragraph
-                        data-ws-id="109"
-                        data-ws-component="Paragraph"
-                        className="w-paragraph w-paragraph-9"
-                      >
+                      <Text className="w-text w-text-9">{"Button"}</Text>
+                      <Paragraph className="w-paragraph w-paragraph-9">
                         {
                           "Displays a button or a component that looks like a button."
                         }
@@ -421,37 +191,14 @@ const Component = () => {
               </Box>
             </NavigationMenuContent>
           </NavigationMenuItem>
-          <NavigationMenuItem
-            data-ws-id="111"
-            data-ws-component="NavigationMenuItem"
-            data-ws-index="2"
-            className="w-menu-item"
-          >
-            <NavigationMenuLink
-              data-ws-id="112"
-              data-ws-component="NavigationMenuLink"
-              className="w-accessible-link-wrapper"
-            >
-              <Link
-                data-ws-id="113"
-                data-ws-component="Link"
-                className="w-link w-link-10"
-              >
-                {"Standalone"}
-              </Link>
+          <NavigationMenuItem data-ws-index="2" className="w-menu-item">
+            <NavigationMenuLink className="w-accessible-link-wrapper">
+              <Link className="w-link w-link-10">{"Standalone"}</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
-        <Box
-          data-ws-id="115"
-          data-ws-component="Box"
-          className="w-box w-viewport-container"
-        >
-          <NavigationMenuViewport
-            data-ws-id="117"
-            data-ws-component="NavigationMenuViewport"
-            className="w-menu-viewport w-menu-viewport-1"
-          />
+        <Box className="w-box w-viewport-container">
+          <NavigationMenuViewport className="w-menu-viewport w-menu-viewport-1" />
         </Box>
       </NavigationMenu>
     </Box>

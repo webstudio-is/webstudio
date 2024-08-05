@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-import { useResource } from "@webstudio-is/react-sdk";
+import { useResource } from "@webstudio-is/react-sdk/runtime";
 import { XmlNode } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "Fixture Site";
@@ -16,7 +16,7 @@ export const favIconAsset: ImageAsset | undefined = {
   size: 3350,
   type: "image",
   format: "svg",
-  createdAt: "2023-10-30T20:35:47.113Z",
+  createdAt: "2023-10-30T20:35:47.113",
   meta: { width: 16, height: 16 },
 };
 
@@ -30,38 +30,18 @@ const Body = (props: any) => props.children;
 const Page = ({ system: system }: { system: any }) => {
   let sitemapxml = useResource("sitemapxml_1");
   return (
-    <Body
-      data-ws-id="rve0BYRbzAkSCr3Lq-wzi"
-      data-ws-component="Body"
-      className="w-body"
-    >
+    <Body className="w-body">
       <XmlNode
-        data-ws-id="cgaMXxOMMAh4H-u-MB3_0"
-        data-ws-component="XmlNode"
         tag={"urlset"}
         xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
       >
         {sitemapxml?.data?.map((url: any, index: number) => (
           <Fragment key={index}>
-            <XmlNode
-              data-ws-id="SKzEKWw1VtVVFvUcIWuUp"
-              data-ws-component="XmlNode"
-              tag={"url"}
-            >
-              <XmlNode
-                data-ws-id="9NJGnzZG3iPZs78XPTHhH"
-                data-ws-component="XmlNode"
-                tag={"loc"}
-              >
+            <XmlNode tag={"url"}>
+              <XmlNode tag={"loc"}>
                 {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
               </XmlNode>
-              <XmlNode
-                data-ws-id="IjNaHLHI4gWStV8GvhijX"
-                data-ws-component="XmlNode"
-                tag={"lastmod"}
-              >
-                {url?.lastModified}
-              </XmlNode>
+              <XmlNode tag={"lastmod"}>{url?.lastModified}</XmlNode>
             </XmlNode>
           </Fragment>
         ))}

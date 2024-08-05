@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import {
   type ServerRuntimeMetaFunction as MetaFunction,
   type LinksFunction,
@@ -10,13 +9,14 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import {
-  n8nHandler,
+  isLocalResource,
+  loadResource,
+  loadResources,
   formIdFieldName,
   formBotFieldName,
-} from "@webstudio-is/form-handlers";
+} from "@webstudio-is/sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
   Page,
   siteName,
@@ -25,7 +25,6 @@ import {
   pageBackgroundImageAssets,
 } from "../__generated__/[another-page]._index";
 import {
-  formsProperties,
   getResources,
   getPageMeta,
   getRemixParams,
@@ -67,7 +66,10 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     origin: url.origin,
   };
 
-  const resources = await loadResources(customFetch, getResources({ system }));
+  const resources = await loadResources(
+    customFetch,
+    getResources({ system }).data
+  );
   const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {
@@ -238,19 +240,6 @@ export const links: LinksFunction = () => {
 const getRequestHost = (request: Request): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
-const getMethod = (value: string | undefined) => {
-  if (value === undefined) {
-    return "post";
-  }
-
-  switch (value.toLowerCase()) {
-    case "get":
-      return "get";
-    default:
-      return "post";
-  }
-};
-
 export const action = async ({
   request,
   context,
@@ -258,13 +247,22 @@ export const action = async ({
   { success: true } | { success: false; errors: string[] }
 > => {
   try {
+    const url = new URL(request.url);
+    url.host = getRequestHost(request);
+
     const formData = await request.formData();
 
-    const formId = formData.get(formIdFieldName);
+    const system = {
+      params: {},
+      search: {},
+      origin: url.origin,
+    };
 
-    if (formId == null || typeof formId !== "string") {
-      throw new Error("No form id in FormData");
-    }
+    const resourceName = formData.get(formIdFieldName);
+    let resource =
+      typeof resourceName === "string"
+        ? getResources({ system }).action.get(resourceName)
+        : undefined;
 
     const formBotValue = formData.get(formBotFieldName);
 
@@ -284,45 +282,35 @@ export const action = async ({
       throw new Error(`Form bot value invalid ${formBotValue}`);
     }
 
-    const formProperties = formsProperties.get(formId);
+    formData.delete(formIdFieldName);
+    formData.delete(formBotFieldName);
 
-    // form properties are not defined when defaults are used
-    const { action, method } = formProperties ?? {};
-
-    if (contactEmail === undefined) {
-      throw new Error("Contact email not found");
-    }
-
-    const pageUrl = new URL(request.url);
-    pageUrl.host = getRequestHost(request);
-
-    if (action !== undefined) {
-      try {
-        // Test that action is full URL
-        new URL(action);
-      } catch {
-        throw new Error(
-          "Invalid action URL, must be valid http/https protocol"
-        );
+    if (resource) {
+      resource = {
+        ...resource,
+        body: Object.fromEntries(formData),
+      };
+    } else {
+      if (contactEmail === undefined) {
+        throw new Error("Contact email not found");
       }
+
+      resource = context.getDefaultActionResource?.({
+        url,
+        projectId,
+        contactEmail,
+        formData,
+      });
     }
 
-    const formInfo = {
-      formData,
-      projectId,
-      action: action ?? null,
-      method: getMethod(method),
-      pageUrl: pageUrl.toString(),
-      toEmail: contactEmail,
-      fromEmail: pageUrl.hostname + "@webstudio.email",
-    } as const;
-
-    const result = await n8nHandler({
-      formInfo,
-      hookUrl: context.N8N_FORM_EMAIL_HOOK,
-    });
-
-    return result;
+    if (resource === undefined) {
+      throw Error("Resource not found");
+    }
+    const { ok, statusText } = await loadResource(fetch, resource);
+    if (ok) {
+      return { success: true };
+    }
+    return { success: false, errors: [statusText] };
   } catch (error) {
     console.error(error);
 

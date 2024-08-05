@@ -19,7 +19,6 @@ export const uploadToFs = async ({
 }) => {
   const filepath = resolve(fileDirectory, name);
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   await mkdir(dirname(filepath), { recursive: true }).catch(() => {});
   const limitSize = createSizeLimiter(maxSize, name);
 

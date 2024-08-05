@@ -83,7 +83,8 @@ export const getStatus = (projectDomain: Domain) =>
     ? (`VERIFIED_${projectDomain.domain.status}` as const)
     : `UNVERIFIED`;
 
-export const PENDING_TIMEOUT = 60 * 3 * 1000;
+export const PENDING_TIMEOUT =
+  process.env.NODE_ENV === "production" ? 60 * 3 * 1000 : 35000;
 
 export const getPublishStatusAndText = ({
   updatedAt,

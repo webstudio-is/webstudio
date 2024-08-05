@@ -43,6 +43,7 @@ import { humanizeString } from "~/shared/string-utils";
 import { getStyleSource } from "../../shared/style-info";
 import { PropertyName } from "../../shared/property-name";
 import { getDots } from "../../shared/collapsible-section";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const transformPanels = [
   "translate",
@@ -63,8 +64,13 @@ export const properties = [
 ] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
-  const { currentStyle, createBatchUpdate } = props;
   const [isOpen, setIsOpen] = useState(true);
+
+  if (isFeatureEnabled("transforms") === false) {
+    return;
+  }
+
+  const { currentStyle, createBatchUpdate } = props;
   const translateStyleSource = getStyleSource(currentStyle["translate"]);
   const scaleStyleSource = getStyleSource(currentStyle["scale"]);
   const rotateAndSkewStyleSrouce = getStyleSource(currentStyle["transform"]);
@@ -203,6 +209,7 @@ const TransformSection = (
   const contentPanelProps: TransformPanelProps = {
     currentStyle,
     setProperty,
+    deleteProperty,
     propertyValue: properties.value,
   };
 

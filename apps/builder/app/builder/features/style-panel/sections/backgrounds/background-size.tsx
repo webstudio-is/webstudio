@@ -55,13 +55,15 @@ export const BackgroundSize = (
 
   const setValue = props.setProperty(property);
 
-  const setValueX: SetValue = (valueX, options) => {
-    const nextValue = toTuple(valueX, customSizeValue.value[1]);
+  const setValueX: SetValue = (value, options) => {
+    const [x] = value.type === "layers" ? value.value : [];
+    const nextValue = toTuple(x, customSizeValue.value[1]);
     setValue(nextValue, options);
   };
 
-  const setValueY: SetValue = (valueY, options) => {
-    const nextValue = toTuple(customSizeValue.value[0], valueY);
+  const setValueY: SetValue = (value, options) => {
+    const [y] = value.type === "layers" ? value.value : [];
+    const nextValue = toTuple(customSizeValue.value[0], y);
     setValue(nextValue, options);
   };
 

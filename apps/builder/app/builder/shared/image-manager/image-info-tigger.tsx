@@ -1,11 +1,10 @@
 import { useState } from "react";
 import {
-  DeprecatedButton,
-  DeprecatedPopover,
-  DeprecatedPopoverTrigger,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverPortal,
-  DeprecatedPopoverHeader,
+  SmallIconButton,
+  FloatingPanelPopover,
+  FloatingPanelPopoverTrigger,
+  FloatingPanelPopoverContent,
+  FloatingPanelPopoverTitle,
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import type { Asset } from "@webstudio-is/sdk";
@@ -27,10 +26,9 @@ export const ImageInfoTrigger = ({
 }) => {
   const [isInfoOpen, setInfoOpen] = useState(false);
   return (
-    <DeprecatedPopover open={isInfoOpen} onOpenChange={setInfoOpen}>
-      <DeprecatedPopoverTrigger asChild>
-        <DeprecatedButton
-          variant="raw"
+    <FloatingPanelPopover modal open={isInfoOpen} onOpenChange={setInfoOpen}>
+      <FloatingPanelPopoverTrigger asChild>
+        <SmallIconButton
           title="Options"
           onClick={() => setInfoOpen(true)}
           css={{
@@ -46,22 +44,19 @@ export const ImageInfoTrigger = ({
             },
             ...gearIconCssVars({ fill: theme.colors.loContrast }),
           }}
-        >
-          <GearIcon />
-        </DeprecatedButton>
-      </DeprecatedPopoverTrigger>
-      <DeprecatedPopoverPortal>
-        <DeprecatedPopoverContent>
-          <DeprecatedPopoverHeader title="Asset Details" />
-          <ImageInfo
-            onDelete={(ids) => {
-              setInfoOpen(false);
-              onDelete(ids);
-            }}
-            asset={asset}
-          />
-        </DeprecatedPopoverContent>
-      </DeprecatedPopoverPortal>
-    </DeprecatedPopover>
+          icon={<GearIcon />}
+        />
+      </FloatingPanelPopoverTrigger>
+      <FloatingPanelPopoverContent>
+        <FloatingPanelPopoverTitle>Asset Details</FloatingPanelPopoverTitle>
+        <ImageInfo
+          onDelete={(ids) => {
+            setInfoOpen(false);
+            onDelete(ids);
+          }}
+          asset={asset}
+        />
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
   );
 };

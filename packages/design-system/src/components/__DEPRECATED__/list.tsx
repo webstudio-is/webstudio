@@ -4,7 +4,7 @@ import {
   forwardRef,
   type KeyboardEvent,
 } from "react";
-import { DeprecatedText2 } from "./text2";
+import { Text } from "../text";
 import { Flex } from "../flex";
 import { styled, theme } from "../../stitches.config";
 
@@ -73,14 +73,18 @@ export const DeprecatedListItem = forwardRef<
       {...props}
     >
       {prefix}
-      <Flex css={{ gridColumn: 2, cursor: "default" }} align="center">
-        <DeprecatedText2
-          variant="label"
+      <Flex
+        css={{ gridColumn: 2, cursor: "default" }}
+        align="center"
+        justify="between"
+      >
+        <Text
+          variant="labelsSentenceCase"
           truncate
-          color={state === "disabled" ? "hint" : "contrast"}
+          color={state === "disabled" ? "disabled" : "main"}
         >
           {children}
-        </DeprecatedText2>
+        </Text>
         {suffix}
       </Flex>
     </ListItemBase>

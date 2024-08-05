@@ -17,7 +17,7 @@ import {
   getIndexWithinAncestorFromComponentProps,
   getInstanceSelectorById,
   type Hook,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/react-sdk/runtime";
 
 export const Accordion = forwardRef<
   HTMLDivElement,

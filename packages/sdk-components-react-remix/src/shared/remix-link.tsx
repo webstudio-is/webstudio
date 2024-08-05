@@ -1,6 +1,6 @@
 import { forwardRef, type ComponentPropsWithoutRef, useContext } from "react";
 import { NavLink as RemixLink } from "@remix-run/react";
-import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import type { Link } from "@webstudio-is/sdk-components-react";
 
 type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {

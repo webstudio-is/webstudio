@@ -16,6 +16,11 @@ type AuthorizationContext = {
   authToken: string | undefined;
 
   /**
+   * In case of authToken, this is the ownerId of the project
+   */
+  ownerId: string | undefined;
+
+  /**
    * Allow service 2 service communications to skip authorization for view calls
    */
   isServiceCall: boolean;

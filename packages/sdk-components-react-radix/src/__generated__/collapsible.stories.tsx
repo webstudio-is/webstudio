@@ -11,32 +11,15 @@ import {
 
 const Component = () => {
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Collapsible
-        data-ws-id="1"
-        data-ws-component="Collapsible"
-        className="w-collapsible"
-      >
-        <CollapsibleTrigger
-          data-ws-id="2"
-          data-ws-component="CollapsibleTrigger"
-        >
-          <Button
-            data-ws-id="3"
-            data-ws-component="Button"
-            className="w-button w-button-1"
-          >
+    <Box className="w-box">
+      <Collapsible className="w-collapsible">
+        <CollapsibleTrigger>
+          <Button className="w-button w-button-1">
             {"Click to toggle content"}
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent
-          data-ws-id="5"
-          data-ws-component="CollapsibleContent"
-          className="w-collapsible-content"
-        >
-          <Text data-ws-id="6" data-ws-component="Text" className="w-text">
-            {"Collapsible Content"}
-          </Text>
+        <CollapsibleContent className="w-collapsible-content">
+          <Text className="w-text">{"Collapsible Content"}</Text>
         </CollapsibleContent>
       </Collapsible>
     </Box>

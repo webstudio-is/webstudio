@@ -13,6 +13,8 @@
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "nanoid": "^5.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {

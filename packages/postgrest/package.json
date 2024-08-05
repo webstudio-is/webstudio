@@ -23,7 +23,6 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "type-fest": "^4.3.1",
     "typescript": "5.5.2"
   }
 }

@@ -42,10 +42,10 @@ import {
   findTreeInstanceIds,
   getPagePath,
   parseComponentName,
-  generateFormsProperties,
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
+  replaceFormActionsWithResources,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -231,11 +231,6 @@ export const prebuild = async (options: {
   }
 
   for (const template of options.template) {
-    // default template is always applied no need to check
-    if (template === "vanilla" || template === "ssg") {
-      continue;
-    }
-
     // Template is local user template
     if (template.startsWith(".") || template.startsWith("/")) {
       continue;
@@ -259,17 +254,10 @@ export const prebuild = async (options: {
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
 
-  await copyTemplates(options.template.includes("ssg") ? "ssg" : "defaults");
-
   // force npm to install with not matching peer dependencies
   await writeFile(join(cwd(), ".npmrc"), "force=true");
 
   for (const template of options.template) {
-    // default template is already applied no need to copy twice
-    if (template === "vanilla" || template === "ssg") {
-      continue;
-    }
-
     await copyTemplates(template);
   }
 
@@ -294,11 +282,6 @@ export const prebuild = async (options: {
     throw new Error(
       `Project data is missing, please make sure you the project is synced.`
     );
-  }
-
-  const domain = siteData.build.deployment?.projectDomain;
-  if (domain === undefined) {
-    throw new Error(`Project domain is missing from the project data`);
   }
 
   // collect all possible component metas
@@ -448,6 +431,15 @@ export const prebuild = async (options: {
   const assetsToDownload: Promise<void>[] = [];
 
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
+
+  const domain =
+    siteData.build.deployment?.destination === "static"
+      ? siteData.build.deployment?.assetsDomain
+      : siteData.build.deployment?.projectDomain;
+  if (domain === undefined) {
+    throw new Error(`Project domain is missing from the project data`);
+  }
+
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
   const imageLoader = createImageLoader({
@@ -580,6 +572,11 @@ export const prebuild = async (options: {
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
+    replaceFormActionsWithResources({
+      instances,
+      resources,
+      props,
+    });
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
@@ -618,7 +615,7 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-      import { useResource } from "@webstudio-is/react-sdk";
+      import { useResource } from "@webstudio-is/react-sdk/runtime";
       ${componentImports}
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
@@ -679,6 +676,7 @@ export const prebuild = async (options: {
         scope,
         page: pageData.page,
         dataSources,
+        props,
         resources,
       })}
 
@@ -688,8 +686,6 @@ export const prebuild = async (options: {
         dataSources,
         assets,
       })}
-
-      ${generateFormsProperties(props)}
 
       ${generateRemixParams(pageData.page.path)}
 

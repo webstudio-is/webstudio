@@ -4360,7 +4360,7 @@ export const TriggerIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 TriggerIcon.displayName = "TriggerIcon";
 
-export const UploadIcon = forwardRef<SVGSVGElement, IconProps>(
+export const UpgradeIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4380,6 +4380,30 @@ export const UploadIcon = forwardRef<SVGSVGElement, IconProps>(
         <path
           fillRule="evenodd"
           d="M7.54 4.874a.65.65 0 0 1 .92 0l2.666 2.666a.65.65 0 0 1-.919.92L8.65 6.903v3.764a.65.65 0 1 1-1.3 0V6.903L5.793 8.46a.65.65 0 1 1-.92-.92L7.54 4.874Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+UpgradeIcon.displayName = "UpgradeIcon";
+
+export const UploadIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M3.315 4.642a4.852 4.852 0 0 1 9.37 0 3.801 3.801 0 0 1 1.277 6.868.65.65 0 0 1-.724-1.08 2.5 2.5 0 0 0-1.154-4.569.65.65 0 0 1-.581-.542 3.551 3.551 0 0 0-7.006 0 .65.65 0 0 1-.581.542 2.5 2.5 0 0 0-1.154 4.568.65.65 0 1 1-.724 1.08 3.801 3.801 0 0 1 1.276-6.868ZM7.35 9.57l-1.69 1.69a.65.65 0 0 1-.92-.919l2.8-2.8a.65.65 0 0 1 .92 0l2.8 2.8a.65.65 0 1 1-.92.92L8.65 9.57v4.73a.65.65 0 1 1-1.3 0V9.57Z"
           clipRule="evenodd"
         />
       </svg>

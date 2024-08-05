@@ -16,6 +16,13 @@ export class ParameterValue {
   }
 }
 
+export class ResourceValue {
+  value;
+  constructor(resourceId: string) {
+    this.value = resourceId;
+  }
+}
+
 export class ActionValue {
   value;
   constructor(args: string[], code: string) {
@@ -87,6 +94,10 @@ export const renderJsx = (root: JSX.Element) => {
       }
       if (value instanceof ParameterValue) {
         props.set(propId, { ...base, type: "parameter", value: value.value });
+        continue;
+      }
+      if (value instanceof ResourceValue) {
+        props.set(propId, { ...base, type: "resource", value: value.value });
         continue;
       }
       if (value instanceof ActionValue) {

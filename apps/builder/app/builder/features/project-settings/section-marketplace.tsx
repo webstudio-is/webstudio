@@ -14,7 +14,6 @@ import {
   InputErrorsTooltip,
   PanelBanner,
   Select,
-  rawTheme,
   Box,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
@@ -38,10 +37,18 @@ import { rightPanelWidth, sectionSpacing } from "./utils";
 
 const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: theme.colors.borderMain,
+  outlineWidth: 1,
+  outlineStyle: "solid",
+  outlineColor: theme.colors.borderMain,
+  width: theme.spacing[28],
   aspectRatio: "1.91",
+  background: "#DFE3E6",
+});
+
+const thumbnailImageStyle = css({
+  display: "block",
+  width: "100%",
+  height: "100%",
   variants: {
     hasAsset: {
       true: {
@@ -208,12 +215,15 @@ export const SectionMarketplace = () => {
         <Label>Thumbnail</Label>
         <Grid flow="column" gap={3}>
           <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
-            <Image
-              width={rawTheme.spacing[28]}
-              className={thumbnailStyle({ hasAsset: asset !== undefined })}
-              src={asset ? `${asset.name}` : undefined}
-              loader={imageLoader}
-            />
+            <Box className={thumbnailStyle()}>
+              <Image
+                className={thumbnailImageStyle({
+                  hasAsset: asset !== undefined,
+                })}
+                src={asset ? `${asset.name}` : undefined}
+                loader={imageLoader}
+              />
+            </Box>
           </InputErrorsTooltip>
 
           <Grid gap={2}>

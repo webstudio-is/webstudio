@@ -13,15 +13,9 @@ import {
 const Component = () => {
   let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
   return (
-    <Box data-ws-id="root" data-ws-component="Box" className="w-box">
-      <Label
-        data-ws-id="1"
-        data-ws-component="Label"
-        className="w-label w-checkbox-field"
-      >
+    <Box className="w-box">
+      <Label className="w-label w-checkbox-field">
         <Checkbox
-          data-ws-id="3"
-          data-ws-component="Checkbox"
           checked={checkboxChecked}
           onCheckedChange={(checked: any) => {
             checkboxChecked = checked;
@@ -29,14 +23,8 @@ const Component = () => {
           }}
           className="w-checkbox w-checkbox-1"
         >
-          <CheckboxIndicator
-            data-ws-id="8"
-            data-ws-component="CheckboxIndicator"
-            className="w-checkbox-indicator w-checkbox-indicator-1"
-          >
+          <CheckboxIndicator className="w-checkbox-indicator w-checkbox-indicator-1">
             <HtmlEmbed
-              data-ws-id="10"
-              data-ws-component="HtmlEmbed"
               code={
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
               }
@@ -44,12 +32,7 @@ const Component = () => {
             />
           </CheckboxIndicator>
         </Checkbox>
-        <Text
-          data-ws-id="12"
-          data-ws-component="Text"
-          tag={"span"}
-          className="w-text"
-        >
+        <Text tag={"span"} className="w-text">
           {"Checkbox"}
         </Text>
       </Label>

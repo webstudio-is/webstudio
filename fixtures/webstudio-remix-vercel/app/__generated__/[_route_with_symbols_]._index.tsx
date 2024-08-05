@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-import { useResource } from "@webstudio-is/react-sdk";
+import { useResource } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Image as Image } from "@webstudio-is/sdk-components-react";
 
@@ -17,7 +17,7 @@ export const favIconAsset: ImageAsset | undefined = {
   size: 268326,
   type: "image",
   format: "png",
-  createdAt: "2023-10-30T13:51:08.416Z",
+  createdAt: "2023-10-30T13:51:08.416",
   meta: { width: 790, height: 786 },
 };
 
@@ -28,14 +28,8 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body
-      data-ws-id="EDEfpMPRqDejthtwkH7ws"
-      data-ws-component="Body"
-      className="w-body"
-    >
+    <Body className="w-body">
       <Image
-        data-ws-id="AdXSAYCx4QDo5QN6nLoGs"
-        data-ws-component="Image"
         src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
         className="w-image c1czoo99"
       />

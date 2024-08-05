@@ -34,7 +34,6 @@ import {
   SelectGroup,
 } from "./select";
 import { MenuCheckedAndSetIcon, MenuSetDotIcon } from "./menu";
-import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
 import { Button } from "./button";
 import {
   ChevronDownIcon,
@@ -43,8 +42,9 @@ import {
   DotIcon,
 } from "@webstudio-is/icons";
 import { useState } from "react";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { StorySection } from "./storybook";
+import { InputField } from "./input-field";
+import { NestedInputButton } from "./nested-input-button";
 
 const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   const [isApple, setIsApple] = useState(true);
@@ -180,13 +180,13 @@ const ComboboxDemo = () => {
     <ComboboxRoot open={isOpen}>
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
-          <DeprecatedTextField
+          <InputField
             {...getInputProps()}
             placeholder="Enter: Apple"
             suffix={
-              <DeprecatedIconButton {...getToggleButtonProps()}>
+              <NestedInputButton {...getToggleButtonProps()}>
                 <ChevronDownIcon />
-              </DeprecatedIconButton>
+              </NestedInputButton>
             }
           />
         </ComboboxAnchor>
