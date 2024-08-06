@@ -7,11 +7,6 @@ on:
         required: true
         type: string
 
-# cancel in-progress runs on new commits to same PR (gitub.event.number)
-concurrency:
-  group: fixtures-${{ github.workflow }}-${{ github.event.number || github.sha }}
-  cancel-in-progress: true
-
 permissions:
   contents: read # to fetch code (actions/checkout)
 
