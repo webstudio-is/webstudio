@@ -51,7 +51,7 @@ export const sync = async (
   ) {
     project = await loadProjectDataByBuildId({
       buildId: options.buildId,
-      authToken: options.authToken,
+      seviceToken: options.authToken,
       origin: options.origin,
     });
   } else {
