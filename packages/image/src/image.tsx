@@ -29,7 +29,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
       quality,
       loader,
       optimize,
-    }) ?? { src: imagePlaceholderSvg };
+    }) ?? { src: imagePlaceholderDataUrl };
 
     return (
       <img
@@ -46,7 +46,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
 
 Image.displayName = "Image";
 
-const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
+export const imagePlaceholderDataUrl = `data:image/svg+xml;base64,${btoa(`<svg
   width="140"
   height="140"
   viewBox="0 0 600 600"

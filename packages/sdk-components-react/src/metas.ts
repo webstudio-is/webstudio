@@ -1,6 +1,7 @@
 export { meta as Slot } from "./slot.ws";
 export { meta as Fragment } from "./fragment.ws";
 export { meta as HtmlEmbed } from "./html-embed.ws";
+export { meta as MarkdownEmbed } from "./markdown-embed.ws";
 export { meta as ContentEmbed } from "./content-embed.ws";
 export { meta as Body } from "./body.ws";
 export { meta as Box } from "./box.ws";

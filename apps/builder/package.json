@@ -86,7 +86,7 @@
     "immerhin": "^0.9.0",
     "lexical": "^0.16.0",
     "match-sorter": "^6.3.1",
-    "mdast-util-from-markdown": "^2.0.0",
+    "mdast-util-from-markdown": "^2.0.1",
     "mdast-util-gfm": "^3.0.0",
     "micromark-extension-gfm": "^3.0.0",
     "nanoevents": "^8.0.0",
