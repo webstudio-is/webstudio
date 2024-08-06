@@ -40,15 +40,16 @@ export const sync = async (
   options: StrictYargsOptionsToInterface<typeof syncOptions>
 ) => {
   const syncing = spinner();
-  syncing.start("Synchronizing project data");
 
   let project: Data | undefined;
+  syncing.start(`Synchronizing project data`);
 
   if (
     options.buildId !== undefined &&
     options.origin !== undefined &&
     options.authToken !== undefined
   ) {
+    syncing.message(`Synchronizing project data from ${options.origin}`);
     project = await loadProjectDataByBuildId({
       buildId: options.buildId,
       seviceToken: options.authToken,
@@ -84,6 +85,7 @@ export const sync = async (
     }
 
     const { origin, token } = projectConfig;
+    syncing.message(`Synchronizing project data from ${origin}`);
 
     try {
       project =
