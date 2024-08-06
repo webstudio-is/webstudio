@@ -5,8 +5,8 @@
     "dev": "remix vite:dev",
     "typecheck": "tsc",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
-    "fixtures:link": "pnpm cli link --link \"https://main.development.webstudio.is/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview\"",
-    "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:link": "pnpm cli link --link ${BUILDER_URL:-https://main.development.webstudio.is}'/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'",
+    "fixtures:sync": "pnpm cli sync --buildId 3dce3f4f-3c20-46e5-a885-d1b543db6237 && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "pnpm cli build --template vercel --template internal --preview && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "private": true,
