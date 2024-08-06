@@ -198,9 +198,8 @@ export const InstanceTree = (
               );
             }}
             prefix={<MetaIcon icon={meta.icon} />}
-          >
-            {label}
-          </TreeItem>
+            value={label}
+          />
         </TreeItemBody>
       );
     },
@@ -231,7 +230,7 @@ export const InstanceTree = (
 
 const TreeItem = ({
   prefix,
-  children,
+  value,
   isEditing,
   isEditable = false,
   onChangeValue,
@@ -240,11 +239,12 @@ const TreeItem = ({
   isEditable: boolean;
   isEditing: boolean;
   prefix?: React.ReactNode;
-  children: React.ReactNode;
+  value: string;
   onChangeValue: (value: string) => void;
   onChangeEditing: (isEditing: boolean) => void;
 }) => {
   const { ref, handlers } = useContentEditable({
+    value,
     isEditable,
     isEditing,
     onChangeValue: (value: string) => {
@@ -264,7 +264,7 @@ const TreeItem = ({
       isEditing={isEditing}
       prefix={prefix}
     >
-      {children}
+      {value}
     </EditableTreeItemLabel>
   );
 };

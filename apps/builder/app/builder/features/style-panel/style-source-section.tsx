@@ -501,19 +501,17 @@ export const StyleSourcesSection = () => {
     $selectedOrLastStyleSourceSelector
   );
 
-  const [editingItemId, setEditingItemId] = useState<
-    undefined | StyleSource["id"]
-  >(undefined);
+  const [editingItemId, setEditingItemId] = useState<StyleSource["id"]>();
 
   const [tokenToDelete, setTokenToDelete] = useState<StyleSourceToken>();
   const [error, setError] = useState<StyleSourceError>();
 
   const setEditingItem = (id?: StyleSource["id"]) => {
-    setEditingItemId(id);
     // User finished editing or started editing a different token
     if (error && (id === undefined || id !== error.id)) {
       setError(undefined);
     }
+    setEditingItemId(id);
   };
 
   return (

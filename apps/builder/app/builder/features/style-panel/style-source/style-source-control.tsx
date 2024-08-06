@@ -112,14 +112,14 @@ const Menu = (props: MenuProps) => {
 export type ItemSource = "token" | "componentToken" | "tag" | "local";
 
 type EditableTextProps = {
-  label: string;
+  value: string;
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
   onChangeValue: (value: string) => void;
 };
 
 const EditableText = ({
-  label,
+  value,
   isEditing,
   onChangeEditing,
   onChangeValue,
@@ -129,6 +129,7 @@ const EditableText = ({
     isEditing,
     onChangeEditing,
     onChangeValue,
+    value,
   });
 
   return (
@@ -143,9 +144,7 @@ const EditableText = ({
         cursor: isEditing ? "auto" : "default",
       }}
       {...handlers}
-    >
-      {label}
-    </Text>
+    />
   );
 };
 
@@ -321,7 +320,7 @@ export const StyleSourceControl = ({
                 isEditing={isEditing}
                 onChangeEditing={onChangeEditing}
                 onChangeValue={onChangeValue}
-                label={children}
+                value={children}
               />
             ) : (
               children
