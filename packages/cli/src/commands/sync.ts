@@ -42,17 +42,6 @@ export const sync = async (
   const syncing = spinner();
   syncing.start("Synchronizing project data");
 
-  const definedOptionValues = [
-    options.buildId,
-    options.origin,
-    options.authToken,
-  ].filter(Boolean);
-
-  if (definedOptionValues.length > 0 && definedOptionValues.length < 3) {
-    syncing.stop(`Please provide buildId, origin and authToken`, 2);
-    return;
-  }
-
   let project: Data | undefined;
 
   if (
@@ -97,11 +86,18 @@ export const sync = async (
     const { origin, token } = projectConfig;
 
     try {
-      project = await loadProjectDataById({
-        projectId: localConfig.projectId,
-        authToken: token,
-        origin,
-      });
+      project =
+        options.buildId !== undefined
+          ? await loadProjectDataByBuildId({
+              buildId: options.buildId,
+              authToken: token,
+              origin,
+            })
+          : await loadProjectDataById({
+              projectId: localConfig.projectId,
+              authToken: token,
+              origin,
+            });
     } catch (error) {
       // catch errors about unpublished project
       syncing.stop((error as Error).message, 2);
