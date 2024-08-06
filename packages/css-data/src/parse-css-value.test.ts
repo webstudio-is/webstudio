@@ -1,7 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { parseCssValue } from "./parse-css-value";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
-import { parseCss } from "./parse-css";
 
 describe("Parse CSS value", () => {
   describe("number value", () => {
@@ -925,12 +924,7 @@ describe("font-family", () => {
 test("parse transform-origin", () => {
   expect(parseCssValue("transformOrigin", "bottom")).toEqual({
     type: "tuple",
-    value: [
-      {
-        type: "keyword",
-        value: "bottom",
-      },
-    ],
+    value: [{ type: "keyword", value: "bottom" }],
   });
 
   expect(parseCssValue("transformOrigin", "left 2px")).toEqual({
