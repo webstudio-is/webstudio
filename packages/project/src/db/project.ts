@@ -92,14 +92,14 @@ export const markAsDeleted = async (
     return { errors: "Only the owner can delete the project" };
   }
 
-  return await prisma.project.update({
-    where: { id: projectId },
-    data: {
+  return await context.postgrest.client
+    .from("Project")
+    .update({
       isDeleted: true,
       // Free up the subdomain
       domain: nanoid(),
-    },
-  });
+    })
+    .eq("id", projectId);
 };
 
 const assertEditPermission = async (projectId: string, context: AppContext) => {
