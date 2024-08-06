@@ -1,0 +1,33 @@
+name: Fixtures Test
+
+on:
+  workflow_run:
+    workflows: ["Vercel Deploy Staging"]
+    types:
+      - completed
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: fixtures-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  checks-2:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - uses: ./.github/actions/ci-setup
+
+      - id: branch
+        run: |
+          echo "EEEE${{ github.event.pull_request.head.sha || github.sha }}EEEE"
+          echo "AAAA${{ github.ref_name }}AAAA"
+          echo GITHUB_SHA=${GITHUB_SHA}
+          echo GITHUB_REF=${GITHUB_REF}
