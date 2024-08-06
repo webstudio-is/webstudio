@@ -43,12 +43,15 @@ import { getStyleSource } from "../../shared/style-info";
 import { PropertyName } from "../../shared/property-name";
 import { getDots } from "../../shared/collapsible-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { TransformOrigin } from "./transform-origin";
+import { parseCssValue } from "@webstudio-is/css-data";
 
 export const transformPanels = [
   "translate",
   "scale",
   "rotate",
   "skew",
+  "transformOrigin",
 ] as const;
 
 export type TransformPanel = (typeof transformPanels)[number];
@@ -58,10 +61,14 @@ export const properties = [
   "translate",
   "scale",
   "transform",
+  "transformOrigin",
 ] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
   const [isOpen, setIsOpen] = useState(true);
+  console.log(parseCssValue("transformOrigin", "50% 50% 0px"));
+  console.log(parseCssValue("transformOrigin", "left 2px"));
+  console.log(parseCssValue("transformOrigin", "right bottom 2cm"));
 
   if (isFeatureEnabled("transforms") === false) {
     return;
@@ -84,6 +91,7 @@ export const Section = (props: SectionProps) => {
     batch.deleteProperty("translate");
     batch.deleteProperty("scale");
     batch.deleteProperty("transform");
+    batch.deleteProperty("transformOrigin");
     batch.publish();
   };
 
@@ -156,14 +164,22 @@ export const Section = (props: SectionProps) => {
     >
       {isAnyTransformPropertyAdded === true ? (
         <CssValueListArrowFocus>
-          {transformPanels.map((panel, index) => (
-            <TransformSection
-              {...props}
-              key={panel}
-              index={index}
-              panel={panel}
-            />
-          ))}
+          <Flex direction="column">
+            {transformPanels.map((panel, index) => {
+              if (panel === "transformOrigin") {
+                return <TransformOrigin key={panel} {...props} index={index} />;
+              }
+
+              return (
+                <TransformSection
+                  {...props}
+                  key={panel}
+                  index={index}
+                  panel={panel}
+                />
+              );
+            })}
+          </Flex>
         </CssValueListArrowFocus>
       ) : undefined}
     </CollapsibleSectionRoot>

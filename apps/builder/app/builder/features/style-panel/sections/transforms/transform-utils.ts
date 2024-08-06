@@ -98,6 +98,15 @@ export const addDefaultsForTransormSection = (props: {
       return setProperty("scale")(scale);
     }
 
+    case "transformOrigin": {
+      const transformOrigin = parseCssValue("transformOrigin", "50% 50% 0px");
+      console.log(transformOrigin);
+      if (transformOrigin.type !== "tuple") {
+        return;
+      }
+      return setProperty("transformOrigin")(transformOrigin);
+    }
+
     case "skew":
     case "rotate": {
       const value = currentStyle["transform"]?.value;
@@ -177,6 +186,7 @@ export const handleDeleteTransformProperty = (params: {
   switch (panel) {
     case "scale":
     case "translate":
+    case "transformOrigin":
       deleteProperty(panel);
       break;
 
