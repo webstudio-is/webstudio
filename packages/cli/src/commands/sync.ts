@@ -5,7 +5,7 @@ import pc from "picocolors";
 import { spinner } from "@clack/prompts";
 import {
   loadProjectDataByBuildId,
-  loadProjectDataById,
+  loadProjectDataByProjectId,
   type Data,
 } from "@webstudio-is/http-client";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
@@ -95,7 +95,7 @@ export const sync = async (
               authToken: token,
               origin,
             })
-          : await loadProjectDataById({
+          : await loadProjectDataByProjectId({
               projectId: localConfig.projectId,
               authToken: token,
               origin,

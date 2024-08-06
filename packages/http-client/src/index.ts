@@ -37,7 +37,7 @@ export type Data = {
   assets: Array<Asset>;
 };
 
-export const loadProjectDataById = async (params: {
+export const loadProjectDataByProjectId = async (params: {
   projectId: string;
   origin: string;
   authToken?: string;
