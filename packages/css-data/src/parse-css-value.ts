@@ -143,6 +143,7 @@ const tupleProps = new Set<StyleProperty>([
   "transform",
   "filter",
   "backdropFilter",
+  "transformOrigin",
 ]);
 
 const availableUnits = new Set<string>(Object.values(units).flat());
