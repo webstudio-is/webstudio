@@ -2,7 +2,7 @@ name: Fixtures Test
 
 on:
   workflow_run:
-    workflows: ["Vercel Deploy Staging"]
+    workflows: [Vercel Deploy Staging]
     types:
       - completed
 
