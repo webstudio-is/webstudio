@@ -69,15 +69,6 @@ PopoverContent.displayName = "PopoverContent";
 export const PopoverTrigger = Primitive.Trigger;
 export const PopoverClose = Primitive.Close;
 
-export const PopoverContentContainer = styled("div", {
-  margin: `0 ${theme.spacing[7]}`,
-});
-
-export const PopoverMenuItemContainer = styled("div", {
-  display: "flex",
-  margin: `0 ${theme.spacing[3]}`,
-});
-
 export const PopoverMenuItemRightSlot = styled("span", {
   marginLeft: "auto",
   display: "flex",

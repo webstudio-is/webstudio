@@ -16,7 +16,6 @@ import {
   ListItem,
   MenuItemButton,
   Box,
-  PopoverMenuItemContainer,
   PopoverMenuItemRightSlot,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -178,7 +177,7 @@ export const BreakpointsPopover = () => {
         {(view === "editor" || view === "initial") && (
           <>
             <PopoverSeparator />
-            <PopoverMenuItemContainer
+            <Flex
               css={{
                 justifyContent: "center",
                 padding: theme.spacing[5],
@@ -196,7 +195,7 @@ export const BreakpointsPopover = () => {
               >
                 {view === "editor" ? "Done" : "Edit breakpoints"}
               </Button>
-            </PopoverMenuItemContainer>
+            </Flex>
           </>
         )}
       </PopoverContent>
