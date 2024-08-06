@@ -1,4 +1,4 @@
-import { ContentEmbedIcon } from "@webstudio-is/icons/svg";
+import { MarkdownEmbedIcon } from "@webstudio-is/icons/svg";
 import { imagePlaceholderDataUrl } from "@webstudio-is/image";
 import {
   descendantComponent,
@@ -61,7 +61,7 @@ export const meta: WsComponentMeta = {
   type: "embed",
   label: "Markdown Embed",
   description: "Used to add markdown code to the page",
-  icon: ContentEmbedIcon,
+  icon: MarkdownEmbedIcon,
   presetStyle: {
     div: [
       {
@@ -70,7 +70,7 @@ export const meta: WsComponentMeta = {
       },
     ],
   },
-  order: 8,
+  order: 5,
   template: [
     {
       type: "instance",
