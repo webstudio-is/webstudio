@@ -31,7 +31,7 @@ export const useContentEditable = ({
   };
   const getValue = () => elementRef.current?.textContent ?? "";
 
-  useEffect(setTextContent, [value]);
+  useEffect(setTextContent, [value, isEditing]);
 
   useEffect(() => {
     const element = elementRef.current;
