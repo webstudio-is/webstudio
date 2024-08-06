@@ -34,9 +34,9 @@ const imagePlaceholder = `
 `.trim();
 
 const markdownSample = `
-# Styling HTML with Content Embed
+# Styling Markdown with Markdown Embed
 
-Content Embed allows styling of HTML, which primarily comes from external data.
+Markdown Embed allows styling of Markdown, which primarily comes from external data.
 
 ## How to Use Markdown Embed
 
