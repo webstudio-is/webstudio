@@ -87,7 +87,9 @@ const getHtmlExtensions = () => [
 
 export const CodeEditor = forwardRef<
   HTMLDivElement,
-  Omit<ComponentProps<typeof CodeEditorBase>, "extensions"> & { lang?: "html" }
+  Omit<ComponentProps<typeof CodeEditorBase>, "extensions"> & {
+    lang?: "html" | "markdown";
+  }
 >(({ lang, ...props }, ref) => {
   const extensions = useMemo(
     () => (lang === "html" ? getHtmlExtensions() : []),
