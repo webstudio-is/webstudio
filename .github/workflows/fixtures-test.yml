@@ -1,15 +1,11 @@
-name: Cli tests
+name: Fixtures tests
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-
-# cancel in-progress runs on new commits to same PR (gitub.event.number)
-concurrency:
-  group: cli-${{ github.workflow }}-${{ github.event.number || github.sha }}
-  cancel-in-progress: true
+  workflow_call:
+    inputs:
+      builder-url:
+        required: true
+        type: string
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -27,6 +23,7 @@ jobs:
     env:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
+      BUILDER_URL: ${{ inputs.builder-url }}
 
     steps:
       - uses: actions/checkout@v4

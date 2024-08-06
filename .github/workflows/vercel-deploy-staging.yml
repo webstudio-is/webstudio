@@ -73,3 +73,12 @@ jobs:
           title: "⭐ [${{ matrix.environment }}] Apps Webstudio URL"
           description: "[${{ matrix.environment }}] Site url"
           url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
+
+    outputs:
+      builder-url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
+
+  fixtures-test:
+    needs: deployment
+    uses: ./.github/workflows/fixtures-test.yml
+    with:
+      builder-url: ${{ needs.deployment.outputs.builder-url }}
