@@ -286,10 +286,11 @@ export const action = async ({
     formData.delete(formBotFieldName);
 
     if (resource) {
-      resource = {
-        ...resource,
-        body: Object.fromEntries(formData),
-      };
+      resource.headers.push({
+        name: "Content-Type",
+        value: "application/json",
+      });
+      resource.body = Object.fromEntries(formData);
     } else {
       if (contactEmail === undefined) {
         throw new Error("Contact email not found");
