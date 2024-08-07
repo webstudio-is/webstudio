@@ -34,7 +34,11 @@ const isTextEditing = (event: ClipboardEvent) => {
 };
 
 const validateClipboardEvent = (event: ClipboardEvent) => {
-  if (event.clipboardData === null || isTextEditing(event)) {
+  if (isTextEditing(event)) {
+    return false;
+  }
+
+  if (event.clipboardData === null) {
     return false;
   }
   if ($authTokenPermissions.get().canCopy === false) {
@@ -58,6 +62,15 @@ export const initCopyPaste = (plugins: Plugin[]) => {
     if (validateClipboardEvent(event) === false) {
       return;
     }
+
+    const isInBuilderContext = window.self === window.top;
+
+    if (isInBuilderContext) {
+      if (event.target !== window.document.body) {
+        return;
+      }
+    }
+
     for (const { mimeType = defaultMimeType, onCopy } of plugins) {
       const data = await onCopy?.();
       if (data) {
