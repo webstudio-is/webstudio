@@ -6,11 +6,8 @@ export default {
 };
 
 const batchUpdate = {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   setProperty: () => () => {},
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   deleteProperty: () => {},
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   publish: () => {},
 };
 

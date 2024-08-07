@@ -131,7 +131,6 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
         }
 
         // Above are known errors; we're not interested in logging them.
-        // eslint-disable-next-line no-console
         console.error(error);
 
         if (error instanceof AiApiException) {
@@ -177,7 +176,6 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const handleAiRequest = async (prompt: string) => {
     if (abortController.current) {
       if (abortController.current.signal.aborted === false) {
-        // eslint-disable-next-line no-console
         console.warn(`For some reason previous operation is not aborted.`);
       }
 
@@ -239,7 +237,6 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
       }
 
       // Above is known errors, we are not interesting in
-      // eslint-disable-next-line no-console
       console.error(error);
 
       if (error instanceof AiApiException) {

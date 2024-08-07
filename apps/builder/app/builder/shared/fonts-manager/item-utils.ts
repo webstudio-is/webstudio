@@ -38,23 +38,20 @@ export const filterIdsByFamily = (
   assetContainers: Array<AssetContainer>
 ) => {
   // One family may have multiple assets for different formats, so we need to find them all.
-  return (
-    assetContainers
-      .filter((assetContainer) => {
-        if (assetContainer.status !== "uploaded") {
-          return false;
-        }
-        const { asset } = assetContainer;
-        // @todo need to teach TS the right type from useAssets
-        return (
-          "meta" in asset &&
-          "family" in asset.meta &&
-          asset.meta.family === family
-        );
-      })
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- we filtered out non uploaded items
-      .map((assetContainer) => assetContainer.asset!.id)
-  );
+  return assetContainers
+    .filter((assetContainer) => {
+      if (assetContainer.status !== "uploaded") {
+        return false;
+      }
+      const { asset } = assetContainer;
+      // @todo need to teach TS the right type from useAssets
+      return (
+        "meta" in asset &&
+        "family" in asset.meta &&
+        asset.meta.family === family
+      );
+    })
+    .map((assetContainer) => assetContainer.asset!.id);
 };
 
 export const groupItemsByType = (items: Array<Item>) => {

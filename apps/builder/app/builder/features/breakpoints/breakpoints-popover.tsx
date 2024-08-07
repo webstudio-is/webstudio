@@ -8,7 +8,6 @@ import {
   Label,
   Button,
   Popover,
-  PopoverPortal,
   PopoverContent,
   PopoverTrigger,
   MenuCheckedIcon,
@@ -17,7 +16,6 @@ import {
   ListItem,
   MenuItemButton,
   Box,
-  PopoverMenuItemContainer,
   PopoverMenuItemRightSlot,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -94,121 +92,113 @@ export const BreakpointsPopover = () => {
           <BreakpointsPopoverToolbarButton css={{ gap: theme.spacing[5] }} />
         </PopoverTrigger>
       </Tooltip>
-      <PopoverPortal>
-        <PopoverContent
-          css={{ padding: 0 }}
-          sideOffset={0}
-          collisionPadding={4}
-          align="start"
-        >
-          {view === "confirmation" && breakpointToDelete && (
-            <ConfirmationDialog
-              breakpoint={breakpointToDelete}
-              onAbort={() => {
-                setBreakpointToDelete(undefined);
-                $breakpointsMenuView.set("editor");
-              }}
-              onConfirm={handleDelete}
-            />
-          )}
-          {view === "editor" && (
-            <BreakpointsEditor
-              onDelete={(breakpoint) => {
-                setBreakpointToDelete(breakpoint);
-                $breakpointsMenuView.set("confirmation");
-              }}
-            />
-          )}
-          {view === "initial" && (
-            <>
-              <Flex
-                css={{ px: theme.spacing[7], paddingTop: theme.spacing[5] }}
-                gap="3"
-              >
-                <WidthInput min={minCanvasWidth} />
-                <Flex align="center" gap="2">
-                  <Label>Scale</Label>
-                  <Button
-                    color="neutral"
-                    css={{ width: theme.spacing[17] }}
-                    tabIndex={-1}
-                  >
-                    {Math.round(scale)}%
-                  </Button>
-                </Flex>
-              </Flex>
-              <PopoverSeparator />
-              <List asChild>
-                <Flex direction="column" css={{ my: 0, mx: theme.spacing[3] }}>
-                  {groupBreakpoints(Array.from(breakpoints.values())).map(
-                    (breakpoint, index) => {
-                      return (
-                        <ListItem
-                          asChild
-                          onSelect={() => {
-                            $selectedBreakpointId.set(breakpoint.id);
-                            setCanvasWidth(breakpoint.id);
-                          }}
-                          index={index}
-                          key={breakpoint.id}
-                        >
-                          <MenuItemButton withIndicator>
-                            {breakpoint === selectedBreakpoint && (
-                              <MenuItemIndicator>
-                                <MenuCheckedIcon />
-                              </MenuItemIndicator>
-                            )}
-                            <Box
-                              css={{ flexGrow: 1, textAlign: "left" }}
-                              as="span"
-                            >
-                              {breakpoint.label}
-                            </Box>
-                            <PopoverMenuItemRightSlot
-                              css={{ color: theme.colors.foregroundSubtle }}
-                            >
-                              {breakpoint.minWidth !== undefined
-                                ? `≥ ${breakpoint.minWidth} PX`
-                                : breakpoint.maxWidth !== undefined
-                                  ? `≤ ${breakpoint.maxWidth} PX`
-                                  : "All Sizes"}
-                            </PopoverMenuItemRightSlot>
-                          </MenuItemButton>
-                        </ListItem>
-                      );
-                    }
-                  )}
-                </Flex>
-              </List>
-            </>
-          )}
-          {(view === "editor" || view === "initial") && (
-            <>
-              <PopoverSeparator />
-              <PopoverMenuItemContainer
-                css={{
-                  justifyContent: "center",
-                  mx: theme.spacing[7],
-                  paddingBottom: theme.spacing[5],
-                }}
-              >
+      <PopoverContent sideOffset={0} collisionPadding={4} align="start">
+        {view === "confirmation" && breakpointToDelete && (
+          <ConfirmationDialog
+            breakpoint={breakpointToDelete}
+            onAbort={() => {
+              setBreakpointToDelete(undefined);
+              $breakpointsMenuView.set("editor");
+            }}
+            onConfirm={handleDelete}
+          />
+        )}
+        {view === "editor" && (
+          <BreakpointsEditor
+            onDelete={(breakpoint) => {
+              setBreakpointToDelete(breakpoint);
+              $breakpointsMenuView.set("confirmation");
+            }}
+          />
+        )}
+        {view === "initial" && (
+          <>
+            <Flex css={{ px: theme.spacing[7], py: theme.spacing[5] }} gap="3">
+              <WidthInput min={minCanvasWidth} />
+              <Flex align="center" gap="2">
+                <Label>Scale</Label>
                 <Button
                   color="neutral"
-                  css={{ flexGrow: 1 }}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    $breakpointsMenuView.set(
-                      view === "initial" ? "editor" : "initial"
-                    );
-                  }}
+                  css={{ width: theme.spacing[17] }}
+                  tabIndex={-1}
                 >
-                  {view === "editor" ? "Done" : "Edit breakpoints"}
+                  {Math.round(scale)}%
                 </Button>
-              </PopoverMenuItemContainer>
-            </>
-          )}
-        </PopoverContent>
-      </PopoverPortal>
+              </Flex>
+            </Flex>
+            <PopoverSeparator />
+            <List asChild>
+              <Flex
+                direction="column"
+                css={{ px: theme.spacing[3], py: theme.spacing[5] }}
+              >
+                {groupBreakpoints(Array.from(breakpoints.values())).map(
+                  (breakpoint, index) => {
+                    return (
+                      <ListItem
+                        asChild
+                        onSelect={() => {
+                          $selectedBreakpointId.set(breakpoint.id);
+                          setCanvasWidth(breakpoint.id);
+                        }}
+                        index={index}
+                        key={breakpoint.id}
+                      >
+                        <MenuItemButton withIndicator>
+                          {breakpoint === selectedBreakpoint && (
+                            <MenuItemIndicator>
+                              <MenuCheckedIcon />
+                            </MenuItemIndicator>
+                          )}
+                          <Box
+                            css={{ flexGrow: 1, textAlign: "left" }}
+                            as="span"
+                          >
+                            {breakpoint.label}
+                          </Box>
+                          <PopoverMenuItemRightSlot
+                            css={{ color: theme.colors.foregroundSubtle }}
+                          >
+                            {breakpoint.minWidth !== undefined
+                              ? `≥ ${breakpoint.minWidth} PX`
+                              : breakpoint.maxWidth !== undefined
+                                ? `≤ ${breakpoint.maxWidth} PX`
+                                : "All Sizes"}
+                          </PopoverMenuItemRightSlot>
+                        </MenuItemButton>
+                      </ListItem>
+                    );
+                  }
+                )}
+              </Flex>
+            </List>
+          </>
+        )}
+        {(view === "editor" || view === "initial") && (
+          <>
+            <PopoverSeparator />
+            <Flex
+              css={{
+                justifyContent: "center",
+                padding: theme.spacing[5],
+              }}
+            >
+              <Button
+                color="neutral"
+                css={{ flexGrow: 1 }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  $breakpointsMenuView.set(
+                    view === "initial" ? "editor" : "initial"
+                  );
+                }}
+              >
+                {view === "editor" ? "Done" : "Edit breakpoints"}
+              </Button>
+            </Flex>
+          </>
+        )}
+      </PopoverContent>
     </Popover>
   );
 };

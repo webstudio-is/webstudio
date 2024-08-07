@@ -920,3 +920,40 @@ describe("font-family", () => {
     });
   });
 });
+
+test("parse transform-origin", () => {
+  expect(parseCssValue("transformOrigin", "bottom")).toEqual({
+    type: "tuple",
+    value: [{ type: "keyword", value: "bottom" }],
+  });
+
+  expect(parseCssValue("transformOrigin", "left 2px")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "keyword", value: "left" },
+      { type: "unit", value: 2, unit: "px" },
+    ],
+  });
+
+  expect(parseCssValue("transformOrigin", "right top")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "keyword", value: "right" },
+      { type: "keyword", value: "top" },
+    ],
+  });
+
+  expect(parseCssValue("transformOrigin", "2px 30% 10px")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "unit", value: 2, unit: "px" },
+      { type: "unit", value: 30, unit: "%" },
+      { type: "unit", value: 10, unit: "px" },
+    ],
+  });
+
+  expect(parseCssValue("transformOrigin", "top left right")).toEqual({
+    type: "invalid",
+    value: "top left right",
+  });
+});

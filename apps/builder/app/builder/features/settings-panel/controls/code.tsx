@@ -103,7 +103,7 @@ export const CodeControl = ({
     ...meta,
     control: "text" as const,
   };
-  const lang = meta.control === "code" ? "html" : undefined;
+  const lang = meta.control === "code" ? meta.language : undefined;
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
     if (lang === "html") {
       const error = validateHtml(value);

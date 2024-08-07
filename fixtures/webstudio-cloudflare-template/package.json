@@ -2,8 +2,8 @@
   "type": "module",
   "scripts": {
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
-    "fixtures:link": "pnpm cli link --link \"https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93&\"",
-    "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:link": "pnpm cli link --link ${BUILDER_URL:-https://main.development.webstudio.is}'/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
+    "fixtures:sync": "pnpm cli sync --buildId a2e8de30-03d5-4514-a3a6-406b3266a3af && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "pnpm cli build --template cloudflare --template saas-helpers --template internal --preview && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
     "build": "remix vite:build",
     "dev": "remix vite:dev",
@@ -27,11 +27,11 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@remix-run/cloudflare": "2.10.3",
-    "@remix-run/cloudflare-pages": "2.10.3",
-    "@remix-run/node": "2.10.3",
-    "@remix-run/react": "2.10.3",
-    "@remix-run/server-runtime": "2.10.3",
+    "@remix-run/cloudflare": "2.11.0",
+    "@remix-run/cloudflare-pages": "2.11.0",
+    "@remix-run/node": "2.11.0",
+    "@remix-run/react": "2.11.0",
+    "@remix-run/server-runtime": "2.11.0",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -47,11 +47,11 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",
-    "@remix-run/dev": "2.10.3",
+    "@remix-run/dev": "2.11.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.5.2",
-    "vite": "^5.3.4",
+    "vite": "^5.3.5",
     "wrangler": "^3.63.2"
   }
 }

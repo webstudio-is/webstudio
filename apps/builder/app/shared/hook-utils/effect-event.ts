@@ -7,7 +7,7 @@ const useSafeInsertionEffect =
         fn();
       };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export const useEffectEvent = <T extends Function>(callback?: T) => {
   const ref = useRef(callback);
 

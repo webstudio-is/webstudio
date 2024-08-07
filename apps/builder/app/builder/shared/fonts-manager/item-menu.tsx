@@ -2,20 +2,20 @@ import { useStore } from "@nanostores/react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
-  DeprecatedIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
   Text,
   DropdownMenuPortal,
   styled,
   Tooltip,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 import { theme } from "@webstudio-is/design-system";
 import { $authPermit } from "~/shared/nano-states";
 
-const MenuButton = styled(DeprecatedIconButton, {
+const MenuButton = styled(SmallIconButton, {
   color: theme.colors.hint,
   "&:hover, &:focus-visible": {
     color: theme.colors.hiContrast,
@@ -74,9 +74,8 @@ const ItemMenu = ({
             // Prevent setting the current font to the item.
             event.stopPropagation();
           }}
-        >
-          <EllipsesIcon />
-        </MenuButton>
+          icon={<EllipsesIcon />}
+        />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent align="start">

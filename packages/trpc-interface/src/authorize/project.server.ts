@@ -1,6 +1,4 @@
-import type { Project } from "@webstudio-is/prisma-client";
 import type { AppContext } from "../context/context.server";
-import { prisma } from "@webstudio-is/prisma-client";
 import memoize from "memoize";
 
 export type AuthPermit = "view" | "edit" | "build" | "admin" | "own";
@@ -17,22 +15,22 @@ type CheckInput = {
   };
 };
 
-const check = async (input: CheckInput) => {
+const check = async (context: AppContext, input: CheckInput) => {
   const { subjectSet } = input;
 
   if (subjectSet.namespace === "User") {
     // We check only if the user is the owner of the project
-    const row = await prisma.project.findFirst({
-      where: {
-        id: input.id,
-        userId: subjectSet.id,
-      },
-      select: {
-        id: true,
-      },
-    });
+    const row = await context.postgrest.client
+      .from("Project")
+      .select("id")
+      .eq("id", input.id)
+      .eq("userId", subjectSet.id)
+      .maybeSingle();
+    if (row.error) {
+      throw row.error;
+    }
 
-    return { allowed: row !== null };
+    return { allowed: row.data !== null };
   }
 
   const permitToRelationRewrite = {
@@ -43,31 +41,32 @@ const check = async (input: CheckInput) => {
   } as const;
 
   if (subjectSet.namespace === "Token" && input.permit !== "own") {
-    const row = await prisma.authorizationToken.findFirst({
-      where: {
-        token: subjectSet.id,
-        relation: {
-          in: [...permitToRelationRewrite[input.permit]],
-        },
-      },
-      select: { token: true },
-    });
+    const row = await context.postgrest.client
+      .from("AuthorizationToken")
+      .select("token")
+      .eq("token", subjectSet.id)
+      .in("relation", [...permitToRelationRewrite[input.permit]])
+      .maybeSingle();
+    if (row.error) {
+      throw row.error;
+    }
 
-    return { allowed: row !== null };
+    return { allowed: row.data !== null };
   }
 
   return { allowed: false };
 };
 
+// doesn't work in cloudflare workers
 const memoizedCheck = memoize(check, {
   // 1 minute
   maxAge: 60 * 1000,
-  cacheKey: JSON.stringify,
+  cacheKey: ([_context, input]) => JSON.stringify(input),
 });
 
 export const hasProjectPermit = async (
   props: {
-    projectId: Project["id"];
+    projectId: string;
     permit: AuthPermit;
   },
   context: AppContext
@@ -105,7 +104,7 @@ export const hasProjectPermit = async (
     // Check if the user is allowed to access the project
     if (authorization.userId !== undefined) {
       checks.push(
-        memoizedCheck({
+        memoizedCheck(context, {
           subjectSet: {
             namespace: "User",
             id: authorization.userId,
@@ -121,7 +120,7 @@ export const hasProjectPermit = async (
     // Token doesn't have own permit, do not check it
     if (authorization.authToken !== undefined && props.permit !== "own") {
       checks.push(
-        memoizedCheck({
+        memoizedCheck(context, {
           namespace,
           id: props.projectId,
           subjectSet: {

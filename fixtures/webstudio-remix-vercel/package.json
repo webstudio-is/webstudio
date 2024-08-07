@@ -5,16 +5,16 @@
     "dev": "remix vite:dev",
     "typecheck": "tsc",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
-    "fixtures:link": "pnpm cli link --link \"https://main.development.webstudio.is/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview\"",
-    "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:link": "pnpm cli link --link ${BUILDER_URL:-https://main.development.webstudio.is}'/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'",
+    "fixtures:sync": "pnpm cli sync --buildId 3dce3f4f-3c20-46e5-a885-d1b543db6237 && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "pnpm cli build --template vercel --template internal --preview && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "private": true,
   "sideEffects": false,
   "dependencies": {
-    "@remix-run/node": "2.10.3",
-    "@remix-run/react": "2.10.3",
-    "@remix-run/server-runtime": "2.10.3",
+    "@remix-run/node": "2.11.0",
+    "@remix-run/react": "2.11.0",
+    "@remix-run/server-runtime": "2.11.0",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -26,11 +26,11 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "devDependencies": {
-    "@remix-run/dev": "2.10.3",
+    "@remix-run/dev": "2.11.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.5.2",
-    "vite": "^5.3.4",
+    "vite": "^5.3.5",
     "webstudio": "workspace:*"
   },
   "engines": {

@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 // When you're adding a log for debugging use console.info as normal.
 // Use logger only for CLI output.
 

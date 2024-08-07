@@ -19,7 +19,7 @@
     "generate-types": "pnpx supabase gen types --lang=typescript --db-url postgresql://postgres:pass@localhost/webstudio > ./src/__generated__/db-types.ts"
   },
   "dependencies": {
-    "@supabase/postgrest-js": "^1.15.8"
+    "@supabase/postgrest-js": "^1.16.0"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",

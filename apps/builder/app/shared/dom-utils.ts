@@ -157,8 +157,8 @@ const attributeNameStartChar =
 const attributeNameChar =
   attributeNameStartChar + "\\-.0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
 
-// eslint-disable-next-line no-misleading-character-class
 const validAttributeNameRegex = new RegExp(
+  // eslint-disable-next-line no-misleading-character-class
   "^[" + attributeNameStartChar + "][" + attributeNameChar + "]*$"
 );
 

@@ -9,7 +9,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@webstudio-is/prisma-client": "workspace:*",
+    "@webstudio-is/postrest": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "zod": "^3.22.4"
   },
