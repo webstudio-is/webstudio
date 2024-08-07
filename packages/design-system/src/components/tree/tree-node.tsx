@@ -337,7 +337,15 @@ export const TreeItemBody = <Data extends { id: string }>({
           handleClick: (event: MouseEvent) =>
             onSelect(itemSelector, event.altKey),
         }
-      : { handleFocus: () => onSelect(itemSelector) };
+      : {
+          handleFocus: () => onSelect(itemSelector),
+          handleClick: () => {
+            // The intent is to reset the selection on focused item click to ensure the same behavior as on focus change. (For simplicity, we reset for all clicks.)
+            // This resolves an edge case with copy/paste when text is selected (e.g., inside CSS Preview) and a Tree Node is selected.
+            // Visually, it's unclear what will be selected on the 'copy' event.
+            window.getSelection()?.removeAllRanges();
+          },
+        };
   }, [selectionEvent, onSelect, itemSelector]);
 
   const isDragging = dropTargetItemSelector !== undefined;
