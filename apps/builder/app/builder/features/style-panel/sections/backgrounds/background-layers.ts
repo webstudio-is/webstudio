@@ -275,8 +275,8 @@ export const setLayerProperty =
             : Array.from(Array(newValue.value.length), (_, index) =>
                 // Do not override existing values with defaults for layerNum layer
                 index === 0
-                  ? newPropertyStyle.value[layerNum] ??
-                    layeredBackgroundPropsDefaults[property]
+                  ? (newPropertyStyle.value[layerNum] ??
+                    layeredBackgroundPropsDefaults[property])
                   : layeredBackgroundPropsDefaults[property]
               );
 

@@ -33,7 +33,7 @@ export const parseIntermediateOrInvalidValue = (
     valueInfo.types.flat().includes("string") === false &&
     valueInfo.types.flat().includes("custom-ident") === false
   ) {
-    const testUnit = "unit" in styleValue ? styleValue.unit ?? "px" : "px";
+    const testUnit = "unit" in styleValue ? (styleValue.unit ?? "px") : "px";
     const styleInput = parseCssValue(property, `${value}${testUnit}`);
 
     if (styleInput.type !== "invalid") {
@@ -86,7 +86,7 @@ export const parseIntermediateOrInvalidValue = (
 
   if (mathResult != null) {
     const unit =
-      matchedUnit ?? ("unit" in styleValue ? styleValue.unit ?? "px" : "px");
+      matchedUnit ?? ("unit" in styleValue ? (styleValue.unit ?? "px") : "px");
     styleInput = parseCssValue(property, `${String(mathResult)}${unit}`);
 
     if (styleInput.type !== "invalid") {

@@ -507,11 +507,11 @@ const BodyField = ({
                 value={
                   isBodyLiteral
                     ? value
-                    : JSON.stringify(
+                    : (JSON.stringify(
                         evaluateExpressionWithinScope(value, scope),
                         null,
                         2
-                      ) ?? ""
+                      ) ?? "")
                 }
                 onChange={onChange}
                 onBlur={() => bodyRef.current?.checkValidity()}
@@ -938,11 +938,11 @@ export const GraphqlResourceForm = forwardRef<
                 value={
                   isVariablesLiteral
                     ? variables
-                    : JSON.stringify(
+                    : (JSON.stringify(
                         evaluateExpressionWithinScope(variables, scope),
                         null,
                         2
-                      ) ?? ""
+                      ) ?? "")
                 }
                 onChange={setVariables}
                 onBlur={() => variablesRef.current?.checkValidity()}

@@ -844,7 +844,7 @@ export const useStyleInfoByInstanceId = (
 
   const styleSourceIds =
     selectedInstanceId !== undefined
-      ? styleSourceSelections.get(selectedInstanceId)?.values ?? []
+      ? (styleSourceSelections.get(selectedInstanceId)?.values ?? [])
       : [];
 
   const lastStyleSourceId = styleSourceIds.at(-1);
