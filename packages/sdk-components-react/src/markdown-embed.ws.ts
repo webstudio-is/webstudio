@@ -70,7 +70,7 @@ export const meta: WsComponentMeta = {
       },
     ],
   },
-  order: 5,
+  order: 4,
   template: [
     {
       type: "instance",
