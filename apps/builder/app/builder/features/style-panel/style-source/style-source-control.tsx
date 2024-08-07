@@ -8,8 +8,10 @@ import {
   Box,
   theme,
   Flex,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
+import type { StyleSource } from "@webstudio-is/sdk";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
@@ -110,14 +112,14 @@ const Menu = (props: MenuProps) => {
 export type ItemSource = "token" | "componentToken" | "tag" | "local";
 
 type EditableTextProps = {
-  label: string;
+  value: string;
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
   onChangeValue: (value: string) => void;
 };
 
 const EditableText = ({
-  label,
+  value,
   isEditing,
   onChangeEditing,
   onChangeValue,
@@ -127,6 +129,7 @@ const EditableText = ({
     isEditing,
     onChangeEditing,
     onChangeValue,
+    value,
   });
 
   return (
@@ -141,9 +144,7 @@ const EditableText = ({
         cursor: isEditing ? "auto" : "default",
       }}
       {...handlers}
-    >
-      {label}
-    </Text>
+    />
   );
 };
 
@@ -152,7 +153,10 @@ const StyleSourceContainer = styled(Box, {
   borderRadius: theme.borderRadius[3],
   minWidth: theme.spacing[14],
   maxWidth: "100%",
+  height: theme.spacing[10],
   position: "relative",
+  overflow: "hidden",
+  alignItems: "center",
   color: theme.colors.foregroundContrastMain,
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
@@ -197,6 +201,11 @@ const StyleSourceContainer = styled(Box, {
       },
       false: {},
     },
+    hasError: {
+      true: {
+        backgroundColor: theme.colors.backgroundDestructiveMain,
+      },
+    },
   },
 });
 
@@ -240,8 +249,19 @@ const StyleSourceState = styled(Text, {
   },
 });
 
-type StyleSourceProps = {
-  id: string;
+const errors = {
+  minlength: "Token must be at least 1 character long",
+  duplicate: "Token already exists",
+} as const;
+
+export type StyleSourceError = {
+  type: keyof typeof errors;
+  id: StyleSource["id"];
+};
+
+type StyleSourceControlProps = {
+  id: StyleSource["id"];
+  error?: StyleSourceError;
   children: ReactNode;
   menuItems: ReactNode;
   selected: boolean;
@@ -256,12 +276,13 @@ type StyleSourceProps = {
   onChangeEditing: (isEditing: boolean) => void;
 };
 
-export const StyleSource = ({
+export const StyleSourceControl = ({
   id,
   menuItems,
   selected,
   state,
   stateLabel,
+  error,
   disabled,
   isEditing,
   isDragging,
@@ -270,43 +291,47 @@ export const StyleSource = ({
   onChangeValue,
   onChangeEditing,
   onSelect,
-}: StyleSourceProps) => {
+}: StyleSourceControlProps) => {
   const showMenu = isEditing === false && isDragging === false;
 
   return (
-    <StyleSourceContainer
-      data-id={id}
-      source={source}
-      selected={selected && state === undefined}
-      disabled={disabled}
-      aria-current={selected && state === undefined}
-      role="button"
+    <Tooltip
+      content={error ? errors[error.type] : ""}
+      open={error !== undefined}
     >
-      <Flex css={{ flexGrow: 1, py: theme.spacing[2], px: theme.spacing[3] }}>
-        <StyleSourceButton
-          disabled={disabled || isEditing}
-          isEditing={isEditing}
-          onClick={onSelect}
-          tabIndex={-1}
-        >
-          {typeof children === "string" ? (
-            <EditableText
-              isEditing={isEditing}
-              onChangeEditing={onChangeEditing}
-              onChangeValue={onChangeValue}
-              label={children}
-            />
-          ) : (
-            children
-          )}
-        </StyleSourceButton>
-      </Flex>
-      {stateLabel !== undefined && (
-        <StyleSourceState source={source} css={{ lineHeight: 1 }}>
-          {stateLabel}
-        </StyleSourceState>
-      )}
-      {showMenu && <Menu>{menuItems}</Menu>}
-    </StyleSourceContainer>
+      <StyleSourceContainer
+        data-id={id}
+        source={source}
+        selected={selected && state === undefined}
+        disabled={disabled}
+        aria-current={selected && state === undefined}
+        role="button"
+        hasError={error !== undefined}
+      >
+        <Flex grow css={{ py: theme.spacing[2], px: theme.spacing[3] }}>
+          <StyleSourceButton
+            disabled={disabled || isEditing}
+            isEditing={isEditing}
+            onClick={onSelect}
+            tabIndex={-1}
+          >
+            {typeof children === "string" ? (
+              <EditableText
+                isEditing={isEditing}
+                onChangeEditing={onChangeEditing}
+                onChangeValue={onChangeValue}
+                value={children}
+              />
+            ) : (
+              children
+            )}
+          </StyleSourceButton>
+        </Flex>
+        {stateLabel !== undefined && (
+          <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
+        )}
+        {showMenu && <Menu>{menuItems}</Menu>}
+      </StyleSourceContainer>
+    </Tooltip>
   );
 };

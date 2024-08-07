@@ -1,16 +1,15 @@
+import type { Database } from "@webstudio-is/postrest/index.server";
 import {
-  prisma,
-  type AuthorizationToken,
-  type Project,
-} from "@webstudio-is/prisma-client";
-import {
-  authorizeProject,
   type AppContext,
+  authorizeProject,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 
+type AuthorizationToken =
+  Database["public"]["Tables"]["AuthorizationToken"]["Row"];
+
 export const findMany = async (
-  props: { projectId: Project["id"] },
+  props: { projectId: string },
   context: AppContext
 ) => {
   // Only owner of the project can list authorization tokens
@@ -25,20 +24,18 @@ export const findMany = async (
     );
   }
 
-  const dbTokens = await prisma.authorizationToken.findMany({
-    where: {
-      projectId: props.projectId,
-    },
+  const dbTokens = await context.postgrest.client
+    .from("AuthorizationToken")
+    .select()
+    .eq("projectId", props.projectId)
     // Stable order
-    orderBy: [
-      {
-        createdAt: "asc",
-      },
-      { token: "asc" },
-    ],
-  });
+    .order("createdAt", { ascending: true })
+    .order("token", { ascending: true });
+  if (dbTokens.error) {
+    throw dbTokens.error;
+  }
 
-  return dbTokens;
+  return dbTokens.data;
 };
 
 export const tokenDefaultPermissions = {
@@ -49,28 +46,28 @@ export const tokenDefaultPermissions = {
 export type TokenPermissions = typeof tokenDefaultPermissions;
 
 export const getTokenPermissions = async (
-  props: { projectId: Project["id"]; token: AuthorizationToken["token"] },
-  _context: AppContext
+  props: { projectId: string; token: AuthorizationToken["token"] },
+  context: AppContext
 ): Promise<TokenPermissions> => {
-  const dbToken = await prisma.authorizationToken.findUnique({
-    where: {
-      token_projectId: {
-        projectId: props.projectId,
-        token: props.token,
-      },
-    },
-  });
-
-  if (dbToken === null) {
+  const dbToken = await context.postgrest.client
+    .from("AuthorizationToken")
+    .select()
+    .eq("projectId", props.projectId)
+    .eq("token", props.token)
+    .maybeSingle();
+  if (dbToken.error) {
+    throw dbToken.error;
+  }
+  if (dbToken.data === null) {
     throw new AuthorizationError("Authorization token not found");
   }
 
-  switch (dbToken.relation) {
+  switch (dbToken.data.relation) {
     // canClone, canCopy permissions can be applied for viewers only
     case "viewers":
       return {
-        canClone: dbToken.canClone,
-        canCopy: dbToken.canCopy,
+        canClone: dbToken.data.canClone,
+        canCopy: dbToken.data.canCopy,
       };
     default:
       return tokenDefaultPermissions;
@@ -79,7 +76,7 @@ export const getTokenPermissions = async (
 
 export const create = async (
   props: {
-    projectId: Project["id"];
+    projectId: string;
     relation: AuthorizationToken["relation"];
     name: string;
   },
@@ -99,20 +96,24 @@ export const create = async (
     );
   }
 
-  const dbToken = await prisma.authorizationToken.create({
-    data: {
+  const dbToken = await context.postgrest.client
+    .from("AuthorizationToken")
+    .insert({
       projectId: props.projectId,
       relation: props.relation,
       token: tokenId,
       name: props.name,
-    },
-  });
+    })
+    .select();
+  if (dbToken.error) {
+    throw dbToken.error;
+  }
 
-  return dbToken;
+  return dbToken.data;
 };
 
 export const update = async (
-  projectId: Project["id"],
+  projectId: string,
   props: Pick<AuthorizationToken, "token" | "relation"> &
     Partial<AuthorizationToken>,
   context: AppContext
@@ -129,40 +130,41 @@ export const update = async (
     );
   }
 
-  const previousToken = await prisma.authorizationToken.findUnique({
-    where: {
-      token_projectId: {
-        projectId,
-        token: props.token,
-      },
-    },
-  });
-
-  if (previousToken === null) {
+  const previousToken = await context.postgrest.client
+    .from("AuthorizationToken")
+    .select()
+    .eq("projectId", projectId)
+    .eq("token", props.token)
+    .maybeSingle();
+  if (previousToken.error) {
+    throw previousToken.error;
+  }
+  if (previousToken.data === null) {
     throw new AuthorizationError("Authorization token not found");
   }
 
-  const dbToken = await prisma.authorizationToken.update({
-    where: {
-      token_projectId: {
-        projectId: projectId,
-        token: props.token,
-      },
-    },
-    data: {
+  const dbToken = await context.postgrest.client
+    .from("AuthorizationToken")
+    .update({
       name: props.name,
       relation: props.relation,
       canClone: props.canClone,
       canCopy: props.canCopy,
-    },
-  });
+    })
+    .eq("projectId", projectId)
+    .eq("token", props.token)
+    .select()
+    .single();
+  if (dbToken.error) {
+    throw dbToken.error;
+  }
 
-  return dbToken;
+  return dbToken.data;
 };
 
 export const remove = async (
   props: {
-    projectId: Project["id"];
+    projectId: string;
     token: AuthorizationToken["token"];
   },
   context: AppContext
@@ -179,14 +181,16 @@ export const remove = async (
     );
   }
 
-  const dbToken = await prisma.authorizationToken.delete({
-    where: {
-      token_projectId: {
-        projectId: props.projectId,
-        token: props.token,
-      },
-    },
-  });
+  const dbToken = await context.postgrest.client
+    .from("AuthorizationToken")
+    .delete()
+    .eq("projectId", props.projectId)
+    .eq("token", props.token)
+    .select()
+    .single();
+  if (dbToken.error) {
+    throw dbToken.error;
+  }
 
-  return dbToken;
+  return dbToken.data;
 };
