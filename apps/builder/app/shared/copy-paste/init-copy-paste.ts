@@ -5,7 +5,7 @@ import {
 } from "../nano-states";
 
 const isTextEditing = (event: ClipboardEvent) => {
-  if ($textEditingInstanceSelector.get() !== null) {
+  if ($textEditingInstanceSelector.get() != null) {
     return true;
   }
 
