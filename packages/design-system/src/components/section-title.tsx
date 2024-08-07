@@ -124,7 +124,7 @@ export const SectionTitle = forwardRef(
     ref: Ref<HTMLButtonElement>
   ) => {
     const state = props["data-state"] ?? "closed";
-    const finalDots = state === "open" ? [] : dots ?? [];
+    const finalDots = state === "open" ? [] : (dots ?? []);
 
     return (
       <context.Provider value={{ state }}>

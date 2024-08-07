@@ -35,7 +35,7 @@ const Cell = ({
 }) => {
   const styleInfo = currentStyle[property];
   const finalValue: StyleValue | undefined = scrubStatus.isActive
-    ? scrubStatus.values[property] ?? styleInfo?.value
+    ? (scrubStatus.values[property] ?? styleInfo?.value)
     : styleInfo?.value;
   const styleSource = getStyleSource(styleInfo);
 

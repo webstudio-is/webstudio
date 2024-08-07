@@ -601,7 +601,7 @@ const Content = (props: {
 
   const latestBuilds = useMemo(
     () => [
-      projectData?.success ? projectData.project.latestBuild ?? null : null,
+      projectData?.success ? (projectData.project.latestBuild ?? null) : null,
       ...domainsToPublish.map((domain) => domain.latestBuid),
     ],
     [domainsToPublish, projectData]
