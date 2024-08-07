@@ -1,10 +1,11 @@
 import { toastError } from "../error/toast-error";
-import { $authTokenPermissions } from "../nano-states";
+import {
+  $authTokenPermissions,
+  $textEditingInstanceSelector,
+} from "../nano-states";
 
 const isTextEditing = (event: ClipboardEvent) => {
-  const selection = document.getSelection();
-
-  if (selection?.type === "Range" || selection?.type === "Caret") {
+  if ($textEditingInstanceSelector.get() !== null) {
     return true;
   }
 
