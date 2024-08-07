@@ -1,4 +1,5 @@
 import { forwardRef, useMemo, type ComponentProps, useEffect } from "react";
+import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
   tooltips,
@@ -13,6 +14,7 @@ import {
   completionKeymap,
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
+import { markdown } from "@codemirror/lang-markdown";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
 import { CodeEditorBase, getMinMaxHeightVars } from "./code-editor-base";
 
@@ -85,16 +87,49 @@ const getHtmlExtensions = () => [
   keymap.of([...closeBracketsKeymap, ...completionKeymap]),
 ];
 
+const getMarkdownExtensions = () => [
+  highlightActiveLine(),
+  highlightSpecialChars(),
+  indentOnInput(),
+  markdown({
+    extensions: [
+      {
+        props: [
+          styleTags({
+            HorizontalRule: tags.separator,
+            HeaderMark: tags.annotation,
+            QuoteMark: tags.annotation,
+            ListMark: tags.annotation,
+            LinkMark: tags.annotation,
+            EmphasisMark: tags.annotation,
+            CodeMark: tags.annotation,
+            InlineCode: tags.string,
+            URL: tags.url,
+          }),
+        ],
+      },
+    ],
+  }),
+  bracketMatching(),
+  closeBrackets(),
+  keymap.of(closeBracketsKeymap),
+];
+
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof CodeEditorBase>, "extensions"> & {
     lang?: "html" | "markdown";
   }
 >(({ lang, ...props }, ref) => {
-  const extensions = useMemo(
-    () => (lang === "html" ? getHtmlExtensions() : []),
-    [lang]
-  );
+  const extensions = useMemo(() => {
+    if (lang === "html") {
+      return getHtmlExtensions();
+    }
+    if (lang === "markdown") {
+      return getMarkdownExtensions();
+    }
+    return [];
+  }, [lang]);
 
   // prevent clicking on autocomplete options propagating to body
   // and closing dialogs and popovers
