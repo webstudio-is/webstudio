@@ -121,7 +121,6 @@ export const CodeEditor = forwardRef<
     lang?: "html" | "markdown";
   }
 >(({ lang, ...props }, ref) => {
-  console.log(lang, props);
   const extensions = useMemo(() => {
     if (lang === "html") {
       return getHtmlExtensions();
