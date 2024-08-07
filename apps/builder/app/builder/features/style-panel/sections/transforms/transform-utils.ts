@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/css-engine";
 import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 import type { StyleInfo } from "../../shared/style-info";
-import type { TransformPanel } from "./transforms";
+import type { TransformPanel, transformPanelDropdown } from "./transforms";
 
 export type TransformPanelProps = {
   currentStyle: StyleInfo;
@@ -81,7 +81,7 @@ export const getHumanizedTextFromTransformLayer = (
 };
 
 export const addDefaultsForTransormSection = (props: {
-  panel: TransformPanel;
+  panel: (typeof transformPanelDropdown)[number];
   currentStyle: StyleInfo;
   setProperty: SetProperty;
 }) => {
@@ -134,7 +134,7 @@ export const addDefaultsForTransormSection = (props: {
 
 export const isTransformPanelPropertyUsed = (params: {
   currentStyle: StyleInfo;
-  panel: TransformPanel;
+  panel: (typeof transformPanelDropdown)[number];
 }): boolean => {
   const { currentStyle, panel } = params;
   switch (panel) {

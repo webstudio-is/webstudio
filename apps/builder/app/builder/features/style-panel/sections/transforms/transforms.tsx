@@ -50,6 +50,10 @@ export const transformPanels = [
   "scale",
   "rotate",
   "skew",
+] as const;
+
+export const transformPanelDropdown = [
+  ...transformPanels,
   "backfaceVisibility",
 ] as const;
 
@@ -113,7 +117,7 @@ export const Section = (props: SectionProps) => {
                   collisionPadding={16}
                   css={{ width: theme.spacing[20] }}
                 >
-                  {transformPanels.map((panel) => {
+                  {transformPanelDropdown.map((panel) => {
                     return (
                       <DropdownMenuItem
                         disabled={
@@ -165,23 +169,19 @@ export const Section = (props: SectionProps) => {
       {isAnyTransformPropertyAdded === true ? (
         <CssValueListArrowFocus>
           <Flex direction="column">
-            {transformPanels.map((panel, index) => {
-              if (panel === "backfaceVisibility") {
-                return <BackfaceVisibility key={panel} {...props} />;
-              }
-
-              return (
-                <TransformSection
-                  {...props}
-                  key={panel}
-                  index={index}
-                  panel={panel}
-                />
-              );
-            })}
+            {transformPanels.map((panel, index) => (
+              <TransformSection
+                {...props}
+                key={panel}
+                index={index}
+                panel={panel}
+              />
+            ))}
           </Flex>
         </CssValueListArrowFocus>
       ) : undefined}
+
+      <BackfaceVisibility {...props} />
     </CollapsibleSectionRoot>
   );
 };
