@@ -56,7 +56,7 @@ const getCanvasStyle = (
 ) => {
   let canvasHeight;
 
-  if (workspaceRect?.height) {
+  if (workspaceRect?.height && scale !== 0) {
     canvasHeight = workspaceRect.height / (scale / 100);
   }
 
