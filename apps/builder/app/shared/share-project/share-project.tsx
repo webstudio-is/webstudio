@@ -17,7 +17,6 @@ import {
   keyframes,
   Text,
   InputField,
-  PopoverPortal,
   Link,
   buttonStyle,
   IconButton,
@@ -119,164 +118,162 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
           aria-label="Menu Button for options"
         ></Button>
       </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent
-          css={{
-            padding: 0,
-            width: theme.spacing[24],
-          }}
-          sideOffset={0}
-          onInteractOutside={saveCustomLinkName}
-        >
-          <Item>
-            <Label htmlFor={ids.name}>Name</Label>
-            <InputField
-              id={ids.name}
-              color={customLinkName.length === 0 ? "error" : undefined}
-              value={customLinkName}
-              onChange={(event) => setCustomLinkName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  saveCustomLinkName();
-                  setIsOpen(false);
-                }
-              }}
-              onBlur={saveCustomLinkName}
-              placeholder="Share Project"
-              name="Name"
-              autoFocus
-            />
-          </Item>
-          <Separator />
-          <Item>
-            <Label>Permissions</Label>
-            <Permission
-              checked={value.relation === "viewers"}
-              onCheckedChange={handleCheckedChange("viewers")}
-              title="View"
-              //info="Recipients can view, copy instances and clone the project"
-              info={
-                <Flex direction="column">
-                  Recipients can view, copy instances and clone the project.
-                  {hasProPlan !== true && (
-                    <>
-                      <br />
-                      <br />
-                      Upgrade to a Pro account to set additional permissions.
-                      <br /> <br />
-                      <Link
-                        className={buttonStyle({ color: "gradient" })}
-                        color="contrast"
-                        underline="none"
-                        href="https://webstudio.is/pricing"
-                        target="_blank"
-                      >
-                        Upgrade
-                      </Link>
-                    </>
-                  )}
-                </Flex>
+      <PopoverContent
+        css={{
+          //padding: 0,
+          width: theme.spacing[24],
+        }}
+        sideOffset={0}
+        onInteractOutside={saveCustomLinkName}
+      >
+        <Item>
+          <Label htmlFor={ids.name}>Name</Label>
+          <InputField
+            id={ids.name}
+            color={customLinkName.length === 0 ? "error" : undefined}
+            value={customLinkName}
+            onChange={(event) => setCustomLinkName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                saveCustomLinkName();
+                setIsOpen(false);
               }
-            />
+            }}
+            onBlur={saveCustomLinkName}
+            placeholder="Share Project"
+            name="Name"
+            autoFocus
+          />
+        </Item>
+        <Separator />
+        <Item>
+          <Label>Permissions</Label>
+          <Permission
+            checked={value.relation === "viewers"}
+            onCheckedChange={handleCheckedChange("viewers")}
+            title="View"
+            //info="Recipients can view, copy instances and clone the project"
+            info={
+              <Flex direction="column">
+                Recipients can view, copy instances and clone the project.
+                {hasProPlan !== true && (
+                  <>
+                    <br />
+                    <br />
+                    Upgrade to a Pro account to set additional permissions.
+                    <br /> <br />
+                    <Link
+                      className={buttonStyle({ color: "gradient" })}
+                      color="contrast"
+                      underline="none"
+                      href="https://webstudio.is/pricing"
+                      target="_blank"
+                    >
+                      Upgrade
+                    </Link>
+                  </>
+                )}
+              </Flex>
+            }
+          />
 
+          <Grid
+            css={{
+              ml: theme.spacing[6],
+            }}
+          >
             <Grid
+              gap={1}
+              flow={"column"}
               css={{
-                ml: theme.spacing[6],
+                alignItems: "center",
+                justifyContent: "start",
               }}
             >
-              <Grid
-                gap={1}
-                flow={"column"}
-                css={{
-                  alignItems: "center",
-                  justifyContent: "start",
+              <Checkbox
+                disabled={hasProPlan !== true}
+                checked={value.canClone}
+                onCheckedChange={(canClone) => {
+                  onChange({ ...value, canClone: Boolean(canClone) });
                 }}
-              >
-                <Checkbox
-                  disabled={hasProPlan !== true}
-                  checked={value.canClone}
-                  onCheckedChange={(canClone) => {
-                    onChange({ ...value, canClone: Boolean(canClone) });
-                  }}
-                  id={ids.canClone}
-                />
-                <Label htmlFor={ids.canClone} disabled={hasProPlan !== true}>
-                  Can clone
-                </Label>
-              </Grid>
-              <Grid
-                gap={1}
-                flow={"column"}
-                css={{
-                  alignItems: "center",
-                  justifyContent: "start",
-                }}
-              >
-                <Checkbox
-                  disabled={hasProPlan !== true}
-                  checked={value.canCopy}
-                  onCheckedChange={(canCopy) => {
-                    onChange({ ...value, canCopy: Boolean(canCopy) });
-                  }}
-                  id={ids.canCopy}
-                />
-                <Label htmlFor={ids.canCopy} disabled={hasProPlan !== true}>
-                  Can copy
-                </Label>
-              </Grid>
+                id={ids.canClone}
+              />
+              <Label htmlFor={ids.canClone} disabled={hasProPlan !== true}>
+                Can clone
+              </Label>
             </Grid>
-
-            <Permission
-              onCheckedChange={handleCheckedChange("builders")}
-              checked={value.relation === "builders"}
-              title="Build"
-              info="Recipients can make any changes but can not publish the project."
-            />
-
-            <Permission
-              disabled={hasProPlan !== true}
-              onCheckedChange={handleCheckedChange("administrators")}
-              checked={value.relation === "administrators"}
-              title="Admin"
-              info={
-                <Flex direction="column">
-                  Recipients can make any changes and can also publish the
-                  project.
-                  {hasProPlan !== true && (
-                    <>
-                      <br />
-                      <br />
-                      Upgrade to a Pro account to share with Admin permissions.
-                      <br /> <br />
-                      <Link
-                        className={buttonStyle({ color: "gradient" })}
-                        color="contrast"
-                        underline="none"
-                        href="https://webstudio.is/pricing"
-                        target="_blank"
-                      >
-                        Upgrade
-                      </Link>
-                    </>
-                  )}
-                </Flex>
-              }
-            />
-          </Item>
-          <Separator />
-          <Item>
-            {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
-            <Button
-              color="neutral-destructive"
-              onClick={() => {
-                onDelete();
+            <Grid
+              gap={1}
+              flow={"column"}
+              css={{
+                alignItems: "center",
+                justifyContent: "start",
               }}
             >
-              Delete Link
-            </Button>
-          </Item>
-        </PopoverContent>
-      </PopoverPortal>
+              <Checkbox
+                disabled={hasProPlan !== true}
+                checked={value.canCopy}
+                onCheckedChange={(canCopy) => {
+                  onChange({ ...value, canCopy: Boolean(canCopy) });
+                }}
+                id={ids.canCopy}
+              />
+              <Label htmlFor={ids.canCopy} disabled={hasProPlan !== true}>
+                Can copy
+              </Label>
+            </Grid>
+          </Grid>
+
+          <Permission
+            onCheckedChange={handleCheckedChange("builders")}
+            checked={value.relation === "builders"}
+            title="Build"
+            info="Recipients can make any changes but can not publish the project."
+          />
+
+          <Permission
+            disabled={hasProPlan !== true}
+            onCheckedChange={handleCheckedChange("administrators")}
+            checked={value.relation === "administrators"}
+            title="Admin"
+            info={
+              <Flex direction="column">
+                Recipients can make any changes and can also publish the
+                project.
+                {hasProPlan !== true && (
+                  <>
+                    <br />
+                    <br />
+                    Upgrade to a Pro account to share with Admin permissions.
+                    <br /> <br />
+                    <Link
+                      className={buttonStyle({ color: "gradient" })}
+                      color="contrast"
+                      underline="none"
+                      href="https://webstudio.is/pricing"
+                      target="_blank"
+                    >
+                      Upgrade
+                    </Link>
+                  </>
+                )}
+              </Flex>
+            }
+          />
+        </Item>
+        <Separator />
+        <Item>
+          {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
+          <Button
+            color="neutral-destructive"
+            onClick={() => {
+              onDelete();
+            }}
+          >
+            Delete Link
+          </Button>
+        </Item>
+      </PopoverContent>
     </Popover>
   );
 };

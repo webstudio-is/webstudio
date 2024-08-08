@@ -1,6 +1,7 @@
 export { propsMeta as Slot } from "./slot.ws";
 export { propsMeta as Fragment } from "./fragment.ws";
 export { propsMeta as HtmlEmbed } from "./html-embed.ws";
+export { propsMeta as MarkdownEmbed } from "./markdown-embed.ws";
 export { propsMeta as Body } from "./body.ws";
 export { propsMeta as Box } from "./box.ws";
 export { propsMeta as Text } from "./text.ws";

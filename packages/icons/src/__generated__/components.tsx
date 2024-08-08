@@ -3269,6 +3269,34 @@ export const LocalStyleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 LocalStyleIcon.displayName = "LocalStyleIcon";
 
+export const MarkdownEmbedIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="#000"
+          fillRule="evenodd"
+          d="M5.823.5h4.32c.538 0 .98 0 1.34.03.374.03.716.095 1.037.259.498.254.904.66 1.158 1.158.163.32.229.663.26 1.036.029.36.029.803.029 1.34V8.15a.65.65 0 1 1-1.3 0v-3.8c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.107-.054-.26-.098-.553-.122-.3-.024-.69-.025-1.26-.025H5.85c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.259-.122.552-.024.301-.025.69-.025 1.261v6.933c0 .571 0 .96.025 1.261.024.293.068.445.122.552.13.254.336.46.59.59.107.055.259.098.552.122.301.025.69.025 1.261.025h2.133a.65.65 0 1 1 0 1.3h-2.16c-.537 0-.98 0-1.34-.03-.373-.03-.715-.095-1.036-.258a2.65 2.65 0 0 1-1.158-1.159c-.164-.32-.23-.662-.26-1.036C2 12.29 2 11.847 2 11.31V4.323c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036A2.65 2.65 0 0 1 3.447.789c.32-.164.663-.23 1.036-.26C4.843.5 5.286.5 5.823.5ZM4.667 4.483a.65.65 0 0 1 .65-.65h5.333a.65.65 0 1 1 0 1.3H5.317a.65.65 0 0 1-.65-.65Zm0 2.667a.65.65 0 0 1 .65-.65h4a.65.65 0 0 1 0 1.3h-4a.65.65 0 0 1-.65-.65Z"
+          clipRule="evenodd"
+        />
+        <path
+          fill="#000"
+          d="M6.03 13.65v-4.5h1.161l1.162 1.654 1.16-1.654h1.162v4.5H9.514v-2.581l-1.161 1.654-1.162-1.654v2.58H6.03Zm7.258 0-1.742-2.184h1.161V9.15h1.162v2.316h1.161l-1.742 2.184Z"
+        />
+      </svg>
+    );
+  }
+);
+MarkdownEmbedIcon.displayName = "MarkdownEmbedIcon";
+
 export const MaximizeIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (

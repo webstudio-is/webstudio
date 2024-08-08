@@ -1,14 +1,10 @@
 import type { ComponentProps } from "react";
 import { EllipsesIcon, CrossIcon, TrashIcon } from "@webstudio-is/icons";
 import { Button as ButtonComponent } from "./button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  PopoverContentContainer,
-} from "./popover";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Text } from "./text";
 import { StorySection, StoryGrid } from "./storybook";
+import { theme } from "../stitches.config";
 
 export default {
   title: "Library/Button",
@@ -119,10 +115,8 @@ export const Button = ({
         <PopoverTrigger asChild>
           <ButtonComponent prefix={<TrashIcon />}>Open</ButtonComponent>
         </PopoverTrigger>
-        <PopoverContent>
-          <PopoverContentContainer>
-            <Text>Some content</Text>
-          </PopoverContentContainer>
+        <PopoverContent css={{ padding: theme.spacing[7] }}>
+          <Text>Some content</Text>
         </PopoverContent>
       </Popover>
     </StorySection>

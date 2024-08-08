@@ -90,7 +90,7 @@ const BreakpointEditorItem = ({
     useHandleChangeComplete(breakpoint, onChangeComplete);
 
   return (
-    <Flex gap="2" css={{ mx: theme.spacing[7] }}>
+    <Flex gap="2">
       <form
         ref={formRef}
         onKeyPress={(event) => {
@@ -186,9 +186,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   return (
     <Flex direction="column">
       <PanelTitle
-        css={{
-          px: theme.spacing[7],
-        }}
+        css={{ px: theme.spacing[9] }}
         suffix={
           <IconButton
             onClick={() => {
@@ -207,21 +205,23 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
         {"Breakpoints"}
       </PanelTitle>
       <Separator />
-      <Box css={{ marginTop: theme.spacing[5] }}>
+      <Fragment>
         {allBreakpoints.map((breakpoint, index, all) => {
           return (
             <Fragment key={breakpoint.id}>
-              <BreakpointEditorItem
-                breakpoint={breakpoint}
-                onChangeComplete={handleChangeComplete}
-                onDelete={onDelete}
-                autoFocus={index === 0}
-              />
+              <Box css={{ px: theme.spacing[7], py: theme.spacing[5] }}>
+                <BreakpointEditorItem
+                  breakpoint={breakpoint}
+                  onChangeComplete={handleChangeComplete}
+                  onDelete={onDelete}
+                  autoFocus={index === 0}
+                />
+              </Box>
               {index < all.length - 1 && <PopoverSeparator />}
             </Fragment>
           );
         })}
-      </Box>
+      </Fragment>
       {allBreakpoints.length === 0 && (
         <Text css={{ margin: theme.spacing[10] }}>No breakpoints found</Text>
       )}

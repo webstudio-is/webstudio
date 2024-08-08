@@ -47,7 +47,12 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { type ComponentState, stateCategories } from "@webstudio-is/react-sdk";
-import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
+import {
+  type ItemSource,
+  type StyleSourceError,
+  menuCssVars,
+  StyleSourceControl,
+} from "./style-source-control";
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
@@ -102,6 +107,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     onEditItem?: (id?: Item["id"]) => void;
     editingItemId?: Item["id"];
     states: { label: string; selector: string }[];
+    error?: StyleSourceError;
   };
 
 const TextFieldBase: ForwardRefRenderFunction<
@@ -126,6 +132,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onEditItem,
     editingItemId,
     states,
+    error,
     ...textFieldProps
   } = props;
   const { sortableRefCallback, dragItemId, placementIndicator } = useSortable({
@@ -187,7 +194,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         />
       )}
       {value.map((item) => (
-        <StyleSource
+        <StyleSourceControl
           key={item.id}
           menuItems={renderStyleSourceMenuItems(item)}
           id={item.id}
@@ -199,10 +206,12 @@ const TextFieldBase: ForwardRefRenderFunction<
           }
           stateLabel={
             item.id === selectedItemSelector?.styleSourceId
-              ? states.find((s) => s.selector === selectedItemSelector.state)
-                  ?.label
+              ? states.find(
+                  (state) => state.selector === selectedItemSelector.state
+                )?.label
               : undefined
           }
+          error={item.id === error?.id ? error : undefined}
           disabled={item.disabled}
           isDragging={item.id === dragItemId}
           isEditing={item.id === editingItemId}
@@ -223,7 +232,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           ) : (
             item.label
           )}
-        </StyleSource>
+        </StyleSourceControl>
       ))}
       {placementIndicator}
     </TextFieldContainer>
@@ -234,6 +243,7 @@ const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps<Item extends IntermediateItem> = {
+  error?: StyleSourceError;
   items?: Array<Item>;
   value?: Array<Item>;
   selectedItemSelector: undefined | ItemSelector;
@@ -322,7 +332,7 @@ const renderMenuItems = (props: {
       <DropdownMenuLabel>{props.item.label}</DropdownMenuLabel>
       {props.item.source !== "local" && (
         <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
-          Edit Name
+          Rename
         </DropdownMenuItem>
       )}
       {props.item.source !== "local" && (
@@ -504,6 +514,7 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
+            error={props.error}
             renderStyleSourceMenuItems={(item) =>
               renderMenuItems({
                 selectedItemSelector: props.selectedItemSelector,

@@ -37,7 +37,7 @@ export type Data = {
   assets: Array<Asset>;
 };
 
-export const loadProjectDataById = async (params: {
+export const loadProjectDataByProjectId = async (params: {
   projectId: string;
   origin: string;
   authToken?: string;
@@ -64,18 +64,29 @@ export const loadProjectDataById = async (params: {
   throw new Error(message.slice(0, 1000));
 };
 
-export const loadProjectDataByBuildId = async (params: {
-  buildId: string;
-  origin: string;
-  authToken: string;
-}): Promise<Data> => {
+export const loadProjectDataByBuildId = async (
+  params: {
+    buildId: string;
+    origin: string;
+  } & (
+    | {
+        seviceToken: string;
+      }
+    | { authToken: string }
+  )
+): Promise<Data> => {
   const url = new URL(params.origin);
   url.pathname = `/rest/build/${params.buildId}`;
 
+  const headers: Record<string, string> = {};
+  if ("seviceToken" in params) {
+    headers.Authorization = params.seviceToken;
+  } else {
+    headers["x-auth-token"] = params.authToken;
+  }
+
   const response = await fetch(url.href, {
-    headers: {
-      Authorization: params.authToken,
-    },
+    headers,
   });
 
   if (response.ok) {

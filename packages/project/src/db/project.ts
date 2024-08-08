@@ -7,6 +7,7 @@ import {
 import { createBuild } from "@webstudio-is/project-build/index.server";
 import { MarketplaceApprovalStatus, Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
+import { nanoid } from "nanoid";
 
 export const loadById = async (
   projectId: Project["id"],
@@ -91,10 +92,14 @@ export const markAsDeleted = async (
     return { errors: "Only the owner can delete the project" };
   }
 
-  return await prisma.project.update({
-    where: { id: projectId },
-    data: { isDeleted: true },
-  });
+  return await context.postgrest.client
+    .from("Project")
+    .update({
+      isDeleted: true,
+      // Free up the subdomain
+      domain: nanoid(),
+    })
+    .eq("id", projectId);
 };
 
 const assertEditPermission = async (projectId: string, context: AppContext) => {

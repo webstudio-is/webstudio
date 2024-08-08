@@ -11,15 +11,27 @@ export const useContentEditable = ({
   isEditing,
   onChangeEditing,
   onChangeValue,
+  value,
 }: {
   isEditable: boolean;
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
   onChangeValue: (value: string) => void;
+  value: string;
 }) => {
-  const elementRef = useRef<HTMLDivElement>(null);
-  const lastValueRef = useRef<string>("");
+  const elementRef = useRef<HTMLDivElement | null>(null);
+  const setTextContent = () => {
+    if (elementRef.current && isEditing === false) {
+      elementRef.current.textContent = value;
+    }
+  };
+  const ref = (element: HTMLDivElement | null) => {
+    elementRef.current = element;
+    setTextContent();
+  };
   const getValue = () => elementRef.current?.textContent ?? "";
+
+  useEffect(setTextContent, [value, isEditing]);
 
   useEffect(() => {
     const element = elementRef.current;
@@ -39,7 +51,6 @@ export const useContentEditable = ({
       requestAnimationFrame(() => {
         element.focus();
         getSelection()?.selectAllChildren(element);
-        lastValueRef.current = getValue();
       });
       return;
     }
@@ -54,25 +65,33 @@ export const useContentEditable = ({
     }
   }, [isEditing]);
 
-  const handleFinishEditing = (
-    event: KeyboardEvent<Element> | FocusEvent<Element>
-  ) => {
+  const handleEnd = (event: KeyboardEvent<Element> | FocusEvent<Element>) => {
     event.preventDefault();
     if (isEditing) {
       onChangeEditing(false);
     }
-    onChangeValue(getValue());
-    lastValueRef.current = "";
+  };
+
+  const handleComplete = (
+    event: KeyboardEvent<Element> | FocusEvent<Element>
+  ) => {
+    event.preventDefault();
+    if (isEditing === false) {
+      return;
+    }
+    const nextValue = getValue();
+    handleEnd(event);
+    onChangeValue(nextValue);
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
-      handleFinishEditing(event);
+      handleComplete(event);
       return;
     }
     if (event.key === "Escape" && elementRef.current !== null) {
-      elementRef.current.textContent = lastValueRef.current;
-      handleFinishEditing(event);
+      elementRef.current.textContent = value;
+      handleEnd(event);
     }
   };
 
@@ -84,9 +103,9 @@ export const useContentEditable = ({
 
   const handlers = {
     onKeyDown: handleKeyDown,
-    onBlur: handleFinishEditing,
+    onBlur: handleComplete,
     onDoubleClick: handleDoubleClick,
   };
 
-  return { ref: elementRef, handlers };
+  return { ref, handlers };
 };

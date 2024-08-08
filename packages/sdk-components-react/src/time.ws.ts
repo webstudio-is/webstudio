@@ -23,7 +23,7 @@ export const meta: WsComponentMeta = {
   icon: CalendarIcon,
   states: defaultStates,
   presetStyle,
-  order: 4,
+  order: 5,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
