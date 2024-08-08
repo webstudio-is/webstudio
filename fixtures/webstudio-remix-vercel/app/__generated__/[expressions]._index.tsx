@@ -5,7 +5,10 @@ import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
-import { Heading as Heading } from "@webstudio-is/sdk-components-react";
+import {
+  Heading as Heading,
+  HtmlEmbed as HtmlEmbed,
+} from "@webstudio-is/sdk-components-react";
 
 export const siteName = "KittyGuardedZone";
 
@@ -27,9 +30,23 @@ export const pageFontAssets: FontAsset[] = [];
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
+  let jsonResourceVariable = useResource("jsonResourceVariable_1");
+  let [jsonVar, set$jsonVar] = useVariableState<any>({ hello: "world" });
   return (
     <Body className="w-body">
-      <Heading className="w-heading">{"Nested page"}</Heading>
+      <Heading className="w-heading">
+        {`${jsonResourceVariable?.data?.args}`}
+      </Heading>
+      <HtmlEmbed
+        code={`<script>
+const a = ${jsonResourceVariable?.data?.args}
+
+const b = ${jsonVar}
+
+console.log(a, b);
+</script>`}
+        className="w-html-embed"
+      />
     </Body>
   );
 };
