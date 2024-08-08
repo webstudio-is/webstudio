@@ -1,11 +1,11 @@
 import { z } from "zod";
-
+import { nanoid } from "nanoid";
+import type { Project } from "@webstudio-is/project";
 import { db as projectDb } from "@webstudio-is/project/index.server";
-import { db } from "../db";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
-import { nanoid } from "nanoid";
 import { Templates } from "@webstudio-is/sdk";
+import { db } from "../db";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -29,7 +29,10 @@ export const domainRouter = router({
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input, ctx }) => {
       try {
-        const project = await projectDb.project.loadById(input.projectId, ctx);
+        const project: Project = await projectDb.project.loadById(
+          input.projectId,
+          ctx
+        );
 
         return {
           success: true,
