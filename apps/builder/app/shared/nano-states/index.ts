@@ -1,4 +1,4 @@
-export * from "./nano-states";
+export * from "./misc";
 export * from "./breakpoints";
 export * from "./instances";
 export * from "./props";

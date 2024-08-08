@@ -58,6 +58,14 @@ const topbarContainerStyle = css({
   color: theme.colors.foregroundContrastMain,
 });
 
+// We are hiding some elements on mobile because we want to let user
+// test in preview mode with device simulators
+const hideOnMobile: CSS = {
+  "@media (max-width: 640px)": {
+    display: "none",
+  },
+};
+
 type TopbarProps = {
   css: CSS;
   project: Project;
@@ -79,11 +87,11 @@ export const Topbar = ({ css, project, hasProPlan }: TopbarProps) => {
             <PagesButton />
             <AddressBarPopover />
           </Flex>
-          <Flex css={{ minWidth: theme.spacing[23] }}>
+          <Flex css={{ minWidth: theme.spacing[23], ...hideOnMobile }}>
             <BreakpointsPopover />
           </Flex>
           <Flex grow></Flex>
-          <Flex align="center" justify="center">
+          <Flex align="center" justify="center" css={hideOnMobile}>
             <BreakpointsSelectorContainer />
           </Flex>
         </>

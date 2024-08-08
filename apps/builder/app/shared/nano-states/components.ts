@@ -13,7 +13,7 @@ import {
 import type { Instance } from "@webstudio-is/sdk";
 import { decodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
-import { $dataSources, $memoryProps, $props } from "./nano-states";
+import { $dataSources, $memoryProps, $props } from "./misc";
 import { $instances, $selectedInstanceSelector } from "./instances";
 import { $selectedPage } from "./pages";
 import { $dataSourceVariables } from "./variables";
