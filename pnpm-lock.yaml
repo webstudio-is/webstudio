@@ -1658,9 +1658,6 @@ importers:
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
         version: link:../asset-uploader
-      '@webstudio-is/prisma-client':
-        specifier: workspace:*
-        version: link:../prisma-client
       '@webstudio-is/project-build':
         specifier: workspace:*
         version: link:../project-build
@@ -1673,6 +1670,9 @@ importers:
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
+      type-fest:
+        specifier: ^4.3.1
+        version: 4.3.1
       zod:
         specifier: ^3.22.4
         version: 3.22.4

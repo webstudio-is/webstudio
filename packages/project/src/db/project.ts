@@ -1,4 +1,4 @@
-import { prisma, Prisma } from "@webstudio-is/prisma-client";
+import { nanoid } from "nanoid";
 import {
   authorizeProject,
   type AppContext,
@@ -7,7 +7,7 @@ import {
 import { createBuild } from "@webstudio-is/project-build/index.server";
 import { MarketplaceApprovalStatus, Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
-import { nanoid } from "nanoid";
+import type { SetNonNullable } from "type-fest";
 
 export const loadById = async (
   projectId: Project["id"],
@@ -22,20 +22,35 @@ export const loadById = async (
     throw new AuthorizationError("You don't have access to this project");
   }
 
-  const data = await prisma.project.findUnique({
-    where: { id_isDeleted: { id: projectId, isDeleted: false } },
-    include: {
-      latestBuild: true,
-      latestStaticBuild: true,
-      previewImageAsset: true,
-    },
-  });
-
-  if (data === null) {
-    throw new Error(`Project ${projectId} not found`);
+  const data = await context.postgrest.client
+    .from("Project")
+    .select(
+      `
+        *,
+        previewImageAsset:Asset (*),
+        latestBuild:LatestBuildPerProject (*),
+        latestStaticBuild:LatestStaticBuildPerProject (*)
+      `
+    )
+    .eq("id", projectId)
+    .eq("isDeleted", false)
+    .single();
+  if (data.error) {
+    throw data.error;
   }
+  const { latestBuild, latestStaticBuild, ...project } = data.data;
 
-  return Project.parse(data);
+  return {
+    ...project,
+    // postgres marks all view fields as nullable
+    // workaround this by casting to non nullable
+    latestBuild: (latestBuild[0] ?? null) as null | SetNonNullable<
+      NonNullable<(typeof latestBuild)[0]>
+    >,
+    latestStaticBuild: (latestStaticBuild[0] ?? null) as null | SetNonNullable<
+      NonNullable<(typeof latestStaticBuild)[0]>
+    >,
+  } satisfies Project;
 };
 
 export const create = async (
@@ -92,7 +107,7 @@ export const markAsDeleted = async (
     return { errors: "Only the owner can delete the project" };
   }
 
-  return await context.postgrest.client
+  const deletedProject = await context.postgrest.client
     .from("Project")
     .update({
       isDeleted: true,
@@ -100,6 +115,9 @@ export const markAsDeleted = async (
       domain: nanoid(),
     })
     .eq("id", projectId);
+  if (deletedProject.error) {
+    throw deletedProject.error;
+  }
 };
 
 const assertEditPermission = async (projectId: string, context: AppContext) => {
@@ -129,10 +147,13 @@ export const rename = async (
 
   await assertEditPermission(projectId, context);
 
-  return await prisma.project.update({
-    where: { id: projectId },
-    data: { title },
-  });
+  const renamedProject = await context.postgrest.client
+    .from("Project")
+    .update({ title })
+    .eq("id", projectId);
+  if (renamedProject.error) {
+    throw renamedProject.error;
+  }
 };
 
 export const updatePreviewImage = async (
@@ -147,10 +168,13 @@ export const updatePreviewImage = async (
 ) => {
   await assertEditPermission(projectId, context);
 
-  return await prisma.project.update({
-    where: { id: projectId },
-    data: { previewImageAssetId: assetId },
-  });
+  const updatedProject = await context.postgrest.client
+    .from("Project")
+    .update({ previewImageAssetId: assetId })
+    .eq("id", projectId);
+  if (updatedProject.error) {
+    throw updatedProject.error;
+  }
 };
 
 export const clone = async (
@@ -203,20 +227,15 @@ export const updateDomain = async (
 
   await assertEditPermission(input.id, context);
 
-  try {
-    const project = await prisma.project.update({
-      data: { domain },
-      where: { id: input.id },
-    });
-    return project;
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+  const updatedProject = await context.postgrest.client
+    .from("Project")
+    .update({ domain })
+    .eq("id", input.id);
+  if (updatedProject.error) {
+    if (updatedProject.error.code === "23505") {
       throw new Error(`Domain "${domain}" is already used`);
     }
-    throw error;
+    throw updatedProject.error;
   }
 };
 
@@ -238,8 +257,14 @@ export const setMarketplaceApprovalStatus = async (
   }
   await assertEditPermission(projectId, context);
 
-  return await prisma.project.update({
-    where: { id: projectId },
-    data: { marketplaceApprovalStatus },
-  });
+  const updatedProject = await context.postgrest.client
+    .from("Project")
+    .update({ marketplaceApprovalStatus })
+    .eq("id", projectId)
+    .select()
+    .single();
+  if (updatedProject.error) {
+    throw updatedProject.error;
+  }
+  return updatedProject.data;
 };
