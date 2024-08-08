@@ -143,9 +143,10 @@ export const isTransformPanelPropertyUsed = (params: {
       return currentStyle[panel]?.value.type === "tuple";
 
     /*
-      backface-visibility takes only two values, either `hidden` / `visible`
-      And it's not inherited. So, we need to check with the local value.
+      backface-visibility is a keyword property. And it's default value is visible.
+      It's not inherited. So, we need to check with the local value to enable/disable in the dropdown.
       If we check with the computed value, it will always return true.
+      https://developer.mozilla.org/en-US/docs/Web/CSS/backface-visibility#formal_definition
     */
     case "backfaceVisibility":
       return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
