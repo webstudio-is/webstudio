@@ -17,7 +17,8 @@ export const BackgroundPosition = ({
   const xInfo = currentStyle.backgroundPositionX;
   const x = xInfo?.value.type === "unit" ? xInfo.value.value : 0;
   const yInfo = currentStyle.backgroundPositionY;
-  const y = yInfo?.value.type === "unit" ? yInfo.value.value : 0;
+  const y = yInfo?.value.type === "unit" ? yInfo.value.value : 100;
+  console.log(x, y);
 
   return (
     <Flex direction="column" gap="1">

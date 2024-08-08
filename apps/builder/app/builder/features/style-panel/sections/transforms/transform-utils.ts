@@ -100,9 +100,6 @@ export const addDefaultsForTransormSection = (props: {
 
     case "transformOrigin": {
       const transformOrigin = parseCssValue("transformOrigin", "50% 50% 0px");
-      if (transformOrigin.type !== "tuple") {
-        return;
-      }
       return setProperty("transformOrigin")(transformOrigin);
     }
 
@@ -158,6 +155,9 @@ export const isTransformPanelPropertyUsed = (params: {
     */
     case "backfaceVisibility":
       return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
+
+    case "transformOrigin":
+      return currentStyle["transformOrigin"]?.local?.type === "tuple";
 
     case "rotate": {
       const rotate = currentStyle["transform"]?.value;
