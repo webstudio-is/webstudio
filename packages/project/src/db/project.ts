@@ -24,41 +24,31 @@ export const loadById = async (
 
   const data = await context.postgrest.client
     .from("Project")
-    .select(`*, previewImageAsset:Asset (*)`)
+    .select(
+      `
+        *,
+        previewImageAsset:Asset (*),
+        latestBuild:LatestBuildPerProject (*),
+        latestStaticBuild:LatestStaticBuildPerProject (*)
+      `
+    )
     .eq("id", projectId)
     .eq("isDeleted", false)
     .single();
   if (data.error) {
     throw data.error;
   }
-
-  const latestBuild = await context.postgrest.client
-    .from("LatestBuildPerProject")
-    .select()
-    .eq("projectId", projectId)
-    .maybeSingle();
-  if (latestBuild.error) {
-    throw latestBuild.error;
-  }
-
-  const latestStaticBuild = await context.postgrest.client
-    .from("LatestStaticBuildPerProject")
-    .select()
-    .eq("projectId", projectId)
-    .maybeSingle();
-  if (latestStaticBuild.error) {
-    throw latestStaticBuild.error;
-  }
+  const { latestBuild, latestStaticBuild, ...project } = data.data;
 
   return {
-    ...data.data,
+    ...project,
     // postgres marks all view fields as nullable
     // workaround this by casting to non nullable
-    latestBuild: latestBuild.data as null | SetNonNullable<
-      NonNullable<typeof latestBuild.data>
+    latestBuild: (latestBuild[0] ?? null) as null | SetNonNullable<
+      NonNullable<(typeof latestBuild)[0]>
     >,
-    latestStaticBuild: latestStaticBuild.data as null | SetNonNullable<
-      NonNullable<typeof latestStaticBuild.data>
+    latestStaticBuild: (latestStaticBuild[0] ?? null) as null | SetNonNullable<
+      NonNullable<(typeof latestStaticBuild)[0]>
     >,
   } satisfies Project;
 };
