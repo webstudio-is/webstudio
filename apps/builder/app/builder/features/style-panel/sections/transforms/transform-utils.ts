@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/css-engine";
 import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 import type { StyleInfo } from "../../shared/style-info";
-import type { TransformPanel } from "./transforms";
+import type { TransformPanel, transformPanelDropdown } from "./transforms";
 
 export type TransformPanelProps = {
   currentStyle: StyleInfo;
@@ -81,7 +81,7 @@ export const getHumanizedTextFromTransformLayer = (
 };
 
 export const addDefaultsForTransormSection = (props: {
-  panel: TransformPanel;
+  panel: (typeof transformPanelDropdown)[number];
   currentStyle: StyleInfo;
   setProperty: SetProperty;
 }) => {
@@ -96,6 +96,13 @@ export const addDefaultsForTransormSection = (props: {
     case "scale": {
       const scale = parseCssValue("scale", defaultScale);
       return setProperty("scale")(scale);
+    }
+
+    case "backfaceVisibility": {
+      return setProperty("backfaceVisibility")({
+        type: "keyword",
+        value: "visible",
+      });
     }
 
     case "skew":
@@ -127,13 +134,22 @@ export const addDefaultsForTransormSection = (props: {
 
 export const isTransformPanelPropertyUsed = (params: {
   currentStyle: StyleInfo;
-  panel: TransformPanel;
+  panel: (typeof transformPanelDropdown)[number];
 }): boolean => {
   const { currentStyle, panel } = params;
   switch (panel) {
     case "scale":
     case "translate":
       return currentStyle[panel]?.value.type === "tuple";
+
+    /*
+      backface-visibility is a keyword property. And it's default value is visible.
+      It's not inherited. So, we need to check with the local value to enable/disable in the dropdown.
+      If we check with the computed value, it will always return true.
+      https://developer.mozilla.org/en-US/docs/Web/CSS/backface-visibility#formal_definition
+    */
+    case "backfaceVisibility":
+      return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
 
     case "rotate": {
       const rotate = currentStyle["transform"]?.value;
