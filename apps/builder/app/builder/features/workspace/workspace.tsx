@@ -53,6 +53,7 @@ const getCanvasStyle = (
 ) => {
   let canvasHeight;
 
+  // For some reason scale is 0 in chrome dev tools mobile touch simulated vervsion.
   if (workspaceRect?.height && scale !== 0) {
     canvasHeight = workspaceRect.height / (scale / 100);
   }

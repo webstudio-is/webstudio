@@ -73,9 +73,9 @@ const preventContextMenu = () => {
   const handler = (event: MouseEvent) => {
     event.preventDefault();
   };
-  globalThis.addEventListener("contextmenu", handler);
+  window.addEventListener("contextmenu", handler);
   return () => {
-    globalThis.removeEventListener("contextmenu", handler);
+    window.removeEventListener("contextmenu", handler);
   };
 };
 
@@ -171,7 +171,10 @@ export const numericScrubControl = (
         }, 150);
 
         targetNode.addEventListener("pointermove", handleEvent);
+        // Pointer event will stop firing on touch after ~300ms because browser starts scrolling the page.
         restoreUserSelect = setRootStyle(targetNode, "user-select", "none");
+        // In chrome mobile touch simulation, you will get the context menu because tapping and holding
+        // results in a right click.
         restoreContextMenu = preventContextMenu();
         break;
       }
