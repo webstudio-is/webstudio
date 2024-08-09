@@ -18,6 +18,7 @@ export { meta as Subscript } from "./subscript.ws";
 export { meta as Button } from "./button.ws";
 export { meta as Input } from "./input.ws";
 export { meta as Form } from "./form.ws";
+export { meta as RemixForm } from "./form.ws";
 export { meta as Image } from "./image.ws";
 export { meta as Blockquote } from "./blockquote.ws";
 export { meta as List } from "./list.ws";

@@ -17,6 +17,7 @@ export { Subscript } from "./subscript";
 export { Button } from "./button";
 export { Input } from "./input";
 export { Form } from "./form";
+export { Form as RemixForm } from "./form";
 export { Image } from "./image";
 export { Blockquote } from "./blockquote";
 export { List } from "./list";
