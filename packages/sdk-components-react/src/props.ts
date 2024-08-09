@@ -17,6 +17,7 @@ export { propsMeta as Subscript } from "./subscript.ws";
 export { propsMeta as Button } from "./button.ws";
 export { propsMeta as Input } from "./input.ws";
 export { propsMeta as Form } from "./form.ws";
+export { propsMeta as RemixForm } from "./form.ws";
 export { propsMeta as Image } from "./image.ws";
 export { propsMeta as Blockquote } from "./blockquote.ws";
 export { propsMeta as List } from "./list.ws";
