@@ -239,15 +239,26 @@ export const numericScrubControl = (
   };
 };
 
+// If the same property was set while its already in a temporal state, something is wrong with
+// the logic on call-site and we need to inform the developer.
+const rootStyleTracker = new Map<string, boolean>();
+
 const setRootStyle = (
   targetNode: HTMLElement | SVGElement,
   property: string,
   value: string
 ) => {
+  if (rootStyleTracker.has(property)) {
+    throw new Error(
+      "setRootStyle is called while the property is already in a temporal state."
+    );
+  }
   const root = targetNode.ownerDocument.documentElement;
   const originalValue = root.style.getPropertyValue(property);
   root.style.setProperty(property, value);
+  rootStyleTracker.set(property, true);
   return () => {
+    rootStyleTracker.delete(property);
     if (originalValue) {
       root.style.setProperty(property, originalValue);
       return;
