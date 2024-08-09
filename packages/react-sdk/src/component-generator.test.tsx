@@ -472,7 +472,7 @@ test("generate component with variables and actions", () => {
   ).toEqual(
     clear(`
       const Page = () => {
-      let [variableName, set$variableName] = useState<any>("initial")
+      let [variableName, set$variableName] = useVariableState<any>("initial")
       return <Body>
       <Input
       value={variableName}
@@ -545,7 +545,7 @@ test("avoid generating collection parameter variable as state", () => {
   ).toEqual(
     clear(`
     const Page = () => {
-    let [data, set$data] = useState<any>(["apple","orange","mango"])
+    let [data, set$data] = useVariableState<any>(["apple","orange","mango"])
     return <Body>
     {data?.map((element: any, index: number) =>
     <Fragment key={index}>
@@ -637,7 +637,7 @@ test("generate resources loading", () => {
   ).toEqual(
     clear(`
     const Page = () => {
-    let [data, set$data] = useState<any>("data")
+    let [data, set$data] = useVariableState<any>("data")
     let data_1 = useResource("data_2")
     return <Body
     data-data={data}
@@ -702,7 +702,7 @@ test("avoid generating unused variables", () => {
     })
   ).toMatchInlineSnapshot(`
 "const Page = ({ }: { system: any; }) => {
-let [UsedVariableName, set$UsedVariableName] = useState<any>("initial")
+let [UsedVariableName, set$UsedVariableName] = useVariableState<any>("initial")
 return <Body
 data-data={UsedVariableName} />
 }
@@ -771,21 +771,21 @@ test("generate conditional collection", () => {
       ),
     })
   ).toMatchInlineSnapshot(`
-    "const Page = () => {
-    let [conditionName, set$conditionName] = useState<any>(false)
-    return <Body>
-    {(conditionName) &&
-    <>
-    {[]?.map((collectionItemName: any, index: number) =>
-    <Fragment key={index}>
-    </Fragment>
-    )}
-    </>
-    }
-    </Body>
-    }
-    "
-    `);
+"const Page = () => {
+let [conditionName, set$conditionName] = useVariableState<any>(false)
+return <Body>
+{(conditionName) &&
+<>
+{[]?.map((collectionItemName: any, index: number) =>
+<Fragment key={index}>
+</Fragment>
+)}
+</>
+}
+</Body>
+}
+"
+`);
 });
 
 test("generate resource prop", () => {
