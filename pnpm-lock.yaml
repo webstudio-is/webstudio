@@ -462,8 +462,8 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -892,8 +892,8 @@ importers:
         specifier: ^3.2.12
         version: 3.2.12
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -1151,8 +1151,8 @@ importers:
         specifier: 2.8.0
         version: 2.8.0
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -1202,15 +1202,15 @@ importers:
 
   packages/dashboard:
     dependencies:
-      '@webstudio-is/prisma-client':
-        specifier: workspace:*
-        version: link:../prisma-client
       '@webstudio-is/project':
         specifier: workspace:*
         version: link:../project
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
+      type-fest:
+        specifier: ^4.24.0
+        version: 4.24.0
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -1600,8 +1600,8 @@ importers:
         specifier: ^3.2.12
         version: 3.2.12
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -1671,8 +1671,8 @@ importers:
         specifier: ^1.6.6
         version: 1.6.6
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -1715,8 +1715,8 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -1776,8 +1776,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -1800,8 +1800,8 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
       type-fest:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.24.0
+        version: 4.24.0
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -9458,8 +9458,8 @@ packages:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
 
-  type-fest@4.3.1:
-    resolution: {integrity: sha512-pphNW/msgOUSkJbH58x8sqpq8uQj6b0ZKGxEsLKMUnGorRcDjrUaLS+39+/ub41JNTwrrMyJcUB8+YZs3mbwqw==}
+  type-fest@4.24.0:
+    resolution: {integrity: sha512-spAaHzc6qre0TlZQQ2aA/nGMe+2Z/wyGk5Z+Ru2VUfdNwT6kWO6TjevOlpebsATEG1EIQ2sOiDszud3lO5mt/Q==}
     engines: {node: '>=16'}
 
   type-is@1.6.18:
@@ -18700,7 +18700,7 @@ snapshots:
 
   type-fest@2.19.0: {}
 
-  type-fest@4.3.1: {}
+  type-fest@4.24.0: {}
 
   type-is@1.6.18:
     dependencies:

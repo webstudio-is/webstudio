@@ -1,11 +1,10 @@
-import { ShareProject, type LinkOptions } from "./share-project";
-import { builderUrl } from "~/shared/router-utils";
 import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import type { Project } from "@webstudio-is/prisma-client";
+import { builderUrl } from "~/shared/router-utils";
 import { trpcClient } from "../trpc/trpc-client";
+import { ShareProject, type LinkOptions } from "./share-project";
 
-const useShareProjectContainer = (projectId: Project["id"]) => {
+const useShareProjectContainer = (projectId: string) => {
   const {
     data,
     load,
@@ -89,7 +88,7 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
 };
 
 type ShareButtonProps = {
-  projectId: Project["id"];
+  projectId: string;
   hasProPlan: boolean;
 };
 
