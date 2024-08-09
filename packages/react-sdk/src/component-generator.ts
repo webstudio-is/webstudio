@@ -424,7 +424,7 @@ export const generateWebstudioComponent = ({
       );
       const initialValue = dataSource.value.value;
       const initialValueString = JSON.stringify(initialValue);
-      generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+      generatedDataSources += `let [${valueName}, ${setterName}] = useVariableState<any>(${initialValueString})\n`;
     }
     if (dataSource.type === "resource") {
       const valueName = scope.getName(dataSource.id, dataSource.name);

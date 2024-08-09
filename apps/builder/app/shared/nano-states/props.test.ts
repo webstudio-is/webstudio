@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from "@jest/globals";
 import { cleanStores } from "nanostores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
-import type { Instance } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable, type Instance } from "@webstudio-is/sdk";
 import {
   collectionComponent,
   textContentAttribute,
@@ -992,4 +992,21 @@ test("prefill default system variable value", () => {
 
 test("compute expression when invalid syntax", () => {
   expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
+});
+
+test("compute literal expression when variable is json object", () => {
+  const variableName = "jsonVariable";
+  const encVariableName = encodeDataSourceVariable(variableName);
+  const jsonObject = { hello: "world", subObject: { world: "hello" } };
+  const variables = new Map([[variableName, jsonObject]]);
+  const expression = "`${" + encVariableName + "}`";
+
+  expect(computeExpression(expression, variables)).toEqual(
+    JSON.stringify(jsonObject)
+  );
+
+  const subObjectExpression = "`${" + encVariableName + ".subObject}`";
+  expect(computeExpression(subObjectExpression, variables)).toEqual(
+    JSON.stringify(jsonObject.subObject)
+  );
 });

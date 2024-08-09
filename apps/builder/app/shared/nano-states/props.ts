@@ -9,8 +9,10 @@ import type {
   ImageAsset,
 } from "@webstudio-is/sdk";
 import {
+  createJsonStringifyProxy,
   decodeDataSourceVariable,
   encodeDataSourceVariable,
+  isPlainObject,
   transpileExpression,
 } from "@webstudio-is/sdk";
 import {
@@ -223,7 +225,15 @@ export const computeExpression = (
       code += `let ${identifier} = _variables.get("${id}");\n`;
     }
     code += `return (${transpiled})`;
-    const result = new Function("_variables", code)(variables);
+
+    const proxiedVariables = new Map(
+      [...variables.entries()].map(([key, value]) => [
+        key,
+        isPlainObject(value) ? createJsonStringifyProxy(value) : value,
+      ])
+    );
+
+    const result = new Function("_variables", code)(proxiedVariables);
     return result;
   } catch {
     // empty block
