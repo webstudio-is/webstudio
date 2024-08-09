@@ -2120,13 +2120,6 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
     description:
       "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
   },
-  disableOutsidePointerEvents: {
-    description:
-      "When `true`, hover/focus/click interactions will be disabled on elements outside\nthe `DismissableLayer`. Users will need to click twice on outside elements to\ninteract with them: once to close the `DismissableLayer`, and again to trigger the element.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-  },
   draggable: {
     required: false,
     control: "boolean",
