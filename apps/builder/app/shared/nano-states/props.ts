@@ -30,7 +30,7 @@ import {
   $uploadingFilesDataStore,
   $memoryProps,
   $isPreviewMode,
-} from "./nano-states";
+} from "./misc";
 import { $selectedPage, $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";

@@ -4,7 +4,6 @@ import {
   css,
   disableCanvasPointerEvents,
   numericScrubControl,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { useEffect, useRef } from "react";
@@ -19,7 +18,7 @@ import {
 const handlesContainerStyle = css({
   position: "absolute",
   top: 0,
-  width: theme.spacing[3],
+  width: 5,
   bottom: 0,
   cursor: "col-resize",
   pointerEvents: "auto",
@@ -33,15 +32,15 @@ const handlesContainerStyle = css({
   "& svg": {
     position: "absolute",
     top: "50%",
-    right: theme.spacing[3],
+    right: 0,
     transform: "translateX(100%)",
     color: theme.colors.foregroundSubtle,
   },
   "&[data-align=left]": {
-    left: `-${rawTheme.spacing[3]}`,
+    left: 0,
   },
   "&[data-align=right]": {
-    right: `-${rawTheme.spacing[3]}`,
+    right: 0,
   },
   "&[data-state=resizing]::before": {
     display: "none",

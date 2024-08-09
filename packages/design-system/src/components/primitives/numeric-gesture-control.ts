@@ -69,6 +69,16 @@ const getValueDefault = (
   return clamp(value, minValue, maxValue);
 };
 
+const preventContextMenu = () => {
+  const handler = (event: MouseEvent) => {
+    event.preventDefault();
+  };
+  window.addEventListener("contextmenu", handler);
+  return () => {
+    window.removeEventListener("contextmenu", handler);
+  };
+};
+
 export const numericScrubControl = (
   targetNode: HTMLElement | SVGElement,
   options: NumericScrubOptions
@@ -95,8 +105,8 @@ export const numericScrubControl = (
   };
 
   let exitPointerLock: (() => void) | undefined = undefined;
-
-  let originalUserSelect = "";
+  let restoreUserSelect: (() => void) | undefined = undefined;
+  let restoreContextMenu: (() => void) | undefined = undefined;
 
   const cleanup = () => {
     targetNode.removeEventListener("pointermove", handleEvent);
@@ -109,14 +119,10 @@ export const numericScrubControl = (
     clearTimeout(state.timerId);
     exitPointerLock?.();
     exitPointerLock = undefined;
-    if (originalUserSelect) {
-      targetNode.ownerDocument.documentElement.style.userSelect =
-        originalUserSelect;
-    } else {
-      targetNode.ownerDocument.documentElement.style.removeProperty(
-        "user-select"
-      );
-    }
+    restoreUserSelect?.();
+    restoreUserSelect = undefined;
+    restoreContextMenu?.();
+    restoreContextMenu = undefined;
   };
 
   // Cannot define `event:` as PointerEvent,
@@ -165,9 +171,11 @@ export const numericScrubControl = (
         }, 150);
 
         targetNode.addEventListener("pointermove", handleEvent);
-        originalUserSelect =
-          targetNode.ownerDocument.documentElement.style.userSelect;
-        targetNode.ownerDocument.documentElement.style.userSelect = "none";
+        // Pointer event will stop firing on touch after ~300ms because browser starts scrolling the page.
+        restoreUserSelect = setRootStyle(targetNode, "user-select", "none");
+        // In chrome mobile touch simulation, you will get the context menu because tapping and holding
+        // results in a right click.
+        restoreContextMenu = preventContextMenu();
         break;
       }
       case "pointermove": {
@@ -231,11 +239,41 @@ export const numericScrubControl = (
   };
 };
 
+// If the same property was set while its already in a temporal state, something is wrong with
+// the logic on call-site and we need to inform the developer.
+const rootStyleTracker = new Map<string, boolean>();
+
+const setRootStyle = (
+  targetNode: HTMLElement | SVGElement,
+  property: string,
+  value: string
+) => {
+  if (rootStyleTracker.has(property)) {
+    throw new Error(
+      "setRootStyle is called while the property is already in a temporal state."
+    );
+  }
+  const root = targetNode.ownerDocument.documentElement;
+  const originalValue = root.style.getPropertyValue(property);
+  root.style.setProperty(property, value);
+  rootStyleTracker.set(property, true);
+  return () => {
+    rootStyleTracker.delete(property);
+    if (originalValue) {
+      root.style.setProperty(property, originalValue);
+      return;
+    }
+    root.style.removeProperty(property);
+  };
+};
+
 const requestPointerLock = (
   state: NumericScrubState,
   event: PointerEvent,
   targetNode: HTMLElement | SVGElement
 ) => {
+  // After ~0.3 seconds starts touch events as page scrolling.
+  const restoreTouchAction = setRootStyle(targetNode, "touch-action", "none");
   // The pointer lock api nukes the cursor on requestng a pointer lock,
   // creating and managing the visual que of the cursor is thus left to the author
   // we create and append an svg that serves as the visual que of where the cursor currently is
@@ -274,22 +312,24 @@ const requestPointerLock = (
         state.cursor.remove();
         state.cursor = undefined;
       }
-
+      restoreTouchAction();
       targetNode.ownerDocument.exitPointerLock();
     };
-  } else {
-    const { pointerId } = event;
-    targetNode.ownerDocument.documentElement.style.setProperty(
-      "cursor",
-      state.direction === "horizontal" ? "ew-resize" : "ns-resize"
-    );
-    targetNode.setPointerCapture(pointerId);
-
-    return () => {
-      targetNode.ownerDocument.documentElement.style.removeProperty("cursor");
-      targetNode.releasePointerCapture(pointerId);
-    };
   }
+
+  const { pointerId } = event;
+  const restoreCursor = setRootStyle(
+    targetNode,
+    "cursor",
+    state.direction === "horizontal" ? "ew-resize" : "ns-resize"
+  );
+  targetNode.setPointerCapture(pointerId);
+
+  return () => {
+    restoreCursor();
+    restoreTouchAction();
+    targetNode.releasePointerCapture(pointerId);
+  };
 };
 
 const shouldUsePointerLock = "chrome" in globalThis;
