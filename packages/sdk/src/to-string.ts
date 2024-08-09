@@ -18,10 +18,10 @@ export const createJsonStringifyProxy = <T extends object>(target: T): T => {
   });
 };
 
-export const isPlainObject = (obj: unknown): obj is object => {
+export const isPlainObject = (value: unknown): value is object => {
   return (
-    Object.prototype.toString.call(obj) === "[object Object]" &&
-    (Object.getPrototypeOf(obj) === null ||
-      Object.getPrototypeOf(obj) === Object.prototype)
+    Object.prototype.toString.call(value) === "[object Object]" &&
+    (Object.getPrototypeOf(value) === null ||
+      Object.getPrototypeOf(value) === Object.prototype)
   );
 };

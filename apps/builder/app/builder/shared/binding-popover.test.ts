@@ -6,8 +6,10 @@ test("evaluateExpressionWithinScope works", () => {
   const variableName = "jsonVariable";
   const encVariableName = encodeDataSourceVariable(variableName);
   const variableValue = 1;
-  const variables = { [encVariableName]: variableValue };
-  const expression = `${encVariableName} + ${encVariableName}`;
 
-  expect(evaluateExpressionWithinScope(expression, variables)).toEqual(2);
+  expect(
+    evaluateExpressionWithinScope(`${encVariableName} + ${encVariableName}`, {
+      [encVariableName]: variableValue,
+    })
+  ).toEqual(2);
 });
