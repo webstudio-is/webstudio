@@ -283,7 +283,7 @@ const ProgressIndicator = ({ value }: { value: number }) => {
         style={{
           filter: `
             drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7))
-            brightness(${fakeValue}%)
+            brightness(${Math.max(fakeValue, 30)}%)
           `,
           transitionProperty: "filter",
           transitionDuration: "500ms",
