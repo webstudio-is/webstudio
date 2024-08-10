@@ -66,6 +66,7 @@ import { WebstudioIcon } from "@webstudio-is/icons";
 import { initBuilderApi } from "~/shared/builder-api";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
+import { useInterval } from "~/shared/hook-utils/use-interval";
 
 registerContainers();
 
@@ -249,20 +250,24 @@ const revealAnimation = ({
 });
 
 const ProgressIndicator = ({ value }: { value: number }) => {
-  const [isDone, setIsDone] = useState(false);
   const [fakeValue, setFakeValue] = useState(value);
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setFakeValue((_fakeValue) => {
-        // Fetching data is the slowest part and we don't want to get stuck at 0% visually
-        return Math.max(value, 50);
-      });
-    }, 300);
-    return () => clearTimeout(id);
-  }, [value]);
+  useInterval((intervalId) => {
+    setFakeValue((previousFakeValue) => {
+      // Makeing sure fake value is not higher than real value to prevent jumping back
+      let nextFakeValue = Math.max(previousFakeValue + 1, value);
+      // Make sure fake value is not lower than 10 to avoid showing empty progress.
+      nextFakeValue = Math.max(nextFakeValue, 10);
+      // Making sure fake value can't get bigger than 100, now that it reached 100 we can stop faking it.
+      if (nextFakeValue >= 100) {
+        clearInterval(intervalId);
+        return previousFakeValue;
+      }
+      return nextFakeValue;
+    });
+  }, 100);
 
-  if (isDone) {
+  if (value >= 100) {
     return;
   }
 
@@ -280,24 +285,9 @@ const ProgressIndicator = ({ value }: { value: number }) => {
     >
       <WebstudioIcon
         size={60}
-        style={{
-          filter: `
-            drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7))
-            brightness(${Math.max(fakeValue, 30)}%)
-          `,
-          transitionProperty: "filter",
-          transitionDuration: "500ms",
-        }}
+        style={{ filter: "drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7))" }}
       />
-      <Progress
-        value={fakeValue}
-        transitionDuration="500ms"
-        onTransitionEnd={() => {
-          if (value === 100) {
-            setIsDone(true);
-          }
-        }}
-      />
+      <Progress value={fakeValue} />
     </Flex>
   );
 };
@@ -500,14 +490,14 @@ export const Builder = ({
             navigatorLayout={navigatorLayout}
             css={revealAnimation({
               show: loadingState.state === "ready",
-              backgroundColor: theme.colors.backgroundPanel,
+              backgroundColor: theme.colors.backgroundCanvas,
             })}
           />
           <SidePanel
             gridArea="sidebar"
             css={revealAnimation({
               show: loadingState.state === "ready",
-              backgroundColor: theme.colors.backgroundPanel,
+              backgroundColor: theme.colors.backgroundCanvas,
             })}
           >
             <SidebarLeft publish={publish} />
@@ -519,7 +509,7 @@ export const Builder = ({
               overflow: "hidden",
               ...revealAnimation({
                 show: loadingState.state === "ready",
-                backgroundColor: theme.colors.backgroundPanel,
+                backgroundColor: theme.colors.backgroundCanvas,
               }),
             }}
           >
