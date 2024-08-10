@@ -329,61 +329,53 @@ const PathField = ({
   const id = useId();
   return (
     <Grid gap={1}>
-      <Label htmlFor={id}>
-        {allowDynamicData && isFeatureEnabled("cms") ? (
-          <Flex align="center" gap={1}>
-            Dynamic Path
-            <Tooltip
-              content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-              variant="wrapped"
-            >
-              <HelpIcon
-                color={rawTheme.colors.foregroundSubtle}
-                tabIndex={-1}
-              />
-            </Tooltip>
-          </Flex>
-        ) : (
-          <Flex align="center" gap={1}>
-            Path
-            <Tooltip
-              content={
-                <>
-                  <Text>
-                    Path is a subset of the URL that looks like this:
-                    &quot;/blog&quot;.
-                  </Text>
-                  {allowDynamicData === false && isFeatureEnabled("cms") && (
-                    <>
-                      <Text>
-                        To make the path dynamic and use it with CMS, you can
-                        use parameters and other features. CMS features are part
-                        of the Pro plan.
-                      </Text>
-                      <Link
-                        className={buttonStyle({ color: "gradient" })}
-                        css={{ marginTop: theme.spacing[5], width: "100%" }}
-                        color="contrast"
-                        underline="none"
-                        target="_blank"
-                        href="https://webstudio.is/pricing"
-                      >
-                        Upgrade
-                      </Link>
-                    </>
-                  )}
-                </>
-              }
-              variant="wrapped"
-            >
-              <HelpIcon
-                color={rawTheme.colors.foregroundSubtle}
-                tabIndex={-1}
-              />
-            </Tooltip>
-          </Flex>
-        )}
-      </Label>
+      {allowDynamicData && isFeatureEnabled("cms") ? (
+        <Flex align="center" gap={1}>
+          <Label htmlFor={id}>Dynamic Path</Label>
+          <Tooltip
+            content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
+            variant="wrapped"
+          >
+            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          </Tooltip>
+        </Flex>
+      ) : (
+        <Flex align="center" gap={1}>
+          <Label htmlFor={id}>Path</Label>
+          <Tooltip
+            content={
+              <>
+                <Text>
+                  Path is a subset of the URL that looks like this:
+                  &quot;/blog&quot;.
+                </Text>
+                {allowDynamicData === false && isFeatureEnabled("cms") && (
+                  <>
+                    <Text>
+                      To make the path dynamic and use it with CMS, you can use
+                      parameters and other features. CMS features are part of
+                      the Pro plan.
+                    </Text>
+                    <Link
+                      className={buttonStyle({ color: "gradient" })}
+                      css={{ marginTop: theme.spacing[5], width: "100%" }}
+                      color="contrast"
+                      underline="none"
+                      target="_blank"
+                      href="https://webstudio.is/pricing"
+                    >
+                      Upgrade
+                    </Link>
+                  </>
+                )}
+              </>
+            }
+            variant="wrapped"
+          >
+            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          </Tooltip>
+        </Flex>
+      )}
       <InputErrorsTooltip errors={errors}>
         <InputField
           color={errors && "error"}
@@ -411,30 +403,28 @@ const StatusField = ({
   const { variableValues, scope, aliases } = useStore($pageRootScope);
   return (
     <Grid gap={1}>
-      <Label htmlFor={id}>
-        <Flex align="center" gap={1}>
-          Status Code
-          <Tooltip
-            content={
-              <Text>
-                Status code value can be a{" "}
-                <Link
-                  color="inherit"
-                  target="_blank"
-                  href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
-                >
-                  HTTP Status
-                </Link>{" "}
-                number or an expression that returns the status code dynamic
-                response handling.
-              </Text>
-            }
-            variant="wrapped"
-          >
-            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
-          </Tooltip>
-        </Flex>
-      </Label>
+      <Flex align="center" gap={1}>
+        <Label htmlFor={id}>Status Code </Label>
+        <Tooltip
+          content={
+            <Text>
+              Status code value can be a{" "}
+              <Link
+                color="inherit"
+                target="_blank"
+                href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+              >
+                HTTP Status
+              </Link>{" "}
+              number or an expression that returns the status code dynamic
+              response handling.
+            </Text>
+          }
+          variant="wrapped"
+        >
+          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+        </Tooltip>
+      </Flex>
       <BindingControl>
         {allowDynamicData && (
           <BindingPopover
@@ -487,17 +477,16 @@ const RedirectField = ({
   const { variableValues, scope, aliases } = useStore($pageRootScope);
   return (
     <Grid gap={1}>
-      <Label htmlFor={id}>
-        <Flex align="center" gap={1}>
-          Redirect
-          <Tooltip
-            content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
-            variant="wrapped"
-          >
-            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
-          </Tooltip>
-        </Flex>
-      </Label>
+      <Flex align="center" gap={1}>
+        <Label htmlFor={id}>Redirect </Label>
+        <Tooltip
+          content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
+          variant="wrapped"
+        >
+          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+        </Tooltip>
+      </Flex>
+
       <BindingControl>
         {allowDynamicData && (
           <BindingPopover
