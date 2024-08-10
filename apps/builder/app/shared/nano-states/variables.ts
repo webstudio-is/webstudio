@@ -4,7 +4,7 @@ import {
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { $publishedOrigin } from "./nano-states";
+import { $publishedOrigin } from "./misc";
 import { $selectedPage } from "./pages";
 
 export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(

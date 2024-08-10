@@ -3,6 +3,9 @@ import { Alert } from "./alert";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { Link } from "@webstudio-is/design-system";
+import { $isPreviewMode } from "~/shared/nano-states";
+import { useStore } from "@nanostores/react";
+import { $loadingState } from "~/builder/shared/nano-states";
 
 const useTooSmallMessage = () => {
   const [message, setMessage] = useState<string>();
@@ -87,13 +90,21 @@ const useUnsupportedBrowser = () => {
 };
 
 export const BlockingAlerts = () => {
+  const isPreviewMode = useStore($isPreviewMode);
+  const loadingState = useStore($loadingState);
+
   // Takes the latest message, order matters
   const message = [useTooSmallMessage(), useUnsupportedBrowser()]
     .filter(Boolean)
     .pop();
 
-  if (message === undefined) {
-    return null;
+  if (
+    message === undefined ||
+    // We want user to be able to test in unsupported browsers in preview mode.
+    isPreviewMode ||
+    loadingState.state !== "ready"
+  ) {
+    return;
   }
 
   return <Alert message={message} />;

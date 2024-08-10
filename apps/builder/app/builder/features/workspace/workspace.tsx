@@ -19,9 +19,6 @@ const workspaceStyle = css({
   position: "relative",
   // Prevent scrollIntoView from scrolling the whole page
   overflow: "clip",
-  // This spacing is needed to still be able to grab the canvas edge, otherwise you will always drag
-  // the browser window instead of the canvas.
-  px: theme.spacing[5],
 });
 
 const canvasContainerStyle = css({
@@ -56,7 +53,8 @@ const getCanvasStyle = (
 ) => {
   let canvasHeight;
 
-  if (workspaceRect?.height) {
+  // For some reason scale is 0 in chrome dev tools mobile touch simulated vervsion.
+  if (workspaceRect?.height && scale !== 0) {
     canvasHeight = workspaceRect.height / (scale / 100);
   }
 

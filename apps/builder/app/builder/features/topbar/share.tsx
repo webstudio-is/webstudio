@@ -10,7 +10,6 @@ import {
   Tooltip,
   rawTheme,
 } from "@webstudio-is/design-system";
-import type { Project } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { $authPermit } from "~/shared/nano-states";
 import { $isShareDialogOpen } from "~/builder/shared/nano-states";
@@ -19,7 +18,7 @@ export const ShareButton = ({
   projectId,
   hasProPlan,
 }: {
-  projectId: Project["id"];
+  projectId: string;
   hasProPlan: boolean;
 }) => {
   const isShareDialogOpen = useStore($isShareDialogOpen);

@@ -1,56 +1,41 @@
-import { prisma } from "@webstudio-is/prisma-client";
+import type { SetNonNullable } from "type-fest";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { DashboardProjects } from "./schema";
+import type { DashboardProjects } from "./schema";
 
-export const findMany = async (userId: string, _context: AppContext) => {
-  const data = await prisma.dashboardProject.findMany({
-    where: {
-      userId,
-      isDeleted: false,
-    },
-    include: {
-      previewImageAsset: true,
-    },
-    orderBy: [
-      {
-        createdAt: "desc",
-      },
-      {
-        id: "desc",
-      },
-    ],
-  });
-
-  return DashboardProjects.parse(data);
+export const findMany = async (userId: string, context: AppContext) => {
+  const data = await context.postgrest.client
+    .from("DashboardProject")
+    .select("*, previewImageAsset:Asset (*)")
+    .eq("userId", userId)
+    .eq("isDeleted", false)
+    .order("createdAt", { ascending: false })
+    .order("id", { ascending: false });
+  if (data.error) {
+    throw data.error;
+  }
+  return data.data as SetNonNullable<
+    (typeof data.data)[number]
+  >[] satisfies DashboardProjects;
 };
 
 export const findManyByIds = async (
   projectIds: string[],
-  _context: AppContext
+  context: AppContext
 ) => {
   if (projectIds.length === 0) {
-    return DashboardProjects.parse([]);
+    return [];
   }
-
-  const data = await prisma.dashboardProject.findMany({
-    where: {
-      id: {
-        in: projectIds,
-      },
-      isDeleted: false,
-    },
-    include: {
-      previewImageAsset: true,
-    },
-    orderBy: [
-      {
-        createdAt: "desc",
-      },
-      {
-        id: "desc",
-      },
-    ],
-  });
-
-  return DashboardProjects.parse(data);
+  const data = await context.postgrest.client
+    .from("DashboardProject")
+    .select("*, previewImageAsset:Asset (*)")
+    .in("id", projectIds)
+    .eq("isDeleted", false)
+    .order("createdAt", { ascending: false })
+    .order("id", { ascending: false });
+  if (data.error) {
+    throw data.error;
+  }
+  return data.data as SetNonNullable<
+    (typeof data.data)[number]
+  >[] satisfies DashboardProjects;
 };

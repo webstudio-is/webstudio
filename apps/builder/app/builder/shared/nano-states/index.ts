@@ -1,6 +1,11 @@
 import { atom, computed } from "nanostores";
 import type { TabName } from "~/builder/features/sidebar-left/types";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import {
+  $isPreviewMode,
+  $selectedInstanceRenderState,
+} from "~/shared/nano-states/misc";
+import { $canvasIframeState } from "~/shared/nano-states/canvas";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
@@ -41,3 +46,39 @@ export const $userPlanFeatures = atom<UserPlanFeatures>({
   hasSubscription: false,
   hasProPlan: false,
 });
+
+export const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
+
+export const $loadingState = computed(
+  [
+    $dataLoadingState,
+    $selectedInstanceRenderState,
+    $canvasIframeState,
+    $isPreviewMode,
+  ],
+  (
+    dataLoadingState,
+    selectedInstanceRenderState,
+    canvasIframeState,
+    isPreviewMode
+  ) => {
+    const readyStates = new Map<
+      "dataLoadingState" | "selectedInstanceRenderState" | "canvasIframeState",
+      boolean
+    >([
+      ["dataLoadingState", dataLoadingState === "loaded"],
+      [
+        "selectedInstanceRenderState",
+        selectedInstanceRenderState === "mounted" || isPreviewMode,
+      ],
+      ["canvasIframeState", canvasIframeState === "ready"],
+    ]);
+
+    const readyCount = Array.from(readyStates.values()).filter(Boolean).length;
+    const progress = Math.round((readyCount / readyStates.size) * 100);
+    const state: "ready" | "loading" =
+      readyCount === readyStates.size ? "ready" : "loading";
+
+    return { state, progress, readyStates };
+  }
+);

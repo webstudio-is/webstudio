@@ -14,7 +14,7 @@ import {
   computeExpression,
 } from "./props";
 import { $pages, $selectedPageId } from "./pages";
-import { $assets, $dataSources, $props, $resources } from "./nano-states";
+import { $assets, $dataSources, $props, $resources } from "./misc";
 import { $params } from "~/canvas/stores";
 import { $dataSourceVariables, $resourceValues } from "./variables";
 

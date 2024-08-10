@@ -181,8 +181,9 @@ model Build {
   version           Int      @default(0)
   lastTransactionId String?
   createdAt         DateTime @default(now())
-  updatedAt         DateTime @default(now()) @updatedAt
-  pages             String
+  updatedAt         DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  pages String
 
   project   Project @relation(fields: [projectId], references: [id])
   projectId String

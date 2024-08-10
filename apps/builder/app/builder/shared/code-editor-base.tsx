@@ -44,6 +44,12 @@ import {
 } from "@webstudio-is/design-system";
 import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
+// This undocumented flag is required to keep contenteditable fields editable after the first activation of EditorView.
+// To reproduce the issue, open any Binding dialog and then try to edit a Navigation Item in the Navigation menu.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+EditorView.EDIT_CONTEXT = false;
+
 const ExternalChange = Annotation.define<boolean>();
 
 const minHeightVar = "--ws-code-editor-min-height";
