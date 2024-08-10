@@ -1,3 +1,5 @@
+SET statement_timeout='120s';
+
 DROP VIEW "LatestStaticBuildPerProject";
 DROP VIEW "LatestBuildPerProject";
 
