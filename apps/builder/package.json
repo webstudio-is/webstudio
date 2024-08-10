@@ -26,9 +26,9 @@
     "@codemirror/state": "^6.4.1",
     "@codemirror/view": "^6.30.0",
     "@floating-ui/dom": "^1.6.5",
-    "@fontsource-variable/inter": "^5.0.13",
-    "@fontsource-variable/manrope": "^5.0.15",
-    "@fontsource/roboto-mono": "^5.0.13",
+    "@fontsource-variable/inter": "^5.0.20",
+    "@fontsource-variable/manrope": "^5.0.20",
+    "@fontsource/roboto-mono": "^5.0.18",
     "@lexical/headless": "^0.16.0",
     "@lexical/link": "^0.16.0",
     "@lexical/react": "^0.16.0",
@@ -133,7 +133,7 @@
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.24.0",
     "typescript": "5.5.2",
-    "vite": "^5.3.5"
+    "vite": "^5.4.0"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"

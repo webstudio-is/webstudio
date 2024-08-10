@@ -42,7 +42,11 @@ export default {
     name: "@storybook/react-vite",
     options: {},
   },
-  addons: ["@storybook/addon-essentials", "@storybook/addon-links"],
+  addons: [
+    "@storybook/addon-controls",
+    "@storybook/addon-actions",
+    "@storybook/addon-backgrounds",
+  ],
   async viteFinal(config) {
     return {
       ...config,
