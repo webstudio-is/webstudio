@@ -50,13 +50,13 @@ export const ReactSdkContext = createContext<
 
 export const useResource = (name: string) => {
   const { resources } = useContext(ReactSdkContext);
-  const resource = useMemo(
+  const resource = resources[name];
+
+  const resourceMemozied = useMemo(
     () =>
-      isPlainObject(resources[name])
-        ? createJsonStringifyProxy(resources[name])
-        : resources[name],
-    [resources, name]
+      isPlainObject(resource) ? createJsonStringifyProxy(resource) : resource,
+    [resource]
   );
 
-  return resource;
+  return resourceMemozied;
 };
