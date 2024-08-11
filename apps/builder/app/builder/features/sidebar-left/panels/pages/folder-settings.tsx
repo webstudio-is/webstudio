@@ -184,20 +184,18 @@ const FormFields = ({
           </Grid>
 
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.slug}>
-              <Flex align="center" css={{ gap: theme.spacing[3] }}>
-                Slug
-                <Tooltip
-                  content={"Slug will be used as part of the path to the page"}
-                  variant="wrapped"
-                >
-                  <HelpIcon
-                    color={rawTheme.colors.foregroundSubtle}
-                    tabIndex={0}
-                  />
-                </Tooltip>
-              </Flex>
-            </Label>
+            <Flex align="center" css={{ gap: theme.spacing[3] }}>
+              <Label htmlFor={fieldIds.slug}>Slug</Label>
+              <Tooltip
+                content={"Slug will be used as part of the path to the page"}
+                variant="wrapped"
+              >
+                <HelpIcon
+                  color={rawTheme.colors.foregroundSubtle}
+                  tabIndex={0}
+                />
+              </Tooltip>
+            </Flex>
             <InputErrorsTooltip errors={errors.slug}>
               <InputField
                 tabIndex={1}
