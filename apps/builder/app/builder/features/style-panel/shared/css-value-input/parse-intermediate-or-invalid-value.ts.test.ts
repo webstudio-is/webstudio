@@ -118,6 +118,33 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
       value: "border-box",
     });
   });
+
+  test("tolerate comma instead of dot typo", () => {
+    const result = parseIntermediateOrInvalidValue("width", {
+      type: "intermediate",
+      value: "2,5",
+      unit: "rem",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 2.5,
+      unit: "rem",
+    });
+  });
+
+  test("tolerate comma instead of dot typo with unit input", () => {
+    const result = parseIntermediateOrInvalidValue("width", {
+      type: "intermediate",
+      value: "2,5rem",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 2.5,
+      unit: "rem",
+    });
+  });
 });
 
 describe("Parse intermediate or invalid value with math evaluation", () => {
