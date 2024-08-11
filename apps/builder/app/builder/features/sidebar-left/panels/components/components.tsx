@@ -12,6 +12,7 @@ import {
   List,
   ListItem,
   SearchField,
+  Separator,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
@@ -62,8 +63,14 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         placeholder="Search..."
         onInput={handleSearch}
         onCancel={() => setSearchText("")}
-        css={{ mx: theme.spacing[9], mt: theme.spacing[9] }}
+        css={{
+          mx: theme.spacing[9],
+          mt: theme.spacing[9],
+          mb: theme.spacing[9],
+        }}
       />
+
+      <Separator />
 
       <ScrollArea>
         {componentCategories
