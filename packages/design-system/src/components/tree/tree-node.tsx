@@ -417,7 +417,10 @@ export const TreeItemBody = <Data extends { id: string }>({
           style={{ left: (level - 1) * INDENT + ITEM_PADDING_LEFT }}
           // We don't want this trigger to be focusable
           tabIndex={-1}
-          onClick={(event) => onToggle(event.altKey)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle(event.altKey);
+          }}
         >
           {isExpanded ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />}
         </CollapsibleTrigger>
