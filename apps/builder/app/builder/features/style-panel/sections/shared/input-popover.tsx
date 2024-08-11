@@ -27,6 +27,7 @@ const slideUpAndFade = keyframes({
   "100%": { opacity: 1, transform: "scale(1)" },
 });
 
+// We need to differentiate between marginTop and top for example.
 const isSpace = (property: string) => {
   return property.startsWith("margin") || property.startsWith("padding");
 };
