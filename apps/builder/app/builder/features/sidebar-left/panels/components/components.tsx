@@ -29,6 +29,7 @@ import { getMetaMaps } from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { insert } from "./insert";
+import { matchSorter } from "match-sorter";
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
@@ -100,24 +101,19 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           .map((category) => {
             const meta = (metaByCategory.get(category) ?? []).filter(
               (meta: WsComponentMeta) => {
-                const component = componentNamesByMeta.get(meta);
-                if (
-                  searchText !== "" &&
-                  !component?.toLowerCase().includes(searchText.toLowerCase())
-                ) {
-                  return false;
-                }
-
                 if (documentType === "xml" && meta.category === "data") {
                   return componentNamesByMeta.get(meta) === "ws:collection";
                 }
                 return true;
               }
             );
+            const matchedMeta = matchSorter(meta, searchText, {
+              keys: [(item) => componentNamesByMeta.get(item) || ""],
+            });
 
             return {
               category,
-              meta,
+              meta: matchedMeta,
             };
           })
           .filter((category) => {
