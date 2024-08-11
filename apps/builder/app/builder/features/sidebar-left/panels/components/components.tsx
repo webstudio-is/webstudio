@@ -56,6 +56,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       />
 
       <SearchField
+        autoFocus
         value={searchText}
         title="Search"
         placeholder="Search..."
