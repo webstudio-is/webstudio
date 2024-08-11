@@ -228,7 +228,11 @@ const useHandleKeyDown =
     ignoreEnter: boolean;
     ignoreUpDownNumeric: boolean;
     value: CssValueInputValue;
-    onChange: (value: CssValueInputValue) => void;
+    onChange: (event: {
+      value: CssValueInputValue;
+      altKey: boolean;
+      shiftKey: boolean;
+    }) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
@@ -236,11 +240,12 @@ const useHandleKeyDown =
       // Underlying select like `unitSelect` can already prevent an event like up/down buttons
       return;
     }
+    const meta = { altKey: event.altKey, shiftKey: event.shiftKey };
 
     // Do not prevent downshift behaviour on item select
     if (ignoreEnter === false) {
       if (event.key === "Enter") {
-        onChange(value);
+        onChange({ value, ...meta });
       }
     }
 
@@ -255,9 +260,12 @@ const useHandleKeyDown =
         value.type === "unit" ? value.value : Number(value.value.trim());
 
       onChange({
-        type: "unit",
-        value: handleNumericInputArrowKeys(inputValue, event),
-        unit: value.unit,
+        value: {
+          type: "unit",
+          value: handleNumericInputArrowKeys(inputValue, event),
+          unit: value.unit,
+        },
+        ...meta,
       });
       // Prevent Downshift from opening menu on arrow up/down
       return;
@@ -274,12 +282,15 @@ export type IntermediateStyleValue = {
 
 export type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
-export type ChangeReason =
-  | "enter"
-  | "blur"
-  | "unit-select"
-  | "keyword-select"
-  | "scrub-end";
+type Modifiers = {
+  altKey: boolean;
+  shiftKey: boolean;
+};
+
+type ChangeCompleteEvent = {
+  type: "enter" | "blur" | "scrub-end" | "unit-select" | "keyword-select";
+  value: StyleValue;
+} & Modifiers;
 
 type CssValueInputProps = Pick<
   ComponentProps<typeof InputField>,
@@ -301,10 +312,7 @@ type CssValueInputProps = Pick<
    */
   keywords?: Array<KeywordValue>;
   onChange: (value: CssValueInputValue | undefined) => void;
-  onChangeComplete: (event: {
-    value: StyleValue;
-    reason: ChangeReason;
-  }) => void;
+  onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   onAbort: () => void;
   icon?: ReactNode;
@@ -398,11 +406,16 @@ export const CssValueInput = ({
   };
 
   const onChangeComplete = (
-    value: CssValueInputValue,
-    reason: ChangeReason
+    event: {
+      type: ChangeCompleteEvent["type"];
+      value: CssValueInputValue;
+    } & Partial<Modifiers>
   ) => {
+    const { value } = event;
+    const defaultProps = { altKey: false, shiftKey: false };
+
     if (value.type !== "intermediate" && value.type !== "invalid") {
-      props.onChangeComplete({ value, reason });
+      props.onChangeComplete({ ...defaultProps, ...event, value });
       return;
     }
 
@@ -414,8 +427,9 @@ export const CssValueInput = ({
     }
 
     props.onChangeComplete({
+      ...defaultProps,
+      ...event,
       value: parsedValue,
-      reason,
     });
   };
 
@@ -439,7 +453,7 @@ export const CssValueInput = ({
       onChange(inputValue);
     },
     onItemSelect: (value) => {
-      onChangeComplete(value, "keyword-select");
+      onChangeComplete({ value, type: "keyword-select" });
     },
     onItemHighlight: (value) => {
       if (value == null) {
@@ -463,7 +477,7 @@ export const CssValueInput = ({
     value,
     onChange: (unitOrKeyword) => {
       if (unitOrKeyword.type === "keyword") {
-        onChangeComplete(unitOrKeyword, "unit-select");
+        onChangeComplete({ value: unitOrKeyword, type: "unit-select" });
         return;
       }
 
@@ -475,7 +489,7 @@ export const CssValueInput = ({
         value.type === "intermediate" &&
         Number.isNaN(Number.parseFloat(value.value)) === false
       ) {
-        onChangeComplete({ ...value, unit }, "unit-select");
+        onChangeComplete({ value: { ...value, unit }, type: "unit-select" });
         return;
       }
 
@@ -489,14 +503,14 @@ export const CssValueInput = ({
           unit
         );
 
-        onChangeComplete(
-          {
+        onChangeComplete({
+          value: {
             type: "unit",
             value: Number.parseFloat(convertedValue.toFixed(2)),
             unit,
           },
-          "unit-select"
-        );
+          type: "unit-select",
+        });
         return;
       }
 
@@ -519,25 +533,25 @@ export const CssValueInput = ({
           unit
         );
 
-        onChangeComplete(
-          {
+        onChangeComplete({
+          value: {
             type: "unit",
             value: Number.parseFloat(convertedValue.toFixed(2)),
             unit,
           },
-          "unit-select"
-        );
+          type: "unit-select",
+        });
         return;
       }
 
-      onChangeComplete(
-        {
+      onChangeComplete({
+        value: {
           type: "intermediate",
           value: toValue(value),
           unit,
         },
-        "unit-select"
-      );
+        type: "unit-select",
+      });
     },
     onCloseAutoFocus(event) {
       // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
@@ -555,7 +569,7 @@ export const CssValueInput = ({
     value,
     property,
     onChange: props.onChange,
-    onChangeComplete: (value) => onChangeComplete(value, "scrub-end"),
+    onChangeComplete: (value) => onChangeComplete({ value, type: "scrub-end" }),
     shouldHandleEvent,
   });
 
@@ -567,7 +581,7 @@ export const CssValueInput = ({
    **/
   const callOnCompleteIfIntermediateValueExists = useDebouncedCallback(() => {
     if (props.intermediateValue !== undefined) {
-      onChangeComplete(value, "blur");
+      onChangeComplete({ value, type: "blur" });
     }
   });
 
@@ -593,7 +607,7 @@ export const CssValueInput = ({
       onAbort();
       return;
     }
-    onChangeComplete(value, "blur");
+    onChangeComplete({ value, type: "blur" });
   };
 
   const handleKeyDown = useHandleKeyDown({
@@ -603,7 +617,7 @@ export const CssValueInput = ({
       isUnitsOpen || (isOpen && !menuProps.empty && highlightedIndex !== -1),
     // Do not change the number value on the arrow up/down if any menu is opened
     ignoreUpDownNumeric: isUnitsOpen || isOpen,
-    onChange: (value) => onChangeComplete(value, "enter"),
+    onChange: (event) => onChangeComplete({ ...event, type: "enter" }),
     value,
     onKeyDown: inputProps.onKeyDown,
   });

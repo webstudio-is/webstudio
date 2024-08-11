@@ -93,20 +93,18 @@ const bigValue = {
 } as const;
 
 export const PositionControlComponent = () => {
-  const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
-    useStyleInfo({
-      left: defaultValue,
-      right: bigValue,
-      top: defaultValue,
-      bottom: defaultValue,
-    });
+  const { styleInfo, deleteProperty, createBatchUpdate } = useStyleInfo({
+    left: defaultValue,
+    right: bigValue,
+    top: defaultValue,
+    bottom: defaultValue,
+  });
 
   return (
     <Box css={{ marginLeft: 100 }}>
       <PositionControl
         createBatchUpdate={createBatchUpdate}
         currentStyle={styleInfo}
-        setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
     </Box>
