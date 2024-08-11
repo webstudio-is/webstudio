@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type WsComponentMeta,
@@ -11,6 +11,7 @@ import {
   ScrollArea,
   List,
   ListItem,
+  SearchField,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
@@ -31,7 +32,7 @@ import { insert } from "./insert";
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
   const selectedPage = useStore($selectedPage);
-
+  const [searchText, setSearchText] = useState("");
   const documentType = selectedPage?.meta.documentType ?? "html";
 
   const { metaByCategory, componentNamesByMeta } = useMemo(
@@ -43,12 +44,26 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     metaByComponentName,
   });
 
+  const handleSearch = (e: FormEvent<HTMLInputElement>) => {
+    setSearchText((e.target as HTMLInputElement).value);
+  };
+
   return (
     <Root ref={draggableContainerRef}>
       <Header
         title="Components"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
+
+      <SearchField
+        value={searchText}
+        title="Search"
+        placeholder="Search..."
+        onInput={handleSearch}
+        onCancel={() => setSearchText("")}
+        css={{ mx: theme.spacing[9], mt: theme.spacing[9] }}
+      />
+
       <ScrollArea>
         {componentCategories
           .filter((category) => {
@@ -74,16 +89,56 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
             return true;
           })
-          .map((category) => (
-            <CollapsibleSection label={category} key={category} fullWidth>
+          .map((category) => {
+            const meta = (metaByCategory.get(category) ?? []).filter(
+              (meta: WsComponentMeta) => {
+                const component = componentNamesByMeta.get(meta);
+                if (
+                  searchText !== "" &&
+                  !component?.toLowerCase().includes(searchText.toLowerCase())
+                ) {
+                  return false;
+                }
+
+                if (documentType === "xml" && meta.category === "data") {
+                  return componentNamesByMeta.get(meta) === "ws:collection";
+                }
+                return true;
+              }
+            );
+
+            return {
+              category,
+              meta,
+            };
+          })
+          .filter((category) => {
+            return category.meta.length > 0;
+          })
+          .map((categoryGroup) => (
+            <CollapsibleSection
+              label={categoryGroup.category}
+              key={categoryGroup.category}
+              fullWidth
+            >
               <List asChild>
                 <Flex
                   gap="2"
                   wrap="wrap"
                   css={{ px: theme.spacing[9], overflow: "auto" }}
                 >
-                  {(metaByCategory.get(category) ?? [])
+                  {(metaByCategory.get(categoryGroup.category) ?? [])
                     .filter((meta: WsComponentMeta) => {
+                      const component = componentNamesByMeta.get(meta);
+                      if (
+                        searchText !== "" &&
+                        !component
+                          ?.toLowerCase()
+                          .includes(searchText.toLowerCase())
+                      ) {
+                        return false;
+                      }
+
                       if (documentType === "xml" && meta.category === "data") {
                         return (
                           componentNamesByMeta.get(meta) === "ws:collection"
