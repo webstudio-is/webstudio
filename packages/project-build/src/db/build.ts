@@ -191,7 +191,7 @@ export const loadBuildByProjectId = async (
   return parseBuild(build);
 };
 
-export const loadCompactBuildByProjectId = async (
+export const loadDevBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]
 ) => {
