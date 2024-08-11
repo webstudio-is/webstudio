@@ -127,67 +127,48 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                   wrap="wrap"
                   css={{ px: theme.spacing[9], overflow: "auto" }}
                 >
-                  {(metaByCategory.get(categoryGroup.category) ?? [])
-                    .filter((meta: WsComponentMeta) => {
-                      const component = componentNamesByMeta.get(meta);
-                      if (
-                        searchText !== "" &&
-                        !component
-                          ?.toLowerCase()
-                          .includes(searchText.toLowerCase())
-                      ) {
-                        return false;
-                      }
-
-                      if (documentType === "xml" && meta.category === "data") {
-                        return (
-                          componentNamesByMeta.get(meta) === "ws:collection"
-                        );
-                      }
-                      return true;
-                    })
-                    .map((meta: WsComponentMeta, index) => {
-                      const component = componentNamesByMeta.get(meta);
-                      if (component === undefined) {
-                        return;
-                      }
-                      if (
-                        isFeatureEnabled("filters") === false &&
-                        component === "RemixForm"
-                      ) {
-                        return;
-                      }
-                      if (
-                        isFeatureEnabled("cms") === false &&
-                        component === "ContentEmbed"
-                      ) {
-                        return;
-                      }
-                      return (
-                        <ListItem
-                          asChild
-                          index={index}
-                          key={component}
-                          onSelect={(event) => {
-                            const component = elementToComponentName(
-                              event.target as HTMLElement,
-                              metaByComponentName
-                            );
-                            if (component) {
-                              onSetActiveTab("none");
-                              insert(component);
-                            }
-                          }}
-                        >
-                          <ComponentCard
-                            {...{ [dragItemAttribute]: component }}
-                            label={getInstanceLabel({ component }, meta)}
-                            description={meta.description}
-                            icon={<MetaIcon size="auto" icon={meta.icon} />}
-                          />
-                        </ListItem>
-                      );
-                    })}
+                  {categoryGroup.meta.map((meta: WsComponentMeta, index) => {
+                    const component = componentNamesByMeta.get(meta);
+                    if (component === undefined) {
+                      return;
+                    }
+                    if (
+                      isFeatureEnabled("filters") === false &&
+                      component === "RemixForm"
+                    ) {
+                      return;
+                    }
+                    if (
+                      isFeatureEnabled("cms") === false &&
+                      component === "ContentEmbed"
+                    ) {
+                      return;
+                    }
+                    return (
+                      <ListItem
+                        asChild
+                        index={index}
+                        key={component}
+                        onSelect={(event) => {
+                          const component = elementToComponentName(
+                            event.target as HTMLElement,
+                            metaByComponentName
+                          );
+                          if (component) {
+                            onSetActiveTab("none");
+                            insert(component);
+                          }
+                        }}
+                      >
+                        <ComponentCard
+                          {...{ [dragItemAttribute]: component }}
+                          label={getInstanceLabel({ component }, meta)}
+                          description={meta.description}
+                          icon={<MetaIcon size="auto" icon={meta.icon} />}
+                        />
+                      </ListItem>
+                    );
+                  })}
                   {dragCard}
                 </Flex>
               </List>
