@@ -46,23 +46,21 @@ import {
   type EditorApi,
 } from "./expression-editor";
 import { useSideOffset } from "./floating-panel";
-import { $dataSourceVariables } from "~/shared/nano-states";
+import { $dataSourceVariables, computeExpression } from "~/shared/nano-states";
 
 export const evaluateExpressionWithinScope = (
   expression: string,
   scope: Record<string, unknown>
 ) => {
-  let expressionWithScope = "";
+  const variables = new Map<string, unknown>();
   for (const [name, value] of Object.entries(scope)) {
-    expressionWithScope += `const ${name} = ${JSON.stringify(value)};\n`;
+    const decodedName = decodeDataSourceVariable(name);
+    if (decodedName) {
+      variables.set(decodedName, value);
+    }
   }
-  expressionWithScope += `return (${expression})`;
-  try {
-    const fn = new Function(expressionWithScope);
-    return fn();
-  } catch {
-    //
-  }
+
+  return computeExpression(expression, variables);
 };
 
 const BindingPanel = ({
@@ -447,6 +445,7 @@ export const BindingPopover = ({
                       value,
                       scope
                     );
+
                     onRemove(evaluatedValue);
                     preventedClosing.current = false;
                     hasUnsavedChange.current = false;

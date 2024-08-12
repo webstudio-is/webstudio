@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-import { useResource } from "@webstudio-is/react-sdk/runtime";
+import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Accordion as Accordion,
@@ -38,7 +38,7 @@ export const pageFontAssets: FontAsset[] = [];
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
-  let [accordionValue, set$accordionValue] = useState<any>("0");
+  let [accordionValue, set$accordionValue] = useVariableState<any>("0");
   return (
     <Body className="w-body">
       <Accordion
@@ -64,7 +64,7 @@ const Page = ({}: { system: any }) => {
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
-          <AccordionContent className="w-item-content c1mxwmum c1j0j9ep c1gl2i2 c44srea">
+          <AccordionContent className="w-item-content c1j0j9ep c1gl2i2 c44srea c1xcxvc0 c12ct49k">
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
         </AccordionItem>
@@ -82,7 +82,7 @@ const Page = ({}: { system: any }) => {
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
-          <AccordionContent className="w-item-content c1mxwmum c1j0j9ep c1gl2i2 c44srea">
+          <AccordionContent className="w-item-content c1j0j9ep c1gl2i2 c44srea c1xcxvc0 c12ct49k">
             {
               "Yes. It comes with default styles that matches the other components' aesthetic."
             }
@@ -102,7 +102,7 @@ const Page = ({}: { system: any }) => {
               </Box>
             </AccordionTrigger>
           </AccordionHeader>
-          <AccordionContent className="w-item-content c1mxwmum c1j0j9ep c1gl2i2 c44srea">
+          <AccordionContent className="w-item-content c1j0j9ep c1gl2i2 c44srea c1xcxvc0 c12ct49k">
             {
               "Yes. It's animated by default, but you can disable it if you prefer."
             }

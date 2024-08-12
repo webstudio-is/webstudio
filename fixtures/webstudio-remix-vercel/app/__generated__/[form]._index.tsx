@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
-import { useResource } from "@webstudio-is/react-sdk/runtime";
+import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Body as Body,
   Form as Form,
@@ -36,8 +36,8 @@ export const pageFontAssets: FontAsset[] = [];
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
-  let [formState, set$formState] = useState<any>("initial");
-  let [formState_1, set$formState_1] = useState<any>("initial");
+  let [formState, set$formState] = useVariableState<any>("initial");
+  let [formState_1, set$formState_1] = useVariableState<any>("initial");
   return (
     <Body className="w-body">
       <Form
