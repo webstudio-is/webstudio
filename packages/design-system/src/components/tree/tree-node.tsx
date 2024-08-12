@@ -418,6 +418,9 @@ export const TreeItemBody = <Data extends { id: string }>({
           // We don't want this trigger to be focusable
           tabIndex={-1}
           onClick={(event) => {
+            // If we don't stop propagation, the currently focused item will loose focus and then regain it
+            // which will result in blinking outline.
+            // We prefer to focus the collapsible trigger instead since it is also a button and it was actually clicked.
             event.stopPropagation();
             onToggle(event.altKey);
           }}
