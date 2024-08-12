@@ -1,4 +1,4 @@
-import { test, expect, describe } from "@jest/globals";
+import { test, expect, describe, jest } from "@jest/globals";
 import { act, renderHook } from "@testing-library/react-hooks";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import {
@@ -15,7 +15,6 @@ import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
-  $selectedInstanceIntanceToTag,
   $selectedInstanceSelector,
   $selectedStyleSources,
   $styleSourceSelections,
@@ -34,7 +33,16 @@ import {
   useStyleInfo,
 } from "./style-info";
 
-const { getPriorityStyleSource } = __testing__;
+jest.unstable_mockModule("~/shared/canvas-api", () => ({
+  isInitialized: () => {
+    throw new Error("Not implemented");
+  },
+  getElementAndAncestorInstanceTags: () => {
+    throw new Error("Not implemented");
+  },
+}));
+
+const { getPriorityStyleSource, setInstanceToTag } = __testing__;
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
@@ -405,7 +413,7 @@ const resetStores = () => {
   $styleSourceSelections.set(new Map());
   $breakpoints.set(new Map());
   $selectedInstanceSelector.set(undefined);
-  $selectedInstanceIntanceToTag.set(new Map());
+  setInstanceToTag(new Map());
   $selectedStyleSources.set(new Map());
   $selectedInstanceStates.set(new Set());
 };
@@ -935,12 +943,14 @@ describe("active states", () => {
         ],
       ])
     );
+
     $selectedInstanceSelector.set(["box"]);
     $selectedInstanceStates.set(new Set([":hover"]));
     $selectedStyleSources.set(new Map([["box", "box.local"]]));
-    $selectedInstanceIntanceToTag.set(new Map([["box", "div"]]));
+    setInstanceToTag(new Map([["box", "div"]]));
 
     const { result } = renderHook(() => useStyleInfo());
+
     expect(getStyleSource(result.current.color)).toEqual("preset");
     expect(result.current.color?.value).toEqual({
       type: "keyword",

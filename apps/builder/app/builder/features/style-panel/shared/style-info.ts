@@ -496,6 +496,10 @@ export const getNextSourceInfo = (
 const $instanceToTag = computed(
   [$selectedInstanceSelector, $loadingState],
   (instanceSelector, loadingState) => {
+    if (__testing__.instanceToTag !== undefined) {
+      return __testing__.instanceToTag;
+    }
+
     if (instanceSelector === undefined) {
       return;
     }
@@ -940,4 +944,15 @@ export const hasInstanceValue = (
 
 export const __testing__ = {
   getPriorityStyleSource,
+  instanceToTag: undefined as Map<Instance["id"], HtmlTags> | undefined,
+  setInstanceToTag: (instanceToTag: Map<Instance["id"], HtmlTags>) => {
+    __testing__.instanceToTag = instanceToTag;
+
+    const selector = $selectedInstanceSelector.get();
+    if (selector === undefined) {
+      return;
+    }
+    // enforce recompute
+    $selectedInstanceSelector.set([...selector]);
+  },
 };
