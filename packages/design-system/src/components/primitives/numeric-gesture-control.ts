@@ -20,11 +20,14 @@ export type NumericScrubDirection = "horizontal" | "vertical";
 
 export type NumericScrubValue = number;
 
-export type NumericScrubCallback = (event: {
+export type NumericScrubEvent = {
+  type: "scrubend" | "scrubbing";
   target: HTMLElement | SVGElement;
   value: NumericScrubValue;
   preventDefault: () => void;
-}) => void;
+};
+
+type NumericScrubCallback = (event: NumericScrubEvent) => void;
 
 export type NumericScrubOptions = {
   inverse?: boolean;
@@ -144,6 +147,7 @@ export const numericScrubControl = (
         cleanup();
         if (shouldComponentUpdate) {
           onValueChange?.({
+            type: "scrubend",
             target: targetNode,
             value: state.value,
             preventDefault: () => event.preventDefault(),
@@ -198,6 +202,7 @@ export const numericScrubControl = (
           onStatusChange?.("scrubbing");
         }
         onValueInput?.({
+          type: "scrubbing",
           target: targetNode,
           value: state.value,
           preventDefault: () => event.preventDefault(),
