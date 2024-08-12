@@ -162,6 +162,7 @@ export const loadApprovedProdBuildByProjectId = async (
       `
     )
     .eq("projectId", projectId)
+    .eq("isLatestBuild", true)
     .eq("project.isDeleted", false)
     .eq("project.marketplaceApprovalStatus", "APPROVED")
     .single();

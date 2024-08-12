@@ -368,14 +368,17 @@ html {
   .c1vri55v {
     transition-duration: 200ms;
   }
-  .c1mxwmum {
-    overflow: hidden;
-  }
   .c1j0j9ep {
     font-size: 0.875rem;
   }
   .c1gl2i2 {
     line-height: 1.25rem;
+  }
+  .c1xcxvc0 {
+    overflow-x: hidden;
+  }
+  .c12ct49k {
+    overflow-y: hidden;
   }
   .ch2exr5 {
     display: block;

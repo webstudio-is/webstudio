@@ -1,5 +1,6 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { ImageLoader } from "@webstudio-is/image";
+import { createJsonStringifyProxy, isPlainObject } from "@webstudio-is/sdk";
 
 export type Params = {
   /**
@@ -49,5 +50,13 @@ export const ReactSdkContext = createContext<
 
 export const useResource = (name: string) => {
   const { resources } = useContext(ReactSdkContext);
-  return resources[name];
+  const resource = resources[name];
+
+  const resourceMemozied = useMemo(
+    () =>
+      isPlainObject(resource) ? createJsonStringifyProxy(resource) : resource,
+    [resource]
+  );
+
+  return resourceMemozied;
 };
