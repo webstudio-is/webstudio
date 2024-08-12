@@ -75,6 +75,34 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
   };
 };
 
+export const getElementAndAncestorInstanceTags = (
+  instanceSelector: Readonly<InstanceSelector>
+) => {
+  const elements = getElementsByInstanceSelector(instanceSelector);
+
+  if (elements.length === 0) {
+    return;
+  }
+
+  const [element] = elements;
+
+  const instanceToTag = new Map<Instance["id"], HtmlTags>();
+  for (
+    let ancestorOrSelf: HTMLElement | null = element;
+    ancestorOrSelf !== null;
+    ancestorOrSelf = ancestorOrSelf.parentElement
+  ) {
+    const tagName = ancestorOrSelf.tagName.toLowerCase();
+    const instanceId = ancestorOrSelf.getAttribute(idAttribute);
+
+    if (isHtmlTag(tagName) && instanceId !== null) {
+      instanceToTag.set(instanceId, tagName);
+    }
+  }
+
+  return instanceToTag;
+};
+
 const subscribeSelectedInstance = (
   selectedInstanceSelector: Readonly<InstanceSelector>,
   debounceEffect: (callback: () => void) => void
@@ -143,19 +171,9 @@ const subscribeSelectedInstance = (
     $selectedInstanceBrowserStyle.set(getBrowserStyle(element));
 
     // Map self and ancestor instance ids to tag names
-    const instanceToTag = new Map<Instance["id"], HtmlTags>();
-    for (
-      let ancestorOrSelf: HTMLElement | null = element;
-      ancestorOrSelf !== null;
-      ancestorOrSelf = ancestorOrSelf.parentElement
-    ) {
-      const tagName = ancestorOrSelf.tagName.toLowerCase();
-      const instanceId = ancestorOrSelf.getAttribute(idAttribute);
-
-      if (isHtmlTag(tagName) && instanceId !== null) {
-        instanceToTag.set(instanceId, tagName);
-      }
-    }
+    const instanceToTag = getElementAndAncestorInstanceTags(
+      selectedInstanceSelector
+    );
 
     $selectedInstanceIntanceToTag.set(instanceToTag);
 
