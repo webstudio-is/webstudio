@@ -45,7 +45,6 @@ import { PropertyName } from "../../shared/property-name";
 import { getDots } from "../../shared/collapsible-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { TransformOrigin } from "./transform-origin";
-import { parseCssValue } from "@webstudio-is/css-data";
 
 export const transformPanels = [
   "translate",
