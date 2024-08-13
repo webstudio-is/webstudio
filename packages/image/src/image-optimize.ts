@@ -272,7 +272,11 @@ export const getImageAttributes = (props: {
       src: string;
       srcSet?: string;
       sizes?: string;
-    } = { src: props.src };
+    } = {
+      src: URL.canParse(props.src)
+        ? props.src
+        : props.loader({ src: props.src, format: "raw" }),
+    };
 
     if (props.srcSet != null) {
       resAttrs.srcSet = props.srcSet;
