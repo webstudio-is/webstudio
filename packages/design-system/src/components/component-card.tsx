@@ -31,7 +31,7 @@ const cardStyle = css({
     background: theme.colors.backgroundPanel,
     color: theme.colors.foregroundDisabled,
   },
-  "&:focus-visible, &[data-state=focus]": {
+  "&:focus-visible, &[data-state=selected]": {
     outline: `2px solid ${theme.colors.borderFocus}`,
     outlineOffset: "-2px",
   },

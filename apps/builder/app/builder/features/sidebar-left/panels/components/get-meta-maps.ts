@@ -1,13 +1,17 @@
 import { type WsComponentMeta } from "@webstudio-is/react-sdk";
 
+export type MetaByCategory = Map<
+  WsComponentMeta["category"],
+  Array<WsComponentMeta>
+>;
+
+export type ComponentNamesByMeta = Map<WsComponentMeta, string>;
+
 export const getMetaMaps = (
   metaByComponentName: Map<string, WsComponentMeta>
 ) => {
-  const metaByCategory: Map<
-    WsComponentMeta["category"],
-    Array<WsComponentMeta>
-  > = new Map();
-  const componentNamesByMeta: Map<WsComponentMeta, string> = new Map();
+  const metaByCategory: MetaByCategory = new Map();
+  const componentNamesByMeta: ComponentNamesByMeta = new Map();
 
   for (const [name, meta] of metaByComponentName) {
     if (meta.category === undefined || meta.category === "hidden") {

@@ -23,7 +23,6 @@ export const meta: WsComponentMeta = {
   category: "forms",
   invalidAncestors: ["Button", "Link"],
   type: "container",
-  label: "Select",
   description:
     "A drop-down menu for users to select a single option from a predefined list.",
   icon: SelectIcon,

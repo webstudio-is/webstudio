@@ -68,7 +68,7 @@ const toCanvasCoordinates = (
   };
 };
 
-export const elementToComponentName = (
+const elementToComponentName = (
   element: Element,
   metaByComponentName: Map<string, WsComponentMeta>
 ) => {

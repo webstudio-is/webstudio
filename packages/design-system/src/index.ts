@@ -53,7 +53,7 @@ export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * from "./components/toggle-group";
 export * from "./components/progress-radial";
 export * from "./components/progress";
-export { SearchField } from "./components/search-field";
+export { SearchField, useSearchFieldKeys } from "./components/search-field";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 export { Card } from "./components/card";
 export * from "./components/tooltip";
