@@ -143,7 +143,7 @@ export const ErrorBoundary = () => {
   const error = useRouteError();
   console.error({ error });
   const message = isRouteErrorResponse(error)
-    ? error.data.message ?? error.data
+    ? (error.data.message ?? error.data)
     : error instanceof Error
       ? error.message
       : String(error);
