@@ -148,7 +148,7 @@ export const useAutoScroll = (
     };
 
     const {
-      edgeDistanceThreshold = 100,
+      edgeDistanceThreshold = 20,
       minSpeed = 1,
       maxSpeed = 500,
     } = latestProps.current;
