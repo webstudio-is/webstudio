@@ -25,7 +25,7 @@ export const parseIntermediateOrInvalidValue = (
 
   // If input contains a number, we assume its either a value or value + unit.
   // Users often mistype comma instead of dot and we want to be tolerant to that.
-  if (isNaN(parseFloat(value)) === false) {
+  if (Number.isNaN(Number.parseFloat(value)) === false) {
     value = value.replace(",", ".");
   }
 
