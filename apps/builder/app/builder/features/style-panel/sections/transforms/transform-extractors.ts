@@ -2,6 +2,7 @@ import type {
   FunctionValue,
   KeywordValue,
   StyleValue,
+  TupleValue,
   UnitValue,
 } from "@webstudio-is/css-engine";
 
@@ -58,11 +59,13 @@ const isValidTransformOriginValue = (
   return value.type === "unit" || value.type === "keyword";
 };
 
-export const extractTransformOriginValues = (value: StyleValue) => {
-  if (value.type !== "tuple") {
-    return;
-  }
-
+export const extractTransformOriginValues = (
+  value: TupleValue
+): {
+  x: KeywordValue | UnitValue;
+  y: KeywordValue | UnitValue;
+  z: UnitValue;
+} => {
   let x: KeywordValue | UnitValue = { type: "keyword", value: "center" };
   let y: KeywordValue | UnitValue = { type: "keyword", value: "center" };
   let z: UnitValue = { type: "unit", unit: "px", value: 0 };

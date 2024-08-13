@@ -5,6 +5,7 @@ import {
   extractTransformOriginValues,
 } from "./transform-extractors";
 import { parseCssValue } from "@webstudio-is/css-data";
+import type { TupleValue } from "@webstudio-is/css-engine";
 
 describe("extractRotatePropertiesFromTransform", () => {
   test("parses transform and returns undefined if no rotate values exists", () => {
@@ -110,7 +111,9 @@ describe("extractSkewPropertiesFromTransform", () => {
 describe("extractTransformOriginValues", () => {
   test("parses transform-origin and returns the individual properties from the value", () => {
     expect(
-      extractTransformOriginValues(parseCssValue("transformOrigin", "center"))
+      extractTransformOriginValues(
+        parseCssValue("transformOrigin", "center") as TupleValue
+      )
     ).toEqual({
       x: { type: "keyword", value: "center" },
       y: { type: "keyword", value: "center" },
@@ -118,7 +121,9 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(parseCssValue("transformOrigin", "top"))
+      extractTransformOriginValues(
+        parseCssValue("transformOrigin", "top") as TupleValue
+      )
     ).toEqual({
       x: { type: "keyword", value: "center" },
       y: { type: "keyword", value: "top" },
@@ -126,7 +131,9 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(parseCssValue("transformOrigin", "right"))
+      extractTransformOriginValues(
+        parseCssValue("transformOrigin", "right") as TupleValue
+      )
     ).toEqual({
       x: { type: "keyword", value: "right" },
       y: { type: "keyword", value: "center" },
@@ -134,7 +141,9 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(parseCssValue("transformOrigin", "45px"))
+      extractTransformOriginValues(
+        parseCssValue("transformOrigin", "45px") as TupleValue
+      )
     ).toEqual({
       x: { type: "unit", unit: "px", value: 45 },
       y: { type: "keyword", value: "center" },
@@ -143,7 +152,7 @@ describe("extractTransformOriginValues", () => {
 
     expect(
       extractTransformOriginValues(
-        parseCssValue("transformOrigin", "20px 40px")
+        parseCssValue("transformOrigin", "20px 40px") as TupleValue
       )
     ).toEqual({
       x: { type: "unit", unit: "px", value: 20 },
@@ -153,7 +162,7 @@ describe("extractTransformOriginValues", () => {
 
     expect(
       extractTransformOriginValues(
-        parseCssValue("transformOrigin", "10px 20px 30px")
+        parseCssValue("transformOrigin", "10px 20px 30px") as TupleValue
       )
     ).toEqual({
       x: { type: "unit", unit: "px", value: 10 },
@@ -163,7 +172,7 @@ describe("extractTransformOriginValues", () => {
 
     expect(
       extractTransformOriginValues(
-        parseCssValue("transformOrigin", "left top 30px")
+        parseCssValue("transformOrigin", "left top 30px") as TupleValue
       )
     ).toEqual({
       x: { type: "keyword", value: "left" },

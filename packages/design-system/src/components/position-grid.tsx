@@ -139,8 +139,6 @@ export const PositionGrid = ({
   });
   const numericSelectedPosition = toNumericPosition(selectedPosition);
 
-  console.log(selectedPosition, numericSelectedPosition);
-
   return (
     <Grid
       tabIndex={0}
