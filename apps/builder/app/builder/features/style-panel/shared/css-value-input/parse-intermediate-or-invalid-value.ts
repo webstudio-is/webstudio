@@ -14,13 +14,19 @@ export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
   styleValue: IntermediateStyleValue | InvalidValue
 ): StyleValue => {
-  const value = styleValue.value.trim();
+  let value = styleValue.value.trim();
 
   if (property.startsWith("--")) {
     return {
       type: "unparsed",
       value,
     };
+  }
+
+  // If input contains a number, we assume its either a value or value + unit.
+  // Users often mistype comma instead of dot and we want to be tolerant to that.
+  if (Number.isNaN(Number.parseFloat(value)) === false) {
+    value = value.replace(",", ".");
   }
 
   const valueInfo = properties[property as keyof typeof properties];

@@ -6,39 +6,64 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@webstudio-is/design-system";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
 import type { StyleSource } from "../../shared/style-info";
 import type {
+  CreateBatchUpdate,
   StyleUpdate,
   StyleUpdateOptions,
 } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
+import { getPositionModifiersGroup, getSpaceModifiersGroup } from "./scrub";
+import type { SpaceStyleProperty } from "../space/types";
+import type { PositionProperty } from "../position/position-layout";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
   "100%": { opacity: 1, transform: "scale(1)" },
 });
 
+// We need to differentiate between marginTop and top for example.
+const isSpace = (property: string) => {
+  return property.startsWith("margin") || property.startsWith("padding");
+};
+
 const Input = ({
   styleSource,
   value,
   property,
-  onChange,
   onClosePopover,
+  createBatchUpdate,
 }: {
   styleSource: StyleSource;
-  property: StyleProperty;
+  property: SpaceStyleProperty | PositionProperty;
   value: StyleValue;
-  onChange: (update: StyleUpdate, options: StyleUpdateOptions) => void;
   onClosePopover: () => void;
+  createBatchUpdate: CreateBatchUpdate;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
+
+  const onChange = (
+    updates: Array<StyleUpdate>,
+    options: StyleUpdateOptions
+  ) => {
+    const batch = createBatchUpdate();
+    for (const update of updates) {
+      if (update.operation === "set") {
+        batch.setProperty(update.property)(update.value);
+      }
+      if (update.operation === "delete") {
+        batch.deleteProperty(update.property);
+      }
+    }
+    batch.publish(options);
+  };
 
   return (
     <CssValueInput
@@ -50,38 +75,47 @@ const Input = ({
         setIntermediateValue(styleValue);
 
         if (styleValue === undefined) {
-          onChange({ operation: "delete", property }, { isEphemeral: true });
+          onChange([{ operation: "delete", property }], { isEphemeral: true });
           return;
         }
 
         if (styleValue.type !== "intermediate") {
-          onChange(
-            { operation: "set", property, value: styleValue },
-            { isEphemeral: true }
-          );
+          onChange([{ operation: "set", property, value: styleValue }], {
+            isEphemeral: true,
+          });
         }
       }}
       onHighlight={(styleValue) => {
         if (styleValue === undefined) {
-          onChange({ operation: "delete", property }, { isEphemeral: true });
+          onChange([{ operation: "delete", property }], { isEphemeral: true });
           return;
         }
 
-        onChange(
-          { operation: "set", property, value: styleValue },
-          { isEphemeral: true }
-        );
+        onChange([{ operation: "set", property, value: styleValue }], {
+          isEphemeral: true,
+        });
       }}
-      onChangeComplete={({ value, reason }) => {
-        setIntermediateValue(undefined);
-        onChange({ operation: "set", property, value }, { isEphemeral: false });
+      onChangeComplete={({ value, type, altKey, shiftKey }) => {
+        const updates: Array<StyleUpdate> = [];
+        const options = { isEphemeral: false };
+        const modifiers = { shiftKey, altKey };
+        const properties = isSpace(property)
+          ? getSpaceModifiersGroup(property as SpaceStyleProperty, modifiers)
+          : getPositionModifiersGroup(property as PositionProperty, modifiers);
 
-        if (reason === "blur" || reason === "enter") {
+        setIntermediateValue(undefined);
+
+        properties.forEach((property) => {
+          updates.push({ operation: "set", property, value });
+        });
+        onChange(updates, options);
+
+        if (type === "blur" || type === "enter") {
           onClosePopover();
         }
       }}
       onAbort={() => {
-        onChange({ operation: "delete", property }, { isEphemeral: true });
+        onChange([{ operation: "delete", property }], { isEphemeral: true });
       }}
     />
   );
@@ -108,14 +142,13 @@ export const InputPopover = ({
   styleSource,
   property,
   value,
-  onChange,
   isOpen,
   onClose,
-}: {
-  styleSource: StyleSource;
-  property: StyleProperty;
-  value: StyleValue;
-  onChange: ComponentProps<typeof Input>["onChange"];
+  createBatchUpdate,
+}: Pick<
+  ComponentProps<typeof Input>,
+  "styleSource" | "property" | "value" | "createBatchUpdate"
+> & {
   isOpen: boolean;
   onClose: () => void;
 }) => {
@@ -136,7 +169,7 @@ export const InputPopover = ({
           styleSource={styleSource}
           value={value}
           property={property}
-          onChange={onChange}
+          createBatchUpdate={createBatchUpdate}
           onClosePopover={onClose}
         />
       </PopoverContentStyled>

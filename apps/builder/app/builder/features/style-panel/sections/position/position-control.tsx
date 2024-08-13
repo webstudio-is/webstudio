@@ -1,11 +1,10 @@
 import { Grid, theme } from "@webstudio-is/design-system";
 import { PositionLayout, type PositionProperty } from "./position-layout";
 import { movementMapPosition, useKeyboardNavigation } from "../shared/keyboard";
-import { useRef, useState, type ComponentProps } from "react";
+import { useRef, useState } from "react";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
-  SetProperty,
 } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
 import { getPositionModifiersGroup, useScrub } from "../shared/scrub";
@@ -21,12 +20,10 @@ const Cell = ({
   onHover,
   isPopoverOpen,
   onPopoverClose,
-  onChange,
   createBatchUpdate,
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
-  onChange: ComponentProps<typeof InputPopover>["onChange"];
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: StyleInfo;
   property: PositionProperty;
@@ -50,8 +47,8 @@ const Cell = ({
         value={finalValue}
         isOpen={isPopoverOpen}
         property={property}
-        onChange={onChange}
         onClose={onPopoverClose}
+        createBatchUpdate={createBatchUpdate}
       />
       <PositionTooltip
         property={property}
@@ -87,7 +84,6 @@ type HoverTarget = {
 };
 
 type PositionControlProps = {
-  setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
@@ -97,7 +93,6 @@ export const PositionControl = ({
   createBatchUpdate,
   currentStyle,
   deleteProperty,
-  setProperty,
 }: PositionControlProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
 
@@ -190,13 +185,6 @@ export const PositionControl = ({
               if (openProperty === property) {
                 setOpenProperty(undefined);
                 layoutRef.current?.focus();
-              }
-            }}
-            onChange={(update, options) => {
-              if (update.operation === "set") {
-                setProperty(update.property)(update.value, options);
-              } else {
-                deleteProperty(update.property, options);
               }
             }}
             createBatchUpdate={createBatchUpdate}

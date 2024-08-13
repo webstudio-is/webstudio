@@ -7,6 +7,7 @@ import {
   updateRotateOrSkewPropertyValue,
   updateTransformTuplePropertyValue,
 } from "./transform-utils";
+import { extractRotatePropertiesFromTransform } from "./transform-extractors";
 import type { StyleInfo } from "../../shared/style-info";
 import {
   FunctionValue,
