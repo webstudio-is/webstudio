@@ -177,7 +177,37 @@ describe("extractTransformOriginValues", () => {
     ).toEqual({
       x: { type: "keyword", value: "left" },
       y: { type: "keyword", value: "top" },
-      z: { type: "unit", unit: "px", value: 30 },
+      z: { type: "unit", value: 30, unit: "px" },
+    });
+
+    expect(
+      extractTransformOriginValues(
+        parseCssValue("transformOrigin", "bottom right 60px") as TupleValue
+      )
+    ).toEqual({
+      x: { type: "keyword", value: "right" },
+      y: { type: "keyword", value: "bottom" },
+      z: { type: "unit", value: 60, unit: "px" },
+    });
+
+    expect(
+      extractTransformOriginValues(
+        parseCssValue("transformOrigin", "left 50% 60px") as TupleValue
+      )
+    ).toEqual({
+      x: { type: "keyword", value: "left" },
+      y: { type: "unit", value: 50, unit: "%" },
+      z: { type: "unit", value: 60, unit: "px" },
+    });
+
+    expect(
+      extractTransformOriginValues(
+        parseCssValue("transformOrigin", "50% bottom 60px") as TupleValue
+      )
+    ).toEqual({
+      x: { type: "unit", value: 50, unit: "%" },
+      y: { type: "keyword", value: "bottom" },
+      z: { type: "unit", value: 60, unit: "px" },
     });
   });
 });

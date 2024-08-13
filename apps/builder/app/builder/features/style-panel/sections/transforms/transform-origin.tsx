@@ -162,7 +162,7 @@ export const TransformOrigin = (props: SectionProps) => {
             onSelect={handlePositionGridChange}
           />
           <Flex gap="2" direction="column">
-            <Flex gap="2">
+            <Flex gap="2" align="center">
               <Label>X Axis</Label>
               <CssValueInputContainer
                 value={origin.x}
@@ -175,7 +175,7 @@ export const TransformOrigin = (props: SectionProps) => {
                 }
               />
             </Flex>
-            <Flex gap="2">
+            <Flex gap="2" align="center">
               <Label>Y Axis</Label>
               <CssValueInputContainer
                 value={origin.y}
@@ -188,7 +188,7 @@ export const TransformOrigin = (props: SectionProps) => {
                 }
               />
             </Flex>
-            <Flex gap="2">
+            <Flex gap="2" align="center">
               <Label>Z Axis</Label>
               <CssValueInputContainer
                 value={origin.z}
