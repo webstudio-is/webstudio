@@ -3,7 +3,7 @@ import { $hoveredInstanceSelector, $instances } from "~/shared/nano-states";
 import { $hoveredInstanceOutline } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
-  getElementsByInstanceSelector,
+  getVisibleElementsByInstanceSelector,
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "./shared/scroll-state";
@@ -106,7 +106,7 @@ export const subscribeInstanceHovering = () => {
   const unsubscribeHoveredInstanceId = $hoveredInstanceSelector.subscribe(
     (instanceSelector) => {
       if (instanceSelector) {
-        const elements = getElementsByInstanceSelector(instanceSelector);
+        const elements = getVisibleElementsByInstanceSelector(instanceSelector);
         updateHoveredRect(elements, instanceSelector);
       } else {
         $hoveredInstanceOutline.set(undefined);

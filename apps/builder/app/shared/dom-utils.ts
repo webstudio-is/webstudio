@@ -54,17 +54,32 @@ const hasLayout = (element: HTMLElement) => {
   return true;
 };
 
+export const getVisibleElementsByInstanceSelector = (
+  instanceSelector: InstanceSelector | Readonly<InstanceSelector>
+) => {
+  return getElementsByInstanceSelector(instanceSelector, true);
+};
+
+export const getAllElementsByInstanceSelector = (
+  instanceSelector: InstanceSelector | Readonly<InstanceSelector>
+) => {
+  return getElementsByInstanceSelector(instanceSelector, false);
+};
+
 /**
  * Get root visible elements, even if instance
  **/
-export const getElementsByInstanceSelector = (
-  instanceSelector: InstanceSelector | Readonly<InstanceSelector>
+const getElementsByInstanceSelector = (
+  instanceSelector: InstanceSelector | Readonly<InstanceSelector>,
+  skipHidden: boolean
 ) => {
   const descendantsOrSelf = [
     ...document.querySelectorAll<HTMLElement>(
       `[${selectorIdAttribute}$="${instanceSelector.join(",")}"]`
     ),
-  ].filter((element) => getIsVisuallyHidden(element) === false);
+  ].filter((element) =>
+    skipHidden ? getIsVisuallyHidden(element) === false : true
+  );
 
   const visibleIdSelectors = descendantsOrSelf.map(
     (element) => element.getAttribute(selectorIdAttribute) ?? ""
@@ -91,6 +106,7 @@ export const getElementsByInstanceSelector = (
     let elementResult: HTMLElement = element;
 
     while (
+      skipHidden &&
       false === hasLayout(elementResult) &&
       elementResult.parentElement !== null
     ) {

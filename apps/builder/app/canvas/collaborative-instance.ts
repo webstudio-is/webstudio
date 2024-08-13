@@ -1,6 +1,6 @@
 import {
   getAllElementsBoundingBox,
-  getElementsByInstanceSelector,
+  getVisibleElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import {
   $collaborativeInstanceSelector,
@@ -35,7 +35,7 @@ export const updateCollaborativeInstanceRect = () => {
       return;
     }
 
-    elements = getElementsByInstanceSelector(selector);
+    elements = getVisibleElementsByInstanceSelector(selector);
 
     if (elements.length > 0) {
       cancelAnimationFrame(frameHandler);
