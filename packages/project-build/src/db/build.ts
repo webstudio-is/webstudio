@@ -17,6 +17,8 @@ import {
   type Breakpoint,
   Pages,
   initialBreakpoints,
+  StyleSourceSelection,
+  StyleDecl,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import type { Build } from "../types";
@@ -26,6 +28,9 @@ import { parseDeployment } from "./deployment";
 import { parsePages, serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "../shared//marketplace";
+
+const parseCompactData = <Item>(serialized: string) =>
+  JSON.parse(serialized) as Item[];
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -87,6 +92,37 @@ const parseBuild = async (
   }
 };
 
+const parseCompactBuild = async (
+  build: Database["public"]["Tables"]["Build"]["Row"]
+) => {
+  try {
+    return {
+      id: build.id,
+      projectId: build.projectId,
+      version: build.version,
+      createdAt: build.createdAt,
+      updatedAt: build.updatedAt,
+      pages: parseConfig<Pages>(build.pages),
+      breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
+      styles: parseCompactData<StyleDecl>(build.styles),
+      styleSources: parseCompactData<StyleSource>(build.styleSources),
+      styleSourceSelections: parseCompactData<StyleSourceSelection>(
+        build.styleSourceSelections
+      ),
+      props: parseCompactData<Prop>(build.props),
+      dataSources: parseCompactData<DataSource>(build.dataSources),
+      resources: parseCompactData<Resource>(build.resources),
+      instances: parseCompactData<Instance>(build.instances),
+      deployment: parseDeployment(build.deployment),
+      marketplaceProduct: parseConfig<MarketplaceProduct>(
+        build.marketplaceProduct
+      ),
+    };
+  } finally {
+    // empty block
+  }
+};
+
 export const loadRawBuildById = async (
   context: AppContext,
   id: Build["id"]
@@ -131,22 +167,36 @@ export const loadBuildIdAndVersionByProjectId = async (
   return build.data;
 };
 
-export const loadBuildByProjectId = async (
+const loadRawBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]
-): Promise<Build> => {
+) => {
   const build = await context.postgrest.client
     .from("Build")
     .select("*")
     .eq("projectId", projectId)
     .is("deployment", null)
     .single();
-
   if (build.error) {
     throw build.error;
   }
+  return build.data;
+};
 
-  return parseBuild(build.data);
+export const loadBuildByProjectId = async (
+  context: AppContext,
+  projectId: Build["projectId"]
+): Promise<Build> => {
+  const build = await loadRawBuildByProjectId(context, projectId);
+  return parseBuild(build);
+};
+
+export const loadDevBuildByProjectId = async (
+  context: AppContext,
+  projectId: Build["projectId"]
+) => {
+  const build = await loadRawBuildByProjectId(context, projectId);
+  return parseCompactBuild(build);
 };
 
 export const loadApprovedProdBuildByProjectId = async (

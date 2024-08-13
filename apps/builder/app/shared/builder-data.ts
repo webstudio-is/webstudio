@@ -1,5 +1,6 @@
-import type { Asset, WebstudioData } from "@webstudio-is/sdk";
-import type { Build, MarketplaceProduct } from "@webstudio-is/project-build";
+import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import type { loader } from "~/routes/rest.data.$projectId";
 import {
   $assets,
   $breakpoints,
@@ -53,6 +54,9 @@ export const setBuilderData = (data: BuilderData) => {
   $marketplaceProduct.set(data.marketplaceProduct);
 };
 
+const getPair = <Item extends { id: string }>(item: Item) =>
+  [item.id, item] as const;
+
 export const loadBuilderData = async ({
   projectId,
   signal,
@@ -68,25 +72,22 @@ export const loadBuilderData = async ({
   }
   const response = await fetch(url, { signal });
   if (response.ok) {
-    const data = (await response.json()) as {
-      assets: Asset[];
-      build: Build;
-      marketplaceProduct: undefined | MarketplaceProduct;
-    };
-    const { assets, build } = data;
+    const data: Awaited<ReturnType<typeof loader>> = await response.json();
     return {
-      version: build.version,
-      assets: new Map(assets.map((asset) => [asset.id, asset])),
-      instances: new Map(build.instances),
-      dataSources: new Map(build.dataSources),
-      resources: new Map(build.resources),
-      props: new Map(build.props),
-      pages: build.pages,
-      styleSources: new Map(build.styleSources),
-      styleSourceSelections: new Map(build.styleSourceSelections),
-      breakpoints: new Map(build.breakpoints),
-      styles: new Map(build.styles),
-      marketplaceProduct: build.marketplaceProduct,
+      version: data.version,
+      assets: new Map(data.assets.map(getPair)),
+      instances: new Map(data.instances.map(getPair)),
+      dataSources: new Map(data.dataSources.map(getPair)),
+      resources: new Map(data.resources.map(getPair)),
+      props: new Map(data.props.map(getPair)),
+      pages: data.pages,
+      breakpoints: new Map(data.breakpoints.map(getPair)),
+      styleSources: new Map(data.styleSources.map(getPair)),
+      styleSourceSelections: new Map(
+        data.styleSourceSelections.map((item) => [item.instanceId, item])
+      ),
+      styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
+      marketplaceProduct: data.marketplaceProduct,
     } satisfies BuilderData & { version: number };
   }
   throw Error("Unable to load builder data");
