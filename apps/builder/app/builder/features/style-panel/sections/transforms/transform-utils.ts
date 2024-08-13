@@ -1,7 +1,6 @@
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
   FunctionValue,
-  StyleValue,
   toValue,
   type TupleValue,
   type TupleValueItem,
@@ -9,6 +8,10 @@ import {
 import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 import type { StyleInfo } from "../../shared/style-info";
 import type { TransformPanel, transformPanelDropdown } from "./transforms";
+import {
+  extractRotatePropertiesFromTransform,
+  extractSkewPropertiesFromTransform,
+} from "./transform-extractors";
 
 export type TransformPanelProps = {
   currentStyle: StyleInfo;
@@ -357,51 +360,4 @@ export const updateRotateOrSkewPropertyValue = (props: {
   }
 
   return newPropertyValue;
-};
-
-export const extractRotatePropertiesFromTransform = (transform: StyleValue) => {
-  let rotateX: FunctionValue | undefined;
-  let rotateY: FunctionValue | undefined;
-  let rotateZ: FunctionValue | undefined;
-
-  if (transform.type !== "tuple") {
-    return { rotateX, rotateY, rotateZ };
-  }
-
-  for (const item of transform.value) {
-    if (item.type === "function" && item.name === "rotateX") {
-      rotateX = item;
-    }
-
-    if (item.type === "function" && item.name === "rotateY") {
-      rotateY = item;
-    }
-
-    if (item.type === "function" && item.name === "rotateZ") {
-      rotateZ = item;
-    }
-  }
-
-  return { rotateX, rotateY, rotateZ };
-};
-
-export const extractSkewPropertiesFromTransform = (skew: StyleValue) => {
-  let skewX: FunctionValue | undefined = undefined;
-  let skewY: FunctionValue | undefined = undefined;
-
-  if (skew.type !== "tuple") {
-    return { skewX, skewY };
-  }
-
-  for (const item of skew.value) {
-    if (item.type === "function" && item.name === "skewX") {
-      skewX = item;
-    }
-
-    if (item.type === "function" && item.name === "skewY") {
-      skewY = item;
-    }
-  }
-
-  return { skewX, skewY };
 };

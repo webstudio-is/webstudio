@@ -6,9 +6,8 @@ import {
   isTransformPanelPropertyUsed,
   updateRotateOrSkewPropertyValue,
   updateTransformTuplePropertyValue,
-  extractRotatePropertiesFromTransform,
-  extractSkewPropertiesFromTransform,
 } from "./transform-utils";
+import { extractRotatePropertiesFromTransform } from "./transform-extractors";
 import type { StyleInfo } from "../../shared/style-info";
 import {
   FunctionValue,
@@ -262,106 +261,5 @@ describe("Transform utils CRUD operations", () => {
     expect(toValue(newValue)).toBe(
       "rotateX(10deg) rotateY(50deg) rotateZ(10deg) skewX(10deg) skewY(10deg)"
     );
-  });
-});
-
-describe("extractRotatePropertiesFromTransform", () => {
-  test("parses transform and returns undefined if no rotate values exists", () => {
-    expect(
-      extractRotatePropertiesFromTransform(
-        parseCssValue("transform", "scale(1.5)")
-      )
-    ).toEqual({
-      rotateX: undefined,
-      rotateY: undefined,
-      rotateZ: undefined,
-    });
-  });
-
-  test("parses transform and returns rotate values", () => {
-    expect(
-      extractRotatePropertiesFromTransform(
-        parseCssValue("transform", "rotateX(0deg) rotateY(10deg) scale(1.5)")
-      )
-    ).toEqual({
-      rotateX: {
-        type: "function",
-        args: {
-          type: "layers",
-          value: [
-            {
-              type: "unit",
-              unit: "deg",
-              value: 0,
-            },
-          ],
-        },
-        name: "rotateX",
-      },
-      rotateY: {
-        type: "function",
-        args: {
-          type: "layers",
-          value: [
-            {
-              type: "unit",
-              unit: "deg",
-              value: 10,
-            },
-          ],
-        },
-        name: "rotateY",
-      },
-    });
-  });
-});
-
-describe("extractSkewPropertiesFromTransform", () => {
-  test("parses transform and returns undefined if no skew properties exists", () => {
-    expect(
-      extractSkewPropertiesFromTransform(
-        parseCssValue("transform", "rotateX(0deg) rotateY(0deg) scale(1.5)")
-      )
-    ).toEqual({ skewX: undefined, skewY: undefined });
-  });
-
-  test("parses transform and extracts valid skew properties", () => {
-    expect(
-      extractSkewPropertiesFromTransform(
-        parseCssValue(
-          "transform",
-          "skewX(10deg) skewY(20deg) rotate(30deg) scale(1.5)"
-        )
-      )
-    ).toEqual({
-      skewX: {
-        type: "function",
-        args: {
-          type: "layers",
-          value: [
-            {
-              type: "unit",
-              unit: "deg",
-              value: 10,
-            },
-          ],
-        },
-        name: "skewX",
-      },
-      skewY: {
-        type: "function",
-        args: {
-          type: "layers",
-          value: [
-            {
-              type: "unit",
-              unit: "deg",
-              value: 20,
-            },
-          ],
-        },
-        name: "skewY",
-      },
-    });
   });
 });

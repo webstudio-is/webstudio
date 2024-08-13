@@ -1,9 +1,9 @@
 import { Flex, Label, Grid } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
-  extractSkewPropertiesFromTransform,
   type TransformPanelProps,
 } from "./transform-utils";
+import { extractSkewPropertiesFromTransform } from "./transform-extractors";
 import { XAxisIcon, YAxisIcon } from "@webstudio-is/icons";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
