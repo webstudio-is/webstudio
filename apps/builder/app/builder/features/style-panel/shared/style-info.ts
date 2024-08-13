@@ -21,7 +21,6 @@ import {
   type StyleSourceSelector,
   $instances,
   $selectedInstanceSelector,
-  $selectedInstanceIntanceToTag,
   $stylesIndex,
   $selectedOrLastStyleSourceSelector,
   $breakpoints,
@@ -32,6 +31,9 @@ import {
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
+import { canvasApi } from "~/shared/canvas-api";
+import { computed } from "nanostores";
+import { $loadingState } from "~/builder/shared/nano-states";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -334,6 +336,7 @@ export const getInheritedInfo = (
     ];
 
     const tagName = selectedInstanceIntanceToTag.get(instanceId);
+
     const component = getInstanceComponent(instances, instanceId);
     const presetStyle =
       tagName !== undefined && component !== undefined
@@ -490,6 +493,28 @@ export const getNextSourceInfo = (
   return nextSourceStyle;
 };
 
+const $instanceToTag = computed(
+  [$selectedInstanceSelector, $loadingState],
+  (instanceSelector, loadingState) => {
+    if (__testing__.instanceToTag !== undefined) {
+      return __testing__.instanceToTag;
+    }
+
+    if (instanceSelector === undefined) {
+      return;
+    }
+
+    if (loadingState.state !== "ready") {
+      return;
+    }
+
+    const result =
+      canvasApi.getElementAndAncestorInstanceTags(instanceSelector);
+
+    return result;
+  }
+);
+
 /**
  * combine all local, cascaded, inherited and browser styles
  */
@@ -500,16 +525,12 @@ const useStyleInfoByInstanceAndStyleSource = (
   const breakpoints = useStore($breakpoints);
   const selectedBreakpoint = useStore($selectedBreakpoint);
   const selectedBreakpointId = selectedBreakpoint?.id;
-
-  // We do not move $selectedInstanceIntanceToTag out of here as it contains ascendants of selected element
-  // And we do not gonna iterate over children
-  const instanceToTag = useStore($selectedInstanceIntanceToTag);
-
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
   const { stylesByInstanceId, stylesByStyleSourceId } = useStore($stylesIndex);
   const styleSourceSelections = useStore($styleSourceSelections);
   const selectedInstanceStates = useStore($selectedInstanceStates);
+  const instanceToTag = useStore($instanceToTag);
   const activeStates = useMemo(() => {
     const activeStates = new Set(selectedInstanceStates);
     if (styleSourceSelector?.state !== undefined) {
@@ -923,4 +944,15 @@ export const hasInstanceValue = (
 
 export const __testing__ = {
   getPriorityStyleSource,
+  instanceToTag: undefined as Map<Instance["id"], HtmlTags> | undefined,
+  setInstanceToTag: (instanceToTag: Map<Instance["id"], HtmlTags>) => {
+    __testing__.instanceToTag = instanceToTag;
+
+    const selector = $selectedInstanceSelector.get();
+    if (selector === undefined) {
+      return;
+    }
+    // enforce recompute
+    $selectedInstanceSelector.set([...selector]);
+  },
 };

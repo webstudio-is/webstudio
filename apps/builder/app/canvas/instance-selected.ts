@@ -18,7 +18,8 @@ import {
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
   getAllElementsBoundingBox,
-  getElementsByInstanceSelector,
+  getVisibleElementsByInstanceSelector,
+  getAllElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
@@ -75,6 +76,34 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
   };
 };
 
+export const getElementAndAncestorInstanceTags = (
+  instanceSelector: Readonly<InstanceSelector>
+) => {
+  const elements = getAllElementsByInstanceSelector(instanceSelector);
+
+  if (elements.length === 0) {
+    return;
+  }
+
+  const [element] = elements;
+
+  const instanceToTag = new Map<Instance["id"], HtmlTags>();
+  for (
+    let ancestorOrSelf: HTMLElement | null = element;
+    ancestorOrSelf !== null;
+    ancestorOrSelf = ancestorOrSelf.parentElement
+  ) {
+    const tagName = ancestorOrSelf.tagName.toLowerCase();
+    const instanceId = ancestorOrSelf.getAttribute(idAttribute);
+
+    if (isHtmlTag(tagName) && instanceId !== null) {
+      instanceToTag.set(instanceId, tagName);
+    }
+  }
+
+  return instanceToTag;
+};
+
 const subscribeSelectedInstance = (
   selectedInstanceSelector: Readonly<InstanceSelector>,
   debounceEffect: (callback: () => void) => void
@@ -84,25 +113,28 @@ const subscribeSelectedInstance = (
   }
 
   const instanceId = selectedInstanceSelector[0];
-  // setDataCollapsed
 
-  let elements = getElementsByInstanceSelector(selectedInstanceSelector);
+  let visibleElements = getVisibleElementsByInstanceSelector(
+    selectedInstanceSelector
+  );
 
-  elements[0]?.scrollIntoView({
+  visibleElements[0]?.scrollIntoView({
     behavior: "smooth",
     block: "nearest",
   });
 
   const updateElements = () => {
-    elements = getElementsByInstanceSelector(selectedInstanceSelector);
+    visibleElements = getVisibleElementsByInstanceSelector(
+      selectedInstanceSelector
+    );
   };
 
   const updateDataCollapsed = () => {
-    if (elements.length === 0) {
+    if (visibleElements.length === 0) {
       return;
     }
 
-    for (const element of elements) {
+    for (const element of visibleElements) {
       const selectorId = element.getAttribute(selectorIdAttribute);
       if (selectorId === null) {
         continue;
@@ -127,13 +159,15 @@ const subscribeSelectedInstance = (
     if ($isResizingCanvas.get()) {
       return;
     }
-    setOutline(instanceId, elements);
+    setOutline(instanceId, visibleElements);
   };
   // effect close to rendered element also catches dnd remounts
   // so actual state is always provided here
   showOutline();
 
   const updateStores = () => {
+    const elements = getAllElementsByInstanceSelector(selectedInstanceSelector);
+
     if (elements.length === 0) {
       return;
     }
@@ -143,19 +177,9 @@ const subscribeSelectedInstance = (
     $selectedInstanceBrowserStyle.set(getBrowserStyle(element));
 
     // Map self and ancestor instance ids to tag names
-    const instanceToTag = new Map<Instance["id"], HtmlTags>();
-    for (
-      let ancestorOrSelf: HTMLElement | null = element;
-      ancestorOrSelf !== null;
-      ancestorOrSelf = ancestorOrSelf.parentElement
-    ) {
-      const tagName = ancestorOrSelf.tagName.toLowerCase();
-      const instanceId = ancestorOrSelf.getAttribute(idAttribute);
-
-      if (isHtmlTag(tagName) && instanceId !== null) {
-        instanceToTag.set(instanceId, tagName);
-      }
-    }
+    const instanceToTag = getElementAndAncestorInstanceTags(
+      selectedInstanceSelector
+    );
 
     $selectedInstanceIntanceToTag.set(instanceToTag);
 
@@ -224,7 +248,7 @@ const subscribeSelectedInstance = (
   const mutationObserver = new MutationObserver(update);
 
   const updateObservers = () => {
-    for (const element of elements) {
+    for (const element of visibleElements) {
       resizeObserver.observe(element);
 
       const parent = element?.parentElement;
