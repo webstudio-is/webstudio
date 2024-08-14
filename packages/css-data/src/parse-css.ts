@@ -60,6 +60,8 @@ const parseCssValue = (
   value: string,
   { customProperties }: { customProperties: boolean }
 ): Map<StyleProperty, StyleValue> => {
+  // Convert commas to dots in the value string
+  value = value.replace(/,/g, '.');
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
   for (const [property, value] of expanded) {
