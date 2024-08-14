@@ -60,10 +60,10 @@ const parseCssValue = (
   value: string,
   { customProperties }: { customProperties: boolean }
 ): Map<StyleProperty, StyleValue> => {
-  // Convert commas to dots in the value string
-  value = value.replace(/,/g, '.');
+  value = value.replace(/,/g, "."); // Convert commas to dots in the value string
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map();
+  
   for (const [property, value] of expanded) {
     if (value === "") {
       // Keep the browser behavior when property is defined with an empty value e.g. `color:;`
