@@ -63,7 +63,7 @@ type ComponentCardProps = {
   label: string;
   description?: string;
   icon: JSX.Element;
-  state?: "hover" | "disabled" | "focus";
+  state?: "hover" | "disabled" | "selected";
 } & ComponentProps<"div">;
 
 export const ComponentCard = forwardRef<HTMLDivElement, ComponentCardProps>(

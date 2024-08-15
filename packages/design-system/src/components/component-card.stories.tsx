@@ -22,7 +22,7 @@ export const Demo = () => {
           <ComponentCard
             icon={<BoxIcon />}
             label="Box"
-            state="focus"
+            state="selected"
             tabIndex={1}
           />
           <ComponentCard
