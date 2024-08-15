@@ -142,6 +142,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
       disableHotkeyOnFormTags: true,
     },
+    {
+      name: "openSettingsPanel",
+      defaultHotkeys: ["D"],
+      handler: () => {
+        $activeInspectorPanel.set("settings");
+      },
+      disableHotkeyOnFormTags: true,
+    },
     makeBreakpointCommand("selectBreakpoint1", 1),
     makeBreakpointCommand("selectBreakpoint2", 2),
     makeBreakpointCommand("selectBreakpoint3", 3),
