@@ -6,8 +6,7 @@ import { html as htmlJson } from "./__generated__/html";
 type Html = {
   [tag in HtmlTags]?: Array<{ property: StyleProperty; value: StyleValue }>;
 };
-declare let exportedTags: keyof typeof htmlJson;
-exportedTags satisfies HtmlTags;
+undefined as unknown as keyof typeof htmlJson satisfies HtmlTags;
 export const html = htmlJson as Html;
 
 export * from "./__generated__/keyword-values";
