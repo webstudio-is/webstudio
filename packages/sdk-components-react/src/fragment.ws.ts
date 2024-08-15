@@ -5,7 +5,6 @@ import type {
 
 export const meta: WsComponentMeta = {
   type: "container",
-  label: "Fragment",
   icon: "",
   stylable: false,
 };

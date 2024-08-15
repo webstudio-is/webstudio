@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { db } from "@webstudio-is/project/index.server";
-import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 
@@ -16,10 +16,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (project.userId === null) {
     throw new Error("Project must have project userId defined");
   }
-  const devBuild = await loadBuildByProjectId(context, project.id);
+  const build = await loadDevBuildByProjectId(context, project.id);
   const assets = await loadAssetsByProject(project.id, context);
   return {
-    build: devBuild,
+    ...build,
     assets,
   };
 };

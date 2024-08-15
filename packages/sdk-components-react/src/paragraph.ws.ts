@@ -16,7 +16,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "text",
   type: "container",
-  label: "Paragraph",
   description: "A container for multi-line text.",
   icon: TextAlignLeftIcon,
   invalidAncestors: ["Paragraph"],

@@ -1,0 +1,395 @@
+/*
+
+all styles are taken from following source
+https://searchfox.org/mozilla-central/source/layout/style/res/html.css
+https://chromium.googlesource.com/chromium/blink/+/master/Source/core/css/html.css
+https://trac.webkit.org/browser/trunk/Source/WebCore/css/html.css
+
+*/
+
+/* blocks */
+
+article,
+aside,
+details,
+div,
+dt,
+figcaption,
+footer,
+form,
+header,
+hgroup,
+html,
+main,
+nav,
+section,
+summary {
+  display: block;
+}
+
+body {
+  display: block;
+  margin: 8px;
+}
+
+p,
+dl {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+dd {
+  display: block;
+  margin-left: 40px;
+}
+
+blockquote,
+figure {
+  display: block;
+  margin: 1em 40px;
+}
+
+address {
+  display: block;
+  font-style: italic;
+}
+
+/*
+
+h1 font-size, margin-top and margin-bottom depend on parent tags
+so better define statically in preset styles
+
+*/
+
+h1 {
+  display: block;
+  font-weight: bold;
+  font-size: 2em;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
+}
+
+h2 {
+  display: block;
+  font-weight: bold;
+  font-size: 1.5em;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
+}
+
+h3 {
+  display: block;
+  font-weight: bold;
+  font-size: 1.17em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+h4 {
+  display: block;
+  font-weight: bold;
+  margin-top: 1.33em;
+  margin-bottom: 1.33em;
+}
+
+h5 {
+  display: block;
+  font-weight: bold;
+  font-size: 0.83em;
+  margin-top: 1.67em;
+  margin-bottom: 1.67em;
+}
+
+h6 {
+  display: block;
+  font-weight: bold;
+  font-size: 0.67em;
+  margin-top: 2.33em;
+  margin-bottom: 2.33em;
+}
+
+pre {
+  display: block;
+  white-space-collapse: preserve;
+  text-wrap-mode: nowrap;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+/* tables */
+
+table {
+  display: table;
+  border-spacing: 2px;
+  border-collapse: separate;
+  box-sizing: border-box;
+  text-indent: 0;
+}
+
+caption {
+  display: table-caption;
+  text-align: center;
+}
+
+tr {
+  display: table-row;
+  vertical-align: inherit;
+}
+
+col {
+  display: table-column;
+}
+
+colgroup {
+  display: table-column-group;
+}
+
+tbody {
+  display: table-row-group;
+  vertical-align: middle;
+}
+
+thead {
+  display: table-header-group;
+  vertical-align: middle;
+}
+
+tfoot {
+  display: table-footer-group;
+  vertical-align: middle;
+}
+
+td {
+  display: table-cell;
+  vertical-align: inherit;
+  padding: 1px;
+}
+
+th {
+  display: table-cell;
+  vertical-align: inherit;
+  font-weight: bold;
+  padding: 1px;
+}
+
+/* inlines */
+
+b,
+strong {
+  /* in firefox defined as bolder */
+  font-weight: bold;
+}
+
+i,
+cite,
+em,
+var,
+dfn {
+  font-style: italic;
+}
+
+code,
+kbd,
+samp {
+  /* in firefox defined as -moz-fixed */
+  font-family: monospace;
+}
+
+mark {
+  /* in firefox defined as Mark */
+  background-color: yellow;
+  /* in firefox defined as MarkText */
+  color: black;
+}
+
+u,
+ins {
+  text-decoration-line: underline;
+}
+
+s,
+del {
+  text-decoration-line: line-through;
+}
+
+sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+/*
+
+active and visited states are not defined as usually overriden with stateless color
+and modeling var-like defaults is too complex
+
+*/
+a {
+  text-decoration-line: underline;
+  cursor: pointer;
+  color: rgb(0 0 238 / 1);
+}
+
+/* lists */
+
+/*
+
+nested lists have no top/bottom margins
+so better redefine statically in preset
+
+*/
+
+ul {
+  display: block;
+  list-style-type: disc;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding-left: 40px;
+}
+
+ol {
+  display: block;
+  list-style-type: decimal;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding-left: 40px;
+}
+
+li {
+  display: list-item;
+  text-align: match-parent;
+}
+
+/* leafs */
+
+hr {
+  color: gray;
+  border-width: 1px;
+  /* in browsers defined as inset */
+  border-style: solid;
+  margin: 0.5em auto;
+  /* firefox only */
+  overflow: hidden;
+  /* This is not really per spec but all browsers define it */
+  display: block;
+}
+
+/**
+ *
+forms
+https://searchfox.org/mozilla-central/source/layout/style/res/forms.css
+
+*/
+
+legend {
+  display: block;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+fieldset {
+  display: block;
+  margin-left: 2px;
+  margin-right: 2px;
+  padding: 0.35em 0.75em 0.625em;
+  /* in browsers defined as groove style with ThreeDFace color */
+  border: 2px solid lightgray;
+  min-width: min-content;
+}
+
+label {
+  cursor: default;
+}
+
+input {
+  appearance: auto;
+  padding: 1px;
+  border-width: 2px;
+  /* in browsers defined as inset */
+  border-style: solid;
+  /* in firefox defined as Field */
+  background-color: white;
+  cursor: text;
+}
+
+/* font controls reset */
+textarea,
+select,
+button {
+  /* in firefox defined as FieldText */
+  color: initial;
+  letter-spacing: normal;
+  word-spacing: normal;
+  line-height: normal;
+  text-transform: none;
+  text-indent: 0;
+  text-shadow: none;
+  display: inline-block;
+}
+
+textarea {
+  text-align: start;
+  appearance: auto;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  /* in firefox 2px */
+  border-width: 1px;
+  /*  in browsers defined as inset */
+  border-style: solid;
+  padding: 2px;
+  /* in firefox defined as Field */
+  background-color: white;
+  vertical-align: text-bottom;
+  cursor: text;
+  resize: both;
+  white-space-collapse: preserve;
+  text-wrap-mode: wrap;
+  word-wrap: break-word;
+}
+
+select {
+  text-align: start;
+  margin: 0;
+  padding: 1px 4px;
+  border-width: 2px;
+  /* in browsers defined as inset */
+  border-style: solid;
+  text-wrap-mode: nowrap;
+  word-wrap: normal;
+  cursor: default;
+  box-sizing: border-box;
+  user-select: none;
+  overflow: clip;
+  vertical-align: baseline;
+  appearance: auto;
+}
+
+option {
+  display: block;
+  float: none;
+  position: static;
+  min-height: 1em;
+  padding: 2px 2px 2px 4px;
+  user-select: none;
+  text-wrap-mode: nowrap;
+  word-wrap: normal;
+}
+
+button {
+  appearance: auto;
+  /* in firefox defined as 1px 8px */
+  padding: 2px 6px 3px;
+  border-width: 2px;
+  /* in browsers defined as outset */
+  border-style: solid;
+  cursor: default;
+  box-sizing: border-box;
+  user-select: none;
+  text-align: center;
+  background-color: lightgray;
+}

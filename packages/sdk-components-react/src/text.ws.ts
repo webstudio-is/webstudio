@@ -22,7 +22,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "text",
   type: "container",
-  label: "Text",
   description:
     "A generic container for any text content that is not a heading or a link.",
   icon: TextIcon,

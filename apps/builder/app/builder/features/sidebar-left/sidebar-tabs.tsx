@@ -9,7 +9,7 @@ import {
   styled,
   theme,
 } from "@webstudio-is/design-system";
-import { forwardRef, type ComponentProps } from "react";
+import { forwardRef, type ComponentProps, type ReactNode } from "react";
 
 export const SidebarTabs = styled(Tabs, {
   display: "flex",
@@ -77,7 +77,7 @@ export const SidebarButton = forwardRef<
 
 export const SidebarTabsTrigger = forwardRef<
   HTMLButtonElement,
-  ComponentProps<typeof TabsTrigger> & { label: string }
+  ComponentProps<typeof TabsTrigger> & { label: ReactNode | string }
 >(({ label, children, ...props }, ref) => {
   return (
     <Tooltip side="right" content={label}>
@@ -85,7 +85,7 @@ export const SidebarTabsTrigger = forwardRef<
         <TabsTrigger
           {...props}
           ref={ref}
-          aria-label={label}
+          aria-label={typeof label === "string" ? label : undefined}
           className={buttonStyle()}
         >
           {children}

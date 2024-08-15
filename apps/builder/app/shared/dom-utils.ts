@@ -34,17 +34,52 @@ export const getElementByInstanceSelector = (
   );
 };
 
+// Determine if the element is detached, or lacks visual layout.
+// We want to exclude elements that are display: none, option tags, or are not in the DOM
+const hasLayout = (element: HTMLElement) => {
+  // Detached element
+  if (false === document.documentElement.contains(element)) {
+    return false;
+  }
+
+  if (element.tagName.toLowerCase() === "option") {
+    return false;
+  }
+
+  // Display none
+  if (getComputedStyle(element)?.display?.toLowerCase() === "none") {
+    return false;
+  }
+
+  return true;
+};
+
+export const getVisibleElementsByInstanceSelector = (
+  instanceSelector: InstanceSelector | Readonly<InstanceSelector>
+) => {
+  return getElementsByInstanceSelector(instanceSelector, true);
+};
+
+export const getAllElementsByInstanceSelector = (
+  instanceSelector: InstanceSelector | Readonly<InstanceSelector>
+) => {
+  return getElementsByInstanceSelector(instanceSelector, false);
+};
+
 /**
  * Get root visible elements, even if instance
  **/
-export const getElementsByInstanceSelector = (
-  instanceSelector: InstanceSelector | Readonly<InstanceSelector>
+const getElementsByInstanceSelector = (
+  instanceSelector: InstanceSelector | Readonly<InstanceSelector>,
+  skipHidden: boolean
 ) => {
   const descendantsOrSelf = [
     ...document.querySelectorAll<HTMLElement>(
       `[${selectorIdAttribute}$="${instanceSelector.join(",")}"]`
     ),
-  ].filter((element) => getIsVisuallyHidden(element) === false);
+  ].filter((element) =>
+    skipHidden ? getIsVisuallyHidden(element) === false : true
+  );
 
   const visibleIdSelectors = descendantsOrSelf.map(
     (element) => element.getAttribute(selectorIdAttribute) ?? ""
@@ -68,17 +103,13 @@ export const getElementsByInstanceSelector = (
   );
 
   return rootElements.map((element) => {
-    // We are not interested in display:none or option elements (they have offsetParent === null)
     let elementResult: HTMLElement = element;
 
     while (
-      elementResult.offsetParent === null &&
+      skipHidden &&
+      false === hasLayout(elementResult) &&
       elementResult.parentElement !== null
     ) {
-      if (getComputedStyle(element).position === "fixed") {
-        return element;
-      }
-
       elementResult = elementResult.parentElement;
     }
 
@@ -119,6 +150,24 @@ export const getAllElementsBoundingBox = (elements: Element[]): DOMRect => {
     }
 
     if (element.children.length === 0) {
+      const textNode = element.firstChild;
+      if (textNode?.nodeType !== Node.TEXT_NODE) {
+        continue;
+      }
+
+      // Create a range object
+      const range = document.createRange();
+      // Set the range to encompass the text node
+      range.selectNodeContents(textNode);
+      // Get the bounding rectangle
+      const rect = range.getBoundingClientRect();
+
+      if (rect.width !== 0 || rect.height !== 0) {
+        rects.push(rect);
+      }
+
+      range.detach();
+
       continue;
     }
 

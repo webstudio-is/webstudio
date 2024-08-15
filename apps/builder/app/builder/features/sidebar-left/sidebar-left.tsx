@@ -162,7 +162,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                   ([tabName, { Icon, label }]) => {
                     return (
                       <SidebarTabsTrigger
-                        key={label}
+                        key={tabName}
                         label={label}
                         value={tabName}
                         onClick={() => {

@@ -4,6 +4,7 @@ import { monitorForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/a
 import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { $canvasIframeState } from "./nano-states";
+import { getElementAndAncestorInstanceTags } from "~/canvas/instance-selected";
 
 const apiWindowNamespace = "__webstudio__$__canvasApi";
 
@@ -13,6 +14,7 @@ const _canvasApi = {
   resetInert,
   preventUnhandled,
   monitorForExternal,
+  getElementAndAncestorInstanceTags,
 };
 
 declare global {

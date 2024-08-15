@@ -126,6 +126,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         $breakpointsMenuView.set("initial");
       },
     },
+    {
+      name: "openComponentsPanel",
+      defaultHotkeys: ["a"],
+      handler: () => {
+        $activeSidebarPanel.set("components");
+      },
+      disableHotkeyOnFormTags: true,
+    },
     makeBreakpointCommand("selectBreakpoint1", 1),
     makeBreakpointCommand("selectBreakpoint2", 2),
     makeBreakpointCommand("selectBreakpoint3", 3),
