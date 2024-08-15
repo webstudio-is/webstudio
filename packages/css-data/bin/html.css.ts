@@ -4,20 +4,15 @@ import { parseCss } from "../src/parse-css";
 
 const css = readFileSync("./src/html.css", "utf8");
 const parsed = parseCss(css);
-const result: Record<
-  string,
-  Array<{ property: string; value: StyleValue }>
-> = {};
+const result: [string, StyleValue][] = [];
 for (const styleDecl of parsed) {
-  result[styleDecl.selector] ??= [];
-  result[styleDecl.selector].push({
-    property: styleDecl.property,
-    value: styleDecl.value,
-  });
+  result.push([`${styleDecl.selector}:${styleDecl.property}`, styleDecl.value]);
 }
+let code = "";
+code += `import type { htmlTags as HtmlTags } from "html-tags";\n`;
+code += `import type { StyleValue } from "@webstudio-is/css-engine";\n\n`;
+const map = "new Map<`${HtmlTags}:${string}`, StyleValue>";
+code += `export const html = ${map}(${JSON.stringify(result)})`;
 
 mkdirSync("./src/__generated__", { recursive: true });
-writeFileSync(
-  "./src/__generated__/html.ts",
-  `export const html = ${JSON.stringify(result)}`
-);
+writeFileSync("./src/__generated__/html.ts", code);
