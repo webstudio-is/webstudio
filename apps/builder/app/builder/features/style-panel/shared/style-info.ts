@@ -688,26 +688,6 @@ const useStyleInfoByInstanceAndStyleSource = (
     styleSourceSelector,
   ]);
 
-  const htmlStyle = useMemo(() => {
-    const instanceId = instanceSelector?.[0];
-    if (instanceId === undefined) {
-      return;
-    }
-    const tagName = instanceToTag?.get(instanceId);
-    if (tagName === undefined) {
-      return;
-    }
-    const styles = html[tagName];
-    if (styles === undefined) {
-      return;
-    }
-    const style: Style = {};
-    for (const styleDecl of styles) {
-      style[styleDecl.property] = styleDecl.value;
-    }
-    return style;
-  }, [instanceSelector, instanceToTag]);
-
   const allPropertyNames = useMemo(() => {
     const [selectedInstanceId] = instanceSelector ?? [];
     const all: Set<StyleProperty> = new Set(propertyNames);
@@ -724,13 +704,16 @@ const useStyleInfoByInstanceAndStyleSource = (
 
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
+    const instanceId = instanceSelector?.[0];
+    const tagName = instanceToTag?.get(instanceId ?? "");
     for (const property of allPropertyNames) {
-      // temporary solution until we start computing all styles from data
-      const htmlValue = htmlStyle?.[property];
       const defaultValue = CUSTOM_DEFAULT_VALUES[property] ??
         properties[property as keyof typeof properties]?.initial ?? {
           type: "guaranteedInvalid",
         };
+      const htmlValue = tagName
+        ? html.get(`${tagName}:${property as string}`)
+        : undefined;
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
@@ -797,7 +780,8 @@ const useStyleInfoByInstanceAndStyleSource = (
     }
     return styleInfoData;
   }, [
-    htmlStyle,
+    instanceSelector,
+    instanceToTag,
     presetStyle,
     inheritedInfo,
     cascadedInfo,
