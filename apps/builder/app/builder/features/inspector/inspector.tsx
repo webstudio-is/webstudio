@@ -16,6 +16,7 @@ import {
   ScrollArea,
   Separator,
   Tooltip,
+  Kbd,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
@@ -130,7 +131,12 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                 {availablePanels.style && (
                   <Tooltip
                     variant="wrapped"
-                    content="The Style panel allows manipulation of CSS visually."
+                    content={
+                      <Text>
+                        The Style panel allows manipulation of CSS visually{" "}
+                        <Kbd value={["(S)"]} />
+                      </Text>
+                    }
                   >
                     <div>
                       <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
@@ -139,7 +145,12 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                 )}
                 <Tooltip
                   variant="wrapped"
-                  content="The Settings panel allows for customizing component properties and HTML attributes."
+                  content={
+                    <Text>
+                      The Settings panel allows for customizing component
+                      properties and HTML attributes <Kbd value={["(D)"]} />
+                    </Text>
+                  }
                 >
                   <div>
                     <PanelTabsTrigger value="settings">
