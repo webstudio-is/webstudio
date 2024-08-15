@@ -44,6 +44,7 @@ const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 clientSyncStore.register("commandMetas", $commandMetas);
 
 // Copied from https://github.com/ai/keyux/blob/main/hotkey.js#L1C1-L2C1
+// eslint-disable-next-line no-control-regex
 const nonEnglishLayout = /^[^\x00-\x7F]$/;
 
 const getKey = (event: KeyboardEvent) => {
