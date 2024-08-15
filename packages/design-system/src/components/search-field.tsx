@@ -7,7 +7,6 @@ import {
   useEffect,
   type ChangeEventHandler,
   type KeyboardEventHandler,
-  type KeyboardEvent,
 } from "react";
 import {
   CrossCircledFilledIcon,
