@@ -130,9 +130,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "toggleComponentsPanel",
       defaultHotkeys: ["a"],
       handler: () => {
-        const panel =
-          $activeSidebarPanel.get() === "components" ? "none" : "components";
-        $activeSidebarPanel.set(panel);
+        const isOpen = $activeSidebarPanel.get() === "components";
+        $activeSidebarPanel.set(isOpen ? "none" : "components");
       },
       disableHotkeyOnFormTags: true,
       disableHotkeyOnContentEditable: true,
@@ -141,9 +140,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "toggleNavigatorPanel",
       defaultHotkeys: ["z"],
       handler: () => {
-        const panel =
-          $activeSidebarPanel.get() === "navigator" ? "none" : "navigator";
-        $activeSidebarPanel.set(panel);
+        const isOpen = $activeSidebarPanel.get() === "navigator";
+        $activeSidebarPanel.set(isOpen ? "none" : "navigator");
       },
       disableHotkeyOnFormTags: true,
       disableHotkeyOnContentEditable: true,
