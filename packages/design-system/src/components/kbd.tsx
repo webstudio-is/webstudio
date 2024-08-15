@@ -35,7 +35,7 @@ const format = (value: ShortcutDefinition) => {
 
 export const Kbd = ({ value }: { value: ShortcutDefinition }) => {
   return (
-    <Text color="subtle" as="kbd">
+    <Text color="moreSubtle" as="kbd">
       {format(value)}
     </Text>
   );
