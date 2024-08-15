@@ -133,8 +133,8 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                     variant="wrapped"
                     content={
                       <Text>
-                        The Style panel allows manipulation of CSS visually{" "}
-                        <Kbd value={["(S)"]} color="moreSubtle" />
+                        CSS for the selected instance&nbsp;&nbsp;
+                        <Kbd value={["S"]} color="moreSubtle" />
                       </Text>
                     }
                   >
@@ -147,9 +147,9 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                   variant="wrapped"
                   content={
                     <Text>
-                      The Settings panel allows for customizing component
-                      properties and HTML attributes{" "}
-                      <Kbd value={["(D)"]} color="moreSubtle" />
+                      Settings, properties and attributes of the selected
+                      instance&nbsp;&nbsp;
+                      <Kbd value={["D"]} color="moreSubtle" />
                     </Text>
                   }
                 >

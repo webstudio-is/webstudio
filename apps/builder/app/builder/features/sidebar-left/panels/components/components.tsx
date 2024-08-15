@@ -306,6 +306,7 @@ export const Icon = PlusIcon;
 
 export const label = (
   <Text>
-    Components <Kbd value={["(A)"]} color="moreSubtle" />
+    Components&nbsp;&nbsp;
+    <Kbd value={["A"]} color="moreSubtle" />
   </Text>
 );
