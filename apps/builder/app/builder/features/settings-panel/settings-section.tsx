@@ -54,7 +54,6 @@ export const SettingsSection = () => {
           value={localValue.value}
           onChange={(event) => localValue.set(event.target.value.trim())}
           onBlur={localValue.save}
-          autoFocus
         />
       </HorizontalLayout>
     </Row>
