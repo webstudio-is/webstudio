@@ -63,7 +63,7 @@ const toggleItemStyle = css(textVariants.labelsTitleCase, {
     },
     variant: {
       subtle: {
-        color: theme.colors.foregroundSubtle,
+        color: theme.colors.foregroundTextMoreSubtle,
         "&:hover, &[data-state=on], &[aria-checked=true]": {
           color: "inherit",
         },
