@@ -1,7 +1,13 @@
 import type { WritableDeep } from "type-fest";
-import type { Html } from "./html";
-import * as exportedHtml from "./html";
-export const html: Html = exportedHtml;
+import type { htmlTags as HtmlTags } from "html-tags";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import { html as htmlJson } from "./__generated__/html";
+
+type Html = {
+  [tag in HtmlTags]?: Array<{ property: StyleProperty; value: StyleValue }>;
+};
+undefined as unknown as keyof typeof htmlJson satisfies HtmlTags;
+export const html = htmlJson as Html;
 
 export * from "./__generated__/keyword-values";
 export * from "./__generated__/units";
