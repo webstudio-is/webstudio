@@ -7,6 +7,7 @@ import {
   useEffect,
   type ChangeEventHandler,
   type KeyboardEventHandler,
+  type KeyboardEvent,
 } from "react";
 import {
   CrossCircledFilledIcon,
@@ -72,7 +73,9 @@ const SearchFieldBase: ForwardRefRenderFunction<
             aria-label="Reset search"
             title="Reset search"
             tabIndex={-1}
-            onClick={handleCancel}
+            onClick={() => {
+              handleCancel();
+            }}
             icon={<CrossCircledFilledIcon />}
           />
         </Flex>
@@ -83,6 +86,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
       }}
       onKeyDown={(event) => {
         if (event.key === "Escape" && value.length !== 0) {
+          event.preventDefault();
           handleCancel();
         }
         onKeyDown?.(event);
