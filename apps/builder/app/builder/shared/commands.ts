@@ -127,19 +127,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
     },
     {
-      name: "openComponentsPanel",
+      name: "toggleComponentsPanel",
       defaultHotkeys: ["a"],
       handler: () => {
-        $activeSidebarPanel.set("components");
+        const panel =
+          $activeSidebarPanel.get() === "components" ? "none" : "components";
+        $activeSidebarPanel.set(panel);
       },
       disableHotkeyOnFormTags: true,
       disableHotkeyOnContentEditable: true,
     },
     {
-      name: "openNavigatorPanel",
+      name: "toggleNavigatorPanel",
       defaultHotkeys: ["z"],
       handler: () => {
-        $activeSidebarPanel.set("navigator");
+        const panel =
+          $activeSidebarPanel.get() === "navigator" ? "none" : "navigator";
+        $activeSidebarPanel.set(panel);
       },
       disableHotkeyOnFormTags: true,
       disableHotkeyOnContentEditable: true,
