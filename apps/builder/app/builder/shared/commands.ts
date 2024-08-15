@@ -133,6 +133,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         $activeSidebarPanel.set("components");
       },
       disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
     },
     {
       name: "openStylePanel",
@@ -141,14 +142,16 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         $activeInspectorPanel.set("style");
       },
       disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
     },
     {
       name: "openSettingsPanel",
-      defaultHotkeys: ["D"],
+      defaultHotkeys: ["d"],
       handler: () => {
         $activeInspectorPanel.set("settings");
       },
       disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
     },
     makeBreakpointCommand("selectBreakpoint1", 1),
     makeBreakpointCommand("selectBreakpoint2", 2),
