@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
@@ -31,6 +31,7 @@ import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
+import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
@@ -74,10 +75,10 @@ const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
 export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore($selectedInstance);
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState("style");
   const isDragging = useStore($isDragging);
   const metas = useStore($registeredComponentMetas);
   const selectedPage = useStore($selectedPage);
+  const activeInspectorPanel = useStore($activeInspectorPanel);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
@@ -99,12 +100,10 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const meta = metas.get(selectedInstance.component);
   const documentType = selectedPage?.meta.documentType ?? "html";
 
-  const isStyleTabVisible = documentType === "html" && (meta?.stylable ?? true);
-
-  const availableTabs = [
-    isStyleTabVisible ? "style" : undefined,
-    "settings",
-  ].filter((tab) => tab);
+  const availablePanels = {
+    style: documentType === "html" && (meta?.stylable ?? true),
+    settings: true,
+  };
 
   return (
     <EnhancedTooltipProvider
@@ -116,13 +115,19 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
         <BindingPopoverProvider value={{ containerRef: tabsRef }}>
           <PanelTabs
             ref={tabsRef}
-            value={availableTabs.includes(tab) ? tab : availableTabs[0]}
-            onValueChange={setTab}
+            value={
+              availablePanels[activeInspectorPanel]
+                ? activeInspectorPanel
+                : "settings"
+            }
+            onValueChange={(panel) => {
+              $activeInspectorPanel.set(panel as keyof typeof availablePanels);
+            }}
             asChild
           >
             <Flex direction="column">
               <PanelTabsList>
-                {isStyleTabVisible && (
+                {availablePanels.style && (
                   <Tooltip
                     variant="wrapped"
                     content="The Style panel allows manipulation of CSS visually."

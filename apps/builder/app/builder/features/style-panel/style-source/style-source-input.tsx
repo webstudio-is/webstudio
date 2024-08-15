@@ -263,6 +263,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onEnableItem?: (id: Item["id"]) => void;
   onSort?: (items: Array<Item>) => void;
   css?: CSS;
+  autoFocus?: boolean;
 };
 
 const newItemId = "__NEW__";
@@ -514,6 +515,7 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
+            autoFocus={props.autoFocus}
             error={props.error}
             renderStyleSourceMenuItems={(item) =>
               renderMenuItems({

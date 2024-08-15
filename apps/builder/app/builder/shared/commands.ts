@@ -21,7 +21,7 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $publisher } from "~/shared/pubsub";
-import { $activeSidebarPanel } from "./nano-states";
+import { $activeInspectorPanel, $activeSidebarPanel } from "./nano-states";
 import { toast } from "@webstudio-is/design-system";
 
 const makeBreakpointCommand = <CommandName extends string>(
@@ -131,6 +131,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["a"],
       handler: () => {
         $activeSidebarPanel.set("components");
+      },
+      disableHotkeyOnFormTags: true,
+    },
+    {
+      name: "openStylePanel",
+      defaultHotkeys: ["s"],
+      handler: () => {
+        $activeInspectorPanel.set("style");
       },
       disableHotkeyOnFormTags: true,
     },

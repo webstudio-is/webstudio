@@ -37,6 +37,8 @@ export const $scale = computed(
 
 export const $activeSidebarPanel = atom<TabName>("none");
 
+export const $activeInspectorPanel = atom<"style" | "settings">("style");
+
 // keep in sync with user-plan-features.server
 export const $userPlanFeatures = atom<UserPlanFeatures>({
   allowShareAdminLinks: false,

@@ -517,6 +517,7 @@ export const StyleSourcesSection = () => {
   return (
     <>
       <StyleSourceInput
+        autoFocus
         error={error}
         items={availableStyleSources}
         value={value}
