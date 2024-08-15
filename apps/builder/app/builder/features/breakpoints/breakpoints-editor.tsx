@@ -136,7 +136,7 @@ const BreakpointEditorItem = ({
               suffix={
                 <Text
                   variant="unit"
-                  color="subtle"
+                  color="moreSubtle"
                   align="center"
                   css={{ width: theme.spacing[10] }}
                 >

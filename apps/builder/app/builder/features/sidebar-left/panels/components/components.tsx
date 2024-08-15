@@ -305,8 +305,8 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 export const Icon = PlusIcon;
 
 export const label = (
-  <Flex gap="1">
-    <Text>Components</Text>
-    <Kbd value={["(A)"]} />
-  </Flex>
+  <Text>
+    Components&nbsp;&nbsp;
+    <Kbd value={["A"]} color="moreSubtle" />
+  </Text>
 );
