@@ -20,7 +20,6 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   invalidAncestors: ["Form", "Button", "Link"],
-  label: "Form",
   description: "Create filters, surveys, searches and more.",
   icon: FormIcon,
   states: defaultStates,

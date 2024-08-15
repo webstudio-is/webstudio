@@ -5,6 +5,8 @@ import {
   useRef,
   useState,
   useEffect,
+  type ChangeEventHandler,
+  type KeyboardEventHandler,
 } from "react";
 import {
   CrossCircledFilledIcon,
@@ -13,7 +15,8 @@ import {
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { InputField } from "./input-field";
-import { IconButton } from "./icon-button";
+import { SmallIconButton } from "./small-icon-button";
+import { Flex } from "./flex";
 
 const SearchIcon = styled(MagnifyingGlassIcon, {
   // need to center icon vertically
@@ -22,8 +25,7 @@ const SearchIcon = styled(MagnifyingGlassIcon, {
   padding: theme.spacing[3],
 });
 
-const AbortButton = styled(IconButton, {
-  marginRight: theme.spacing[3],
+const AbortButton = styled(SmallIconButton, {
   variants: {
     hidden: {
       false: { visibility: "hidden" },
@@ -48,6 +50,10 @@ const SearchFieldBase: ForwardRefRenderFunction<
   useEffect(() => {
     setValue(String(propsValue));
   }, [propsValue]);
+  const handleCancel = () => {
+    setValue("");
+    onCancel?.();
+  };
   return (
     <InputField
       {...rest}
@@ -60,28 +66,24 @@ const SearchFieldBase: ForwardRefRenderFunction<
       inputRef={inputRef}
       prefix={<SearchIcon />}
       suffix={
-        <AbortButton
-          hidden={value.length > 0 ? "true" : "false"}
-          aria-label="Reset search"
-          title="Reset search"
-          tabIndex={-1}
-          onClick={() => {
-            setValue("");
-            onCancel?.();
-          }}
-        >
-          <CrossCircledFilledIcon />
-        </AbortButton>
+        <Flex align="center" css={{ padding: theme.spacing[2] }}>
+          <AbortButton
+            hidden={value.length > 0 ? "true" : "false"}
+            aria-label="Reset search"
+            title="Reset search"
+            tabIndex={-1}
+            onClick={handleCancel}
+            icon={<CrossCircledFilledIcon />}
+          />
+        </Flex>
       }
       onChange={(event) => {
         setValue(event.target.value);
         onChange?.(event);
       }}
       onKeyDown={(event) => {
-        // Make sure we clear the search on esc and preserve the default browser behavior
         if (event.key === "Escape" && value.length !== 0) {
-          event.stopPropagation();
-          return;
+          handleCancel();
         }
         onKeyDown?.(event);
       }}
@@ -90,3 +92,46 @@ const SearchFieldBase: ForwardRefRenderFunction<
 };
 
 export const SearchField = forwardRef(SearchFieldBase);
+
+type UseSearchFieldKeys = {
+  onMove: (event: { direction: "next" | "previous" | "current" }) => void;
+  onChange?: ComponentProps<typeof SearchFieldBase>["onChange"];
+  onCancel?: ComponentProps<typeof SearchFieldBase>["onCancel"];
+};
+
+export const useSearchFieldKeys = ({
+  onMove,
+  onChange,
+  onCancel,
+}: UseSearchFieldKeys) => {
+  const [search, setSearch] = useState("");
+  const handleKeyDown: KeyboardEventHandler = ({ code }) => {
+    const keyMap = {
+      ArrowUp: "previous",
+      ArrowDown: "next",
+      Enter: "current",
+    } as const;
+    const direction = keyMap[code as keyof typeof keyMap];
+    if (direction !== undefined) {
+      onMove({ direction });
+    }
+  };
+
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const { value } = event.currentTarget;
+    setSearch(value.trim());
+    onChange?.(event);
+  };
+
+  const handleCancel = () => {
+    setSearch("");
+    onCancel?.();
+  };
+
+  return {
+    value: search,
+    onCancel: handleCancel,
+    onChange: handleChange,
+    onKeyDown: handleKeyDown,
+  };
+};

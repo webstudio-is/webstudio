@@ -2,15 +2,15 @@ import {
   DeprecatedList,
   DeprecatedListItem,
   useDeprecatedList,
-  deprecatedFindNextListIndex,
   theme,
+  useSearchFieldKeys,
+  findNextListItemIndex,
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
   deleteAssets,
   Separator,
   useAssets,
-  useSearch,
 } from "~/builder/shared/assets";
 import { useEffect, useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
@@ -34,13 +34,13 @@ const useLogic = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assetContainers), [assetContainers]);
 
-  const searchProps = useSearch({
-    onSelect(direction) {
+  const searchProps = useSearchFieldKeys({
+    onMove({ direction }) {
       if (direction === "current") {
         handleChangeCurrent(selectedIndex);
         return;
       }
-      const nextIndex = deprecatedFindNextListIndex(
+      const nextIndex = findNextListItemIndex(
         selectedIndex,
         groupedItems.length,
         direction

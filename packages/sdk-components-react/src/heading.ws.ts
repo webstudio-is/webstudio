@@ -24,7 +24,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "text",
   type: "container",
-  label: "Heading",
   description:
     "Use HTML headings to structure and organize content. Use the Tag property in settings to change the heading level (h1-h6).",
   icon: HeadingIcon,

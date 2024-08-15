@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type WsComponentMeta,
@@ -13,42 +13,217 @@ import {
   ListItem,
   SearchField,
   Separator,
+  useSearchFieldKeys,
+  findNextListItemIndex,
+  Text,
+  Box,
+  Kbd,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton, Root } from "../../shared/panel";
-import {
-  dragItemAttribute,
-  elementToComponentName,
-  useDraggable,
-} from "./use-draggable";
+import { dragItemAttribute, useDraggable } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { $registeredComponentMetas, $selectedPage } from "~/shared/nano-states";
-import { getMetaMaps } from "./get-meta-maps";
+import {
+  getMetaMaps,
+  type MetaByCategory,
+  type ComponentNamesByMeta,
+} from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { insert } from "./insert";
 import { matchSorter } from "match-sorter";
+import { parseComponentName } from "@webstudio-is/sdk";
+
+const matchComponents = (
+  metas: Array<WsComponentMeta>,
+  componentNamesByMeta: ComponentNamesByMeta,
+  search: string
+) => {
+  const getKey = (meta: WsComponentMeta) => {
+    if (meta.label) {
+      return meta.label.toLowerCase();
+    }
+    const component = componentNamesByMeta.get(meta);
+    if (component) {
+      const [_namespace, name] = parseComponentName(component);
+      return name.toLowerCase();
+    }
+    return "";
+  };
+
+  return matchSorter(metas, search, {
+    keys: [getKey],
+  });
+};
+
+type Groups = Array<{
+  category: Exclude<WsComponentMeta["category"], undefined> | "found";
+  metas: Array<WsComponentMeta>;
+}>;
+
+const filterAndGroupComponents = ({
+  documentType = "html",
+  metaByCategory,
+  componentNamesByMeta,
+  search,
+}: {
+  documentType?: "html" | "xml";
+  metaByCategory: MetaByCategory;
+  componentNamesByMeta: ComponentNamesByMeta;
+  search: string;
+}): Groups => {
+  const categories = componentCategories.filter((category) => {
+    if (category === "hidden") {
+      return false;
+    }
+
+    // Only xml category is allowed for xml document type
+    if (documentType === "xml") {
+      return category === "xml" || category === "data";
+    }
+    // Hide xml category for non-xml document types
+    if (category === "xml") {
+      return false;
+    }
+
+    if (
+      isFeatureEnabled("internalComponents") === false &&
+      category === "internal"
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  let groups: Groups = categories.map((category) => {
+    const metas = (metaByCategory.get(category) ?? []).filter((meta) => {
+      const component = componentNamesByMeta.get(meta);
+
+      if (component === undefined) {
+        return false;
+      }
+
+      if (documentType === "xml" && meta.category === "data") {
+        return component === "ws:collection";
+      }
+
+      if (component === "RemixForm" && isFeatureEnabled("filters") === false) {
+        return false;
+      }
+
+      if (component === "ContentEmbed" && isFeatureEnabled("cms") === false) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return { category, metas };
+  });
+
+  if (search.length !== 0) {
+    let metas = groups.map((group) => group.metas).flat();
+    metas = matchComponents(metas, componentNamesByMeta, search);
+    groups = [{ category: "found", metas }];
+  }
+
+  groups = groups.filter((group) => group.metas.length > 0);
+
+  return groups;
+};
+
+const findComponentIndex = (
+  groups: Groups,
+  componentNamesByMeta: ComponentNamesByMeta,
+  selectedComponent?: string
+) => {
+  if (selectedComponent === undefined) {
+    return { index: -1, metas: groups[0].metas };
+  }
+
+  for (const { metas } of groups) {
+    const index = metas.findIndex((meta) => {
+      return componentNamesByMeta.get(meta) === selectedComponent;
+    });
+    if (index === -1) {
+      continue;
+    }
+    return { index, metas };
+  }
+
+  return { index: -1, metas: [] };
+};
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
   const selectedPage = useStore($selectedPage);
-  const [searchText, setSearchText] = useState("");
-  const documentType = selectedPage?.meta.documentType ?? "html";
+  const [selectedComponent, setSelectedComponent] = useState<string>();
+
+  const handleInsert = (component: string) => {
+    onSetActiveTab("none");
+    insert(component);
+  };
+
+  const resetSelectedComponent = () => {
+    setSelectedComponent(undefined);
+  };
+
+  const getSelectedComponent = () => {
+    // When user didn't select a component but they have search input,
+    // we want to always have the first component selected, so that user can just hit enter.
+    if (selectedComponent === undefined && searchFieldProps.value) {
+      return componentNamesByMeta.get(groups[0].metas[0]);
+    }
+    return selectedComponent;
+  };
+
+  const searchFieldProps = useSearchFieldKeys({
+    onChange: resetSelectedComponent,
+    onCancel: resetSelectedComponent,
+    onMove({ direction }) {
+      if (direction === "current") {
+        const component = getSelectedComponent();
+        if (component !== undefined) {
+          handleInsert(component);
+        }
+        return;
+      }
+
+      const { index, metas } = findComponentIndex(
+        groups,
+        componentNamesByMeta,
+        selectedComponent
+      );
+
+      const nextIndex = findNextListItemIndex(index, metas.length, direction);
+      const nextComponent = componentNamesByMeta.get(metas[nextIndex]);
+
+      if (nextComponent) {
+        setSelectedComponent(nextComponent);
+      }
+    },
+  });
 
   const { metaByCategory, componentNamesByMeta } = useMemo(
     () => getMetaMaps(metaByComponentName),
     [metaByComponentName]
   );
+
   const { dragCard, draggableContainerRef } = useDraggable({
     publish,
     metaByComponentName,
   });
 
-  const handleSearch = (e: FormEvent<HTMLInputElement>) => {
-    setSearchText((e.target as HTMLInputElement).value);
-  };
+  const groups = filterAndGroupComponents({
+    documentType: selectedPage?.meta.documentType,
+    metaByCategory,
+    componentNamesByMeta,
+    search: searchFieldProps.value,
+  });
 
   return (
     <Root ref={draggableContainerRef}>
@@ -56,128 +231,72 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         title="Components"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-
-      <SearchField
-        autoFocus
-        value={searchText}
-        title="Search"
-        placeholder="Search..."
-        onInput={handleSearch}
-        onCancel={() => setSearchText("")}
-        css={{
-          mx: theme.spacing[9],
-          mt: theme.spacing[9],
-          mb: theme.spacing[9],
-        }}
-      />
+      <Box css={{ padding: theme.spacing[9] }}>
+        <SearchField
+          {...searchFieldProps}
+          autoFocus
+          placeholder="Find components"
+        />
+      </Box>
 
       <Separator />
 
       <ScrollArea>
-        {componentCategories
-          .filter((category) => {
-            if (category === "hidden") {
-              return false;
-            }
+        {groups.map((group) => (
+          <CollapsibleSection
+            label={group.category}
+            key={group.category}
+            fullWidth
+          >
+            <List asChild>
+              <Flex
+                gap="2"
+                wrap="wrap"
+                css={{ px: theme.spacing[9], overflow: "auto" }}
+              >
+                {group.metas.map((meta: WsComponentMeta, index) => {
+                  const component = componentNamesByMeta.get(meta);
 
-            // Only xml category is allowed for xml document type
-            if (documentType === "xml") {
-              return category === "xml" || category === "data";
-            }
-            // Hide xml category for non-xml document types
-            if (category === "xml") {
-              return false;
-            }
+                  if (component === undefined) {
+                    return;
+                  }
 
-            if (
-              isFeatureEnabled("internalComponents") === false &&
-              category === "internal"
-            ) {
-              return false;
-            }
-
-            return true;
-          })
-          .map((category) => {
-            const meta = (metaByCategory.get(category) ?? []).filter(
-              (meta: WsComponentMeta) => {
-                if (documentType === "xml" && meta.category === "data") {
-                  return componentNamesByMeta.get(meta) === "ws:collection";
-                }
-                return true;
-              }
-            );
-            const matchedMeta = matchSorter(meta, searchText, {
-              keys: [(item) => componentNamesByMeta.get(item) || ""],
-            });
-
-            return {
-              category,
-              meta: matchedMeta,
-            };
-          })
-          .filter((category) => {
-            return category.meta.length > 0;
-          })
-          .map((categoryGroup) => (
-            <CollapsibleSection
-              label={categoryGroup.category}
-              key={categoryGroup.category}
-              fullWidth
-            >
-              <List asChild>
-                <Flex
-                  gap="2"
-                  wrap="wrap"
-                  css={{ px: theme.spacing[9], overflow: "auto" }}
-                >
-                  {categoryGroup.meta.map((meta: WsComponentMeta, index) => {
-                    const component = componentNamesByMeta.get(meta);
-                    if (component === undefined) {
-                      return;
-                    }
-                    if (
-                      isFeatureEnabled("filters") === false &&
-                      component === "RemixForm"
-                    ) {
-                      return;
-                    }
-                    if (
-                      isFeatureEnabled("cms") === false &&
-                      component === "ContentEmbed"
-                    ) {
-                      return;
-                    }
-                    return (
-                      <ListItem
-                        asChild
-                        index={index}
-                        key={component}
-                        onSelect={(event) => {
-                          const component = elementToComponentName(
-                            event.target as HTMLElement,
-                            metaByComponentName
-                          );
-                          if (component) {
-                            onSetActiveTab("none");
-                            insert(component);
-                          }
-                        }}
-                      >
-                        <ComponentCard
-                          {...{ [dragItemAttribute]: component }}
-                          label={getInstanceLabel({ component }, meta)}
-                          description={meta.description}
-                          icon={<MetaIcon size="auto" icon={meta.icon} />}
-                        />
-                      </ListItem>
-                    );
-                  })}
-                  {dragCard}
-                </Flex>
-              </List>
-            </CollapsibleSection>
-          ))}
+                  return (
+                    <ListItem
+                      asChild
+                      state={
+                        component === getSelectedComponent()
+                          ? "selected"
+                          : undefined
+                      }
+                      index={index}
+                      key={component}
+                      onSelect={() => {
+                        handleInsert(component);
+                      }}
+                      onFocus={() => {
+                        setSelectedComponent(component);
+                      }}
+                    >
+                      <ComponentCard
+                        {...{ [dragItemAttribute]: component }}
+                        label={getInstanceLabel({ component }, meta)}
+                        description={meta.description}
+                        icon={<MetaIcon size="auto" icon={meta.icon} />}
+                      />
+                    </ListItem>
+                  );
+                })}
+                {dragCard}
+                {group.metas.length === 0 && (
+                  <Flex grow justify="center" css={{ py: theme.spacing[10] }}>
+                    <Text>No matching component</Text>
+                  </Flex>
+                )}
+              </Flex>
+            </List>
+          </CollapsibleSection>
+        ))}
       </ScrollArea>
     </Root>
   );
@@ -185,4 +304,9 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
 export const Icon = PlusIcon;
 
-export const label = "Components";
+export const label = (
+  <Flex gap="1">
+    <Text>Components</Text>
+    <Kbd value={["(A)"]} />
+  </Flex>
+);

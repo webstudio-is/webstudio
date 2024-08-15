@@ -13,7 +13,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   icon: XmlIcon,
   stylable: false,
-  description: "Xml Node",
+  description: "XML Node",
 };
 
 export const propsMeta: WsComponentPropsMeta = {

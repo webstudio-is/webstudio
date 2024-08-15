@@ -31,7 +31,7 @@ const cardStyle = css({
     background: theme.colors.backgroundPanel,
     color: theme.colors.foregroundDisabled,
   },
-  "&:focus-visible, &[data-state=focus]": {
+  "&:focus-visible, &[data-state=selected]": {
     outline: `2px solid ${theme.colors.borderFocus}`,
     outlineOffset: "-2px",
   },
@@ -63,7 +63,7 @@ type ComponentCardProps = {
   label: string;
   description?: string;
   icon: JSX.Element;
-  state?: "hover" | "disabled" | "focus";
+  state?: "hover" | "disabled" | "selected";
 } & ComponentProps<"div">;
 
 export const ComponentCard = forwardRef<HTMLDivElement, ComponentCardProps>(

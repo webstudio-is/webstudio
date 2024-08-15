@@ -17,7 +17,6 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   invalidAncestors: ["Button", "Link"],
-  label: "Button",
   description:
     "Use a button to submit forms or trigger actions within a page. Do not use a button to navigate users to another resource or another page - that’s what a link is used for.",
   icon: ButtonElementIcon,

@@ -62,7 +62,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "text",
   type: "container",
-  label: "Blockquote",
   description:
     "Use to style a quote from an external source like an article or book.",
   icon: BlockquoteIcon,

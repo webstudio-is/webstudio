@@ -10,7 +10,7 @@ import type { IconComponent } from "@webstudio-is/icons";
 type PanelExports = {
   TabContent: (props: TabContentProps) => ReactNode;
   Icon: IconComponent;
-  label: string;
+  label: ReactNode;
 };
 
 export const panels = new Map<TabName, PanelExports>([

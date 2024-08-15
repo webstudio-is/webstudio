@@ -7,6 +7,7 @@ import {
 import { Text } from "../text";
 import { Flex } from "../flex";
 import { styled, theme } from "../../stitches.config";
+import { findNextListItemIndex } from "../primitives/list";
 
 const ListBase = styled("ul", {
   display: "flex",
@@ -92,27 +93,6 @@ export const DeprecatedListItem = forwardRef<
 });
 DeprecatedListItem.displayName = "DeprecatedListItem";
 
-export const deprecatedFindNextListIndex = (
-  currentIndex: number,
-  total: number,
-  direction: "next" | "previous"
-) => {
-  const nextIndex =
-    direction === "next"
-      ? currentIndex + 1
-      : direction === "previous"
-        ? currentIndex - 1
-        : currentIndex;
-
-  if (nextIndex < 0) {
-    return total - 1;
-  }
-  if (nextIndex >= total) {
-    return 0;
-  }
-  return nextIndex;
-};
-
 type UseList<Item = unknown> = {
   items: Array<Item>;
   selectedIndex: number;
@@ -155,7 +135,7 @@ export const useDeprecatedList = ({
         switch (event.code) {
           case "ArrowUp":
           case "ArrowDown": {
-            const nextIndex = deprecatedFindNextListIndex(
+            const nextIndex = findNextListItemIndex(
               selectedIndex,
               items.length,
               event.code === "ArrowUp" ? "previous" : "next"

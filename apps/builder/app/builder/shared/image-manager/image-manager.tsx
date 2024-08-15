@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { matchSorter } from "match-sorter";
 import {
-  deprecatedFindNextListIndex,
   Grid,
+  findNextListItemIndex,
   theme,
+  useSearchFieldKeys,
 } from "@webstudio-is/design-system";
 import type { ImageAsset } from "@webstudio-is/sdk";
 import {
@@ -14,7 +15,6 @@ import {
   AssetsShell,
   type AssetContainer,
   useAssets,
-  useSearch,
   deleteAssets,
 } from "../assets";
 import { ImageThumbnail } from "./image-thumbnail";
@@ -30,8 +30,8 @@ const useLogic = ({
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const searchProps = useSearch({
-    onSelect(direction) {
+  const searchProps = useSearchFieldKeys({
+    onMove({ direction }) {
       if (direction === "current") {
         setSelectedIndex(selectedIndex);
         const assetContainer = filteredItems[selectedIndex];
@@ -43,7 +43,7 @@ const useLogic = ({
         }
         return;
       }
-      const nextIndex = deprecatedFindNextListIndex(
+      const nextIndex = findNextListItemIndex(
         selectedIndex,
         filteredItems.length,
         direction

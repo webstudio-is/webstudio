@@ -59,7 +59,6 @@ const descendant = (label: string, tag: string): WsEmbedTemplate[number] => {
 export const meta: WsComponentMeta = {
   category: "data",
   type: "embed",
-  label: "Markdown Embed",
   description: "Used to add markdown code to the page",
   icon: MarkdownEmbedIcon,
   presetStyle: {
