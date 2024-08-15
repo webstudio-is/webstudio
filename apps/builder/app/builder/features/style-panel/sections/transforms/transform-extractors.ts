@@ -64,11 +64,11 @@ export const extractTransformOriginValues = (
 ): {
   x: KeywordValue | UnitValue;
   y: KeywordValue | UnitValue;
-  z: UnitValue;
+  z?: UnitValue;
 } => {
   let x: KeywordValue | UnitValue = { type: "keyword", value: "center" };
   let y: KeywordValue | UnitValue = { type: "keyword", value: "center" };
-  let z: UnitValue = { type: "unit", unit: "px", value: 0 };
+  let z: UnitValue | undefined;
 
   // https://www.w3.org/TR/css-transforms-1/#transform-origin-property
   // https://github.com/mdn/content/issues/35411

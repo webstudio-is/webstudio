@@ -102,7 +102,7 @@ export const addDefaultsForTransormSection = (props: {
     }
 
     case "transformOrigin": {
-      const transformOrigin = parseCssValue("transformOrigin", "50% 50% 0px");
+      const transformOrigin = parseCssValue("transformOrigin", "50% 50%");
       return setProperty("transformOrigin")(transformOrigin);
     }
 

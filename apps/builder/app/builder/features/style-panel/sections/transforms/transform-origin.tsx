@@ -64,6 +64,7 @@ export const TransformOrigin = (props: SectionProps) => {
 
     return extractTransformOriginValues(value);
   }, [value]);
+
   const xInfo = useMemo(() => calculateBackgroundPosition(origin?.x), [origin]);
   const yInfo = useMemo(() => calculateBackgroundPosition(origin?.y), [origin]);
   const xOriginKeywords: Array<KeywordValue> = ["left", "center", "right"].map(
@@ -111,8 +112,13 @@ export const TransformOrigin = (props: SectionProps) => {
 
     const newTupleValue: TupleValue = {
       type: "tuple",
-      value: [origin.x, origin.y, origin.z],
+      value: [origin.x, origin.y],
     };
+
+    if (origin.z !== undefined) {
+      newTupleValue.value.push(origin.z);
+    }
+
     newTupleValue.value.splice(index, 1, newValue);
     setProperty(property)(newTupleValue, options);
   };
@@ -131,9 +137,13 @@ export const TransformOrigin = (props: SectionProps) => {
           value: position.y,
           unit: "%",
         },
-        origin.z,
       ],
     };
+
+    if (origin.z !== undefined) {
+      value.value.push(origin.z);
+    }
+
     setProperty(property)(value, { isEphemeral: false });
   };
 
@@ -152,18 +162,14 @@ export const TransformOrigin = (props: SectionProps) => {
         onReset={() => deleteProperty(property)}
       />
       <Flex gap="6">
-        <Grid
-          css={{ gridTemplateColumns: "max-content 1fr" }}
-          align="center"
-          gapX="2"
-        >
+        <Grid css={{ gridTemplateColumns: "1fr 1fr" }} align="center" gapX="2">
           <PositionGrid
             selectedPosition={{ x: xInfo, y: yInfo }}
             onSelect={handlePositionGridChange}
           />
           <Flex gap="2" direction="column">
             <Flex gap="2" align="center">
-              <Label>X Axis</Label>
+              <Label>X</Label>
               <CssValueInputContainer
                 value={origin.x}
                 keywords={xOriginKeywords}
@@ -176,7 +182,7 @@ export const TransformOrigin = (props: SectionProps) => {
               />
             </Flex>
             <Flex gap="2" align="center">
-              <Label>Y Axis</Label>
+              <Label>Y</Label>
               <CssValueInputContainer
                 value={origin.y}
                 keywords={yOriginKeywords}
@@ -188,19 +194,21 @@ export const TransformOrigin = (props: SectionProps) => {
                 }
               />
             </Flex>
-            <Flex gap="2" align="center">
-              <Label>Z Axis</Label>
-              <CssValueInputContainer
-                value={origin.z}
-                keywords={[]}
-                styleSource="local"
-                property={fakePropertyZ}
-                deleteProperty={() => {}}
-                setValue={(value, options) =>
-                  handleValueChange(2, value, options)
-                }
-              />
-            </Flex>
+            {origin.z !== undefined && (
+              <Flex gap="2" align="center">
+                <Label>Z</Label>
+                <CssValueInputContainer
+                  value={origin.z}
+                  keywords={[]}
+                  styleSource="local"
+                  property={fakePropertyZ}
+                  deleteProperty={() => {}}
+                  setValue={(value, options) =>
+                    handleValueChange(2, value, options)
+                  }
+                />
+              </Flex>
+            )}
           </Flex>
         </Grid>
       </Flex>

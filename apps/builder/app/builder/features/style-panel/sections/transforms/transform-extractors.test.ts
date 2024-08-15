@@ -117,7 +117,7 @@ describe("extractTransformOriginValues", () => {
     ).toEqual({
       x: { type: "keyword", value: "center" },
       y: { type: "keyword", value: "center" },
-      z: { type: "unit", unit: "px", value: 0 },
+      z: undefined,
     });
 
     expect(
@@ -127,7 +127,7 @@ describe("extractTransformOriginValues", () => {
     ).toEqual({
       x: { type: "keyword", value: "center" },
       y: { type: "keyword", value: "top" },
-      z: { type: "unit", unit: "px", value: 0 },
+      z: undefined,
     });
 
     expect(
@@ -137,7 +137,7 @@ describe("extractTransformOriginValues", () => {
     ).toEqual({
       x: { type: "keyword", value: "right" },
       y: { type: "keyword", value: "center" },
-      z: { type: "unit", unit: "px", value: 0 },
+      z: undefined,
     });
 
     expect(
@@ -147,7 +147,7 @@ describe("extractTransformOriginValues", () => {
     ).toEqual({
       x: { type: "unit", unit: "px", value: 45 },
       y: { type: "keyword", value: "center" },
-      z: { type: "unit", unit: "px", value: 0 },
+      z: undefined,
     });
 
     expect(
@@ -157,7 +157,7 @@ describe("extractTransformOriginValues", () => {
     ).toEqual({
       x: { type: "unit", unit: "px", value: 20 },
       y: { type: "unit", unit: "px", value: 40 },
-      z: { type: "unit", unit: "px", value: 0 },
+      z: undefined,
     });
 
     expect(
