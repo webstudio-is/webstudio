@@ -164,14 +164,12 @@ const getCascadedValue = ({
   const declaredValues: DeclaredValue[] = [];
 
   // browser styles
-  const htmlStyles = tag ? html[tag] : undefined;
-  if (htmlStyles) {
-    for (const styleDecl of htmlStyles) {
-      if (styleDecl.property !== property) {
-        continue;
-      }
+  if (tag) {
+    const key = `${tag}:${property}` as const;
+    const browserValue = html.get(key);
+    if (browserValue) {
       const specificity: Specificity = [browserLayer, 0, 0, 0];
-      declaredValues.push({ specificity, value: styleDecl.value });
+      declaredValues.push({ specificity, value: browserValue });
     }
   }
 
