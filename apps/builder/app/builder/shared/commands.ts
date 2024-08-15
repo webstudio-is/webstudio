@@ -136,6 +136,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableHotkeyOnContentEditable: true,
     },
     {
+      name: "openNavigatorPanel",
+      defaultHotkeys: ["z"],
+      handler: () => {
+        $activeSidebarPanel.set("navigator");
+      },
+      disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
+    },
+    {
       name: "openStylePanel",
       defaultHotkeys: ["s"],
       handler: () => {
