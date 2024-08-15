@@ -1,13 +1,13 @@
 import type { htmlTags as HtmlTags } from "html-tags";
 import { html, properties } from "@webstudio-is/css-data";
-import { StyleValue } from "@webstudio-is/css-engine";
-import type {
-  StyleDecl,
-  Breakpoint,
-  Instance,
-  StyleSource,
+import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
+import {
+  type Breakpoint,
+  type Instance,
+  type StyleSource,
+  type Styles,
+  getStyleDeclKey,
 } from "@webstudio-is/sdk";
-import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
 /**
  *
@@ -63,12 +63,25 @@ export type StyleSelector = {
  * and manages reactive subscriptions
  */
 export type StyleObjectModel = {
+  styles: Styles;
   styleSourcesByInstanceId: Map<Instance["id"], StyleSource["id"][]>;
-  styleByStyleSourceId: Map<`${StyleSource["id"]}:${Property}`, StyleDecl[]>;
-  metas: Map<Instance["component"], WsComponentMeta>;
+  // component:tag:state:property
+  presetStyles: Map<string, StyleValue>;
   instanceTags: Map<Instance["id"], HtmlTags>;
   instanceComponents: Map<Instance["id"], Instance["component"]>;
 };
+
+export const getPresetStyleDeclKey = ({
+  component,
+  tag,
+  state,
+  property,
+}: {
+  component: string;
+  tag: string;
+  state?: string;
+  property: string;
+}) => `${component}:${tag}:${state ?? ""}:${property}`;
 
 /**
  *
@@ -116,23 +129,6 @@ const compareSpecificity = (left: Specificity, right: Specificity) => {
   return 0;
 };
 
-const getSpecificity = ({
-  layer,
-  styleDecl,
-  matchingBreakpoints,
-  matchingStyleSources,
-}: {
-  layer: number;
-  styleDecl: StyleDecl;
-  matchingBreakpoints: Breakpoint["id"][];
-  matchingStyleSources: StyleSource["id"][];
-}): Specificity => {
-  const state = styleDecl.state === undefined ? 0 : 1;
-  const breakpoint = matchingBreakpoints.indexOf(styleDecl.breakpointId);
-  const styleSource = matchingStyleSources.indexOf(styleDecl.styleSourceId);
-  return [layer, state, breakpoint, styleSource];
-};
-
 const getCascadedValue = ({
   model,
   matchingBreakpoints,
@@ -147,17 +143,21 @@ const getCascadedValue = ({
   property: Property;
 }) => {
   const {
+    styles,
     styleSourcesByInstanceId,
-    styleByStyleSourceId,
+    presetStyles,
     instanceTags,
     instanceComponents,
-    metas,
   } = model;
   const tag = instanceTags.get(instanceId);
   const component = instanceComponents.get(instanceId);
+
   const browserLayer = 0;
   const presetLayer = 1;
   const userLayer = 2;
+
+  const stateless = 0;
+  const stateful = 1;
 
   // https://drafts.csswg.org/css-cascade-5/#declared
   type DeclaredValue = { specificity: Specificity; value: StyleValue };
@@ -174,47 +174,73 @@ const getCascadedValue = ({
   }
 
   // preset component styles
-  const preset = component ? metas.get(component)?.presetStyle : undefined;
-  const presetStyles = tag ? preset?.[tag] : undefined;
-  if (presetStyles) {
-    for (const styleDecl of presetStyles) {
-      if (styleDecl.property !== property) {
-        continue;
+  if (component && tag) {
+    // stateless
+    const key = getPresetStyleDeclKey({ component, tag, property });
+    const styleValue = presetStyles.get(key);
+    if (styleValue) {
+      const specificity: Specificity = [presetLayer, stateless, 0, 0];
+      declaredValues.push({ specificity, value: styleValue });
+    }
+    // stateful
+    for (const state of matchingStates) {
+      const key = getPresetStyleDeclKey({ component, tag, state, property });
+      const styleValue = presetStyles.get(key);
+      if (styleValue) {
+        const specificity: Specificity = [presetLayer, stateful, 0, 0];
+        declaredValues.push({ specificity, value: styleValue });
       }
-      if (styleDecl.state && matchingStates.has(styleDecl.state) === false) {
-        continue;
-      }
-      // states from preset styles are rendered with :where() to avoid increasing specificity
-      const stateSpecificity = styleDecl.state === undefined ? 0 : 1;
-      const specificity: Specificity = [presetLayer, stateSpecificity, 0, 0];
-      declaredValues.push({ specificity, value: styleDecl.value });
     }
   }
 
   // user styles
-  const styleSourceIds = styleSourcesByInstanceId.get(instanceId);
-  if (styleSourceIds) {
-    for (const styleSourceId of styleSourceIds) {
-      const styles = styleByStyleSourceId.get(`${styleSourceId}:${property}`);
-      if (styles === undefined) {
-        continue;
+  const styleSourceIds = styleSourcesByInstanceId.get(instanceId) ?? [];
+  for (
+    let styleSourceIndex = 0;
+    styleSourceIndex < styleSourceIds.length;
+    styleSourceIndex += 1
+  ) {
+    const styleSourceId = styleSourceIds[styleSourceIndex];
+    for (
+      let breakpointIndex = 0;
+      breakpointIndex < matchingBreakpoints.length;
+      breakpointIndex += 1
+    ) {
+      const breakpointId = matchingBreakpoints[breakpointIndex];
+      // stateless
+      const key = getStyleDeclKey({
+        styleSourceId,
+        breakpointId,
+        property: property as StyleProperty,
+      });
+      const styleDecl = styles.get(key);
+      if (styleDecl) {
+        const specificity: Specificity = [
+          userLayer,
+          stateless,
+          breakpointIndex,
+          styleSourceIndex,
+        ];
+        declaredValues.push({ specificity, value: styleDecl.value });
       }
-      for (const styleDecl of styles) {
-        // exclude values from not matching breakpoints
-        if (matchingBreakpoints.includes(styleDecl.breakpointId) === false) {
-          continue;
-        }
-        if (styleDecl.state && matchingStates.has(styleDecl.state) === false) {
-          continue;
-        }
-        // precompute specificity for all values before sorting
-        const specificity = getSpecificity({
-          layer: userLayer,
-          styleDecl,
-          matchingBreakpoints,
-          matchingStyleSources: styleSourceIds,
+      // stateful
+      for (const state of matchingStates) {
+        const key = getStyleDeclKey({
+          styleSourceId,
+          breakpointId,
+          state,
+          property: property as StyleProperty,
         });
-        declaredValues.push({ value: styleDecl.value, specificity });
+        const styleDecl = styles.get(key);
+        if (styleDecl) {
+          const specificity: Specificity = [
+            userLayer,
+            stateful,
+            breakpointIndex,
+            styleSourceIndex,
+          ];
+          declaredValues.push({ specificity, value: styleDecl.value });
+        }
       }
     }
   }

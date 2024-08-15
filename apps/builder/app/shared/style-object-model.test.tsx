@@ -1,14 +1,20 @@
 import { expect, test } from "@jest/globals";
 import type { htmlTags as HtmlTags } from "html-tags";
-import type { Instance, StyleDecl, StyleSource } from "@webstudio-is/sdk";
+import {
+  getStyleDeclKey,
+  Styles,
+  type Instance,
+  type StyleDecl,
+  type StyleSource,
+} from "@webstudio-is/sdk";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
 import { parseCss } from "@webstudio-is/css-data";
-import type { WsComponentMeta } from "@webstudio-is/react-sdk";
-import { mapGroupBy, objectGroupBy } from "./shim";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   type StyleObjectModel,
   type StyleSelector,
   getComputedStyleDecl,
+  getPresetStyleDeclKey,
 } from "./style-object-model";
 
 /**
@@ -37,15 +43,16 @@ const createModel = ({
 }): StyleObjectModel => {
   const instanceTags = new Map<Instance["id"], HtmlTags>();
   const parsedStyles = parseCss(css, { customProperties: true });
-  const styles: StyleDecl[] = [];
+  const styles: Styles = new Map();
   for (const { breakpoint, selector, state, property, value } of parsedStyles) {
-    styles.push({
+    const styleDecl: StyleDecl = {
       styleSourceId: selector,
       breakpointId: breakpoint ?? "base",
       state,
       property,
       value,
-    });
+    };
+    styles.set(getStyleDeclKey(styleDecl), styleDecl);
   }
   const { instances, props } = renderJsx(jsx);
   const styleSourcesByInstanceId = new Map<
@@ -64,25 +71,23 @@ const createModel = ({
   for (const instance of instances.values()) {
     instanceComponents.set(instance.id, instance.component);
   }
-  const metas = new Map<string, WsComponentMeta>();
+  const presetStyles = new Map<string, StyleValue>();
   for (const [componentName, css] of Object.entries(presets ?? {})) {
     const parsedStyles = parseCss(css, { customProperties: true });
-    metas.set(componentName, {
-      type: "control",
-      icon: "",
-      presetStyle: objectGroupBy(
-        parsedStyles,
-        (parsedStyleDecl) => parsedStyleDecl.selector
-      ),
-    });
+    for (const styleDecl of parsedStyles) {
+      const key = getPresetStyleDeclKey({
+        component: componentName,
+        tag: styleDecl.selector,
+        state: styleDecl.state,
+        property: styleDecl.property,
+      });
+      presetStyles.set(key, styleDecl.value);
+    }
   }
   return {
     styleSourcesByInstanceId,
-    styleByStyleSourceId: mapGroupBy(
-      styles,
-      (styleDecl) => `${styleDecl.styleSourceId}:${styleDecl.property}` as const
-    ),
-    metas,
+    styles,
+    presetStyles,
     instanceTags,
     instanceComponents,
   };
