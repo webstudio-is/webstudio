@@ -188,6 +188,11 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
 
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setActiveTab("none");
+            }
+          }}
           css={{
             width: theme.spacing[30],
             // We need the node to be rendered but hidden

@@ -256,6 +256,7 @@ export const InputField = forwardRef(
     const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
       onKeyDown?.(event);
       if (event.key === "Escape" && event.defaultPrevented === false) {
+        event.preventDefault();
         unfocusContainerRef.current?.focus();
       }
     };
