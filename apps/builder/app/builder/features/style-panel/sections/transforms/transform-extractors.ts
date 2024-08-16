@@ -59,7 +59,11 @@ const isValidTransformOriginValue = (
   return value.type === "unit" || value.type === "keyword";
 };
 
-export const extractTransformOriginValues = (
+// https://developer.mozilla.org/en-US/docs/Web/CSS/perspective-origin#syntax
+// https://developer.mozilla.org/en-US/docs/Web/CSS/transform-origin#syntax
+// Both transform and perspective origin shares the same syntax for their values.
+// The only difference is `transform-origin` can have a 3rd value for z-axis.
+export const extractTransformOrPerspectiveOriginValues = (
   value: TupleValue
 ): {
   x: KeywordValue | UnitValue;
@@ -71,7 +75,6 @@ export const extractTransformOriginValues = (
   let z: UnitValue | undefined;
 
   // https://www.w3.org/TR/css-transforms-1/#transform-origin-property
-  // https://github.com/mdn/content/issues/35411
   // If only one value is specified, the second value is assumed to be center.
   if (value.value.length === 1 && value.value[0].type === "unit") {
     x = value.value[0];

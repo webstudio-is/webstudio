@@ -144,6 +144,7 @@ const tupleProps = new Set<StyleProperty>([
   "filter",
   "backdropFilter",
   "transformOrigin",
+  "perspectiveOrigin",
 ]);
 
 const availableUnits = new Set<string>(Object.values(units).flat());

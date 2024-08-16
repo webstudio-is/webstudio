@@ -16,7 +16,7 @@ import {
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import { useMemo } from "react";
-import { extractTransformOriginValues } from "./transform-extractors";
+import { extractTransformOrPerspectiveOriginValues } from "./transform-extractors";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 
@@ -62,7 +62,7 @@ export const TransformOrigin = (props: SectionProps) => {
       return;
     }
 
-    return extractTransformOriginValues(value);
+    return extractTransformOrPerspectiveOriginValues(value);
   }, [value]);
 
   const xInfo = useMemo(() => calculateBackgroundPosition(origin?.x), [origin]);

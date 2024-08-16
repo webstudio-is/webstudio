@@ -957,3 +957,44 @@ test("parse transform-origin", () => {
     value: "top left right",
   });
 });
+
+test("parse perspective-origin", () => {
+  expect(parseCssValue("perspectiveOrigin", "center")).toEqual({
+    type: "tuple",
+    value: [{ type: "keyword", value: "center" }],
+  });
+
+  expect(parseCssValue("perspectiveOrigin", "bottom right")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "keyword", value: "bottom" },
+      { type: "keyword", value: "right" },
+    ],
+  });
+
+  expect(parseCssValue("perspectiveOrigin", "bottom 55%")).toEqual({
+    type: "invalid",
+    value: "bottom 55%",
+  });
+
+  expect(parseCssValue("perspectiveOrigin", "75% bottom")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "unit", value: 75, unit: "%" },
+      { type: "keyword", value: "bottom" },
+    ],
+  });
+
+  expect(parseCssValue("perspectiveOrigin", "-175%")).toEqual({
+    type: "tuple",
+    value: [{ type: "unit", value: -175, unit: "%" }],
+  });
+
+  expect(parseCssValue("perspectiveOrigin", "50% 50%")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "unit", value: 50, unit: "%" },
+      { type: "unit", value: 50, unit: "%" },
+    ],
+  });
+});
