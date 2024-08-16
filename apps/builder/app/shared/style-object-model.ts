@@ -4,7 +4,7 @@ import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
   type Breakpoint,
   type Instance,
-  type StyleSource,
+  type StyleSourceSelections,
   type Styles,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
@@ -43,11 +43,16 @@ type InstanceSelector = string[];
 type Property = string;
 
 /**
- * style selector is a full address in a tree
- * and style data to extract computed style
+ * model contains all data and cache of computed styles
+ * and manages reactive subscriptions
  */
-export type StyleSelector = {
-  instanceSelector: InstanceSelector;
+export type StyleObjectModel = {
+  styles: Styles;
+  styleSourceSelections: StyleSourceSelections;
+  // component:tag:state:property
+  presetStyles: Map<string, StyleValue>;
+  instanceTags: Map<Instance["id"], HtmlTags>;
+  instanceComponents: Map<Instance["id"], Instance["component"]>;
   /**
    * all currently matching and ordered breakpoints
    */
@@ -56,19 +61,6 @@ export type StyleSelector = {
    * all currently matching and ordered breakpointsgg
    */
   matchingStates: Set<string>;
-};
-
-/**
- * model contains all data and cache of computed styles
- * and manages reactive subscriptions
- */
-export type StyleObjectModel = {
-  styles: Styles;
-  styleSourcesByInstanceId: Map<Instance["id"], StyleSource["id"][]>;
-  // component:tag:state:property
-  presetStyles: Map<string, StyleValue>;
-  instanceTags: Map<Instance["id"], HtmlTags>;
-  instanceComponents: Map<Instance["id"], Instance["component"]>;
 };
 
 export const getPresetStyleDeclKey = ({
@@ -144,7 +136,7 @@ const getCascadedValue = ({
 }) => {
   const {
     styles,
-    styleSourcesByInstanceId,
+    styleSourceSelections,
     presetStyles,
     instanceTags,
     instanceComponents,
@@ -194,7 +186,7 @@ const getCascadedValue = ({
   }
 
   // user styles
-  const styleSourceIds = styleSourcesByInstanceId.get(instanceId) ?? [];
+  const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
   for (
     let styleSourceIndex = 0;
     styleSourceIndex < styleSourceIds.length;
@@ -279,12 +271,12 @@ const customPropertyData = {
  */
 export const getComputedStyleDecl = ({
   model,
-  styleSelector,
+  instanceSelector,
   property,
   customPropertiesGraph = new Map(),
 }: {
   model: StyleObjectModel;
-  styleSelector: StyleSelector;
+  instanceSelector: InstanceSelector;
   property: Property;
   /**
    * for internal use only
@@ -294,8 +286,7 @@ export const getComputedStyleDecl = ({
   computedValue: StyleValue;
   usedValue: StyleValue;
 } => {
-  const { instanceSelector, matchingBreakpoints, matchingStates } =
-    styleSelector;
+  const { matchingBreakpoints, matchingStates } = model;
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
@@ -371,12 +362,9 @@ export const getComputedStyleDecl = ({
       const fallback = computedValue.fallbacks.at(0);
       const customPropertyValue = getComputedStyleDecl({
         model,
-        styleSelector: {
-          ...styleSelector,
-          // resolve custom properties on instance they are defined
-          // instead of where they are accessed
-          instanceSelector: instanceSelector.slice(index),
-        },
+        // resolve custom properties on instance they are defined
+        // instead of where they are accessed
+        instanceSelector: instanceSelector.slice(index),
         property: customProperty,
         customPropertiesGraph,
       });
@@ -401,7 +389,7 @@ export const getComputedStyleDecl = ({
   if (matchKeyword(computedValue, "currentcolor")) {
     const currentColor = getComputedStyleDecl({
       model,
-      styleSelector,
+      instanceSelector,
       property: "color",
     });
     usedValue = currentColor.usedValue;
