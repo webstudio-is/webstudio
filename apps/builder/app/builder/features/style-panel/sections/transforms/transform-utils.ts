@@ -108,6 +108,13 @@ export const addDefaultsForTransormSection = (props: {
       });
     }
 
+    case "perspective": {
+      return setProperty("perspective")({
+        type: "keyword",
+        value: "none",
+      });
+    }
+
     case "skew":
     case "rotate": {
       const value = currentStyle["transform"]?.value;
@@ -153,6 +160,9 @@ export const isTransformPanelPropertyUsed = (params: {
     */
     case "backfaceVisibility":
       return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
+
+    case "perspective":
+      return currentStyle["perspective"]?.local !== undefined;
 
     case "rotate": {
       const rotate = currentStyle["transform"]?.value;
