@@ -1,4 +1,5 @@
 import { createCookie } from "@remix-run/node";
+import env from "~/env/env.server";
 import { dashboardPath } from "~/shared/router-utils";
 
 export const returnToCookie = createCookie("returnTo", {
@@ -6,7 +7,7 @@ export const returnToCookie = createCookie("returnTo", {
   httpOnly: true,
   sameSite: "lax",
   maxAge: 60, // 1 minute because it makes no sense to keep it for a long time
-  secure: process.env.NODE_ENV === "production",
+  secure: env.SECURE_COOKIE,
 });
 
 export const returnToPath = async (request: Request) => {
