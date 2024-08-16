@@ -15,7 +15,7 @@ import {
   $selectedInstanceStates,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
+import htmlTags, { type HtmlTags } from "html-tags";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,

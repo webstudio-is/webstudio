@@ -22,7 +22,7 @@
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "html-tags": "^3.3.1",
+    "html-tags": "^4.0.0",
     "mdn-data": "2.8.0",
     "type-fest": "^4.24.0",
     "typescript": "5.5.2",

@@ -9,7 +9,7 @@ import {
 import type { Instance } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import type { htmlTags as HtmlTag } from "html-tags";
+import type { HtmlTags } from "html-tags";
 
 import { useStyleData } from "./shared/use-style-data";
 
@@ -37,7 +37,7 @@ const $selectedInstanceTag = computed(
 const shouldRenderCategory = (
   category: string,
   parentStyle: StyleInfo,
-  tag: undefined | HtmlTag
+  tag: undefined | HtmlTags
 ) => {
   switch (category) {
     case "flexChild":

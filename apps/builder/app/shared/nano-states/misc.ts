@@ -25,7 +25,7 @@ import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
-import type { htmlTags as HtmlTags } from "html-tags";
+import type { HtmlTags } from "html-tags";
 import { $instances, $selectedInstanceSelector } from "./instances";
 import { $selectedPage } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";

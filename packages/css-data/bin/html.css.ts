@@ -9,7 +9,7 @@ for (const styleDecl of parsed) {
   result.push([`${styleDecl.selector}:${styleDecl.property}`, styleDecl.value]);
 }
 let code = "";
-code += `import type { htmlTags as HtmlTags } from "html-tags";\n`;
+code += `import type { HtmlTags } from "html-tags";\n`;
 code += `import type { StyleValue } from "@webstudio-is/css-engine";\n\n`;
 const map = "new Map<`${HtmlTags}:${string}`, StyleValue>";
 code += `export const html = ${map}(${JSON.stringify(result)})`;

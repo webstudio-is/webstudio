@@ -1,4 +1,4 @@
-import type { htmlTags as HtmlTags } from "html-tags";
+import type { HtmlTags } from "html-tags";
 import { html, properties } from "@webstudio-is/css-data";
 import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
 import {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import type { htmlTags as HtmlTags } from "html-tags";
+import type { HtmlTags } from "html-tags";
 import type {
   Style,
   StyleProperty,
