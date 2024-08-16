@@ -19,8 +19,7 @@ import { useMemo } from "react";
 import { extractTransformOrPerspectiveOriginValues } from "./transform-extractors";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-
-const property: StyleProperty = "transformOrigin";
+import { calculatePositionFromOrigin } from "./transform-utils";
 
 // Fake properties to use in the CssValueInputContainer
 // x, y axis takes length | percentage | keyword
@@ -29,32 +28,10 @@ const fakePropertyX: StyleProperty = "backgroundPositionX";
 const fakePropertyY: StyleProperty = "backgroundPositionY";
 const fakePropertyZ: StyleProperty = "outlineOffset";
 
-const keyworkToValue: Record<string, number> = {
-  left: 0,
-  right: 100,
-  center: 50,
-  top: 0,
-  bottom: 100,
-};
-
-const calculateBackgroundPosition = (value: StyleValue | undefined) => {
-  if (value === undefined) {
-    return 50;
-  }
-
-  if (value.type === "unit") {
-    return value.value;
-  }
-
-  if (value.type === "keyword") {
-    return keyworkToValue[value.value];
-  }
-
-  return 0;
-};
-
-export const TransformOrigin = (props: SectionProps) => {
-  const { currentStyle, deleteProperty, setProperty } = props;
+export const TransformAndPerspectiveOrigin = (
+  props: SectionProps & { property: StyleProperty }
+) => {
+  const { currentStyle, deleteProperty, setProperty, property } = props;
   const value = currentStyle[property]?.local;
   const { label } = styleConfigByName(property);
   const origin = useMemo(() => {
@@ -65,8 +42,8 @@ export const TransformOrigin = (props: SectionProps) => {
     return extractTransformOrPerspectiveOriginValues(value);
   }, [value]);
 
-  const xInfo = useMemo(() => calculateBackgroundPosition(origin?.x), [origin]);
-  const yInfo = useMemo(() => calculateBackgroundPosition(origin?.y), [origin]);
+  const xInfo = useMemo(() => calculatePositionFromOrigin(origin?.x), [origin]);
+  const yInfo = useMemo(() => calculatePositionFromOrigin(origin?.y), [origin]);
   const xOriginKeywords: Array<KeywordValue> = ["left", "center", "right"].map(
     (value) => ({
       type: "keyword",
