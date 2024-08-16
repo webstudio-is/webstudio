@@ -14,7 +14,7 @@ import {
 } from "~/shared/nano-states";
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import { subscribe } from "~/shared/pubsub";
-import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
+import htmlTags, { voidHtmlTags, type HtmlTags } from "html-tags";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -23,29 +23,13 @@ const instanceIdSet = new Set<string>();
 
 let rafHandle: number;
 
-// Do not add collapsed paddings for void elements
-// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
-const voidHtmlElements = [
-  "AREA",
-  "BASE",
-  "BR",
-  "COL",
-  "EMBED",
-  "HR",
-  "IMG",
-  "INPUT",
-  "LINK",
-  "META",
-  "SOURCE",
-  "TRACK",
-  "WBR",
-];
-
 // Do not add collapsed paddings for replaced elements as at the moment we add them they don't have real size
 // https://developer.mozilla.org/en-US/docs/Web/CSS/Replaced_element
-const replacedHtmlElements = ["IFRAME", "VIDEO", "EMBED", "IMG"];
+const replacedHtmlElements = ["iframe", "video", "embed", "img"];
 
-const skipElementsSet = new Set([...voidHtmlElements, ...replacedHtmlElements]);
+// Do not add collapsed paddings for void elements
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+const skipElementsSet = new Set([...voidHtmlTags, ...replacedHtmlElements]);
 
 const isSelectorSupported = (selector: string) => {
   try {
@@ -151,7 +135,7 @@ const recalculate = () => {
       continue;
     }
 
-    if (skipElementsSet.has(element.tagName)) {
+    if (skipElementsSet.has(element.tagName.toLowerCase())) {
       // Images should not collapse, and have a fallback.
       // The issue that unloaded image has 0 width and height until explicitly set,
       // so at the moment new Image added we detect it as collapsed.

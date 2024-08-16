@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import type { htmlTags as HtmlTags } from "html-tags";
+import type { HtmlTags } from "html-tags";
 import {
   getStyleDeclKey,
   Styles,

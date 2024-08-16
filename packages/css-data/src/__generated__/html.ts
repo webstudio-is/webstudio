@@ -1,4 +1,4 @@
-import type { htmlTags as HtmlTags } from "html-tags";
+import type { HtmlTags } from "html-tags";
 import type { StyleValue } from "@webstudio-is/css-engine";
 
 export const html = new Map<`${HtmlTags}:${string}`, StyleValue>([

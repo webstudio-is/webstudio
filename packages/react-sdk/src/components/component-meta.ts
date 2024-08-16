@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PropMeta } from "../prop-meta";
-import type { htmlTags as HtmlTags } from "html-tags";
+import type { HtmlTags } from "html-tags";
 import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "../embed-template";
 
 export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<
