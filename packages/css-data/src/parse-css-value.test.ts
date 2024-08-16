@@ -1,7 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { parseCssValue } from "./parse-css-value";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
-import { parseCss } from "./parse-css";
 
 describe("Parse CSS value", () => {
   describe("number value", () => {

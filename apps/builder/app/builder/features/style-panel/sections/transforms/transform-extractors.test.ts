@@ -2,7 +2,7 @@ import { describe, test, expect } from "@jest/globals";
 import {
   extractRotatePropertiesFromTransform,
   extractSkewPropertiesFromTransform,
-  extractTransformOriginValues,
+  extractTransformOrPerspectiveOriginValues,
 } from "./transform-extractors";
 import { parseCssValue } from "@webstudio-is/css-data";
 import type { TupleValue } from "@webstudio-is/css-engine";
@@ -108,10 +108,10 @@ describe("extractSkewPropertiesFromTransform", () => {
   });
 });
 
-describe("extractTransformOriginValues", () => {
+describe("extractTransformOrPerspectiveOriginValues", () => {
   test("parses transform-origin and returns the individual properties from the value", () => {
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "center") as TupleValue
       )
     ).toEqual({
@@ -121,7 +121,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "top") as TupleValue
       )
     ).toEqual({
@@ -131,7 +131,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "right") as TupleValue
       )
     ).toEqual({
@@ -141,7 +141,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "45px") as TupleValue
       )
     ).toEqual({
@@ -151,7 +151,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "20px 40px") as TupleValue
       )
     ).toEqual({
@@ -161,7 +161,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "10px 20px 30px") as TupleValue
       )
     ).toEqual({
@@ -171,7 +171,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "left top 30px") as TupleValue
       )
     ).toEqual({
@@ -181,7 +181,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "bottom right 60px") as TupleValue
       )
     ).toEqual({
@@ -191,7 +191,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "left 50% 60px") as TupleValue
       )
     ).toEqual({
@@ -201,7 +201,7 @@ describe("extractTransformOriginValues", () => {
     });
 
     expect(
-      extractTransformOriginValues(
+      extractTransformOrPerspectiveOriginValues(
         parseCssValue("transformOrigin", "50% bottom 60px") as TupleValue
       )
     ).toEqual({
