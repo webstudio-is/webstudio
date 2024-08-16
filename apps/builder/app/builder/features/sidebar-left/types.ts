@@ -1,6 +1,6 @@
 import type { Publish } from "~/shared/pubsub";
 
-export type TabName =
+export type SidebarPanelName =
   | "assets"
   | "components"
   | "navigator"
@@ -9,6 +9,6 @@ export type TabName =
   | "none";
 
 export type TabContentProps = {
-  onSetActiveTab: (tabName: TabName) => void;
+  onSetActiveTab: (tabName: SidebarPanelName) => void;
   publish: Publish;
 };

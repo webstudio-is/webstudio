@@ -21,7 +21,11 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $publisher } from "~/shared/pubsub";
-import { $activeInspectorPanel, $activeSidebarPanel } from "./nano-states";
+import {
+  $activeInspectorPanel,
+  setActiveSidebarPanel,
+  toggleActiveSidebarPanel,
+} from "./nano-states";
 import { toast } from "@webstudio-is/design-system";
 
 const makeBreakpointCommand = <CommandName extends string>(
@@ -107,7 +111,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "clickCanvas",
       handler: () => {
         $breakpointsMenuView.set(undefined);
-        $activeSidebarPanel.set("none");
+        setActiveSidebarPanel("none");
       },
     },
 
@@ -130,8 +134,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "toggleComponentsPanel",
       defaultHotkeys: ["a"],
       handler: () => {
-        const isOpen = $activeSidebarPanel.get() === "components";
-        $activeSidebarPanel.set(isOpen ? "none" : "components");
+        toggleActiveSidebarPanel("components");
       },
       disableHotkeyOnFormTags: true,
       disableHotkeyOnContentEditable: true,
@@ -140,8 +143,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "toggleNavigatorPanel",
       defaultHotkeys: ["z"],
       handler: () => {
-        const isOpen = $activeSidebarPanel.get() === "navigator";
-        $activeSidebarPanel.set(isOpen ? "none" : "navigator");
+        toggleActiveSidebarPanel("navigator");
       },
       disableHotkeyOnFormTags: true,
       disableHotkeyOnContentEditable: true,
