@@ -9,6 +9,8 @@ import {
   type ComponentProps,
   type Ref,
   type FocusEventHandler,
+  useRef,
+  type KeyboardEventHandler,
 } from "react";
 import { textVariants } from "./text";
 import { css, theme, type CSS } from "../stitches.config";
@@ -239,6 +241,7 @@ export const InputField = forwardRef(
       onBlur,
       variant,
       size,
+      onKeyDown,
       ...inputProps
     }: InputProps & InputFieldProps,
     ref: Ref<HTMLDivElement>
@@ -249,6 +252,14 @@ export const InputField = forwardRef(
       onFocusWithin: onFocus,
       onBlurWithin: onBlur,
     });
+    const unfocusContainerRef = useRef<HTMLDivElement>(null);
+    const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
+      onKeyDown?.(event);
+      if (event.key === "Escape" && event.defaultPrevented === false) {
+        event.preventDefault();
+        unfocusContainerRef.current?.focus();
+      }
+    };
 
     return (
       <Container
@@ -261,7 +272,13 @@ export const InputField = forwardRef(
         {...focusWithinProps}
         ref={mergeRefs(ref, containerRef ?? null)}
       >
-        <Input {...inputProps} ref={inputRef} />
+        <div
+          // This element is used to move focus to it when user hits Escape.
+          // This way user can unfocus the input and then use any single-key shortcut.
+          tabIndex={-1}
+          ref={unfocusContainerRef}
+        />
+        <Input {...inputProps} onKeyDown={handleKeyDown} ref={inputRef} />
       </Container>
     );
   }

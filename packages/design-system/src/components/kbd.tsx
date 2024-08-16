@@ -33,9 +33,15 @@ const format = (value: ShortcutDefinition) => {
   );
 };
 
-export const Kbd = ({ value }: { value: ShortcutDefinition }) => {
+export const Kbd = ({
+  value,
+  color = "subtle",
+}: {
+  value: ShortcutDefinition;
+  color?: "subtle" | "moreSubtle";
+}) => {
   return (
-    <Text color="subtle" as="kbd">
+    <Text color={color} as="kbd">
       {format(value)}
     </Text>
   );

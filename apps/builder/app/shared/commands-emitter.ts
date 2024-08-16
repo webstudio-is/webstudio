@@ -43,8 +43,20 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
 const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 clientSyncStore.register("commandMetas", $commandMetas);
 
+// Copied from https://github.com/ai/keyux/blob/main/hotkey.js#L1C1-L2C1
+// eslint-disable-next-line no-control-regex
+const nonEnglishLayout = /^[^\x00-\x7F]$/;
+
+const getKey = (event: KeyboardEvent) => {
+  if (nonEnglishLayout.test(event.key) && /^Key.$/.test(event.code)) {
+    return event.code.replace(/^Key/, "").toLowerCase();
+  }
+  return event.key;
+};
+
 const findCommandsMatchingHotkeys = (event: KeyboardEvent) => {
-  const { key, ctrlKey, metaKey, shiftKey, altKey } = event;
+  const { ctrlKey, metaKey, shiftKey, altKey } = event;
+  const key = getKey(event);
   const pressedKeys = new Set<string>();
   pressedKeys.add(key.toLocaleLowerCase());
   if (ctrlKey) {
