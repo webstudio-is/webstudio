@@ -138,6 +138,7 @@ export const PositionGrid = ({
     focusedPosition,
   });
   const numericSelectedPosition = toNumericPosition(selectedPosition);
+
   return (
     <Grid
       tabIndex={0}

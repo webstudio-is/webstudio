@@ -7,7 +7,6 @@ import {
   updateRotateOrSkewPropertyValue,
   updateTransformTuplePropertyValue,
 } from "./transform-utils";
-import { extractRotatePropertiesFromTransform } from "./transform-extractors";
 import type { StyleInfo } from "../../shared/style-info";
 import {
   FunctionValue,
@@ -17,6 +16,7 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { parseCssValue } from "@webstudio-is/css-data";
+import { extractRotatePropertiesFromTransform } from "./transform-extractors";
 
 const initializeStyleInfo = () => {
   const currentStyle: StyleInfo = {};

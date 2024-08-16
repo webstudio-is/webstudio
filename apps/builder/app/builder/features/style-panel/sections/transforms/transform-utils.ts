@@ -101,6 +101,11 @@ export const addDefaultsForTransormSection = (props: {
       return setProperty("scale")(scale);
     }
 
+    case "transformOrigin": {
+      const transformOrigin = parseCssValue("transformOrigin", "50% 50%");
+      return setProperty("transformOrigin")(transformOrigin);
+    }
+
     case "backfaceVisibility": {
       return setProperty("backfaceVisibility")({
         type: "keyword",
@@ -160,6 +165,9 @@ export const isTransformPanelPropertyUsed = (params: {
     */
     case "backfaceVisibility":
       return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
+
+    case "transformOrigin":
+      return currentStyle["transformOrigin"]?.local?.type === "tuple";
 
     case "perspective":
       return currentStyle["perspective"]?.local !== undefined;
