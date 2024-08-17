@@ -672,7 +672,15 @@ test("V Flex", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
-  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-vflex {
+        flex-direction: column;
+        align-items: flex-start;
+        display: flex
+      }
+    }"
+  `);
 });
 
 test("H Flex", async () => {
@@ -693,7 +701,15 @@ test("H Flex", async () => {
     },
   });
   equalFragment(fragment, <$.Box />);
-  expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-layout-hflex {
+        flex-direction: row;
+        align-items: flex-start;
+        display: flex
+      }
+    }"
+  `);
 });
 
 test("QuickStack with instance styles", async () => {
