@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { div } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/vimeo.props";
 import { Vimeo } from "./vimeo";
 import type { ComponentProps } from "react";

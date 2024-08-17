@@ -6,7 +6,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { i } from "@webstudio-is/react-sdk/css-normalize";
+import { i } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/italic.props";
 
 const presetStyle = {

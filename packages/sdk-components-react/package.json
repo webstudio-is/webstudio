@@ -50,6 +50,7 @@
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "colord": "^2.9.3",
     "micromark": "^4.0.0"
   },

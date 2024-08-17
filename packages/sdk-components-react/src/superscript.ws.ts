@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { sup } from "@webstudio-is/react-sdk/css-normalize";
+import { sup } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./superscript";
 import { props } from "./__generated__/superscript.props";
 

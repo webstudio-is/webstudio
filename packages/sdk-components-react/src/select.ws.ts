@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { select } from "@webstudio-is/react-sdk/css-normalize";
+import { select } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./select";
 import { props } from "./__generated__/select.props";
 

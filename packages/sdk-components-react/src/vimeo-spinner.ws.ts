@@ -5,7 +5,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { props } from "./__generated__/vimeo-spinner.props";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { div } from "@webstudio-is/sdk/normalize.css";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 
 const presetStyle = {

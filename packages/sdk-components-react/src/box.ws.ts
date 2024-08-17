@@ -17,7 +17,7 @@ import {
   main,
   nav,
   section,
-} from "@webstudio-is/react-sdk/css-normalize";
+} from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/box.props";
 import type { Box } from "./box";
 
