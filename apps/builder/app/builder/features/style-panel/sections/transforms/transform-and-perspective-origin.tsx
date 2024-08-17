@@ -117,7 +117,7 @@ export const TransformAndPerspectiveOrigin = (
       ],
     };
 
-    if (origin.z !== undefined) {
+    if (property === "transformOrigin" && origin.z !== undefined) {
       value.value.push(origin.z);
     }
 
@@ -171,7 +171,7 @@ export const TransformAndPerspectiveOrigin = (
                 }
               />
             </Flex>
-            {origin.z !== undefined && (
+            {property === "transformOrigin" && origin.z !== undefined && (
               <Flex gap="2" align="center">
                 <Label>Z</Label>
                 <CssValueInputContainer
