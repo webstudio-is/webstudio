@@ -5,7 +5,7 @@ import {
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/react-sdk";
-import { checkbox } from "@webstudio-is/react-sdk/css-normalize";
+import { checkbox } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./checkbox";
 import { props } from "./__generated__/checkbox.props";
 

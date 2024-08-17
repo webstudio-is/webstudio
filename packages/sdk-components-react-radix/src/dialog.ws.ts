@@ -14,7 +14,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
+import { div, button, h2, p } from "@webstudio-is/sdk/normalize.css";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsDialog,

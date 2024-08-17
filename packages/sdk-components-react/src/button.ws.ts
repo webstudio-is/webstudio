@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { button } from "@webstudio-is/react-sdk/css-normalize";
+import { button } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/button.props";
 import type { defaultTag } from "./button";
 

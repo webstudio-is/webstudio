@@ -14,7 +14,7 @@ import {
   type WsComponentPropsMeta,
   type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
-import { div, h3, button } from "@webstudio-is/react-sdk/css-normalize";
+import { div, h3, button } from "@webstudio-is/sdk/normalize.css";
 import * as tc from "./theme/tailwind-classes";
 import { buttonReset } from "./theme/styles";
 import {

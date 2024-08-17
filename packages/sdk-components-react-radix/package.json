@@ -61,7 +61,8 @@
     "@radix-ui/react-tooltip": "^1.1.2",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
-    "@webstudio-is/react-sdk": "workspace:*"
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",

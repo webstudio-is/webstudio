@@ -8,7 +8,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { button, span } from "@webstudio-is/react-sdk/css-normalize";
+import { button, span } from "@webstudio-is/sdk/normalize.css";
 import * as tc from "./theme/tailwind-classes";
 import { buttonReset } from "./theme/styles";
 import {

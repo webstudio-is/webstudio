@@ -11,7 +11,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { button, div } from "@webstudio-is/react-sdk/css-normalize";
+import { button, div } from "@webstudio-is/sdk/normalize.css";
 import * as tc from "./theme/tailwind-classes";
 import { buttonReset } from "./theme/styles";
 import {

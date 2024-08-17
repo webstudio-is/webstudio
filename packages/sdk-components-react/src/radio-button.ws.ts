@@ -6,7 +6,7 @@ import {
   defaultStates,
 } from "@webstudio-is/react-sdk";
 import type { defaultTag } from "./radio-button";
-import { radio } from "@webstudio-is/react-sdk/css-normalize";
+import { radio } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/radio-button.props";
 
 const presetStyle = {

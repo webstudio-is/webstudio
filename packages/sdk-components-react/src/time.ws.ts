@@ -7,7 +7,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 
-import { time } from "@webstudio-is/react-sdk/css-normalize";
+import { time } from "@webstudio-is/sdk/normalize.css";
 
 import { props } from "./__generated__/time.props";
 

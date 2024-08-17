@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { form } from "@webstudio-is/react-sdk/css-normalize";
+import { form } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
 
@@ -19,6 +19,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
+  label: "Form",
   invalidAncestors: ["Form", "Button", "Link"],
   description: "Create filters, surveys, searches and more.",
   icon: FormIcon,
