@@ -27,6 +27,7 @@ import {
   toggleActiveSidebarPanel,
 } from "./nano-states";
 import { toast } from "@webstudio-is/design-system";
+import { getSetting } from "./client-settings";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -111,7 +112,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "clickCanvas",
       handler: () => {
         $breakpointsMenuView.set(undefined);
-        setActiveSidebarPanel("none");
+        // Only close the panel if its covering the canvas.
+        if (getSetting("navigatorLayout") === "docked") {
+          setActiveSidebarPanel("none");
+        }
       },
     },
 

@@ -1,5 +1,4 @@
 import { atom, computed } from "nanostores";
-import type { SidebarPanelName } from "~/builder/features/sidebar-left/types";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import {
   $isPreviewMode,
@@ -83,6 +82,14 @@ export const $loadingState = computed(
     return { state, progress, readyStates };
   }
 );
+
+export type SidebarPanelName =
+  | "assets"
+  | "components"
+  | "navigator"
+  | "pages"
+  | "marketplace"
+  | "none";
 
 // Only used internally to avoid directly setting the value without using setActiveSidebarPanel.
 const $activeSidebarPanel_ = atom<SidebarPanelName | undefined>();

@@ -12,6 +12,7 @@ import {
   $activeSidebarPanel,
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
+  type SidebarPanelName,
 } from "~/builder/shared/nano-states";
 import {
   SidebarButton,
@@ -27,7 +28,6 @@ import {
   useOnDropEffect,
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
-import type { SidebarPanelName } from "./types";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
 
 const none = { TabContent: () => null };

@@ -46,6 +46,7 @@ import {
   $isCloneDialogOpen,
   $loadingState,
   $userPlanFeatures,
+  type SidebarPanelName,
 } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
@@ -55,7 +56,6 @@ import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { initBuilderApi } from "~/shared/builder-api";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
-import type { SidebarPanelName } from "./features/sidebar-left/types";
 import { Loading, LoadingBackground } from "./shared/loading";
 
 registerContainers();
