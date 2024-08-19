@@ -100,6 +100,9 @@ const env = {
 
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
+
+  SECURE_COOKIE:
+    process.env.SSL === "true" || process.env.NODE_ENV === "production",
 };
 
 export type ServerEnv = typeof env;

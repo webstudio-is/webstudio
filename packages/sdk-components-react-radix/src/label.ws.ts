@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { label } from "@webstudio-is/react-sdk/css-normalize";
+import { label } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/label.props";
 import * as tc from "./theme/tailwind-classes";
 

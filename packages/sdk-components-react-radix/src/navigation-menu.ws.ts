@@ -13,7 +13,7 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { div } from "@webstudio-is/sdk/normalize.css";
 import * as tc from "./theme/tailwind-classes";
 import { getButtonStyles } from "./theme/styles";
 import {

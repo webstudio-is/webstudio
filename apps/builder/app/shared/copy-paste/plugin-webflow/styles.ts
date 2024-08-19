@@ -366,6 +366,14 @@ const mapComponentAndPresetStyles = (
       presetStyles.push("wf-layout-layout");
       return presetStyles;
     }
+    case "HFlex": {
+      presetStyles.push("w-layout-hflex");
+      return presetStyles;
+    }
+    case "VFlex": {
+      presetStyles.push("w-layout-vflex");
+      return presetStyles;
+    }
     case "FormWrapper": {
       presetStyles.push("w-form");
       return presetStyles;

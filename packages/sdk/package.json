@@ -12,6 +12,11 @@
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js"
     },
+    "./normalize.css": {
+      "webstudio": "./src/__generated__/normalize.css.ts",
+      "types": "./lib/types/__generated__/normalize.css.d.ts",
+      "import": "./lib/__generated__/normalize.css.js"
+    },
     "./testing": {
       "webstudio": "./src/testing.ts"
     }
@@ -24,7 +29,8 @@
   "scripts": {
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && prettier --write src/__generated__/normalize.css.ts",
+    "build": "rm -rf lib && esbuild src/index.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
@@ -37,8 +43,10 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "html-tags": "^4.0.0",
     "strip-indent": "^4.0.0"
   }
 }

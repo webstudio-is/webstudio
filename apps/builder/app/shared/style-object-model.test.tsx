@@ -1,18 +1,18 @@
 import { expect, test } from "@jest/globals";
 import type { HtmlTags } from "html-tags";
 import {
-  getStyleDeclKey,
-  Styles,
+  type Breakpoint,
+  type Styles,
+  type StyleSourceSelections,
   type Instance,
   type StyleDecl,
-  type StyleSource,
+  getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
 import { parseCss } from "@webstudio-is/css-data";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   type StyleObjectModel,
-  type StyleSelector,
   getComputedStyleDecl,
   getPresetStyleDeclKey,
 } from "./style-object-model";
@@ -36,10 +36,14 @@ const createModel = ({
   presets,
   css,
   jsx,
+  matchingBreakpoints,
+  matchingStates,
 }: {
   presets?: Record<string, string>;
   css: string;
   jsx: JSX.Element;
+  matchingBreakpoints?: Breakpoint["id"][];
+  matchingStates?: Set<string>;
 }): StyleObjectModel => {
   const instanceTags = new Map<Instance["id"], HtmlTags>();
   const parsedStyles = parseCss(css, { customProperties: true });
@@ -55,13 +59,13 @@ const createModel = ({
     styles.set(getStyleDeclKey(styleDecl), styleDecl);
   }
   const { instances, props } = renderJsx(jsx);
-  const styleSourcesByInstanceId = new Map<
-    Instance["id"],
-    StyleSource["id"][]
-  >();
+  const styleSourceSelections: StyleSourceSelections = new Map();
   for (const prop of props.values()) {
     if (prop.name === "class" && prop.type === "string") {
-      styleSourcesByInstanceId.set(prop.instanceId, prop.value.split(" "));
+      styleSourceSelections.set(prop.instanceId, {
+        instanceId: prop.instanceId,
+        values: prop.value.split(" "),
+      });
     }
     if (prop.name === "ws:tag" && prop.type === "string") {
       instanceTags.set(prop.instanceId, prop.value as HtmlTags);
@@ -85,11 +89,13 @@ const createModel = ({
     }
   }
   return {
-    styleSourcesByInstanceId,
     styles,
+    styleSourceSelections,
     presetStyles,
     instanceTags,
     instanceComponents,
+    matchingBreakpoints: matchingBreakpoints ?? ["base"],
+    matchingStates: matchingStates ?? new Set(),
   };
 };
 
@@ -102,22 +108,21 @@ test("use cascaded style when specified and fallback to initial value", () => {
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["body"];
   // cascaded property
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "unit", unit: "px", value: 10 });
   // initial for not inherited property
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "height" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "height" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "auto" });
   // initial for inherited property
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "black" });
 });
 
@@ -130,13 +135,10 @@ test("support initial keyword", () => {
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
 
@@ -162,18 +164,16 @@ test("support inherit keyword", () => {
       </$.Box>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["level3", "level2", "level1"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["level3", "level2", "level1"];
   // should inherit declared value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "unit", unit: "px", value: 10 });
   // should inherit initial value as height is not inherited
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "height" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "height" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
 
@@ -195,18 +195,16 @@ test("support unset keyword", () => {
       </$.Box>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["level2", "level1"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["level2", "level1"];
   // when property is not inherited use initial value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "auto" });
   // when property is inherited use inherited value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "blue" });
 });
 
@@ -226,18 +224,16 @@ test("inherit style from ancestors", () => {
       </$.Box>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["level3", "level2", "level1"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["level3", "level2", "level1"];
   // inherited value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "blue" });
   // not inherited value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
 
@@ -260,18 +256,20 @@ test("support currentcolor keyword", () => {
       </$.Box>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["level2", "level1"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["level2", "level1"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "borderTopColor" })
-      .usedValue
+    getComputedStyleDecl({
+      model,
+      instanceSelector,
+      property: "borderTopColor",
+    }).usedValue
   ).toEqual({ type: "keyword", value: "blue" });
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "backgroundColor" })
-      .usedValue
+    getComputedStyleDecl({
+      model,
+      instanceSelector,
+      property: "backgroundColor",
+    }).usedValue
   ).toEqual({ type: "keyword", value: "blue" });
 });
 
@@ -294,13 +292,10 @@ test("in color property currentcolor is inherited", () => {
       </$.Box>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["level3", "level2", "level1"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["level3", "level2", "level1"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "blue" });
 });
 
@@ -313,13 +308,10 @@ test("in root color property currentcolor is initial", () => {
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "black" });
 });
 
@@ -333,17 +325,14 @@ test("support custom properties", () => {
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "--my-property" })
+    getComputedStyleDecl({ model, instanceSelector, property: "--my-property" })
       .usedValue
   ).toEqual({ type: "unparsed", value: "blue" });
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "unparsed", value: "blue" });
 });
 
@@ -356,13 +345,10 @@ test("use fallback value when custom property does not exist", () => {
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "unparsed", value: "red" });
 });
 
@@ -375,13 +361,10 @@ test("use initial value when custom property does not exist", () => {
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "black" });
 });
 
@@ -403,18 +386,16 @@ test("use inherited value when custom property does not exist", () => {
       </$.Body>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["box", "body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["box", "body"];
   // inherited property use inherited value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "red" });
   // not inherited property use initial value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
 
@@ -436,17 +417,14 @@ test("inherit custom property", () => {
       </$.Box>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["level3", "level2", "level1"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["level3", "level2", "level1"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "--my-property" })
+    getComputedStyleDecl({ model, instanceSelector, property: "--my-property" })
       .usedValue
   ).toEqual({ type: "unparsed", value: "blue" });
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "unparsed", value: "blue" });
 });
 
@@ -468,16 +446,13 @@ test("resolve dependency cycles in custom properties", () => {
       </$.Body>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["box", "body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["box", "body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "keyword", value: "black" });
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "--color" })
+    getComputedStyleDecl({ model, instanceSelector, property: "--color" })
       .usedValue
   ).toEqual({ type: "invalid", value: "" });
 });
@@ -500,16 +475,13 @@ test("resolve non-cyclic references in custom properties", () => {
       </$.Body>
     ),
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["box", "body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["box", "body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "color" })
+      .usedValue
   ).toEqual({ type: "unparsed", value: "red" });
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "--color" })
+    getComputedStyleDecl({ model, instanceSelector, property: "--color" })
       .usedValue
   ).toEqual({ type: "unparsed", value: "red" });
 });
@@ -532,14 +504,12 @@ test("cascade value from matching breakpoints", () => {
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
-  });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
     matchingBreakpoints: ["base", "small", "large"],
-    matchingStates: new Set(),
-  };
+  });
+  const instanceSelector = ["body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "unit", unit: "px", value: 30 });
 });
 
@@ -561,15 +531,13 @@ test("ignore values from not matching breakpoints", () => {
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
-  });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
     // large is not matching breakpoint
     matchingBreakpoints: ["base", "small"],
-    matchingStates: new Set(),
-  };
+  });
+  const instanceSelector = ["body"];
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
@@ -585,14 +553,11 @@ test("cascade value from matching style sources", () => {
     `,
     jsx: <$.Body ws:id="body" class="bodyToken bodyLocal"></$.Body>,
   });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
-    matchingStates: new Set(),
-  };
+  const instanceSelector = ["body"];
   // the latest token value wins
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
@@ -607,15 +572,13 @@ test("cascade values with states as more specific", () => {
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
-  });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
     matchingStates: new Set([":hover"]),
-  };
+  });
+  const instanceSelector = ["body"];
   // value with state wins
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
@@ -633,15 +596,13 @@ test("ignore values from not matching states", () => {
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
-  });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
-    matchingBreakpoints: ["base"],
     matchingStates: new Set([":hover"]),
-  };
+  });
+  const instanceSelector = ["body"];
   // ignore :focus state because it is not matching
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
@@ -659,11 +620,7 @@ test("support html styles", () => {
   expect(
     getComputedStyleDecl({
       model,
-      styleSelector: {
-        instanceSelector: ["bodyId"],
-        matchingBreakpoints: ["base"],
-        matchingStates: new Set(),
-      },
+      instanceSelector: ["bodyId"],
       property: "display",
     }).usedValue
   ).toEqual({ type: "keyword", value: "block" });
@@ -671,11 +628,7 @@ test("support html styles", () => {
   expect(
     getComputedStyleDecl({
       model,
-      styleSelector: {
-        instanceSelector: ["spanId"],
-        matchingBreakpoints: ["base"],
-        matchingStates: new Set(),
-      },
+      instanceSelector: ["spanId"],
       property: "display",
     }).usedValue
   ).toEqual({ type: "keyword", value: "inline" });
@@ -697,11 +650,7 @@ test("support preset styles", () => {
   expect(
     getComputedStyleDecl({
       model,
-      styleSelector: {
-        instanceSelector: ["body"],
-        matchingBreakpoints: ["base"],
-        matchingStates: new Set(),
-      },
+      instanceSelector: ["body"],
       property: "width",
     }).usedValue
   ).toEqual({ type: "unit", value: 100, unit: "px" });
@@ -729,11 +678,7 @@ test("ignore values from not matching states in preset styles", () => {
   expect(
     getComputedStyleDecl({
       model,
-      styleSelector: {
-        instanceSelector: ["body"],
-        matchingBreakpoints: ["base"],
-        matchingStates: new Set(),
-      },
+      instanceSelector: ["body"],
       property: "color",
     }).usedValue
   ).toEqual({ type: "keyword", value: "red" });
@@ -752,16 +697,16 @@ test("breakpoints are more specific than style sources", () => {
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyToken bodyLocal"></$.Body>,
-  });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
     matchingBreakpoints: ["base", "small"],
-    matchingStates: new Set(),
-  };
+  });
   // bigger breakpoint on current style source should overide
   // when the next style source has the same property on smaller breakpoint
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "width",
+    }).usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
@@ -778,15 +723,16 @@ test("states are more specific than breakpoints", () => {
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
-  });
-  const styleSelector: StyleSelector = {
-    instanceSelector: ["body"],
     matchingBreakpoints: ["base", "small"],
     matchingStates: new Set([":hover"]),
-  };
+  });
   // values with states override values without states on bigger breakpoint
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "width",
+    }).usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
@@ -808,15 +754,12 @@ test("user styles are more specific than preset styles", () => {
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    matchingStates: new Set([":hover"]),
   });
   expect(
     getComputedStyleDecl({
       model,
-      styleSelector: {
-        instanceSelector: ["body"],
-        matchingBreakpoints: ["base"],
-        matchingStates: new Set([":hover"]),
-      },
+      instanceSelector: ["body"],
       property: "color",
     }).usedValue
   ).toEqual({ type: "keyword", value: "red" });
@@ -839,11 +782,7 @@ test("preset styles are more specific than browser styles", () => {
   expect(
     getComputedStyleDecl({
       model,
-      styleSelector: {
-        instanceSelector: ["body"],
-        matchingBreakpoints: ["base"],
-        matchingStates: new Set(),
-      },
+      instanceSelector: ["body"],
       property: "display",
     }).usedValue
   ).toEqual({ type: "keyword", value: "flex" });

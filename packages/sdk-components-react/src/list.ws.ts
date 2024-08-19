@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { ol, ul } from "@webstudio-is/react-sdk/css-normalize";
+import { ol, ul } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/list.props";
 import type { ListTag } from "./list";
 

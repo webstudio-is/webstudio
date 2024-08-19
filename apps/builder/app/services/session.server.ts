@@ -10,7 +10,7 @@ export const sessionStorage = createCookieSessionStorage({
     path: "/", // remember to add this so the cookie will work in all routes
     httpOnly: true, // for security reasons, make this cookie http only
     secrets: env.AUTH_SECRET ? [env.AUTH_SECRET] : undefined, // replace this with an actual secret
-    secure: process.env.NODE_ENV === "production", // enable this in prod only
+    secure: env.SECURE_COOKIE,
   },
 });
 

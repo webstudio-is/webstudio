@@ -5,7 +5,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { a } from "@webstudio-is/react-sdk/css-normalize";
+import { a } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./link";
 import { props } from "./__generated__/link.props";
 

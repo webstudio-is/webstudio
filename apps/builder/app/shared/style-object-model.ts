@@ -4,7 +4,7 @@ import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
   type Breakpoint,
   type Instance,
-  type StyleSource,
+  type StyleSourceSelections,
   type Styles,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
@@ -43,11 +43,16 @@ type InstanceSelector = string[];
 type Property = string;
 
 /**
- * style selector is a full address in a tree
- * and style data to extract computed style
+ * model contains all data and cache of computed styles
+ * and manages reactive subscriptions
  */
-export type StyleSelector = {
-  instanceSelector: InstanceSelector;
+export type StyleObjectModel = {
+  styles: Styles;
+  styleSourceSelections: StyleSourceSelections;
+  // component:tag:state:property
+  presetStyles: Map<string, StyleValue>;
+  instanceTags: Map<Instance["id"], HtmlTags>;
+  instanceComponents: Map<Instance["id"], Instance["component"]>;
   /**
    * all currently matching and ordered breakpoints
    */
@@ -56,19 +61,6 @@ export type StyleSelector = {
    * all currently matching and ordered breakpointsgg
    */
   matchingStates: Set<string>;
-};
-
-/**
- * model contains all data and cache of computed styles
- * and manages reactive subscriptions
- */
-export type StyleObjectModel = {
-  styles: Styles;
-  styleSourcesByInstanceId: Map<Instance["id"], StyleSource["id"][]>;
-  // component:tag:state:property
-  presetStyles: Map<string, StyleValue>;
-  instanceTags: Map<Instance["id"], HtmlTags>;
-  instanceComponents: Map<Instance["id"], Instance["component"]>;
 };
 
 export const getPresetStyleDeclKey = ({
@@ -101,66 +93,29 @@ export const getPresetStyleDeclKey = ({
  * excluding everything after selected STYLESOURCE
  *
  */
-type Specificity = [
-  LAYER: number,
-  STATE: number,
-  BREAKPOINT: number,
-  STYLESOURCE: number,
-];
-
-const compareSpecificity = (left: Specificity, right: Specificity) => {
-  // LAYER-STATE-BREAKPOINT-STYLESOURCE
-  const layerDiff = left[0] - right[0];
-  if (layerDiff !== 0) {
-    return layerDiff;
-  }
-  const stateDiff = left[1] - right[1];
-  if (stateDiff !== 0) {
-    return stateDiff;
-  }
-  const breakpointDiff = left[2] - right[2];
-  if (breakpointDiff !== 0) {
-    return breakpointDiff;
-  }
-  const styleSourceDiff = left[3] - right[3];
-  if (styleSourceDiff !== 0) {
-    return styleSourceDiff;
-  }
-  return 0;
-};
-
 const getCascadedValue = ({
   model,
-  matchingBreakpoints,
-  matchingStates,
   instanceId,
   property,
 }: {
   model: StyleObjectModel;
-  matchingBreakpoints: Breakpoint["id"][];
-  matchingStates: Set<string>;
   instanceId: Instance["id"];
   property: Property;
 }) => {
   const {
     styles,
-    styleSourcesByInstanceId,
+    styleSourceSelections,
     presetStyles,
     instanceTags,
     instanceComponents,
+    matchingBreakpoints,
+    matchingStates,
   } = model;
   const tag = instanceTags.get(instanceId);
   const component = instanceComponents.get(instanceId);
 
-  const browserLayer = 0;
-  const presetLayer = 1;
-  const userLayer = 2;
-
-  const stateless = 0;
-  const stateful = 1;
-
   // https://drafts.csswg.org/css-cascade-5/#declared
-  type DeclaredValue = { specificity: Specificity; value: StyleValue };
+  type DeclaredValue = { value: StyleValue };
   const declaredValues: DeclaredValue[] = [];
 
   // browser styles
@@ -168,8 +123,7 @@ const getCascadedValue = ({
     const key = `${tag}:${property}` as const;
     const browserValue = html.get(key);
     if (browserValue) {
-      const specificity: Specificity = [browserLayer, 0, 0, 0];
-      declaredValues.push({ specificity, value: browserValue });
+      declaredValues.push({ value: browserValue });
     }
   }
 
@@ -179,35 +133,24 @@ const getCascadedValue = ({
     const key = getPresetStyleDeclKey({ component, tag, property });
     const styleValue = presetStyles.get(key);
     if (styleValue) {
-      const specificity: Specificity = [presetLayer, stateless, 0, 0];
-      declaredValues.push({ specificity, value: styleValue });
+      declaredValues.push({ value: styleValue });
     }
     // stateful
     for (const state of matchingStates) {
       const key = getPresetStyleDeclKey({ component, tag, state, property });
       const styleValue = presetStyles.get(key);
       if (styleValue) {
-        const specificity: Specificity = [presetLayer, stateful, 0, 0];
-        declaredValues.push({ specificity, value: styleValue });
+        declaredValues.push({ value: styleValue });
       }
     }
   }
 
   // user styles
-  const styleSourceIds = styleSourcesByInstanceId.get(instanceId) ?? [];
-  for (
-    let styleSourceIndex = 0;
-    styleSourceIndex < styleSourceIds.length;
-    styleSourceIndex += 1
-  ) {
-    const styleSourceId = styleSourceIds[styleSourceIndex];
-    for (
-      let breakpointIndex = 0;
-      breakpointIndex < matchingBreakpoints.length;
-      breakpointIndex += 1
-    ) {
-      const breakpointId = matchingBreakpoints[breakpointIndex];
-      // stateless
+
+  // stateless
+  const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
+  for (const breakpointId of matchingBreakpoints) {
+    for (const styleSourceId of styleSourceIds) {
       const key = getStyleDeclKey({
         styleSourceId,
         breakpointId,
@@ -215,16 +158,15 @@ const getCascadedValue = ({
       });
       const styleDecl = styles.get(key);
       if (styleDecl) {
-        const specificity: Specificity = [
-          userLayer,
-          stateless,
-          breakpointIndex,
-          styleSourceIndex,
-        ];
-        declaredValues.push({ specificity, value: styleDecl.value });
+        declaredValues.push({ value: styleDecl.value });
       }
-      // stateful
-      for (const state of matchingStates) {
+    }
+  }
+
+  // stateful
+  for (const state of matchingStates) {
+    for (const breakpointId of matchingBreakpoints) {
+      for (const styleSourceId of styleSourceIds) {
         const key = getStyleDeclKey({
           styleSourceId,
           breakpointId,
@@ -233,21 +175,11 @@ const getCascadedValue = ({
         });
         const styleDecl = styles.get(key);
         if (styleDecl) {
-          const specificity: Specificity = [
-            userLayer,
-            stateful,
-            breakpointIndex,
-            styleSourceIndex,
-          ];
-          declaredValues.push({ specificity, value: styleDecl.value });
+          declaredValues.push({ value: styleDecl.value });
         }
       }
     }
   }
-
-  declaredValues.sort((left, right) =>
-    compareSpecificity(left.specificity, right.specificity)
-  );
 
   // https://drafts.csswg.org/css-cascade-5/#cascaded
   const cascadedValue = declaredValues.at(-1)?.value;
@@ -279,12 +211,12 @@ const customPropertyData = {
  */
 export const getComputedStyleDecl = ({
   model,
-  styleSelector,
+  instanceSelector,
   property,
   customPropertiesGraph = new Map(),
 }: {
   model: StyleObjectModel;
-  styleSelector: StyleSelector;
+  instanceSelector: InstanceSelector;
   property: Property;
   /**
    * for internal use only
@@ -294,8 +226,6 @@ export const getComputedStyleDecl = ({
   computedValue: StyleValue;
   usedValue: StyleValue;
 } => {
-  const { instanceSelector, matchingBreakpoints, matchingStates } =
-    styleSelector;
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
@@ -319,8 +249,6 @@ export const getComputedStyleDecl = ({
     // https://drafts.csswg.org/css-cascade-5/#cascaded
     const { cascadedValue } = getCascadedValue({
       model,
-      matchingBreakpoints,
-      matchingStates,
       instanceId,
       property,
     });
@@ -371,12 +299,9 @@ export const getComputedStyleDecl = ({
       const fallback = computedValue.fallbacks.at(0);
       const customPropertyValue = getComputedStyleDecl({
         model,
-        styleSelector: {
-          ...styleSelector,
-          // resolve custom properties on instance they are defined
-          // instead of where they are accessed
-          instanceSelector: instanceSelector.slice(index),
-        },
+        // resolve custom properties on instance they are defined
+        // instead of where they are accessed
+        instanceSelector: instanceSelector.slice(index),
         property: customProperty,
         customPropertiesGraph,
       });
@@ -401,7 +326,7 @@ export const getComputedStyleDecl = ({
   if (matchKeyword(computedValue, "currentcolor")) {
     const currentColor = getComputedStyleDecl({
       model,
-      styleSelector,
+      instanceSelector,
       property: "color",
     });
     usedValue = currentColor.usedValue;

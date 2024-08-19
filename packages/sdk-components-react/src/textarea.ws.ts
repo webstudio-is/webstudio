@@ -5,7 +5,7 @@ import {
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/react-sdk";
-import { textarea } from "@webstudio-is/react-sdk/css-normalize";
+import { textarea } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./textarea";
 import { props } from "./__generated__/textarea.props";
 
