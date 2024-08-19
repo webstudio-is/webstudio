@@ -21,7 +21,7 @@ import {
   StyleDecl,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
-import type { Build } from "../types";
+import type { Build, CompactBuild } from "../types";
 import { parseStyles } from "./styles";
 import { parseStyleSourceSelections } from "./style-source-selections";
 import { parseDeployment } from "./deployment";
@@ -117,7 +117,7 @@ const parseCompactBuild = async (
       marketplaceProduct: parseConfig<MarketplaceProduct>(
         build.marketplaceProduct
       ),
-    };
+    } satisfies CompactBuild;
   } finally {
     // empty block
   }
@@ -202,7 +202,7 @@ export const loadDevBuildByProjectId = async (
 export const loadApprovedProdBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]
-): Promise<Build> => {
+) => {
   const latestBuild = await context.postgrest.client
     .from("LatestBuildPerProject")
     .select(
@@ -230,7 +230,7 @@ export const loadApprovedProdBuildByProjectId = async (
   if (build.error) {
     throw build.error;
   }
-  return parseBuild(build.data);
+  return parseCompactBuild(build.data);
 };
 
 const createNewPageInstances = (): Build["instances"] => {

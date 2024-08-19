@@ -10,8 +10,8 @@ const cacheMiddleware = createCacheMiddleware(60 * 3); // 60 * 3 = 3 minutes cac
 const cachedProcedure = procedure.use(cacheMiddleware);
 
 export const marketplaceRouter = router({
-  getItems: cachedProcedure.query(async () => {
-    return await getItems();
+  getItems: cachedProcedure.query(async ({ ctx }) => {
+    return await getItems(ctx);
   }),
   getBuildData: cachedProcedure
     .input(

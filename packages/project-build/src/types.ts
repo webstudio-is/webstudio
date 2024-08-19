@@ -31,3 +31,22 @@ export type Build = {
   deployment?: Deployment | undefined;
   marketplaceProduct: MarketplaceProduct;
 };
+
+export type CompactBuild = {
+  id: string;
+  projectId: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  pages: Pages;
+  breakpoints: Breakpoint[];
+  styles: StyleDecl[];
+  styleSources: StyleSource[];
+  styleSourceSelections: StyleSourceSelection[];
+  props: Prop[];
+  dataSources: DataSource[];
+  resources: Resource[];
+  instances: Instance[];
+  deployment?: Deployment;
+  marketplaceProduct: MarketplaceProduct;
+};
