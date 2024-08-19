@@ -65,7 +65,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Allow direct image access, and from the same origin
   const refererRawUrl = request.headers.get("referer");
   const refererUrl = refererRawUrl === null ? url : new URL(refererRawUrl);
-  if (refererUrl.origin !== url.origin) {
+  if (refererUrl.host !== url.host) {
     throw new Response("Forbidden", {
       status: 403,
     });
