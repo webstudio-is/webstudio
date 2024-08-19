@@ -1,4 +1,4 @@
-import { Flex, Label, Grid } from "@webstudio-is/design-system";
+import { Flex, Label, Grid, Text, Tooltip } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
   type TransformPanelProps,
@@ -69,7 +69,21 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <XAxisIcon />
-        <Label> Skew X</Label>
+        <Tooltip
+          variant="wrapped"
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Skew X</Text>
+              <Text variant="monoBold">skewX</Text>
+              <Text>
+                Skews an element along the X-axis. Positive values tilt the
+                element to the right, while negative values tilt it to the left.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ width: "fit-content" }}> Skew X</Label>
+        </Tooltip>
         <CssValueInputContainer
           key="skewX"
           styleSource="local"
@@ -91,7 +105,21 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <YAxisIcon />
-        <Label> Skew Y</Label>
+        <Tooltip
+          variant="wrapped"
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Skew Y</Text>
+              <Text variant="monoBold">skewY</Text>
+              <Text>
+                Skews an element along the Y-axis. Positive values tilt the
+                element to the right, while negative values tilt it to the left.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ width: "fit-content" }}> Skew Y</Label>
+        </Tooltip>
         <CssValueInputContainer
           key="skewY"
           styleSource="local"

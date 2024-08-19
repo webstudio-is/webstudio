@@ -1,4 +1,4 @@
-import { Flex, Grid, Label } from "@webstudio-is/design-system";
+import { Flex, Grid, Label, Text, Tooltip } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
   type TransformPanelProps,
@@ -69,7 +69,22 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <XAxisRotateIcon />
-        <Label> Rotate X</Label>
+        <Tooltip
+          variant="wrapped"
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Rotate X</Text>
+              <Text variant="monoBold">rotateX</Text>
+              <Text>
+                Rotates an element around the X-axis. Positive values rotate the
+                element clockwise, while negative values rotate it
+                counterclockwise.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ width: "fit-content" }}> Rotate X</Label>
+        </Tooltip>
         <CssValueInputContainer
           key="rotateX"
           styleSource="local"
@@ -91,7 +106,22 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <YAxisRotateIcon />
-        <Label> Rotate Y</Label>
+        <Tooltip
+          variant="wrapped"
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Rotate Y</Text>
+              <Text variant="monoBold">rotateY</Text>
+              <Text>
+                Rotates an element around the Y-axis. Positive values rotate the
+                element clockwise, while negative values rotate it
+                counterclockwise.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ width: "fit-content" }}> Rotate Y</Label>
+        </Tooltip>
         <CssValueInputContainer
           key="rotateY"
           styleSource="local"
@@ -113,7 +143,22 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <ZAxisRotateIcon />
-        <Label> Rotate Z</Label>
+        <Tooltip
+          variant="wrapped"
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Rotate Z</Text>
+              <Text variant="monoBold">rotateZ</Text>
+              <Text>
+                Rotates an element around the Z-axis. Positive values rotate the
+                element clockwise, while negative values rotate it
+                counterclockwise.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ width: "fit-content" }}> Rotate Z</Label>
+        </Tooltip>
         <CssValueInputContainer
           key="rotateZ"
           styleSource="local"
