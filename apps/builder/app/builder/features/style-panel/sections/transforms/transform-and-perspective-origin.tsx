@@ -35,7 +35,7 @@ export const TransformAndPerspectiveOrigin = (
   const value = currentStyle[property]?.local;
   const { label } = styleConfigByName(property);
   const origin = useMemo(() => {
-    if (value?.type !== "tuple") {
+    if (value?.type !== "tuple" && value?.type !== "keyword") {
       return;
     }
 
@@ -57,7 +57,7 @@ export const TransformAndPerspectiveOrigin = (
     })
   );
 
-  if (value?.type !== "tuple" || origin === undefined) {
+  if (origin === undefined) {
     return;
   }
 
