@@ -207,11 +207,6 @@ const customPropertyData = {
 /**
  * follow value processing specification
  * https://drafts.csswg.org/css-cascade-5/#value-stages
- *
- * @todo
- * - selected style source
- * - selected state
- *
  */
 export const getComputedStyleDecl = ({
   model,

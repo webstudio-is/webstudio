@@ -985,6 +985,3 @@ describe("selected style", () => {
     ).toEqual({ type: "keyword", value: "red" });
   });
 });
-
-// @todo need to take deepest instance
-// and latest breakpoint
