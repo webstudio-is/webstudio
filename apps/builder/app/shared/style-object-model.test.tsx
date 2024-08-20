@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { describe, expect, test } from "@jest/globals";
 import type { HtmlTags } from "html-tags";
 import {
   type Breakpoint,
@@ -561,14 +561,11 @@ test("cascade value from matching style sources", () => {
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
-test("cascade values with states as more specific", () => {
+test("cascade values with matching states", () => {
   const model = createModel({
     css: `
       bodyLocal:hover {
         width: 20px;
-      }
-      bodyLocal {
-        width: 10px;
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
@@ -582,12 +579,30 @@ test("cascade values with states as more specific", () => {
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
-test("ignore values from not matching states", () => {
+test("prefer stateless values over matching states", () => {
   const model = createModel({
     css: `
       bodyLocal {
         width: 10px;
       }
+      bodyLocal:hover {
+        width: 20px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+    matchingStates: new Set([":hover"]),
+  });
+  const instanceSelector = ["body"];
+  // value with state wins
+  expect(
+    getComputedStyleDecl({ model, instanceSelector, property: "width" })
+      .usedValue
+  ).toEqual({ type: "unit", unit: "px", value: 10 });
+});
+
+test("ignore values from not matching states", () => {
+  const model = createModel({
+    css: `
       bodyLocal:hover {
         width: 20px;
       }
@@ -710,16 +725,16 @@ test("breakpoints are more specific than style sources", () => {
   ).toEqual({ type: "unit", unit: "px", value: 20 });
 });
 
-test("states are more specific than breakpoints", () => {
+test("breakpoints are more specific than matching states", () => {
   const model = createModel({
     css: `
-      bodyLocal:hover {
-        width: 20px;
-      }
       @media small {
         bodyLocal {
           width: 10px;
         }
+      }
+      bodyLocal:hover {
+        width: 20px;
       }
     `,
     jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
@@ -733,7 +748,7 @@ test("states are more specific than breakpoints", () => {
       instanceSelector: ["body"],
       property: "width",
     }).usedValue
-  ).toEqual({ type: "unit", unit: "px", value: 20 });
+  ).toEqual({ type: "unit", unit: "px", value: 10 });
 });
 
 test("user styles are more specific than preset styles", () => {
@@ -786,4 +801,187 @@ test("preset styles are more specific than browser styles", () => {
       property: "display",
     }).usedValue
   ).toEqual({ type: "keyword", value: "flex" });
+});
+
+describe("selected style", () => {
+  test("access selected style source value within cascade", () => {
+    const model = createModel({
+      css: `
+        token {
+          color: red;
+        }
+        local {
+          color: blue;
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="token local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "token",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("fallback to previous style source", () => {
+    const model = createModel({
+      css: `
+        token {
+          color: red;
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="token local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "local",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("fallback to final style source", () => {
+    const model = createModel({
+      css: `
+        first {
+          color: red;
+        }
+        local {
+          color: blue;
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="first second local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "second",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "blue" });
+  });
+
+  test("access selected state value", () => {
+    const model = createModel({
+      css: `
+        local {
+          color: red;
+        }
+        local:hover {
+          color: green;
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "green" });
+  });
+
+  test("fallback to stateless value", () => {
+    const model = createModel({
+      css: `
+        local {
+          color: red;
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("prefer stateless when states are matched but not selected", () => {
+    const model = createModel({
+      css: `
+        local {
+          color: red;
+        }
+        local:hover {
+          color: blue;
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      matchingStates: new Set([":hover"]),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("prefer selected state over matched one", () => {
+    const model = createModel({
+      css: `
+        local:hover {
+          color: green;
+        }
+        local:focus {
+          color: blue;
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      matchingStates: new Set([":hover", ":focus"]),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "green" });
+  });
+
+  test("prefer selected state over breakpoint", () => {
+    const model = createModel({
+      css: `
+        local:hover {
+          color: red;
+        }
+        @media small {
+          local {
+            color: blue;
+          }
+        }
+      `,
+      jsx: <$.Body ws:id="body" class="local"></$.Body>,
+      matchingBreakpoints: ["base", "small"],
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+  });
 });
