@@ -32,8 +32,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
   const openAboutItem = items?.find((item) => item.projectId === openAbout);
   const showTemplates =
-    activeOverviewItem &&
-    buildData?.build.projectId === activeOverviewItem.projectId;
+    activeOverviewItem && buildData?.projectId === activeOverviewItem.projectId;
 
   return (
     <>

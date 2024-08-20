@@ -4,6 +4,7 @@ import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
   type Breakpoint,
   type Instance,
+  type StyleDecl,
   type StyleSourceSelections,
   type Styles,
   getStyleDeclKey,
@@ -96,10 +97,14 @@ export const getPresetStyleDeclKey = ({
 const getCascadedValue = ({
   model,
   instanceId,
+  styleSourceId: selectedStyleSourceId,
+  state: selectedState,
   property,
 }: {
   model: StyleObjectModel;
   instanceId: Instance["id"];
+  styleSourceId?: StyleDecl["styleSourceId"];
+  state?: StyleDecl["state"];
   property: Property;
 }) => {
   const {
@@ -127,6 +132,15 @@ const getCascadedValue = ({
     }
   }
 
+  // sort first matching states
+  // then statesless
+  // and selected state
+  const states = new Set<undefined | string>(matchingStates);
+  states.add(undefined);
+  // move selected state in the end if already present in matching states
+  states.delete(selectedState);
+  states.add(selectedState);
+
   // preset component styles
   if (component && tag) {
     // stateless
@@ -136,7 +150,7 @@ const getCascadedValue = ({
       declaredValues.push({ value: styleValue });
     }
     // stateful
-    for (const state of matchingStates) {
+    for (const state of states) {
       const key = getPresetStyleDeclKey({ component, tag, state, property });
       const styleValue = presetStyles.get(key);
       if (styleValue) {
@@ -146,25 +160,15 @@ const getCascadedValue = ({
   }
 
   // user styles
-
-  // stateless
-  const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
-  for (const breakpointId of matchingBreakpoints) {
-    for (const styleSourceId of styleSourceIds) {
-      const key = getStyleDeclKey({
-        styleSourceId,
-        breakpointId,
-        property: property as StyleProperty,
-      });
-      const styleDecl = styles.get(key);
-      if (styleDecl) {
-        declaredValues.push({ value: styleDecl.value });
-      }
-    }
+  const styleSourceIds = new Set(
+    styleSourceSelections.get(instanceId)?.values ?? []
+  );
+  if (selectedStyleSourceId) {
+    // move selected style source in the end
+    styleSourceIds.delete(selectedStyleSourceId);
+    styleSourceIds.add(selectedStyleSourceId);
   }
-
-  // stateful
-  for (const state of matchingStates) {
+  for (const state of states) {
     for (const breakpointId of matchingBreakpoints) {
       for (const styleSourceId of styleSourceIds) {
         const key = getStyleDeclKey({
@@ -203,20 +207,19 @@ const customPropertyData = {
 /**
  * follow value processing specification
  * https://drafts.csswg.org/css-cascade-5/#value-stages
- *
- * @todo
- * - selected style source
- * - selected state
- *
  */
 export const getComputedStyleDecl = ({
   model,
   instanceSelector,
+  styleSourceId,
+  state,
   property,
   customPropertiesGraph = new Map(),
 }: {
   model: StyleObjectModel;
   instanceSelector: InstanceSelector;
+  styleSourceId?: StyleDecl["styleSourceId"];
+  state?: StyleDecl["state"];
   property: Property;
   /**
    * for internal use only
@@ -250,6 +253,8 @@ export const getComputedStyleDecl = ({
     const { cascadedValue } = getCascadedValue({
       model,
       instanceId,
+      styleSourceId,
+      state,
       property,
     });
 

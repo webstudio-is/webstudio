@@ -45,7 +45,7 @@ import { getStyleSource } from "../../shared/style-info";
 import { PropertyName } from "../../shared/property-name";
 import { getDots } from "../../shared/collapsible-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { TransformOrigin } from "./transform-origin";
+import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origin";
 
 export const transformPanels = [
   "translate",
@@ -59,6 +59,7 @@ export const transformPanelDropdown = [
   "backfaceVisibility",
   "transformOrigin",
   "perspective",
+  "perspectiveOrigin",
 ] as const;
 
 export type TransformPanel = (typeof transformPanels)[number];
@@ -71,6 +72,7 @@ export const properties = [
   "transformOrigin",
   "backfaceVisibility",
   "perspective",
+  "perspectiveOrigin",
 ] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
@@ -88,6 +90,12 @@ export const Section = (props: SectionProps) => {
     currentStyle["backfaceVisibility"]
   );
   const perspectiveStyleSource = getStyleSource(currentStyle["perspective"]);
+  const transformOriginStyleSource = getStyleSource(
+    currentStyle["transformOrigin"]
+  );
+  const perspectiveOriginStyleSource = getStyleSource(
+    currentStyle["perspectiveOrigin"]
+  );
 
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
     isTransformPanelPropertyUsed({
@@ -104,6 +112,8 @@ export const Section = (props: SectionProps) => {
     batch.deleteProperty("transformOrigin");
     batch.deleteProperty("backfaceVisibility");
     batch.deleteProperty("perspective");
+    batch.deleteProperty("perspectiveOrigin");
+
     batch.publish();
   };
 
@@ -165,7 +175,9 @@ export const Section = (props: SectionProps) => {
                   scaleStyleSource ||
                   rotateAndSkewStyleSrouce ||
                   backfaceVisibilityStyleSource ||
-                  perspectiveStyleSource
+                  perspectiveStyleSource ||
+                  transformOriginStyleSource ||
+                  perspectiveOriginStyleSource
                 }
               >
                 {label}
@@ -192,8 +204,9 @@ export const Section = (props: SectionProps) => {
       ) : undefined}
 
       <BackfaceVisibility {...props} />
-      <TransformOrigin {...props} />
+      <TransformAndPerspectiveOrigin property="transformOrigin" {...props} />
       <TransformPerspective {...props} />
+      <TransformAndPerspectiveOrigin property="perspectiveOrigin" {...props} />
     </CollapsibleSectionRoot>
   );
 };

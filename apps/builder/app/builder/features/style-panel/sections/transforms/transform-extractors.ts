@@ -64,15 +64,45 @@ const isValidTransformOriginValue = (
 // Both transform and perspective origin shares the same syntax for their values.
 // The only difference is `transform-origin` can have a 3rd value for z-axis.
 export const extractTransformOrPerspectiveOriginValues = (
-  value: TupleValue
+  value: TupleValue | KeywordValue
 ): {
   x: KeywordValue | UnitValue;
   y: KeywordValue | UnitValue;
   z?: UnitValue;
 } => {
+  const xAxisKeywordValues: Array<string> = ["left", "right"];
+  const yAxisKeywordValues: Array<string> = ["top", "bottom"];
   let x: KeywordValue | UnitValue = { type: "keyword", value: "center" };
   let y: KeywordValue | UnitValue = { type: "keyword", value: "center" };
   let z: UnitValue | undefined;
+
+  if (value.type === "keyword") {
+    if (value.value === "center") {
+      return {
+        x: value,
+        y: value,
+      };
+    }
+
+    if (yAxisKeywordValues.includes(value.value)) {
+      return {
+        x: x,
+        y: value,
+      };
+    }
+
+    if (xAxisKeywordValues.includes(value.value)) {
+      return {
+        x: value,
+        y: y,
+      };
+    }
+
+    return {
+      x: value,
+      y: value,
+    };
+  }
 
   // https://www.w3.org/TR/css-transforms-1/#transform-origin-property
   // If only one value is specified, the second value is assumed to be center.
@@ -81,11 +111,11 @@ export const extractTransformOrPerspectiveOriginValues = (
   }
 
   if (value.value.length === 1 && value.value[0].type === "keyword") {
-    if (["top", "bottom"].includes(value.value[0].value)) {
+    if (yAxisKeywordValues.includes(value.value[0].value)) {
       y = value.value[0];
     }
 
-    if (["left", "right"].includes(value.value[0].value)) {
+    if (xAxisKeywordValues.includes(value.value[0].value)) {
       x = value.value[0];
     }
   }
@@ -103,12 +133,15 @@ export const extractTransformOrPerspectiveOriginValues = (
       x = first;
       y = second;
 
-      if (first.type === "keyword" && ["left", "right"].includes(first.value)) {
+      if (
+        first.type === "keyword" &&
+        xAxisKeywordValues.includes(first.value)
+      ) {
         x = first;
         y = second;
       } else if (
         first.type === "keyword" &&
-        ["top", "bottom"].includes(first.value)
+        yAxisKeywordValues.includes(first.value)
       ) {
         y = first;
         x = second;
@@ -127,12 +160,15 @@ export const extractTransformOrPerspectiveOriginValues = (
       y = second;
       z = third;
 
-      if (first.type === "keyword" && ["left", "right"].includes(first.value)) {
+      if (
+        first.type === "keyword" &&
+        xAxisKeywordValues.includes(first.value)
+      ) {
         x = first;
         y = second;
       } else if (
         first.type === "keyword" &&
-        ["top", "bottom"].includes(first.value)
+        yAxisKeywordValues.includes(first.value)
       ) {
         y = first;
         x = second;

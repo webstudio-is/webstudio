@@ -1,6 +1,7 @@
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
   FunctionValue,
+  StyleValue,
   toValue,
   type TupleValue,
   type TupleValueItem,
@@ -106,6 +107,11 @@ export const addDefaultsForTransormSection = (props: {
       return setProperty("transformOrigin")(transformOrigin);
     }
 
+    case "perspectiveOrigin": {
+      const perspectiveOrigin = parseCssValue("perspectiveOrigin", "50% 50%");
+      return setProperty("perspectiveOrigin")(perspectiveOrigin);
+    }
+
     case "backfaceVisibility": {
       return setProperty("backfaceVisibility")({
         type: "keyword",
@@ -167,10 +173,13 @@ export const isTransformPanelPropertyUsed = (params: {
       return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
 
     case "transformOrigin":
-      return currentStyle["transformOrigin"]?.local?.type === "tuple";
+      return currentStyle["transformOrigin"]?.local !== undefined;
 
     case "perspective":
       return currentStyle["perspective"]?.local !== undefined;
+
+    case "perspectiveOrigin":
+      return currentStyle["perspectiveOrigin"]?.local !== undefined;
 
     case "rotate": {
       const rotate = currentStyle["transform"]?.value;
@@ -378,4 +387,28 @@ export const updateRotateOrSkewPropertyValue = (props: {
   }
 
   return newPropertyValue;
+};
+
+const keywordToValue: Record<string, number> = {
+  left: 0,
+  right: 100,
+  center: 50,
+  top: 0,
+  bottom: 100,
+};
+
+export const calculatePositionFromOrigin = (value: StyleValue | undefined) => {
+  if (value === undefined) {
+    return 50;
+  }
+
+  if (value.type === "unit") {
+    return value.value;
+  }
+
+  if (value.type === "keyword") {
+    return keywordToValue[value.value];
+  }
+
+  return 0;
 };
