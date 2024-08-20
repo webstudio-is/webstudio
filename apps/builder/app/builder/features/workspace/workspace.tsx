@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { theme, Toaster, css, type CSS } from "@webstudio-is/design-system";
+import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
   $canvasWidth,
   $scale,
@@ -91,14 +91,9 @@ const useOutlineStyle = () => {
 type WorkspaceProps = {
   children: ReactNode;
   onTransitionEnd: () => void;
-  css: CSS;
 };
 
-export const Workspace = ({
-  children,
-  onTransitionEnd,
-  css,
-}: WorkspaceProps) => {
+export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle();
   const outlineStyle = useOutlineStyle();
   const workspaceRef = useMeasureWorkspace();
@@ -110,7 +105,7 @@ export const Workspace = ({
 
   return (
     <div
-      className={workspaceStyle({ css })}
+      className={workspaceStyle()}
       onClick={handleWorkspaceClick}
       ref={workspaceRef}
     >

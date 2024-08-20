@@ -4,23 +4,12 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import {
-  theme,
-  Box,
-  type CSS,
-  Flex,
-  Grid,
-  Progress,
-} from "@webstudio-is/design-system";
+import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { startProjectSync, useSyncServer } from "./shared/sync/sync-server";
-import {
-  SidebarLeft,
-  NavigatorContent,
-  useNavigatorLayout,
-} from "./features/sidebar-left";
+import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";
@@ -41,7 +30,7 @@ import {
   $imageLoader,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
-import { type Settings } from "./shared/client-settings";
+import { $settings, type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
@@ -52,21 +41,22 @@ import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import {
+  $activeSidebarPanel,
   $dataLoadingState,
   $isCloneDialogOpen,
   $loadingState,
   $userPlanFeatures,
+  type SidebarPanelName,
 } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
-import { WebstudioIcon } from "@webstudio-is/icons";
 import { initBuilderApi } from "~/shared/builder-api";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
-import { useInterval } from "~/shared/hook-utils/use-interval";
+import { Loading, LoadingBackground } from "./shared/loading";
 
 registerContainers();
 
@@ -134,14 +124,17 @@ const Main = ({ children }: { children: ReactNode }) => (
 type ChromeWrapperProps = {
   children: Array<JSX.Element | null | false>;
   isPreviewMode: boolean;
+  navigatorLayout: Settings["navigatorLayout"];
 };
 
 const getChromeLayout = ({
   isPreviewMode,
   navigatorLayout,
+  activeSidebarPanel,
 }: {
   isPreviewMode: boolean;
   navigatorLayout: Settings["navigatorLayout"];
+  activeSidebarPanel?: SidebarPanelName;
 }) => {
   if (isPreviewMode) {
     return {
@@ -154,7 +147,7 @@ const getChromeLayout = ({
     };
   }
 
-  if (navigatorLayout === "undocked") {
+  if (navigatorLayout === "undocked" && activeSidebarPanel !== "none") {
     return {
       gridTemplateColumns: `auto ${theme.spacing[30]} 1fr ${theme.spacing[30]}`,
       gridTemplateAreas: `
@@ -175,11 +168,16 @@ const getChromeLayout = ({
   };
 };
 
-const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
-  const navigatorLayout = useNavigatorLayout();
+const ChromeWrapper = ({
+  children,
+  isPreviewMode,
+  navigatorLayout,
+}: ChromeWrapperProps) => {
+  const activeSidebarPanel = useStore($activeSidebarPanel);
   const gridLayout = getChromeLayout({
     isPreviewMode,
     navigatorLayout,
+    activeSidebarPanel,
   });
 
   return (
@@ -194,101 +192,6 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
     >
       {children}
     </Grid>
-  );
-};
-
-type NavigatorPanelProps = {
-  isPreviewMode: boolean;
-  navigatorLayout: "docked" | "undocked";
-  css: CSS;
-};
-
-const NavigatorPanel = ({
-  isPreviewMode,
-  navigatorLayout,
-  css,
-}: NavigatorPanelProps) => {
-  if (navigatorLayout === "docked") {
-    return;
-  }
-
-  return (
-    <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-      <Box
-        css={{
-          borderRight: `1px solid ${theme.colors.borderMain}`,
-          width: theme.spacing[30],
-          height: "100%",
-          ...css,
-        }}
-      >
-        <NavigatorContent isClosable={false} />
-      </Box>
-    </SidePanel>
-  );
-};
-
-const revealAnimation = ({
-  show,
-  backgroundColor,
-}: {
-  show: boolean;
-  backgroundColor: string;
-}): CSS => ({
-  position: "relative",
-  "> ::after": {
-    content: "",
-    position: "absolute",
-    inset: 0,
-    zIndex: 1,
-    transitionDuration: "300ms",
-    pointerEvents: "none",
-    transitionProperty: "opacity",
-    backgroundColor,
-    opacity: show ? 0 : 1,
-  },
-});
-
-const ProgressIndicator = ({ value }: { value: number }) => {
-  const [fakeValue, setFakeValue] = useState(value);
-
-  useInterval((intervalId) => {
-    setFakeValue((previousFakeValue) => {
-      // Makeing sure fake value is not higher than real value to prevent jumping back
-      let nextFakeValue = Math.max(previousFakeValue + 1, value);
-      // Make sure fake value is not lower than 10 to avoid showing empty progress.
-      nextFakeValue = Math.max(nextFakeValue, 10);
-      // Making sure fake value can't get bigger than 100, now that it reached 100 we can stop faking it.
-      if (nextFakeValue >= 100) {
-        clearInterval(intervalId);
-        return previousFakeValue;
-      }
-      return nextFakeValue;
-    });
-  }, 100);
-
-  if (value >= 100) {
-    return;
-  }
-
-  return (
-    <Flex
-      direction="column"
-      gap="3"
-      css={{
-        position: "absolute",
-        inset: 0,
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1,
-      }}
-    >
-      <WebstudioIcon
-        size={60}
-        style={{ filter: "drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7))" }}
-      />
-      <Progress value={fakeValue} />
-    </Flex>
   );
 };
 
@@ -393,7 +296,7 @@ export const Builder = ({
     [publishRef, onRefReadCanvas]
   );
 
-  const navigatorLayout = useNavigatorLayout();
+  const { navigatorLayout } = useStore($settings);
   const dataLoadingState = useStore($dataLoadingState);
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
 
@@ -453,28 +356,29 @@ export const Builder = ({
         onPointerDown={handlePointerDown}
         onInput={handleInput}
       >
-        <ChromeWrapper isPreviewMode={isPreviewMode}>
+        <ChromeWrapper
+          isPreviewMode={isPreviewMode}
+          navigatorLayout={navigatorLayout}
+        >
           <ProjectSettings />
           <Topbar
             project={project}
             hasProPlan={userPlanFeatures.hasProPlan}
-            css={{
-              gridArea: "header",
-              ...revealAnimation({
+            css={{ gridArea: "header" }}
+            loading={
+              <LoadingBackground
                 // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
-                show: loadingState.readyStates.get("dataLoadingState") ?? false,
-                backgroundColor: theme.colors.backgroundTopbar,
-              }),
-            }}
+                show={
+                  loadingState.readyStates.get("dataLoadingState")
+                    ? false
+                    : true
+                }
+                backgroundColor={theme.colors.backgroundTopbar}
+              />
+            }
           />
           <Main>
-            <Workspace
-              onTransitionEnd={onTransitionEnd}
-              css={revealAnimation({
-                show: loadingState.state === "ready",
-                backgroundColor: theme.colors.backgroundCanvas,
-              })}
-            >
+            <Workspace onTransitionEnd={onTransitionEnd}>
               {dataLoadingState === "loaded" && (
                 <CanvasIframe
                   ref={iframeRefCallback}
@@ -485,33 +389,13 @@ export const Builder = ({
             </Workspace>
             <AiCommandBar isPreviewMode={isPreviewMode} />
           </Main>
-          <NavigatorPanel
-            isPreviewMode={isPreviewMode}
-            navigatorLayout={navigatorLayout}
-            css={revealAnimation({
-              show: loadingState.state === "ready",
-              backgroundColor: theme.colors.backgroundCanvas,
-            })}
-          />
-          <SidePanel
-            gridArea="sidebar"
-            css={revealAnimation({
-              show: loadingState.state === "ready",
-              backgroundColor: theme.colors.backgroundCanvas,
-            })}
-          >
+          <SidePanel gridArea="sidebar">
             <SidebarLeft publish={publish} />
           </SidePanel>
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
-            css={{
-              overflow: "hidden",
-              ...revealAnimation({
-                show: loadingState.state === "ready",
-                backgroundColor: theme.colors.backgroundCanvas,
-              }),
-            }}
+            css={{ overflow: "hidden" }}
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
@@ -522,7 +406,7 @@ export const Builder = ({
             project={project}
           />
         </ChromeWrapper>
-        <ProgressIndicator value={loadingState.progress} />
+        <Loading state={loadingState} />
         <BlockingAlerts />
       </div>
     </TooltipProvider>

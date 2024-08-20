@@ -21,8 +21,9 @@ import {
   BreakpointsPopover,
 } from "../breakpoints";
 import { ViewMode } from "./view-mode";
-import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 import { AddressBarPopover } from "../address-bar";
+import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
+import type { ReactNode } from "react";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -38,9 +39,7 @@ const PagesButton = () => {
       }}
       aria-label="Toggle Pages"
       onClick={() => {
-        $activeSidebarPanel.set(
-          $activeSidebarPanel.get() === "pages" ? "none" : "pages"
-        );
+        toggleActiveSidebarPanel("pages");
       }}
       tabIndex={0}
     >
@@ -50,6 +49,7 @@ const PagesButton = () => {
 };
 
 const topbarContainerStyle = css({
+  position: "relative",
   display: "flex",
   background: theme.colors.backgroundTopbar,
   height: theme.spacing[15],
@@ -67,12 +67,13 @@ const hideOnMobile: CSS = {
 };
 
 type TopbarProps = {
-  css: CSS;
   project: Project;
   hasProPlan: boolean;
+  loading: ReactNode;
+  css: CSS;
 };
 
-export const Topbar = ({ css, project, hasProPlan }: TopbarProps) => {
+export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
   const pages = useStore($pages);
   return (
     <nav className={topbarContainerStyle({ css })}>
@@ -101,6 +102,7 @@ export const Topbar = ({ css, project, hasProPlan }: TopbarProps) => {
         <ToolbarToggleGroup
           type="single"
           css={{
+            isolation: "isolate",
             justifyContent: "flex-end",
             gap: theme.spacing[5],
             width: theme.spacing[30],
@@ -113,6 +115,7 @@ export const Topbar = ({ css, project, hasProPlan }: TopbarProps) => {
           <PublishButton projectId={project.id} />
         </ToolbarToggleGroup>
       </Toolbar>
+      {loading}
     </nav>
   );
 };
