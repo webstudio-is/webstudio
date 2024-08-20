@@ -28,7 +28,7 @@ export const loadById = async (
       `
         *,
         previewImageAsset:Asset (*),
-        latestBuild:LatestBuildPerProject (*),
+        latestBuilds:LatestBuildPerProject (*),
         latestStaticBuild:LatestStaticBuildPerProject (*)
       `
     )
@@ -38,15 +38,23 @@ export const loadById = async (
   if (data.error) {
     throw data.error;
   }
-  const { latestBuild, latestStaticBuild, ...project } = data.data;
+  const { latestBuilds, latestStaticBuild, ...project } = data.data;
+
+  // latestBuilds is an array containing the latest builds for each project domain (which can be renamed).
+  // We need to find the latest build for the current project domain.
+  // postgres marks all view fields as nullable
+  // workaround this by casting to non nullable
+  const latestBuild = (latestBuilds.filter(
+    (build) => build.domain === project.domain
+  )?.[0] ?? null) as null | SetNonNullable<
+    NonNullable<(typeof latestBuilds)[number]>
+  >;
 
   return {
     ...project,
+    latestBuild,
     // postgres marks all view fields as nullable
     // workaround this by casting to non nullable
-    latestBuild: (latestBuild[0] ?? null) as null | SetNonNullable<
-      NonNullable<(typeof latestBuild)[0]>
-    >,
     latestStaticBuild: (latestStaticBuild[0] ?? null) as null | SetNonNullable<
       NonNullable<(typeof latestStaticBuild)[0]>
     >,
