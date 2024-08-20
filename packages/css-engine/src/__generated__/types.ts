@@ -215,6 +215,7 @@ export type Property =
   | "objectPosition"
   | "offsetDistance"
   | "offsetPath"
+  | "offsetPosition"
   | "offsetRotate"
   | "opacity"
   | "order"

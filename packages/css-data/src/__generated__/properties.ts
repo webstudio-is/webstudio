@@ -2000,6 +2000,15 @@ export const properties = {
     },
     types: ["offset-path", "coord-box"],
   },
+  offsetPosition: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    types: ["length", "percentage"],
+  },
   offsetRotate: {
     unitGroups: ["angle"],
     inherited: false,

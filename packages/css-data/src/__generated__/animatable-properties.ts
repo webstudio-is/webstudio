@@ -107,6 +107,7 @@ export const animatableProperties = [
   "object-position",
   "offset-distance",
   "offset-path",
+  "offset-position",
   "offset-rotate",
   "opacity",
   "order",
