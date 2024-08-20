@@ -206,7 +206,7 @@ export const domainRouter = router({
     .input(
       z.object({
         projectId: z.string(),
-        domain: z.string(),
+        domainId: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -214,7 +214,7 @@ export const domainRouter = router({
         return await db.verify(
           {
             projectId: input.projectId,
-            domain: input.domain,
+            domainId: input.domainId,
           },
           ctx
         );
@@ -229,7 +229,7 @@ export const domainRouter = router({
     .input(
       z.object({
         projectId: z.string(),
-        domain: z.string(),
+        domainId: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -237,7 +237,7 @@ export const domainRouter = router({
         return await db.remove(
           {
             projectId: input.projectId,
-            domain: input.domain,
+            domainId: input.domainId,
           },
           ctx
         );
