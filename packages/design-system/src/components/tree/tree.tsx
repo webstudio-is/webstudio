@@ -508,11 +508,11 @@ const useExpandState = <Data extends { id: string }>({
   selectedItemSelector: undefined | ItemSelector;
   getItemChildren: (itemSelector: ItemSelector) => Data[];
 }) => {
-  const [record, setRecord] = useState<Record<string, boolean>>({});
+  const [expandMap, setExpandMap] = useState<Map<string, boolean>>(new Map());
 
   // whenever selected instance is changed
   // all its parents should be automatically expanded
-  const prevSelectedItemSelector = useRef(selectedItemSelector);
+  const prevSelectedItemSelector = useRef<ItemSelector>();
   useEffect(() => {
     if (
       areItemSelectorsEqual(
@@ -526,19 +526,19 @@ const useExpandState = <Data extends { id: string }>({
     if (selectedItemSelector === undefined) {
       return;
     }
-    setRecord((record) => {
-      const newRecord = { ...record };
+    setExpandMap((expandMap) => {
+      const newExpandMap = new Map(expandMap);
       let expanded = 0;
       // do not expand the selected instance itself, start with parent
       for (let index = 1; index < selectedItemSelector.length; index += 1) {
         const key = selectedItemSelector.slice(index).join();
-        if (newRecord[key] !== true) {
-          newRecord[key] = true;
+        if (newExpandMap.get(key) !== true) {
+          newExpandMap.set(key, true);
           expanded += 1;
         }
       }
       // prevent rerender if nothing new is expanded
-      return expanded === 0 ? record : newRecord;
+      return expanded === 0 ? expandMap : newExpandMap;
     });
   }, [selectedItemSelector]);
 
@@ -548,28 +548,29 @@ const useExpandState = <Data extends { id: string }>({
       if (itemSelector.length === 1) {
         return true;
       }
-      return record[itemSelector.join()] === true;
+      return expandMap.get(itemSelector.join()) === true;
     },
-    [record]
+    [expandMap]
   );
 
   const setIsExpanded = useCallback(
     (itemSelector: ItemSelector, value: boolean, all?: boolean) => {
-      setRecord((record) => {
+      setExpandMap((expandMap) => {
+        const newExpandMap = new Map(expandMap);
         if (all) {
-          const newRecord = { ...record };
           const addChildren = (parentSelector: string[]) => {
             for (const child of getItemChildren(parentSelector)) {
               const itemSelector = [child.id, ...parentSelector];
-              newRecord[itemSelector.join()] = value;
+              newExpandMap.set(itemSelector.join(), value);
               addChildren(itemSelector);
             }
           };
-          newRecord[itemSelector.join()] = value;
+          newExpandMap.set(itemSelector.join(), value);
           addChildren(itemSelector);
-          return newRecord;
+          return newExpandMap;
         }
-        return { ...record, [itemSelector.join()]: value };
+        newExpandMap.set(itemSelector.join(), value);
+        return newExpandMap;
       });
     },
     [getItemChildren]
