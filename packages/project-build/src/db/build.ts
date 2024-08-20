@@ -130,14 +130,20 @@ export const loadRawBuildById = async (
   const build = await context.postgrest.client
     .from("Build")
     .select("*")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
 
   if (build.error) {
     throw build.error;
   }
 
-  return build.data;
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return build.data[0];
 };
 
 export const loadBuildById = async (
@@ -157,14 +163,20 @@ export const loadBuildIdAndVersionByProjectId = async (
     .from("Build")
     .select("id,version")
     .eq("projectId", projectId)
-    .is("deployment", null)
-    .single();
+    .is("deployment", null);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
 
   if (build.error) {
     throw build.error;
   }
 
-  return build.data;
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return build.data[0];
 };
 
 const loadRawBuildByProjectId = async (
@@ -175,12 +187,20 @@ const loadRawBuildByProjectId = async (
     .from("Build")
     .select("*")
     .eq("projectId", projectId)
-    .is("deployment", null)
-    .single();
+    .is("deployment", null);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
+
   if (build.error) {
     throw build.error;
   }
-  return build.data;
+
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return build.data[0];
 };
 
 export const loadBuildByProjectId = async (
@@ -225,12 +245,20 @@ export const loadApprovedProdBuildByProjectId = async (
   const build = await context.postgrest.client
     .from("Build")
     .select()
-    .eq("id", latestBuild.data.buildId)
-    .single();
+    .eq("id", latestBuild.data.buildId);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
+
   if (build.error) {
     throw build.error;
   }
-  return parseCompactBuild(build.data);
+
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return parseCompactBuild(build.data[0]);
 };
 
 const createNewPageInstances = (): Build["instances"] => {
