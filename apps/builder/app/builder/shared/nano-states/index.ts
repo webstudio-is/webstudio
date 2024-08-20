@@ -97,8 +97,11 @@ const $activeSidebarPanel_ = atom<SidebarPanelName | undefined>();
 export const $activeSidebarPanel = computed(
   [$activeSidebarPanel_, $isPreviewMode, $loadingState, $settings],
   (currentPanel, isPreviewMode, loadingState, { navigatorLayout }) => {
-    if (isPreviewMode || loadingState.state !== "ready") {
+    if (loadingState.state !== "ready") {
       return "none";
+    }
+    if (isPreviewMode) {
+      return currentPanel === "pages" ? "pages" : "none";
     }
     if (currentPanel === undefined) {
       return navigatorLayout === "undocked" ? "navigator" : "none";
