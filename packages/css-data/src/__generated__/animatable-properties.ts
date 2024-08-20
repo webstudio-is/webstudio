@@ -105,6 +105,7 @@ export const animatableProperties = [
   "min-inline-size",
   "min-width",
   "object-position",
+  "offset-anchor",
   "offset-distance",
   "offset-path",
   "offset-position",

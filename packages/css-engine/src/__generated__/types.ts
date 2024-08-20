@@ -213,6 +213,7 @@ export type Property =
   | "mixBlendMode"
   | "objectFit"
   | "objectPosition"
+  | "offsetAnchor"
   | "offsetDistance"
   | "offsetPath"
   | "offsetPosition"

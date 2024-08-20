@@ -3867,6 +3867,17 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
+  offsetAnchor: [
+    "auto",
+    "left",
+    "center",
+    "right",
+    "top",
+    "bottom",
+    "initial",
+    "inherit",
+    "unset",
+  ],
   offsetDistance: ["initial", "inherit", "unset"],
   offsetPath: ["none", "initial", "inherit", "unset"],
   offsetPosition: [

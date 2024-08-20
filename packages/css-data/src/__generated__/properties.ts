@@ -1981,6 +1981,15 @@ export const properties = {
     },
     types: ["length", "percentage"],
   },
+  offsetAnchor: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    types: ["length", "percentage"],
+  },
   offsetDistance: {
     unitGroups: ["length", "percentage"],
     inherited: false,
