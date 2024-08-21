@@ -50,18 +50,8 @@ export const $userPlanFeatures = atom<UserPlanFeatures>({
 export const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 
 export const $loadingState = computed(
-  [
-    $dataLoadingState,
-    $selectedInstanceRenderState,
-    $canvasIframeState,
-    $isPreviewMode,
-  ],
-  (
-    dataLoadingState,
-    selectedInstanceRenderState,
-    canvasIframeState,
-    isPreviewMode
-  ) => {
+  [$dataLoadingState, $selectedInstanceRenderState, $canvasIframeState],
+  (dataLoadingState, selectedInstanceRenderState, canvasIframeState) => {
     const readyStates = new Map<
       "dataLoadingState" | "selectedInstanceRenderState" | "canvasIframeState",
       boolean
@@ -69,7 +59,7 @@ export const $loadingState = computed(
       ["dataLoadingState", dataLoadingState === "loaded"],
       [
         "selectedInstanceRenderState",
-        selectedInstanceRenderState === "mounted" || isPreviewMode,
+        selectedInstanceRenderState !== "pending",
       ],
       ["canvasIframeState", canvasIframeState === "ready"],
     ]);
