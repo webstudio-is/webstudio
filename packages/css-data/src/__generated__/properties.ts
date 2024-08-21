@@ -1981,6 +1981,15 @@ export const properties = {
     },
     types: ["length", "percentage"],
   },
+  offsetAnchor: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    types: ["length", "percentage"],
+  },
   offsetDistance: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -1999,6 +2008,15 @@ export const properties = {
       value: "none",
     },
     types: ["offset-path", "coord-box"],
+  },
+  offsetPosition: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    types: ["length", "percentage"],
   },
   offsetRotate: {
     unitGroups: ["angle"],
