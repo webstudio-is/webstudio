@@ -1,13 +1,13 @@
 import { resolve } from "node:path";
-import { defineConfig, type CorsOptions, type Plugin } from "vite";
+import { defineConfig, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
-import basicSsl from "@vitejs/plugin-basic-ssl";
 import type { IncomingMessage } from "node:http";
 import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
 } from "./app/shared/router-utils/origins.server";
+import { readFileSync } from "node:fs";
 
 export default defineConfig(({ mode }) => {
   if (mode === "development") {
@@ -18,8 +18,6 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      // Type "thisisunsafe" in Chrome to bypass SSL warnings for wstd.dev domains
-      basicSsl() as Plugin<unknown>,
       remix({
         presets: [vercelPreset()],
       }),
@@ -41,9 +39,14 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       // Service-to-service OAuth token call requires a specified host for the wstd.dev domain
-      host: "0.0.0.0",
+      host: "wstd.dev",
       // Needed for SSL
       proxy: {},
+
+      https: {
+        key: readFileSync("../../https/privkey.pem"),
+        cert: readFileSync("../../https/fullchain.pem"),
+      },
 
       cors: ((
         req: IncomingMessage,

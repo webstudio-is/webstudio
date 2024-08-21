@@ -220,9 +220,6 @@ importers:
       '@vercel/remix':
         specifier: 2.11.0
         version: 2.11.0(@remix-run/dev@2.11.0(@remix-run/react@2.11.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.5.2))(@remix-run/serve@2.11.0(typescript@5.5.2))(@types/node@20.12.7)(typescript@5.5.2)(vite@5.4.0(@types/node@20.12.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.11.0(typescript@5.5.2))(@remix-run/server-runtime@2.11.0(typescript@5.5.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@vitejs/plugin-basic-ssl':
-        specifier: ^1.1.0
-        version: 1.1.0(vite@5.4.0(@types/node@20.12.7))
       '@webstudio-is/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -5450,12 +5447,6 @@ packages:
 
   '@vercel/static-config@3.0.0':
     resolution: {integrity: sha512-2qtvcBJ1bGY0dYGYh3iM7yGKkk971FujLEDXzuW5wcZsPr1GSEjO/w2iSr3qve6nDDtBImsGoDEnus5FI4+fIw==}
-
-  '@vitejs/plugin-basic-ssl@1.1.0':
-    resolution: {integrity: sha512-wO4Dk/rm8u7RNhOf95ZzcEmC9rYOncYgvq4z3duaJrCgjN8BxAnDVyndanfcJZ0O6XZzHz6Q0hTimxTg8Y9g/A==}
-    engines: {node: '>=14.6.0'}
-    peerDependencies:
-      vite: ^3.0.0 || ^4.0.0 || ^5.0.0
 
   '@vitejs/plugin-react@4.3.1':
     resolution: {integrity: sha512-m/V2syj5CuVnaxcUJOQRel/Wr31FFXRFlnOoq1TVtkCxsY5veGMTEmpWHndrhB2U8ScHtCQB1e+4hWYExQc6Lg==}
@@ -13656,10 +13647,6 @@ snapshots:
       ajv: 8.6.3
       json-schema-to-ts: 1.6.4
       ts-morph: 12.0.0
-
-  '@vitejs/plugin-basic-ssl@1.1.0(vite@5.4.0(@types/node@20.12.7))':
-    dependencies:
-      vite: 5.4.0(@types/node@20.12.7)
 
   '@vitejs/plugin-react@4.3.1(vite@5.4.0(@types/node@20.12.7))':
     dependencies:
