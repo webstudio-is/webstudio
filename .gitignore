@@ -20,6 +20,7 @@ _build
 # misc
 .DS_Store
 *.pem
+!https/*.pem
 /.idea
 
 # logs

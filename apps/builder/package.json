@@ -49,7 +49,6 @@
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "@vercel/remix": "2.11.0",
-    "@vitejs/plugin-basic-ssl": "^1.1.0",
     "@webstudio-is/ai": "workspace:*",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
