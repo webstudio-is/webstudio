@@ -50,7 +50,7 @@ export const TransitionProperty = ({
   onPropertySelection,
 }: TransitionPropertyProps) => {
   const valueString = toValue(property);
-  const [inputValue, setInputValue] = useState(valueString);
+  const [inputValue, setInputValue] = useState<string>(valueString);
   useEffect(() => setInputValue(valueString), [valueString]);
 
   const {
@@ -69,13 +69,7 @@ export const TransitionProperty = ({
     value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
     itemToString: (value) => value?.label || "",
-    onItemSelect: (prop) => {
-      if (isAnimatableProperty(prop.name) === false) {
-        return;
-      }
-      setInputValue(prop.name);
-      onPropertySelection({ property: { type: "unparsed", value: prop.name } });
-    },
+    onItemSelect: (prop) => saveAnimatableProperty(prop.name),
     onInputChange: (value) => setInputValue(value ?? ""),
     /*
       We are splitting the items into two lists.
@@ -91,9 +85,26 @@ export const TransitionProperty = ({
       const sortedItems = matchSorter(itemsToFilter, search, {
         keys: [itemToString],
         sorter: (rankedItems) =>
-          rankedItems.sort((a) =>
-            commonPropertiesSet.has(a.item.name) ? -1 : 1
-          ),
+          rankedItems.sort((a, b) => {
+            // Prioritize exact matches
+            if (a.item.name === search) {
+              return -1;
+            }
+            if (b.item.name === search) {
+              return 1;
+            }
+
+            // Keep the common properties at the top as well
+            if (commonPropertiesSet.has(a.item.name)) {
+              return -1;
+            }
+            if (commonPropertiesSet.has(b.item.name)) {
+              return 1;
+            }
+
+            // Maintain original rank if neither is prioritized
+            return a.rank - b.rank;
+          }),
       });
 
       return sortedItems;
@@ -108,9 +119,18 @@ export const TransitionProperty = ({
     (item) => commonPropertiesSet.has(item.name) === false
   );
 
+  const saveAnimatableProperty = (propertyName: string) => {
+    if (isAnimatableProperty(propertyName) === false) {
+      return;
+    }
+    setInputValue(propertyName);
+    onPropertySelection({
+      property: { type: "unparsed", value: propertyName },
+    });
+  };
+
   const renderItem = (item: NameAndLabel, index: number) => (
     <ComboboxListboxItem
-      key={item.name}
       {...getItemProps({
         item,
         index,
@@ -146,7 +166,14 @@ export const TransitionProperty = ({
           <ComboboxAnchor>
             <InputField
               autoFocus
-              {...getInputProps({ onKeyDown: (e) => e.stopPropagation() })}
+              {...getInputProps({
+                onKeyDown: (event) => {
+                  if (event.key === "Enter") {
+                    saveAnimatableProperty(inputValue);
+                  }
+                  event.stopPropagation();
+                },
+              })}
               placeholder="all"
               suffix={<NestedInputButton {...getToggleButtonProps()} />}
             />
