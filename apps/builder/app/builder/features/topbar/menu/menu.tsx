@@ -195,6 +195,16 @@ export const Menu = () => {
           </Tooltip>
 
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            onSelect={() => {
+              window.open(
+                "https://docs.webstudio.is/university/foundations/shortcuts"
+              );
+            }}
+          >
+            Keyboard shortcuts
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://docs.webstudio.is");
