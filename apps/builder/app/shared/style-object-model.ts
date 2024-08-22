@@ -143,13 +143,6 @@ const getCascadedValue = ({
 
   // preset component styles
   if (component && tag) {
-    // stateless
-    const key = getPresetStyleDeclKey({ component, tag, property });
-    const styleValue = presetStyles.get(key);
-    if (styleValue) {
-      declaredValues.push({ value: styleValue });
-    }
-    // stateful
     for (const state of states) {
       const key = getPresetStyleDeclKey({ component, tag, state, property });
       const styleValue = presetStyles.get(key);
@@ -210,14 +203,14 @@ const customPropertyData = {
  */
 export const getComputedStyleDecl = ({
   model,
-  instanceSelector,
+  instanceSelector = [],
   styleSourceId,
   state,
   property,
   customPropertiesGraph = new Map(),
 }: {
   model: StyleObjectModel;
-  instanceSelector: InstanceSelector;
+  instanceSelector?: InstanceSelector;
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
   property: Property;
@@ -226,6 +219,7 @@ export const getComputedStyleDecl = ({
    */
   customPropertiesGraph?: Map<Instance["id"], Set<Property>>;
 }): {
+  cascadedValue: StyleValue;
   computedValue: StyleValue;
   usedValue: StyleValue;
 } => {
@@ -236,6 +230,7 @@ export const getComputedStyleDecl = ({
   const inherited = propertyData.inherited;
   const initialValue: StyleValue = propertyData.initial;
   let computedValue: StyleValue = initialValue;
+  let cascadedValue: undefined | StyleValue;
 
   // start computing from the root
   for (let index = instanceSelector.length - 1; index >= 0; index -= 1) {
@@ -250,13 +245,14 @@ export const getComputedStyleDecl = ({
     const inheritedValue: StyleValue = computedValue;
 
     // https://drafts.csswg.org/css-cascade-5/#cascaded
-    const { cascadedValue } = getCascadedValue({
+    const cascaded = getCascadedValue({
       model,
       instanceId,
       styleSourceId,
       state,
       property,
     });
+    cascadedValue = cascaded.cascadedValue;
 
     // resolve specified value
     // https://drafts.csswg.org/css-cascade-5/#specified
@@ -337,5 +333,8 @@ export const getComputedStyleDecl = ({
     usedValue = currentColor.usedValue;
   }
 
-  return { computedValue, usedValue };
+  // fallback to inherited value
+  cascadedValue ??= computedValue;
+
+  return { cascadedValue, computedValue, usedValue };
 };

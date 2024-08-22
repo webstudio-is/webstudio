@@ -14,6 +14,7 @@ import {
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import {
+  getComputedStyleDecl,
   getPresetStyleDeclKey,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
@@ -61,17 +62,6 @@ const $matchingBreakpoints = computed($breakpoints, (breakpoints) => {
     .map((breakpoint) => breakpoint.id);
 });
 
-const $matchingStates = computed(
-  [$selectedInstanceStates, $selectedOrLastStyleSourceSelector],
-  (instanceStates, styleSourceSelector) => {
-    const matchingStates = new Set(instanceStates);
-    if (styleSourceSelector?.state) {
-      matchingStates.add(styleSourceSelector.state);
-    }
-    return matchingStates;
-  }
-);
-
 const $model = computed(
   [
     $styles,
@@ -80,7 +70,7 @@ const $model = computed(
     $selectedInstanceIntanceToTag,
     $instanceComponents,
     $matchingBreakpoints,
-    $matchingStates,
+    $selectedInstanceStates,
   ],
   (
     styles,
@@ -102,6 +92,21 @@ const $model = computed(
     };
   }
 );
+
+export const createComputedStyleDeclStore = (property: string) => {
+  return computed(
+    [$model, $selectedInstanceSelector, $selectedOrLastStyleSourceSelector],
+    (model, instanceSelector, styleSourceSelector) => {
+      return getComputedStyleDecl({
+        model,
+        instanceSelector,
+        styleSourceId: styleSourceSelector?.styleSourceId,
+        state: styleSourceSelector?.state,
+        property,
+      });
+    }
+  );
+};
 
 export const useStyleObjectModel = () => {
   return useStore($model);

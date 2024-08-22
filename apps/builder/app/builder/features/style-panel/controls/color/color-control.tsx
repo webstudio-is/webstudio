@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useStore } from "@nanostores/react";
+import { useMemo, useState } from "react";
 import { Flex } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
@@ -11,6 +12,7 @@ import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
 import type { ControlProps } from "../types";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
+import { createComputedStyleDeclStore } from "../../shared/model";
 
 const parseColor = (color?: StyleValue): RgbValue => {
   const colordValue = colord(toValue(color));
@@ -45,25 +47,26 @@ export const ColorControl = ({
   deleteProperty,
   isAdvanced,
 }: ControlProps) => {
+  const $computedStyleDecl = useMemo(
+    () => createComputedStyleDeclStore(property),
+    [property]
+  );
+  const computedStyleDecl = useStore($computedStyleDecl);
+
   const [intermediateValue, setIntermediateValue] =
     useState<CssColorPickerValueInput>();
 
   const { items: defaultItems } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
 
-  let value = currentStyle[property]?.value ?? {
-    type: "keyword" as const,
-    value: "black",
-  };
-
   const setValue = setProperty(property);
 
+  let value = computedStyleDecl.cascadedValue;
   if (value.type !== "rgb" && value.type !== "keyword") {
     // Support previously set colors
     value = parseColor(value);
   }
-
-  const currentColor = parseColor(currentStyle["color"]?.currentColor);
+  const currentColor = parseColor(computedStyleDecl.usedValue);
 
   return (
     <Flex align="center" gap="1">
