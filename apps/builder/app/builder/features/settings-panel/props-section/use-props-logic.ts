@@ -187,7 +187,8 @@ export const usePropsLogic = ({
   });
   const canHaveTextContent =
     instanceMeta?.type === "container" &&
-    instance.component !== collectionComponent;
+    instance.component !== collectionComponent &&
+    instance.component !== "Body";
   const hasNoChildren = instance.children.length === 0;
   const hasOnlyTextChild =
     instance.children.length === 1 && instance.children[0].type === "text";
