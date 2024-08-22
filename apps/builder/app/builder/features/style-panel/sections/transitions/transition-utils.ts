@@ -4,6 +4,8 @@ import {
   type KeywordValue,
   type LayersValue,
   type UnitValue,
+  type StyleProperty,
+  hyphenateProperty,
 } from "@webstudio-is/css-engine";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -12,6 +14,7 @@ import type {
 } from "../../shared/use-style-data";
 import {
   extractTransitionProperties,
+  isAnimatableProperty,
   properties,
   transitionLongHandProperties,
 } from "@webstudio-is/css-data";
@@ -84,6 +87,21 @@ export const findTimingFunctionFromValue = (
   return (Object.keys(timingFunctions) as TimingFunctions[]).find(
     (key: TimingFunctions) => timingFunctions[key] === cleanedFuncValue
   );
+};
+
+export const getAnimatablePropertiesOnInstance = (currentStyle: StyleInfo) => {
+  const properties: Array<StyleProperty> = [];
+  let property: StyleProperty;
+  for (property in currentStyle) {
+    const value = currentStyle[property];
+    if (
+      isAnimatableProperty(hyphenateProperty(property)) === true &&
+      value?.local !== undefined
+    ) {
+      properties.push(property);
+    }
+  }
+  return properties;
 };
 
 export const getTransitionProperties = (

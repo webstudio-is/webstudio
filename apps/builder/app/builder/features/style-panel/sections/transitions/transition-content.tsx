@@ -174,6 +174,7 @@ export const TransitionContent = ({
         }}
       >
         <TransitionProperty
+          currentStyle={currentStyle}
           property={property ?? properties.transitionProperty.initial}
           onPropertySelection={handlePropertyUpdate}
         />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   animatableProperties,
   commonTransitionProperties,
@@ -29,11 +29,14 @@ import {
 } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
 import { setUnion } from "~/shared/shim";
+import type { StyleInfo } from "../../shared/style-info";
+import { getAnimatablePropertiesOnInstance } from "./transition-utils";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
 type TransitionPropertyProps = {
   property: StyleValue;
+  currentStyle: StyleInfo;
   onPropertySelection: (params: {
     property: KeywordValue | UnparsedValue;
   }) => void;
@@ -47,11 +50,18 @@ const properties = Array.from(
 
 export const TransitionProperty = ({
   property,
+  currentStyle,
   onPropertySelection,
 }: TransitionPropertyProps) => {
   const valueString = toValue(property);
   const [inputValue, setInputValue] = useState<string>(valueString);
   useEffect(() => setInputValue(valueString), [valueString]);
+  const propertiesOnInstance = useMemo(
+    () => getAnimatablePropertiesOnInstance(currentStyle),
+    [currentStyle]
+  );
+
+  console.log(propertiesOnInstance);
 
   const {
     items,
