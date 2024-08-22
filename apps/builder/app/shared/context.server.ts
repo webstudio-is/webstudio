@@ -8,6 +8,8 @@ import { getUserPlanFeatures } from "./db/user-plan-features.server";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postrest/index.server";
 import { prisma } from "@webstudio-is/prisma-client";
+import { isBuilderUrl } from "./router-utils/origins";
+import { builderAuthenticator } from "~/services/builder-auth.server";
 
 const createAuthorizationContext = async (
   request: Request
@@ -19,7 +21,9 @@ const createAuthorizationContext = async (
     request.headers.get("x-auth-token") ??
     undefined;
 
-  const user = await authenticator.isAuthenticated(request);
+  const user = isBuilderUrl(request.url)
+    ? await builderAuthenticator.isAuthenticated(request)
+    : await authenticator.isAuthenticated(request);
 
   const isServiceCall =
     request.headers.has("Authorization") &&
@@ -73,15 +77,9 @@ const createDomainContext = (_request: Request) => {
   return context;
 };
 
-const getRequestOrigin = (request: Request) => {
-  const url = new URL(request.url);
+const getRequestOrigin = (urlStr: string) => {
+  const url = new URL(urlStr);
 
-  // vercel overwrites x-forwarded-host on edge level even if our header is set
-  // as workaround we use custom header x-forwarded-ws-host to get the original host
-  url.host =
-    request.headers.get("x-forwarded-ws-host") ??
-    request.headers.get("x-forwarded-host") ??
-    url.host;
   return url.origin;
 };
 
@@ -89,7 +87,7 @@ const createDeploymentContext = (request: Request) => {
   const context: AppContext["deployment"] = {
     deploymentTrpc: trpcSharedClient.deployment,
     env: {
-      BUILDER_ORIGIN: `${getRequestOrigin(request)}`,
+      BUILDER_ORIGIN: `${getRequestOrigin(request.url)}`,
       GITHUB_REF_NAME: staticEnv.GITHUB_REF_NAME ?? "undefined",
       GITHUB_SHA: staticEnv.GITHUB_SHA ?? undefined,
     },
@@ -130,7 +128,7 @@ const createTrpcCache = () => {
   };
 };
 
-const createPostrestContext = () => {
+export const createPostrestContext = () => {
   return { client: createClient(env.POSTGREST_URL, env.POSTGREST_API_KEY) };
 };
 

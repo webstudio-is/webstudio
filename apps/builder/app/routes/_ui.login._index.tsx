@@ -26,19 +26,23 @@ export const loader = async ({
   const user = await findAuthenticatedUser(request);
 
   const url = new URL(request.url);
-  let returnTo = url.searchParams.get("returnTo") ?? dashboardPath();
-
-  // Avoid loops
-  if (comparePathnames(returnTo, request.url)) {
-    returnTo = dashboardPath();
-  }
+  let returnTo = url.searchParams.get("returnTo");
 
   if (user) {
+    returnTo = returnTo ?? dashboardPath();
+    // Avoid loops
+    if (comparePathnames(returnTo, request.url)) {
+      returnTo = dashboardPath();
+    }
+
     throw redirect(returnTo);
   }
 
   const headers = new Headers();
-  headers.append("Set-Cookie", await returnToCookie.serialize(returnTo));
+
+  if (returnTo) {
+    headers.append("Set-Cookie", await returnToCookie.serialize(returnTo));
+  }
 
   return json(
     {

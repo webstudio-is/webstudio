@@ -6,7 +6,7 @@ export const returnToCookie = createCookie("returnTo", {
   path: "/",
   httpOnly: true,
   sameSite: "lax",
-  maxAge: 60, // 1 minute because it makes no sense to keep it for a long time
+  maxAge: 60 * 5, // 5 minutes because it makes no sense to keep it for a long time
   secure: env.SECURE_COOKIE,
 });
 

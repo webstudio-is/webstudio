@@ -57,12 +57,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   n8nWebhookUrl.search = new URL(request.url).search;
 
   const requestUrl = new URL(request.url);
-  const host =
-    request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-
-  if (host != null) {
-    requestUrl.host = host;
-  }
 
   const response = await fetch(n8nWebhookUrl.href, {
     method: "POST",

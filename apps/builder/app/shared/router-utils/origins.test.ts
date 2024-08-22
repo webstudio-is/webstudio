@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { parseBuilderUrl } from "./origins.server";
+import { parseBuilderUrl } from "./origins";
 
 test("parseBuilderUrl wstd.dev", async () => {
   expect(
@@ -45,7 +45,7 @@ test("parseBuilderUrl development.webstudio.is", async () => {
   `);
 });
 
-test("parseBuilderUrl development.webstudio.is", async () => {
+test("parseBuilderUrl main.development.webstudio.is", async () => {
   expect(
     parseBuilderUrl(
       "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-main.development.webstudio.is"
@@ -53,9 +53,22 @@ test("parseBuilderUrl development.webstudio.is", async () => {
   ).toMatchInlineSnapshot(`
     {
       "projectId": "090e6e14-ae50-4b2e-bd22-71733cec05bb",
-      "sourceOrigin": "https://development.webstudio.is",
+      "sourceOrigin": "https://main.development.webstudio.is",
     }
   `);
+});
+
+test("parseBuilderUrl branch.development.webstudio.is", async () => {
+  expect(
+    parseBuilderUrl(
+      "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-branch.development.webstudio.is"
+    )
+  ).toMatchInlineSnapshot(`
+{
+  "projectId": "090e6e14-ae50-4b2e-bd22-71733cec05bb",
+  "sourceOrigin": "https://branch.development.webstudio.is",
+}
+`);
 });
 
 test("parseBuilderUrl apps.webstudio.is", async () => {
