@@ -270,9 +270,8 @@ export const computeExpression = (
 
     const result = new Function("_variables", code)(proxiedVariables);
     return result;
-  } catch (e) {
-    // empty block
-    console.error(e);
+  } catch (error) {
+    console.error(error);
   }
 };
 
