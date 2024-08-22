@@ -44,10 +44,6 @@ type TransitionPropertyProps = {
 
 const commonPropertiesSet = new Set(commonTransitionProperties);
 
-const properties = Array.from(
-  setUnion(commonPropertiesSet, new Set(animatableProperties))
-);
-
 export const TransitionProperty = ({
   property,
   currentStyle,
@@ -56,12 +52,16 @@ export const TransitionProperty = ({
   const valueString = toValue(property);
   const [inputValue, setInputValue] = useState<string>(valueString);
   useEffect(() => setInputValue(valueString), [valueString]);
-  const propertiesOnInstance = useMemo(
+  const propertiesOnInstanceSet = useMemo(
     () => getAnimatablePropertiesOnInstance(currentStyle),
     [currentStyle]
   );
-
-  console.log(propertiesOnInstance);
+  const properties = Array.from(
+    setUnion(
+      setUnion(propertiesOnInstanceSet, commonPropertiesSet),
+      new Set(animatableProperties)
+    )
+  );
 
   const {
     items,
@@ -81,12 +81,13 @@ export const TransitionProperty = ({
     itemToString: (value) => value?.label || "",
     onItemSelect: (prop) => saveAnimatableProperty(prop.name),
     onInputChange: (value) => setInputValue(value ?? ""),
-    /*
-      We are splitting the items into two lists.
-      But when users pass a input, the list is filtered and mixed together.
-      The UI is still showing the lists as separated. But the items are mixed together in background.
-      Since, first we show the common-properties followed by filtered-properties. We can use matchSorter to sort the items.
-    */
+
+    // We are splitting the items into two lists.
+    // But when users pass a input, the list is filtered and mixed together.
+    // The UI is still showing the lists as separated. But the items are mixed together in background.
+    // Since, first we show the properties on instance and then common-properties
+    // followed by filtered-properties. We can use matchSorter to sort the items.
+
     match: (search, itemsToFilter, itemToString) => {
       if (search === "") {
         return itemsToFilter;
@@ -101,6 +102,14 @@ export const TransitionProperty = ({
               return -1;
             }
             if (b.item.name === search) {
+              return 1;
+            }
+
+            // Keep the proeprties on instance at the top
+            if (propertiesOnInstanceSet.has(a.item.name)) {
+              return -1;
+            }
+            if (propertiesOnInstanceSet.has(b.item.name)) {
               return 1;
             }
 
@@ -122,12 +131,21 @@ export const TransitionProperty = ({
   });
 
   const commonProperties = items.filter(
-    (item) => commonPropertiesSet.has(item.name) === true
+    (item) =>
+      commonPropertiesSet.has(item.name) === true &&
+      propertiesOnInstanceSet.has(item.name) === false
   );
-
   const filteredProperties = items.filter(
-    (item) => commonPropertiesSet.has(item.name) === false
+    (item) =>
+      commonPropertiesSet.has(item.name) === false &&
+      propertiesOnInstanceSet.has(item.name) === false
   );
+  const propertiesOnInstance: Array<NameAndLabel> = Array.from(
+    propertiesOnInstanceSet
+  ).map((item) => ({
+    name: item,
+    label: item,
+  }));
 
   const saveAnimatableProperty = (propertyName: string) => {
     if (isAnimatableProperty(propertyName) === false) {
@@ -139,17 +157,20 @@ export const TransitionProperty = ({
     });
   };
 
-  const renderItem = (item: NameAndLabel, index: number) => (
-    <ComboboxListboxItem
-      {...getItemProps({
-        item,
-        index,
-      })}
-      selected={item.name === inputValue}
-    >
-      {item?.label ?? ""}
-    </ComboboxListboxItem>
-  );
+  const renderItem = (item: NameAndLabel, index: number) => {
+    return (
+      <ComboboxListboxItem
+        {...getItemProps({
+          item,
+          index,
+        })}
+        key={item.name}
+        selected={item.name === inputValue}
+      >
+        {item?.label ?? ""}
+      </ComboboxListboxItem>
+    );
+  };
 
   return (
     <>
@@ -193,19 +214,29 @@ export const TransitionProperty = ({
               <ComboboxScrollArea>
                 {isOpen && (
                   <>
-                    <ComboboxLabel>Common</ComboboxLabel>
-                    {commonProperties.map(renderItem)}
+                    {propertiesOnInstance.length > 0 && (
+                      <>
+                        <ComboboxLabel>Defined</ComboboxLabel>
+                        {propertiesOnInstance.map((property, index) =>
+                          renderItem(property, index)
+                        )}
+                        <ComboboxSeparator />
+                      </>
+                    )}
+
+                    <ComboboxLabel role="option">Common</ComboboxLabel>
+                    {commonProperties.map((property, index) =>
+                      renderItem(property, propertiesOnInstance.length + index)
+                    )}
                     <ComboboxSeparator />
+
                     {filteredProperties.map((property, index) =>
-                      /*
-                      When rendered in two different lists.
-                      We will have two indexes start at '0'. Which leads to
-                      - The same focus might be repeated when highlighted.
-                      - Using findIndex within getItemProps might make the focus jump around,
-                        as it searches the entire list for items.
-                        This happens because the list isn't sorted in order but is divided when rendering.
-                    */
-                      renderItem(property, commonProperties.length + index)
+                      renderItem(
+                        property,
+                        propertiesOnInstance.length +
+                          commonProperties.length +
+                          index
+                      )
                     )}
                   </>
                 )}

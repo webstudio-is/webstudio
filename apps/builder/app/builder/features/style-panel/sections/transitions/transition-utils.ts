@@ -89,16 +89,16 @@ export const findTimingFunctionFromValue = (
   );
 };
 
-export const getAnimatablePropertiesOnInstance = (currentStyle: StyleInfo) => {
-  const properties: Array<StyleProperty> = [];
+export const getAnimatablePropertiesOnInstance = (
+  currentStyle: StyleInfo
+): Set<string> => {
+  const properties: Set<string> = new Set();
   let property: StyleProperty;
   for (property in currentStyle) {
     const value = currentStyle[property];
-    if (
-      isAnimatableProperty(hyphenateProperty(property)) === true &&
-      value?.local !== undefined
-    ) {
-      properties.push(property);
+    const prop = hyphenateProperty(property);
+    if (isAnimatableProperty(prop) === true && value?.local !== undefined) {
+      properties.add(prop);
     }
   }
   return properties;

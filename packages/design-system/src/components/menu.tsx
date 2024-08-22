@@ -29,6 +29,7 @@ export const labelCss = css(textVariants.titles, {
   color: theme.colors.foregroundMain,
   mx: theme.spacing[3],
   padding: theme.spacing[3],
+  order: 1,
 });
 
 const indicatorSize = theme.spacing[9];
@@ -114,8 +115,10 @@ export const MenuItemButton = styled("button", menuItemCss, {
 
 export const separatorCss = css({
   height: 1,
+  minHeight: 1,
   my: theme.spacing[3],
   backgroundColor: theme.colors.borderMain,
+  order: 1,
 });
 
 const menuPadding = theme.spacing[3];

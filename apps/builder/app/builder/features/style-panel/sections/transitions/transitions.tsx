@@ -58,7 +58,7 @@ const getLayerLabel = ({
   const propertyLayer =
     getTransitionLayers(style, "transitionProperty")[index] ??
     properties.transitionProperty.initial;
-  const property = humanizeString(toValue({ ...propertyLayer, hidden: false }));
+  const property = toValue({ ...propertyLayer, hidden: false });
   const duration = toValue(
     getTransitionLayers(style, "transitionDuration")[index] ??
       properties.transitionDuration.initial
@@ -73,7 +73,12 @@ const getLayerLabel = ({
     getTransitionLayers(style, "transitionDelay")[index] ??
       properties.transitionDelay.initial
   );
-  return `${property}: ${duration} ${humanizedTimingFunction} ${delay}`;
+
+  if (property === "transform") {
+    return `Transform (Rotate, Skew): ${duration} ${humanizedTimingFunction} ${delay}`;
+  }
+
+  return `${humanizeString(property)}: ${duration} ${humanizedTimingFunction} ${delay}`;
 };
 
 const defaultTransitionLayers: Record<TransitionProperty, LayerValueItem> = {
