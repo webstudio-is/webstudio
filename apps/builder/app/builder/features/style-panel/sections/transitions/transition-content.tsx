@@ -262,7 +262,9 @@ export const TransitionContent = ({
         />
 
         <TransitionTiming
-          timing={timingFunction ?? properties.transitionTimingFunction.initial}
+          timingFunction={
+            timingFunction ?? properties.transitionTimingFunction.initial
+          }
           onTimingSelection={handlePropertyUpdate}
         />
       </Grid>
