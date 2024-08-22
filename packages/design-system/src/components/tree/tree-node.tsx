@@ -206,9 +206,7 @@ const ItemContainer = styled(Flex, {
       },
     },
     isHighlighted: {
-      true: {
-        bc: theme.colors.backgroundItemCurrent,
-      },
+      true: { "&:after": hoverStyle },
     },
     parentIsSelected: {
       true: {
