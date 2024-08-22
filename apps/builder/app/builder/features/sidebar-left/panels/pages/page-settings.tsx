@@ -29,7 +29,7 @@ import {
   isLiteralExpression,
   type System,
   documentTypes,
-  isRoot,
+  isRootFolder,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -762,7 +762,7 @@ const FormFields = ({
                     “{values.name}” is the home page
                   </Text>
                 </>
-              ) : isRoot({ id: values.parentFolderId }) === false ? (
+              ) : isRootFolder({ id: values.parentFolderId }) === false ? (
                 <>
                   <HomeIcon color={rawTheme.colors.foregroundSubtle} />
                   <Text
@@ -1527,7 +1527,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       oldHomePage.name = "Old Home";
       oldHomePage.path = nameToPath(pages, oldHomePage.name);
 
-      const rootFolder = pages.folders.find((folder) => isRoot(folder));
+      const rootFolder = pages.folders.find((folder) => isRootFolder(folder));
 
       if (rootFolder === undefined) {
         throw new Error("Root folder not found");

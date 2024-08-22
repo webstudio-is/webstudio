@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
-  isRoot,
+  isRootFolder,
   type Folder,
   ROOT_FOLDER_ID,
   type Page,
@@ -73,7 +73,7 @@ const createPages = () => {
 
   const register = (children: Array<Page | Folder>, root: boolean = true) => {
     const childIds = [];
-    const rootFolder = folders.find(isRoot);
+    const rootFolder = folders.find(isRootFolder);
 
     for (const child of children) {
       childIds.push(child.id);
@@ -274,7 +274,7 @@ describe("reparentOrphansMutable", () => {
       children: [],
     });
     reparentOrphansMutable(pages);
-    const rootFolder = pages.folders.find(isRoot);
+    const rootFolder = pages.folders.find(isRootFolder);
     expect(rootFolder).toEqual({
       id: ROOT_FOLDER_ID,
       name: "Root",
@@ -295,7 +295,7 @@ describe("cleanupChildRefsMutable", () => {
       slug: "folder",
       children: [],
     });
-    const rootFolder = folders.find(isRoot);
+    const rootFolder = folders.find(isRootFolder);
     rootFolder?.children.push("folderId");
     cleanupChildRefsMutable("folderId", folders);
     expect(rootFolder).toEqual({
@@ -320,7 +320,7 @@ describe("isSlugAvailable", () => {
     f("folder2-2", ""),
   ]);
 
-  const rootFolder = folders.find(isRoot)!;
+  const rootFolder = folders.find(isRootFolder)!;
 
   test("available in the root", () => {
     expect(isSlugAvailable("folder", folders, rootFolder.id)).toBe(true);
@@ -394,7 +394,7 @@ describe("registerFolderChildMutable", () => {
       pages: { folders },
     } = createPages();
     registerFolderChildMutable(folders, "folderId");
-    const rootFolder = folders.find(isRoot);
+    const rootFolder = folders.find(isRootFolder);
     expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
   });
 
@@ -424,7 +424,7 @@ describe("registerFolderChildMutable", () => {
       children: [],
     };
     folders.push(folder);
-    const rootFolder = folders.find(isRoot);
+    const rootFolder = folders.find(isRootFolder);
     registerFolderChildMutable(folders, "folderId", ROOT_FOLDER_ID);
     registerFolderChildMutable(folders, "folderId2", ROOT_FOLDER_ID);
 

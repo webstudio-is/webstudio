@@ -11,7 +11,7 @@ import {
   findParentFolderByChildId,
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
-  isRoot,
+  isRootFolder,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {
@@ -138,7 +138,7 @@ export const reparentOrphansMutable = (pages: Pages) => {
     children.push(...folder.children);
   }
 
-  let rootFolder = pages.folders.find(isRoot);
+  let rootFolder = pages.folders.find(isRootFolder);
   // Should never happen, but just in case.
   if (rootFolder === undefined) {
     rootFolder = createRootFolder();
@@ -231,7 +231,7 @@ export const registerFolderChildMutable = (
 ) => {
   const parentFolder =
     folders.find((folder) => folder.id === parentFolderId) ??
-    folders.find(isRoot);
+    folders.find(isRootFolder);
   cleanupChildRefsMutable(id, folders);
   parentFolder?.children.push(id);
 };
