@@ -803,6 +803,46 @@ test("preset styles are more specific than browser styles", () => {
   ).toEqual({ type: "keyword", value: "flex" });
 });
 
+test("access cascaded value without resolving", () => {
+  const model = createModel({
+    css: `
+      local {
+        color: initial;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="local"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "color",
+    }).cascadedValue
+  ).toEqual({ type: "keyword", value: "initial" });
+});
+
+test("fallback cascaded value to inherited computed value", () => {
+  const model = createModel({
+    css: `
+      body {
+        border-top-color: currentcolor;
+      }
+    `,
+    jsx: (
+      <$.Body ws:id="body" class="body">
+        <$.Box ws:id="box" class="box"></$.Box>
+      </$.Body>
+    ),
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box", "body"],
+      property: "borderTopColor",
+    }).cascadedValue
+  ).toEqual({ type: "keyword", value: "currentColor" });
+});
+
 describe("selected style", () => {
   test("access selected style source value within cascade", () => {
     const model = createModel({
@@ -983,5 +1023,38 @@ describe("selected style", () => {
         property: "color",
       }).usedValue
     ).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("prefer selected state from preset", () => {
+    const model = createModel({
+      presets: {
+        Body: `
+          body {
+            color: red;
+          }
+          body:hover {
+            color: blue;
+          }
+        `,
+      },
+      css: "",
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      matchingBreakpoints: ["base", "small"],
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "blue" });
   });
 });
