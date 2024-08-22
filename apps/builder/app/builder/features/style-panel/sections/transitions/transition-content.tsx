@@ -135,7 +135,7 @@ export const TransitionContent = ({
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     const value: Array<UnitValue | KeywordValue> = Object.values({
-      ...{ property, duration, delay, timingFunction },
+      ...{ property, duration, delay, timing: timingFunction },
       ...params,
     }).filter<UnitValue | KeywordValue>(
       (item): item is UnitValue | KeywordValue => item != null
@@ -262,9 +262,7 @@ export const TransitionContent = ({
         />
 
         <TransitionTiming
-          timingFunction={
-            timingFunction ?? properties.transitionTimingFunction.initial
-          }
+          timing={timingFunction ?? properties.transitionTimingFunction.initial}
           onTimingSelection={handlePropertyUpdate}
         />
       </Grid>

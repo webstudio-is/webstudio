@@ -27,10 +27,8 @@ import {
 } from "./transition-utils";
 
 type TransitionTimingProps = {
-  timingFunction: StyleValue;
-  onTimingSelection: (params: {
-    timingFunction: KeywordValue | FunctionValue;
-  }) => void;
+  timing: StyleValue;
+  onTimingSelection: (params: { timing: KeywordValue | FunctionValue }) => void;
 };
 
 const options: TimingFunctions[] = [
@@ -39,26 +37,23 @@ const options: TimingFunctions[] = [
 ] as TimingFunctions[] & "custom";
 
 export const TransitionTiming = ({
-  timingFunction,
+  timing,
   onTimingSelection,
 }: TransitionTimingProps) => {
   const [value, setValue] = useState<TimingFunctions | "custom">(
-    findTimingFunctionFromValue(toValue(timingFunction)) ?? "custom"
+    findTimingFunctionFromValue(toValue(timing)) ?? "custom"
   );
 
   useEffect(
-    () =>
-      setValue(
-        findTimingFunctionFromValue(toValue(timingFunction)) ?? "custom"
-      ),
-    [timingFunction]
+    () => setValue(findTimingFunctionFromValue(toValue(timing)) ?? "custom"),
+    [timing]
   );
 
   const handleTimingChange = (value: TimingFunctions | "custom") => {
     setValue(value);
 
     if (value === "custom") {
-      onTimingSelection({ timingFunction: { type: "keyword", value: "" } });
+      onTimingSelection({ timing: { type: "keyword", value: "" } });
       return;
     }
 
@@ -75,7 +70,7 @@ export const TransitionTiming = ({
       parsedEasing.type === "layers" ? parsedEasing.value[0] : parsedEasing;
 
     if (easingValue.type === "keyword" || easingValue.type === "function") {
-      onTimingSelection({ timingFunction: easingValue });
+      onTimingSelection({ timing: easingValue });
     }
   };
 

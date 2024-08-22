@@ -166,7 +166,7 @@ export const editTransitionLayer = (props: {
     const {
       property,
       duration = properties.transitionDuration.initial,
-      timingFunction = properties.transitionTimingFunction.initial,
+      timing = properties.transitionTimingFunction.initial,
       delay = properties.transitionDelay.initial,
     } = extractTransitionProperties(layer);
 
@@ -178,7 +178,7 @@ export const editTransitionLayer = (props: {
     newTransitionProperties.push(property);
     newTransitionDurations.push(duration);
     newTransitionDelays.push(delay);
-    newTransitionTimingFunctions.push(timingFunction);
+    newTransitionTimingFunctions.push(timing);
   }
 
   const existingTransitionProperties = getTransitionProperties(currentStyle);

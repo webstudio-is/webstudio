@@ -23,7 +23,7 @@ export const isTimingFunction = (name: string) => {
 
 export type ExtractedTransitionProperties = {
   property?: KeywordValue | UnparsedValue;
-  timingFunction?: KeywordValue | FunctionValue;
+  timing?: KeywordValue | FunctionValue;
   delay?: UnitValue;
   duration?: UnitValue;
 };
@@ -32,7 +32,7 @@ export const extractTransitionProperties = (
   transition: TupleValue
 ): ExtractedTransitionProperties => {
   let property: KeywordValue | UnparsedValue | undefined;
-  let timingFunction: KeywordValue | FunctionValue | undefined;
+  let timing: KeywordValue | FunctionValue | undefined;
 
   const unitValues: UnitValue[] = [];
 
@@ -45,11 +45,11 @@ export const extractTransitionProperties = (
     }
 
     if (item.type === "keyword" && isAnimatableProperty(item.value) === false) {
-      timingFunction = item;
+      timing = item;
     }
 
     if (item.type === "function") {
-      timingFunction = item;
+      timing = item;
     }
 
     if (item.type === "unit") {
@@ -63,7 +63,7 @@ export const extractTransitionProperties = (
   return {
     property,
     duration,
-    timingFunction,
+    timing,
     delay,
   };
 };
