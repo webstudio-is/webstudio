@@ -33,7 +33,7 @@ import { theme } from "../..";
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
-  highlightedItemSelector: undefined | ItemSelector;
+  highlightedItemSelector?: ItemSelector;
   dragItemSelector: undefined | ItemSelector;
   dropTarget: undefined | ItemDropTarget;
 
