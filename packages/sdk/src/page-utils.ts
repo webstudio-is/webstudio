@@ -7,7 +7,8 @@ export const ROOT_FOLDER_ID = "root";
 /**
  * Returns true if folder is the root folder.
  */
-export const isRoot = (folder: Folder) => folder.id === ROOT_FOLDER_ID;
+export const isRootFolder = ({ id }: { id: Folder["id"] }) =>
+  id === ROOT_FOLDER_ID;
 
 /**
  * Find a page by id or path.

@@ -363,6 +363,14 @@ export const findClosestDroppableTarget = (
   instanceSelector: InstanceSelector,
   insertConstraints: InsertConstraints
 ): undefined | DroppableTarget => {
+  // We want to always allow dropping into the root.
+  // For example when body has text content and the only viable option is to insert at the end.
+  if (instanceSelector.length === 1) {
+    return {
+      parentSelector: instanceSelector,
+      position: "end",
+    };
+  }
   const droppableIndex = findClosestDroppableComponentIndex({
     metas,
     constraints: insertConstraints,
@@ -370,6 +378,7 @@ export const findClosestDroppableTarget = (
     instanceSelector,
     allowInsertIntoTextContainer: false,
   });
+
   if (droppableIndex === -1) {
     return;
   }

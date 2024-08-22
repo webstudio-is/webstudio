@@ -2,16 +2,16 @@ import { atom, computed } from "nanostores";
 import { createRootFolder } from "@webstudio-is/project-build";
 import {
   type Page,
-  Pages,
   type Folder,
-  findPageByIdOrPath,
-  ROOT_FOLDER_ID,
-  isRoot,
   type WebstudioData,
+  type System,
+  Pages,
+  findPageByIdOrPath,
   getPagePath,
   findParentFolderByChildId,
   encodeDataSourceVariable,
-  type System,
+  ROOT_FOLDER_ID,
+  isRootFolder,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {
@@ -49,10 +49,6 @@ type TreeFolder = {
 export type TreeData = TreeFolder | TreePage;
 
 type Index = Map<string, TreeData>;
-
-const PAGES_ROOT_ID = "root";
-
-export const isRootId = (id: string) => id === PAGES_ROOT_ID;
 
 /**
  * Return a nested tree structure from flat pages and folders.
@@ -102,7 +98,7 @@ export const toTreeData = (
       children: Array.from(children.values()),
     } satisfies TreeFolder;
   };
-  const rootFolder = foldersMap.get(PAGES_ROOT_ID);
+  const rootFolder = foldersMap.get(ROOT_FOLDER_ID);
   if (rootFolder === undefined) {
     throw new Error("Root folder not found");
   }
@@ -142,7 +138,7 @@ export const reparentOrphansMutable = (pages: Pages) => {
     children.push(...folder.children);
   }
 
-  let rootFolder = pages.folders.find(isRoot);
+  let rootFolder = pages.folders.find(isRootFolder);
   // Should never happen, but just in case.
   if (rootFolder === undefined) {
     rootFolder = createRootFolder();
@@ -235,7 +231,7 @@ export const registerFolderChildMutable = (
 ) => {
   const parentFolder =
     folders.find((folder) => folder.id === parentFolderId) ??
-    folders.find(isRoot);
+    folders.find(isRootFolder);
   cleanupChildRefsMutable(id, folders);
   parentFolder?.children.push(id);
 };
