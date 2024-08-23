@@ -19,14 +19,14 @@ import { createContext } from "~/shared/context.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 
-export const RequestParamsSchema = z.object({
+export const RequestParams = z.object({
   projectId: z.string().min(1, "nonempty"),
   instanceId: z.string().min(1, "nonempty"),
   prompt: z.string().min(1, "nonempty").max(1200),
   components: z.array(z.string()),
   jsx: z.string().min(1, "nonempty"),
   command: z.union([
-    // Using client* friendly imports because RequestParamsSchema
+    // Using client* friendly imports because RequestParams
     // is used to parse the form data on the client too.
     z.literal(clientCopywriter.name),
     z.literal(clientOperations.editStylesName),
@@ -87,7 +87,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   const PEXELS_API_KEY = env.PEXELS_API_KEY;
 
-  const parsed = RequestParamsSchema.safeParse(await request.json());
+  const parsed = RequestParams.safeParse(await request.json());
 
   if (parsed.success === false) {
     return {

@@ -12,7 +12,7 @@ import {
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 
-export const RequestParamsSchema = z.object({
+export const RequestParams = z.object({
   prompt: z.string().max(1200),
 });
 
@@ -49,7 +49,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const requestJson = await request.json();
-  const parsed = RequestParamsSchema.safeParse(requestJson);
+  const parsed = RequestParams.safeParse(requestJson);
 
   if (parsed.success === false) {
     return {
@@ -57,7 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidRequest",
         status: 401,
-        message: `RequestParamsSchema.safeParse failed on ${JSON.stringify(
+        message: `RequestParams.safeParse failed on ${JSON.stringify(
           requestJson
         )}`,
         debug: "Invalid request data",

@@ -44,36 +44,36 @@ const fontFamilyMapping = {
   "Roboto Mono": fontFamilies.Roboto,
 } as const;
 
-const TreeLeafSchema = z.object({
+const TreeLeaf = z.object({
   type: z.string(),
   value: z.unknown(),
 });
 
-const FontWeightSchema = z.preprocess(
+const FontWeight = z.preprocess(
   (x) => (typeof x === "string" ? x.toLowerCase().replace(/\s+/g, "") : x),
   z.enum(Object.keys(fontWeightMapping) as [keyof typeof fontWeightMapping])
 );
 
-const FontFamilySchema = z.string();
+const FontFamily = z.string();
 
-const LineHeightSchema = z.union([z.string(), z.number()]);
+const LineHeight = z.union([z.string(), z.number()]);
 
-const FontSizeSchema = z.number();
+const FontSize = z.number();
 
-const LetterSpacingSchema = z.union([z.string(), z.number()]);
+const LetterSpacing = z.union([z.string(), z.number()]);
 
-const TextCaseSchema = z.enum(["uppercase", "lowercase", "capitalize", "none"]);
+const TextCase = z.enum(["uppercase", "lowercase", "capitalize", "none"]);
 
-const TextDecorationSchema = z.enum([
+const TextDecoration = z.enum([
   "none",
   "underline",
   "overline",
   "line-through",
 ]);
 
-const DimentionSchema = z.union([z.string(), z.number()]);
+const Dimention = z.union([z.string(), z.number()]);
 
-const TypographySchema = z.object({
+const Typography = z.object({
   fontFamily: z.unknown(),
   fontWeight: z.unknown(),
   lineHeight: z.unknown(),
@@ -84,7 +84,7 @@ const TypographySchema = z.object({
   paragraphIndent: z.unknown(),
 });
 
-const SingleShadowSchema = z.object({
+const SingleShadow = z.object({
   color: z.string(),
   type: z.enum(["dropShadow", "innerShadow"]),
   x: z.number(),
@@ -93,7 +93,7 @@ const SingleShadowSchema = z.object({
   spread: z.number(),
 });
 
-const ShadowSchema = z.union([SingleShadowSchema, z.array(SingleShadowSchema)]);
+const Shadow = z.union([SingleShadow, z.array(SingleShadow)]);
 
 const parse = <Output, Def extends ZodTypeDef, Input>(
   path: string[],
@@ -112,8 +112,8 @@ const parse = <Output, Def extends ZodTypeDef, Input>(
 };
 
 const printShadow = (path: string[], unparsedValue: unknown) => {
-  const shadow = parse(path, unparsedValue, ShadowSchema);
-  const printSingle = (shadow: z.infer<typeof SingleShadowSchema>) => {
+  const shadow = parse(path, unparsedValue, Shadow);
+  const printSingle = (shadow: z.infer<typeof SingleShadow>) => {
     return [
       shadow.type === "innerShadow" ? "inset" : "",
       `${shadow.x}px`,
@@ -131,7 +131,7 @@ const printShadow = (path: string[], unparsedValue: unknown) => {
 };
 
 const printLineHeight = (path: string[], unparsedValue: unknown) => {
-  const value = parse(path, unparsedValue, LineHeightSchema);
+  const value = parse(path, unparsedValue, LineHeight);
 
   if (typeof value === "number") {
     return `${value}px`;
@@ -150,7 +150,7 @@ const printLineHeight = (path: string[], unparsedValue: unknown) => {
 };
 
 const printLetterSpacing = (path: string[], unparsedValue: unknown) => {
-  const value = parse(path, unparsedValue, LetterSpacingSchema);
+  const value = parse(path, unparsedValue, LetterSpacing);
 
   if (typeof value === "number") {
     return `${value}px`;
@@ -165,30 +165,30 @@ const printLetterSpacing = (path: string[], unparsedValue: unknown) => {
 };
 
 const printFontWeight = (path: string[], unparsedValue: unknown) => {
-  const value = parse(path, unparsedValue, FontWeightSchema);
+  const value = parse(path, unparsedValue, FontWeight);
   return fontWeightMapping[value];
 };
 
 const printFontFamily = (path: string[], unparsedValue: unknown) => {
-  const value = parse(path, unparsedValue, FontFamilySchema);
+  const value = parse(path, unparsedValue, FontFamily);
   return fontFamilyMapping[value as keyof typeof fontFamilyMapping] || value;
 };
 
 const printFontSize = (path: string[], unparsedValue: unknown) => {
-  const value = parse(path, unparsedValue, FontSizeSchema);
+  const value = parse(path, unparsedValue, FontSize);
   return `${value}px`;
 };
 
 const printTextCase = (path: string[], unparsedValue: unknown) => {
-  return parse(path, unparsedValue, TextCaseSchema);
+  return parse(path, unparsedValue, TextCase);
 };
 
 const printTextDecoration = (path: string[], unparsedValue: unknown) => {
-  return parse(path, unparsedValue, TextDecorationSchema);
+  return parse(path, unparsedValue, TextDecoration);
 };
 
 const printDimension = (path: string[], unparsedValue: unknown) => {
-  const value = parse(path, unparsedValue, DimentionSchema);
+  const value = parse(path, unparsedValue, Dimention);
   if (typeof value === "number") {
     return `${value}px`;
   }
@@ -196,7 +196,7 @@ const printDimension = (path: string[], unparsedValue: unknown) => {
 };
 
 const printTypography = (path: string[], unparsedValue: unknown) => {
-  const value = parse(path, unparsedValue, TypographySchema);
+  const value = parse(path, unparsedValue, Typography);
   return {
     fontFamily: printFontFamily(path, value.fontFamily),
     fontWeight: printFontWeight(path, value.fontWeight),
@@ -231,7 +231,7 @@ const traverse = (
     return;
   }
 
-  const asLeaf = TreeLeafSchema.safeParse(node);
+  const asLeaf = TreeLeaf.safeParse(node);
   if (asLeaf.success && asLeaf.data.value !== undefined) {
     fn(nodePath, asLeaf.data.type, asLeaf.data.value);
     return;
