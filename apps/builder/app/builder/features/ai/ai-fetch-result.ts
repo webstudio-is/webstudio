@@ -59,7 +59,7 @@ export const fetchResult = async (
   instanceId: Instance["id"],
   abortSignal: AbortSignal
 ): Promise<void> => {
-  const commandsResponse = await handleAiRequest<commandDetect.Response>(
+  const commandsResponse = await handleAiRequest<commandDetect.AiResponse>(
     fetch(restAi("detect"), {
       method: "POST",
       body: JSON.stringify({ prompt }),
@@ -112,7 +112,7 @@ export const fetchResult = async (
 
   const promises = await Promise.allSettled(
     commandsResponse.data.map((command) =>
-      handleAiRequest<operations.Response>(
+      handleAiRequest<operations.WsOperations>(
         fetch(restAi(), {
           method: "POST",
           body: JSON.stringify({

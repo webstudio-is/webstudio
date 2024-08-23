@@ -30,12 +30,12 @@ export {
 
 export const name = "operations";
 
-export const Context = z.object({
+export const OperationContext = z.object({
   prompt: z.string().describe("Edit request from the user"),
   components: z.array(z.string()).describe("Available Webstudio components"),
   jsx: z.string().describe("Input JSX to edit"),
 });
-export type Context = z.infer<typeof Context>;
+export type OperationContext = z.infer<typeof OperationContext>;
 
 // AiOperations are supported LLM operations.
 // A valid completion is then converted to WsOperations
@@ -66,6 +66,3 @@ export const WsOperations = z.array(
   ])
 );
 export type WsOperations = z.infer<typeof WsOperations>;
-
-export const Response = WsOperations;
-export type Response = z.infer<typeof Response>;
