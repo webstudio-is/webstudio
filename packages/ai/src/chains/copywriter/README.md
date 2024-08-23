@@ -151,7 +151,7 @@ const [json, setJson] = useState([]);
 useEffect(() => {
   try {
     const jsonResponse = z
-      .array(copywriter.TextInstanceSchema)
+      .array(copywriter.TextInstance)
       .parse(JSON.parse(untruncateJson(completion)));
 
     const currenTextInstance = jsonResponse.pop();

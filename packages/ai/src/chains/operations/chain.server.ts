@@ -8,9 +8,8 @@ import { createErrorResponse } from "../../utils/create-error-response";
 import {
   type Context,
   type Response,
-  type AiOperations,
   type WsOperations,
-  AiOperationsSchema,
+  AiOperations,
   name,
 } from "./schema";
 import * as editStyles from "./edit-styles.server";
@@ -65,8 +64,8 @@ export const createChain = <ModelMessageFormat>(): Chain<
     // a specific operation among the supported ones.
     // This could be passed as context.operations.
     const operationsSchema = zodToJsonSchema(
-      AiOperationsSchema.element,
-      "AiOperationsSchema"
+      AiOperations.element,
+      "AiOperations"
     );
 
     const llmMessages: ModelMessage[] = [
@@ -112,9 +111,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     let parsedCompletion;
 
     try {
-      parsedCompletion = AiOperationsSchema.safeParse(
-        JSON.parse(completionText)
-      );
+      parsedCompletion = AiOperations.safeParse(JSON.parse(completionText));
     } catch (error) {
       return {
         id: name,
