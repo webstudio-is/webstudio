@@ -4,30 +4,17 @@
  * For more information, see https://remix.run/file-conventions/entry.server
  */
 
-import type { EntryContext } from "@remix-run/node";
-import { flushCss } from "@webstudio-is/design-system";
+import {
+  createReadableStreamFromReadable,
+  type AppLoadContext,
+  type EntryContext,
+} from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
+import { PassThrough } from "node:stream";
+import { renderToPipeableStream } from "react-dom/server";
 
-import ReactDOMServer from "react-dom/server";
+const ABORT_DELAY = 5_000;
 
-export default function handleRequest(
-  request: Request,
-  responseStatusCode: number,
-  responseHeaders: Headers,
-  remixContext: EntryContext
-) {
-  const markup = ReactDOMServer.renderToString(
-    <RemixServer context={remixContext} url={request.url} />
-  ).replace(/<\/head>/, `<style>${flushCss()}</style></head>`);
-
-  responseHeaders.set("Content-Type", "text/html");
-
-  return new Response("<!DOCTYPE html>" + markup, {
-    status: responseStatusCode,
-    headers: responseHeaders,
-  });
-}
-/*
 export default function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -46,6 +33,7 @@ export default function handleRequest(
   );
 }
 
+// eslint-disable-next-line func-style
 function handleBrowserRequest(
   request: Request,
   responseStatusCode: number,
@@ -95,4 +83,3 @@ function handleBrowserRequest(
     setTimeout(abort, ABORT_DELAY);
   });
 }
-*/
