@@ -10,8 +10,7 @@ import {
   type EntryContext,
 } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import { flushCss } from "@webstudio-is/design-system";
-import { PassThrough, Readable } from "node:stream";
+import { PassThrough } from "node:stream";
 import { renderToPipeableStream } from "react-dom/server";
 
 const ABORT_DELAY = 5_000;
@@ -34,33 +33,6 @@ export default function handleRequest(
 }
 
 // eslint-disable-next-line func-style
-async function* injectStyle(stream: PassThrough, styleContent: string) {
-  const styleTag = `<style>${styleContent}</style>`;
-  let injected = false;
-  let buffer = "";
-
-  for await (const chunk of stream) {
-    if (injected) {
-      yield chunk;
-      continue;
-    }
-
-    buffer += chunk.toString();
-
-    if (!injected && buffer.includes("</head>")) {
-      const [beforeHead, afterHead] = buffer.split("</head>");
-      yield beforeHead + styleTag + "</head>";
-      buffer = afterHead;
-      injected = true;
-      // Yield the remaining buffer
-      if (buffer) {
-        yield buffer;
-      }
-    }
-  }
-}
-
-// eslint-disable-next-line func-style
 function handleBrowserRequest(
   request: Request,
   responseStatusCode: number,
@@ -79,15 +51,12 @@ function handleBrowserRequest(
         onShellReady() {
           shellRendered = true;
           const body = new PassThrough();
-
-          const transformedStream = createReadableStreamFromReadable(
-            Readable.from(injectStyle(body, flushCss()))
-          );
+          const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set("Content-Type", "text/html");
 
           resolve(
-            new Response(transformedStream, {
+            new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
             })

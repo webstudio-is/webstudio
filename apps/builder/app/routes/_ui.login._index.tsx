@@ -12,6 +12,7 @@ import { Login } from "~/auth";
 import { useLoginErrorMessage } from "~/shared/session";
 import { dashboardPath } from "~/shared/router-utils";
 import { returnToCookie } from "~/services/cookie.server";
+import { ClientOnly } from "~/shared/client-only";
 
 const comparePathnames = (pathnameOrUrlA: string, pathnameOrUrlB: string) => {
   const aPathname = new URL(pathnameOrUrlA, "http://localhost").pathname;
@@ -56,7 +57,11 @@ export const loader = async ({
 const LoginRoute = () => {
   const errorMessage = useLoginErrorMessage();
   const data = useLoaderData<typeof loader>();
-  return <Login {...data} errorMessage={errorMessage} />;
+  return (
+    <ClientOnly>
+      <Login {...data} errorMessage={errorMessage} />
+    </ClientOnly>
+  );
 };
 
 export default LoginRoute;

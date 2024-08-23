@@ -38,11 +38,6 @@ export const links = () => {
   ];
 };
 
-const Builder = lazy(async () => {
-  const { Builder } = await import("~/builder/index.client");
-  return { default: Builder };
-});
-
 export const loader = async ({
   params,
   request,
@@ -157,7 +152,12 @@ export const ErrorBoundary = () => {
   return <ErrorMessage message={message} />;
 };
 
-export const BuilderRoute = () => {
+const Builder = lazy(async () => {
+  const { Builder } = await import("~/builder/index.client");
+  return { default: Builder };
+});
+
+const BuilderRoute = () => {
   const data = useLoaderData<BuilderProps>();
 
   return (
