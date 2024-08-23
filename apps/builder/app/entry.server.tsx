@@ -34,10 +34,7 @@ export default function handleRequest(
 }
 
 // eslint-disable-next-line func-style
-async function* injectStyle(
-  stream: ReadableStream<Uint8Array>,
-  styleContent: string
-) {
+async function* injectStyle(stream: PassThrough, styleContent: string) {
   const styleTag = `<style>${styleContent}</style>`;
   let injected = false;
   let buffer = "";
@@ -82,10 +79,9 @@ function handleBrowserRequest(
         onShellReady() {
           shellRendered = true;
           const body = new PassThrough();
-          const stream = createReadableStreamFromReadable(body);
 
           const transformedStream = createReadableStreamFromReadable(
-            Readable.from(injectStyle(stream, flushCss()))
+            Readable.from(injectStyle(body, flushCss()))
           );
 
           responseHeaders.set("Content-Type", "text/html");
