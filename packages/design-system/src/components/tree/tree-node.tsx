@@ -205,6 +205,9 @@ const ItemContainer = styled(Flex, {
         bc: theme.colors.backgroundItemCurrent,
       },
     },
+    isHighlighted: {
+      true: { "&:after": hoverStyle },
+    },
     parentIsSelected: {
       true: {
         bc: theme.colors.backgroundItemCurrentChild,
@@ -272,6 +275,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   dropTargetItemSelector?: ItemSelector;
   parentIsSelected?: boolean;
   isSelected?: boolean;
+  isHighlighted?: boolean;
   onSelect?: (itemSelector: ItemSelector, all?: boolean) => void;
   level: number;
   isAlwaysExpanded: boolean;
@@ -285,6 +289,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   onSelect,
   parentIsSelected = false,
   isSelected = false,
+  isHighlighted = false,
   dropTargetItemSelector,
   onHover,
   itemData,
@@ -382,6 +387,7 @@ export const TreeItemBody = <Data extends { id: string }>({
       onMouseEnter={onHover && (() => onHover(itemSelector))}
       onMouseLeave={onHover && (() => onHover())}
       isSelected={isSelected}
+      isHighlighted={isHighlighted}
       parentIsSelected={parentIsSelected}
       enableHoverState={isDragging === false}
       forceHoverState={
@@ -390,9 +396,7 @@ export const TreeItemBody = <Data extends { id: string }>({
       suffixVisible={alwaysShowSuffix || focusTarget !== undefined}
       onFocus={updateFocusTarget}
       onBlur={updateFocusTarget}
-      css={{
-        [suffixWidthVar]: suffixWidth,
-      }}
+      css={{ [suffixWidthVar]: suffixWidth }}
     >
       <ItemButton
         type="button"
@@ -483,6 +487,7 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
   ) => void;
 
   selectedItemSelector?: ItemSelector;
+  highlightedItemSelector?: ItemSelector;
   dropTargetItemSelector?: ItemSelector;
   parentSelector?: ItemSelector;
 
@@ -504,6 +509,7 @@ export const TreeNode = <Data extends { id: string }>({
     getIsExpanded,
     setIsExpanded,
     selectedItemSelector,
+    highlightedItemSelector,
     onSelect,
     onHover,
     dropTargetItemSelector,
@@ -524,7 +530,10 @@ export const TreeNode = <Data extends { id: string }>({
   const isExpandable = itemChildren.length > 0;
   const isExpanded = getIsExpanded(itemSelector) || isAlwaysExpanded;
   const isSelected = areItemSelectorsEqual(itemSelector, selectedItemSelector);
-
+  const isHighlighted = areItemSelectorsEqual(
+    itemSelector,
+    highlightedItemSelector
+  );
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
   return (
@@ -541,6 +550,7 @@ export const TreeNode = <Data extends { id: string }>({
           itemSelector,
           parentIsSelected,
           isSelected,
+          isHighlighted,
           onSelect,
           level,
           isAlwaysExpanded,

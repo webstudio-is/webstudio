@@ -25,6 +25,7 @@ import { InstanceTree } from "./tree";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const rootInstance = useStore($rootInstance);
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
@@ -124,6 +125,7 @@ export const NavigatorTree = () => {
     <InstanceTree
       root={rootInstance}
       selectedItemSelector={selectedInstanceSelector}
+      highlightedItemSelector={hoveredInstanceSelector}
       dragItemSelector={dragItemSelector}
       dropTarget={state.dropTarget}
       isItemHidden={isItemHidden}
