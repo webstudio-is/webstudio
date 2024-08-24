@@ -1,7 +1,3 @@
-/**
- * The file is named _canvas.(canvas) instead of _canvas._index due to an issue with Vercel.
- * The _canvas._index route isn’t recognized on Vercel, even though it works perfectly in other environments.
- */
 import { lazy } from "react";
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import {
