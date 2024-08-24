@@ -17,7 +17,7 @@ import {
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
-import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
 
 export const RequestParams = z.object({
   projectId: z.string().min(1, "nonempty"),
@@ -139,7 +139,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       };
     }
 
-    const { instances } = await loadBuildByProjectId(context, projectId);
+    const { instances } = await loadDevBuildByProjectId(context, projectId);
 
     const model = createGptModel({
       apiKey: env.OPENAI_KEY,
@@ -154,7 +154,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       context: {
         prompt,
         textInstances: copywriter.collectTextInstances({
-          instances: new Map(instances),
+          instances: new Map(
+            instances.map((instance) => [instance.id, instance])
+          ),
           rootInstanceId: instanceId,
         }),
       },
