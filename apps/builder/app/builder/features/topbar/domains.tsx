@@ -30,6 +30,7 @@ import { $publisherHost } from "~/shared/nano-states";
 
 export type Domain = {
   projectId: Project["id"];
+  domainId: string;
   domain: {
     domain: string;
     error: string | null;
@@ -241,6 +242,7 @@ const DomainItem = (props: {
 
   const { initiallyOpen } = props;
 
+  const domainId = props.projectDomain.domainId;
   const domain = props.projectDomain.domain.domain;
   const domainStatus = props.projectDomain.domain.status;
   const domainError = props.projectDomain.domain.error;
@@ -255,7 +257,7 @@ const DomainItem = (props: {
   const handleVerify = useCallback(() => {
     verify(
       {
-        domain,
+        domainId,
         projectId,
       },
       (verifyResponse) => {
@@ -268,7 +270,7 @@ const DomainItem = (props: {
         }
       }
     );
-  }, [domain, projectId, refreshDomainResult, verify]);
+  }, [domainId, projectId, refreshDomainResult, verify]);
 
   // @todo this should gone https://github.com/webstudio-is/webstudio/issues/1723
   const handleUpdateStatus = useCallback(() => {
@@ -340,7 +342,7 @@ const DomainItem = (props: {
   ]);
 
   const publisherHost = useStore($publisherHost);
-  const cnameEntryName = getCname(props.projectDomain.domain.domain);
+  const cnameEntryName = getCname(domain);
   const cnameEntryValue = `${props.projectDomain.cname}.customers.${publisherHost}`;
 
   const txtEntryName =
@@ -372,7 +374,7 @@ const DomainItem = (props: {
   return (
     <CollapsibleDomainSection
       initiallyOpen={props.initiallyOpen}
-      title={props.projectDomain.domain.domain}
+      title={domain}
       suffix={
         <Grid flow="column">
           <StatusIcon
@@ -380,14 +382,12 @@ const DomainItem = (props: {
             projectDomain={props.projectDomain}
           />
 
-          <Tooltip content={`Proceed to ${props.projectDomain.domain.domain}`}>
+          <Tooltip content={`Proceed to ${domain}`}>
             <IconButton
               tabIndex={-1}
               disabled={status !== "VERIFIED_ACTIVE"}
               onClick={(event) => {
-                const url = new URL(
-                  `https://${props.projectDomain.domain.domain}`
-                );
+                const url = new URL(`https://${domain}`);
                 window.open(url.href, "_blank");
                 event.preventDefault();
               }}
@@ -446,17 +446,9 @@ const DomainItem = (props: {
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         onClick={() => {
-          remove(
-            {
-              domain: props.projectDomain.domain.domain,
-              projectId: props.projectDomain.projectId,
-            },
-            () => {
-              props.refreshDomainResult({
-                projectId: props.projectDomain.projectId,
-              });
-            }
-          );
+          remove({ projectId, domainId }, () => {
+            props.refreshDomainResult({ projectId });
+          });
         }}
       >
         Remove domain
@@ -557,7 +549,7 @@ const DomainItem = (props: {
 
         <Entri
           dnsRecords={dnsRecords}
-          domain={props.projectDomain.domain.domain}
+          domain={domain}
           onClose={() => {
             // Sometimes Entri modal dialog hangs even if it's successful,
             // until they fix that, we'll just refresh the status here on every onClose event
