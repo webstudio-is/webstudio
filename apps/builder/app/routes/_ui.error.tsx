@@ -10,12 +10,8 @@ import { authenticator } from "~/services/auth.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import {
-  Toast,
-  Text,
-  TooltipProvider,
-  Flex,
-} from "@webstudio-is/design-system";
+import { lazy } from "react";
+import { ClientOnly } from "~/shared/client-only";
 
 const SessionError = z.object({
   message: z.string(),
@@ -54,6 +50,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   );
 };
 
+const ErrorPage = lazy(async () => {
+  const { ErrorPage } = await import("~/shared/error/error-page.client");
+  return { default: ErrorPage };
+});
+
 /**
  * @todo Implement the error page
  */
@@ -61,33 +62,9 @@ const Error = () => {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <TooltipProvider>
-      <Flex
-        css={{
-          position: "fixed",
-          inset: 0,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Flex>
-          <Toast
-            variant={"error"}
-            onCopy={() => {
-              navigator.clipboard.writeText(
-                `${data.error.message}\n${data.error.description}`
-              );
-            }}
-            onClose={() => {
-              window.location.href = data.origin;
-            }}
-          >
-            <Text variant={"titles"}>{data.error.message}</Text>
-            <Text>{data.error.description}</Text>
-          </Toast>
-        </Flex>
-      </Flex>
-    </TooltipProvider>
+    <ClientOnly>
+      <ErrorPage error={data.error} onCloseNavigateTo={data.origin} />
+    </ClientOnly>
   );
 };
 
