@@ -42,7 +42,7 @@ const Section = (props: ComponentProps<typeof Flex>) => {
   );
 };
 
-type DashboardProps = {
+export type DashboardProps = {
   user: User;
   projects: Array<DashboardProject>;
   projectTemplates: Array<DashboardProject>;
