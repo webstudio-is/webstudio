@@ -1,6 +1,5 @@
 import { type LoaderFunctionArgs, json } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import { Root } from "~/shared/remix/root";
 import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
@@ -92,6 +91,4 @@ const Error = () => {
   );
 };
 
-export default () => {
-  return <Root Outlet={Error} />;
-};
+export default Error;
