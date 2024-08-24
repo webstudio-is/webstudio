@@ -6,8 +6,6 @@ import {
 } from "@remix-run/server-runtime";
 import {
   isRouteErrorResponse,
-  Links,
-  Meta,
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
@@ -84,7 +82,7 @@ const Canvas = lazy(async () => {
   return { default: Canvas };
 });
 
-const Outlet = () => {
+const CanvasRoute = () => {
   const { params } = useLoaderData<typeof loader>();
   const imageLoader = createImageLoader({
     imageBaseUrl: params.imageBaseUrl,
@@ -96,26 +94,7 @@ const Outlet = () => {
   );
 };
 
-/**
- * @todo add support for published project on localhost
- * consider switching current route to something like /canvas
- */
-
-const Content = () => {
-  return (
-    <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
-        <Links />
-      </head>
-      <Outlet />
-    </html>
-  );
-};
-
-export default Content;
+export default CanvasRoute;
 
 // Reduces Vercel function size from 29MB to 9MB for unknown reasons; effective when used in limited files.
 export const config = {
