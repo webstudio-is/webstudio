@@ -29,6 +29,12 @@ export default defineConfig(({ mode }) => {
           find: "~",
           replacement: resolve("app"),
         },
+
+        // before 2,899.74 kB, after 2,145.98 kB
+        {
+          find: "@supabase/node-fetch",
+          replacement: resolve("./app/shared/empty.ts"),
+        },
       ],
     },
     define: {
