@@ -1,4 +1,3 @@
-import { useNavigate } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
 import {
   theme,
@@ -21,7 +20,7 @@ import {
   $isShareDialogOpen,
   $isPublishDialogOpen,
 } from "~/builder/shared/nano-states";
-import { dashboardPath } from "~/shared/router-utils";
+import { dashboardUrl } from "~/shared/router-utils";
 import { $authPermit, $authTokenPermissions } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
@@ -52,7 +51,6 @@ const ViewMenuItem = () => {
 };
 
 export const Menu = () => {
-  const navigate = useNavigate();
   const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
   const authTokenPermission = useStore($authTokenPermissions);
@@ -80,7 +78,7 @@ export const Menu = () => {
         >
           <DropdownMenuItem
             onSelect={() => {
-              navigate(dashboardPath());
+              window.location.href = dashboardUrl({ origin: window.origin });
             }}
           >
             Dashboard

@@ -1,15 +1,18 @@
 import {
+  isRouteErrorResponse,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteError,
 } from "@remix-run/react";
 import interFont from "@fontsource-variable/inter/index.css?url";
 import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
 import robotoMonoFont from "@fontsource/roboto-mono/index.css?url";
 import appCss from "../shared/app.css?url";
 import type { LinksFunction } from "@remix-run/server-runtime";
+import { ErrorMessage } from "~/shared/error/error-message";
 
 export const links: LinksFunction = () => {
   // `links` returns an array of objects whose
@@ -22,7 +25,7 @@ export const links: LinksFunction = () => {
   ];
 };
 
-export default function Layout() {
+const Document = (props: { children: React.ReactNode }) => {
   return (
     <html lang="en">
       <head>
@@ -32,10 +35,37 @@ export default function Layout() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        {props.children}
         <ScrollRestoration />
         <Scripts />
       </body>
     </html>
+  );
+};
+
+export const ErrorBoundary = () => {
+  const error = useRouteError();
+
+  const message =
+    error == null
+      ? "Uknown error"
+      : isRouteErrorResponse(error)
+        ? `${error.status} ${error.statusText} ${error.data.message ?? error.data}`
+        : typeof error === "object" && "message" in error
+          ? error.message
+          : JSON.stringify(error);
+
+  return (
+    <Document>
+      <ErrorMessage message={`${message}`} />
+    </Document>
+  );
+};
+
+export default function Layout() {
+  return (
+    <Document>
+      <Outlet />
+    </Document>
   );
 }

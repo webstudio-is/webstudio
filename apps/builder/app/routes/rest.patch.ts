@@ -39,6 +39,7 @@ import { createContext } from "~/shared/context.server";
 import { db } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
 import { publicStaticEnv } from "~/env/env.static";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -54,6 +55,8 @@ export const action = async ({
   | { status: "version_mismatched"; errors: string }
   | { status: "error"; errors: string }
 > => {
+  preventCrossOriginCookie(request);
+
   enableMapSet();
   enablePatches();
 

@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { createDebug } from "~/shared/debug";
 import { authenticator } from "~/services/auth.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
@@ -6,35 +6,41 @@ import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
 } from "~/shared/router-utils/origins";
+import { isDashboard, loginPath } from "~/shared/router-utils";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const debug = createDebug(import.meta.url);
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  if (isDashboard(request)) {
+    // Builder logout can be done through a cross origin fetch request
+    preventCrossOriginCookie(request);
+  }
+
+  // We are not clearing cross origin cookies here for logout to work through a fetch request
   debug("Logout request received", request.url);
 
+  const authenticatorService = isBuilderUrl(request.url)
+    ? builderAuthenticator
+    : authenticator;
+
+  const redirectTo = isBuilderUrl(request.url)
+    ? `${getAuthorizationServerOrigin(request.url)}/${loginPath({})}`
+    : loginPath({});
+
   try {
-    if (isBuilderUrl(request.url)) {
-      debug("Temporary redirect to /tmp/login after logout");
-      await builderAuthenticator.logout(request, {
-        redirectTo: `${getAuthorizationServerOrigin(request.url)}/tmp/login`,
-      });
-    } else {
-      await authenticator.logout(request, { redirectTo: "/" });
-    }
+    await authenticatorService.logout(request, {
+      redirectTo,
+    });
   } catch (error) {
     if (error instanceof Response) {
       const contentType = request.headers.get("Content-Type");
 
       if (contentType?.includes("application/json")) {
-        const headers = new Headers(error.headers);
-        headers.set("Content-Type", "application/json");
-        return new Response(
-          JSON.stringify({
-            success: true,
-          }),
+        return json(
+          { success: error.status < 400 },
           {
-            headers,
-            status: 200,
+            status: error.status < 400 ? 200 : error.status,
           }
         );
       }

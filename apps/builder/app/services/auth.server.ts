@@ -5,14 +5,29 @@ import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
 import { AUTH_PROVIDERS } from "~/shared/session";
-import { authCallbackPath } from "~/shared/router-utils";
+import { authCallbackPath, isBuilder } from "~/shared/router-utils";
 import { getUserById, type User } from "~/shared/db/user.server";
 import env from "~/env/env.server";
+import { builderAuthenticator } from "./builder-auth.server";
+import { staticEnv } from "~/env/env.static.server";
 
-const url =
+const transformRefToAlias = (input: string) => {
+  const rawAlias = input.endsWith(".staging") ? input.slice(0, -8) : input;
+
+  return rawAlias
+    .replace(/[^a-zA-Z0-9_-]/g, "") // Remove all characters except a-z, A-Z, 0-9, _ and -
+    .toLowerCase() // Convert to lowercase
+    .replace(/_/g, "-") // Replace underscores with hyphens
+    .replace(/-+/g, "-"); // Replace multiple hyphens with a single hyphen
+};
+
+export const callbackOrigin =
   env.DEPLOYMENT_ENVIRONMENT === "production"
     ? env.DEPLOYMENT_URL
-    : `http://localhost:${env.PORT || 3000}`;
+    : env.DEPLOYMENT_ENVIRONMENT === "staging" ||
+        env.DEPLOYMENT_ENVIRONMENT === "development"
+      ? `https://${transformRefToAlias(staticEnv.GITHUB_REF_NAME ?? "main")}.${env.DEPLOYMENT_ENVIRONMENT}.webstudio.is`
+      : `https://wstd.dev:${env.PORT || 5173}`;
 
 const strategyCallback = async ({
   profile,
@@ -46,7 +61,7 @@ if (env.GH_CLIENT_ID && env.GH_CLIENT_SECRET) {
     {
       clientID: env.GH_CLIENT_ID,
       clientSecret: env.GH_CLIENT_SECRET,
-      callbackURL: `${url}${authCallbackPath({ provider: "github" })}`,
+      callbackURL: `${callbackOrigin}${authCallbackPath({ provider: "github" })}`,
     },
     strategyCallback
   );
@@ -58,7 +73,7 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
     {
       clientID: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${url}${authCallbackPath({ provider: "google" })}`,
+      callbackURL: `${callbackOrigin}${authCallbackPath({ provider: "google" })}`,
     },
     strategyCallback
   );
@@ -102,10 +117,14 @@ if (env.DEV_LOGIN === "true") {
 }
 
 export const findAuthenticatedUser = async (request: Request) => {
-  const user = await authenticator.isAuthenticated(request);
+  const user = isBuilder(request)
+    ? await builderAuthenticator.isAuthenticated(request)
+    : await authenticator.isAuthenticated(request);
+
   if (user == null) {
     return null;
   }
+
   try {
     return await getUserById(user.id);
   } catch (error) {

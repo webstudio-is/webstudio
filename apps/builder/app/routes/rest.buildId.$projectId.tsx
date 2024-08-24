@@ -1,11 +1,14 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { db as projectDb } from "@webstudio-is/project/index.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createContext } from "~/shared/context.server";
 
 export const loader = async ({
   params,
   request,
 }: LoaderFunctionArgs): Promise<{ buildId: string | null }> => {
+  preventCrossOriginCookie(request);
+
   try {
     const projectId = params.projectId;
 

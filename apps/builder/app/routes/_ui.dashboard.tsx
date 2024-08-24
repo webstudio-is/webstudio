@@ -1,18 +1,28 @@
 import { lazy } from "react";
-import { useLoaderData, useRouteError } from "@remix-run/react";
-import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
+import { useLoaderData } from "@remix-run/react";
+import {
+  json,
+  type LoaderFunctionArgs,
+  redirect,
+} from "@remix-run/server-runtime";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { findAuthenticatedUser } from "~/services/auth.server";
-import { loginPath } from "~/shared/router-utils";
-import { ErrorMessage } from "~/shared/error";
+import { isDashboard, loginPath } from "~/shared/router-utils";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
-import type { DashboardProps } from "~/dashboard/dashboard";
 import { ClientOnly } from "~/shared/client-only";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
-export const loader = async ({
-  request,
-}: LoaderFunctionArgs): Promise<DashboardProps> => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
+  if (false === isDashboard(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {
@@ -41,21 +51,27 @@ export const loader = async ({
     throw new Error("User plan features are not defined");
   }
 
-  return {
+  return json({
     user,
     projects,
     projectTemplates,
     userPlanFeatures,
     publisherHost: env.PUBLISHER_HOST,
     imageBaseUrl: env.IMAGE_BASE_URL,
-  };
+  });
 };
 
-export const ErrorBoundary = () => {
-  const error = useRouteError();
-  console.error({ error });
-  const message = error instanceof Error ? error.message : String(error);
-  return <ErrorMessage message={message} />;
+/**
+ * When deleting/adding a project, then navigating to a new project and pressing the back button,
+ * the dashboard page may display stale data because it’s being retrieved from the browser’s back/forward cache (bfcache).
+ *
+ * https://web.dev/articles/bfcache
+ *
+ */
+export const headers = () => {
+  return {
+    "Cache-Control": "no-store",
+  };
 };
 
 const Dashboard = lazy(async () => {
@@ -64,7 +80,7 @@ const Dashboard = lazy(async () => {
 });
 
 const DashboardRoute = () => {
-  const data = useLoaderData<DashboardProps>();
+  const data = useLoaderData<typeof loader>();
 
   return (
     <ClientOnly>

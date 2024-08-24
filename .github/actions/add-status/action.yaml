@@ -15,7 +15,7 @@ runs:
   using: "composite"
   steps:
     - name: Add URL to vercel deployment through *.prs.webstudio.is
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const branch = context.payload.pull_request?.head?.ref ?? context.payload.ref?.replace('refs/heads/', '')

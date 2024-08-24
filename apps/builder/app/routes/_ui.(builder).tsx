@@ -1,15 +1,12 @@
+/**
+ * The file is named _ui.(builder) instead of _ui._index due to an issue with Vercel.
+ * The _ui._index route isn’t recognized on Vercel, even though it works perfectly in other environments.
+ */
+
 import { lazy } from "react";
-import {
-  useLoaderData,
-  useRouteError,
-  isRouteErrorResponse,
-} from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
-import {
-  type LoaderFunctionArgs,
-  redirect,
-  json,
-} from "@remix-run/server-runtime";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 
 import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
@@ -20,8 +17,7 @@ import {
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
-import { ErrorMessage } from "~/shared/error";
-import { loginPath } from "~/shared/router-utils";
+import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
 
 import env from "~/env/env.server";
 
@@ -29,8 +25,9 @@ import builderStyles from "~/builder/builder.css?url";
 import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { ClientOnly } from "~/shared/client-only";
 import type { BuilderProps } from "~/builder/builder";
+import { parseBuilderUrl } from "~/shared/router-utils/origins";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
-// Can cause FOUC because of remix-island, be very accurate adding anything here
 export const links = () => {
   return [
     { rel: "stylesheet", href: builderStyles },
@@ -39,20 +36,46 @@ export const links = () => {
 };
 
 export const loader = async ({
-  params,
   request,
 }: LoaderFunctionArgs): Promise<BuilderProps> => {
+  preventCrossOriginCookie(request);
+
+  if (isDashboard(request)) {
+    throw redirect(dashboardPath());
+  }
+
+  if (false === isBuilder(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
   const context = await createContext(request);
 
-  try {
-    if (params.projectId === undefined) {
-      throw new Error("Project id undefined");
-    }
+  if (
+    context.authorization.userId === undefined &&
+    context.authorization.authToken === undefined
+  ) {
+    // @todo just import loader from auth and call it
+    throw redirect("/auth/ws");
+  }
 
+  try {
     const url = new URL(request.url);
 
+    const { projectId } = parseBuilderUrl(request.url);
+
+    if (projectId === undefined) {
+      throw new Error("Project ID is not defined");
+    }
+
     const start = Date.now();
-    const project = await db.project.loadById(params.projectId, context);
+    const project = await db.project.loadById(projectId, context);
+
+    if (project === null) {
+      throw new Error(`Project "${projectId}" not found`);
+    }
 
     const authPermit =
       (await authorizeProject.getProjectPermit(
@@ -64,10 +87,6 @@ export const loader = async ({
         },
         context
       )) ?? "view";
-
-    if (project === null) {
-      throw new Error(`Project "${params.projectId}" not found`);
-    }
 
     const devBuild = await loadBuildIdAndVersionByProjectId(
       context,
@@ -120,36 +139,25 @@ export const loader = async ({
     };
   } catch (error) {
     if (error instanceof AuthorizationError) {
-      // try to login user if he is not logged in
-      if (context.authorization.userId === undefined) {
-        const url = new URL(request.url);
-
-        throw redirect(
-          loginPath({
-            returnTo: url.pathname,
-          })
-        );
-      }
-
-      const FORBIDDEN = 403;
-
-      throw json({ message: error.message }, { status: FORBIDDEN });
+      // try to re-login user if he has no access to the project
+      throw redirect(`/auth/ws`);
     }
 
     throw error;
   }
 };
 
-export const ErrorBoundary = () => {
-  const error = useRouteError();
-  console.error({ error });
-  const message = isRouteErrorResponse(error)
-    ? (error.data.message ?? error.data)
-    : error instanceof Error
-      ? error.message
-      : String(error);
-
-  return <ErrorMessage message={message} />;
+/**
+ * When doing changes in a project, then navigating to a dashboard then pressing the back button,
+ * the builder page may display stale data because it’s being retrieved from the browser’s back/forward cache (bfcache).
+ *
+ * https://web.dev/articles/bfcache
+ *
+ */
+export const headers = () => {
+  return {
+    "Cache-Control": "no-store",
+  };
 };
 
 const Builder = lazy(async () => {

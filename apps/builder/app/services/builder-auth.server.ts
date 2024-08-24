@@ -34,7 +34,8 @@ builderAuthenticator.use(
       tokenEndpoint: "https://OVERRIDDEN_ENDPOINT/oauth2/token",
       redirectURI: "https://OVERRIDDEN_ENDPOINT/auth/callback",
       codeChallengeMethod: "S256",
-      authenticateWith: "request_body",
+      // use http_basic_auth to bypass no-cross-origin-cookie.ts/preventCrossOriginCookie
+      authenticateWith: "http_basic_auth",
     },
     async ({ tokens, request }) => {
       const accessToken = await readAccessToken(

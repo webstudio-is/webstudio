@@ -4,9 +4,15 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 
-import { dashboardPath } from "~/shared/router-utils";
+import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
+
+import { dashboardPath, isDashboard } from "~/shared/router-utils";
+import { ErrorMessage } from "~/shared/error/error-message";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
   const url = new URL(request.url);
 
   // Redirecting asset files (e.g., .js, .css) to the dashboard should be avoided.
@@ -22,6 +28,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       headers: {
         "Cache-Control": "public, max-age=0, must-revalidate",
       },
+    });
+  }
+
+  if (false === isDashboard(request)) {
+    const contentType = request.headers.get("Content-Type");
+
+    if (contentType?.includes("application/json")) {
+      // Return an error to not trigger the ErrorBoundary rendering (api request)
+      return new Response(null, {
+        status: 404,
+        statusText: "Not Found",
+      });
+    }
+
+    // Throw an error to trigger the ErrorBoundary rendering
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
     });
   }
 
@@ -42,4 +66,16 @@ export const headers: HeadersFunction = ({ errorHeaders, loaderHeaders }) => {
     };
   }
   return loaderHeaders;
+};
+
+export const ErrorBoundary = () => {
+  const error = useRouteError();
+  console.error({ error });
+  const message = isRouteErrorResponse(error)
+    ? `${error.status} ${error.statusText} ${error.data.message ?? error.data}`
+    : error instanceof Error
+      ? error.message
+      : String(error);
+
+  return <ErrorMessage message={`${message}`} />;
 };

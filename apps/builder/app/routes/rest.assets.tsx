@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const loader = async ({
   params,
@@ -23,6 +24,8 @@ export const loader = async ({
 };
 
 export const action = async (props: ActionFunctionArgs) => {
+  preventCrossOriginCookie(props.request);
+
   const { request } = props;
 
   const context = await createContext(request);

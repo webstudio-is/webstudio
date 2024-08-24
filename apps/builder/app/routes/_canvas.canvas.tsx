@@ -1,21 +1,19 @@
 import { lazy } from "react";
-import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
-import {
-  isRouteErrorResponse,
-  useLoaderData,
-  useRouteError,
-} from "@remix-run/react";
+import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { useLoaderData } from "@remix-run/react";
 import type { Params } from "@webstudio-is/react-sdk";
 import { Body } from "@webstudio-is/sdk-components-react-remix";
 import { createImageLoader } from "@webstudio-is/image";
 import env from "~/env/env.server";
-import { ErrorMessage } from "~/shared/error";
-import { dashboardPath, isCanvas } from "~/shared/router-utils";
+import { isCanvas } from "~/shared/router-utils";
 import { ClientOnly } from "~/shared/client-only";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (isCanvas(request) === false) {
-    throw redirect(dashboardPath());
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
   }
 
   const params: Params = {
@@ -24,19 +22,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 
   return { params };
-};
-
-export const ErrorBoundary = () => {
-  const error = useRouteError();
-
-  console.error({ error });
-  const message = isRouteErrorResponse(error)
-    ? (error.data.message ?? error.data)
-    : error instanceof Error
-      ? error.message
-      : String(error);
-
-  return <ErrorMessage message={message} />;
 };
 
 const Canvas = lazy(async () => {

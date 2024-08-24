@@ -5,9 +5,11 @@ import { fromError } from "zod-validation-error";
 import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
-import { returnToCookie } from "~/services/cookie.server";
 import { createCodeToken } from "~/services/token.server";
 import { isUserAuthorizedForProject } from "~/services/builder-access.server";
+import { loginPath } from "~/shared/router-utils";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import * as session from "~/services/session.server";
 
 const debug = createDebug(import.meta.url);
 
@@ -68,6 +70,8 @@ const OAuthRedirectUri = z.object({
  * https://datatracker.ietf.org/doc/html/rfc7636
  */
 export const loader: LoaderFunction = async ({ request }) => {
+  preventCrossOriginCookie(request);
+
   try {
     debug("Authorize request received", request.url);
 
@@ -184,7 +188,28 @@ export const loader: LoaderFunction = async ({ request }) => {
         `Code ${code} created, redirecting to redirect_uri: ${redirectUri.href}`
       );
 
-      return redirect(redirectUri.href);
+      // To use during logout
+
+      const bloomFilter = await session.readBloomFilter(request);
+
+      debug(
+        `db40c18d-d837-4e8b-ba75-764769e6fd0e is in bloom filter?`,
+        await bloomFilter.has("db40c18d-d837-4e8b-ba75-764769e6fd0e"),
+        await bloomFilter.has("9ccd96e1-de48-4f3f-898b-042e890ae805")
+      );
+
+      await bloomFilter.add(oAuthParams.scope.projectId);
+
+      return session.writeBloomFilter(
+        request,
+        new Response(null, {
+          status: 302,
+          headers: {
+            Location: redirectUri.href,
+          },
+        }),
+        bloomFilter
+      );
     }
 
     user satisfies null;
@@ -193,18 +218,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       "User is not authenticated, saving current url to returnTo cookie and redirecting to login"
     );
 
-    const headers = new Headers();
-    // Issue with local development, so force https
-    const returnToUrl = new URL(request.url);
-    returnToUrl.protocol = "https";
-
-    // We don't want to have all params above in the URL, so save in returnTo cookie immediately
-    headers.append(
-      "Set-Cookie",
-      await returnToCookie.serialize(returnToUrl.href)
-    );
-
-    return redirect("/login", { headers });
+    return redirect(loginPath({ returnTo: request.url }));
   } catch (error) {
     if (error instanceof Response) {
       return error;

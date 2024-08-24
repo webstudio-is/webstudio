@@ -12,6 +12,7 @@ import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { lazy } from "react";
 import { ClientOnly } from "~/shared/client-only";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const SessionError = z.object({
   message: z.string(),
@@ -19,6 +20,8 @@ const SessionError = z.object({
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
   const storage = isBuilderUrl(request.url)
     ? builderSessionStorage
     : sessionStorage;
