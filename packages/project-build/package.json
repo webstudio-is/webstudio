@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "type-fest": "^4.24.0",
