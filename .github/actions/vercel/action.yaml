@@ -79,6 +79,27 @@ runs:
         vercel build
       shell: bash
 
+    - name: Patch
+      run: |
+        # When we deploy on Vercel, it generates a URL like webstudio-saas-mahqcavgo-getwebstudio.vercel.app.
+        # We use the alias oauth-wstd-00-staging.vercel.app for routing, which maps to oauth.staging.webstudio.is on the worker.
+        # Issue: Vercel proxies also set x-forwarded-host, which overrides our header.
+        # We are adding x-forwarded-ws-host on the worker as a workaround, but issues with request.url persist.
+        # Remix and the Vercel adapter lack support for header selection https://github.com/vercel/vercel/blob/9d4d4b6deb6294506016106f78e71f1984adcc7f/packages/remix/defaults/server-node.mjs#L44
+        # Patching server-node.mjs directly without installing Vercel CLI was unsuccessful, so we are using string replacement instead.
+
+        mapfile -t matching_files < <(grep -rl "req\.headers\['x-forwarded-host'\] || req\.headers\.host" "./apps/builder/build")
+        if [ ${#matching_files[@]} -eq 0 ]; then
+          echo "No files found containing the specified string."
+          exit 1
+        fi
+
+        echo "Files containing 'req.headers['x-forwarded-host'] || req.headers.host':"
+        printf '%s\n' "${matching_files[@]}"
+
+        find ./apps/builder/build -type f -exec sed -i "s/req\.headers\['x-forwarded-host'\] || req\.headers\.host/req.headers['x-forwarded-ws-host'] || req.headers['x-forwarded-host'] || req.headers.host/g" {} +
+      shell: bash
+
     - name: Deploy
       id: deploy
       run: |

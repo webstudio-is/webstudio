@@ -103,6 +103,10 @@ const env = {
 
   SECURE_COOKIE:
     process.env.SSL === "true" || process.env.NODE_ENV === "production",
+
+  // Used for project oauth login flow @todo remove ??
+  AUTH_WS_CLIENT_ID: process.env.AUTH_WS_CLIENT_ID ?? "12345",
+  AUTH_WS_CLIENT_SECRET: process.env.AUTH_WS_CLIENT_SECRET ?? "12345678",
 };
 
 export type ServerEnv = typeof env;

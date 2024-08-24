@@ -1,13 +1,6 @@
-export const getRequestOrigin = (request: Request) => {
-  const url = new URL(request.url);
+export const getRequestOrigin = (urlStr: string) => {
+  const url = new URL(urlStr);
 
-  // Vercel overwrites x-forwarded-host at the edge level, even if our header is set.
-  // We use custom header x-forwarded-ws-host to get the original host as a workaround.
-  url.host =
-    request.headers.get("x-forwarded-ws-host") ??
-    request.headers.get("x-forwarded-host") ??
-    url.host;
-  url.protocol = request.headers.get("x-forwarded-proto") ?? "https";
   return url.origin;
 };
 
@@ -33,6 +26,7 @@ export const parseBuilderUrl = (urlStr: string) => {
   // Extract prefix, projectId (UUID), and branch (if exists)
   const prefix = match?.groups?.prefix;
   const projectId = match?.groups?.uuid;
+  const branch = match?.groups?.branch;
 
   if (prefix !== buildProjectDomainPrefix) {
     return {
@@ -48,7 +42,7 @@ export const parseBuilderUrl = (urlStr: string) => {
     };
   }
 
-  fragments[0] = fragments[0].replace(re, "");
+  fragments[0] = fragments[0].replace(re, branch ?? "");
 
   const sourceUrl = new URL(url.origin);
   sourceUrl.protocol = "https";
@@ -65,17 +59,8 @@ export const isBuilderUrl = (urlStr: string): boolean => {
   return projectId !== undefined;
 };
 
-export function getAuthorizationServerOrigin(request: Request): string;
-export function getAuthorizationServerOrigin(origin: string): string;
-
-// eslint-disable-next-line func-style
-export function getAuthorizationServerOrigin(
-  request: string | Request
-): string {
-  const origin =
-    typeof request === "string"
-      ? new URL(request).origin
-      : getRequestOrigin(request);
+export const getAuthorizationServerOrigin = (urlStr: string): string => {
+  const origin = getRequestOrigin(urlStr);
   const { sourceOrigin } = parseBuilderUrl(origin);
   return sourceOrigin;
-}
+};
