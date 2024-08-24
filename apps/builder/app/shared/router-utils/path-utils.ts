@@ -182,12 +182,12 @@ export const restPatchPath = (props: { authToken?: string }) => {
   }`;
 };
 
-export const getBuildUrl = ({ project }: { project: Project }) => {
+export const getCanvasUrl = ({ project }: { project: Project }) => {
   // const url = new URL(buildOrigin);
   const searchParams = new URLSearchParams();
   searchParams.set("projectId", project.id);
 
-  return `/?${searchParams.toString()}`;
+  return `/canvas?${searchParams.toString()}`;
 };
 
 export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>
