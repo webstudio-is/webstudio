@@ -126,7 +126,6 @@ const getCascadedValue = ({
   const tag = instanceTags.get(instanceId);
   const component = instanceComponents.get(instanceId);
   let selectedIndex = -1;
-  let previousIndex = -1;
 
   // https://drafts.csswg.org/css-cascade-5/#declared
   type DeclaredValue = { source: StyleValueSource; value: StyleValue };
@@ -181,14 +180,8 @@ const getCascadedValue = ({
           styleSourceId === selectedStyleSourceId &&
           state === selectedState
         ) {
-          if (styleDecl) {
-            selectedIndex = declaredValues.length;
-            previousIndex = -1;
-          } else {
-            // reset selection from another state or breakpoint
-            selectedIndex = -1;
-            previousIndex = declaredValues.length - 1;
-          }
+          // reset selection from another state or breakpoint
+          selectedIndex = styleDecl ? declaredValues.length : -1;
         }
         if (styleDecl) {
           declaredValues.push({ source: "remote", value: styleDecl.value });
