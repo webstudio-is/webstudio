@@ -177,9 +177,10 @@ const getCascadedValue = ({
           property: property as StyleProperty,
         });
         const styleDecl = styles.get(key);
-        if (styleDecl) {
-        }
-        if (styleSourceId === selectedStyleSourceId && state == selectedState) {
+        if (
+          styleSourceId === selectedStyleSourceId &&
+          state === selectedState
+        ) {
           if (styleDecl) {
             selectedIndex = declaredValues.length;
             previousIndex = -1;
