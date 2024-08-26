@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type Breakpoint,
@@ -18,6 +18,7 @@ import {
 import { useStyleInfo } from "./style-info";
 import { serverSyncStore } from "~/shared/sync";
 import { $ephemeralStyles } from "~/canvas/stores";
+import { $isEphemeralUpdateInProgress } from "~/builder/shared/nano-states";
 
 export type StyleUpdate =
   | {
@@ -152,10 +153,11 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
     (property) => {
       return (value, options: StyleUpdateOptions = { isEphemeral: false }) => {
         if (value.type !== "invalid") {
+          const isEphimeral = options.isEphemeral ?? false;
           const updates = [{ operation: "set" as const, property, value }];
-          const type = options.isEphemeral ? "preview" : "update";
-
+          const type = isEphimeral ? "preview" : "update";
           publishUpdates(type, updates, options);
+          $isEphemeralUpdateInProgress.set(isEphimeral);
         }
       };
     },
@@ -193,12 +195,14 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
     };
 
     const publish = (options: StyleUpdateOptions = { isEphemeral: false }) => {
-      if (!updates.length) {
+      if (updates.length === 0) {
         return;
       }
-      const type = options.isEphemeral ? "preview" : "update";
+      const isEphimeral = options.isEphemeral ?? false;
+      const type = isEphimeral ? "preview" : "update";
       publishUpdates(type, updates, options);
       updates = [];
+      $isEphemeralUpdateInProgress.set(isEphimeral);
     };
 
     return {

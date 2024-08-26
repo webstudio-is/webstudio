@@ -9,7 +9,10 @@ import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "./apply-scale";
-import { $scale } from "~/builder/shared/nano-states";
+import {
+  $isEphemeralUpdateInProgress,
+  $scale,
+} from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 
 export const SelectedInstanceOutline = () => {
@@ -18,6 +21,8 @@ export const SelectedInstanceOutline = () => {
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const outline = useStore($selectedInstanceOutlineAndInstance);
   const scale = useStore($scale);
+  const isEphemeralUpdateInProgress = useStore($isEphemeralUpdateInProgress);
+
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
     areInstanceSelectorsEqual(
@@ -28,7 +33,8 @@ export const SelectedInstanceOutline = () => {
   if (
     isEditingCurrentInstance ||
     outline === undefined ||
-    selectedInstanceSelector === undefined
+    selectedInstanceSelector === undefined ||
+    isEphemeralUpdateInProgress
   ) {
     return;
   }
