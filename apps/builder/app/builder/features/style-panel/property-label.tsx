@@ -195,6 +195,7 @@ export const PropertyLabel = ({
       properties.map(createComputedStyleDeclStore),
       (...computedStyles) => computedStyles
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, properties);
   const styles = useStore($styles);
   const colors = styles.map(({ source }) => source.name);
