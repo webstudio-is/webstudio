@@ -1070,7 +1070,7 @@ describe("style value source", () => {
         instanceSelector: ["body"],
         property: "color",
       }).source
-    ).toEqual("default");
+    ).toEqual({ name: "default" });
   });
 
   test("preset", () => {
@@ -1091,7 +1091,7 @@ describe("style value source", () => {
         instanceSelector: ["body"],
         property: "color",
       }).source
-    ).toEqual("preset");
+    ).toEqual({ name: "preset", instanceId: "body" });
   });
 
   test("remote style source", () => {
@@ -1120,7 +1120,12 @@ describe("style value source", () => {
         styleSourceId: "first",
         property: "color",
       }).source
-    ).toEqual("remote");
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "second",
+    });
     expect(
       getComputedStyleDecl({
         model,
@@ -1128,7 +1133,12 @@ describe("style value source", () => {
         styleSourceId: "second",
         property: "color",
       }).source
-    ).toEqual("local");
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "second",
+    });
     expect(
       getComputedStyleDecl({
         model,
@@ -1136,7 +1146,12 @@ describe("style value source", () => {
         styleSourceId: "third",
         property: "color",
       }).source
-    ).toEqual("remote");
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "second",
+    });
   });
 
   test("overwritten style source", () => {
@@ -1154,7 +1169,7 @@ describe("style value source", () => {
           color: red;
         }
         second {
-          color: blue;
+          color: green;
         }
         third {
           color: blue;
@@ -1171,7 +1186,12 @@ describe("style value source", () => {
         styleSourceId: "first",
         property: "color",
       }).source
-    ).toEqual("overwritten");
+    ).toEqual({
+      name: "overwritten",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "third",
+    });
     expect(
       getComputedStyleDecl({
         model,
@@ -1179,7 +1199,12 @@ describe("style value source", () => {
         styleSourceId: "second",
         property: "color",
       }).source
-    ).toEqual("overwritten");
+    ).toEqual({
+      name: "overwritten",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "third",
+    });
     expect(
       getComputedStyleDecl({
         model,
@@ -1187,7 +1212,12 @@ describe("style value source", () => {
         styleSourceId: "third",
         property: "color",
       }).source
-    ).toEqual("local");
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "third",
+    });
   });
 
   test("remote matching state", () => {
@@ -1206,7 +1236,13 @@ describe("style value source", () => {
         instanceSelector: ["body"],
         property: "color",
       }).source
-    ).toEqual("remote");
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
     expect(
       getComputedStyleDecl({
         model,
@@ -1214,7 +1250,13 @@ describe("style value source", () => {
         state: ":hover",
         property: "color",
       }).source
-    ).toEqual("local");
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
   });
 
   test("overwritten stateless", () => {
@@ -1236,7 +1278,13 @@ describe("style value source", () => {
         instanceSelector: ["body"],
         property: "color",
       }).source
-    ).toEqual("overwritten");
+    ).toEqual({
+      name: "overwritten",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
     expect(
       getComputedStyleDecl({
         model,
@@ -1244,7 +1292,54 @@ describe("style value source", () => {
         state: ":hover",
         property: "color",
       }).source
-    ).toEqual("local");
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
+  });
+
+  test("remote breakpoint", () => {
+    const model = createModel({
+      css: `
+        local {
+          color: red;
+        }
+        @media small {
+          local {
+            border-top-color: blue;
+          }
+        }
+      `,
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      matchingBreakpoints: ["base", "small"],
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "borderTopColor",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "small",
+      styleSourceId: "local",
+    });
   });
 
   test("remote inherited", () => {
@@ -1274,20 +1369,30 @@ describe("style value source", () => {
         instanceSelector: ["inner", "box", "outer", "body"],
         property: "color",
       }).source
-    ).toEqual("remote");
+    ).toEqual({
+      name: "remote",
+      instanceId: "box",
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+    });
     expect(
       getComputedStyleDecl({
         model,
         instanceSelector: ["inner", "box", "outer", "body"],
         property: "width",
       }).source
-    ).toEqual("default");
+    ).toEqual({ name: "default" });
     expect(
       getComputedStyleDecl({
         model,
         instanceSelector: ["box", "outer", "body"],
         property: "color",
       }).source
-    ).toEqual("local");
+    ).toEqual({
+      name: "local",
+      instanceId: "box",
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+    });
   });
 });

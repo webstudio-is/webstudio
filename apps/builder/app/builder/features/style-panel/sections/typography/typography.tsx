@@ -6,6 +6,7 @@ import {
   theme,
   IconButton,
 } from "@webstudio-is/design-system";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
@@ -38,6 +39,7 @@ import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-con
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSourceColor, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
+import { PropertyLabel } from "../../property-label";
 
 export const properties = [
   "fontFamily",
@@ -79,11 +81,10 @@ export const TypographySectionFont = (props: SectionProps) => {
 
   return (
     <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-      <PropertyName
-        style={currentStyle}
+      <PropertyLabel
         label="Family"
+        description={propertyDescriptions.fontFamily}
         properties={["fontFamily"]}
-        onReset={() => deleteProperty("fontFamily")}
       />
       <FontFamilyControl
         property="fontFamily"
@@ -91,11 +92,10 @@ export const TypographySectionFont = (props: SectionProps) => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
-      <PropertyName
-        style={currentStyle}
+      <PropertyLabel
         label="Weight"
+        description={propertyDescriptions.fontWeight}
         properties={["fontWeight"]}
-        onReset={() => deleteProperty("fontWeight")}
       />
       <FontWeightControl
         property="fontWeight"
@@ -103,11 +103,10 @@ export const TypographySectionFont = (props: SectionProps) => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
-      <PropertyName
-        style={currentStyle}
+      <PropertyLabel
         label="Color"
+        description={propertyDescriptions.color}
         properties={["color"]}
-        onReset={() => deleteProperty("color")}
       />
       <ColorControl
         property="color"
