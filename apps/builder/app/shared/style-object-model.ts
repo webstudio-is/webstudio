@@ -2,7 +2,6 @@ import type { HtmlTags } from "html-tags";
 import { html, properties } from "@webstudio-is/css-data";
 import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
-  type Breakpoint,
   type Instance,
   type StyleDecl,
   type StyleSourceSelections,
@@ -43,12 +42,20 @@ import {
 type InstanceSelector = string[];
 type Property = string;
 
-type StyleValueSource =
+export type StyleValueSourceColor =
   | "default"
   | "preset"
   | "remote"
   | "local"
   | "overwritten";
+
+export type StyleValueSource = {
+  name: StyleValueSourceColor;
+  instanceId?: Instance["id"];
+  styleSourceId?: StyleDecl["styleSourceId"];
+  state?: StyleDecl["state"];
+  breakpointId?: StyleDecl["breakpointId"];
+};
 
 /**
  * model contains all data and cache of computed styles
@@ -61,10 +68,10 @@ export type StyleObjectModel = {
   presetStyles: Map<string, StyleValue>;
   instanceTags: Map<Instance["id"], HtmlTags>;
   instanceComponents: Map<Instance["id"], Instance["component"]>;
-  /**
+  /**:
    * all currently matching and ordered breakpoints
    */
-  matchingBreakpoints: Breakpoint["id"][];
+  matchingBreakpoints: StyleDecl["breakpointId"][];
   /**
    * all currently matching and ordered breakpointsgg
    */
@@ -126,17 +133,18 @@ const getCascadedValue = ({
   const tag = instanceTags.get(instanceId);
   const component = instanceComponents.get(instanceId);
   let selectedIndex = -1;
+  // store the source of latest value
+  let source: StyleValueSource = { name: "default" };
 
   // https://drafts.csswg.org/css-cascade-5/#declared
-  type DeclaredValue = { source: StyleValueSource; value: StyleValue };
-  const declaredValues: DeclaredValue[] = [];
+  const declaredValues: StyleValue[] = [];
 
   // browser styles
   if (tag) {
     const key = `${tag}:${property}` as const;
     const browserValue = html.get(key);
     if (browserValue) {
-      declaredValues.push({ source: "default", value: browserValue });
+      declaredValues.push(browserValue);
     }
   }
 
@@ -158,7 +166,8 @@ const getCascadedValue = ({
       const key = getPresetStyleDeclKey({ component, tag, state, property });
       const styleValue = presetStyles.get(key);
       if (styleValue) {
-        declaredValues.push({ source: "preset", value: styleValue });
+        source = { name: "preset", state, instanceId };
+        declaredValues.push(styleValue);
       }
     }
   }
@@ -184,7 +193,14 @@ const getCascadedValue = ({
           selectedIndex = styleDecl ? declaredValues.length : -1;
         }
         if (styleDecl) {
-          declaredValues.push({ source: "remote", value: styleDecl.value });
+          source = {
+            name: "remote",
+            instanceId,
+            styleSourceId,
+            state,
+            breakpointId,
+          };
+          declaredValues.push(styleDecl.value);
         }
       }
     }
@@ -193,15 +209,17 @@ const getCascadedValue = ({
   // https://drafts.csswg.org/css-cascade-5/#cascaded
   // when reset or unselected (-1) take last declared value
   const cascadedValue = declaredValues.at(selectedIndex);
-  if (cascadedValue && selectedIndex > -1) {
-    // local when selected value is latest declared
-    if (selectedIndex === declaredValues.length - 1) {
-      cascadedValue.source = "local";
-    } else {
-      cascadedValue.source = "overwritten";
+  if (cascadedValue) {
+    if (selectedIndex > -1) {
+      // local when selected value is latest declared
+      if (selectedIndex === declaredValues.length - 1) {
+        source.name = "local";
+      } else {
+        source.name = "overwritten";
+      }
     }
+    return { value: cascadedValue, source };
   }
-  return cascadedValue;
 };
 
 const matchKeyword = (styleValue: undefined | StyleValue, keyword: string) =>
@@ -216,6 +234,14 @@ const invalidValue: StyleValue = { type: "invalid", value: "" };
 const customPropertyData = {
   inherited: true,
   initial: guaranteedInvalidValue,
+};
+
+export type ComputedStyleDecl = {
+  property: string;
+  source: StyleValueSource;
+  cascadedValue: StyleValue;
+  computedValue: StyleValue;
+  usedValue: StyleValue;
 };
 
 /**
@@ -239,12 +265,7 @@ export const getComputedStyleDecl = ({
    * for internal use only
    */
   customPropertiesGraph?: Map<Instance["id"], Set<Property>>;
-}): {
-  source: StyleValueSource;
-  cascadedValue: StyleValue;
-  computedValue: StyleValue;
-  usedValue: StyleValue;
-} => {
+}): ComputedStyleDecl => {
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
@@ -253,7 +274,7 @@ export const getComputedStyleDecl = ({
   const initialValue: StyleValue = propertyData.initial;
   let computedValue: StyleValue = initialValue;
   let cascadedValue: undefined | StyleValue;
-  let source: StyleValueSource = "default";
+  let source: StyleValueSource = { name: "default" };
 
   // start computing from the root
   for (let index = instanceSelector.length - 1; index >= 0; index -= 1) {
@@ -267,7 +288,7 @@ export const getComputedStyleDecl = ({
     // https://drafts.csswg.org/css-cascade-5/#inheriting
     const inheritedValue: StyleValue = computedValue;
     const inheritedSource: StyleValueSource =
-      source === "local" ? "remote" : source;
+      source.name === "local" ? { ...source, name: "remote" } : source;
 
     // https://drafts.csswg.org/css-cascade-5/#cascaded
     const cascaded = getCascadedValue({
@@ -278,7 +299,7 @@ export const getComputedStyleDecl = ({
       property,
     });
     cascadedValue = cascaded?.value;
-    source = cascaded?.source ?? "default";
+    source = cascaded?.source ?? { name: "default" };
 
     // resolve specified value
     // https://drafts.csswg.org/css-cascade-5/#specified
@@ -365,5 +386,5 @@ export const getComputedStyleDecl = ({
   // fallback to inherited value
   cascadedValue ??= computedValue;
 
-  return { source, cascadedValue, computedValue, usedValue };
+  return { property, source, cascadedValue, computedValue, usedValue };
 };

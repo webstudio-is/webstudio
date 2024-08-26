@@ -57,7 +57,7 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = (selectedInstance: Instance) => {
+export const useStyleData = (selectedInstanceId: Instance["id"]) => {
   const selectedBreakpoint = useStore($selectedBreakpoint);
 
   const currentStyle = useStyleInfo();
@@ -102,7 +102,7 @@ export const useStyleData = (selectedInstance: Instance) => {
       serverSyncStore.createTransaction(
         [$styleSourceSelections, $styleSources, $styles],
         (styleSourceSelections, styleSources, styles) => {
-          const instanceId = selectedInstance.id;
+          const instanceId = selectedInstanceId;
           const breakpointId = selectedBreakpoint.id;
           // set only selected style source and update selection with it
           // generated local style source will not be written if not selected
@@ -145,7 +145,7 @@ export const useStyleData = (selectedInstance: Instance) => {
         }
       );
     },
-    [selectedBreakpoint, selectedInstance]
+    [selectedBreakpoint, selectedInstanceId]
   );
 
   const setProperty = useCallback<SetProperty>(
