@@ -9,11 +9,11 @@ import {
 } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
-import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import type { SectionProps } from "../shared/section";
 import { deleteAllProperties, rowCss, setAllProperties } from "./utils";
 import { useSelectedInstanceKv } from "../../shared/instances-kv";
+import { PropertyLabel } from "../../property-label";
 
 const borderPropertyStyleValueDefault: UnitValue = {
   type: "unit",
@@ -39,11 +39,12 @@ export const BorderProperty = ({
     [property in StyleProperty]: { icon?: ReactNode };
   }>;
   label: string;
-  description?: string;
+  description: string;
 }) => {
-  const borderProperties = Object.keys(borderPropertyOptions) as Array<
-    keyof typeof borderPropertyOptions
-  >;
+  const borderProperties = Object.keys(borderPropertyOptions) as [
+    StyleProperty,
+    ...StyleProperty[],
+  ];
 
   const allPropertyValuesAreEqual =
     new Set(
@@ -109,12 +110,10 @@ export const BorderProperty = ({
   return (
     <Grid gap={1}>
       <Grid css={rowCss}>
-        <PropertyName
-          style={currentStyle}
-          properties={borderProperties}
+        <PropertyLabel
           label={label}
           description={description}
-          onReset={() => deleteBorderProperties(firstPropertyName)}
+          properties={borderProperties}
         />
 
         <Box

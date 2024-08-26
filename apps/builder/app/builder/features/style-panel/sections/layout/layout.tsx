@@ -6,6 +6,7 @@ import {
   Grid,
   SmallToggleButton,
 } from "@webstudio-is/design-system";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -39,7 +40,6 @@ import {
 import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
-import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
@@ -52,6 +52,7 @@ import { theme } from "@webstudio-is/design-system";
 import { TooltipContent } from "../../../style-panel/shared/property-name";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { ToggleControl } from "../../controls/toggle/toggle-control";
+import { PropertyLabel } from "../../property-label";
 
 const GapLinked = ({
   isLinked,
@@ -507,7 +508,7 @@ export const Section = ({
 }: SectionProps) => {
   const value = toValue(currentStyle.display?.value);
 
-  const { label, items } = styleConfigByName("display");
+  const { items } = styleConfigByName("display");
   return (
     <CollapsibleSection
       label="Layout"
@@ -522,11 +523,10 @@ export const Section = ({
             alignItems: "center",
           }}
         >
-          <PropertyName
-            style={currentStyle}
+          <PropertyLabel
+            label="Display"
+            description={propertyDescriptions.display}
             properties={["display"]}
-            label={label}
-            onReset={() => deleteProperty("display")}
           />
           <SelectControl
             property="display"

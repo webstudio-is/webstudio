@@ -1,16 +1,12 @@
-import { type StyleProperty } from "@webstudio-is/css-engine";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { TextControl } from "../../controls";
-import { PropertyName } from "../../shared/property-name";
-import { styleConfigByName } from "../../shared/configs";
 import type { SectionProps } from "../shared/section";
-
-const property: StyleProperty = "perspective";
+import { PropertyLabel } from "../../property-label";
 
 export const TransformPerspective = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
-  const { label } = styleConfigByName(property);
-  const value = currentStyle[property]?.local;
+  const value = currentStyle.perspective?.local;
 
   if (value?.type !== "keyword" && value?.type !== "unit") {
     return;
@@ -23,14 +19,13 @@ export const TransformPerspective = (props: SectionProps) => {
         gridTemplateColumns: `2fr 1fr`,
       }}
     >
-      <PropertyName
-        label={label}
-        properties={[property]}
-        style={currentStyle}
-        onReset={() => deleteProperty(property)}
+      <PropertyLabel
+        label="Perspective"
+        description={propertyDescriptions.perspective}
+        properties={["perspective"]}
       />
       <TextControl
-        property={property}
+        property="perspective"
         currentStyle={currentStyle}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
