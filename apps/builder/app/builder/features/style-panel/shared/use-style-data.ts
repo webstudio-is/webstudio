@@ -153,11 +153,11 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
     (property) => {
       return (value, options: StyleUpdateOptions = { isEphemeral: false }) => {
         if (value.type !== "invalid") {
-          const isEphimeral = options.isEphemeral ?? false;
+          const isEphemeral = options.isEphemeral ?? false;
           const updates = [{ operation: "set" as const, property, value }];
-          const type = isEphimeral ? "preview" : "update";
+          const type = isEphemeral ? "preview" : "update";
           publishUpdates(type, updates, options);
-          $isEphemeralUpdateInProgress.set(isEphimeral);
+          $isEphemeralUpdateInProgress.set(isEphemeral);
         }
       };
     },
@@ -170,8 +170,10 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
       options: StyleUpdateOptions = { isEphemeral: false }
     ) => {
       const updates = [{ operation: "delete" as const, property }];
-      const type = options.isEphemeral ? "preview" : "update";
+      const isEphemeral = options.isEphemeral ?? false;
+      const type = isEphemeral ? "preview" : "update";
       publishUpdates(type, updates, options);
+      $isEphemeralUpdateInProgress.set(isEphemeral);
     },
     [publishUpdates]
   );
@@ -198,11 +200,14 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
       if (updates.length === 0) {
         return;
       }
-      const isEphimeral = options.isEphemeral ?? false;
-      const type = isEphimeral ? "preview" : "update";
+      const isEphemeral = options.isEphemeral ?? false;
+      const type = isEphemeral ? "preview" : "update";
       publishUpdates(type, updates, options);
+      // Border color control, when blurred, will have a batch delete operation with isEphemeral true.
+      // in this case we want to show outlines.
+      const hasDelete = updates.some((update) => update.operation === "delete");
+      $isEphemeralUpdateInProgress.set(isEphemeral && hasDelete === false);
       updates = [];
-      $isEphemeralUpdateInProgress.set(isEphimeral);
     };
 
     return {
