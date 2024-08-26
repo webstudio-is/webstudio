@@ -1091,7 +1091,7 @@ describe("style value source", () => {
         instanceSelector: ["body"],
         property: "color",
       }).source
-    ).toEqual({ name: "preset" });
+    ).toEqual({ name: "preset", instanceId: "body" });
   });
 
   test("remote style source", () => {
