@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type Breakpoint,
@@ -18,7 +18,6 @@ import {
 import { useStyleInfo } from "./style-info";
 import { serverSyncStore } from "~/shared/sync";
 import { $ephemeralStyles } from "~/canvas/stores";
-import { $isEphemeralUpdateInProgress } from "~/builder/shared/nano-states";
 
 export type StyleUpdate =
   | {
@@ -153,11 +152,10 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
     (property) => {
       return (value, options: StyleUpdateOptions = { isEphemeral: false }) => {
         if (value.type !== "invalid") {
-          const isEphemeral = options.isEphemeral ?? false;
           const updates = [{ operation: "set" as const, property, value }];
-          const type = isEphemeral ? "preview" : "update";
+          const type = options.isEphemeral ? "preview" : "update";
+
           publishUpdates(type, updates, options);
-          $isEphemeralUpdateInProgress.set(isEphemeral);
         }
       };
     },
@@ -170,10 +168,8 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
       options: StyleUpdateOptions = { isEphemeral: false }
     ) => {
       const updates = [{ operation: "delete" as const, property }];
-      const isEphemeral = options.isEphemeral ?? false;
-      const type = isEphemeral ? "preview" : "update";
+      const type = options.isEphemeral ? "preview" : "update";
       publishUpdates(type, updates, options);
-      $isEphemeralUpdateInProgress.set(isEphemeral);
     },
     [publishUpdates]
   );
@@ -197,16 +193,11 @@ export const useStyleData = (selectedInstanceId: Instance["id"]) => {
     };
 
     const publish = (options: StyleUpdateOptions = { isEphemeral: false }) => {
-      if (updates.length === 0) {
+      if (!updates.length) {
         return;
       }
-      const isEphemeral = options.isEphemeral ?? false;
-      const type = isEphemeral ? "preview" : "update";
+      const type = options.isEphemeral ? "preview" : "update";
       publishUpdates(type, updates, options);
-      // Border color control, when blurred, will have a batch delete operation with isEphemeral true.
-      // in this case we want to show outlines.
-      const hasDelete = updates.some((update) => update.operation === "delete");
-      $isEphemeralUpdateInProgress.set(isEphemeral && hasDelete === false);
       updates = [];
     };
 

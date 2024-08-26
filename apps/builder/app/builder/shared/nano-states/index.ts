@@ -121,5 +121,3 @@ export const toggleActiveSidebarPanel = (panel: SidebarPanelName) => {
   const currentPanel = $activeSidebarPanel.get();
   setActiveSidebarPanel(panel === currentPanel ? "none" : panel);
 };
-
-export const $isEphemeralUpdateInProgress = atom(false);
