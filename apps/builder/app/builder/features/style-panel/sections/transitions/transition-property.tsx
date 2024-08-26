@@ -29,7 +29,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
 import { setUnion } from "~/shared/shim";
-import type { StyleInfo } from "../../shared/style-info";
+import { type StyleInfo } from "../../shared/style-info";
 import { getAnimatablePropertiesOnInstance } from "./transition-utils";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
@@ -56,6 +56,7 @@ export const TransitionProperty = ({
     () => getAnimatablePropertiesOnInstance(currentStyle),
     [currentStyle]
   );
+
   const properties = Array.from(
     setUnion(
       setUnion(propertiesOnInstanceSet, commonPropertiesSet),

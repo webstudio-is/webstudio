@@ -97,7 +97,16 @@ export const getAnimatablePropertiesOnInstance = (
   for (property in currentStyle) {
     const value = currentStyle[property];
     const prop = hyphenateProperty(property);
-    if (isAnimatableProperty(prop) === true && value?.local !== undefined) {
+
+    if (isAnimatableProperty(prop) === false) {
+      continue;
+    }
+
+    if (value?.local !== undefined) {
+      properties.add(prop);
+    }
+
+    if (value?.nextSource || value?.previousSource || value?.preset) {
       properties.add(prop);
     }
   }
