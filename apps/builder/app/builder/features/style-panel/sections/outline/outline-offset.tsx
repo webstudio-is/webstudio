@@ -1,10 +1,11 @@
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SectionProps } from "../shared/section";
-import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
+import { PropertyLabel } from "../../property-label";
 
 const property: StyleProperty = "outlineOffset";
 const defaultOutlineOffsetValue: UnitValue = {
@@ -34,15 +35,13 @@ export const OutlineOffset = (
       }}
       gap={2}
     >
-      <PropertyName
-        properties={[property]}
-        style={props.currentStyle}
-        label={"Offset"}
-        onReset={() => deleteProperty(property)}
+      <PropertyLabel
+        label="Offset"
+        description={propertyDescriptions.outlineOffset}
+        properties={["outlineOffset"]}
       />
 
       <CssValueInputContainer
-        key={property}
         property={property}
         styleSource={getStyleSource(currentStyle[property])}
         keywords={outlineOffsetWidthKeywords}

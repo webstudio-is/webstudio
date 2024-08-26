@@ -1,6 +1,5 @@
 import { type StyleProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
-import { PropertyName } from "../../shared/property-name";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import type { SectionProps } from "../shared/section";
@@ -10,13 +9,14 @@ import {
   rowCss,
   isAdvancedValue,
 } from "./utils";
+import { PropertyLabel } from "../../property-label";
 
 export const properties = [
   "borderTopColor",
   "borderRightColor",
   "borderBottomColor",
   "borderLeftColor",
-] satisfies Array<StyleProperty>;
+] satisfies [StyleProperty, ...StyleProperty[]];
 
 // We do not use shorthand properties such as borderWidth or borderRadius in our code.
 // However, in the UI, we can display a single field, and in that case, we can use any property
@@ -36,12 +36,10 @@ export const BorderColor = (props: SectionProps) => {
 
   return (
     <Grid css={rowCss}>
-      <PropertyName
-        style={currentStyle}
-        properties={properties}
-        label={"Color"}
+      <PropertyLabel
+        label="Color"
         description="Sets the color of the border"
-        onReset={() => deleteColorProperties(borderColorProperty)}
+        properties={properties}
       />
 
       <Box css={{ gridColumn: `span 2` }}>

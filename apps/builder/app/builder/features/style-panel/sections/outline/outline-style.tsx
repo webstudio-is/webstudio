@@ -7,9 +7,12 @@ import {
   SmallXIcon,
 } from "@webstudio-is/icons";
 import type { SectionProps } from "../shared/section";
-import { PropertyName } from "../../shared/property-name";
-import { declarationDescriptions } from "@webstudio-is/css-data";
+import {
+  declarationDescriptions,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
+import { PropertyLabel } from "../../property-label";
 
 const property: StyleProperty = "outlineStyle";
 
@@ -47,8 +50,6 @@ const items = [
 export const OutlineStyle = (
   props: Pick<SectionProps, "currentStyle" | "setProperty" | "deleteProperty">
 ) => {
-  const { deleteProperty } = props;
-
   return (
     <Grid
       css={{
@@ -56,11 +57,10 @@ export const OutlineStyle = (
       }}
       gap={2}
     >
-      <PropertyName
-        properties={[property]}
-        style={props.currentStyle}
-        label={"Style"}
-        onReset={() => deleteProperty(property)}
+      <PropertyLabel
+        label="Style"
+        description={propertyDescriptions.outlineStyle}
+        properties={["outlineStyle"]}
       />
       <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
         <ToggleGroupControl {...props} items={items} property={property} />{" "}

@@ -1,11 +1,10 @@
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../shared/configs";
 import type { SectionProps } from "./shared/section";
-import { PropertyName } from "../shared/property-name";
 import { SelectControl } from "../controls";
-
 import { CollapsibleSection } from "../shared/collapsible-section";
+import { PropertyLabel } from "../property-label";
 
 export const properties = ["listStyleType"] satisfies Array<StyleProperty>;
 
@@ -21,11 +20,10 @@ export const Section = ({
       properties={properties}
     >
       <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[21]}` }}>
-        <PropertyName
-          label={styleConfigByName("listStyleType").label}
+        <PropertyLabel
+          label="List Style Type"
+          description={propertyDescriptions.listStyleType}
           properties={["listStyleType"]}
-          style={style}
-          onReset={() => deleteProperty("listStyleType")}
         />
         <SelectControl
           property={"listStyleType"}

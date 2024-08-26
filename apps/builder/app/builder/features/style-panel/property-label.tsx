@@ -103,11 +103,7 @@ export const PropertyInfo = ({
         variant="monoBold"
         color="moreSubtle"
         userSelect="text"
-        css={{
-          whiteSpace: "break-spaces",
-          maxHeight: "3em",
-          cursor: "text",
-        }}
+        css={{ whiteSpace: "break-spaces", cursor: "text" }}
       >
         {properties.join("\n")}
       </Text>
