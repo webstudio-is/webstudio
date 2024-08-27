@@ -49,13 +49,13 @@ export const LogoutPage = (props: LogoutPageProps) => {
       }
 
       if (failedUrls.length === 0) {
-        // props.onFinish();
+        props.onFinish();
         return;
       }
 
       if (logoutState.retries === 0) {
         console.error("Failed to logout", failedUrls);
-        // props.onFinish();
+        props.onFinish();
         return;
       }
 
