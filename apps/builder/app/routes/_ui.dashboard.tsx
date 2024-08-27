@@ -12,6 +12,9 @@ import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
+
+const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -36,14 +39,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const context = await createContext(request);
 
-  const projects = await dashboardProjectRouter
-    // @todo pass authorization context
-    .createCaller(context)
-    .findMany({ userId: user.id });
+  const projects = await dashboardProjectCaller(context).findMany({
+    userId: user.id,
+  });
 
-  const projectTemplates = await dashboardProjectRouter
-    .createCaller(context)
-    .findManyByIds({ projectIds: env.PROJECT_TEMPLATES });
+  const projectTemplates = await dashboardProjectCaller(context).findManyByIds({
+    projectIds: env.PROJECT_TEMPLATES,
+  });
 
   const { userPlanFeatures } = context;
 

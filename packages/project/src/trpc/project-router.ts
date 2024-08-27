@@ -41,6 +41,18 @@ export const projectRouter = router({
     .mutation(async ({ input, ctx }) => {
       return await db.project.setMarketplaceApprovalStatus(input, ctx);
     }),
+  findCurrentUserProjectIds: procedure.query(async ({ ctx }) => {
+    if (ctx.authorization.userId === undefined) {
+      return [];
+    }
+
+    const projectIds = await db.project.findProjectIdsByUserId(
+      ctx.authorization.userId,
+      ctx
+    );
+
+    return projectIds.map((project) => project.id);
+  }),
 });
 
 export type ProjectRouter = typeof projectRouter;
