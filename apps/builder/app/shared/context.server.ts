@@ -76,6 +76,7 @@ const createAuthorizationContext = async (
       if (loginBloomFilter === undefined) {
         loginBloomFilter = await readLoginSessionBloomFilter(request);
       }
+
       return await loginBloomFilter.has(projectId);
     };
   }

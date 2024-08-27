@@ -62,8 +62,8 @@ export default defineConfig(({ mode }) => {
           if (req.headers.origin != null && req.url != null) {
             const url = new URL(req.url, `https://${req.headers.host}`);
 
-            // Allow CORS for /logout path when requested from the authorization server
-            if (url.pathname === "/logout" && isBuilderUrl(url.href)) {
+            // Allow CORS for /builder-logout path when requested from the authorization server
+            if (url.pathname === "/builder-logout" && isBuilderUrl(url.href)) {
               return callback(null, {
                 origin: getAuthorizationServerOrigin(url.href),
                 preflightContinue: false,

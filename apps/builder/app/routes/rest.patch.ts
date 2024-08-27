@@ -34,7 +34,10 @@ import {
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
-import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
+import {
+  AuthorizationError,
+  authorizeProject,
+} from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
 import { db } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
@@ -53,6 +56,7 @@ export const action = async ({
 }: ActionFunctionArgs): Promise<
   | { status: "ok" }
   | { status: "version_mismatched"; errors: string }
+  | { status: "authorization_error"; errors: string }
   | { status: "error"; errors: string }
 > => {
   preventCrossOriginCookie(request);
@@ -99,7 +103,10 @@ export const action = async ({
       context
     );
     if (canEdit === false) {
-      throw Error("You don't have edit access to this project");
+      return {
+        status: "authorization_error",
+        errors: "You don't have permission to edit this project.",
+      };
     }
 
     const build = await loadRawBuildById(context, buildId);
@@ -360,6 +367,13 @@ export const action = async ({
 
     return { status: "ok" };
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      return {
+        status: "authorization_error",
+        errors: error.message,
+      };
+    }
+
     console.error(error);
     return {
       status: "error",

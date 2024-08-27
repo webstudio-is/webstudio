@@ -70,6 +70,7 @@ export const dashboardPath = () => {
 
 export const dashboardUrl = (props: { origin: string }) => {
   const authServerOrigin = getAuthorizationServerOrigin(props.origin);
+
   return `${authServerOrigin}/dashboard`;
 };
 
