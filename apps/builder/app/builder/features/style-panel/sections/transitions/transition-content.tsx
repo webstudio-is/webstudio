@@ -38,6 +38,7 @@ import { deleteTransitionLayer, editTransitionLayer } from "./transition-utils";
 import type { StyleInfo } from "../../shared/style-info";
 import { parseCssFragment } from "../../shared/parse-css-fragment";
 import { InfoCircleIcon } from "@webstudio-is/icons";
+import { PropertyInlineLabel } from "../../property-label";
 
 type TransitionContentProps = {
   index: number;
@@ -178,25 +179,11 @@ export const TransitionContent = ({
           onPropertySelection={handlePropertyUpdate}
         />
 
-        <Flex align="center">
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Duration</Text>
-                <Text variant="monoBold" color="moreSubtle">
-                  transition-duration
-                </Text>
-                <Text>
-                  Sets the length of time a transition animation should take to
-                  complete.
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ display: "inline" }}>Duration</Label>
-          </Tooltip>
-        </Flex>
+        <PropertyInlineLabel
+          label="Duration"
+          description="Sets the length of time a transition animation should take to complete."
+          properties={["transitionDuration"]}
+        />
         <CssValueInputContainer
           key={"transitionDuration"}
           property={"transitionDuration"}
@@ -220,24 +207,11 @@ export const TransitionContent = ({
           }}
         />
 
-        <Flex align="center">
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Delay</Text>
-                <Text variant="monoBold" color="moreSubtle">
-                  transition-delay
-                </Text>
-                <Text>
-                  Specify the duration to wait before the transition begins.
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ display: "inline" }}>Delay</Label>
-          </Tooltip>
-        </Flex>
+        <PropertyInlineLabel
+          label="Delay"
+          description="Specify the duration to wait before the transition begins."
+          properties={["transitionDelay"]}
+        />
         <CssValueInputContainer
           property={"transitionDelay"}
           key={"transitionDelay"}
