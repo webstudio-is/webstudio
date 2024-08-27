@@ -3,7 +3,7 @@ import { formatPrompt } from "../../utils/format-prompt";
 import { prompt as promptSystemTemplate } from "./__generated__/command-detect.system.prompt";
 import { prompt as promptUserTemplate } from "./__generated__/command-detect.user.prompt";
 import { createErrorResponse } from "../../utils/create-error-response";
-import { type Context, type Response, ResponseSchema, name } from "./schema";
+import { type AiContext, AiResponse, name } from "./schema";
 
 /**
  * Command Detect Chain
@@ -15,8 +15,8 @@ export { name };
 
 export const createChain = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>,
-  Context,
-  Response
+  AiContext,
+  AiResponse
 > =>
   async function chain({ model, context }) {
     const { prompt, commands } = context;
@@ -53,7 +53,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
 
     let detectedCommands = [];
     try {
-      detectedCommands = ResponseSchema.parse(JSON.parse(completionText));
+      detectedCommands = AiResponse.parse(JSON.parse(completionText));
       const expectedCommands = new Set(Object.keys(commands));
       for (const command of detectedCommands) {
         if (expectedCommands.has(command) === false) {

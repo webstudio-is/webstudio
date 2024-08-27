@@ -43,7 +43,7 @@ const sidebarStyle = css({
   },
 });
 
-type LoginProps = {
+export type LoginProps = {
   errorMessage?: string;
   isGithubEnabled?: boolean;
   isGoogleEnabled?: boolean;

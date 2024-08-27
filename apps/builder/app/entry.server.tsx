@@ -1,45 +1,84 @@
-import { renderToString } from "react-dom/server";
-import type { EntryContext } from "@remix-run/node";
+/**
+ * By default, Remix will handle generating the HTTP Response for you.
+ * You are free to delete this file if you'd like to, but if you ever want it revealed again, you can run `npx remix reveal` ✨
+ * For more information, see https://remix.run/file-conventions/entry.server
+ */
+
+import {
+  createReadableStreamFromReadable,
+  type AppLoadContext,
+  type EntryContext,
+} from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import { handleRequest as handleRequestBuilder } from "./shared/remix/handle-request.server";
-import { isCanvas } from "./shared/router-utils";
+import { PassThrough } from "node:stream";
+import { renderToPipeableStream } from "react-dom/server";
 
-const handleRequestCanvas = (
-  request: Request,
-  responseStatusCode: number,
-  responseHeaders: Headers,
-  remixContext: EntryContext
-) => {
-  const markup = renderToString(
-    <RemixServer context={remixContext} url={request.url} />
-  );
-
-  responseHeaders.set("Content-Type", "text/html");
-
-  return new Response(`<!DOCTYPE html>${markup}`, {
-    status: responseStatusCode,
-    headers: responseHeaders,
-  });
-};
+const ABORT_DELAY = 5_000;
 
 export default function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
+  remixContext: EntryContext,
+  // This is ignored so we can keep it in the template for visibility.  Feel
+  // free to delete this parameter in your app if you're not using it!
+  _loadContext: AppLoadContext
+) {
+  return handleBrowserRequest(
+    request,
+    responseStatusCode,
+    responseHeaders,
+    remixContext
+  );
+}
+
+// eslint-disable-next-line func-style
+function handleBrowserRequest(
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  let handle = handleRequestBuilder;
+  return new Promise((resolve, reject) => {
+    let shellRendered = false;
+    const { pipe, abort } = renderToPipeableStream(
+      <RemixServer
+        context={remixContext}
+        url={request.url}
+        abortDelay={ABORT_DELAY}
+      />,
+      {
+        onShellReady() {
+          shellRendered = true;
+          const body = new PassThrough();
+          const stream = createReadableStreamFromReadable(body);
 
-  // @todo canvas can be deployed as separate app
-  // and separate request handler will not be necessary anymore
-  if (
-    remixContext.staticHandlerContext.matches.some(
-      (match) => match.route.id === "routes/_index"
-    ) &&
-    isCanvas(request)
-  ) {
-    handle = handleRequestCanvas;
-  }
+          responseHeaders.set("Content-Type", "text/html");
 
-  return handle(request, responseStatusCode, responseHeaders, remixContext);
+          resolve(
+            new Response(stream, {
+              headers: responseHeaders,
+              status: responseStatusCode,
+            })
+          );
+
+          pipe(body);
+        },
+        onShellError(error: unknown) {
+          reject(error);
+        },
+        onError(error: unknown) {
+          responseStatusCode = 500;
+          // Log streaming rendering errors from inside the shell.  Don't log
+          // errors encountered during initial shell rendering since they'll
+          // reject and get logged in handleDocumentRequest.
+          if (shellRendered) {
+            console.error(error);
+          }
+        },
+      }
+    );
+
+    setTimeout(abort, ABORT_DELAY);
+  });
 }

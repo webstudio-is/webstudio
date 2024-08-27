@@ -1,16 +1,12 @@
-import { type StyleProperty } from "@webstudio-is/css-engine";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { TextControl } from "../../controls";
-import { PropertyName } from "../../shared/property-name";
-import { styleConfigByName } from "../../shared/configs";
 import type { SectionProps } from "../shared/section";
-
-const property: StyleProperty = "backfaceVisibility";
+import { PropertyLabel } from "../../property-label";
 
 export const BackfaceVisibility = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
-  const value = currentStyle[property]?.local;
-  const { label } = styleConfigByName(property);
+  const value = currentStyle.backfaceVisibility?.local;
 
   if (value?.type !== "keyword") {
     return;
@@ -23,14 +19,13 @@ export const BackfaceVisibility = (props: SectionProps) => {
         gridTemplateColumns: `2fr 1fr`,
       }}
     >
-      <PropertyName
-        label={label}
-        properties={[property]}
-        style={currentStyle}
-        onReset={() => deleteProperty(property)}
+      <PropertyLabel
+        label="Backface Visibility"
+        description={propertyDescriptions.backfaceVisibility}
+        properties={["backfaceVisibility"]}
       />
       <TextControl
-        property={property}
+        property="backfaceVisibility"
         currentStyle={currentStyle}
         setProperty={setProperty}
         deleteProperty={deleteProperty}

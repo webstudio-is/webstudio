@@ -1,14 +1,7 @@
+import type { SidebarPanelName } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 
-export type TabName =
-  | "assets"
-  | "components"
-  | "navigator"
-  | "pages"
-  | "marketplace"
-  | "none";
-
 export type TabContentProps = {
-  onSetActiveTab: (tabName: TabName) => void;
+  onSetActiveTab: (tabName: SidebarPanelName) => void;
   publish: Publish;
 };

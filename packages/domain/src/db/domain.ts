@@ -147,8 +147,8 @@ export const create = async (
  */
 export const verify = async (
   props: {
-    projectId: Project["id"];
-    domain: string;
+    projectId: string;
+    domainId: string;
   },
   context: AppContext
 ): Promise<Result> => {
@@ -162,20 +162,10 @@ export const verify = async (
     throw new Error("You don't have access to create this project domains");
   }
 
-  const validationResult = validateDomain(props.domain);
-
-  if (validationResult.success === false) {
-    return validationResult;
-  }
-
-  const { domain } = validationResult;
-
   const projectDomain = await prisma.projectWithDomain.findFirstOrThrow({
     where: {
       projectId: props.projectId,
-      domain: {
-        domain,
-      },
+      domainId: props.domainId,
     },
     include: {
       domain: true,
@@ -184,7 +174,7 @@ export const verify = async (
 
   // @todo: TXT verification and domain initialization should be implemented in the future as queue service
   const createDomainResult = await context.domain.domainTrpc.create.mutate({
-    domain,
+    domain: projectDomain.domain.domain,
     txtRecord: projectDomain.txtRecord,
   });
 
@@ -194,7 +184,7 @@ export const verify = async (
 
   await prisma.domain.update({
     where: {
-      domain,
+      id: props.domainId,
     },
     data: {
       status: "PENDING",
@@ -210,8 +200,8 @@ export const verify = async (
  */
 export const remove = async (
   props: {
-    projectId: Project["id"];
-    domain: string;
+    projectId: string;
+    domainId: string;
   },
   context: AppContext
 ): Promise<Result> => {
@@ -225,20 +215,10 @@ export const remove = async (
     throw new Error("You don't have access to delete this project domains");
   }
 
-  const validationResult = validateDomain(props.domain);
-
-  if (validationResult.success === false) {
-    return validationResult;
-  }
-
-  const { domain } = validationResult;
-
   await prisma.projectDomain.deleteMany({
     where: {
       projectId: props.projectId,
-      domain: {
-        domain,
-      },
+      domainId: props.domainId,
     },
   });
 

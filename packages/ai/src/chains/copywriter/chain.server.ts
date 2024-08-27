@@ -6,12 +6,7 @@ import { prompt as promptSystemTemplate } from "./__generated__/copy.system.prom
 import { prompt as promptUserTemplate } from "./__generated__/copy.user.prompt";
 import { createErrorResponse } from "../../utils/create-error-response";
 import type { RemixStreamingTextResponse } from "../../utils/remix-streaming-text-response";
-import {
-  type Context,
-  name,
-  TextInstanceSchema,
-  type TextInstance,
-} from "./schema";
+import { type Context, name, TextInstance } from "./schema";
 
 /**
  * Copywriter chain.
@@ -44,9 +39,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
       };
     }
 
-    if (
-      z.array(TextInstanceSchema).safeParse(textInstances).success === false
-    ) {
+    if (z.array(TextInstance).safeParse(textInstances).success === false) {
       const message = "Invalid nodes list";
       return {
         id: name,

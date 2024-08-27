@@ -39,7 +39,7 @@ import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { AiApiException, RateLimitException } from "./api-exceptions";
-import { useClientSettings } from "~/builder/shared/client-settings";
+import { getSetting, setSetting } from "~/builder/shared/client-settings";
 import { flushSync } from "react-dom";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
@@ -64,12 +64,10 @@ const initialPrompts = [
 export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const [value, setValue] = useState("");
   const [prompts, setPrompts] = useState<string[]>(initialPrompts);
-  const [clientSettings, setClientSetting, isClientSettingsLoaded] =
-    useClientSettings();
-  const isMenuOpen = isClientSettingsLoaded && clientSettings.isAiMenuOpen;
-  const setIsMenuOpen = useEffectEvent((value: boolean) =>
-    setClientSetting("isAiMenuOpen", value)
-  );
+  const isMenuOpen = getSetting("isAiMenuOpen");
+  const setIsMenuOpen = (value: boolean) => {
+    setSetting("isAiMenuOpen", value);
+  };
 
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
@@ -273,10 +271,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
     selectPrompt();
   };
 
-  if (
-    isClientSettingsLoaded === false ||
-    clientSettings.isAiCommandBarVisible === false
-  ) {
+  if (getSetting("isAiCommandBarVisible") === false) {
     return;
   }
 

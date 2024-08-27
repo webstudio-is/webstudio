@@ -21,29 +21,27 @@ import {
   $isShareDialogOpen,
   $isPublishDialogOpen,
 } from "~/builder/shared/nano-states";
-import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit, $authTokenPermissions } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { UpgradeIcon } from "@webstudio-is/icons";
+import { getSetting, setSetting } from "~/builder/shared/client-settings";
 
 const ViewMenuItem = () => {
-  const [clientSettings, setClientSetting] = useClientSettings();
+  const navigatorLayout = getSetting("navigatorLayout");
 
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>View</DropdownMenuSubTrigger>
       <DropdownMenuSubContent width="regular">
         <DropdownMenuCheckboxItem
-          checked={clientSettings.navigatorLayout === "undocked"}
+          checked={navigatorLayout === "undocked"}
           onSelect={() => {
             const setting =
-              clientSettings.navigatorLayout === "undocked"
-                ? "docked"
-                : "undocked";
-            setClientSetting("navigatorLayout", setting);
+              navigatorLayout === "undocked" ? "docked" : "undocked";
+            setSetting("navigatorLayout", setting);
           }}
         >
           Undock navigator
@@ -197,6 +195,16 @@ export const Menu = () => {
           </Tooltip>
 
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            onSelect={() => {
+              window.open(
+                "https://docs.webstudio.is/university/foundations/shortcuts"
+              );
+            }}
+          >
+            Keyboard shortcuts
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://docs.webstudio.is");

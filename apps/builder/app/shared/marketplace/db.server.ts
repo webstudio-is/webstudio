@@ -1,6 +1,5 @@
-import { prisma } from "@webstudio-is/prisma-client";
 import { MarketplaceProduct } from "@webstudio-is/project-build";
-import type { BuildData, MarketplaceOverviewItem } from "./types";
+import type { MarketplaceOverviewItem } from "./types";
 import {
   loadApprovedProdBuildByProjectId,
   parseConfig,
@@ -12,7 +11,7 @@ import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 export const getBuildProdData = async (
   { projectId }: { projectId: Project["id"] },
   context: AppContext
-): Promise<BuildData> => {
+) => {
   const build = await loadApprovedProdBuildByProjectId(context, projectId);
 
   const assets = await loadAssetsByProject(projectId, context, {
@@ -20,20 +19,29 @@ export const getBuildProdData = async (
   });
 
   return {
-    assets: assets.map((asset) => [asset.id, asset]),
-    build,
+    ...build,
+    assets,
   };
 };
 
-export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
-  const approvedMarketplaceProducts =
-    await prisma.approvedMarketplaceProduct.findMany();
+export const getItems = async (
+  context: AppContext
+): Promise<Array<MarketplaceOverviewItem>> => {
+  const approvedMarketplaceProducts = await context.postgrest.client
+    .from("ApprovedMarketplaceProduct")
+    .select();
+  if (approvedMarketplaceProducts.error) {
+    throw approvedMarketplaceProducts.error;
+  }
 
   const items: MarketplaceOverviewItem[] = [];
 
-  for (const approvedMarketplaceProduct of approvedMarketplaceProducts) {
+  for (const product of approvedMarketplaceProducts.data) {
+    if (product.marketplaceProduct === null || product.projectId === null) {
+      continue;
+    }
     const parsedProduct = MarketplaceProduct.safeParse(
-      parseConfig(approvedMarketplaceProduct.marketplaceProduct)
+      parseConfig(product.marketplaceProduct)
     );
 
     if (parsedProduct.success === false) {
@@ -42,9 +50,8 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
     }
 
     items.push({
-      projectId: approvedMarketplaceProduct.projectId,
-      authorizationToken:
-        approvedMarketplaceProduct.authorizationToken ?? undefined,
+      projectId: product.projectId,
+      authorizationToken: product.authorizationToken ?? undefined,
       ...parsedProduct.data,
     });
   }
@@ -52,23 +59,24 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
     .map((item) => item.thumbnailAssetId)
     .filter((value): value is string => value != null);
 
-  const assets =
-    assetIds.length > 0
-      ? await prisma.asset.findMany({
-          where: {
-            id: {
-              in: assetIds,
-            },
-          },
-        })
-      : [];
+  const assets = new Map<string, string>();
+  if (assetIds.length > 0) {
+    const data = await context.postgrest.client
+      .from("Asset")
+      .select()
+      .in("id", assetIds);
+    if (data.error) {
+      throw data.error;
+    }
+    for (const asset of data.data) {
+      assets.set(asset.id, asset.name);
+    }
+  }
 
   return items.map((item) => {
     return {
       ...item,
-      thumbnailAssetName: assets.find(
-        (asset) => asset.id === item.thumbnailAssetId
-      )?.name,
+      thumbnailAssetName: assets.get(item.thumbnailAssetId),
     };
   });
 };

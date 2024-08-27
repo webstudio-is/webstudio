@@ -22,12 +22,13 @@ import {
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { loginPath } from "~/shared/router-utils";
-import type { BuilderProps } from "~/builder/index.client";
+
 import env from "~/env/env.server";
 
 import builderStyles from "~/builder/builder.css?url";
 import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { ClientOnly } from "~/shared/client-only";
+import type { BuilderProps } from "~/builder/builder";
 
 // Can cause FOUC because of remix-island, be very accurate adding anything here
 export const links = () => {
@@ -156,7 +157,7 @@ const Builder = lazy(async () => {
   return { default: Builder };
 });
 
-export const BuilderRoute = () => {
+const BuilderRoute = () => {
   const data = useLoaderData<BuilderProps>();
 
   return (

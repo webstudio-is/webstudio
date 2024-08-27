@@ -1,11 +1,12 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { compareMedia, type StyleValue } from "@webstudio-is/css-engine";
-import type { Instance } from "@webstudio-is/sdk";
+import type { Breakpoint, Instance } from "@webstudio-is/sdk";
 import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
+  $selectedBreakpoint,
   $selectedInstanceIntanceToTag,
   $selectedInstanceSelector,
   $selectedInstanceStates,
@@ -14,6 +15,7 @@ import {
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import {
+  getComputedStyleDecl,
   getPresetStyleDeclKey,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
@@ -55,20 +57,20 @@ const $instanceComponents = computed(
   }
 );
 
-const $matchingBreakpoints = computed($breakpoints, (breakpoints) => {
-  return Array.from(breakpoints.values())
-    .sort(compareMedia)
-    .map((breakpoint) => breakpoint.id);
-});
-
-const $matchingStates = computed(
-  [$selectedInstanceStates, $selectedOrLastStyleSourceSelector],
-  (instanceStates, styleSourceSelector) => {
-    const matchingStates = new Set(instanceStates);
-    if (styleSourceSelector?.state) {
-      matchingStates.add(styleSourceSelector.state);
+const $matchingBreakpoints = computed(
+  [$breakpoints, $selectedBreakpoint],
+  (breakpoints, selectedBreakpoint) => {
+    const sortedBreakpoints = Array.from(breakpoints.values()).sort(
+      compareMedia
+    );
+    const matchingBreakpoints: Breakpoint["id"][] = [];
+    for (const breakpoint of sortedBreakpoints) {
+      matchingBreakpoints.push(breakpoint.id);
+      if (breakpoint.id === selectedBreakpoint?.id) {
+        break;
+      }
     }
-    return matchingStates;
+    return matchingBreakpoints;
   }
 );
 
@@ -80,7 +82,7 @@ const $model = computed(
     $selectedInstanceIntanceToTag,
     $instanceComponents,
     $matchingBreakpoints,
-    $matchingStates,
+    $selectedInstanceStates,
   ],
   (
     styles,
@@ -102,6 +104,21 @@ const $model = computed(
     };
   }
 );
+
+export const createComputedStyleDeclStore = (property: string) => {
+  return computed(
+    [$model, $selectedInstanceSelector, $selectedOrLastStyleSourceSelector],
+    (model, instanceSelector, styleSourceSelector) => {
+      return getComputedStyleDecl({
+        model,
+        instanceSelector,
+        styleSourceId: styleSourceSelector?.styleSourceId,
+        state: styleSourceSelector?.state,
+        property,
+      });
+    }
+  );
+};
 
 export const useStyleObjectModel = () => {
   return useStore($model);

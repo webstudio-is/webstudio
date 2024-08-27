@@ -1,14 +1,14 @@
 import { Flex, Grid, theme, Box } from "@webstudio-is/design-system";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorControl } from "../../controls";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import { OutlineStyle } from "./outline-style";
-import { PropertyName } from "../../shared/property-name";
 import { OutlineWidth } from "./outline-width";
 import { OutlineOffset } from "./outline-offset";
+import { PropertyLabel } from "../../property-label";
 
-const property: StyleProperty = "outlineColor";
 export const properties = [
   "outlineStyle",
   "outlineColor",
@@ -44,11 +44,10 @@ export const Section = (props: SectionProps) => {
               }}
               gapX={2}
             >
-              <PropertyName
-                style={currentStyle}
-                properties={[property]}
-                label={"Color"}
-                onReset={() => deleteProperty(property)}
+              <PropertyLabel
+                label="Color"
+                description={propertyDescriptions.outlineColor}
+                properties={["outlineColor"]}
               />
 
               <Box
@@ -57,7 +56,7 @@ export const Section = (props: SectionProps) => {
                 }}
               >
                 <ColorControl
-                  property={property}
+                  property="outlineColor"
                   currentStyle={currentStyle}
                   setProperty={setProperty}
                   deleteProperty={deleteProperty}

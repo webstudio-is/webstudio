@@ -15,17 +15,14 @@ import {
   type DataSource,
   type Instance,
   type Breakpoint,
+  type StyleSourceSelection,
+  type StyleDecl,
   Pages,
   initialBreakpoints,
-  StyleSourceSelection,
-  StyleDecl,
 } from "@webstudio-is/sdk";
-import type { Data } from "@webstudio-is/http-client";
-import type { Build } from "../types";
-import { parseStyles } from "./styles";
-import { parseStyleSourceSelections } from "./style-source-selections";
+import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
-import { parsePages, serializePages } from "./pages";
+import { serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "../shared//marketplace";
 
@@ -54,44 +51,6 @@ export const serializeConfig = <Type>(data: Type) => {
   return JSON.stringify(data);
 };
 
-const parseBuild = async (
-  build: Database["public"]["Tables"]["Build"]["Row"]
-): Promise<Build> => {
-  console.time("parseBuild");
-  try {
-    const pages = parsePages(build.pages);
-    const styles = Array.from(parseStyles(build.styles));
-    const styleSourceSelections = Array.from(
-      parseStyleSourceSelections(build.styleSourceSelections)
-    );
-    const deployment = parseDeployment(build.deployment);
-
-    const result: Build = {
-      id: build.id,
-      projectId: build.projectId,
-      version: build.version,
-      createdAt: build.createdAt,
-      updatedAt: build.updatedAt,
-      pages,
-      breakpoints: Array.from(parseData<Breakpoint>(build.breakpoints)),
-      styles,
-      styleSources: Array.from(parseData<StyleSource>(build.styleSources)),
-      styleSourceSelections,
-      props: Array.from(parseData<Prop>(build.props)),
-      dataSources: Array.from(parseData<DataSource>(build.dataSources)),
-      resources: Array.from(parseData<Resource>(build.resources)),
-      instances: Array.from(parseData<Instance>(build.instances)),
-      deployment,
-      marketplaceProduct: parseConfig<MarketplaceProduct>(
-        build.marketplaceProduct
-      ),
-    } satisfies Data["build"] & { marketplaceProduct: MarketplaceProduct };
-    return result;
-  } finally {
-    console.timeEnd("parseBuild");
-  }
-};
-
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
@@ -117,7 +76,7 @@ const parseCompactBuild = async (
       marketplaceProduct: parseConfig<MarketplaceProduct>(
         build.marketplaceProduct
       ),
-    };
+    } satisfies CompactBuild;
   } finally {
     // empty block
   }
@@ -130,23 +89,26 @@ export const loadRawBuildById = async (
   const build = await context.postgrest.client
     .from("Build")
     .select("*")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
 
   if (build.error) {
     throw build.error;
   }
 
-  return build.data;
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return build.data[0];
 };
 
-export const loadBuildById = async (
-  context: AppContext,
-  id: Build["id"]
-): Promise<Build> => {
+export const loadBuildById = async (context: AppContext, id: Build["id"]) => {
   const build = await loadRawBuildById(context, id);
 
-  return parseBuild(build);
+  return parseCompactBuild(build);
 };
 
 export const loadBuildIdAndVersionByProjectId = async (
@@ -157,17 +119,23 @@ export const loadBuildIdAndVersionByProjectId = async (
     .from("Build")
     .select("id,version")
     .eq("projectId", projectId)
-    .is("deployment", null)
-    .single();
+    .is("deployment", null);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
 
   if (build.error) {
     throw build.error;
   }
 
-  return build.data;
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return build.data[0];
 };
 
-const loadRawBuildByProjectId = async (
+export const loadDevBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]
 ) => {
@@ -175,34 +143,26 @@ const loadRawBuildByProjectId = async (
     .from("Build")
     .select("*")
     .eq("projectId", projectId)
-    .is("deployment", null)
-    .single();
+    .is("deployment", null);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
+
   if (build.error) {
     throw build.error;
   }
-  return build.data;
-};
 
-export const loadBuildByProjectId = async (
-  context: AppContext,
-  projectId: Build["projectId"]
-): Promise<Build> => {
-  const build = await loadRawBuildByProjectId(context, projectId);
-  return parseBuild(build);
-};
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
 
-export const loadDevBuildByProjectId = async (
-  context: AppContext,
-  projectId: Build["projectId"]
-) => {
-  const build = await loadRawBuildByProjectId(context, projectId);
-  return parseCompactBuild(build);
+  return parseCompactBuild(build.data[0]);
 };
 
 export const loadApprovedProdBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]
-): Promise<Build> => {
+) => {
   const latestBuild = await context.postgrest.client
     .from("LatestBuildPerProject")
     .select(
@@ -225,12 +185,20 @@ export const loadApprovedProdBuildByProjectId = async (
   const build = await context.postgrest.client
     .from("Build")
     .select()
-    .eq("id", latestBuild.data.buildId)
-    .single();
+    .eq("id", latestBuild.data.buildId);
+  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
+
   if (build.error) {
     throw build.error;
   }
-  return parseBuild(build.data);
+
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return parseCompactBuild(build.data[0]);
 };
 
 const createNewPageInstances = (): Build["instances"] => {

@@ -226,17 +226,52 @@ export const computeExpression = (
     }
     code += `return (${transpiled})`;
 
+    /**
+     *
+     * We are using structuredClone on frozen values because, for some reason,
+     * the Proxy example below throws a cryptic error:
+     * TypeError: 'get' on proxy: property 'data' is a read-only and non-configurable
+     * data property on the proxy target, but the proxy did not return its actual value
+     * (expected '[object Array]' but got '[object Array]').
+     *
+     * ```
+     * const createJsonStringifyProxy = (target) => {
+     *   return new Proxy(target, {
+     *     get(target, prop, receiver) {
+     *
+     *       console.log((prop in target), prop)
+     *
+     *       const value = Reflect.get(target, prop, receiver);
+     *
+     *       if (typeof value === "object" && value !== null) {
+     *         return createJsonStringifyProxy(value);
+     *       }
+     *
+     *       return value;
+     *     },
+     *   });
+     * };
+     * const obj = Object.freeze({ data: [1, 2, 3, 4] });
+     * const proxy = createJsonStringifyProxy(obj)
+     * proxy.data
+     *
+     * ```
+     */
     const proxiedVariables = new Map(
       [...variables.entries()].map(([key, value]) => [
         key,
-        isPlainObject(value) ? createJsonStringifyProxy(value) : value,
+        isPlainObject(value)
+          ? createJsonStringifyProxy(
+              Object.isFrozen(value) ? structuredClone(value) : value
+            )
+          : value,
       ])
     );
 
     const result = new Function("_variables", code)(proxiedVariables);
     return result;
-  } catch {
-    // empty block
+  } catch (error) {
+    console.error(error);
   }
 };
 

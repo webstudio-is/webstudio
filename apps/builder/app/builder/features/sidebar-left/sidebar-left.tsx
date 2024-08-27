@@ -1,15 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Box, rawTheme } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
 import { panels } from "./panels";
-import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import { AiIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
-import { $activeSidebarPanel } from "~/builder/shared/nano-states";
+import {
+  $activeSidebarPanel,
+  setActiveSidebarPanel,
+  toggleActiveSidebarPanel,
+  type SidebarPanelName,
+} from "~/builder/shared/nano-states";
 import {
   SidebarButton,
   SidebarTabs,
@@ -24,44 +28,19 @@ import {
   useOnDropEffect,
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
-import type { TabName } from "./types";
+import { getSetting, setSetting } from "~/builder/shared/client-settings";
 
 const none = { TabContent: () => null };
 
-const useActiveTab = () => {
-  const activeTab = useStore($activeSidebarPanel);
-  const [clientSettings] = useClientSettings();
-  let nextTab = activeTab;
-  if (
-    nextTab === "navigator" &&
-    clientSettings.navigatorLayout === "undocked"
-  ) {
-    nextTab = "none";
-  }
-  return [nextTab, $activeSidebarPanel.set] as const;
-};
-
-const useHideActiveTabOnPreview = () => {
-  useEffect(() => {
-    return $isPreviewMode.subscribe((isPreviewMode) => {
-      // When user switches to preview mode we want to hide any active sidebar panel.
-      if (isPreviewMode) {
-        $activeSidebarPanel.set("none");
-      }
-    });
-  }, []);
-};
-
 const AiTabTrigger = () => {
-  const [clientSettings, setClientSetting] = useClientSettings();
   return (
     <SidebarButton
       label="AI"
-      data-state={clientSettings.isAiCommandBarVisible ? "active" : undefined}
+      data-state={getSetting("isAiCommandBarVisible") ? "active" : undefined}
       onClick={() => {
-        setClientSetting(
+        setSetting(
           "isAiCommandBarVisible",
-          clientSettings.isAiCommandBarVisible ? false : true
+          getSetting("isAiCommandBarVisible") ? false : true
         );
       }}
     >
@@ -91,17 +70,15 @@ type SidebarLeftProps = {
 };
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
-  const [activeTab, setActiveTab] = useActiveTab();
-  useHideActiveTabOnPreview();
+  const activePanel = useStore($activeSidebarPanel);
   const dragAndDropState = useStore($dragAndDropState);
-  const { TabContent } = panels.get(activeTab) ?? none;
+  const { TabContent } = panels.get(activePanel) ?? none;
   const isPreviewMode = useStore($isPreviewMode);
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
-
-  const returnTabRef = useRef<TabName | undefined>(undefined);
+  const returnTabRef = useRef<SidebarPanelName | undefined>(undefined);
 
   useSubscribe("dragEnd", () => {
-    setActiveTab("none");
+    setActiveSidebarPanel("none");
   });
 
   useOnDropEffect(() => {
@@ -121,7 +98,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   useExternalDragStateEffect((state) => {
     if (state !== POTENTIAL) {
       if (returnTabRef.current !== undefined) {
-        setActiveTab(returnTabRef.current);
+        setActiveSidebarPanel(returnTabRef.current);
       }
       returnTabRef.current = undefined;
       return;
@@ -137,16 +114,16 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
       return;
     }
 
-    returnTabRef.current = activeTab;
+    returnTabRef.current = activePanel;
     // Save prevous state
-    setActiveTab("assets");
+    setActiveSidebarPanel("assets");
   });
 
   return (
     <Flex grow>
       <SidebarTabs
         activationMode="manual"
-        value={activeTab}
+        value={activePanel}
         orientation="vertical"
       >
         {
@@ -159,16 +136,14 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             <div ref={tabsWrapperRef} style={{ display: "contents" }}>
               <SidebarTabsList>
                 {Array.from(panels.entries()).map(
-                  ([tabName, { Icon, label }]) => {
+                  ([panel, { Icon, label }]) => {
                     return (
                       <SidebarTabsTrigger
-                        key={tabName}
+                        key={panel}
                         label={label}
-                        value={tabName}
+                        value={panel}
                         onClick={() => {
-                          setActiveTab(
-                            activeTab === tabName ? "none" : tabName
-                          );
+                          toggleActiveSidebarPanel(panel);
                         }}
                       >
                         <Icon size={rawTheme.spacing[10]} />
@@ -187,10 +162,10 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         )}
 
         <SidebarTabsContent
-          value={activeTab === "none" ? "" : activeTab}
+          value={activePanel === "none" ? "" : activePanel}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
-              setActiveTab("none");
+              setActiveSidebarPanel("none");
             }
           }}
           css={{
@@ -199,12 +174,16 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             // to keep receiving the drag events.
             visibility:
               dragAndDropState.isDragging &&
-              dragAndDropState.dragPayload?.origin === "panel"
+              dragAndDropState.dragPayload?.origin === "panel" &&
+              getSetting("navigatorLayout") !== "undocked"
                 ? "hidden"
                 : "visible",
           }}
         >
-          <TabContent publish={publish} onSetActiveTab={setActiveTab} />
+          <TabContent
+            publish={publish}
+            onSetActiveTab={setActiveSidebarPanel}
+          />
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>

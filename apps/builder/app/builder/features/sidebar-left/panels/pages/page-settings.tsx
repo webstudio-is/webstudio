@@ -29,6 +29,7 @@ import {
   isLiteralExpression,
   type System,
   documentTypes,
+  isRootFolder,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -99,7 +100,6 @@ import {
   deletePageMutable,
   $pageRootScope,
   duplicatePage,
-  isRootId,
   toTreeData,
   isPathAvailable,
 } from "./page-utils";
@@ -762,7 +762,7 @@ const FormFields = ({
                     “{values.name}” is the home page
                   </Text>
                 </>
-              ) : isRootId(values.parentFolderId) === false ? (
+              ) : isRootFolder({ id: values.parentFolderId }) === false ? (
                 <>
                   <HomeIcon color={rawTheme.colors.foregroundSubtle} />
                   <Text
@@ -1527,7 +1527,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       oldHomePage.name = "Old Home";
       oldHomePage.path = nameToPath(pages, oldHomePage.name);
 
-      const rootFolder = pages.folders.find((folder) => isRootId(folder.id));
+      const rootFolder = pages.folders.find((folder) => isRootFolder(folder));
 
       if (rootFolder === undefined) {
         throw new Error("Root folder not found");

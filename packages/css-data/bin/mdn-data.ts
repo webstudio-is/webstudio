@@ -247,6 +247,11 @@ const experimentalProperties = [
   "-webkit-tap-highlight-color",
   "-webkit-overflow-scrolling",
   "transition-behavior",
+  "offset-position",
+  // https://github.com/mdn/data/pull/759
+  // offset-anchor is standard according to mdn.
+  // But the mdn_url is missing from its config which is skipping othe starndard check.
+  "offset-anchor",
 ];
 
 const unsupportedProperties = [

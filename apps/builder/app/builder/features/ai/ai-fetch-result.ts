@@ -29,7 +29,7 @@ import {
 import { applyOperations, patchTextInstance } from "./apply-operations";
 import { restAi } from "~/shared/router-utils";
 import untruncateJson from "untruncate-json";
-import { RequestParamsSchema } from "~/routes/rest.ai._index";
+import { RequestParams } from "~/routes/rest.ai._index";
 import {
   AiApiException,
   RateLimitException,
@@ -59,7 +59,7 @@ export const fetchResult = async (
   instanceId: Instance["id"],
   abortSignal: AbortSignal
 ): Promise<void> => {
-  const commandsResponse = await handleAiRequest<commandDetect.Response>(
+  const commandsResponse = await handleAiRequest<commandDetect.AiResponse>(
     fetch(restAi("detect"), {
       method: "POST",
       body: JSON.stringify({ prompt }),
@@ -102,8 +102,8 @@ export const fetchResult = async (
 
   // @todo can be covered by ts
   if (
-    RequestParamsSchema.omit({ command: true }).safeParse(requestParams)
-      .success === false
+    RequestParams.omit({ command: true }).safeParse(requestParams).success ===
+    false
   ) {
     throw new Error("Invalid prompt data");
   }
@@ -112,7 +112,7 @@ export const fetchResult = async (
 
   const promises = await Promise.allSettled(
     commandsResponse.data.map((command) =>
-      handleAiRequest<operations.Response>(
+      handleAiRequest<operations.WsOperations>(
         fetch(restAi(), {
           method: "POST",
           body: JSON.stringify({
@@ -141,8 +141,7 @@ export const fetchResult = async (
 
                 const parsedDataArray = unparsedDataArray
                   .map((item) => {
-                    const safeResult =
-                      copywriter.TextInstanceSchema.safeParse(item);
+                    const safeResult = copywriter.TextInstance.safeParse(item);
                     if (safeResult.success) {
                       return safeResult.data;
                     }

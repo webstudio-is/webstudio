@@ -456,6 +456,23 @@ describe("find closest droppable target", () => {
     });
   });
 
+  test("puts in the end of root instance when root only has text", () => {
+    const instances = new Map([
+      createInstancePair("body", "Body", [{ type: "text", value: "text" }]),
+    ]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["body"],
+        emptyInsertConstraints
+      )
+    ).toEqual({
+      parentSelector: ["body"],
+      position: "end",
+    });
+  });
+
   test("finds closest container and puts after its child within selection", () => {
     const instances = new Map([
       createInstancePair("body", "Body", [{ type: "id", value: "paragraph" }]),

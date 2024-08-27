@@ -3,7 +3,6 @@ import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
-import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";
 import {
   SmallXIcon,
@@ -20,6 +19,8 @@ import {
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { CollapsibleSection } from "../../shared/collapsible-section";
+import { PropertyLabel } from "../../property-label";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 
 export const properties = [
   "flexShrink",
@@ -46,20 +47,17 @@ export const Section = (props: SectionProps) => {
 };
 
 const FlexChildSectionAlign = (props: SectionProps) => {
-  const { deleteProperty, currentStyle } = props;
-  const property = "alignSelf";
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-      <PropertyName
-        style={currentStyle}
-        properties={[property]}
+      <PropertyLabel
         label="Align"
-        onReset={() => deleteProperty(property)}
+        description={propertyDescriptions.alignSelf}
+        properties={["alignSelf"]}
       />
       <ToggleGroupControl
         {...props}
         // We don't support "flex" shorthand and this control is manipulating 3 properties at once
-        property={property}
+        property="alignSelf"
         items={[
           {
             child: <SmallXIcon />,
@@ -125,12 +123,10 @@ const FlexChildSectionSizing = (props: SectionProps) => {
 
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-      <PropertyName
-        style={currentStyle}
-        properties={["flexGrow", "flexShrink", "flexBasis"]}
+      <PropertyLabel
         label="Sizing"
         description="Specifies the ability of a flex item to grow, shrink, or set its initial size within a flex container."
-        onReset={onReset}
+        properties={["flexGrow", "flexShrink", "flexBasis"]}
       />
       <ToggleGroupControl
         {...props}
@@ -252,11 +248,10 @@ const FlexChildSectionSizingPopover = ({
           }}
         >
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
-            <PropertyName
-              style={currentStyle}
+            <PropertyLabel
               properties={["flexGrow"]}
+              description={propertyDescriptions.flexGrow}
               label="Grow"
-              onReset={() => deleteProperty("flexGrow")}
             />
             <TextControl
               property="flexGrow"
@@ -266,11 +261,10 @@ const FlexChildSectionSizingPopover = ({
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
-            <PropertyName
-              style={currentStyle}
-              properties={["flexShrink"]}
+            <PropertyLabel
               label="Shrink"
-              onReset={() => deleteProperty("flexShrink")}
+              description={propertyDescriptions.flexShrink}
+              properties={["flexShrink"]}
             />
             <TextControl
               property="flexShrink"
@@ -280,11 +274,10 @@ const FlexChildSectionSizingPopover = ({
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
-            <PropertyName
-              style={currentStyle}
-              properties={["flexBasis"]}
+            <PropertyLabel
               label="Basis"
-              onReset={() => deleteProperty("flexBasis")}
+              description={propertyDescriptions.flexBasis}
+              properties={["flexBasis"]}
             />
             <TextControl
               property="flexBasis"
@@ -304,21 +297,19 @@ const FlexChildSectionSizingPopover = ({
 };
 
 const FlexChildSectionOrder = (props: SectionProps) => {
-  const { deleteProperty, setProperty, currentStyle } = props;
-  const property = "order";
-  const setOrder = setProperty(property);
+  const { setProperty, currentStyle } = props;
+  const setOrder = setProperty("order");
 
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-      <PropertyName
-        style={currentStyle}
-        properties={[property]}
+      <PropertyLabel
         label="Order"
-        onReset={() => deleteProperty(property)}
+        description={propertyDescriptions.order}
+        properties={["order"]}
       />
       <ToggleGroupControl
         {...props}
-        property={property}
+        property="order"
         setProperty={() => {
           return (styleValue: StyleValue) => {
             if (styleValue.type !== "keyword") {
@@ -382,11 +373,10 @@ const FlexChildSectionOrderPopover = (props: SectionProps) => {
       content={
         <Grid css={{ padding: theme.spacing[9] }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-            <PropertyName
-              style={currentStyle}
-              properties={["order"]}
+            <PropertyLabel
               label="Order"
-              onReset={() => deleteProperty("order")}
+              description={propertyDescriptions.order}
+              properties={["order"]}
             />
             <TextControl
               property="order"

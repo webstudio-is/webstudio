@@ -6,7 +6,6 @@ import {
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import { PropertyName } from "../../shared/property-name";
 import type { SectionProps } from "../shared/section";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import {
@@ -19,13 +18,14 @@ import {
   rowCss,
   isAdvancedValue,
 } from "./utils";
+import { PropertyLabel } from "../../property-label";
 
-export const properties: StyleProperty[] = [
+export const properties: [StyleProperty, ...StyleProperty[]] = [
   "borderTopStyle",
   "borderRightStyle",
   "borderLeftStyle",
   "borderBottomStyle",
-] satisfies Array<StyleProperty>;
+];
 
 const items = [
   {
@@ -83,12 +83,10 @@ export const BorderStyle = (
 
   return (
     <Grid css={rowCss}>
-      <PropertyName
-        style={props.currentStyle}
-        properties={properties}
+      <PropertyLabel
         label="Style"
         description={propertyDescriptions.borderBlockStyle}
-        onReset={handleDelete}
+        properties={properties}
       />
       <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
         <ToggleGroupControl

@@ -2,6 +2,7 @@ import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Project } from "@webstudio-is/project";
 import { $authToken } from "../nano-states";
 import { publicStaticEnv } from "~/env/env.static";
+import { getAuthorizationServerOrigin } from "./origins";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
@@ -47,6 +48,38 @@ export const builderUrl = (props: {
     builderPath({ projectId, pageId, authToken }),
     props.origin
   );
+
+  if (props.mode !== undefined) {
+    url.searchParams.set("mode", props.mode);
+  }
+
+  return url.href;
+};
+
+export const builderUrlNew = (props: {
+  projectId: string;
+  pageId?: string;
+  origin: string;
+  authToken?: string;
+  mode?: "edit" | "preview";
+}) => {
+  const authServerOrigin = getAuthorizationServerOrigin(props.origin);
+
+  // const { projectId, pageId, authToken } = props;
+  const url = new URL(
+    "/", // builderPath({ projectId, pageId, authToken }),
+    authServerOrigin
+  );
+
+  const fragments = url.host.split(".");
+  if (fragments.length <= 3) {
+    fragments.splice(0, 0, "p-" + props.projectId);
+  } else {
+    // staging | development branches
+    fragments[0] = "p-" + props.projectId + "-dot-" + fragments[0];
+  }
+
+  url.host = fragments.join(".");
 
   if (props.mode !== undefined) {
     url.searchParams.set("mode", props.mode);
@@ -149,12 +182,12 @@ export const restPatchPath = (props: { authToken?: string }) => {
   }`;
 };
 
-export const getBuildUrl = ({ project }: { project: Project }) => {
+export const getCanvasUrl = ({ project }: { project: Project }) => {
   // const url = new URL(buildOrigin);
   const searchParams = new URLSearchParams();
   searchParams.set("projectId", project.id);
 
-  return `/?${searchParams.toString()}`;
+  return `/canvas?${searchParams.toString()}`;
 };
 
 export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>

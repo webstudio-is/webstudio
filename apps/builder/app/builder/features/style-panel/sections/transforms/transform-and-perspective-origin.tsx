@@ -1,3 +1,4 @@
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { SectionProps } from "../shared/section";
 import {
   Label,
@@ -13,13 +14,13 @@ import {
   UnitValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
-import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import { useMemo } from "react";
 import { extractTransformOrPerspectiveOriginValues } from "./transform-extractors";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { calculatePositionFromOrigin } from "./transform-utils";
+import { PropertyLabel } from "../../property-label";
 
 // Fake properties to use in the CssValueInputContainer
 // x, y axis takes length | percentage | keyword
@@ -31,7 +32,7 @@ const fakePropertyZ: StyleProperty = "outlineOffset";
 export const TransformAndPerspectiveOrigin = (
   props: SectionProps & { property: StyleProperty }
 ) => {
-  const { currentStyle, deleteProperty, setProperty, property } = props;
+  const { currentStyle, setProperty, property } = props;
   const value = currentStyle[property]?.local;
   const { label } = styleConfigByName(property);
   const origin = useMemo(() => {
@@ -132,11 +133,12 @@ export const TransformAndPerspectiveOrigin = (
         px: theme.spacing[9],
       }}
     >
-      <PropertyName
+      <PropertyLabel
         label={label}
+        description={
+          propertyDescriptions[property as keyof typeof propertyDescriptions]
+        }
         properties={[property]}
-        style={currentStyle}
-        onReset={() => deleteProperty(property)}
       />
       <Flex gap="6">
         <Grid css={{ gridTemplateColumns: "1fr 1fr" }} align="center" gapX="2">

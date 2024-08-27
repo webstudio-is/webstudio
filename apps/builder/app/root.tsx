@@ -2,10 +2,7 @@
 import { Outlet, json, useLoaderData } from "@remix-run/react";
 import { setEnv } from "@webstudio-is/feature-flags";
 import env from "./env/env.server";
-import type { ComponentProps } from "react";
 import { useSetFeatures } from "./shared/use-set-features";
-
-type OutletProps = ComponentProps<typeof Outlet>;
 
 export const loader = () => {
   return json({
@@ -13,12 +10,9 @@ export const loader = () => {
   });
 };
 
-const Root = (props: OutletProps) => {
+export default function App() {
   const { features } = useLoaderData<typeof loader>();
   setEnv(features);
   useSetFeatures();
-
-  return <Outlet {...props} />;
-};
-
-export default Root;
+  return <Outlet />;
+}
