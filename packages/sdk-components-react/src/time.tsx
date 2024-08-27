@@ -348,8 +348,18 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
       timeStyle: timeStyleOrUndefined(timeStyle),
     };
 
-    const datetimeString =
-      datetime === null ? INVALID_DATE_STRING : datetime.toString();
+    let datetimeString;
+    if (datetime === null) {
+      datetimeString = INVALID_DATE_STRING;
+    } else if (isNaN(Number(datetime)) === false) {
+      let timestamp = Number(datetime);
+      if (datetime.length === 10) {
+        timestamp = timestamp * 1000;
+      }
+      datetimeString = new Date(timestamp).toISOString();
+    } else {
+      datetimeString = datetime.toString();
+    }
 
     const date = new Date(datetimeString);
     const isValidDate = false === Number.isNaN(date.getTime());
