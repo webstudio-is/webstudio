@@ -15,17 +15,14 @@ import {
   type DataSource,
   type Instance,
   type Breakpoint,
+  type StyleSourceSelection,
+  type StyleDecl,
   Pages,
   initialBreakpoints,
-  StyleSourceSelection,
-  StyleDecl,
 } from "@webstudio-is/sdk";
-import type { Data } from "@webstudio-is/http-client";
 import type { Build, CompactBuild } from "../types";
-import { parseStyles } from "./styles";
-import { parseStyleSourceSelections } from "./style-source-selections";
 import { parseDeployment } from "./deployment";
-import { parsePages, serializePages } from "./pages";
+import { serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "../shared//marketplace";
 
@@ -52,44 +49,6 @@ export const parseConfig = <Type>(string: string): Type => {
 
 export const serializeConfig = <Type>(data: Type) => {
   return JSON.stringify(data);
-};
-
-const parseBuild = async (
-  build: Database["public"]["Tables"]["Build"]["Row"]
-): Promise<Build> => {
-  console.time("parseBuild");
-  try {
-    const pages = parsePages(build.pages);
-    const styles = Array.from(parseStyles(build.styles));
-    const styleSourceSelections = Array.from(
-      parseStyleSourceSelections(build.styleSourceSelections)
-    );
-    const deployment = parseDeployment(build.deployment);
-
-    const result: Build = {
-      id: build.id,
-      projectId: build.projectId,
-      version: build.version,
-      createdAt: build.createdAt,
-      updatedAt: build.updatedAt,
-      pages,
-      breakpoints: Array.from(parseData<Breakpoint>(build.breakpoints)),
-      styles,
-      styleSources: Array.from(parseData<StyleSource>(build.styleSources)),
-      styleSourceSelections,
-      props: Array.from(parseData<Prop>(build.props)),
-      dataSources: Array.from(parseData<DataSource>(build.dataSources)),
-      resources: Array.from(parseData<Resource>(build.resources)),
-      instances: Array.from(parseData<Instance>(build.instances)),
-      deployment,
-      marketplaceProduct: parseConfig<MarketplaceProduct>(
-        build.marketplaceProduct
-      ),
-    } satisfies Data["build"] & { marketplaceProduct: MarketplaceProduct };
-    return result;
-  } finally {
-    console.timeEnd("parseBuild");
-  }
 };
 
 const parseCompactBuild = async (
@@ -146,13 +105,10 @@ export const loadRawBuildById = async (
   return build.data[0];
 };
 
-export const loadBuildById = async (
-  context: AppContext,
-  id: Build["id"]
-): Promise<Build> => {
+export const loadBuildById = async (context: AppContext, id: Build["id"]) => {
   const build = await loadRawBuildById(context, id);
 
-  return parseBuild(build);
+  return parseCompactBuild(build);
 };
 
 export const loadBuildIdAndVersionByProjectId = async (
@@ -179,7 +135,7 @@ export const loadBuildIdAndVersionByProjectId = async (
   return build.data[0];
 };
 
-const loadRawBuildByProjectId = async (
+export const loadDevBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]
 ) => {
@@ -200,23 +156,7 @@ const loadRawBuildByProjectId = async (
     );
   }
 
-  return build.data[0];
-};
-
-export const loadBuildByProjectId = async (
-  context: AppContext,
-  projectId: Build["projectId"]
-): Promise<Build> => {
-  const build = await loadRawBuildByProjectId(context, projectId);
-  return parseBuild(build);
-};
-
-export const loadDevBuildByProjectId = async (
-  context: AppContext,
-  projectId: Build["projectId"]
-) => {
-  const build = await loadRawBuildByProjectId(context, projectId);
-  return parseCompactBuild(build);
+  return parseCompactBuild(build.data[0]);
 };
 
 export const loadApprovedProdBuildByProjectId = async (

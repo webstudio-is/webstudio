@@ -54,7 +54,7 @@ type StylePanelProps = {
 
 export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
-    useStyleData(selectedInstance);
+    useStyleData(selectedInstance.id);
 
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const selectedInstanceTag = useStore($selectedInstanceTag);

@@ -3,10 +3,11 @@ import type { SectionProps } from "../shared/section";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";
-import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import { PositionControl } from "./position-control";
 import { useParentStyle } from "../../parent-style";
+import { PropertyLabel } from "../../property-label";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 
 export const properties = [
   "position",
@@ -66,11 +67,10 @@ export const Section = ({
             gridTemplateColumns: `1fr ${theme.spacing[23]}`,
           }}
         >
-          <PropertyName
-            label={styleConfigByName("position").label}
+          <PropertyLabel
+            label="Position"
+            description={propertyDescriptions.position}
             properties={["position"]}
-            style={currentStyle}
-            onReset={() => deleteProperty("position")}
           />
           <SelectControl
             property={"position"}
@@ -81,11 +81,10 @@ export const Section = ({
           />
           {showZindexControl && showPositionControls === false && (
             <>
-              <PropertyName
-                label={styleConfigByName("zIndex").label}
+              <PropertyLabel
+                label="Z Index"
+                description={propertyDescriptions.zIndex}
                 properties={["zIndex"]}
-                style={currentStyle}
-                onReset={() => deleteProperty("zIndex")}
               />
               <TextControl
                 property={"zIndex"}
@@ -105,11 +104,10 @@ export const Section = ({
               createBatchUpdate={createBatchUpdate}
             />
             <Grid gap={1}>
-              <PropertyName
-                label={styleConfigByName("zIndex").label}
+              <PropertyLabel
+                label="Z Index"
+                description={propertyDescriptions.zIndex}
                 properties={["zIndex"]}
-                style={currentStyle}
-                onReset={() => deleteProperty("zIndex")}
               />
               <TextControl
                 property={"zIndex"}

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const name = "copywriter";
 
-export const TextInstanceSchema = z.object({
+export const TextInstance = z.object({
   instanceId: z.string(),
   index: z.number(),
   type: z.union([
@@ -13,15 +13,15 @@ export const TextInstanceSchema = z.object({
   text: z.string(),
 });
 
-export type TextInstance = z.infer<typeof TextInstanceSchema>;
+export type TextInstance = z.infer<typeof TextInstance>;
 
-export const ContextSchema = z.object({
+export const Context = z.object({
   // The prompt provides context about the copy to generate and comes from the user.
   prompt: z.string(),
   // An array of text nodes to generate copy for.
-  textInstances: z.array(TextInstanceSchema),
+  textInstances: z.array(TextInstance),
 });
-export type Context = z.infer<typeof ContextSchema>;
+export type Context = z.infer<typeof Context>;
 
-export const ResponseSchema = z.array(TextInstanceSchema);
-export type Response = z.infer<typeof ResponseSchema>;
+export const Response = z.array(TextInstance);
+export type Response = z.infer<typeof Response>;

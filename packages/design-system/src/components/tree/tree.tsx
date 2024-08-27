@@ -33,6 +33,7 @@ import { theme } from "../..";
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
+  highlightedItemSelector?: ItemSelector;
   dragItemSelector: undefined | ItemSelector;
   dropTarget: undefined | ItemDropTarget;
 
@@ -71,6 +72,7 @@ const sharedDropOptions = {
 export const Tree = <Data extends { id: string }>({
   root,
   selectedItemSelector,
+  highlightedItemSelector,
   dragItemSelector,
   dropTarget,
   canLeaveParent,
@@ -313,6 +315,7 @@ export const Tree = <Data extends { id: string }>({
           onSelect={onSelect}
           onHover={onHover}
           selectedItemSelector={selectedItemSelector}
+          highlightedItemSelector={highlightedItemSelector}
           itemData={root}
           getIsExpanded={getIsExpanded}
           setIsExpanded={(itemSelector, value, all) => {

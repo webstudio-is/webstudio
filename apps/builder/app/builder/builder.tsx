@@ -31,7 +31,7 @@ import {
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
-import { getBuildUrl } from "~/shared/router-utils";
+import { getCanvasUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
@@ -311,7 +311,7 @@ export const Builder = ({
     return unsubscribe;
   }, []);
 
-  const canvasUrl = getBuildUrl({
+  const canvasUrl = getCanvasUrl({
     project,
   });
 

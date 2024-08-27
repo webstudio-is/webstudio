@@ -74,7 +74,7 @@ export type ModelCompletionStream<ModelMessageFormat> = (args: {
  * and a context object which includes input data such as prompt and other relevant methods for the chain.
  *
  * Additionally each chain should export types for Context and Response data (using these names) both as zod and TypeScript types.
- * zod types must have a Schema suffix. For example ResponseSchema.
+ * zod types must have a Schema suffix. For example Response.
  */
 
 export type ModelResponse<ResponseData> = Response<ResponseData> & {

@@ -1,16 +1,18 @@
-import { type ComponentProps } from "react";
+import { lazy } from "react";
 import { useLoaderData, useRouteError } from "@remix-run/react";
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
-import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
+import type { DashboardProps } from "~/dashboard/dashboard";
+import { ClientOnly } from "~/shared/client-only";
+
 export const loader = async ({
   request,
-}: LoaderFunctionArgs): Promise<ComponentProps<typeof Dashboard>> => {
+}: LoaderFunctionArgs): Promise<DashboardProps> => {
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {
@@ -56,9 +58,19 @@ export const ErrorBoundary = () => {
   return <ErrorMessage message={message} />;
 };
 
+const Dashboard = lazy(async () => {
+  const { Dashboard } = await import("~/dashboard/index.client");
+  return { default: Dashboard };
+});
+
 const DashboardRoute = () => {
-  const data = useLoaderData<ReturnType<typeof loader>>();
-  return <Dashboard {...data} />;
+  const data = useLoaderData<DashboardProps>();
+
+  return (
+    <ClientOnly>
+      <Dashboard {...data} />
+    </ClientOnly>
+  );
 };
 
 export default DashboardRoute;

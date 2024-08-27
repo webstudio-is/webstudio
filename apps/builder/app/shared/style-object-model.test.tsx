@@ -803,6 +803,46 @@ test("preset styles are more specific than browser styles", () => {
   ).toEqual({ type: "keyword", value: "flex" });
 });
 
+test("access cascaded value without resolving", () => {
+  const model = createModel({
+    css: `
+      local {
+        color: initial;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="local"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "color",
+    }).cascadedValue
+  ).toEqual({ type: "keyword", value: "initial" });
+});
+
+test("fallback cascaded value to inherited computed value", () => {
+  const model = createModel({
+    css: `
+      body {
+        border-top-color: currentcolor;
+      }
+    `,
+    jsx: (
+      <$.Body ws:id="body" class="body">
+        <$.Box ws:id="box" class="box"></$.Box>
+      </$.Body>
+    ),
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box", "body"],
+      property: "borderTopColor",
+    }).cascadedValue
+  ).toEqual({ type: "keyword", value: "currentColor" });
+});
+
 describe("selected style", () => {
   test("access selected style source value within cascade", () => {
     const model = createModel({
@@ -983,5 +1023,376 @@ describe("selected style", () => {
         property: "color",
       }).usedValue
     ).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("prefer selected state from preset", () => {
+    const model = createModel({
+      presets: {
+        Body: `
+          body {
+            color: red;
+          }
+          body:hover {
+            color: blue;
+          }
+        `,
+      },
+      css: "",
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "blue" });
+  });
+});
+
+describe("style value source", () => {
+  test("default", () => {
+    const model = createModel({
+      css: "",
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual({ name: "default" });
+  });
+
+  test("preset", () => {
+    const model = createModel({
+      presets: {
+        Body: `
+          body {
+            color: red;
+          }
+        `,
+      },
+      css: "",
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual({ name: "preset", instanceId: "body" });
+  });
+
+  test("remote style source", () => {
+    const model = createModel({
+      // presets should be ignored
+      presets: {
+        Body: `
+          body {
+            color: yellow;
+          }
+        `,
+      },
+      css: `
+        second {
+          color: red;
+        }
+      `,
+      jsx: (
+        <$.Body ws:id="body" ws:tag="body" class="first second third"></$.Body>
+      ),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "first",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "second",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "second",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "second",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "third",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "second",
+    });
+  });
+
+  test("overwritten style source", () => {
+    const model = createModel({
+      // presets should be ignored
+      presets: {
+        Body: `
+          body {
+            color: yellow;
+          }
+        `,
+      },
+      css: `
+        first {
+          color: red;
+        }
+        second {
+          color: green;
+        }
+        third {
+          color: blue;
+        }
+      `,
+      jsx: (
+        <$.Body ws:id="body" ws:tag="body" class="first second third"></$.Body>
+      ),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "first",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "overwritten",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "third",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "second",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "overwritten",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "third",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        styleSourceId: "third",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "third",
+    });
+  });
+
+  test("remote matching state", () => {
+    const model = createModel({
+      css: `
+        local:hover {
+          color: red;
+        }
+      `,
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      matchingStates: new Set([":hover"]),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
+  });
+
+  test("overwritten stateless", () => {
+    const model = createModel({
+      css: `
+        local {
+          color: red;
+        }
+        local:hover {
+          color: blue;
+        }
+      `,
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      matchingStates: new Set([":hover"]),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "overwritten",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        state: ":hover",
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+      state: ":hover",
+    });
+  });
+
+  test("remote breakpoint", () => {
+    const model = createModel({
+      css: `
+        local {
+          color: red;
+        }
+        @media small {
+          local {
+            border-top-color: blue;
+          }
+        }
+      `,
+      jsx: <$.Body ws:id="body" ws:tag="body" class="local"></$.Body>,
+      matchingBreakpoints: ["base", "small"],
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "remote",
+      instanceId: "body",
+      breakpointId: "base",
+      styleSourceId: "local",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["body"],
+        property: "borderTopColor",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "body",
+      breakpointId: "small",
+      styleSourceId: "local",
+    });
+  });
+
+  test("remote inherited", () => {
+    const model = createModel({
+      css: `
+        bodyLocal {
+          color: red;
+        }
+        boxLocal {
+          color: blue;
+          width: 100%;
+        }
+      `,
+      jsx: (
+        <$.Body ws:id="body" ws:tag="body" class="bodyLocal">
+          <$.Box ws:id="outer" ws:tag="div" class="outerLocal">
+            <$.Box ws:id="box" ws:tag="div" class="boxLocal">
+              <$.Box ws:id="inner" ws:tag="div" class="innerLocal"></$.Box>
+            </$.Box>
+          </$.Box>
+        </$.Body>
+      ),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["inner", "box", "outer", "body"],
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "remote",
+      instanceId: "box",
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["inner", "box", "outer", "body"],
+        property: "width",
+      }).source
+    ).toEqual({ name: "default" });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["box", "outer", "body"],
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "box",
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+    });
   });
 });

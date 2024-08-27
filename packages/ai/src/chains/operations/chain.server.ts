@@ -6,12 +6,10 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { postProcessTemplate } from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
 import {
-  type Context,
-  type Response,
-  type AiOperations,
   type WsOperations,
-  AiOperationsSchema,
+  AiOperations,
   name,
+  OperationContext,
 } from "./schema";
 import * as editStyles from "./edit-styles.server";
 import * as generateTemplatePrompt from "./generate-template-prompt.server";
@@ -55,8 +53,8 @@ const aiToWs = (aiOperations: AiOperations) => {
 
 export const createChain = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>,
-  Context,
-  Response
+  OperationContext,
+  WsOperations
 > =>
   async function chain({ model, context }) {
     const { prompt, components, jsx } = context;
@@ -65,8 +63,8 @@ export const createChain = <ModelMessageFormat>(): Chain<
     // a specific operation among the supported ones.
     // This could be passed as context.operations.
     const operationsSchema = zodToJsonSchema(
-      AiOperationsSchema.element,
-      "AiOperationsSchema"
+      AiOperations.element,
+      "AiOperations"
     );
 
     const llmMessages: ModelMessage[] = [
@@ -112,9 +110,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     let parsedCompletion;
 
     try {
-      parsedCompletion = AiOperationsSchema.safeParse(
-        JSON.parse(completionText)
-      );
+      parsedCompletion = AiOperations.safeParse(JSON.parse(completionText));
     } catch (error) {
       return {
         id: name,

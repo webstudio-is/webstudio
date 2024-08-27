@@ -1,3 +1,4 @@
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -6,9 +7,7 @@ import {
   Separator,
   styled,
 } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
 import type { SectionProps } from "../shared/section";
-import { PropertyName } from "../../shared/property-name";
 import {
   PositionControl,
   SelectControl,
@@ -27,6 +26,8 @@ import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { getStyleSourceColor } from "../../shared/style-info";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
+import { humanizeString } from "~/shared/string-utils";
+import { PropertyLabel } from "../../property-label";
 
 const SizeProperty = ({
   property,
@@ -34,14 +35,14 @@ const SizeProperty = ({
   setProperty,
   deleteProperty,
 }: ControlProps) => {
-  const { label } = styleConfigByName(property);
   return (
     <Grid gap={1}>
-      <PropertyName
-        label={label}
+      <PropertyLabel
+        label={humanizeString(property)}
+        description={
+          propertyDescriptions[property as keyof typeof propertyDescriptions]
+        }
         properties={[property]}
-        style={currentStyle}
-        onReset={() => deleteProperty(property)}
       />
       <TextControl
         property={property}
@@ -167,11 +168,10 @@ export const Section = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <PropertyName
-          label={styleConfigByName("aspectRatio").label}
+        <PropertyLabel
+          label="Aspect Ratio"
+          description={propertyDescriptions.aspectRatio}
           properties={["aspectRatio"]}
-          style={currentStyle}
-          onReset={() => deleteProperty("aspectRatio")}
         />
         <TextControl
           property={"aspectRatio"}
@@ -182,16 +182,10 @@ export const Section = ({
       </SectionLayout>
       <Separator />
       <SectionLayout columns={2}>
-        <PropertyName
+        <PropertyLabel
           label="Overflow"
+          description={propertyDescriptions.overflow}
           properties={["overflowX", "overflowY"]}
-          style={currentStyle}
-          onReset={() => {
-            const batch = createBatchUpdate();
-            deleteProperty("overflowX");
-            deleteProperty("overflowY");
-            batch.publish();
-          }}
         />
         <ToggleGroupControl
           property="overflowX"
@@ -244,11 +238,10 @@ export const Section = ({
             },
           ]}
         />
-        <PropertyName
-          label={styleConfigByName("objectFit").label}
+        <PropertyLabel
+          label="Object Fit"
+          description={propertyDescriptions.objectFit}
           properties={["objectFit"]}
-          style={currentStyle}
-          onReset={() => deleteProperty("objectFit")}
         />
         <SelectControl
           property="objectFit"
@@ -256,11 +249,10 @@ export const Section = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <PropertyName
-          label={styleConfigByName("objectPosition").label}
+        <PropertyLabel
+          label="Object Position"
+          description={propertyDescriptions.objectPosition}
           properties={["objectPosition"]}
-          style={currentStyle}
-          onReset={() => deleteProperty("objectPosition")}
         />
         <ObjectPosition
           property="objectPosition"

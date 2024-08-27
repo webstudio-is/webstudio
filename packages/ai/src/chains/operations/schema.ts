@@ -30,18 +30,18 @@ export {
 
 export const name = "operations";
 
-export const ContextSchema = z.object({
+export const OperationContext = z.object({
   prompt: z.string().describe("Edit request from the user"),
   components: z.array(z.string()).describe("Available Webstudio components"),
   jsx: z.string().describe("Input JSX to edit"),
 });
-export type Context = z.infer<typeof ContextSchema>;
+export type OperationContext = z.infer<typeof OperationContext>;
 
 // AiOperations are supported LLM operations.
 // A valid completion is then converted to WsOperations
 // which is the final format that we send to the client.
 
-export const AiOperationsSchema = z.array(
+export const AiOperations = z.array(
   z.discriminatedUnion("operation", [
     editStyles.aiOperation,
     generateTemplatePrompt.aiOperation,
@@ -55,9 +55,9 @@ export const AiOperationsSchema = z.array(
     deleteInstance.aiOperation,
   ])
 );
-export type AiOperations = z.infer<typeof AiOperationsSchema>;
+export type AiOperations = z.infer<typeof AiOperations>;
 
-export const WsOperationsSchema = z.array(
+export const WsOperations = z.array(
   z.discriminatedUnion("operation", [
     editStyles.wsOperation,
     generateTemplatePrompt.wsOperation,
@@ -65,7 +65,4 @@ export const WsOperationsSchema = z.array(
     deleteInstance.wsOperation,
   ])
 );
-export type WsOperations = z.infer<typeof WsOperationsSchema>;
-
-export const ResponseSchema = WsOperationsSchema;
-export type Response = z.infer<typeof ResponseSchema>;
+export type WsOperations = z.infer<typeof WsOperations>;

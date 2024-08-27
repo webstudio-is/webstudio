@@ -6,9 +6,9 @@ import {
   theme,
   IconButton,
 } from "@webstudio-is/design-system";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
-import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
   FontFamilyControl,
@@ -38,6 +38,7 @@ import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-con
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSourceColor, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
+import { PropertyLabel } from "../../property-label";
 
 export const properties = [
   "fontFamily",
@@ -79,11 +80,10 @@ export const TypographySectionFont = (props: SectionProps) => {
 
   return (
     <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-      <PropertyName
-        style={currentStyle}
+      <PropertyLabel
         label="Family"
+        description={propertyDescriptions.fontFamily}
         properties={["fontFamily"]}
-        onReset={() => deleteProperty("fontFamily")}
       />
       <FontFamilyControl
         property="fontFamily"
@@ -91,11 +91,10 @@ export const TypographySectionFont = (props: SectionProps) => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
-      <PropertyName
-        style={currentStyle}
+      <PropertyLabel
         label="Weight"
+        description={propertyDescriptions.fontWeight}
         properties={["fontWeight"]}
-        onReset={() => deleteProperty("fontWeight")}
       />
       <FontWeightControl
         property="fontWeight"
@@ -103,11 +102,10 @@ export const TypographySectionFont = (props: SectionProps) => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
-      <PropertyName
-        style={currentStyle}
+      <PropertyLabel
         label="Color"
+        description={propertyDescriptions.color}
         properties={["color"]}
-        onReset={() => deleteProperty("color")}
       />
       <ColorControl
         property="color"
@@ -125,11 +123,10 @@ export const TypographySectionSizing = (props: SectionProps) => {
   return (
     <Grid gap="2" css={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
       <Grid gap="1">
-        <PropertyName
-          style={currentStyle}
-          properties={["fontSize"]}
+        <PropertyLabel
           label="Size"
-          onReset={() => deleteProperty("fontSize")}
+          description={propertyDescriptions.fontSize}
+          properties={["fontSize"]}
         />
         <TextControl
           property="fontSize"
@@ -139,11 +136,10 @@ export const TypographySectionSizing = (props: SectionProps) => {
         />
       </Grid>
       <Grid gap="1">
-        <PropertyName
-          style={currentStyle}
-          properties={["lineHeight"]}
+        <PropertyLabel
           label="Height"
-          onReset={() => deleteProperty("lineHeight")}
+          description={propertyDescriptions.lineHeight}
+          properties={["lineHeight"]}
         />
         <TextControl
           property="lineHeight"
@@ -153,11 +149,10 @@ export const TypographySectionSizing = (props: SectionProps) => {
         />
       </Grid>
       <Grid gap="1">
-        <PropertyName
-          style={currentStyle}
-          properties={["letterSpacing"]}
+        <PropertyLabel
           label="Spacing"
-          onReset={() => deleteProperty("letterSpacing")}
+          description={propertyDescriptions.letterSpacing}
+          properties={["letterSpacing"]}
         />
         <TextControl
           property="letterSpacing"
@@ -350,18 +345,18 @@ const AdvancedOptionsButton = forwardRef<
 });
 AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 
+const advancedProperties: StyleProperty[] = [
+  "whiteSpaceCollapse",
+  "textWrapMode",
+  "textWrapStyle",
+  "direction",
+  "hyphens",
+  "textOverflow",
+];
+
 export const TypographySectionAdvancedPopover = (props: SectionProps) => {
   const { deleteProperty, setProperty, createBatchUpdate, currentStyle } =
     props;
-  const properties = {
-    whiteSpaceCollapse: "whiteSpaceCollapse",
-    textWrapMode: "textWrapMode",
-    textWrapStyle: "textWrapStyle",
-    direction: "direction",
-    hyphens: "hyphens",
-    textOverflow: "textOverflow",
-  } as const; // in Record<StyleProperty, StyleProperty>//{ [key: StyleProperty]: StyleProperty }  { [key in StyleProperty]: string };
-
   return (
     <FloatingPanel
       title="Advanced Typography"
@@ -374,58 +369,53 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
           }}
         >
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-            <PropertyName
-              style={currentStyle}
-              properties={[properties.whiteSpaceCollapse]}
+            <PropertyLabel
               label="White Space"
-              onReset={() => deleteProperty(properties.whiteSpaceCollapse)}
+              description={propertyDescriptions.whiteSpaceCollapse}
+              properties={["whiteSpaceCollapse"]}
             />
             <SelectControl
-              property={properties.whiteSpaceCollapse}
+              property="whiteSpaceCollapse"
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
           </Grid>
-          {/* @todo cannot set because not supported in browser ??? */}
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-            <PropertyName
-              style={currentStyle}
-              properties={[properties.textWrapMode]}
+            <PropertyLabel
               label="Wrap Mode"
-              onReset={() => deleteProperty(properties.textWrapMode)}
+              description={propertyDescriptions.textWrapMode}
+              properties={["textWrapMode"]}
             />
             <SelectControl
-              property={properties.textWrapMode}
+              property="textWrapMode"
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-            <PropertyName
-              style={currentStyle}
-              properties={[properties.textWrapStyle]}
+            <PropertyLabel
               label="Wrap Style"
-              onReset={() => deleteProperty(properties.textWrapStyle)}
+              description={propertyDescriptions.textWrapStyle}
+              properties={["textWrapStyle"]}
             />
             <SelectControl
-              property={properties.textWrapStyle}
+              property="textWrapStyle"
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-            <PropertyName
-              style={currentStyle}
-              properties={[properties.direction]}
+            <PropertyLabel
               label="Direction"
-              onReset={() => deleteProperty(properties.direction)}
+              description={propertyDescriptions.direction}
+              properties={["direction"]}
             />
             <ToggleGroupControl
               {...props}
-              property={properties.direction}
+              property="direction"
               items={[
                 {
                   child: <TextDirectionLTRIcon />,
@@ -447,15 +437,14 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-            <PropertyName
-              style={currentStyle}
-              properties={[properties.hyphens]}
+            <PropertyLabel
               label="Hyphens"
-              onReset={() => deleteProperty(properties.hyphens)}
+              description={propertyDescriptions.hyphens}
+              properties={["hyphens"]}
             />
             <ToggleGroupControl
               {...props}
-              property={properties.hyphens}
+              property="hyphens"
               items={[
                 {
                   child: <CrossSmallIcon />,
@@ -477,15 +466,14 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-            <PropertyName
-              style={currentStyle}
-              properties={[properties.textOverflow]}
+            <PropertyLabel
               label="Text Overflow"
-              onReset={() => deleteProperty(properties.textOverflow)}
+              description={propertyDescriptions.textOverflow}
+              properties={["textOverflow"]}
             />
             <ToggleGroupControl
               {...props}
-              property={properties.textOverflow}
+              property="textOverflow"
               items={[
                 {
                   child: <CrossSmallIcon />,
@@ -511,10 +499,10 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
     >
       <AdvancedOptionsButton
         currentStyle={currentStyle}
-        properties={Object.values(properties)}
+        properties={advancedProperties}
         onReset={() => {
           const batch = createBatchUpdate();
-          Object.values(properties).forEach((property) => {
+          Object.values(advancedProperties).forEach((property) => {
             batch.deleteProperty(property);
           });
           batch.publish();

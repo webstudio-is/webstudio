@@ -308,7 +308,7 @@ const subscribeSelectedInstance = (
   return () => {
     clearTimeout(updateStoreTimeouHandle);
     hideOutline();
-    $selectedInstanceRenderState.set("pending");
+    $selectedInstanceRenderState.set("notMounted");
     resizeObserver.disconnect();
     mutationObserver.disconnect();
     bodyStyleMutationObserver.disconnect();

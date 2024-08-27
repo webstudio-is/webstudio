@@ -6,7 +6,7 @@ import type { IncomingMessage } from "node:http";
 import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
-} from "./app/shared/router-utils/origins.server";
+} from "./app/shared/router-utils/origins";
 import { readFileSync } from "node:fs";
 
 export default defineConfig(({ mode }) => {
@@ -29,6 +29,12 @@ export default defineConfig(({ mode }) => {
           find: "~",
           replacement: resolve("app"),
         },
+
+        // before 2,899.74 kB, after 2,145.98 kB
+        {
+          find: "@supabase/node-fetch",
+          replacement: resolve("./app/shared/empty.ts"),
+        },
       ],
     },
     define: {
@@ -47,13 +53,12 @@ export default defineConfig(({ mode }) => {
         key: readFileSync("../../https/privkey.pem"),
         cert: readFileSync("../../https/fullchain.pem"),
       },
-
       cors: ((
         req: IncomingMessage,
         callback: (error: Error | null, options: CorsOptions | null) => void
       ) => {
         // Handle CORS preflight requests in development to mimic Remix production behavior
-        if (req.method === "OPTIONS") {
+        if (req.method === "OPTIONS" || req.method === "GET") {
           if (req.headers.origin != null && req.url != null) {
             const url = new URL(req.url, `https://${req.headers.host}`);
 
@@ -67,11 +72,13 @@ export default defineConfig(({ mode }) => {
             }
           }
 
-          // Respond with method not allowed for other preflight requests
-          return callback(null, {
-            preflightContinue: false,
-            optionsSuccessStatus: 405,
-          });
+          if (req.method === "OPTIONS") {
+            // Respond with method not allowed for other preflight requests
+            return callback(null, {
+              preflightContinue: false,
+              optionsSuccessStatus: 405,
+            });
+          }
         }
 
         // Disable CORS for all other requests

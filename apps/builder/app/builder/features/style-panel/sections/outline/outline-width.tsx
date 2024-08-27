@@ -1,10 +1,11 @@
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
 import type { SectionProps } from "../shared/section";
-import { PropertyName } from "../../shared/property-name";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
+import { PropertyLabel } from "../../property-label";
 
 const property: StyleProperty = "outlineWidth";
 
@@ -26,11 +27,10 @@ export const OutlineWidth = (
       }}
       gap={2}
     >
-      <PropertyName
-        properties={[property]}
-        style={props.currentStyle}
-        label={"Width"}
-        onReset={() => deleteProperty(property)}
+      <PropertyLabel
+        label="Width"
+        description={propertyDescriptions.outlineWidth}
+        properties={["outlineWidth"]}
       />
 
       <CssValueInputContainer
