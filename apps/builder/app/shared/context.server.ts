@@ -8,20 +8,27 @@ import { getUserPlanFeatures } from "./db/user-plan-features.server";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postrest/index.server";
 import { prisma } from "@webstudio-is/prisma-client";
-import { isBuilderUrl } from "./router-utils/origins";
 import { builderAuthenticator } from "~/services/builder-auth.server";
+import { readLoginSessionBloomFilter } from "~/services/session.server";
+import type { BloomFilter } from "~/services/bloom-filter.server";
+import { isBuilder, isCanvas, isDashboard } from "./router-utils";
+import { parseBuilderUrl } from "./router-utils/origins";
 
 const createAuthorizationContext = async (
   request: Request
 ): Promise<AppContext["authorization"]> => {
   const url = new URL(request.url);
 
+  if (isCanvas(request)) {
+    throw new Error("Canvas requests can't have authorization context");
+  }
+
   const authToken =
     url.searchParams.get("authToken") ??
     request.headers.get("x-auth-token") ??
     undefined;
 
-  const user = isBuilderUrl(request.url)
+  const user = isBuilder(request)
     ? await builderAuthenticator.isAuthenticated(request)
     : await authenticator.isAuthenticated(request);
 
@@ -59,11 +66,33 @@ const createAuthorizationContext = async (
     ownerId = projectOwnerId;
   }
 
+  let loginBloomFilter: BloomFilter | undefined = undefined;
+  let isLoggedInToBuilder:
+    | AppContext["authorization"]["isLoggedInToBuilder"]
+    | undefined = undefined;
+
+  if (isDashboard(request) && user?.id !== undefined) {
+    isLoggedInToBuilder = async (projectId: string) => {
+      if (loginBloomFilter === undefined) {
+        loginBloomFilter = await readLoginSessionBloomFilter(request);
+      }
+      return await loginBloomFilter.has(projectId);
+    };
+  }
+
+  if (isBuilder(request) && user?.id !== undefined) {
+    isLoggedInToBuilder = async (projectId: string) => {
+      const parsedUrl = parseBuilderUrl(request.url);
+      return parsedUrl.projectId === projectId;
+    };
+  }
+
   const context: AppContext["authorization"] = {
     userId: user?.id,
     authToken,
     isServiceCall,
     ownerId,
+    isLoggedInToBuilder,
   };
 
   return context;

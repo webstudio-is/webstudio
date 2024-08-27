@@ -2,11 +2,8 @@ import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { createDebug } from "~/shared/debug";
 import { authenticator } from "~/services/auth.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
-import {
-  getAuthorizationServerOrigin,
-  isBuilderUrl,
-} from "~/shared/router-utils/origins";
-import { isDashboard, loginPath } from "~/shared/router-utils";
+import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
+import { isBuilder, isDashboard, loginPath } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const debug = createDebug(import.meta.url);
@@ -20,11 +17,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // We are not clearing cross origin cookies here for logout to work through a fetch request
   debug("Logout request received", request.url);
 
-  const authenticatorService = isBuilderUrl(request.url)
+  const authenticatorService = isBuilder(request)
     ? builderAuthenticator
     : authenticator;
 
-  const redirectTo = isBuilderUrl(request.url)
+  const redirectTo = isBuilder(request)
     ? `${getAuthorizationServerOrigin(request.url)}/${loginPath({})}`
     : loginPath({});
 

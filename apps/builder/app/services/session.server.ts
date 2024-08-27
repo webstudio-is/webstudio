@@ -18,9 +18,11 @@ export const sessionStorage = createCookieSessionStorage({
   },
 });
 
-const bloomFilterKey = "bloom_filter";
+// Bloom filter: probabilistic data structure to efficiently check if session IDs are logged in.
+// Allowing tracking of user login status for specific projects
+const bloomFilterKey = "login_session_bloom_filter";
 
-export const readBloomFilter = async (request: Request) => {
+export const readLoginSessionBloomFilter = async (request: Request) => {
   try {
     const session = await sessionStorage.getSession(
       request.headers.get("Cookie")
@@ -39,7 +41,7 @@ export const readBloomFilter = async (request: Request) => {
   }
 };
 
-export const writeBloomFilter = async (
+export const writeLoginSessionBloomFilter = async (
   request: Request,
   response: Response,
   bloomFilter: BloomFilter

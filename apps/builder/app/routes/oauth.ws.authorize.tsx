@@ -190,7 +190,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       // To use during logout
 
-      const bloomFilter = await session.readBloomFilter(request);
+      const bloomFilter = await session.readLoginSessionBloomFilter(request);
 
       debug(
         `db40c18d-d837-4e8b-ba75-764769e6fd0e is in bloom filter?`,
@@ -200,7 +200,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       await bloomFilter.add(oAuthParams.scope.projectId);
 
-      return session.writeBloomFilter(
+      return session.writeLoginSessionBloomFilter(
         request,
         new Response(null, {
           status: 302,
