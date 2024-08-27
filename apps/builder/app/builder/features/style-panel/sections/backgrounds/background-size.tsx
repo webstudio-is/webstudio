@@ -1,7 +1,7 @@
 import { Grid, Select, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "../../shared/configs";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertyDescriptions } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import {
   type StyleValue,
@@ -9,8 +9,8 @@ import {
   TupleValueItem,
 } from "@webstudio-is/css-engine";
 import type { SetValue } from "../../shared/use-style-data";
-import { NonResetablePropertyName } from "../../shared/property-name";
 import type { ControlProps } from "../../controls";
+import { PropertyInlineLabel } from "../../property-label";
 
 const StyleKeywordAuto = { type: "keyword" as const, value: "auto" };
 
@@ -74,10 +74,10 @@ export const BackgroundSize = (
         align="center"
         gap={2}
       >
-        <NonResetablePropertyName
-          style={props.currentStyle}
-          properties={[property]}
+        <PropertyInlineLabel
           label="Size"
+          description={propertyDescriptions.backgroundSize}
+          properties={[property]}
         />
 
         <Select
@@ -129,17 +129,15 @@ export const BackgroundSize = (
         gapX={2}
         gapY={1}
       >
-        <NonResetablePropertyName
-          style={props.currentStyle}
-          properties={[property]}
+        <PropertyInlineLabel
+          properties={["backgroundSize"]}
           label="Width"
           description="The width of the background image."
           disabled={customSizeDisabled}
         />
 
-        <NonResetablePropertyName
-          style={props.currentStyle}
-          properties={[property]}
+        <PropertyInlineLabel
+          properties={["backgroundSize"]}
           label="Height"
           description="The height of the background image."
           disabled={customSizeDisabled}

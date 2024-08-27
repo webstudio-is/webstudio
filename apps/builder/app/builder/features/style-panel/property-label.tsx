@@ -242,3 +242,62 @@ export const PropertyLabel = ({
     </Flex>
   );
 };
+
+/**
+ * Some properties like layered background-image, background-size are non resetable.
+ * UI of background would be unreadable, imagine you have
+ * background-size inherited from one source, background-image from the other,
+ * Every property have different amount of layers. The final result on the screen would be a mess.
+ */
+export const PropertyInlineLabel = ({
+  label,
+  description,
+  properties,
+  disabled,
+}: {
+  label: string;
+  description: string;
+  properties: [StyleProperty, ...StyleProperty[]];
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Flex align="center">
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        // prevent closing tooltip on content click
+        onPointerDown={(event) => event.preventDefault()}
+        triggerProps={{
+          onClick: () => setIsOpen(true),
+        }}
+        content={
+          <>
+            <Flex
+              direction="column"
+              gap="2"
+              css={{ maxWidth: theme.spacing[28] }}
+            >
+              <Text variant="titles">{label}</Text>
+              <Text
+                variant="monoBold"
+                color="moreSubtle"
+                userSelect="text"
+                css={{ whiteSpace: "break-spaces", cursor: "text" }}
+              >
+                {properties.map(hyphenateProperty).join("\n")}
+              </Text>
+              <Text>{description}</Text>
+            </Flex>
+          </>
+        }
+      >
+        <Flex shrink gap={1} align="center">
+          <Label color="default" disabled={disabled} truncate>
+            {label}
+          </Label>
+        </Flex>
+      </Tooltip>
+    </Flex>
+  );
+};

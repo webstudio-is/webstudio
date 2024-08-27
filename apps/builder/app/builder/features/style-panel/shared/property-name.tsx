@@ -427,35 +427,3 @@ export const PropertyName = ({
     </Flex>
   );
 };
-
-type NonResetablePropertyNameProps = {
-  style: StyleInfo;
-  properties: StyleProperty[];
-  label: string | ReactElement;
-  title?: string;
-  description?: ReactNode;
-  disabled?: boolean;
-};
-/**
- * Some properties like layered background-image, background-size are non resetable.
- * UI of background would be unreadable, imagine you have
- * background-size inherited from one source, background-image from the other,
- * Every property have different amount of layers. The final result on the screen would be a mess.
- */
-export const NonResetablePropertyName = ({
-  style,
-  title,
-  description,
-  properties,
-  label,
-  disabled,
-}: NonResetablePropertyNameProps) => (
-  <PropertyName
-    style={style}
-    title={title}
-    description={description}
-    properties={properties}
-    label={label}
-    disabled={disabled}
-  />
-);

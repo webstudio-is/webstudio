@@ -6,14 +6,17 @@ import type {
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
   Flex,
+  Label,
+  Text,
   TextArea,
   textVariants,
   theme,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
 import type { ControlProps } from "../../controls";
-import { NonResetablePropertyName } from "../../shared/property-name";
 import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -118,22 +121,27 @@ export const BackgroundGradient = (
         gap: theme.spacing[3],
       }}
     >
-      <NonResetablePropertyName
-        style={props.currentStyle}
-        description={
-          <>
-            Paste a CSS gradient, for example:
-            <br />
-            <br />
-            linear-gradient(...)
-            <br />
-            <br />
-            If pasting from Figma, remove the "background" property name.
-          </>
-        }
-        properties={[property]}
-        label="Code"
-      />
+      <Label>
+        <Flex align="center" gap="1">
+          Code
+          <Tooltip
+            variant="wrapped"
+            content={
+              <Text>
+                Paste a CSS gradient, for example:
+                <br />
+                <br />
+                linear-gradient(...)
+                <br />
+                <br />
+                If pasting from Figma, remove the "background" property name.
+              </Text>
+            }
+          >
+            <InfoCircleIcon />
+          </Tooltip>
+        </Flex>
+      </Label>
       <TextArea
         ref={textAreaRef}
         css={{ ...textVariants.mono }}

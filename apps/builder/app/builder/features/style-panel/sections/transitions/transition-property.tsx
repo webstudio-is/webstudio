@@ -5,7 +5,6 @@ import {
   isAnimatableProperty,
 } from "@webstudio-is/css-data";
 import {
-  Label,
   InputField,
   ComboboxRoot,
   ComboboxAnchor,
@@ -16,9 +15,6 @@ import {
   ComboboxListboxItem,
   ComboboxSeparator,
   NestedInputButton,
-  Tooltip,
-  Text,
-  Flex,
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import {
@@ -29,6 +25,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
 import { setUnion } from "~/shared/shim";
+import { PropertyInlineLabel } from "../../property-label";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
@@ -143,24 +140,11 @@ export const TransitionProperty = ({
 
   return (
     <>
-      <Flex align="center">
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Property</Text>
-              <Text variant="monoBold" color="moreSubtle">
-                transition-property
-              </Text>
-              <Text>
-                Sets the CSS properties that will be affected by the transition.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ display: "inline" }}> Property </Label>
-        </Tooltip>
-      </Flex>
+      <PropertyInlineLabel
+        label="Property"
+        description="Sets the CSS properties that will be affected by the transition."
+        properties={["transitionProperty"]}
+      />
       <ComboboxRoot open={isOpen}>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>
