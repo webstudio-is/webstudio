@@ -227,12 +227,14 @@ const syncServer = async function () {
 
           console.info(`Non ok respone: ${text}`);
         }
-      } catch (e) {
+      } catch (error) {
         if (navigator.onLine) {
           // ERR_CONNECTION_REFUSED or like, probably restorable with retries
           // anyway lets's log it
 
-          console.info(e instanceof Error ? e.message : JSON.stringify(e));
+          console.info(
+            error instanceof Error ? error.message : JSON.stringify(error)
+          );
         }
       }
     }

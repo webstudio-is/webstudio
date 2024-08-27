@@ -99,12 +99,12 @@ export const prisma =
         }),
   });
 
-prisma.$on("query", (e) => {
+prisma.$on("query", (error) => {
   // Try to minify the query as vercel/new relic log size is limited
 
   console.info(
     "Query: " +
-      e.query
+      error.query
         .replace(/"public"\./g, "")
         .replace(/"Project"\./g, "")
         .replace(/"Build"\./g, "")
@@ -112,9 +112,9 @@ prisma.$on("query", (e) => {
         .replace(/"Asset"\./g, "")
   );
 
-  console.info("Params: " + e.params.slice(0, 200));
+  console.info("Params: " + error.params.slice(0, 200));
 
-  console.info("Duration: " + e.duration + "ms");
+  console.info("Duration: " + error.duration + "ms");
 });
 
 if (process.env.NODE_ENV !== "production") {

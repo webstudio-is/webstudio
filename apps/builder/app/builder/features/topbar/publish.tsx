@@ -430,10 +430,10 @@ const PublishStatic = ({
       try {
         const projectDataStatus = await fetchProjectDataStatus(projectId);
         setProjectDataStatus(projectDataStatus);
-      } catch (e) {
+      } catch (error) {
         setProjectDataStatus({
           status: "FAILED",
-          statusText: e instanceof Error ? e.message : "Unknown error",
+          statusText: error instanceof Error ? error.message : "Unknown error",
         });
       }
     });
@@ -519,8 +519,10 @@ const PublishStatic = ({
                 if (projectDataStatus.status === "PUBLISHED") {
                   window.location.href = `/cgi/static/ssg/${name}`;
                 }
-              } catch (e) {
-                toast.error(e instanceof Error ? e.message : "Unknown error");
+              } catch (error) {
+                toast.error(
+                  error instanceof Error ? error.message : "Unknown error"
+                );
               }
             });
           }}
