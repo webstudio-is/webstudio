@@ -189,8 +189,8 @@ const sendToAnalitics: CLSReportCallbackWithAttribution &
         const content = buildElementHumanReadablePath(element);
         params.debug_target_path = content;
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
 
       console.error(`selector: ${selector} seems like not working`);
     }
@@ -219,8 +219,8 @@ export const subscribe = () => {
 
   try {
     _isMobile = window.matchMedia("(hover: none)").matches;
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error(error);
   }
 
   const options = {
