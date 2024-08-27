@@ -5,7 +5,6 @@ import {
   isAnimatableProperty,
 } from "@webstudio-is/css-data";
 import {
-  Label,
   InputField,
   ComboboxRoot,
   ComboboxAnchor,
@@ -16,9 +15,6 @@ import {
   ComboboxListboxItem,
   ComboboxSeparator,
   NestedInputButton,
-  Tooltip,
-  Text,
-  Flex,
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import {
@@ -31,6 +27,7 @@ import { matchSorter } from "match-sorter";
 import { setUnion } from "~/shared/shim";
 import { type StyleInfo } from "../../shared/style-info";
 import { getAnimatablePropertiesOnInstance } from "./transition-utils";
+import { PropertyInlineLabel } from "../../property-label";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
@@ -52,14 +49,14 @@ export const TransitionProperty = ({
   const valueString = toValue(property);
   const [inputValue, setInputValue] = useState<string>(valueString);
   useEffect(() => setInputValue(valueString), [valueString]);
-  const propertiesOnInstanceSet = useMemo(
+  const propertiesDefinedOnInstanceSet = useMemo(
     () => getAnimatablePropertiesOnInstance(currentStyle),
     [currentStyle]
   );
 
   const properties = Array.from(
     setUnion(
-      setUnion(propertiesOnInstanceSet, commonPropertiesSet),
+      setUnion(propertiesDefinedOnInstanceSet, commonPropertiesSet),
       new Set(animatableProperties)
     )
   );
@@ -107,10 +104,10 @@ export const TransitionProperty = ({
             }
 
             // Keep the proeprties on instance at the top
-            if (propertiesOnInstanceSet.has(a.item.name)) {
+            if (propertiesDefinedOnInstanceSet.has(a.item.name)) {
               return -1;
             }
-            if (propertiesOnInstanceSet.has(b.item.name)) {
+            if (propertiesDefinedOnInstanceSet.has(b.item.name)) {
               return 1;
             }
 
@@ -134,15 +131,15 @@ export const TransitionProperty = ({
   const commonProperties = items.filter(
     (item) =>
       commonPropertiesSet.has(item.name) === true &&
-      propertiesOnInstanceSet.has(item.name) === false
+      propertiesDefinedOnInstanceSet.has(item.name) === false
   );
   const filteredProperties = items.filter(
     (item) =>
       commonPropertiesSet.has(item.name) === false &&
-      propertiesOnInstanceSet.has(item.name) === false
+      propertiesDefinedOnInstanceSet.has(item.name) === false
   );
-  const propertiesOnInstance: Array<NameAndLabel> = Array.from(
-    propertiesOnInstanceSet
+  const propertiesDefinedOnInstance: Array<NameAndLabel> = Array.from(
+    propertiesDefinedOnInstanceSet
   ).map((item) => ({
     name: item,
     label: item,
@@ -175,24 +172,11 @@ export const TransitionProperty = ({
 
   return (
     <>
-      <Flex align="center">
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Property</Text>
-              <Text variant="monoBold" color="moreSubtle">
-                transition-property
-              </Text>
-              <Text>
-                Sets the CSS properties that will be affected by the transition.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ display: "inline" }}> Property </Label>
-        </Tooltip>
-      </Flex>
+      <PropertyInlineLabel
+        label="Property"
+        description="Sets the CSS properties that will be affected by the transition."
+        properties={["transitionProperty"]}
+      />
       <ComboboxRoot open={isOpen}>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>
@@ -215,10 +199,10 @@ export const TransitionProperty = ({
               <ComboboxScrollArea>
                 {isOpen && (
                   <>
-                    {propertiesOnInstance.length > 0 && (
+                    {propertiesDefinedOnInstance.length > 0 && (
                       <>
                         <ComboboxLabel>Defined</ComboboxLabel>
-                        {propertiesOnInstance.map((property, index) =>
+                        {propertiesDefinedOnInstance.map((property, index) =>
                           renderItem(property, index)
                         )}
                         <ComboboxSeparator />
@@ -227,14 +211,17 @@ export const TransitionProperty = ({
 
                     <ComboboxLabel role="option">Common</ComboboxLabel>
                     {commonProperties.map((property, index) =>
-                      renderItem(property, propertiesOnInstance.length + index)
+                      renderItem(
+                        property,
+                        propertiesDefinedOnInstance.length + index
+                      )
                     )}
                     <ComboboxSeparator />
 
                     {filteredProperties.map((property, index) =>
                       renderItem(
                         property,
-                        propertiesOnInstance.length +
+                        propertiesDefinedOnInstance.length +
                           commonProperties.length +
                           index
                       )

@@ -106,7 +106,7 @@ export const getAnimatablePropertiesOnInstance = (
       properties.add(prop);
     }
 
-    if (value?.nextSource || value?.previousSource || value?.preset) {
+    if (value?.nextSource || value?.previousSource) {
       properties.add(prop);
     }
   }

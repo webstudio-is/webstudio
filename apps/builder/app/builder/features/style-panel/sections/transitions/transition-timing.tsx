@@ -7,10 +7,6 @@ import {
 } from "@webstudio-is/css-engine";
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
-  Label,
-  Tooltip,
-  Flex,
-  Text,
   Select,
   SelectGroup,
   SelectLabel,
@@ -25,6 +21,7 @@ import {
   type TimingFunctions,
   findTimingFunctionFromValue,
 } from "./transition-utils";
+import { PropertyInlineLabel } from "../../property-label";
 
 type TransitionTimingProps = {
   timing: StyleValue;
@@ -76,25 +73,11 @@ export const TransitionTiming = ({
 
   return (
     <>
-      <Flex align="center">
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Easing</Text>
-              <Text variant="monoBold" color="moreSubtle">
-                transition-timing-function
-              </Text>
-              <Text>
-                Affects the look and feel of the animation by varying the speed
-                of the transition at different points in its duration.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ display: "inline" }}>Easing</Label>
-        </Tooltip>
-      </Flex>
+      <PropertyInlineLabel
+        label="Easing"
+        description="Affects the look and feel of the animation by varying the speed of the transition at different points in its duration."
+        properties={["transitionTimingFunction"]}
+      />
       <Select options={options} value={value} onChange={handleTimingChange}>
         <SelectGroup>
           <SelectLabel>Default</SelectLabel>

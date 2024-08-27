@@ -1,3 +1,4 @@
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   TupleValue,
   type StyleValue,
@@ -9,7 +10,7 @@ import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
-import { NonResetablePropertyName } from "../../shared/property-name";
+import { PropertyInlineLabel } from "../../property-label";
 
 const toPosition = (value: TupleValue) => {
   // Should never actually happen, just for TS
@@ -74,10 +75,12 @@ export const PositionControl = ({
 
   return (
     <Flex direction="column" gap="1">
-      <NonResetablePropertyName
-        style={currentStyle}
-        properties={[property]}
+      <PropertyInlineLabel
         label="Position"
+        description={
+          propertyDescriptions[property as keyof typeof propertyDescriptions]
+        }
+        properties={[property]}
       />
 
       <Flex gap="6">
@@ -100,11 +103,10 @@ export const PositionControl = ({
           align="center"
           gapX="2"
         >
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={[property]}
-            description="Left position offset"
+          <PropertyInlineLabel
             label="Left"
+            description="Left position offset"
+            properties={[property]}
           />
 
           <CssValueInputContainer
@@ -117,11 +119,10 @@ export const PositionControl = ({
             disabled={isAdvanced}
           />
 
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={[property]}
-            description="Top position offset"
+          <PropertyInlineLabel
             label="Top"
+            description="Top position offset"
+            properties={[property]}
           />
 
           <CssValueInputContainer

@@ -3,7 +3,16 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
+import { useRef, useState } from "react";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleValue } from "@webstudio-is/css-engine";
+import {
+  RepeatGridIcon,
+  RepeatColumnIcon,
+  RepeatRowIcon,
+  CrossSmallIcon,
+} from "@webstudio-is/icons";
+import { toValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Flex,
@@ -20,29 +29,19 @@ import type {
   SetProperty,
   StyleUpdateOptions,
 } from "../../shared/use-style-data";
-
 import {
   type DeleteBackgroundProperty,
   isBackgroundLayeredProperty,
   isBackgroundStyleValue,
   type SetBackgroundProperty,
 } from "./background-layers";
-
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
-import { useRef, useState } from "react";
 import { BackgroundSize } from "./background-size";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
-import {
-  RepeatGridIcon,
-  RepeatColumnIcon,
-  RepeatRowIcon,
-  CrossSmallIcon,
-} from "@webstudio-is/icons";
-import { toValue } from "@webstudio-is/css-engine";
 import { BackgroundGradient } from "./background-gradient";
-import { NonResetablePropertyName } from "../../shared/property-name";
 import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
+import { PropertyInlineLabel } from "../../property-label";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
@@ -160,10 +159,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           {imageGradientToggle === "image" && (
             <>
               <Flex css={{ height: "100%" }} align="start">
-                <NonResetablePropertyName
-                  style={currentStyle}
-                  properties={["backgroundImage"]}
+                <PropertyInlineLabel
                   label="Image"
+                  description={propertyDescriptions.backgroundImage}
+                  properties={["backgroundImage"]}
                 />
               </Flex>
 
@@ -178,10 +177,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             </>
           )}
 
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={["backgroundClip"]}
+          <PropertyInlineLabel
             label="Clip"
+            description={propertyDescriptions.backgroundClip}
+            properties={["backgroundClip"]}
           />
 
           <SelectControl
@@ -191,10 +190,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             property="backgroundClip"
           />
 
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={["backgroundOrigin"]}
+          <PropertyInlineLabel
             label="Origin"
+            description={propertyDescriptions.backgroundOrigin}
+            properties={["backgroundOrigin"]}
           />
 
           <SelectControl
@@ -223,7 +222,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
 
         <Grid
           css={{
-            gridTemplateColumns: `1fr ${theme.spacing[23]}`,
+            gridTemplateColumns: `1fr ${theme.spacing[22]}`,
             mt: theme.spacing[5],
           }}
           align="center"
@@ -231,10 +230,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         >
           {imageGradientToggle === "image" && (
             <>
-              <NonResetablePropertyName
-                style={currentStyle}
-                properties={["backgroundRepeat"]}
+              <PropertyInlineLabel
                 label="Repeat"
+                description={propertyDescriptions.backgroundRepeat}
+                properties={["backgroundRepeat"]}
               />
 
               <Flex css={{ justifySelf: "end" }}>
@@ -282,10 +281,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             </>
           )}
 
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={["backgroundAttachment"]}
+          <PropertyInlineLabel
             label="Attachment"
+            description={propertyDescriptions.backgroundAttachment}
+            properties={["backgroundAttachment"]}
           />
 
           <Flex css={{ justifySelf: "end" }}>
@@ -308,10 +307,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             </ToggleGroup>
           </Flex>
 
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={["backgroundBlendMode"]}
+          <PropertyInlineLabel
             label="Blend mode"
+            description={propertyDescriptions.backgroundBlendMode}
+            properties={["backgroundBlendMode"]}
           />
 
           <SelectControl
