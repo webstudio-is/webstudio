@@ -1,4 +1,4 @@
-import { Text, Grid, Button } from "@webstudio-is/design-system";
+import { Text, Grid } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 
 export type LogoutPageProps = {
@@ -49,13 +49,13 @@ export const LogoutPage = (props: LogoutPageProps) => {
       }
 
       if (failedUrls.length === 0) {
-        props.onFinish();
+        // props.onFinish();
         return;
       }
 
       if (logoutState.retries === 0) {
         console.error("Failed to logout", failedUrls);
-        props.onFinish();
+        // props.onFinish();
         return;
       }
 
@@ -68,7 +68,7 @@ export const LogoutPage = (props: LogoutPageProps) => {
 
   return (
     <Grid
-      gap={1}
+      gap={2}
       css={{
         position: "fixed",
         inset: 0,
@@ -76,9 +76,7 @@ export const LogoutPage = (props: LogoutPageProps) => {
         justifyItems: "center",
       }}
     >
-      <Text variant={"bigTitle"}>Logout</Text>
-      <Text>please wait...</Text>
-      <Button onClick={props.onFinish}>Continue</Button>
+      <Text variant={"bigTitle"}>Logging out ...</Text>
     </Grid>
   );
 };
