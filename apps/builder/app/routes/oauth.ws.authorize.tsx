@@ -188,15 +188,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         `Code ${code} created, redirecting to redirect_uri: ${redirectUri.href}`
       );
 
-      // To use during logout
-
       const bloomFilter = await session.readLoginSessionBloomFilter(request);
-
-      debug(
-        `db40c18d-d837-4e8b-ba75-764769e6fd0e is in bloom filter?`,
-        await bloomFilter.has("db40c18d-d837-4e8b-ba75-764769e6fd0e"),
-        await bloomFilter.has("9ccd96e1-de48-4f3f-898b-042e890ae805")
-      );
 
       await bloomFilter.add(oAuthParams.scope.projectId);
 
