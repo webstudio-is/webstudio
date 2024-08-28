@@ -9,7 +9,11 @@ import invariant from "tiny-invariant";
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
 export const logoutRouter = router({
-  loggedInProjectIds: procedure.query(async ({ ctx }) => {
+  /**
+   * The builderUrl can be derived/constructed using the projectId.
+   * Therefore, instead of returning builder app endpoints, we are using projectIds.
+   */
+  getLoggedInProjectIds: procedure.query(async ({ ctx }) => {
     const { isLoggedInToBuilder } = ctx.authorization;
 
     invariant(

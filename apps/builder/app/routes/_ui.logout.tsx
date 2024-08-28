@@ -17,7 +17,6 @@ const debug = createDebug(import.meta.url);
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (false === isDashboard(request)) {
-    // Builder logout can be done through a cross origin fetch request
     throw new Error("Only Dashboard can logout at this endpoint");
   }
 
@@ -29,13 +28,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (context.authorization.userId === undefined) {
     debug("User is not logged in redirecting to", redirectTo);
-    // User is not logged in
     throw redirect(redirectTo);
   }
 
   try {
     const buildProjectIdsToLogout =
-      await logoutCaller(context).loggedInProjectIds();
+      await logoutCaller(context).getLoggedInProjectIds();
 
     debug("buildProjectIdsToLogout", buildProjectIdsToLogout);
 
