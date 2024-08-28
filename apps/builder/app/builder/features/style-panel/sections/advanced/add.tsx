@@ -51,7 +51,7 @@ export const Add = ({
       getItemProps={() => ({ text: "sentence" })}
       onItemSelect={(item) => onSelect(item.value)}
       value={item}
-      onInputChange={(value) => {
+      onChange={(value) => {
         setItem({ value: value ?? "", label: value ?? "" });
       }}
       match={matchOrSuggestToCreate}

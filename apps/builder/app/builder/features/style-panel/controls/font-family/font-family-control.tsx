@@ -96,8 +96,14 @@ export const FontFamilyControl = ({
           setIntermediateValue(undefined);
         }}
         value={{ value: intermediateValue ?? itemValue }}
-        onInputChange={(value) => {
+        onChange={(value) => {
           setIntermediateValue(value);
+        }}
+        onBlur={() => {
+          setValue({
+            type: "fontFamily",
+            value: [itemValue],
+          });
         }}
         match={matchOrSuggestToCreate}
       />

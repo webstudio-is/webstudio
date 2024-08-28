@@ -276,7 +276,7 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   ) => ComponentProps<typeof ComboboxListboxItem>;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
   selectedItem?: Item;
-  onInputChange?: (value: string | undefined) => void;
+  onChange?: (value: string | undefined) => void;
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value: Item | null) => void;
   stateReducer?: (
@@ -295,7 +295,7 @@ export const useCombobox = <Item,>({
   selectedItem,
   getItemProps,
   itemToString,
-  onInputChange,
+  onChange,
   onItemSelect,
   onItemHighlight,
   stateReducer = (_state, { changes }) => changes,
@@ -349,7 +349,7 @@ export const useCombobox = <Item,>({
       // Don't call onItemSelect when ESC is pressed
       if (type === comboboxStateChangeTypes.InputKeyDownEscape) {
         // Reset intermediate value when ESC is pressed
-        onInputChange?.(undefined);
+        onChange?.(undefined);
         return;
       }
 
@@ -388,13 +388,13 @@ export const useCombobox = <Item,>({
         ...inputProps,
         onChange: (event: ChangeEvent<HTMLInputElement>) => {
           inputProps.onChange(event);
-          // If we want controllable input we need to call onInputChange here
+          // If we want controllable input we need to call onChange here
           // see https://github.com/downshift-js/downshift/issues/1108
-          onInputChange?.(event.target.value);
+          onChange?.(event.target.value);
         },
       };
     },
-    [downshiftGetInputProps, onInputChange]
+    [downshiftGetInputProps, onChange]
   );
 
   const downshiftHighlightedIndex = downshiftProps.highlightedIndex;
@@ -448,10 +448,10 @@ export const useCombobox = <Item,>({
 };
 
 type ComboboxProps<Item> = UseComboboxProps<Item> &
-  Omit<ComponentProps<"input">, "value"> & {
-    color?: ComponentProps<typeof InputField>["color"];
-    suffix?: ComponentProps<typeof InputField>["suffix"];
-  };
+  Pick<
+    ComponentProps<typeof InputField>,
+    "autoFocus" | "placeholder" | "color" | "suffix" | "onBlur"
+  >;
 
 export const Combobox = <Item,>({
   autoFocus,
@@ -459,6 +459,7 @@ export const Combobox = <Item,>({
   placeholder,
   color,
   suffix,
+  onBlur,
   ...props
 }: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
@@ -479,6 +480,7 @@ export const Combobox = <Item,>({
             {...combobox.getInputProps()}
             placeholder={placeholder}
             autoFocus={autoFocus}
+            onBlur={onBlur}
             color={color}
             suffix={
               suffix ?? (

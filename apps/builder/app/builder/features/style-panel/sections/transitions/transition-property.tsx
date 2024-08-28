@@ -78,7 +78,7 @@ export const TransitionProperty = ({
     selectedItem: undefined,
     itemToString: (value) => value?.label || "",
     onItemSelect: (prop) => saveAnimatableProperty(prop.name),
-    onInputChange: (value) => setInputValue(value ?? ""),
+    onChange: (value) => setInputValue(value ?? ""),
 
     // We are splitting the items into two lists.
     // But when users pass a input, the list is filtered and mixed together.
