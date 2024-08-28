@@ -35,7 +35,7 @@ jobs:
 
             console.log(deployments);
 
-            await Promise.all(
+            await Promise.allSettled(
               deployments.data.map(async (deployment) => {
                 await github.rest.repos.createDeploymentStatus({
                   owner: context.repo.owner,
