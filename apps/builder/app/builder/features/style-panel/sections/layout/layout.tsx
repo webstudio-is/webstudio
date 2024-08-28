@@ -308,12 +308,10 @@ const FlexGap = ({
 
 const LayoutSectionFlex = ({
   currentStyle,
-  setProperty,
   deleteProperty,
   createBatchUpdate,
 }: {
   currentStyle: SectionProps["currentStyle"];
-  setProperty: SectionProps["setProperty"];
   deleteProperty: SectionProps["deleteProperty"];
   createBatchUpdate: SectionProps["createBatchUpdate"];
 }) => {
@@ -356,9 +354,6 @@ const LayoutSectionFlex = ({
                 { name: "nowrap", label: "No Wrap", icon: NoWrapIcon },
                 { name: "wrap", label: "Wrap", icon: WrapIcon },
               ]}
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
             />
           </Flex>
           <Flex css={{ gap: theme.spacing[7] }}>
@@ -496,7 +491,6 @@ export const Section = ({
         {(value === "flex" || value === "inline-flex") && (
           <LayoutSectionFlex
             currentStyle={currentStyle}
-            setProperty={setProperty}
             deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
           />
