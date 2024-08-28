@@ -71,7 +71,7 @@ builderAuthenticator.use(
 
       debug("User authenticated", accessToken.userId);
 
-      return await { userId: accessToken.userId };
+      return await { userId: accessToken.userId, createdAt: Date.now() };
     },
     (request: Request): OAuth2StrategyOptionsOverrides => {
       const origin = getRequestOrigin(request.url);

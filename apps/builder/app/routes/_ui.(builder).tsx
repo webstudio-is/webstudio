@@ -61,6 +61,27 @@ export const loader = async ({
     throw redirect("/auth/ws");
   }
 
+  if (
+    context.authorization.userId !== undefined &&
+    context.authorization.sessionCreatedAt !== undefined &&
+    request.headers.get("sec-fetch-mode") === "navigate"
+  ) {
+    // If logout fails, or the session cookie in the dashboard is deleted or expired,
+    // enforce reauthorization on builder reload or navigation (sec-fetch-mode === 'navigate') after a timeout.
+
+    const RELOAD_ON_NAVIGATE_TIMEOUT =
+      env.DEPLOYMENT_ENVIRONMENT === "production"
+        ? 1000 * 60 * 3 // 3 minutes
+        : 1000 * 30; // 30 seconds
+
+    if (
+      Date.now() - context.authorization.sessionCreatedAt >
+      RELOAD_ON_NAVIGATE_TIMEOUT
+    ) {
+      throw redirect("/auth/ws");
+    }
+  }
+
   try {
     const url = new URL(request.url);
 

@@ -90,6 +90,7 @@ const createAuthorizationContext = async (
 
   const context: AppContext["authorization"] = {
     userId: sessionData?.userId,
+    sessionCreatedAt: sessionData?.createdAt,
     authToken,
     isServiceCall,
     ownerId,

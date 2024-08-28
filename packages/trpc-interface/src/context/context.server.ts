@@ -9,6 +9,7 @@ type AuthorizationContext = {
    * userId of the current authenticated user
    */
   userId: string | undefined;
+  sessionCreatedAt: number | undefined;
 
   /**
    * token URLSearchParams or hostname

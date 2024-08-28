@@ -37,7 +37,7 @@ const strategyCallback = async ({
 }) => {
   try {
     const user = await db.user.createOrLoginWithOAuth(profile);
-    return { userId: user.id };
+    return { userId: user.id, createdAt: Date.now() };
   } catch (error) {
     if (error instanceof Error) {
       console.error({
@@ -99,6 +99,7 @@ if (env.DEV_LOGIN === "true") {
           const user = await db.user.createOrLoginWithDev(email);
           return {
             userId: user.id,
+            createdAt: Date.now(),
           };
         } catch (error) {
           if (error instanceof Error) {
