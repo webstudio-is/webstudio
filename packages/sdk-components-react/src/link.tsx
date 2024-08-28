@@ -8,14 +8,15 @@ type Props = Omit<ComponentProps<"a">, "target" | "download"> & {
   download?: boolean;
 };
 
-export const Link = forwardRef<HTMLAnchorElement, Props>(
-  ({ children, ...props }, ref) => {
-    return (
-      <a {...props} href={props.href ?? "#"} ref={ref}>
-        {children}
-      </a>
-    );
-  }
-);
+export const Link = forwardRef<
+  HTMLAnchorElement,
+  Props & { $webstudio$canvasOnly$assetId?: string | undefined }
+>(({ children, $webstudio$canvasOnly$assetId, ...props }, ref) => {
+  return (
+    <a {...props} href={props.href ?? "#"} ref={ref}>
+      {children}
+    </a>
+  );
+});
 
 Link.displayName = "Link";
