@@ -350,12 +350,13 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
 
     let datetimeString = INVALID_DATE_STRING;
 
-    if (datetime !== null) {
+    if (datetime) {
       const timestamp = Number(datetime);
       if (
         isNaN(timestamp) === false &&
         Number.isNaN(new Date(datetime).getTime())
       ) {
+        // 10 length timestamp is in seconds, convert to milliseconds.
         datetimeString = new Date(
           datetime.length === 10 ? timestamp * 1000 : timestamp
         ).toISOString();
