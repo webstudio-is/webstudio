@@ -1,16 +1,19 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useMemo, useState } from "react";
-import { ResetIcon } from "@webstudio-is/icons";
+import { useMemo, useState, type ReactNode } from "react";
+import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
+  toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
+import { declarationDescriptions } from "@webstudio-is/css-data";
 import {
   Button,
   Flex,
   Kbd,
   Label,
+  rawTheme,
   SectionTitleLabel,
   Text,
   theme,
@@ -34,12 +37,14 @@ import { createBatchUpdate } from "./shared/use-style-data";
 
 export const PropertyInfo = ({
   title,
+  code,
   description,
   styles,
   onReset,
 }: {
   title: string;
-  description: string;
+  code?: string;
+  description: ReactNode;
   styles: ComputedStyleDecl[];
   onReset: () => void;
 }) => {
@@ -105,7 +110,7 @@ export const PropertyInfo = ({
         userSelect="text"
         css={{ whiteSpace: "break-spaces", cursor: "text" }}
       >
-        {properties.join("\n")}
+        {code ?? properties.join("\n")}
       </Text>
       <Text>{description}</Text>
       {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
@@ -361,6 +366,79 @@ export const PropertyInlineLabel = ({
             {label}
           </Label>
         </Flex>
+      </Tooltip>
+    </Flex>
+  );
+};
+
+export const PropertyValueTooltip = ({
+  label,
+  property,
+  isAdvanced,
+  children,
+}: {
+  label: string;
+  property: StyleProperty;
+  isAdvanced?: boolean;
+  children: ReactNode;
+}) => {
+  const $computedStyleDecl = useMemo(
+    () => createComputedStyleDeclStore(property),
+    [property]
+  );
+  const computedStyleDecl = useStore($computedStyleDecl);
+  const [isOpen, setIsOpen] = useState(false);
+  const resetProperty = () => {
+    const batch = createBatchUpdate();
+    batch.deleteProperty(property);
+    batch.publish();
+  };
+  const value = toValue(computedStyleDecl.usedValue);
+  const css = `${hyphenateProperty(property)}: ${value};`;
+  const description =
+    declarationDescriptions[
+      `${property}:${value}` as keyof typeof declarationDescriptions
+    ];
+  return (
+    <Flex align="center">
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        // prevent closing tooltip on content click
+        onPointerDown={(event) => event.preventDefault()}
+        triggerProps={{
+          onClick: (event) => {
+            if (event.altKey) {
+              event.preventDefault();
+              resetProperty();
+              return;
+            }
+          },
+        }}
+        content={
+          <PropertyInfo
+            title={label}
+            code={css}
+            description={
+              <Flex gap="2" direction="column">
+                {description}
+                {isAdvanced && (
+                  <Flex gap="1">
+                    <AlertIcon color={rawTheme.colors.backgroundAlertMain} />{" "}
+                    This value was defined in the Advanced section.
+                  </Flex>
+                )}
+              </Flex>
+            }
+            styles={[computedStyleDecl]}
+            onReset={() => {
+              resetProperty();
+              setIsOpen(false);
+            }}
+          />
+        }
+      >
+        {children}
       </Tooltip>
     </Flex>
   );

@@ -306,24 +306,6 @@ const FlexGap = ({
   );
 };
 
-const mapNormalTo = (
-  style: StyleInfo,
-  property: StyleProperty,
-  newValue: string
-): StyleInfo => {
-  const styleInfoValue = style[property]?.value;
-  if (styleInfoValue?.type === "keyword" && styleInfoValue.value === "normal") {
-    return {
-      ...style,
-      [property]: {
-        ...style[property],
-        value: { type: "keyword", value: newValue },
-      },
-    };
-  }
-  return style;
-};
-
 const LayoutSectionFlex = ({
   currentStyle,
   setProperty,
@@ -367,9 +349,6 @@ const LayoutSectionFlex = ({
                   icon: ArrowUpIcon,
                 },
               ]}
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
             />
             <ToggleControl
               property="flexWrap"
@@ -385,9 +364,6 @@ const LayoutSectionFlex = ({
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
               property="alignItems"
-              currentStyle={mapNormalTo(currentStyle, "alignItems", "stretch")}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
               items={[
                 { name: "stretch", label: "Stretch", icon: AIStretchIcon },
                 { name: "baseline", label: "Baseline", icon: AIBaselineIcon },
@@ -398,13 +374,6 @@ const LayoutSectionFlex = ({
             />
             <MenuControl
               property="justifyContent"
-              currentStyle={mapNormalTo(
-                currentStyle,
-                "justifyContent",
-                "start"
-              )}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
               items={[
                 {
                   name: "space-between",
@@ -424,13 +393,6 @@ const LayoutSectionFlex = ({
             {showAlignContent && (
               <MenuControl
                 property="alignContent"
-                currentStyle={mapNormalTo(
-                  currentStyle,
-                  "alignContent",
-                  "stretch"
-                )}
-                setProperty={setProperty}
-                deleteProperty={deleteProperty}
                 items={[
                   {
                     name: "space-between",
