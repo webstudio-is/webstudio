@@ -98,6 +98,18 @@ export const action = async ({
     }
 
     const context = await createContext(request);
+
+    if (
+      context.authorization.userId === undefined &&
+      context.authorization.authToken === undefined
+    ) {
+      return {
+        status: "authorization_error",
+        errors:
+          "Due to a recent update or a possible logout, you may need to log in again. Please reload the page and sign in to continue.",
+      };
+    }
+
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId, permit: "edit" },
       context
