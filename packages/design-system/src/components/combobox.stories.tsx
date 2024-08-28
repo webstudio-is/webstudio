@@ -26,7 +26,7 @@ export const Basic = () => {
       itemToString={(item) => item ?? ""}
       items={["Apple", "Banana", "Orange"]}
       onItemSelect={setValue}
-      onInputChange={(value) => {
+      onChange={(value) => {
         setValue(value ?? "");
       }}
     />
@@ -85,7 +85,7 @@ export const Complex = () => {
     itemToString: (item) => item ?? "",
     stateReducer,
     onItemSelect: setValue,
-    onInputChange: (value) => {
+    onChange: (value) => {
       if (value) {
         setValue(value);
       }

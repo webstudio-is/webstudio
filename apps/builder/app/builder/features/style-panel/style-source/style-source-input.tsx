@@ -481,7 +481,7 @@ export const StyleSourceInput = (
         props.onSelectAutocompleteItem?.(item);
       }
     },
-    onInputChange(label) {
+    onChange(label) {
       setLabel(label ?? "");
     },
   });
