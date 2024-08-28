@@ -4,7 +4,6 @@ import { PlusIcon } from "@webstudio-is/icons";
 import {
   SectionTitle,
   SectionTitleButton,
-  SectionTitleLabel,
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
@@ -14,19 +13,18 @@ import {
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import { getDots } from "../../shared/collapsible-section";
-import { PropertyName } from "../../shared/property-name";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { TransitionContent } from "./transition-content";
 import {
-  deleteTransitionProperties,
   findTimingFunctionFromValue,
   type TransitionProperty,
 } from "./transition-utils";
 import { toValue, type LayerValueItem } from "@webstudio-is/css-engine";
 import { humanizeString } from "~/shared/string-utils";
 import { RepeatedStyle } from "../../shared/repeated-style";
-import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import type { StyleInfo } from "../../shared/style-info";
 import { repeatUntil } from "~/shared/array-utils";
+import { PropertySectionLabel } from "../../property-label";
 
 export { transitionLongHandProperties as properties };
 
@@ -92,12 +90,6 @@ const defaultTransitionLayers: Record<TransitionProperty, LayerValueItem> = {
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const propertyValue = currentStyle?.["transitionProperty"]?.value;
-  const sectionStyleSource =
-    propertyValue?.type === "unparsed" ||
-    propertyValue?.type === "guaranteedInvalid"
-      ? undefined
-      : getStyleSource(currentStyle["transitionProperty"]);
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
@@ -144,21 +136,10 @@ export const Section = (props: SectionProps) => {
             </Tooltip>
           }
         >
-          <PropertyName
-            title={label}
-            style={currentStyle}
+          <PropertySectionLabel
+            label={label}
             description="Animate the transition between states on this instance."
             properties={transitionLongHandProperties}
-            label={
-              <SectionTitleLabel color={sectionStyleSource}>
-                {label}
-              </SectionTitleLabel>
-            }
-            onReset={() =>
-              deleteTransitionProperties({
-                createBatchUpdate,
-              })
-            }
           />
         </SectionTitle>
       }

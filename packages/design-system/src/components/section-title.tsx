@@ -191,7 +191,7 @@ export const SectionTitleLabel = forwardRef(
 
     const commonCss = { flex: "0 1 auto" };
 
-    const color = state === "closed" ? "default" : props.color;
+    const color = state === "closed" ? undefined : props.color;
 
     const isButton = isLabelButton(color);
 
@@ -209,7 +209,7 @@ export const SectionTitleLabel = forwardRef(
           // Instead, we need to render the label using a div that has position:absolute and pointer-events:none
           // However, if the label itself is a button, we need to make sure that it remains clickable.
           // @todo: move this logic to css
-          pointerEvents: isButton ? "all" : "inherit",
+          pointerEvents: isButton ? "auto" : "inherit",
         }}
         ref={ref}
       >

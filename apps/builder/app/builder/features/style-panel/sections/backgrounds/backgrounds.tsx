@@ -10,7 +10,6 @@ import {
   Label,
   SectionTitle,
   SectionTitleButton,
-  SectionTitleLabel,
   SmallIconButton,
   SmallToggleButton,
   theme,
@@ -23,7 +22,6 @@ import {
   PlusIcon,
 } from "@webstudio-is/icons";
 import { $assets } from "~/shared/nano-states";
-import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import { ColorControl } from "../../controls/color/color-control";
 import {
@@ -37,8 +35,6 @@ import {
   getLayerBackgroundStyleInfo,
   deleteLayerProperty,
   swapLayers,
-  getLayersStyleSource,
-  deleteLayers,
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
@@ -49,6 +45,8 @@ import {
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { getDots } from "../../shared/collapsible-section";
+import { PropertyLabel, PropertySectionLabel } from "../../property-label";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 
 const Layer = (props: {
   id: string;
@@ -159,7 +157,6 @@ const BackgroundsCollapsibleSection = ({
 }: SectionProps & { children: React.ReactNode }) => {
   const label = "Backgrounds";
   const [isOpen, setIsOpen] = useOpenState({ label });
-  const layersStyleSource = getLayersStyleSource(currentStyle);
 
   return (
     <CollapsibleSectionRoot
@@ -182,19 +179,10 @@ const BackgroundsCollapsibleSection = ({
             />
           }
         >
-          <PropertyName
-            style={currentStyle}
-            title="Backgrounds"
+          <PropertySectionLabel
+            label="Backgrounds"
             description="Add one or more backgrounds to the instance such as a color, image, or gradient."
             properties={layeredBackgroundProps}
-            label={
-              <SectionTitleLabel color={layersStyleSource}>
-                {label}
-              </SectionTitleLabel>
-            }
-            onReset={() => {
-              deleteLayers(createBatchUpdate);
-            }}
           />
         </SectionTitle>
       }
@@ -277,12 +265,10 @@ export const Section = (props: SectionProps) => {
             gridTemplateColumns: `1fr ${theme.spacing[23]}`,
           }}
         >
-          <PropertyName
-            style={currentStyle}
+          <PropertyLabel
             properties={["backgroundColor"]}
-            title={"Background Color"}
-            label={"Color"}
-            onReset={() => deleteProperty("backgroundColor")}
+            label="Color"
+            description={propertyDescriptions.backgroundColor}
           />
 
           <ColorControl

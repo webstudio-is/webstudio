@@ -11,6 +11,7 @@ import {
   Flex,
   Kbd,
   Label,
+  SectionTitleLabel,
   Text,
   theme,
   Tooltip,
@@ -237,6 +238,74 @@ export const PropertyLabel = ({
           <Label color={styleValueSourceColor} truncate>
             {label}
           </Label>
+        </Flex>
+      </Tooltip>
+    </Flex>
+  );
+};
+
+export const PropertySectionLabel = ({
+  label,
+  description,
+  properties,
+}: {
+  label: string;
+  description: string;
+  properties: [StyleProperty, ...StyleProperty[]];
+}) => {
+  const instanceSelector = useStore($selectedInstanceSelector);
+  const { createBatchUpdate } = useStyleData(instanceSelector?.[0] ?? "");
+  const $styles = useMemo(() => {
+    return computed(
+      properties.map(createComputedStyleDeclStore),
+      (...computedStyles) => computedStyles
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, properties);
+  const styles = useStore($styles);
+  const colors = styles.map(({ source }) => source.name);
+  const styleValueSourceColor = getPriorityStyleSource(colors);
+  const [isOpen, setIsOpen] = useState(false);
+  const resetProperty = () => {
+    const batch = createBatchUpdate();
+    for (const property of properties) {
+      batch.deleteProperty(property);
+    }
+    batch.publish();
+  };
+  return (
+    <Flex align="center">
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        // prevent closing tooltip on content click
+        onPointerDown={(event) => event.preventDefault()}
+        triggerProps={{
+          onClick: (event) => {
+            if (event.altKey) {
+              event.preventDefault();
+              resetProperty();
+              return;
+            }
+            setIsOpen(true);
+          },
+        }}
+        content={
+          <PropertyInfo
+            title={label}
+            description={description}
+            styles={styles}
+            onReset={() => {
+              resetProperty();
+              setIsOpen(false);
+            }}
+          />
+        }
+      >
+        <Flex shrink gap={1} align="center">
+          <SectionTitleLabel color={styleValueSourceColor}>
+            {label}
+          </SectionTitleLabel>
         </Flex>
       </Tooltip>
     </Flex>

@@ -134,16 +134,6 @@ export const getTransitionProperties = (
   return properties;
 };
 
-export const deleteTransitionProperties = (props: {
-  createBatchUpdate: CreateBatchUpdate;
-}) => {
-  const batch = props.createBatchUpdate();
-  transitionLongHandProperties.forEach((property) => {
-    batch.deleteProperty(property);
-  });
-  batch.publish();
-};
-
 export const deleteTransitionLayer = (props: {
   index: number;
   createBatchUpdate: CreateBatchUpdate;

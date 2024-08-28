@@ -1,7 +1,6 @@
 import {
   SectionTitle,
   SectionTitleButton,
-  SectionTitleLabel,
   Tooltip,
   Text,
 } from "@webstudio-is/design-system";
@@ -10,15 +9,17 @@ import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
-import { PropertyName } from "../../shared/property-name";
-import { getStyleSource } from "../../shared/style-info";
 import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
 import { addLayer } from "../../style-layer-utils";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { ShadowContent } from "../../shared/shadow-content";
+import { PropertySectionLabel } from "../../property-label";
 
-export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
+export const properties = ["boxShadow"] satisfies [
+  StyleProperty,
+  ...StyleProperty[],
+];
 
 const property: StyleProperty = properties[0];
 const label = "Box Shadows";
@@ -28,10 +29,6 @@ export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
-  const sectionStyleSource =
-    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
-      ? undefined
-      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -57,17 +54,10 @@ export const Section = (props: SectionProps) => {
             />
           }
         >
-          <PropertyName
-            title={label}
-            style={currentStyle}
-            properties={properties}
+          <PropertySectionLabel
+            label={label}
             description="Adds shadow effects around an element's frame."
-            label={
-              <SectionTitleLabel color={sectionStyleSource}>
-                {label}
-              </SectionTitleLabel>
-            }
-            onReset={() => deleteProperty(property)}
+            properties={properties}
           />
         </SectionTitle>
       }

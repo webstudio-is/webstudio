@@ -1,9 +1,5 @@
 import type { LayersValue, StyleValue } from "@webstudio-is/css-engine";
-import {
-  type StyleInfo,
-  type StyleValueInfo,
-  getStyleSource,
-} from "../../shared/style-info";
+import type { StyleInfo, StyleValueInfo } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
@@ -41,9 +37,11 @@ export const isBackgroundStyleValue = (
   return false;
 };
 
+type BackgroundProperty = keyof typeof layeredBackgroundPropsDefaults;
+
 export const layeredBackgroundProps = Object.keys(
   layeredBackgroundPropsDefaults
-) as (keyof typeof layeredBackgroundPropsDefaults)[];
+) as [BackgroundProperty, ...BackgroundProperty[]];
 
 export type LayeredBackgroundProperty = (typeof layeredBackgroundProps)[number];
 
@@ -184,18 +182,6 @@ const getLayersValue = (styleValue?: StyleValueInfo) => {
     return clonedStyleValue?.cascaded?.value;
   }
   return { type: "layers" as const, value: [] };
-};
-
-export const getLayersStyleSource = (style: StyleInfo) => {
-  return getStyleSource(...layeredBackgroundProps.map((prop) => style[prop]));
-};
-
-export const deleteLayers = (createBatchUpdate: CreateBatchUpdate) => {
-  const batch = createBatchUpdate();
-  for (const property of layeredBackgroundProps) {
-    batch.deleteProperty(property);
-  }
-  batch.publish();
 };
 
 const isLayerStylesRecord = (value: {
