@@ -14,39 +14,32 @@ export const LogoutPage = (props: LogoutPageProps) => {
 
   useEffect(() => {
     Promise.allSettled(
-      logoutState.logoutUrls.map((url) =>
-        fetch(url, {
+      logoutState.logoutUrls.map(async (url) => {
+        const response = await fetch(url, {
           credentials: "include",
           redirect: "manual",
           headers: { "content-type": "application/json" },
-        })
-      )
+        });
+
+        if (response.type === "opaqueredirect" && response.status === 0) {
+          return response;
+        }
+
+        if (response.status >= 200 && response.status < 400) {
+          return response;
+        }
+
+        console.error(`Logout failed for URL: ${url}`, response);
+        throw new Error(`Logout failed for URL: ${url}`);
+      })
     ).then((results) => {
       const failedUrls: string[] = [];
 
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-
-        console.info("Logout result", result);
-
+      results.forEach((result, index) => {
         if (result.status === "rejected") {
-          failedUrls.push(logoutState.logoutUrls[i]);
-          continue;
+          failedUrls.push(logoutState.logoutUrls[index]);
         }
-
-        if (
-          result.value.type === "opaqueredirect" &&
-          result.value.status === 0
-        ) {
-          continue;
-        }
-
-        if (result.value.status >= 200 && result.value.status < 400) {
-          continue;
-        }
-
-        failedUrls.push(logoutState.logoutUrls[i]);
-      }
+      });
 
       if (failedUrls.length === 0) {
         props.onFinish();
@@ -54,7 +47,10 @@ export const LogoutPage = (props: LogoutPageProps) => {
       }
 
       if (logoutState.retries === 0) {
-        console.error("Failed to logout", failedUrls);
+        console.error(
+          "Logout failed for the following URLs:",
+          failedUrls.join(", ")
+        );
         props.onFinish();
         return;
       }
