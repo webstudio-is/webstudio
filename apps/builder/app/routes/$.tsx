@@ -16,11 +16,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // This is because immutable caching rules apply to redirects, causing these files
   // to become permanently inaccessible. Ensure asset files are served correctly
   // without redirects to maintain availability and proper caching behavior.
-  const publicPaths = ["/cgi/", "/assets/"];
+  const publicPaths = ["/cgi/", "/assets/", "/apple-touch-icon-"];
 
   // In case of 404 on static assets, this route will be executed
   if (publicPaths.some((publicPath) => url.pathname.startsWith(publicPath))) {
-    throw new Response("Not found", {
+    return new Response("Not found", {
       status: 404,
       headers: {
         "Cache-Control": "public, max-age=0, must-revalidate",
