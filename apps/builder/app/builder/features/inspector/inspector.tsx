@@ -163,7 +163,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
               <Separator />
               <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
                 <InstanceInfo instance={selectedInstance} />
-                <StylePanel selectedInstance={selectedInstance} />
+                <StylePanel />
               </PanelTabsContent>
               <PanelTabsContent
                 value="settings"

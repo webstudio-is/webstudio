@@ -6,13 +6,14 @@ import {
   Separator,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import type { HtmlTags } from "html-tags";
-
-import { useStyleData } from "./shared/use-style-data";
-
+import {
+  setProperty,
+  deleteProperty,
+  createBatchUpdate,
+} from "./shared/use-style-data";
 import { StyleSourcesSection } from "./style-source-section";
 import { $selectedInstanceRenderState } from "~/shared/nano-states";
 import {
@@ -21,7 +22,7 @@ import {
 } from "~/shared/nano-states";
 import { sections } from "./sections";
 import { useParentStyle } from "./parent-style";
-import type { StyleInfo } from "./shared/style-info";
+import { useStyleInfo, type StyleInfo } from "./shared/style-info";
 import { toValue } from "@webstudio-is/css-engine";
 
 const $selectedInstanceTag = computed(
@@ -48,13 +49,8 @@ const shouldRenderCategory = (
   return true;
 };
 
-type StylePanelProps = {
-  selectedInstance: Instance;
-};
-
-export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
-  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
-    useStyleData(selectedInstance.id);
+export const StylePanel = () => {
+  const currentStyle = useStyleInfo();
 
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const selectedInstanceTag = useStore($selectedInstanceTag);

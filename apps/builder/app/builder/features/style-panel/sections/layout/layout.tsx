@@ -374,16 +374,8 @@ const LayoutSectionFlex = ({
             <ToggleControl
               property="flexWrap"
               items={[
-                {
-                  name: "nowrap",
-                  label: "No Wrap",
-                  icon: NoWrapIcon,
-                },
-                {
-                  name: "wrap",
-                  label: "Wrap",
-                  icon: WrapIcon,
-                },
+                { name: "nowrap", label: "No Wrap", icon: NoWrapIcon },
+                { name: "wrap", label: "Wrap", icon: WrapIcon },
               ]}
               currentStyle={currentStyle}
               setProperty={setProperty}

@@ -21,7 +21,6 @@ import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $styleSources,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
@@ -31,7 +30,7 @@ import type {
 } from "~/shared/style-object-model";
 import { createComputedStyleDeclStore } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
-import { useStyleData } from "./shared/use-style-data";
+import { createBatchUpdate } from "./shared/use-style-data";
 
 export const PropertyInfo = ({
   title,
@@ -185,8 +184,6 @@ export const PropertyLabel = ({
   description: string;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
-  const instanceSelector = useStore($selectedInstanceSelector);
-  const { createBatchUpdate } = useStyleData(instanceSelector?.[0] ?? "");
   const $styles = useMemo(() => {
     return computed(
       properties.map(createComputedStyleDeclStore),
@@ -253,8 +250,6 @@ export const PropertySectionLabel = ({
   description: string;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
-  const instanceSelector = useStore($selectedInstanceSelector);
-  const { createBatchUpdate } = useStyleData(instanceSelector?.[0] ?? "");
   const $styles = useMemo(() => {
     return computed(
       properties.map(createComputedStyleDeclStore),
