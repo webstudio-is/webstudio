@@ -104,7 +104,9 @@ export const action = async ({
       context.authorization.authToken === undefined
     ) {
       return {
-        status: "authorization_error",
+        // We use version_mismatched here to support older browser client
+        // @todo change on authorization_error after 15/09/2024
+        status: "version_mismatched",
         errors:
           "Due to a recent update or a possible logout, you may need to log in again. Please reload the page and sign in to continue.",
       };
