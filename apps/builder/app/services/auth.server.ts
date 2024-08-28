@@ -6,10 +6,11 @@ import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { authCallbackPath, isBuilder } from "~/shared/router-utils";
-import { getUserById, type User } from "~/shared/db/user.server";
+import { getUserById } from "~/shared/db/user.server";
 import env from "~/env/env.server";
 import { builderAuthenticator } from "./builder-auth.server";
 import { staticEnv } from "~/env/env.static.server";
+import type { SessionData } from "./auth.server.utils";
 
 const transformRefToAlias = (input: string) => {
   const rawAlias = input.endsWith(".staging") ? input.slice(0, -8) : input;
@@ -36,7 +37,7 @@ const strategyCallback = async ({
 }) => {
   try {
     const user = await db.user.createOrLoginWithOAuth(profile);
-    return user;
+    return { userId: user.id };
   } catch (error) {
     if (error instanceof Error) {
       console.error({
@@ -52,7 +53,7 @@ const strategyCallback = async ({
 
 // Create an instance of the authenticator, pass a generic with what
 // strategies will return and will store in the session
-export const authenticator = new Authenticator<User>(sessionStorage, {
+export const authenticator = new Authenticator<SessionData>(sessionStorage, {
   throwOnError: true,
 });
 
@@ -96,7 +97,9 @@ if (env.DEV_LOGIN === "true") {
       if (secret === env.AUTH_SECRET?.slice(0, 4)) {
         try {
           const user = await db.user.createOrLoginWithDev(email);
-          return user;
+          return {
+            userId: user.id,
+          };
         } catch (error) {
           if (error instanceof Error) {
             console.error({
@@ -126,7 +129,7 @@ export const findAuthenticatedUser = async (request: Request) => {
   }
 
   try {
-    return await getUserById(user.id);
+    return await getUserById(user.userId);
   } catch (error) {
     return null;
   }

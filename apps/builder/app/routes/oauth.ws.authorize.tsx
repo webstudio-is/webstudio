@@ -140,20 +140,20 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     const oAuthParams = parsedOAuthParams.data;
 
-    const user = await authenticator.isAuthenticated(request);
+    const sessionData = await authenticator.isAuthenticated(request);
 
-    if (user) {
-      debug(`User id=${user.id} is authenticated`);
+    if (sessionData) {
+      debug(`User id=${sessionData.userId} is authenticated`);
 
       const isAuthorized = await isUserAuthorizedForProject(
-        user.id,
+        sessionData.userId,
         oAuthParams.scope.projectId
       );
 
       // scope: Ensure the requested scope is valid, authorized, and within the permissions granted to the client.
       if (false === isAuthorized) {
         debug(
-          `User ${user.id} is not the owner of ${oAuthParams.scope.projectId}, denying access`
+          `User ${sessionData.userId} is not the owner of ${oAuthParams.scope.projectId}, denying access`
         );
         return oauthError(
           "unauthorized_client",
@@ -162,14 +162,14 @@ export const loader: LoaderFunction = async ({ request }) => {
       }
 
       debug(
-        `User ${user.id} is the owner of ${oAuthParams.scope.projectId}, creating token`
+        `User ${sessionData.userId} is the owner of ${oAuthParams.scope.projectId}, creating token`
       );
 
       // We do not use database now.
       // https://datatracker.ietf.org/doc/html/rfc7636#section-4.4
       const code = await createCodeToken(
         {
-          userId: user.id,
+          userId: sessionData.userId,
           projectId: oAuthParams.scope.projectId,
           codeChallenge: oAuthParams.code_challenge,
         },
@@ -204,7 +204,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       );
     }
 
-    user satisfies null;
+    sessionData satisfies null;
 
     debug(
       "User is not authenticated, saving current url to returnTo cookie and redirecting to login"

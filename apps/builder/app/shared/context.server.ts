@@ -28,7 +28,7 @@ const createAuthorizationContext = async (
     request.headers.get("x-auth-token") ??
     undefined;
 
-  const user = isBuilder(request)
+  const sessionData = isBuilder(request)
     ? await builderAuthenticator.isAuthenticated(request)
     : await authenticator.isAuthenticated(request);
 
@@ -36,7 +36,7 @@ const createAuthorizationContext = async (
     request.headers.has("Authorization") &&
     request.headers.get("Authorization") === env.TRPC_SERVER_API_TOKEN;
 
-  let ownerId = user?.id;
+  let ownerId = sessionData?.userId;
 
   if (authToken != null) {
     const projectOwnerIdByToken = await prisma.authorizationToken.findUnique({
@@ -71,7 +71,7 @@ const createAuthorizationContext = async (
     | AppContext["authorization"]["isLoggedInToBuilder"]
     | undefined = undefined;
 
-  if (isDashboard(request) && user?.id !== undefined) {
+  if (isDashboard(request) && sessionData?.userId !== undefined) {
     isLoggedInToBuilder = async (projectId: string) => {
       if (loginBloomFilter === undefined) {
         loginBloomFilter = await readLoginSessionBloomFilter(request);
@@ -81,7 +81,7 @@ const createAuthorizationContext = async (
     };
   }
 
-  if (isBuilder(request) && user?.id !== undefined) {
+  if (isBuilder(request) && sessionData?.userId !== undefined) {
     isLoggedInToBuilder = async (projectId: string) => {
       const parsedUrl = parseBuilderUrl(request.url);
       return parsedUrl.projectId === projectId;
@@ -89,7 +89,7 @@ const createAuthorizationContext = async (
   }
 
   const context: AppContext["authorization"] = {
-    userId: user?.id,
+    userId: sessionData?.userId,
     authToken,
     isServiceCall,
     ownerId,
