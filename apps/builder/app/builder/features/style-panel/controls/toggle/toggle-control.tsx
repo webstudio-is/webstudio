@@ -1,70 +1,60 @@
 import { ToggleButton } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
-import { PropertyTooltip } from "../../shared/property-name";
-import type { ControlProps } from "../types";
-import { getStyleSource } from "../../shared/style-info";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
-import { AdvancedValueTooltip } from "../advanced-value-tooltip";
-import { toKebabCase } from "../../shared/keyword-utils";
-
-type Item = {
-  name: string;
-  label: string;
-  icon: IconComponent;
-};
+import { humanizeString } from "~/shared/string-utils";
+import { setProperty } from "../../shared/use-style-data";
+import { useComputedStyleDecl } from "../../shared/model";
+import { PropertyValueTooltip } from "../../property-label";
 
 export const ToggleControl = ({
   property,
-  currentStyle,
-  setProperty,
-  deleteProperty,
   items,
-  isAdvanced,
-}: Omit<ControlProps, "items"> & {
-  items: [Item, Item];
+}: {
+  property: StyleProperty;
+  items: Array<{
+    name: string;
+    label: string;
+    icon: IconComponent;
+  }>;
 }) => {
-  const { label } = styleConfigByName(property);
-  const styleValue = currentStyle[property]?.value;
-
-  if (styleValue?.type !== "keyword") {
-    return;
-  }
+  const computedStyleDecl = useComputedStyleDecl(property);
+  const currentValue = toValue(computedStyleDecl.cascadedValue);
+  const currentItem = items.find((item) => item.name === currentValue);
+  const setValue = setProperty(property);
 
   // First item is the pressed state
-  const isPressed = items[0].name === styleValue.value ? true : false;
-  const currentItem = items.find((item) => item.name === styleValue.value);
+  const isPressed = items[0].name === currentValue ? true : false;
   const Icon = currentItem?.icon ?? items[0].icon;
-  isAdvanced = isAdvanced ?? currentItem === undefined;
+  // consider defined (not default) value as advanced
+  // when there is no matching item
+  const isAdvanced =
+    computedStyleDecl.source.name !== "default" && currentItem === undefined;
 
   return (
-    <AdvancedValueTooltip
-      isAdvanced={isAdvanced}
+    <PropertyValueTooltip
+      label={currentItem?.label ?? humanizeString(property)}
       property={property}
-      value={styleValue.value}
-      currentStyle={currentStyle}
-      deleteProperty={deleteProperty}
+      isAdvanced={isAdvanced}
     >
-      <PropertyTooltip
-        title={label}
-        scrollableContent={`${toKebabCase(property)}: ${styleValue.value};`}
-        properties={[property]}
-        style={currentStyle}
-        onReset={() => deleteProperty(property)}
+      <ToggleButton
+        aria-disabled={isAdvanced}
+        variant={computedStyleDecl.source.name}
+        pressed={isPressed}
+        onPressedChange={(isPressed) => {
+          setValue({
+            type: "keyword",
+            value: isPressed ? items[0].name : items[1].name,
+          });
+        }}
+        onPointerDown={(event) => {
+          // tooltip reset property when click with altKey
+          if (event.altKey) {
+            event.preventDefault();
+          }
+        }}
       >
-        <ToggleButton
-          disabled={isAdvanced}
-          pressed={isPressed}
-          onPressedChange={(isPressed) => {
-            setProperty(property)({
-              type: "keyword",
-              value: isPressed ? items[0].name : items[1].name,
-            });
-          }}
-          variant={getStyleSource(currentStyle[property])}
-        >
-          <Icon />
-        </ToggleButton>
-      </PropertyTooltip>
-    </AdvancedValueTooltip>
+        <Icon />
+      </ToggleButton>
+    </PropertyValueTooltip>
   );
 };
