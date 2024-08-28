@@ -19,6 +19,7 @@ import {
   getPresetStyleDeclKey,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
+import { useMemo } from "react";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -122,4 +123,12 @@ export const createComputedStyleDeclStore = (property: string) => {
 
 export const useStyleObjectModel = () => {
   return useStore($model);
+};
+
+export const useComputedStyleDecl = (property: string) => {
+  const $store = useMemo(
+    () => createComputedStyleDeclStore(property),
+    [property]
+  );
+  return useStore($store);
 };

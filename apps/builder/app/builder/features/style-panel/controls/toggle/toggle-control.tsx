@@ -1,11 +1,9 @@
-import { useMemo } from "react";
-import { useStore } from "@nanostores/react";
 import { ToggleButton } from "@webstudio-is/design-system";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import { setProperty } from "../../shared/use-style-data";
-import { createComputedStyleDeclStore } from "../../shared/model";
+import { useComputedStyleDecl } from "../../shared/model";
 import { PropertyValueTooltip } from "../../property-label";
 
 export const ToggleControl = ({
@@ -19,9 +17,7 @@ export const ToggleControl = ({
     icon: IconComponent;
   }>;
 }) => {
-  const computedStyleDecl = useStore(
-    useMemo(() => createComputedStyleDeclStore(property), [property])
-  );
+  const computedStyleDecl = useComputedStyleDecl(property);
   const currentValue = toValue(computedStyleDecl.cascadedValue);
   const currentItem = items.find((item) => item.name === currentValue);
   const setValue = setProperty(property);

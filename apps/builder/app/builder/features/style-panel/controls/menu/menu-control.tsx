@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import {
@@ -15,13 +16,11 @@ import {
   IconButton,
   theme,
 } from "@webstudio-is/design-system";
-import { useMemo, useState } from "react";
 import { declarationDescriptions } from "@webstudio-is/css-data";
-import { setProperty } from "../../shared/use-style-data";
-import { createComputedStyleDeclStore } from "../../shared/model";
-import { useStore } from "@nanostores/react";
-import { PropertyValueTooltip } from "../../property-label";
 import { humanizeString } from "~/shared/string-utils";
+import { setProperty } from "../../shared/use-style-data";
+import { useComputedStyleDecl } from "../../shared/model";
+import { PropertyValueTooltip } from "../../property-label";
 
 export const MenuControl = ({
   property,
@@ -34,9 +33,7 @@ export const MenuControl = ({
     icon: IconComponent;
   }>;
 }) => {
-  const computedStyleDecl = useStore(
-    useMemo(() => createComputedStyleDeclStore(property), [property])
-  );
+  const computedStyleDecl = useComputedStyleDecl(property);
   const [descriptionValue, setDescriptionValue] = useState<string>();
 
   const setValue = setProperty(property);
