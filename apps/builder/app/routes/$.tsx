@@ -1,12 +1,9 @@
 import {
   type HeadersFunction,
   type LoaderFunctionArgs,
-  redirect,
 } from "@remix-run/server-runtime";
 
 import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
-
-import { dashboardPath, isDashboard } from "~/shared/router-utils";
 import { ErrorMessage } from "~/shared/error/error-message";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
@@ -31,25 +28,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  if (false === isDashboard(request)) {
-    const contentType = request.headers.get("Content-Type");
+  const contentType = request.headers.get("Content-Type");
 
-    if (contentType?.includes("application/json")) {
-      // Return an error to not trigger the ErrorBoundary rendering (api request)
-      return new Response(null, {
-        status: 404,
-        statusText: "Not Found",
-      });
-    }
-
-    // Throw an error to trigger the ErrorBoundary rendering
-    throw new Response(null, {
+  if (contentType?.includes("application/json")) {
+    // Return an error to not trigger the ErrorBoundary rendering (api request)
+    return new Response(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
 
-  return redirect(dashboardPath());
+  // Throw an error to trigger the ErrorBoundary rendering
+  throw new Response(null, {
+    status: 404,
+    statusText: "Not Found",
+  });
 };
 
 export const headers: HeadersFunction = ({ errorHeaders, loaderHeaders }) => {
