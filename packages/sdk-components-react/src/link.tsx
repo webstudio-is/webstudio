@@ -2,9 +2,10 @@ import { forwardRef, type ComponentProps } from "react";
 
 export const defaultTag = "a";
 
-type Props = Omit<ComponentProps<"a">, "target"> & {
+type Props = Omit<ComponentProps<"a">, "target" | "download"> & {
   // override (string & {}) in target to generate keywords
   target?: "_self" | "_blank" | "_parent" | "_top";
+  download?: boolean;
 };
 
 export const Link = forwardRef<HTMLAnchorElement, Props>(

@@ -15,7 +15,7 @@ import {
   SelectItem,
 } from "@webstudio-is/design-system";
 import {
-  AttachmentIcon,
+  //AttachmentIcon,
   EmailIcon,
   LinkIcon,
   PageIcon,
@@ -420,11 +420,12 @@ const modes = {
   page: { icon: <PageIcon />, control: BasePage, label: "Page" },
   email: { icon: <EmailIcon />, control: BaseEmail, label: "Email" },
   phone: { icon: <PhoneIcon />, control: BasePhone, label: "Phone" },
-  attachment: {
-    icon: <AttachmentIcon />,
-    control: BaseAttachment,
-    label: "Attachment",
-  },
+  // Enable when we have other file types than images.
+  //attachment: {
+  //  icon: <AttachmentIcon />,
+  //  control: BaseAttachment,
+  //  label: "Attachment",
+  //},
 } as const;
 
 type Mode = keyof typeof modes;
@@ -441,9 +442,9 @@ const propToMode = (
     return "page";
   }
 
-  if (prop.type === "asset") {
-    return "attachment";
-  }
+  //if (prop.type === "asset") {
+  //  return "attachment";
+  //}
 
   if (value.startsWith("tel:")) {
     return "phone";
