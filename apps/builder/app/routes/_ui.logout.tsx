@@ -37,22 +37,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     debug("buildProjectIdsToLogout", buildProjectIdsToLogout);
 
-    if (buildProjectIdsToLogout.length > 0) {
-      const url = new URL(request.url);
-      const logoutUrls = buildProjectIdsToLogout.map(
-        (projectId) =>
-          `${builderUrl({ projectId, origin: url.origin })}builder-logout`
-      );
+    const url = new URL(request.url);
+    const logoutUrls = buildProjectIdsToLogout.map(
+      (projectId) =>
+        `${builderUrl({ projectId, origin: url.origin })}builder-logout`
+    );
 
-      return json({
-        redirectTo,
-        logoutUrls,
-      });
-    }
-
-    debug("Logging out");
-    await authenticator.logout(request, {
+    return json({
       redirectTo,
+      logoutUrls,
     });
   } catch (error) {
     if (error instanceof Response) {
@@ -62,11 +55,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     console.error(error);
     throw error;
   }
-
-  throw new Error("Should not reach this point");
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  if (false === isDashboard(request)) {
+    throw new Error("Only Dashboard can logout at this endpoint");
+  }
+
+  preventCrossOriginCookie(request);
+
   const redirectTo = loginPath({});
   await authenticator.logout(request, {
     redirectTo,

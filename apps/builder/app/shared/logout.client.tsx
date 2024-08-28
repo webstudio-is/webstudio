@@ -16,16 +16,12 @@ export const LogoutPage = (props: LogoutPageProps) => {
     Promise.allSettled(
       logoutState.logoutUrls.map(async (url) => {
         const response = await fetch(url, {
+          method: "POST",
           credentials: "include",
-          redirect: "manual",
           headers: { "content-type": "application/json" },
         });
 
-        if (response.type === "opaqueredirect" && response.status === 0) {
-          return response;
-        }
-
-        if (response.status >= 200 && response.status < 400) {
+        if (response.ok) {
           return response;
         }
 

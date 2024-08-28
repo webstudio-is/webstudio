@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
         callback: (error: Error | null, options: CorsOptions | null) => void
       ) => {
         // Handle CORS preflight requests in development to mimic Remix production behavior
-        if (req.method === "OPTIONS" || req.method === "GET") {
+        if (req.method === "OPTIONS" || req.method === "POST") {
           if (req.headers.origin != null && req.url != null) {
             const url = new URL(req.url, `https://${req.headers.host}`);
 
