@@ -186,6 +186,7 @@ for (let i = 0; i < newPropertySyntaxes.length; ) {
 
   i += batchSize;
 }
+console.info("\n✅ Properties syntax description generated!\n");
 
 for (let i = 0; i < newPropertiesNames.length; ) {
   const properties = newPropertiesNames.slice(i, i + batchSize);
