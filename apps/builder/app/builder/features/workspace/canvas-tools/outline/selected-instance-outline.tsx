@@ -11,6 +11,7 @@ import { Label } from "./label";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
+import { $ephemeralStyles } from "~/canvas/stores";
 
 export const SelectedInstanceOutline = () => {
   const instances = useStore($instances);
@@ -18,6 +19,7 @@ export const SelectedInstanceOutline = () => {
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const outline = useStore($selectedInstanceOutlineAndInstance);
   const scale = useStore($scale);
+  const ephemeralStyles = useStore($ephemeralStyles);
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
     areInstanceSelectorsEqual(
@@ -28,7 +30,8 @@ export const SelectedInstanceOutline = () => {
   if (
     isEditingCurrentInstance ||
     outline === undefined ||
-    selectedInstanceSelector === undefined
+    selectedInstanceSelector === undefined ||
+    ephemeralStyles.length !== 0
   ) {
     return;
   }

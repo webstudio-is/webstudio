@@ -1,16 +1,20 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useMemo, useState } from "react";
-import { ResetIcon } from "@webstudio-is/icons";
+import { useMemo, useState, type ReactNode } from "react";
+import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
+  toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
+import { declarationDescriptions } from "@webstudio-is/css-data";
 import {
   Button,
   Flex,
   Kbd,
   Label,
+  rawTheme,
+  SectionTitleLabel,
   Text,
   theme,
   Tooltip,
@@ -20,7 +24,6 @@ import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $styleSources,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
@@ -30,16 +33,18 @@ import type {
 } from "~/shared/style-object-model";
 import { createComputedStyleDeclStore } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
-import { useStyleData } from "./shared/use-style-data";
+import { createBatchUpdate } from "./shared/use-style-data";
 
 export const PropertyInfo = ({
   title,
+  code,
   description,
   styles,
   onReset,
 }: {
   title: string;
-  description: string;
+  code?: string;
+  description: ReactNode;
   styles: ComputedStyleDecl[];
   onReset: () => void;
 }) => {
@@ -105,7 +110,7 @@ export const PropertyInfo = ({
         userSelect="text"
         css={{ whiteSpace: "break-spaces", cursor: "text" }}
       >
-        {properties.join("\n")}
+        {code ?? properties.join("\n")}
       </Text>
       <Text>{description}</Text>
       {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
@@ -184,8 +189,6 @@ export const PropertyLabel = ({
   description: string;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
-  const instanceSelector = useStore($selectedInstanceSelector);
-  const { createBatchUpdate } = useStyleData(instanceSelector?.[0] ?? "");
   const $styles = useMemo(() => {
     return computed(
       properties.map(createComputedStyleDeclStore),
@@ -238,6 +241,204 @@ export const PropertyLabel = ({
             {label}
           </Label>
         </Flex>
+      </Tooltip>
+    </Flex>
+  );
+};
+
+export const PropertySectionLabel = ({
+  label,
+  description,
+  properties,
+}: {
+  label: string;
+  description: string;
+  properties: [StyleProperty, ...StyleProperty[]];
+}) => {
+  const $styles = useMemo(() => {
+    return computed(
+      properties.map(createComputedStyleDeclStore),
+      (...computedStyles) => computedStyles
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, properties);
+  const styles = useStore($styles);
+  const colors = styles.map(({ source }) => source.name);
+  const styleValueSourceColor = getPriorityStyleSource(colors);
+  const [isOpen, setIsOpen] = useState(false);
+  const resetProperty = () => {
+    const batch = createBatchUpdate();
+    for (const property of properties) {
+      batch.deleteProperty(property);
+    }
+    batch.publish();
+  };
+  return (
+    <Flex align="center">
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        // prevent closing tooltip on content click
+        onPointerDown={(event) => event.preventDefault()}
+        triggerProps={{
+          onClick: (event) => {
+            if (event.altKey) {
+              event.preventDefault();
+              resetProperty();
+              return;
+            }
+            setIsOpen(true);
+          },
+        }}
+        content={
+          <PropertyInfo
+            title={label}
+            description={description}
+            styles={styles}
+            onReset={() => {
+              resetProperty();
+              setIsOpen(false);
+            }}
+          />
+        }
+      >
+        <Flex shrink gap={1} align="center">
+          <SectionTitleLabel color={styleValueSourceColor}>
+            {label}
+          </SectionTitleLabel>
+        </Flex>
+      </Tooltip>
+    </Flex>
+  );
+};
+
+/**
+ * Some properties like layered background-image, background-size are non resetable.
+ * UI of background would be unreadable, imagine you have
+ * background-size inherited from one source, background-image from the other,
+ * Every property have different amount of layers. The final result on the screen would be a mess.
+ */
+export const PropertyInlineLabel = ({
+  label,
+  description,
+  properties,
+  disabled,
+}: {
+  label: string;
+  description: string;
+  properties: [StyleProperty, ...StyleProperty[]];
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Flex align="center">
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        // prevent closing tooltip on content click
+        onPointerDown={(event) => event.preventDefault()}
+        triggerProps={{
+          onClick: () => setIsOpen(true),
+        }}
+        content={
+          <>
+            <Flex
+              direction="column"
+              gap="2"
+              css={{ maxWidth: theme.spacing[28] }}
+            >
+              <Text variant="titles">{label}</Text>
+              <Text
+                variant="monoBold"
+                color="moreSubtle"
+                userSelect="text"
+                css={{ whiteSpace: "break-spaces", cursor: "text" }}
+              >
+                {properties.map(hyphenateProperty).join("\n")}
+              </Text>
+              <Text>{description}</Text>
+            </Flex>
+          </>
+        }
+      >
+        <Flex shrink gap={1} align="center">
+          <Label color="default" disabled={disabled} truncate>
+            {label}
+          </Label>
+        </Flex>
+      </Tooltip>
+    </Flex>
+  );
+};
+
+export const PropertyValueTooltip = ({
+  label,
+  property,
+  isAdvanced,
+  children,
+}: {
+  label: string;
+  property: StyleProperty;
+  isAdvanced?: boolean;
+  children: ReactNode;
+}) => {
+  const $computedStyleDecl = useMemo(
+    () => createComputedStyleDeclStore(property),
+    [property]
+  );
+  const computedStyleDecl = useStore($computedStyleDecl);
+  const [isOpen, setIsOpen] = useState(false);
+  const resetProperty = () => {
+    const batch = createBatchUpdate();
+    batch.deleteProperty(property);
+    batch.publish();
+  };
+  const value = toValue(computedStyleDecl.usedValue);
+  const css = `${hyphenateProperty(property)}: ${value};`;
+  const description =
+    declarationDescriptions[
+      `${property}:${value}` as keyof typeof declarationDescriptions
+    ];
+  return (
+    <Flex align="center">
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        // prevent closing tooltip on content click
+        onPointerDown={(event) => event.preventDefault()}
+        triggerProps={{
+          onClick: (event) => {
+            if (event.altKey) {
+              event.preventDefault();
+              resetProperty();
+              return;
+            }
+          },
+        }}
+        content={
+          <PropertyInfo
+            title={label}
+            code={css}
+            description={
+              <Flex gap="2" direction="column">
+                {description}
+                {isAdvanced && (
+                  <Flex gap="1">
+                    <AlertIcon color={rawTheme.colors.backgroundAlertMain} />{" "}
+                    This value was defined in the Advanced section.
+                  </Flex>
+                )}
+              </Flex>
+            }
+            styles={[computedStyleDecl]}
+            onReset={() => {
+              resetProperty();
+              setIsOpen(false);
+            }}
+          />
+        }
+      >
+        {children}
       </Tooltip>
     </Flex>
   );

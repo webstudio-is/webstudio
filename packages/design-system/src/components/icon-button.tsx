@@ -11,6 +11,15 @@ const openOrHoverStateStyle = {
   backgroundColor: theme.colors.backgroundHover,
 };
 
+const disabledVariantStyles = {
+  "&:disabled, &[aria-disabled=true]": {
+    color: theme.colors.foregroundDisabled,
+    "&:hover": {
+      backgroundColor: theme.colors.backgroundHover,
+    },
+  },
+};
+
 export const IconButton = styled("button", {
   // reset styles
   boxSizing: "border-box",
@@ -34,9 +43,8 @@ export const IconButton = styled("button", {
     outlineOffset: -2,
   },
 
-  "&:disabled": {
+  "&:disabled, &[aria-disabled=true]": {
     borderColor: "transparent",
-    pointerEvents: "none",
     backgroundColor: "transparent",
   },
 
@@ -57,10 +65,7 @@ export const IconButton = styled("button", {
 
           "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
         },
-
-        "&:disabled": {
-          color: theme.colors.foregroundDisabled,
-        },
+        ...disabledVariantStyles,
       },
 
       preset: {
@@ -70,9 +75,7 @@ export const IconButton = styled("button", {
         "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundPresetHover,
         },
-        "&:disabled": {
-          color: theme.colors.foregroundDisabled,
-        },
+        ...disabledVariantStyles,
       },
 
       local: {
@@ -82,9 +85,7 @@ export const IconButton = styled("button", {
         "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundLocalHover,
         },
-        "&:disabled": {
-          color: theme.colors.foregroundDisabled,
-        },
+        ...disabledVariantStyles,
       },
 
       overwritten: {
@@ -94,9 +95,7 @@ export const IconButton = styled("button", {
         "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundOverwrittenHover,
         },
-        "&:disabled": {
-          color: theme.colors.foregroundDisabled,
-        },
+        ...disabledVariantStyles,
       },
 
       remote: {
@@ -106,9 +105,7 @@ export const IconButton = styled("button", {
         "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundRemoteHover,
         },
-        "&:disabled": {
-          color: theme.colors.foregroundDisabled,
-        },
+        ...disabledVariantStyles,
       },
     },
     state: {

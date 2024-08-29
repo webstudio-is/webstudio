@@ -4,6 +4,8 @@ import {
   type KeywordValue,
   type LayersValue,
   type UnitValue,
+  type StyleProperty,
+  hyphenateProperty,
 } from "@webstudio-is/css-engine";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -12,6 +14,7 @@ import type {
 } from "../../shared/use-style-data";
 import {
   extractTransitionProperties,
+  isAnimatableProperty,
   properties,
   transitionLongHandProperties,
 } from "@webstudio-is/css-data";
@@ -86,6 +89,30 @@ export const findTimingFunctionFromValue = (
   );
 };
 
+export const getAnimatablePropertiesOnInstance = (
+  currentStyle: StyleInfo
+): Set<string> => {
+  const properties: Set<string> = new Set();
+  let property: StyleProperty;
+  for (property in currentStyle) {
+    const value = currentStyle[property];
+    const prop = hyphenateProperty(property);
+
+    if (isAnimatableProperty(prop) === false) {
+      continue;
+    }
+
+    if (value?.local !== undefined) {
+      properties.add(prop);
+    }
+
+    if (value?.nextSource || value?.previousSource) {
+      properties.add(prop);
+    }
+  }
+  return properties;
+};
+
 export const getTransitionProperties = (
   currentyStyle: StyleInfo
 ): Record<TransitionProperty, LayersValue> => {
@@ -105,16 +132,6 @@ export const getTransitionProperties = (
   }
 
   return properties;
-};
-
-export const deleteTransitionProperties = (props: {
-  createBatchUpdate: CreateBatchUpdate;
-}) => {
-  const batch = props.createBatchUpdate();
-  transitionLongHandProperties.forEach((property) => {
-    batch.deleteProperty(property);
-  });
-  batch.publish();
 };
 
 export const deleteTransitionLayer = (props: {

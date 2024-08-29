@@ -14,7 +14,6 @@ import {
   Label,
   SectionTitle,
   SectionTitleButton,
-  SectionTitleLabel,
   SmallIconButton,
   SmallToggleButton,
   theme,
@@ -41,11 +40,11 @@ import { SkewPanelContent } from "./transform-skew";
 import { BackfaceVisibility } from "./transform-backface-visibility";
 import { TransformPerspective } from "./transform-perspective";
 import { humanizeString } from "~/shared/string-utils";
-import { getStyleSource } from "../../shared/style-info";
-import { PropertyName } from "../../shared/property-name";
 import { getDots } from "../../shared/collapsible-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origin";
+import { PropertySectionLabel } from "../../property-label";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 
 export const transformPanels = [
   "translate",
@@ -73,7 +72,7 @@ export const properties = [
   "backfaceVisibility",
   "perspective",
   "perspectiveOrigin",
-] satisfies Array<StyleProperty>;
+] satisfies [StyleProperty, ...StyleProperty[]];
 
 export const Section = (props: SectionProps) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -82,20 +81,7 @@ export const Section = (props: SectionProps) => {
     return;
   }
 
-  const { currentStyle, createBatchUpdate } = props;
-  const translateStyleSource = getStyleSource(currentStyle["translate"]);
-  const scaleStyleSource = getStyleSource(currentStyle["scale"]);
-  const rotateAndSkewStyleSrouce = getStyleSource(currentStyle["transform"]);
-  const backfaceVisibilityStyleSource = getStyleSource(
-    currentStyle["backfaceVisibility"]
-  );
-  const perspectiveStyleSource = getStyleSource(currentStyle["perspective"]);
-  const transformOriginStyleSource = getStyleSource(
-    currentStyle["transformOrigin"]
-  );
-  const perspectiveOriginStyleSource = getStyleSource(
-    currentStyle["perspectiveOrigin"]
-  );
+  const { currentStyle } = props;
 
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
     isTransformPanelPropertyUsed({
@@ -103,19 +89,6 @@ export const Section = (props: SectionProps) => {
       panel,
     })
   );
-
-  const handleResetForAllTransformProperties = () => {
-    const batch = createBatchUpdate();
-    batch.deleteProperty("translate");
-    batch.deleteProperty("scale");
-    batch.deleteProperty("transform");
-    batch.deleteProperty("transformOrigin");
-    batch.deleteProperty("backfaceVisibility");
-    batch.deleteProperty("perspective");
-    batch.deleteProperty("perspectiveOrigin");
-
-    batch.publish();
-  };
 
   return (
     <CollapsibleSectionRoot
@@ -164,26 +137,10 @@ export const Section = (props: SectionProps) => {
             </DropdownMenu>
           }
         >
-          <PropertyName
-            title={label}
-            style={currentStyle}
+          <PropertySectionLabel
+            label={label}
+            description={propertyDescriptions.transform}
             properties={properties}
-            label={
-              <SectionTitleLabel
-                color={
-                  translateStyleSource ||
-                  scaleStyleSource ||
-                  rotateAndSkewStyleSrouce ||
-                  backfaceVisibilityStyleSource ||
-                  perspectiveStyleSource ||
-                  transformOriginStyleSource ||
-                  perspectiveOriginStyleSource
-                }
-              >
-                {label}
-              </SectionTitleLabel>
-            }
-            onReset={handleResetForAllTransformProperties}
           />
         </SectionTitle>
       }

@@ -26,7 +26,7 @@ declare global {
 const isInIframe = () => {
   try {
     return window.self !== window.top;
-  } catch (e) {
+  } catch (error) {
     return true;
   }
 };

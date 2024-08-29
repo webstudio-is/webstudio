@@ -5,7 +5,6 @@ import { useState } from "react";
 import {
   SectionTitle,
   SectionTitleButton,
-  SectionTitleLabel,
   Tooltip,
   Text,
 } from "@webstudio-is/design-system";
@@ -13,12 +12,14 @@ import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { getDots } from "../../shared/collapsible-section";
-import { PropertyName } from "../../shared/property-name";
-import { getStyleSource } from "../../shared/style-info";
 import { LayersList } from "../../style-layers-list";
 import { ShadowContent } from "../../shared/shadow-content";
+import { PropertySectionLabel } from "../../property-label";
 
-export const properties = ["textShadow"] satisfies Array<StyleProperty>;
+export const properties = ["textShadow"] satisfies [
+  StyleProperty,
+  ...StyleProperty[],
+];
 
 const property: StyleProperty = properties[0];
 const label = "Text Shadows";
@@ -28,10 +29,6 @@ export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
-  const sectionStyleSource =
-    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
-      ? undefined
-      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -57,17 +54,10 @@ export const Section = (props: SectionProps) => {
             />
           }
         >
-          <PropertyName
-            title={label}
-            style={currentStyle}
-            properties={properties}
+          <PropertySectionLabel
+            label={label}
             description="Adds shadow effects around a text."
-            label={
-              <SectionTitleLabel color={sectionStyleSource}>
-                {label}
-              </SectionTitleLabel>
-            }
-            onReset={() => deleteProperty(property)}
+            properties={properties}
           />
         </SectionTitle>
       }

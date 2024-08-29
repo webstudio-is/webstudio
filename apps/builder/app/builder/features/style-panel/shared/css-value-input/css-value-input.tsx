@@ -449,7 +449,7 @@ export const CssValueInput = ({
     value,
     selectedItem: props.value,
     itemToString,
-    onInputChange: (inputValue) => {
+    onChange: (inputValue) => {
       onChange(inputValue);
     },
     onItemSelect: (value) => {

@@ -1,4 +1,4 @@
-import { keywordValues } from "@webstudio-is/css-data";
+import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import {
   getStyleSource,
@@ -6,9 +6,9 @@ import {
   type StyleValueInfo,
 } from "../../shared/style-info";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import { NonResetablePropertyName } from "../../shared/property-name";
 import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 import { useMemo } from "react";
+import { PropertyInlineLabel } from "../../property-label";
 
 const keyworkToValue: Record<string, number> = {
   left: 0,
@@ -46,10 +46,10 @@ export const BackgroundPosition = ({
 
   return (
     <Flex direction="column" gap="1">
-      <NonResetablePropertyName
-        style={currentStyle}
-        properties={["backgroundPositionX", "backgroundPositionY"]}
+      <PropertyInlineLabel
         label="Position"
+        description={propertyDescriptions.backgroundPosition}
+        properties={["backgroundPositionX", "backgroundPositionY"]}
       />
       <Flex gap="6">
         <PositionGrid
@@ -72,11 +72,10 @@ export const BackgroundPosition = ({
           align="center"
           gapX="2"
         >
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={["backgroundPositionX"]}
-            description="Left position offset"
+          <PropertyInlineLabel
             label="Left"
+            description="Left position offset"
+            properties={["backgroundPositionX"]}
           />
           <CssValueInputContainer
             property="backgroundPositionX"
@@ -89,11 +88,10 @@ export const BackgroundPosition = ({
             setValue={setProperty("backgroundPositionX")}
             deleteProperty={deleteProperty}
           />
-          <NonResetablePropertyName
-            style={currentStyle}
-            properties={["backgroundPositionY"]}
-            description="Top position offset"
+          <PropertyInlineLabel
             label="Top"
+            description="Top position offset"
+            properties={["backgroundPositionY"]}
           />
           <CssValueInputContainer
             property="backgroundPositionY"

@@ -127,7 +127,7 @@ const AddPropertyOrAttribute = ({
         }}
         match={matchOrSuggestToCreate}
         value={{ name: "", label: value }}
-        onInputChange={(value) => {
+        onChange={(value) => {
           setValue(value ?? "");
         }}
         getDescription={(item) => {
