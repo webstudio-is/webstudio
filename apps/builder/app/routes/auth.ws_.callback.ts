@@ -34,7 +34,25 @@ export const loader: LoaderFunction = async ({ request }) => {
   } catch (error) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
-      return clearReturnToCookie(request, error);
+      debug("Response Cookie", error.headers.get("Set-Cookie"));
+
+      const session = await builderSessionStorage.getSession(
+        error.headers.get("Set-Cookie")
+      );
+
+      // Cleanup due to a bug in remix-auth-oauth2: https://github.com/sergiodxa/remix-auth-oauth2/issues/122
+      const sessionStateKey = "oauth2:state";
+      const sessionCodeVerifierKey = "oauth2:codeVerifier";
+      session.unset(sessionStateKey);
+      session.unset(sessionCodeVerifierKey);
+      const response = error.clone();
+      // Use set instead of append to overwrite the cookie
+      response.headers.set(
+        "Set-Cookie",
+        await builderSessionStorage.commitSession(session)
+      );
+
+      return clearReturnToCookie(request, response);
     }
 
     if (error instanceof AuthorizationError) {
