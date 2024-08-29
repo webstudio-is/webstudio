@@ -23,15 +23,12 @@ export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
       $canvasIframeState.set("idle");
     });
 
-    const credentialless = {
-      credentialless: "true",
-    };
     return (
       <iframe
         {...props}
         ref={ref}
         className={iframeStyle()}
-        {...credentialless}
+        credentialless="true"
       />
     );
   }
