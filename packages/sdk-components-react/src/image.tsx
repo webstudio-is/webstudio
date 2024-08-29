@@ -5,8 +5,10 @@ import {
   useContext,
 } from "react";
 import { Image as WebstudioImage } from "@webstudio-is/image";
-import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { canvasAssetIdAttribute } from "@webstudio-is/react-sdk";
+import {
+  ReactSdkContext,
+  canvasAssetIdAttribute,
+} from "@webstudio-is/react-sdk/runtime";
 
 export const defaultTag = "img";
 

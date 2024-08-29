@@ -1,4 +1,4 @@
-import { canvasAssetIdAttribute } from "@webstudio-is/react-sdk";
+import { canvasAssetIdAttribute } from "@webstudio-is/react-sdk/runtime";
 import { forwardRef, type ComponentProps } from "react";
 
 export const defaultTag = "a";
