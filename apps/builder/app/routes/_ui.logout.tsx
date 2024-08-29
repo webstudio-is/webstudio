@@ -8,12 +8,20 @@ import { logoutRouter } from "~/services/logout-router.server";
 import { createContext } from "~/shared/context.server";
 import { redirect, type ActionFunctionArgs } from "react-router-dom";
 import { ClientOnly } from "~/shared/client-only";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { lazy, useRef } from "react";
 
 const logoutCaller = createCallerFactory(logoutRouter);
 
 const debug = createDebug(import.meta.url);
+
+export const meta: MetaFunction<typeof loader> = () => {
+  const metas: ReturnType<MetaFunction> = [];
+
+  metas.push({ title: "Webstudio Logout" });
+
+  return metas;
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (false === isDashboard(request)) {

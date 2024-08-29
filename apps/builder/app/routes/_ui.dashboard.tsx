@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import {
   json,
   type LoaderFunctionArgs,
@@ -15,6 +15,14 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
+
+export const meta: MetaFunction<typeof loader> = () => {
+  const metas: ReturnType<MetaFunction> = [];
+
+  metas.push({ title: "Webstudio Dashboard" });
+
+  return metas;
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
