@@ -1,5 +1,5 @@
 import { type LoaderFunctionArgs, json } from "@remix-run/server-runtime";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
 import { builderSessionStorage } from "~/services/builder-session.server";
 import { sessionStorage } from "~/services/session.server";
@@ -16,6 +16,14 @@ const SessionError = z.object({
   message: z.string(),
   description: z.string().optional(),
 });
+
+export const meta: MetaFunction<typeof loader> = () => {
+  const metas: ReturnType<MetaFunction> = [];
+
+  metas.push({ title: "Webstudio Error" });
+
+  return metas;
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);

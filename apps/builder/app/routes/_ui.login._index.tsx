@@ -4,7 +4,7 @@ import {
   redirect,
   json,
 } from "@remix-run/server-runtime";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
 import type { LoginProps } from "~/auth/index.client";
@@ -18,6 +18,14 @@ import { returnToCookie } from "~/services/cookie.server";
 import { ClientOnly } from "~/shared/client-only";
 import { lazy } from "react";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+
+export const meta: MetaFunction<typeof loader> = () => {
+  const metas: ReturnType<MetaFunction> = [];
+
+  metas.push({ title: "Webstudio Login" });
+
+  return metas;
+};
 
 export const loader = async ({
   request,

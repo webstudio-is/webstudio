@@ -5,7 +5,7 @@
 
 import { lazy } from "react";
 import { useLoaderData } from "@remix-run/react";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
+import type { MetaFunction, ShouldRevalidateFunction } from "@remix-run/react";
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 
 import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
@@ -33,6 +33,21 @@ export const links = () => {
     { rel: "stylesheet", href: builderStyles },
     { rel: "stylesheet", href: prismStyles },
   ];
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const metas: ReturnType<MetaFunction> = [];
+
+  if (data === undefined) {
+    return metas;
+  }
+  const { project } = data;
+
+  if (project.title) {
+    metas.push({ title: project.title });
+  }
+
+  return metas;
 };
 
 export const loader = async ({
