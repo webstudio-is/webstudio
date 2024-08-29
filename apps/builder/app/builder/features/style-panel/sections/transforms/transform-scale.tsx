@@ -178,7 +178,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <PropertyInlineLabel
             label="Scale X"
             description={propertySyntaxes.scaleX}
-            syntax="scale-x"
+            properties="scale-x"
           />
           <CssValueInput
             key="scaleX"
@@ -222,7 +222,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <PropertyInlineLabel
             label="Scale Y"
             description={propertySyntaxes.scaleY}
-            syntax="scale-y"
+            properties="scale-y"
           />
           <CssValueInput
             key="scaleY"
@@ -266,7 +266,7 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           <PropertyInlineLabel
             label="Scale Z"
             description={propertySyntaxes.scaleZ}
-            syntax="scale-z"
+            properties="scale-z"
           />
           <CssValueInput
             key="scaleZ"

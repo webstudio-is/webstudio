@@ -73,7 +73,7 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Rotate X"
           description={propertySyntaxes.rotateX}
-          syntax="rotate-x"
+          properties="rotate-x"
         />
         <CssValueInputContainer
           key="rotateX"
@@ -99,7 +99,7 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Rotate Y"
           description={propertySyntaxes.rotateY}
-          syntax="rotate-y"
+          properties="rotate-y"
         />
         <CssValueInputContainer
           key="rotateY"
@@ -125,7 +125,7 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Rotate Z"
           description={propertySyntaxes.rotateZ}
-          syntax="rotate-z"
+          properties="rotate-z"
         />
         <CssValueInputContainer
           key="rotateZ"

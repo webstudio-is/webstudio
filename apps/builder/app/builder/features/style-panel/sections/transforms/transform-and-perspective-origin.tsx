@@ -148,7 +148,7 @@ export const TransformAndPerspectiveOrigin = (
             >
               <PropertyInlineLabel
                 label="X"
-                syntax={
+                properties={
                   property === "transformOrigin"
                     ? "transform-origin-x"
                     : "perspective-origin-x"
@@ -177,7 +177,7 @@ export const TransformAndPerspectiveOrigin = (
             >
               <PropertyInlineLabel
                 label="Y"
-                syntax={
+                properties={
                   property === "transformOrigin"
                     ? "transform-origin-y"
                     : "perspective-origin-y"
@@ -207,7 +207,7 @@ export const TransformAndPerspectiveOrigin = (
               >
                 <PropertyInlineLabel
                   label="Z"
-                  syntax="transform-origin-z"
+                  properties="transform-origin-z"
                   description={propertySyntaxes.transformOriginZ}
                 />
                 <CssValueInputContainer

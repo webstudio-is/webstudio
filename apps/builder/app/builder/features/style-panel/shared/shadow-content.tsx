@@ -251,7 +251,7 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="X"
-            syntax={shadowPropertySyntaxes[property].x.syntax}
+            properties={shadowPropertySyntaxes[property].x.syntax}
             description={shadowPropertySyntaxes[property].x.description}
           />
           <CssValueInputContainer
@@ -275,7 +275,7 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="Y"
-            syntax={shadowPropertySyntaxes[property].y.syntax}
+            properties={shadowPropertySyntaxes[property].y.syntax}
             description={shadowPropertySyntaxes[property].y.description}
           />
           <CssValueInputContainer
@@ -299,7 +299,7 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="Blur"
-            syntax={shadowPropertySyntaxes[property].blur.syntax}
+            properties={shadowPropertySyntaxes[property].blur.syntax}
             description={shadowPropertySyntaxes[property].blur.description}
           />
           <CssValueInputContainer
@@ -324,7 +324,7 @@ export const ShadowContent = ({
           <Flex direction="column">
             <PropertyInlineLabel
               label="Spread"
-              syntax={shadowPropertySyntaxes.boxShadow.spread.syntax}
+              properties={shadowPropertySyntaxes.boxShadow.spread.syntax}
               description={shadowPropertySyntaxes.boxShadow.spread.description}
             />
             <CssValueInputContainer
@@ -359,7 +359,7 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="Color"
-            syntax={shadowPropertySyntaxes[property].color.syntax}
+            properties={shadowPropertySyntaxes[property].color.syntax}
             description={shadowPropertySyntaxes[property].color.description}
           />
           <ColorControl
@@ -381,7 +381,7 @@ export const ShadowContent = ({
           <Flex direction="column">
             <PropertyInlineLabel
               label="Inset"
-              syntax={shadowPropertySyntaxes.boxShadow.position.syntax}
+              properties={shadowPropertySyntaxes.boxShadow.position.syntax}
               description={
                 shadowPropertySyntaxes.boxShadow.position.description
               }
