@@ -331,22 +331,15 @@ export const parseDate = (datetimeString: string) => {
   if (datetimeString === "") {
     return;
   }
-  const timestamp = Number(datetimeString);
-  if (
-    isNaN(timestamp) === false &&
-    Number.isNaN(new Date(datetimeString).getTime())
-  ) {
-    // 10 length timestamp is in seconds, convert to milliseconds.
-    datetimeString = new Date(
-      datetimeString.length === 10 ? timestamp * 1000 : timestamp
-    ).toISOString();
-  } else {
-    datetimeString = datetimeString.toString();
+  let timestamp = Number(datetimeString);
+  const isNumber = Number.isNaN(timestamp) === false;
+  if (isNumber && datetimeString.length === 10) {
+    timestamp = timestamp * 1000;
   }
+  const date = new Date(timestamp);
+  const isValid = false === Number.isNaN(date.getTime());
 
-  const date = new Date(datetimeString);
-  const isValidDate = false === Number.isNaN(date.getTime());
-  if (isValidDate) {
+  if (isValid) {
     return date;
   }
 };
