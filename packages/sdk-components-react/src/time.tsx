@@ -327,6 +327,30 @@ const timeStyleOrUndefined = (
   return undefined;
 };
 
+export const parseDate = (datetimeString: string) => {
+  if (datetimeString === "") {
+    return;
+  }
+  const timestamp = Number(datetimeString);
+  if (
+    isNaN(timestamp) === false &&
+    Number.isNaN(new Date(datetimeString).getTime())
+  ) {
+    // 10 length timestamp is in seconds, convert to milliseconds.
+    datetimeString = new Date(
+      datetimeString.length === 10 ? timestamp * 1000 : timestamp
+    ).toISOString();
+  } else {
+    datetimeString = datetimeString.toString();
+  }
+
+  const date = new Date(datetimeString);
+  const isValidDate = false === Number.isNaN(date.getTime());
+  if (isValidDate) {
+    return date;
+  }
+};
+
 export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
   (
     {
@@ -348,29 +372,13 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
       timeStyle: timeStyleOrUndefined(timeStyle),
     };
 
-    let datetimeString = INVALID_DATE_STRING;
+    const datetimeString =
+      datetime === null ? INVALID_DATE_STRING : datetime.toString();
 
-    if (datetime) {
-      const timestamp = Number(datetime);
-      if (
-        isNaN(timestamp) === false &&
-        Number.isNaN(new Date(datetime).getTime())
-      ) {
-        // 10 length timestamp is in seconds, convert to milliseconds.
-        datetimeString = new Date(
-          datetime.length === 10 ? timestamp * 1000 : timestamp
-        ).toISOString();
-      } else {
-        datetimeString = datetime.toString();
-      }
-    }
-
-    const date = new Date(datetimeString);
-    const isValidDate = false === Number.isNaN(date.getTime());
-
+    const date = parseDate(datetimeString);
     let formattedDate = datetimeString;
 
-    if (isValidDate) {
+    if (date) {
       try {
         formattedDate = new Intl.DateTimeFormat(locale, options).format(date);
       } catch {
