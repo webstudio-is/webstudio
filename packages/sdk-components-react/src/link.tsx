@@ -11,9 +11,15 @@ type Props = Omit<ComponentProps<"a">, "target" | "download"> & {
 export const Link = forwardRef<
   HTMLAnchorElement,
   Props & { $webstudio$canvasOnly$assetId?: string | undefined }
->(({ children, $webstudio$canvasOnly$assetId, ...props }, ref) => {
+>((props, ref) => {
+  const {
+    children,
+    // @todo: it's a hack made for Image component for the builder and should't be in the runtime at all.
+    $webstudio$canvasOnly$assetId,
+    ...rest
+  } = props;
   return (
-    <a {...props} href={props.href ?? "#"} ref={ref}>
+    <a {...rest} href={rest.href ?? "#"} ref={ref}>
       {children}
     </a>
   );
