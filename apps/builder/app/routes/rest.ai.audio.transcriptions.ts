@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { z } from "zod";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const zTranscription = z.object({
   text: z.string().transform((value) => value.trim()),
@@ -7,6 +8,8 @@ const zTranscription = z.object({
 
 // @todo: move to AI package
 export const action = async ({ request }: ActionFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
   // @todo: validate request
   const formData = await request.formData();
   formData.append("model", "whisper-1");

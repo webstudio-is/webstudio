@@ -1,6 +1,8 @@
 import { Links, Meta, Outlet } from "@remix-run/react";
+import { ErrorMessage } from "~/shared/error";
+import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 
-export default function CanvasLayout() {
+const Document = (props: { children: React.ReactNode }) => {
   return (
     <html lang="en">
       <head>
@@ -9,7 +11,34 @@ export default function CanvasLayout() {
         <Meta />
         <Links />
       </head>
-      <Outlet />
+      {props.children}
     </html>
+  );
+};
+
+export const ErrorBoundary = () => {
+  const error = useRouteError();
+
+  console.error({ error });
+  const message = isRouteErrorResponse(error)
+    ? (error.data.message ?? error.data)
+    : error instanceof Error
+      ? error.message
+      : String(error);
+
+  return (
+    <Document>
+      <body>
+        <ErrorMessage message={message} />
+      </body>
+    </Document>
+  );
+};
+
+export default function CanvasLayout() {
+  return (
+    <Document>
+      <Outlet />
+    </Document>
   );
 }

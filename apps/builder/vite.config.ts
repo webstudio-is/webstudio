@@ -58,12 +58,12 @@ export default defineConfig(({ mode }) => {
         callback: (error: Error | null, options: CorsOptions | null) => void
       ) => {
         // Handle CORS preflight requests in development to mimic Remix production behavior
-        if (req.method === "OPTIONS" || req.method === "GET") {
+        if (req.method === "OPTIONS" || req.method === "POST") {
           if (req.headers.origin != null && req.url != null) {
             const url = new URL(req.url, `https://${req.headers.host}`);
 
-            // Allow CORS for /logout path when requested from the authorization server
-            if (url.pathname === "/logout" && isBuilderUrl(url.href)) {
+            // Allow CORS for /builder-logout path when requested from the authorization server
+            if (url.pathname === "/builder-logout" && isBuilderUrl(url.href)) {
               return callback(null, {
                 origin: getAuthorizationServerOrigin(url.href),
                 preflightContinue: false,

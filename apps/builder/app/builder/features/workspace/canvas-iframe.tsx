@@ -23,7 +23,14 @@ export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
       $canvasIframeState.set("idle");
     });
 
-    return <iframe {...props} ref={ref} className={iframeStyle()} />;
+    return (
+      <iframe
+        {...props}
+        ref={ref}
+        className={iframeStyle()}
+        credentialless="true"
+      />
+    );
   }
 );
 

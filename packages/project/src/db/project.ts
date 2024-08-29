@@ -9,6 +9,30 @@ import { MarketplaceApprovalStatus, Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
 
+export const findProjectIdsByUserId = async (
+  userId: string,
+  context: AppContext
+) => {
+  if (userId !== context.authorization.userId) {
+    throw new AuthorizationError(
+      "Only the project owner can view the project list"
+    );
+  }
+
+  const result = await context.postgrest.client
+    .from("Project")
+    .select("id")
+    .eq("userId", userId)
+    .eq("isDeleted", false)
+    .order("id");
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result.data;
+};
+
 export const loadById = async (
   projectId: Project["id"],
   context: AppContext

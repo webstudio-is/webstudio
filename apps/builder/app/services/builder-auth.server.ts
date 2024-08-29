@@ -13,12 +13,12 @@ import {
 } from "~/shared/router-utils/origins";
 import { createDebug } from "~/shared/debug";
 import { readAccessToken } from "./token.server";
-import { getUserById, type User } from "~/shared/db/user.server";
 import { isUserAuthorizedForProject } from "./builder-access.server";
+import type { SessionData } from "./auth.server.utils";
 
 const debug = createDebug(import.meta.url);
 
-export const builderAuthenticator = new Authenticator<User>(
+export const builderAuthenticator = new Authenticator<SessionData>(
   builderSessionStorage,
   {
     throwOnError: true,
@@ -26,7 +26,7 @@ export const builderAuthenticator = new Authenticator<User>(
 );
 
 builderAuthenticator.use(
-  new WsStrategy<User>(
+  new WsStrategy<SessionData>(
     {
       clientId: env.AUTH_WS_CLIENT_ID,
       clientSecret: env.AUTH_WS_CLIENT_SECRET,
@@ -34,7 +34,8 @@ builderAuthenticator.use(
       tokenEndpoint: "https://OVERRIDDEN_ENDPOINT/oauth2/token",
       redirectURI: "https://OVERRIDDEN_ENDPOINT/auth/callback",
       codeChallengeMethod: "S256",
-      authenticateWith: "request_body",
+      // use http_basic_auth to bypass no-cross-origin-cookie.ts/preventCrossOriginCookie
+      authenticateWith: "http_basic_auth",
     },
     async ({ tokens, request }) => {
       const accessToken = await readAccessToken(
@@ -70,7 +71,7 @@ builderAuthenticator.use(
 
       debug("User authenticated", accessToken.userId);
 
-      return await getUserById(accessToken.userId);
+      return await { userId: accessToken.userId, createdAt: Date.now() };
     },
     (request: Request): OAuth2StrategyOptionsOverrides => {
       const origin = getRequestOrigin(request.url);

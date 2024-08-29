@@ -9,20 +9,28 @@ import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
 import type { LoginProps } from "~/auth/index.client";
 import { useLoginErrorMessage } from "~/shared/session";
-import { dashboardPath } from "~/shared/router-utils";
+import {
+  comparePathnames,
+  dashboardPath,
+  isDashboard,
+} from "~/shared/router-utils";
 import { returnToCookie } from "~/services/cookie.server";
 import { ClientOnly } from "~/shared/client-only";
 import { lazy } from "react";
-
-const comparePathnames = (pathnameOrUrlA: string, pathnameOrUrlB: string) => {
-  const aPathname = new URL(pathnameOrUrlA, "http://localhost").pathname;
-  const bPathname = new URL(pathnameOrUrlB, "http://localhost").pathname;
-  return aPathname === bPathname;
-};
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const loader = async ({
   request,
 }: LoaderFunctionArgs): Promise<TypedResponse<LoginProps>> => {
+  preventCrossOriginCookie(request);
+
+  if (false === isDashboard(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
   const user = await findAuthenticatedUser(request);
 
   const url = new URL(request.url);
@@ -40,9 +48,7 @@ export const loader = async ({
 
   const headers = new Headers();
 
-  if (returnTo) {
-    headers.append("Set-Cookie", await returnToCookie.serialize(returnTo));
-  }
+  headers.append("Set-Cookie", await returnToCookie.serialize(returnTo));
 
   return json(
     {

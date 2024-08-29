@@ -1,9 +1,6 @@
 import { type LoaderFunctionArgs, json } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import {
-  getAuthorizationServerOrigin,
-  isBuilderUrl,
-} from "~/shared/router-utils/origins";
+import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
 import { builderSessionStorage } from "~/services/builder-session.server";
 import { sessionStorage } from "~/services/session.server";
 import { authenticator } from "~/services/auth.server";
@@ -12,6 +9,8 @@ import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { lazy } from "react";
 import { ClientOnly } from "~/shared/client-only";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { isBuilder } from "~/shared/router-utils";
 
 const SessionError = z.object({
   message: z.string(),
@@ -19,10 +18,10 @@ const SessionError = z.object({
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const storage = isBuilderUrl(request.url)
-    ? builderSessionStorage
-    : sessionStorage;
-  const sessionErrorKey = isBuilderUrl(request.url)
+  preventCrossOriginCookie(request);
+
+  const storage = isBuilder(request) ? builderSessionStorage : sessionStorage;
+  const sessionErrorKey = isBuilder(request)
     ? builderAuthenticator.sessionErrorKey
     : authenticator.sessionErrorKey;
 

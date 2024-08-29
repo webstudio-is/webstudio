@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate, useRevalidator } from "@remix-run/react";
 import {
   Box,
   Button,
@@ -15,7 +14,7 @@ import {
   DialogActions,
 } from "@webstudio-is/design-system";
 import { Title, Project } from "@webstudio-is/project";
-import { builderPath } from "~/shared/router-utils";
+import { builderUrl } from "~/shared/router-utils";
 import { trpcClient } from "./trpc/trpc-client";
 
 const useCloneProject = ({
@@ -25,8 +24,6 @@ const useCloneProject = ({
   projectId: Project["id"];
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  const revalidator = useRevalidator();
-  const navigate = useNavigate();
   const { send, state } = trpcClient.project.clone.useMutation();
   const [errors, setErrors] = useState<string>();
 
@@ -41,9 +38,12 @@ const useCloneProject = ({
 
     if (parsed.success) {
       send({ projectId, title }, (data) => {
-        revalidator.revalidate();
         if (data?.id) {
-          navigate(builderPath({ projectId: data.id }));
+          window.location.href = builderUrl({
+            origin: window.origin,
+            projectId: data.id,
+          });
+
           onOpenChange(false);
         }
       });

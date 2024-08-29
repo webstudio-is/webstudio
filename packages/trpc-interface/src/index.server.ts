@@ -13,4 +13,5 @@ export {
   middleware,
   mergeRouters,
   createCacheMiddleware,
+  createCallerFactory,
 } from "./context/router.server";

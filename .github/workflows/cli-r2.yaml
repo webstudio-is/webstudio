@@ -14,6 +14,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
   statuses: write # This is required for the GitHub Script createCommitStatus to work
   packages: write
+  deployments: write
 
 jobs:
   build:
@@ -115,3 +116,9 @@ jobs:
           './functions/[[path]].ts'
 
         working-directory: ${{ github.workspace }}/cloudflare-template
+
+  delete-github-deployments:
+    needs: checks
+    uses: ./.github/workflows/delete-github-deployments.yml
+    with:
+      ref: ${{ github.ref_name }}

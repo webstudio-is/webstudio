@@ -17,7 +17,7 @@ import {
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useRef, useState } from "react";
 import type { ImageLoader } from "@webstudio-is/image";
-import { builderPath } from "~/shared/router-utils";
+import { builderUrl } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
@@ -181,7 +181,8 @@ export const ProjectCard = ({
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleCloneProject = useCloneProject(id);
   const { state, location } = useNavigation();
-  const linkPath = builderPath({ projectId: id });
+
+  const linkPath = builderUrl({ origin: window.origin, projectId: id });
   // Transition to the project has started, we may need to show a spinner
   const isTransitioning = state !== "idle" && linkPath === location.pathname;
   return (

@@ -101,8 +101,7 @@ const env = {
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 
-  SECURE_COOKIE:
-    process.env.SSL === "true" || process.env.NODE_ENV === "production",
+  SECURE_COOKIE: true,
 
   // Used for project oauth login flow @todo remove ??
   AUTH_WS_CLIENT_ID: process.env.AUTH_WS_CLIENT_ID ?? "12345",
