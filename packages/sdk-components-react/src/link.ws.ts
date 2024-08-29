@@ -68,5 +68,5 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: ["id", "className", "href", "target"],
+  initialProps: ["id", "className", "href", "target", "download"],
 };
