@@ -243,12 +243,7 @@ export const Section = ({
           description={propertyDescriptions.objectFit}
           properties={["objectFit"]}
         />
-        <SelectControl
-          property="objectFit"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <SelectControl property="objectFit" />
         <PropertyLabel
           label="Object Position"
           description={propertyDescriptions.objectPosition}

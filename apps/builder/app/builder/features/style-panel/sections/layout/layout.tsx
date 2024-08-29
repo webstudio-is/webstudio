@@ -432,12 +432,6 @@ if (isFeatureEnabled("displayContents")) {
   orderedDisplayValues.push("contents");
 }
 
-const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
-  const aIndex = orderedDisplayValues.indexOf(a.name);
-  const bIndex = orderedDisplayValues.indexOf(b.name);
-  return aIndex - bIndex;
-};
-
 export const properties = [
   "display",
   "flexDirection",
@@ -451,13 +445,11 @@ export const properties = [
 
 export const Section = ({
   currentStyle,
-  setProperty,
   deleteProperty,
   createBatchUpdate,
 }: SectionProps) => {
   const value = toValue(currentStyle.display?.value);
 
-  const { items } = styleConfigByName("display");
   return (
     <CollapsibleSection
       label="Layout"
@@ -479,12 +471,7 @@ export const Section = ({
           />
           <SelectControl
             property="display"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            items={items
-              .filter((item) => orderedDisplayValues.includes(item.name))
-              .sort(compareDisplayValues)}
+            items={orderedDisplayValues.map((name) => ({ name, label: name }))}
           />
         </Grid>
 

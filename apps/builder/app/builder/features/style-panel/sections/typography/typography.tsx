@@ -355,8 +355,7 @@ const advancedProperties: StyleProperty[] = [
 ];
 
 export const TypographySectionAdvancedPopover = (props: SectionProps) => {
-  const { deleteProperty, setProperty, createBatchUpdate, currentStyle } =
-    props;
+  const { createBatchUpdate, currentStyle } = props;
   return (
     <FloatingPanel
       title="Advanced Typography"
@@ -374,12 +373,7 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               description={propertyDescriptions.whiteSpaceCollapse}
               properties={["whiteSpaceCollapse"]}
             />
-            <SelectControl
-              property="whiteSpaceCollapse"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <SelectControl property="whiteSpaceCollapse" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyLabel
@@ -387,12 +381,7 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               description={propertyDescriptions.textWrapMode}
               properties={["textWrapMode"]}
             />
-            <SelectControl
-              property="textWrapMode"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <SelectControl property="textWrapMode" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyLabel
@@ -400,12 +389,7 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               description={propertyDescriptions.textWrapStyle}
               properties={["textWrapStyle"]}
             />
-            <SelectControl
-              property="textWrapStyle"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <SelectControl property="textWrapStyle" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
             <PropertyLabel

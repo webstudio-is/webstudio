@@ -197,3 +197,7 @@ export const createBatchUpdate = () => {
     publish,
   };
 };
+
+export const resetEphemeralStyles = () => {
+  $ephemeralStyles.set([]);
+};

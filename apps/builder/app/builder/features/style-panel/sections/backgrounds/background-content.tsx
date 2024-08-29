@@ -183,12 +183,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             properties={["backgroundClip"]}
           />
 
-          <SelectControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={currentStyle}
-            property="backgroundClip"
-          />
+          <SelectControl property="backgroundClip" />
 
           <PropertyInlineLabel
             label="Origin"
@@ -196,12 +191,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             properties={["backgroundOrigin"]}
           />
 
-          <SelectControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={currentStyle}
-            property="backgroundOrigin"
-          />
+          <SelectControl property="backgroundOrigin" />
         </Grid>
 
         <Spacer />
@@ -313,12 +303,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             properties={["backgroundBlendMode"]}
           />
 
-          <SelectControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={currentStyle}
-            property="backgroundBlendMode"
-          />
+          <SelectControl property="backgroundBlendMode" />
         </Grid>
       </BackgroundSection>
       <Separator css={{ gridColumn: "span 2" }} />
