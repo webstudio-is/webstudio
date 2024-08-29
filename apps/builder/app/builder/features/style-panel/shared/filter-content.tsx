@@ -226,7 +226,7 @@ export const FilterSectionContent = ({
       {filterFunction === "drop-shadow" && layer.args.type === "tuple" ? (
         <ShadowContent
           index={index}
-          property="textShadow"
+          property="dropShadow"
           layer={layer.args}
           tooltip={<></>}
           propertyValue={toValue(layer.args)}

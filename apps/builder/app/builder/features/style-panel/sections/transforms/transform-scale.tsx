@@ -3,11 +3,8 @@ import {
   EnhancedTooltip,
   Flex,
   Grid,
-  Label,
   SmallToggleButton,
   theme,
-  Tooltip,
-  Text,
 } from "@webstudio-is/design-system";
 import {
   StyleValue,
@@ -26,10 +23,11 @@ import {
   Link2Icon,
   Link2UnlinkedIcon,
 } from "@webstudio-is/icons";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
 import { useCallback, useState } from "react";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import type { IntermediateStyleValue } from "../../shared/css-value-input/css-value-input";
+import { PropertyInlineLabel } from "../../property-label";
 
 const property: StyleProperty = "scale";
 // When a scale shorthand proeprty is used, we can't set keywords.
@@ -177,22 +175,11 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
         >
           <XAxisIcon />
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Scale X</Text>
-                <Text variant="monoBold">scaleX</Text>
-                <Text>
-                  Scales an element horizontally along the X-axis. Values
-                  greater than 1 increase width, while values between 0 and 1
-                  decrease width.
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ width: "fit-content" }}> Scale X</Label>
-          </Tooltip>
+          <PropertyInlineLabel
+            label="Scale X"
+            description={propertySyntaxes.scaleX}
+            syntax="scale-x"
+          />
           <CssValueInput
             key="scaleX"
             styleSource="local"
@@ -232,22 +219,11 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
         >
           <YAxisIcon />
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Scale Y</Text>
-                <Text variant="monoBold">scaleY</Text>
-                <Text>
-                  Scales an element vertically along the Y-axis. Values greater
-                  than 1 increase height, while values between 0 and 1 decrease
-                  height.
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ width: "fit-content" }}> Scale Y</Label>
-          </Tooltip>
+          <PropertyInlineLabel
+            label="Scale Y"
+            description={propertySyntaxes.scaleY}
+            syntax="scale-y"
+          />
           <CssValueInput
             key="scaleY"
             styleSource="local"
@@ -287,21 +263,11 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
         >
           <ZAxisIcon />
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Scale Z</Text>
-                <Text variant="monoBold">scaleZ</Text>
-                <Text>
-                  Scales an element along the Z-axis. Values greater than 1
-                  increase depth, while values between 0 and 1 decrease depth.
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ width: "fit-content" }}> Scale Z</Label>
-          </Tooltip>
+          <PropertyInlineLabel
+            label="Scale Z"
+            description={propertySyntaxes.scaleZ}
+            syntax="scale-z"
+          />
           <CssValueInput
             key="scaleZ"
             styleSource="local"

@@ -1,4 +1,4 @@
-import { Flex, Grid, Label, Tooltip, Text } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import {
   StyleValue,
   toValue,
@@ -12,7 +12,8 @@ import {
 } from "./transform-utils";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
+import { PropertyInlineLabel } from "../../property-label";
 
 const property: StyleProperty = "translate";
 
@@ -61,21 +62,12 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 2fr 2fr" }}
       >
         <XAxisIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Translate X</Text>
-              <Text variant="monoBold">translateX</Text>
-              <Text>
-                Moves an element horizontally along the X-axis. Positive values
-                move it to the right, while negative values move it to the left.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Translate X</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Translate X"
+          description={propertySyntaxes.translateX}
+          syntax="translate-x"
+        />
+
         <CssValueInputContainer
           key="translateX"
           styleSource="local"
@@ -93,21 +85,11 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 2fr 2fr" }}
       >
         <YAxisIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Translate Y</Text>
-              <Text variant="monoBold">translateY</Text>
-              <Text>
-                Moves an element vertically along the Y-axis. Positive values
-                move it down, while negative values move it up.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Translate Y</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Translate Y"
+          description={propertySyntaxes.translateY}
+          syntax="translate-y"
+        />
         <CssValueInputContainer
           key="translateX"
           styleSource="local"
@@ -125,21 +107,11 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <ZAxisIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Translate Z</Text>
-              <Text variant="monoBold">translateZ</Text>
-              <Text>
-                Moves an element along the Z-axis. Positive values move it
-                towards the viewer, while negative values move it away.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Translate Z</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Translate Z"
+          description={propertySyntaxes.translateZ}
+          syntax="translate-z"
+        />
         <CssValueInputContainer
           key="translateX"
           styleSource="local"

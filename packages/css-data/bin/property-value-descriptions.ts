@@ -43,6 +43,7 @@ let propertiesGenerated: Record<string, string> = {};
 let propertiesOverrides: Record<string, string> = {};
 let declarationsGenerated: Record<string, string> = {};
 let declarationsOverrides: Record<string, string> = {};
+let propertySyntaxesGenerated: Record<string, string> = {};
 
 try {
   ({
@@ -50,6 +51,7 @@ try {
     propertiesOverrides = {},
     declarationsGenerated = {},
     declarationsOverrides = {},
+    propertySyntaxesGenerated = {},
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
   } = await import(path.join(targetPath, fileName)));
@@ -58,6 +60,39 @@ try {
 }
 
 const batchSize = 16;
+
+const propertiesAndFunctionsSyntax = [
+  "boxShadowOffsetX",
+  "boxShadowOffsetY",
+  "boxShadowBlurRadius",
+  "boxShadowSpreadRadius",
+  "boxShadowColor",
+  "boxShadowPosition",
+  "textShadowOffsetX",
+  "textShadowOffsetY",
+  "textShadowBlurRadius",
+  "textShadowColor",
+  "dropShadowOffsetX",
+  "dropShadowOffsetY",
+  "dropShadowBlurRadius",
+  "dropShadowColor",
+  "translateX",
+  "translateY",
+  "translateZ",
+  "rotateX",
+  "rotateY",
+  "rotateZ",
+  "scaleX",
+  "scaleY",
+  "scaleZ",
+  "skewX",
+  "skewY",
+  "transformOriginX",
+  "transformOriginY",
+  "transformOriginZ",
+  "perspectiveOriginX",
+  "perspectiveOriginY",
+];
 
 /**
  * Properties descriptions
@@ -72,11 +107,85 @@ const newPropertiesNames = Object.keys(keywordValues)
         typeof propertiesOverrides[property] !== "string")
   );
 
+const newPropertySyntaxes = propertiesAndFunctionsSyntax.filter(
+  (property) =>
+    forceRegenerate ||
+    (typeof propertySyntaxesGenerated[property] !== "string" &&
+      typeof propertySyntaxesGenerated[property] !== "string")
+);
+
 let retries = 0;
 
 const backoff = (num: number) => {
   return Math.floor(Math.pow(2, Math.min(num, 4)) * 1000);
 };
+
+for (let i = 0; i < newPropertySyntaxes.length; ) {
+  const syntaxes = newPropertySyntaxes.slice(i, i + batchSize);
+
+  console.info(
+    `[${Math.floor(i / batchSize) + 1}/${Math.ceil(
+      newPropertySyntaxes.length / batchSize
+    )}] Generating property syntax descriptions.`
+  );
+
+  if (syntaxes.length === 0) {
+    i += batchSize;
+    continue;
+  }
+
+  const prompt = propertiesPrompt.replace(
+    "{properties}",
+    syntaxes.map((name) => `- ${name}`).join("\n")
+  );
+
+  const result = await generate(prompt);
+
+  if (Array.isArray(result)) {
+    // Retry
+    if (result[0] === 429) {
+      console.info(
+        `❌  Error: 429 ${result[1]}. Retrying after sleep ${backoff(
+          retries
+        )}...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, backoff(retries)));
+      retries++;
+      continue;
+    }
+
+    throw new Error(`❌ Error: ${result[0]} ${result[1]}`);
+  }
+
+  const descriptions = grabDescriptions(result);
+
+  if (syntaxes.length !== descriptions.length) {
+    console.info(
+      "❌ Error: the number of generated descriptions does not match the amount of inputs. Retrying..."
+    );
+
+    console.info({ input: syntaxes.join("\n"), output: result });
+    continue;
+  }
+
+  syntaxes.forEach((name, index) => {
+    propertySyntaxesGenerated[name] = (descriptions[index] ?? "")
+      .replace(new RegExp(`^\`?${name}\`?:`), "")
+      .trim();
+  });
+
+  writeFile({
+    propertiesGenerated,
+    propertiesOverrides,
+    propertySyntaxesGenerated,
+    properties: `{ ...propertiesGenerated, ...propertiesOverrides }`,
+    declarationsGenerated,
+    declarationsOverrides,
+    declarations: `{ ...declarationsGenerated, ...declarationsOverrides }`,
+  });
+
+  i += batchSize;
+}
 
 for (let i = 0; i < newPropertiesNames.length; ) {
   const properties = newPropertiesNames.slice(i, i + batchSize);
@@ -135,6 +244,7 @@ for (let i = 0; i < newPropertiesNames.length; ) {
   writeFile({
     propertiesGenerated,
     propertiesOverrides,
+    propertySyntaxesGenerated,
     properties: `{ ...propertiesGenerated, ...propertiesOverrides }`,
     declarationsGenerated,
     declarationsOverrides,
@@ -276,6 +386,7 @@ for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
   writeFile({
     propertiesGenerated,
     propertiesOverrides,
+    propertySyntaxesGenerated,
     properties: `{ ...propertiesGenerated, ...propertiesOverrides }`,
     declarationsGenerated,
     declarationsOverrides,
@@ -315,7 +426,7 @@ async function generate(message: string): Promise<string | [number, string]> {
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     Accept: "application/json",
-    Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+    Authorization: `Bearer ${OPENAI_KEY}`,
   };
 
   if (OPENAI_ORG?.startsWith("org-")) {

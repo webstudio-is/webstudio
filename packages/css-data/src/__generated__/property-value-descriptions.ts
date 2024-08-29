@@ -494,9 +494,53 @@ export const propertiesGenerated = {
   viewTransitionName: "Sets a custom name for a transition effect",
   whiteSpaceCollapse:
     "Specifies how white space inside an element is collapsed",
+  "-webkit-box-orient":
+    '"Controls the direction of flex items in a flex container."',
+  "-webkit-line-clamp":
+    '"Truncates text to a specific number of lines in a container."',
+  "-webkit-overflow-scrolling":
+    '"Controls whether or not touch events trigger overflow scrolling."',
+  "-webkit-tap-highlight-color":
+    '"Sets the highlight color of links and form controls if tapped."',
+  fieldSizing:
+    '"Controls the algorithm used to calculate the width of form controls."',
+  zoom: '"Specifies the zoom level of a document."',
 } as const;
 
 export const propertiesOverrides = {} as const;
+
+export const propertySyntaxesGenerated = {
+  boxShadowOffsetX: "Controls the offset of the horizontal shadow.",
+  boxShadowOffsetY: "Controls the offset of the vertical shadow.",
+  boxShadowBlurRadius: "Controls the blur radius of the shadow.",
+  boxShadowSpreadRadius: "Controls the spread radius of the shadow.",
+  boxShadowColor: "Controls the color of the shadow.",
+  boxShadowPosition: "Controls the positioning of the shadow.",
+  textShadowOffsetX: "Controls the offset of the horizontal text shadow.",
+  textShadowOffsetY: "Controls the offset of the vertical text shadow.",
+  textShadowBlurRadius: "Controls the blur radius of the text shadow.",
+  textShadowColor: "Controls the color of the text shadow.",
+  dropShadowOffsetX: "Controls the offset of the horizontal drop shadow.",
+  dropShadowOffsetY: "Controls the offset of the vertical drop shadow.",
+  dropShadowBlurRadius: "Controls the blur radius of the drop shadow.",
+  dropShadowColor: "Controls the color of the drop shadow.",
+  translateX: "Controls the horizontal translation.",
+  translateY: "Controls the vertical translation.",
+  translateZ: "Controls the depth of the element along the z-axis.",
+  rotateX: "Rotates the element around the x-axis.",
+  rotateY: "Rotates the element around the y-axis.",
+  rotateZ: "Rotates the element around the z-axis.",
+  scaleX: "Scales the element in the x-axis direction.",
+  scaleY: "Scales the element in the y-axis direction.",
+  scaleZ: "Scales the element in the z-axis direction.",
+  skewX: "Skews the element along the x-axis.",
+  skewY: "Skews the element along the y-axis.",
+  transformOriginX: "Sets the origin for transformations in the x-axis.",
+  transformOriginY: "Sets the origin for transformations in the y-axis.",
+  transformOriginZ: "Sets the origin for transformations in the z-axis.",
+  perspectiveOriginX: "Sets the origin for the perspective view in the x-axis.",
+  perspectiveOriginY: "Sets the origin for the perspective view in the y-axis.",
+} as const;
 
 export const properties = {
   ...propertiesGenerated,
@@ -4290,6 +4334,38 @@ export const declarationsGenerated = {
     "Aligns the last line of text to the start of the line.",
   "textDecorationLine:unset":
     "Resets the text decoration line to its initial value.",
+  "-webkit-box-orient:horizontal":
+    "Specifies the box orientation as horizontal.",
+  "-webkit-box-orient:vertical": "Specifies the box orientation as vertical.",
+  "-webkit-line-clamp:none": "Limits the number of lines for text to none.",
+  "-webkit-line-clamp:initial":
+    "Resets the number of lines for text to its initial value.",
+  "-webkit-line-clamp:inherit":
+    "Sets the number of lines for text to inherit from the parent element.",
+  "-webkit-line-clamp:unset":
+    "Sets the number of lines for text to the initial value.",
+  "-webkit-overflow-scrolling:auto":
+    "Enables smooth scrolling with the overflow behavior auto.",
+  "-webkit-overflow-scrolling:touch":
+    "Enables smooth scrolling with the overflow behavior touch.",
+  "-webkit-overflow-scrolling:initial":
+    "Resets the overflow behavior to the initial value.",
+  "-webkit-overflow-scrolling:inherit":
+    "Sets the overflow behavior to inherit from the parent element.",
+  "-webkit-overflow-scrolling:unset":
+    "Sets the overflow behavior to the initial value.",
+  "fieldSizing:content": "Adjusts the sizing of form elements to content.",
+  "fieldSizing:fixed": "Adjusts the sizing of form elements to a fixed value.",
+  "fieldSizing:initial":
+    "Resets the sizing of form elements to the initial value.",
+  "fieldSizing:inherit":
+    "Sets the sizing of form elements to inherit from the parent element.",
+  "fieldSizing:unset": "Sets the sizing of form elements to the initial value.",
+  "zoom:normal": "Zooms the specified element to its initial size.",
+  "zoom:reset": "Resets the zoom level to the default value.",
+  "zoom:initial": "Sets the zoom level to the default value.",
+  "zoom:inherit": "Inherits the zoom level from the parent element.",
+  "zoom:unset": "Unsets the zoom level, allowing the browser to decide.",
 } as const;
 
 export const declarationsOverrides = {} as const;

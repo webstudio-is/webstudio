@@ -323,10 +323,12 @@ export const PropertyInlineLabel = ({
   description,
   properties,
   disabled,
+  syntax,
 }: {
   label: string;
   description: string;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties?: [StyleProperty, ...StyleProperty[]];
+  syntax?: string;
   disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -354,7 +356,12 @@ export const PropertyInlineLabel = ({
                 userSelect="text"
                 css={{ whiteSpace: "break-spaces", cursor: "text" }}
               >
-                {properties.map(hyphenateProperty).join("\n")}
+                <>
+                  {properties?.length &&
+                    properties.map(hyphenateProperty).join("\n")}
+
+                  {syntax}
+                </>
               </Text>
               <Text>{description}</Text>
             </Flex>

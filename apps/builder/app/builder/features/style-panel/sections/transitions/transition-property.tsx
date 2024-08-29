@@ -3,6 +3,7 @@ import {
   animatableProperties,
   commonTransitionProperties,
   isAnimatableProperty,
+  propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
   InputField,
@@ -171,7 +172,7 @@ export const TransitionProperty = ({
     <>
       <PropertyInlineLabel
         label="Property"
-        description="Sets the CSS properties that will be affected by the transition."
+        description={propertyDescriptions.transitionProperty}
         properties={["transitionProperty"]}
       />
       <ComboboxRoot open={isOpen}>

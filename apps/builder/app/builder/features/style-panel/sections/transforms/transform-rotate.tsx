@@ -1,4 +1,4 @@
-import { Flex, Grid, Label, Text, Tooltip } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
   type TransformPanelProps,
@@ -16,8 +16,9 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
 import { extractRotatePropertiesFromTransform } from "./transform-extractors";
+import { PropertyInlineLabel } from "../../property-label";
 
 export const RotatePanelContent = (props: TransformPanelProps) => {
   const { propertyValue, setProperty, currentStyle } = props;
@@ -69,22 +70,11 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <XAxisRotateIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Rotate X</Text>
-              <Text variant="monoBold">rotateX</Text>
-              <Text>
-                Rotates an element around the X-axis. Positive values rotate the
-                element clockwise, while negative values rotate it
-                counterclockwise.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Rotate X</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Rotate X"
+          description={propertySyntaxes.rotateX}
+          syntax="rotate-x"
+        />
         <CssValueInputContainer
           key="rotateX"
           styleSource="local"
@@ -106,22 +96,11 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <YAxisRotateIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Rotate Y</Text>
-              <Text variant="monoBold">rotateY</Text>
-              <Text>
-                Rotates an element around the Y-axis. Positive values rotate the
-                element clockwise, while negative values rotate it
-                counterclockwise.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Rotate Y</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Rotate Y"
+          description={propertySyntaxes.rotateY}
+          syntax="rotate-y"
+        />
         <CssValueInputContainer
           key="rotateY"
           styleSource="local"
@@ -143,22 +122,11 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <ZAxisRotateIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Rotate Z</Text>
-              <Text variant="monoBold">rotateZ</Text>
-              <Text>
-                Rotates an element around the Z-axis. Positive values rotate the
-                element clockwise, while negative values rotate it
-                counterclockwise.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Rotate Z</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Rotate Z"
+          description={propertySyntaxes.rotateZ}
+          syntax="rotate-z"
+        />
         <CssValueInputContainer
           key="rotateZ"
           styleSource="local"

@@ -1,4 +1,4 @@
-import { Flex, Label, Grid, Text, Tooltip } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
   type TransformPanelProps,
@@ -13,7 +13,8 @@ import {
   UnitValue,
   type FunctionValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
+import { PropertyInlineLabel } from "../../property-label";
 
 // We use fakeProperty to pass for the CssValueInputContainer.
 // https://developer.mozilla.org/en-US/docs/Web/CSS/rotate#formal_syntax
@@ -69,21 +70,11 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <XAxisIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Skew X</Text>
-              <Text variant="monoBold">skewX</Text>
-              <Text>
-                Skews an element along the X-axis. Positive values tilt the
-                element to the right, while negative values tilt it to the left.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Skew X</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Skew X"
+          description={propertySyntaxes.skewX}
+          syntax="skew-x"
+        />
         <CssValueInputContainer
           key="skewX"
           styleSource="local"
@@ -105,21 +96,11 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <YAxisIcon />
-        <Tooltip
-          variant="wrapped"
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Skew Y</Text>
-              <Text variant="monoBold">skewY</Text>
-              <Text>
-                Skews an element along the Y-axis. Positive values tilt the
-                element to the right, while negative values tilt it to the left.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label css={{ width: "fit-content" }}> Skew Y</Label>
-        </Tooltip>
+        <PropertyInlineLabel
+          label="Skew Y"
+          description={propertySyntaxes.skewY}
+          syntax="skew-y"
+        />
         <CssValueInputContainer
           key="skewY"
           styleSource="local"
