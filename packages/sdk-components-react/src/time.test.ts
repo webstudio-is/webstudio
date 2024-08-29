@@ -20,3 +20,7 @@ test("far future date", () => {
     new Date("2286-11-20T17:46:39.999Z")
   );
 });
+
+test("empty string", () => {
+  expect(parseDate("")).toEqual(undefined);
+});
