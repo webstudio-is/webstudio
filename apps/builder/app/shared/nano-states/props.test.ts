@@ -4,7 +4,6 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
 import { encodeDataSourceVariable, type Instance } from "@webstudio-is/sdk";
 import {
-  canvasAssetIdAttribute,
   collectionComponent,
   textContentAttribute,
 } from "@webstudio-is/react-sdk";
@@ -249,7 +248,7 @@ test("resolve asset prop values when params is provided", () => {
     $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
   ).toEqual(
     new Map<string, unknown>([
-      [canvasAssetIdAttribute, "assetId"],
+      ["$webstudio$canvasOnly$assetId", "assetId"],
       ["myAsset", "/asset/my-file.jpg"],
     ])
   );

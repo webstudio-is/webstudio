@@ -6,7 +6,6 @@ import {
 } from "react";
 import { Image as WebstudioImage } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { canvasAssetIdAttribute } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "img";
 
@@ -14,7 +13,7 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<
   ElementRef<typeof defaultTag>,
-  Props & { [canvasAssetIdAttribute]?: string }
+  Props & { $webstudio$canvasOnly$assetId?: string | undefined }
 >(
   (
     {
@@ -23,7 +22,7 @@ export const Image = forwardRef<
       height,
       optimize = true,
       decoding: decodingProp,
-      [canvasAssetIdAttribute]: canvasAssetId,
+      $webstudio$canvasOnly$assetId,
       ...props
     },
     ref
@@ -45,7 +44,7 @@ export const Image = forwardRef<
       decoding = "sync";
 
       // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state (we don't know asset src during uploading)
-      key = canvasAssetId ?? src;
+      key = $webstudio$canvasOnly$assetId ?? src;
 
       // NaN width and height means that the image is not yet uploaded, and should not be optimized on canvas
       if (

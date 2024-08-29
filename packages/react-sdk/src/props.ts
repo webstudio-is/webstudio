@@ -71,7 +71,7 @@ export const normalizeProps = ({
         // see Image component in sdk-components-react
         newProps.push({
           id: `${prop.instanceId}-${asset.id}-assetId`,
-          name: canvasAssetIdAttribute,
+          name: "$webstudio$canvasOnly$assetId",
           required: false,
           instanceId: prop.instanceId,
           type: "string",
@@ -129,4 +129,3 @@ export const showAttribute = "data-ws-show" as const;
 export const indexAttribute = "data-ws-index" as const;
 export const collapsedAttribute = "data-ws-collapsed" as const;
 export const textContentAttribute = "data-ws-text-content" as const;
-export const canvasAssetIdAttribute = "$webstudio$canvasOnly$assetId" as const;
