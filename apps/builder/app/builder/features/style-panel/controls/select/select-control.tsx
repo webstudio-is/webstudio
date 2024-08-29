@@ -1,25 +1,24 @@
 import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
-import { toValue } from "@webstudio-is/css-engine";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import { toKebabCase } from "../../shared/keyword-utils";
-import type { ControlProps } from "../types";
+import { useComputedStyleDecl } from "../../shared/model";
+import { resetEphemeralStyles, setProperty } from "../../shared/use-style-data";
 
 export const SelectControl = ({
   property,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  items,
-  isAdvanced,
-}: ControlProps) => {
-  const { items: defaultItems } = styleConfigByName(property);
-  const styleValue = currentStyle[property]?.value;
+  items = styleConfigByName(property).items,
+}: {
+  property: StyleProperty;
+  items?: Array<{ label: string; name: string }>;
+}) => {
+  const computedStyleDecl = useComputedStyleDecl(property);
   const setValue = setProperty(property);
-  const options = (items ?? defaultItems).map(({ name }) => name);
+  const options = items.map(({ name }) => name);
   // We can't render an empty string as a value when display was added but without a value.
   // One case is when advanced property is being added, but no value is set.
-  const value = toValue(styleValue) || "empty";
+  const value = toValue(computedStyleDecl.cascadedValue) || "empty";
 
   // Append selected value when not present in the list of options
   // because radix requires values to always be in the list.
@@ -29,7 +28,6 @@ export const SelectControl = ({
 
   return (
     <Select
-      disabled={isAdvanced}
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
@@ -42,9 +40,7 @@ export const SelectControl = ({
       onItemHighlight={(name) => {
         // Remove preview when mouse leaves the item.
         if (name === undefined) {
-          if (styleValue !== undefined) {
-            setValue(styleValue, { isEphemeral: true });
-          }
+          setValue(computedStyleDecl.usedValue, { isEphemeral: true });
           return;
         }
         // Preview on mouse enter or focus.
@@ -53,8 +49,8 @@ export const SelectControl = ({
       }}
       onOpenChange={(isOpen) => {
         // Remove ephemeral changes when closing the menu.
-        if (isOpen === false && styleValue !== undefined) {
-          deleteProperty(property, { isEphemeral: true });
+        if (isOpen === false) {
+          resetEphemeralStyles();
         }
       }}
       getDescription={(option) => {

@@ -72,13 +72,7 @@ export const Section = ({
             description={propertyDescriptions.position}
             properties={["position"]}
           />
-          <SelectControl
-            property={"position"}
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            items={positionItems}
-          />
+          <SelectControl property="position" items={positionItems} />
           {showZindexControl && showPositionControls === false && (
             <>
               <PropertyLabel
