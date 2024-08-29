@@ -336,7 +336,7 @@ export const parseDate = (datetimeString: string) => {
   if (isNumber && datetimeString.length === 10) {
     timestamp = timestamp * 1000;
   }
-  const date = new Date(timestamp);
+  const date = new Date(isNumber ? timestamp : datetimeString);
   const isValid = false === Number.isNaN(date.getTime());
 
   if (isValid) {

@@ -21,6 +21,12 @@ test("far future date", () => {
   );
 });
 
+test("parse ISO date string", () => {
+  expect(parseDate("2024-08-29T13:36:17.000Z")).toEqual(
+    new Date("2024-08-29T13:36:17.000Z")
+  );
+});
+
 test("empty string", () => {
   expect(parseDate("")).toEqual(undefined);
 });
