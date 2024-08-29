@@ -331,8 +331,8 @@ export const parseDate = (datetimeString: string) => {
   if (datetimeString === "") {
     return;
   }
+  const isNumber = /^\d+$/.test(datetimeString);
   let timestamp = Number(datetimeString);
-  const isNumber = Number.isNaN(timestamp) === false;
   if (isNumber && datetimeString.length === 10) {
     timestamp = timestamp * 1000;
   }
