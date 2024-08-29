@@ -25,3 +25,12 @@ find . -name '.pnpm-store' -type d -prune -exec rm -rf '{}' +
 pnpm install
 pnpm run build
 pnpm migrations migrate
+
+
+cat << 'EOF' >> /home/node/.bashrc
+
+alias gitclean="(git remote | xargs git remote prune) && git branch -vv | egrep '('\$(git remote | xargs | sed -e 's/ /|/g')')/.*: gone]' | awk '{print \$1}'  | xargs -r git branch -D"
+alias gitrebase="git rebase --interactive main"
+EOF
+
+
