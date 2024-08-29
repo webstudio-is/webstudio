@@ -24,3 +24,7 @@ test("far future date", () => {
 test("empty string", () => {
   expect(parseDate("")).toEqual(undefined);
 });
+
+test("invalid date string", () => {
+  expect(parseDate("whatever that is")).toEqual(undefined);
+});
