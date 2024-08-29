@@ -1395,4 +1395,34 @@ describe("style value source", () => {
       styleSourceId: "boxLocal",
     });
   });
+
+  test("local with inherit keyword", () => {
+    const model = createModel({
+      css: `
+        bodyLocal {
+          color: red;
+        }
+        boxLocal {
+          color: inherit;
+        }
+      `,
+      jsx: (
+        <$.Body ws:id="body" ws:tag="body" class="bodyLocal">
+          <$.Box ws:id="box" ws:tag="div" class="boxLocal"></$.Box>
+        </$.Body>
+      ),
+    });
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["box", "body"],
+        property: "color",
+      }).source
+    ).toEqual({
+      name: "local",
+      instanceId: "box",
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+    });
+  });
 });
