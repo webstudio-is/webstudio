@@ -34,11 +34,15 @@ import {
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
-import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
+import {
+  AuthorizationError,
+  authorizeProject,
+} from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
 import { db } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
 import { publicStaticEnv } from "~/env/env.static";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -52,8 +56,11 @@ export const action = async ({
 }: ActionFunctionArgs): Promise<
   | { status: "ok" }
   | { status: "version_mismatched"; errors: string }
+  | { status: "authorization_error"; errors: string }
   | { status: "error"; errors: string }
 > => {
+  preventCrossOriginCookie(request);
+
   enableMapSet();
   enablePatches();
 
@@ -91,12 +98,29 @@ export const action = async ({
     }
 
     const context = await createContext(request);
+
+    if (
+      context.authorization.userId === undefined &&
+      context.authorization.authToken === undefined
+    ) {
+      return {
+        // We use version_mismatched here to support older browser client
+        // @todo change on authorization_error after 15/09/2024
+        status: "version_mismatched",
+        errors:
+          "Due to a recent update or a possible logout, you may need to log in again. Please reload the page and sign in to continue.",
+      };
+    }
+
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId, permit: "edit" },
       context
     );
     if (canEdit === false) {
-      throw Error("You don't have edit access to this project");
+      return {
+        status: "authorization_error",
+        errors: "You don't have permission to edit this project.",
+      };
     }
 
     const build = await loadRawBuildById(context, buildId);
@@ -357,6 +381,13 @@ export const action = async ({
 
     return { status: "ok" };
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      return {
+        status: "authorization_error",
+        errors: error.message,
+      };
+    }
+
     console.error(error);
     return {
       status: "error",

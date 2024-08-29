@@ -1,17 +1,20 @@
 import { type LoaderFunction, redirect } from "@remix-run/server-runtime";
 import { AuthorizationError } from "remix-auth";
 import { createDebug } from "~/shared/debug";
-import { isBuilderUrl } from "~/shared/router-utils/origins";
-import { returnToPath } from "~/services/cookie.server";
+import { clearReturnToCookie, returnToPath } from "~/services/cookie.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
 import { OAuth2Error } from "remix-auth-oauth2";
 import { builderSessionStorage } from "~/services/builder-session.server";
+import { builderPath, isBuilder } from "~/shared/router-utils";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const debug = createDebug(import.meta.url);
 
 export const loader: LoaderFunction = async ({ request }) => {
+  preventCrossOriginCookie(request);
+
   try {
-    if (false === isBuilderUrl(request.url)) {
+    if (false === isBuilder(request)) {
       debug(`Request url is not the builder URL ${request.url}`);
 
       return new Response(null, {
@@ -20,7 +23,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
     }
 
-    const returnTo = await returnToPath(request);
+    const returnTo = (await returnToPath(request)) ?? builderPath({});
 
     debug("Start exchanging the code for the access token");
 
@@ -31,7 +34,25 @@ export const loader: LoaderFunction = async ({ request }) => {
   } catch (error) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
-      return error;
+      debug("Response Cookie", error.headers.get("Set-Cookie"));
+
+      const session = await builderSessionStorage.getSession(
+        error.headers.get("Set-Cookie")
+      );
+
+      // Cleanup due to a bug in remix-auth-oauth2: https://github.com/sergiodxa/remix-auth-oauth2/issues/122
+      const sessionStateKey = "oauth2:state";
+      const sessionCodeVerifierKey = "oauth2:codeVerifier";
+      session.unset(sessionStateKey);
+      session.unset(sessionCodeVerifierKey);
+      const response = error.clone();
+      // Use set instead of append to overwrite the cookie
+      response.headers.set(
+        "Set-Cookie",
+        await builderSessionStorage.commitSession(session)
+      );
+
+      return clearReturnToCookie(request, response);
     }
 
     if (error instanceof AuthorizationError) {

@@ -2,8 +2,11 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { createContext } from "~/shared/context.server";
 import { appRouter } from "~/services/trcp-router.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
   // https://trpc.io/docs/server/adapters/fetch
   const response = await fetchRequestHandler({
     req: request,

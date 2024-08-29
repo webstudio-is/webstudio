@@ -1,8 +1,17 @@
 import type { SetNonNullable } from "type-fest";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import {
+  AuthorizationError,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/index.server";
 import type { DashboardProjects } from "./schema";
 
 export const findMany = async (userId: string, context: AppContext) => {
+  if (userId !== context.authorization.userId) {
+    throw new AuthorizationError(
+      "Only the project owner can view the project list"
+    );
+  }
+
   const data = await context.postgrest.client
     .from("DashboardProject")
     .select("*, previewImageAsset:Asset (*)")

@@ -9,6 +9,7 @@ type AuthorizationContext = {
    * userId of the current authenticated user
    */
   userId: string | undefined;
+  sessionCreatedAt: number | undefined;
 
   /**
    * token URLSearchParams or hostname
@@ -24,6 +25,11 @@ type AuthorizationContext = {
    * Allow service 2 service communications to skip authorization for view calls
    */
   isServiceCall: boolean;
+
+  /**
+   * Has projectId in the tracked sessions
+   */
+  isLoggedInToBuilder: undefined | ((projectId: string) => Promise<boolean>);
 };
 
 type DomainContext = {

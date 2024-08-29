@@ -1,25 +1,48 @@
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import { authenticator } from "~/services/auth.server";
-import { loginPath } from "~/shared/router-utils";
+import { dashboardPath, isDashboard, loginPath } from "~/shared/router-utils";
 import { AUTH_PROVIDERS } from "~/shared/session";
-import { returnToPath } from "~/services/cookie.server";
+import { clearReturnToCookie, returnToPath } from "~/services/cookie.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const returnTo = await returnToPath(request);
-  const url = new URL(request.url);
-  const error = url.searchParams.get("error");
-  const errorDescription = url.searchParams.get("error_description");
-  if (error) {
+  preventCrossOriginCookie(request);
+
+  if (false === isDashboard(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
+  const returnTo = (await returnToPath(request)) ?? dashboardPath();
+
+  try {
+    await authenticator.authenticate("github", request, {
+      successRedirect: returnTo,
+      throwOnError: true,
+    });
+  } catch (error) {
+    // all redirects are basically errors and in that case we don't want to catch it
+    if (error instanceof Response) {
+      return clearReturnToCookie(request, error);
+    }
+
+    const message = error instanceof Error ? error?.message : "unknown error";
+
+    console.error({
+      error,
+      extras: {
+        loginMethod: AUTH_PROVIDERS.LOGIN_GITHUB,
+      },
+    });
+
     return redirect(
       loginPath({
         error: AUTH_PROVIDERS.LOGIN_GITHUB,
-        message: errorDescription || error,
+        message,
         returnTo,
       })
     );
   }
-  return authenticator.authenticate("github", request, {
-    successRedirect: returnTo,
-    failureRedirect: loginPath({}),
-  });
 };

@@ -180,7 +180,10 @@ const syncServer = async function () {
           }
           // when versions mismatched ask user to reload
           // user may cancel to copy own state before reloading
-          if (result.status === "version_mismatched") {
+          if (
+            result.status === "version_mismatched" ||
+            result.status === "authorization_error"
+          ) {
             const error =
               result.errors ?? "Unknown version mismatch. Please reload.";
 

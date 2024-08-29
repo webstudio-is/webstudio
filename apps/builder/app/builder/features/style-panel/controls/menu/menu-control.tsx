@@ -1,4 +1,5 @@
-import { toValue } from "@webstudio-is/css-engine";
+import { useState } from "react";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import {
   Box,
@@ -15,39 +16,28 @@ import {
   IconButton,
   theme,
 } from "@webstudio-is/design-system";
-import type { ControlProps } from "../types";
-import { getStyleSource } from "../../shared/style-info";
-import { PropertyTooltip } from "../../shared/property-name";
-import { AdvancedValueTooltip } from "../advanced-value-tooltip";
-import { toKebabCase } from "../../shared/keyword-utils";
-import { useState } from "react";
 import { declarationDescriptions } from "@webstudio-is/css-data";
+import { humanizeString } from "~/shared/string-utils";
+import { setProperty } from "../../shared/use-style-data";
+import { useComputedStyleDecl } from "../../shared/model";
+import { PropertyValueTooltip } from "../../property-label";
 
 export const MenuControl = ({
-  currentStyle,
   property,
   items,
-  setProperty,
-  deleteProperty,
-  isAdvanced,
-}: Omit<ControlProps, "items"> & {
+}: {
+  property: StyleProperty;
   items: Array<{
     name: string;
     label: string;
     icon: IconComponent;
   }>;
 }) => {
-  const styleValue = currentStyle[property];
-  const value = styleValue?.value;
-  const styleSource = getStyleSource(styleValue);
+  const computedStyleDecl = useComputedStyleDecl(property);
   const [descriptionValue, setDescriptionValue] = useState<string>();
 
-  if (value === undefined) {
-    return;
-  }
-
   const setValue = setProperty(property);
-  const currentValue = toValue(value);
+  const currentValue = toValue(computedStyleDecl.cascadedValue);
   const currentItem = items.find((item) => item.name === currentValue);
   const Icon = currentItem?.icon ?? items[0].icon;
   const description =
@@ -56,41 +46,33 @@ export const MenuControl = ({
         descriptionValue ?? currentValue
       }` as keyof typeof declarationDescriptions
     ];
-  // If there is no icon, we can't represent the value visually and assume the value comes from advanced section.
-  isAdvanced = isAdvanced ?? currentItem === undefined;
+  // consider defined (not default) value as advanced
+  // when there is no matching item
+  const isAdvanced =
+    computedStyleDecl.source.name !== "default" && currentItem === undefined;
 
   return (
     <DropdownMenu modal={false}>
-      <AdvancedValueTooltip
-        isAdvanced={isAdvanced}
+      <PropertyValueTooltip
+        label={currentItem?.label ?? humanizeString(property)}
         property={property}
-        value={currentValue}
-        currentStyle={currentStyle}
-        deleteProperty={deleteProperty}
+        isAdvanced={isAdvanced}
       >
-        <PropertyTooltip
-          title={currentItem?.label}
-          properties={[property]}
-          scrollableContent={`${toKebabCase(property)}: ${currentValue};`}
-          style={currentStyle}
-          onReset={() => deleteProperty(property)}
-        >
-          <DropdownMenuTrigger asChild>
-            <IconButton
-              disabled={isAdvanced}
-              variant={styleSource}
-              onPointerDown={(event) => {
-                // tooltip reset property when click with altKey
-                if (event.altKey) {
-                  event.preventDefault();
-                }
-              }}
-            >
-              <Icon />
-            </IconButton>
-          </DropdownMenuTrigger>
-        </PropertyTooltip>
-      </AdvancedValueTooltip>
+        <DropdownMenuTrigger asChild>
+          <IconButton
+            aria-disabled={isAdvanced}
+            variant={computedStyleDecl.source.name}
+            onPointerDown={(event) => {
+              // tooltip reset property when click with altKey
+              if (event.altKey) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <Icon />
+          </IconButton>
+        </DropdownMenuTrigger>
+      </PropertyValueTooltip>
       <DropdownMenuPortal>
         <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
           <DropdownMenuRadioGroup

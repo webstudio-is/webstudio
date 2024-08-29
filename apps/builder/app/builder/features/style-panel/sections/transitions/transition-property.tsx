@@ -72,7 +72,7 @@ export const TransitionProperty = ({
   } = useCombobox<NameAndLabel>({
     items: properties.map((prop) => ({
       name: prop,
-      label: prop,
+      label: prop === "transform" ? `${prop} (rotate, skew)` : prop,
     })),
     value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
@@ -138,12 +138,9 @@ export const TransitionProperty = ({
       commonPropertiesSet.has(item.name) === false &&
       propertiesDefinedOnInstanceSet.has(item.name) === false
   );
-  const propertiesDefinedOnInstance: Array<NameAndLabel> = Array.from(
-    propertiesDefinedOnInstanceSet
-  ).map((item) => ({
-    name: item,
-    label: item,
-  }));
+  const propertiesDefinedOnInstance: Array<NameAndLabel> = items.filter(
+    (item) => propertiesDefinedOnInstanceSet.has(item.name)
+  );
 
   const saveAnimatableProperty = (propertyName: string) => {
     if (isAnimatableProperty(propertyName) === false) {
@@ -209,7 +206,7 @@ export const TransitionProperty = ({
                       </>
                     )}
 
-                    <ComboboxLabel role="option">Common</ComboboxLabel>
+                    <ComboboxLabel>Common</ComboboxLabel>
                     {commonProperties.map((property, index) =>
                       renderItem(
                         property,

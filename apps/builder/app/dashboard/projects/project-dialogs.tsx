@@ -1,6 +1,5 @@
 import { useRevalidator } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "@remix-run/react";
 import {
   Box,
   Button,
@@ -19,7 +18,7 @@ import {
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { Title } from "@webstudio-is/project";
-import { builderPath } from "~/shared/router-utils";
+import { builderUrl } from "~/shared/router-utils";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 
@@ -118,10 +117,8 @@ const DialogContent = ({
 };
 
 const useCreateProject = () => {
-  const navigate = useNavigate();
   const { send, state } = trpcClient.dashboardProject.create.useMutation();
   const [errors, setErrors] = useState<string>();
-  const revalidator = useRevalidator();
 
   const handleSubmit = ({ title }: { title: string }) => {
     const parsed = Title.safeParse(title);
@@ -132,9 +129,13 @@ const useCreateProject = () => {
     setErrors(errors);
     if (parsed.success) {
       send({ title }, (data) => {
-        revalidator.revalidate();
+        console.info("data");
+
         if (data?.id) {
-          navigate(builderPath({ projectId: data.id }));
+          window.location.href = builderUrl({
+            origin: window.origin,
+            projectId: data.id,
+          });
         }
       });
     }

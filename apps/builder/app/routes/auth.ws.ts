@@ -1,13 +1,18 @@
 import type { LoaderFunction } from "@remix-run/node";
 import { createDebug } from "~/shared/debug";
 import { builderAuthenticator } from "~/services/builder-auth.server";
-import { isBuilderUrl } from "~/shared/router-utils/origins";
+import { comparePathnames, isBuilder } from "~/shared/router-utils";
+import { isRedirectResponse, returnToCookie } from "~/services/cookie.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const debug = createDebug(import.meta.url);
 
+// Endpoint to force user relogin
 export const loader: LoaderFunction = async ({ request }) => {
+  preventCrossOriginCookie(request);
+
   try {
-    if (false === isBuilderUrl(request.url)) {
+    if (false === isBuilder(request)) {
       debug(`Request url is not the builder URL ${request.url}`);
 
       return new Response(null, {
@@ -26,7 +31,25 @@ export const loader: LoaderFunction = async ({ request }) => {
   } catch (error) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
-      return error;
+      const response = error.clone();
+
+      if (isRedirectResponse(response)) {
+        const url = new URL(request.url);
+        let returnTo = url.searchParams.get("returnTo");
+        if (returnTo !== null && comparePathnames(returnTo, request.url)) {
+          // avoid loops
+          returnTo = "/";
+        }
+
+        const options = returnTo === null ? { maxAge: -1 } : {};
+
+        response.headers.append(
+          "Set-Cookie",
+          await returnToCookie.serialize(returnTo, options)
+        );
+      }
+
+      return response;
     }
 
     debug("error", error);
