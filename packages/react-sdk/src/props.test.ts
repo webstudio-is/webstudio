@@ -1,6 +1,6 @@
 import { test, expect } from "@jest/globals";
 import type { Pages, Prop } from "@webstudio-is/sdk";
-import { normalizeProps } from "./props";
+import { canvasAssetIdAttribute, normalizeProps } from "./props";
 
 const pagesBase: Pages = {
   meta: {},
@@ -156,7 +156,7 @@ test("normalize asset prop into string and pass assetId on the canvas", () => {
     {
       id: "instance1-asset1-assetId",
       instanceId: "instance1",
-      name: "$webstudio$canvasOnly$assetId",
+      name: canvasAssetIdAttribute,
       required: false,
       type: "string",
       value: "asset1",

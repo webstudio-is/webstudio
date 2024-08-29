@@ -1,3 +1,4 @@
+import { canvasAssetIdAttribute } from "@webstudio-is/react-sdk";
 import { forwardRef, type ComponentProps } from "react";
 
 export const defaultTag = "a";
@@ -10,8 +11,8 @@ type Props = Omit<ComponentProps<"a">, "target" | "download"> & {
 
 export const Link = forwardRef<
   HTMLAnchorElement,
-  Props & { $webstudio$canvasOnly$assetId?: string | undefined }
->(({ children, $webstudio$canvasOnly$assetId, ...props }, ref) => {
+  Props & { [canvasAssetIdAttribute]?: string }
+>(({ children, [canvasAssetIdAttribute]: canvasAssetId, ...props }, ref) => {
   return (
     <a {...props} href={props.href ?? "#"} ref={ref}>
       {children}
