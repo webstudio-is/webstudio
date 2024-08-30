@@ -400,46 +400,44 @@ export const PropertyValueTooltip = ({
       `${property}:${value}` as keyof typeof declarationDescriptions
     ];
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
-        triggerProps={{
-          onClick: (event) => {
-            if (event.altKey) {
-              event.preventDefault();
-              resetProperty();
-              return;
-            }
-          },
-        }}
-        content={
-          <PropertyInfo
-            title={label}
-            code={css}
-            description={
-              <Flex gap="2" direction="column">
-                {description}
-                {isAdvanced && (
-                  <Flex gap="1">
-                    <AlertIcon color={rawTheme.colors.backgroundAlertMain} />{" "}
-                    This value was defined in the Advanced section.
-                  </Flex>
-                )}
-              </Flex>
-            }
-            styles={[computedStyleDecl]}
-            onReset={() => {
-              resetProperty();
-              setIsOpen(false);
-            }}
-          />
-        }
-      >
-        {children}
-      </Tooltip>
-    </Flex>
+    <Tooltip
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      // prevent closing tooltip on content click
+      onPointerDown={(event) => event.preventDefault()}
+      triggerProps={{
+        onClick: (event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            resetProperty();
+            return;
+          }
+        },
+      }}
+      content={
+        <PropertyInfo
+          title={label}
+          code={css}
+          description={
+            <Flex gap="2" direction="column">
+              {description}
+              {isAdvanced && (
+                <Flex gap="1">
+                  <AlertIcon color={rawTheme.colors.backgroundAlertMain} /> This
+                  value was defined in the Advanced section.
+                </Flex>
+              )}
+            </Flex>
+          }
+          styles={[computedStyleDecl]}
+          onReset={() => {
+            resetProperty();
+            setIsOpen(false);
+          }}
+        />
+      }
+    >
+      {children}
+    </Tooltip>
   );
 };
