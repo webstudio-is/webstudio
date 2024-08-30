@@ -316,11 +316,9 @@ export const getComputedStyleDecl = ({
       (property === "color" && matchKeyword(cascadedValue, "currentcolor"))
     ) {
       specifiedValue = inheritedValue;
-      source = inheritedSource;
     } else if (matchKeyword(cascadedValue, "unset")) {
       if (inherited) {
         specifiedValue = inheritedValue;
-        source = inheritedSource;
       } else {
         specifiedValue = initialValue;
       }
