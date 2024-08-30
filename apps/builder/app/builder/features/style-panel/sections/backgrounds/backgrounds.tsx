@@ -1,6 +1,5 @@
 import { useStore } from "@nanostores/react";
 import type { SectionProps } from "../shared/section";
-import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
   CssValueListItem,
@@ -197,8 +196,6 @@ export const Section = (props: SectionProps) => {
     props;
   const layersCount = getLayerCount(currentStyle);
 
-  const { items } = styleConfigByName("backgroundColor");
-
   const sortableItems = useMemo(
     () =>
       Array.from(Array(layersCount), (_, index) => ({
@@ -266,18 +263,11 @@ export const Section = (props: SectionProps) => {
           }}
         >
           <PropertyLabel
-            properties={["backgroundColor"]}
             label="Color"
             description={propertyDescriptions.backgroundColor}
+            properties={["backgroundColor"]}
           />
-
-          <ColorControl
-            property={"backgroundColor"}
-            items={items}
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
+          <ColorControl property="backgroundColor" />
         </Grid>
       </Flex>
     </BackgroundsCollapsibleSection>

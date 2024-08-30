@@ -107,12 +107,7 @@ export const TypographySectionFont = (props: SectionProps) => {
         description={propertyDescriptions.color}
         properties={["color"]}
       />
-      <ColorControl
-        property="color"
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
+      <ColorControl property="color" />
     </Grid>
   );
 };

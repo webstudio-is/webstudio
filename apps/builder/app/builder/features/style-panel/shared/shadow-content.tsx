@@ -29,13 +29,13 @@ import { useMemo, useState } from "react";
 import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
 import { toPascalCase } from "../shared/keyword-utils";
-import { ColorControl } from "../controls";
 import type {
   DeleteProperty,
-  SetProperty,
   StyleUpdateOptions,
 } from "../shared/use-style-data";
 import { parseCssFragment } from "./parse-css-fragment";
+import { styleConfigByName } from "./configs";
+import { ColorPicker } from "./color-picker";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -153,12 +153,6 @@ export const ShadowContent = ({
       value: toValue(newLayer),
     });
     onEditLayer(index, { type: "layers", value: [newLayer] }, options);
-  };
-
-  const colorControlCallback: SetProperty = () => {
-    return (value, options) => {
-      handlePropertyChange({ color: value }, options);
-    };
   };
 
   return (
@@ -333,18 +327,21 @@ export const ShadowContent = ({
           >
             <Label css={{ width: "fit-content" }}>Color</Label>
           </Tooltip>
-          <ColorControl
+          <ColorPicker
             property="color"
-            currentStyle={{
-              color: {
-                value: colorControlProp,
-                currentColor: colorControlProp,
-              },
-            }}
-            setProperty={colorControlCallback}
-            deleteProperty={() =>
-              handlePropertyChange({ color: colorControlProp })
+            value={colorControlProp}
+            currentColor={colorControlProp}
+            keywords={styleConfigByName("color").items.map((item) => ({
+              type: "keyword",
+              value: item.name,
+            }))}
+            onChange={(styleValue) =>
+              handlePropertyChange({ color: styleValue }, { isEphemeral: true })
             }
+            onChangeComplete={(styleValue) =>
+              handlePropertyChange({ color: styleValue })
+            }
+            onAbort={() => handlePropertyChange({ color: colorControlProp })}
           />
         </Flex>
 

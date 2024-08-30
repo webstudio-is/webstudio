@@ -1,57 +1,24 @@
-import { useStore } from "@nanostores/react";
-import { useMemo } from "react";
-import { Flex } from "@webstudio-is/design-system";
-import { toValue } from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorPicker } from "../../shared/color-picker";
 import { styleConfigByName } from "../../shared/configs";
-import type { ControlProps } from "../types";
-import { AdvancedValueTooltip } from "../advanced-value-tooltip";
-import { createComputedStyleDeclStore } from "../../shared/model";
+import { useComputedStyleDecl } from "../../shared/model";
+import { deleteProperty, setProperty } from "../../shared/use-style-data";
 
-export const ColorControl = ({
-  property,
-  items,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  isAdvanced,
-}: ControlProps) => {
-  const $computedStyleDecl = useMemo(
-    () => createComputedStyleDeclStore(property),
-    [property]
-  );
-  const computedStyleDecl = useStore($computedStyleDecl);
-
-  const { items: defaultItems } = styleConfigByName(property);
-
-  const setValue = setProperty(property);
-
+export const ColorControl = ({ property }: { property: StyleProperty }) => {
+  const computedStyleDecl = useComputedStyleDecl(property);
+  const { items } = styleConfigByName(property);
   const value = computedStyleDecl.cascadedValue;
   const currentColor = computedStyleDecl.usedValue;
-
+  const setValue = setProperty(property);
   return (
-    <Flex align="center" gap="1">
-      <AdvancedValueTooltip
-        isAdvanced={isAdvanced}
-        property={property}
-        value={toValue(currentColor)}
-        currentStyle={currentStyle}
-        deleteProperty={deleteProperty}
-      >
-        <ColorPicker
-          disabled={isAdvanced}
-          currentColor={currentColor}
-          property={property}
-          value={value}
-          keywords={(items ?? defaultItems).map((item) => ({
-            type: "keyword",
-            value: item.name,
-          }))}
-          onChange={(styleValue) => setValue(styleValue, { isEphemeral: true })}
-          onChangeComplete={setValue}
-          onAbort={() => deleteProperty(property, { isEphemeral: true })}
-        />
-      </AdvancedValueTooltip>
-    </Flex>
+    <ColorPicker
+      property={property}
+      value={value}
+      currentColor={currentColor}
+      keywords={items.map((item) => ({ type: "keyword", value: item.name }))}
+      onChange={(styleValue) => setValue(styleValue, { isEphemeral: true })}
+      onChangeComplete={setValue}
+      onAbort={() => deleteProperty(property, { isEphemeral: true })}
+    />
   );
 };
