@@ -6,7 +6,7 @@
 import { lazy } from "react";
 import { useLoaderData } from "@remix-run/react";
 import type { MetaFunction, ShouldRevalidateFunction } from "@remix-run/react";
-import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 
 import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
@@ -24,10 +24,10 @@ import env from "~/env/env.server";
 import builderStyles from "~/builder/builder.css?url";
 import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { ClientOnly } from "~/shared/client-only";
-import type { BuilderProps } from "~/builder/builder";
 import { parseBuilderUrl } from "~/shared/router-utils/origins";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
+import { builderSessionStorage } from "~/services/builder-session.server";
 
 export const links = () => {
   return [
@@ -51,9 +51,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return metas;
 };
 
-export const loader = async ({
-  request,
-}: LoaderFunctionArgs): Promise<BuilderProps> => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
 
   if (isDashboard(request)) {
@@ -78,6 +76,7 @@ export const loader = async ({
   }
 
   if (
+    context.authorization.authToken === undefined &&
     context.authorization.userId !== undefined &&
     context.authorization.sessionCreatedAt !== undefined &&
     request.headers.get("sec-fetch-mode") === "navigate"
@@ -161,19 +160,45 @@ export const loader = async ({
     }
 
     const publisherHost = env.PUBLISHER_HOST;
-    return {
-      project,
-      publisherHost,
-      imageBaseUrl: env.IMAGE_BASE_URL,
-      build: {
-        id: devBuild.id,
-        version: devBuild.version,
-      },
-      authToken,
-      authTokenPermissions,
-      authPermit,
-      userPlanFeatures,
-    };
+
+    const headers = new Headers();
+
+    if (context.authorization.authToken !== undefined) {
+      // To protect against cookie overwrites, we set a null session cookie if a user is using an authToken.
+      // This ensures that any existing HttpOnly, secure session cookies cannot be overwritten by client-side scripts
+
+      // See Storage model https://datatracker.ietf.org/doc/html/rfc6265#section-5.3
+      // If the cookie store contains a cookie with the same name,
+      // domain, and path as the newly created cookie:
+      // ...
+      // If the newly created cookie was received from a "non-HTTP"
+      //  API and the old-cookie's http-only-flag is set, abort these
+      //  steps and ignore the newly created cookie entirely.
+      const builderSession = await builderSessionStorage.getSession(null);
+      headers.set(
+        "Set-Cookie",
+        await builderSessionStorage.commitSession(builderSession)
+      );
+    }
+
+    return json(
+      {
+        project,
+        publisherHost,
+        imageBaseUrl: env.IMAGE_BASE_URL,
+        build: {
+          id: devBuild.id,
+          version: devBuild.version,
+        },
+        authToken,
+        authTokenPermissions,
+        authPermit,
+        userPlanFeatures,
+      } as const,
+      {
+        headers,
+      }
+    );
   } catch (error) {
     if (error instanceof AuthorizationError) {
       // try to re-login user if he has no access to the project
@@ -203,7 +228,7 @@ const Builder = lazy(async () => {
 });
 
 const BuilderRoute = () => {
-  const data = useLoaderData<BuilderProps>();
+  const data = useLoaderData<typeof loader>();
 
   return (
     <ClientOnly>
