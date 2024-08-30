@@ -199,9 +199,6 @@ importers:
       '@react-aria/utils':
         specifier: ^3.21.0
         version: 3.21.0(react@18.3.0-canary-14898b6a9-20240318)
-      '@remix-run/cloudflare':
-        specifier: ^2.11.0
-        version: 2.11.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.5.2)
       '@remix-run/node':
         specifier: ^2.11.0
         version: 2.11.0(typescript@5.5.2)
@@ -337,6 +334,9 @@ importers:
       immerhin:
         specifier: ^0.9.0
         version: 0.9.0
+      isbot:
+        specifier: ^4
+        version: 4.4.0
       lexical:
         specifier: ^0.16.0
         version: 0.16.0
@@ -7193,6 +7193,10 @@ packages:
   isbot@3.6.13:
     resolution: {integrity: sha512-uoP4uK5Dc2CrabmK+Gue1jTL+scHiCc1c9rblRpJwG8CPxjLIv8jmGyyGRGkbPOweayhkskdZsEQXG6p+QCQrg==}
     engines: {node: '>=12'}
+
+  isbot@4.4.0:
+    resolution: {integrity: sha512-8ZvOWUA68kyJO4hHJdWjyreq7TYNWTS9y15IzeqVdKxR9pPr3P/3r9AHcoIv9M0Rllkao5qWz2v1lmcyKIVCzQ==}
+    engines: {node: '>=18'}
 
   isbot@5.1.13:
     resolution: {integrity: sha512-RXtBib4m9zChSb+187EpNQML7Z3u2i34zDdqcRFZnqSJs0xdh91xzJytc5apYVg+9Y4NGnUQ0AIeJvX9FAnCUw==}
@@ -15689,6 +15693,8 @@ snapshots:
     optional: true
 
   isbot@3.6.13: {}
+
+  isbot@4.4.0: {}
 
   isbot@5.1.13: {}
 
