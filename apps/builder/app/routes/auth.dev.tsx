@@ -1,9 +1,10 @@
-import { type ActionFunctionArgs, redirect } from "@remix-run/server-runtime";
+import { type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { authenticator } from "~/services/auth.server";
 import { dashboardPath, isDashboard, loginPath } from "~/shared/router-utils";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { clearReturnToCookie, returnToPath } from "~/services/cookie.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { redirect, setNoStoreToRedirect } from "~/services/no-store-redirect";
 
 export default function Dev() {
   return null;
@@ -29,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } catch (error: unknown) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
-      return clearReturnToCookie(request, error);
+      return setNoStoreToRedirect(await clearReturnToCookie(request, error));
     }
 
     if (error instanceof Error) {

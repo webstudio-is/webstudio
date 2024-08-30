@@ -43,8 +43,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ? parsedError.data
     : {
         message: "Unknown error",
-        description: fromError(parsedError.error).toString(),
+        description: "",
       };
+
+  if (false === parsedError.success) {
+    console.error(fromError(parsedError.error));
+  }
 
   return json(
     { error, origin: getAuthorizationServerOrigin(request.url) },

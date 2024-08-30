@@ -4,6 +4,7 @@ import { builderAuthenticator } from "~/services/builder-auth.server";
 import { comparePathnames, isBuilder } from "~/shared/router-utils";
 import { isRedirectResponse, returnToCookie } from "~/services/cookie.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { setNoStoreToRedirect } from "~/services/no-store-redirect";
 
 const debug = createDebug(import.meta.url);
 
@@ -31,9 +32,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   } catch (error) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
-      const response = error.clone();
+      if (isRedirectResponse(error)) {
+        const response = setNoStoreToRedirect(error).clone();
 
-      if (isRedirectResponse(response)) {
         const url = new URL(request.url);
         let returnTo = url.searchParams.get("returnTo");
         if (returnTo !== null && comparePathnames(returnTo, request.url)) {
@@ -47,9 +48,11 @@ export const loader: LoaderFunction = async ({ request }) => {
           "Set-Cookie",
           await returnToCookie.serialize(returnTo, options)
         );
+
+        return response;
       }
 
-      return response;
+      return error;
     }
 
     debug("error", error);
