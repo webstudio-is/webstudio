@@ -331,9 +331,9 @@ export const parseDate = (datetimeString: string) => {
   if (datetimeString === "") {
     return;
   }
-  const isNumber = /^\d+$/.test(datetimeString);
+  const isDigit = /^\d+$/.test(datetimeString);
   let date = new Date(datetimeString);
-  if (isNumber) {
+  if (isDigit) {
     let timestamp = Number(datetimeString);
     // We need to normalize the 10-digit timestamp to 13-digit first
     if (datetimeString.length === 10) {
