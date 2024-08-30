@@ -4,7 +4,7 @@ import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
-import { PositionControl } from "./position-control";
+import { InsetControl } from "./inset-control";
 import { useParentStyle } from "../../parent-style";
 import { PropertyLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
@@ -92,7 +92,7 @@ export const Section = ({
 
         {showPositionControls && (
           <Grid gap={3} columns={2}>
-            <PositionControl
+            <InsetControl
               currentStyle={currentStyle}
               deleteProperty={deleteProperty}
               createBatchUpdate={createBatchUpdate}

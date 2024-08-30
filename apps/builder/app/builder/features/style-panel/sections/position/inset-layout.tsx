@@ -34,14 +34,14 @@ const LeftRight = styled(Trapezoid, {
   backgroundColor: theme.colors.backgroundSpacingLeftRight,
 });
 
-export type PositionProperty = "top" | "right" | "bottom" | "left";
+export type InsetProperty = "top" | "right" | "bottom" | "left";
 
-type PositionLayoutProps = {
-  renderCell: (property: PositionProperty) => React.ReactNode;
+type InsetLayoutProps = {
+  renderCell: (property: InsetProperty) => React.ReactNode;
   onHover: (
-    args: { element: HTMLElement; property: PositionProperty } | undefined
+    args: { element: HTMLElement; property: InsetProperty } | undefined
   ) => void;
-  activeProperties: readonly PositionProperty[];
+  activeProperties: readonly InsetProperty[];
 };
 /**
  *  Grid schema for graphical layout
@@ -56,12 +56,12 @@ type PositionLayoutProps = {
  *  ```
  *
  **/
-export const PositionLayout = ({
+export const InsetLayout = ({
   renderCell,
   onHover,
   activeProperties,
-}: PositionLayoutProps) => {
-  const createHandleHover = (property: PositionProperty) => ({
+}: InsetLayoutProps) => {
+  const createHandleHover = (property: InsetProperty) => ({
     onMouseEnter: (e: MouseEvent<HTMLDivElement>) => {
       onHover({
         element: e.currentTarget,
