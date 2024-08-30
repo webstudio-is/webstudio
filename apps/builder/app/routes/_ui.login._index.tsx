@@ -1,7 +1,6 @@
 import {
   type LoaderFunctionArgs,
   type TypedResponse,
-  redirect,
   json,
 } from "@remix-run/server-runtime";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
@@ -18,6 +17,7 @@ import { returnToCookie } from "~/services/cookie.server";
 import { ClientOnly } from "~/shared/client-only";
 import { lazy } from "react";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { redirect } from "~/services/no-store-redirect";
 
 export const meta: MetaFunction<typeof loader> = () => {
   const metas: ReturnType<MetaFunction> = [];

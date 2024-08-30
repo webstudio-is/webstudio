@@ -1,10 +1,6 @@
 import { lazy } from "react";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
-import {
-  json,
-  type LoaderFunctionArgs,
-  redirect,
-} from "@remix-run/server-runtime";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { isDashboard, loginPath } from "~/shared/router-utils";
@@ -13,6 +9,7 @@ import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
+import { redirect } from "~/services/no-store-redirect";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 

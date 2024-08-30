@@ -1,4 +1,4 @@
-import { type LoaderFunction, redirect } from "@remix-run/server-runtime";
+import { type LoaderFunction } from "@remix-run/server-runtime";
 import { AuthorizationError } from "remix-auth";
 import { createDebug } from "~/shared/debug";
 import { clearReturnToCookie, returnToPath } from "~/services/cookie.server";
@@ -7,6 +7,7 @@ import { OAuth2Error } from "remix-auth-oauth2";
 import { builderSessionStorage } from "~/services/builder-session.server";
 import { builderPath, isBuilder } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { redirect, setNoStoreToRedirect } from "~/services/no-store-redirect";
 
 const debug = createDebug(import.meta.url);
 
@@ -34,7 +35,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   } catch (error) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
-      debug("Response Cookie", error.headers.get("Set-Cookie"));
+      debug("Response with Cookie");
 
       const session = await builderSessionStorage.getSession(
         error.headers.get("Set-Cookie")
@@ -52,7 +53,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         await builderSessionStorage.commitSession(session)
       );
 
-      return clearReturnToCookie(request, response);
+      return setNoStoreToRedirect(await clearReturnToCookie(request, response));
     }
 
     if (error instanceof AuthorizationError) {

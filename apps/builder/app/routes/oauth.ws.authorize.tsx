@@ -1,4 +1,4 @@
-import { json, redirect, type LoaderFunction } from "@remix-run/server-runtime";
+import { json, type LoaderFunction } from "@remix-run/server-runtime";
 import { z } from "zod";
 import { createDebug } from "~/shared/debug";
 import { fromError } from "zod-validation-error";
@@ -10,6 +10,7 @@ import { isUserAuthorizedForProject } from "~/services/builder-access.server";
 import { loginPath } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import * as session from "~/services/session.server";
+import { redirect } from "~/services/no-store-redirect";
 
 const debug = createDebug(import.meta.url);
 
@@ -194,12 +195,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       return session.writeLoginSessionBloomFilter(
         request,
-        new Response(null, {
-          status: 302,
-          headers: {
-            Location: redirectUri.href,
-          },
-        }),
+        redirect(redirectUri.href),
         bloomFilter
       );
     }

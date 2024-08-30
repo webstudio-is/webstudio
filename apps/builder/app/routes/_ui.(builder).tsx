@@ -6,7 +6,7 @@
 import { lazy } from "react";
 import { useLoaderData } from "@remix-run/react";
 import type { MetaFunction, ShouldRevalidateFunction } from "@remix-run/react";
-import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
+import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 
 import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
@@ -27,6 +27,7 @@ import { ClientOnly } from "~/shared/client-only";
 import type { BuilderProps } from "~/builder/builder";
 import { parseBuilderUrl } from "~/shared/router-utils/origins";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { redirect } from "~/services/no-store-redirect";
 
 export const links = () => {
   return [
