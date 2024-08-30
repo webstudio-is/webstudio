@@ -18,9 +18,9 @@ import type {
   StyleUpdateOptions,
 } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
-import { getPositionModifiersGroup, getSpaceModifiersGroup } from "./scrub";
+import { getInsetModifiersGroup, getSpaceModifiersGroup } from "./scrub";
 import type { SpaceStyleProperty } from "../space/types";
-import type { PositionProperty } from "../position/position-layout";
+import type { InsetProperty } from "../position/inset-layout";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -40,7 +40,7 @@ const Input = ({
   createBatchUpdate,
 }: {
   styleSource: StyleSource;
-  property: SpaceStyleProperty | PositionProperty;
+  property: SpaceStyleProperty | InsetProperty;
   value: StyleValue;
   onClosePopover: () => void;
   createBatchUpdate: CreateBatchUpdate;
@@ -101,7 +101,7 @@ const Input = ({
         const modifiers = { shiftKey, altKey };
         const properties = isSpace(property)
           ? getSpaceModifiersGroup(property as SpaceStyleProperty, modifiers)
-          : getPositionModifiersGroup(property as PositionProperty, modifiers);
+          : getInsetModifiersGroup(property as InsetProperty, modifiers);
 
         setIntermediateValue(undefined);
 
