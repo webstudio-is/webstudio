@@ -46,45 +46,47 @@ export const BorderColor = (_props: SectionProps) => {
         description="Sets the color of the border"
         properties={properties}
       />
-      <PropertyValueTooltip
-        label="Color"
-        property={local.property as StyleProperty}
-        isAdvanced={isAdvanced}
-      >
-        <Box css={{ gridColumn: `span 2` }}>
-          <ColorPicker
-            disabled={isAdvanced}
-            currentColor={currentColor}
-            property={local.property as StyleProperty}
-            value={value}
-            keywords={items.map((item) => ({
-              type: "keyword",
-              value: item.name,
-            }))}
-            onChange={(styleValue) => {
-              const batch = createBatchUpdate();
-              for (const property of properties) {
-                batch.setProperty(property)(styleValue);
-              }
-              batch.publish({ isEphemeral: true });
-            }}
-            onChangeComplete={(styleValue) => {
-              const batch = createBatchUpdate();
-              for (const property of properties) {
-                batch.setProperty(property)(styleValue);
-              }
-              batch.publish();
-            }}
-            onAbort={() => {
-              const batch = createBatchUpdate();
-              for (const property of properties) {
-                batch.deleteProperty(property);
-              }
-              batch.publish({ isEphemeral: true });
-            }}
-          />
-        </Box>
-      </PropertyValueTooltip>
+      <Box css={{ gridColumn: `span 2` }}>
+        <PropertyValueTooltip
+          label="Color"
+          property={local.property as StyleProperty}
+          isAdvanced={isAdvanced}
+        >
+          <div>
+            <ColorPicker
+              disabled={isAdvanced}
+              currentColor={currentColor}
+              property={local.property as StyleProperty}
+              value={value}
+              keywords={items.map((item) => ({
+                type: "keyword",
+                value: item.name,
+              }))}
+              onChange={(styleValue) => {
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.setProperty(property)(styleValue);
+                }
+                batch.publish({ isEphemeral: true });
+              }}
+              onChangeComplete={(styleValue) => {
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.setProperty(property)(styleValue);
+                }
+                batch.publish();
+              }}
+              onAbort={() => {
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.deleteProperty(property);
+                }
+                batch.publish({ isEphemeral: true });
+              }}
+            />
+          </div>
+        </PropertyValueTooltip>
+      </Box>
     </Grid>
   );
 };
