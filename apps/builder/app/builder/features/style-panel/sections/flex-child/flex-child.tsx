@@ -214,7 +214,7 @@ const FlexChildSectionSizing = (props: SectionProps) => {
             propertyValues: ["flex-grow: 0;", "flex-shrink: 1;"],
           },
           {
-            child: <FlexChildSectionSizingPopover {...props} />,
+            child: <FlexChildSectionSizingPopover />,
             title: "Flex",
             description:
               "More sizing options, set flex-basis, flex-grow, flex-shrink individually",
@@ -231,11 +231,7 @@ const FlexChildSectionSizing = (props: SectionProps) => {
   );
 };
 
-const FlexChildSectionSizingPopover = ({
-  currentStyle,
-  setProperty,
-  deleteProperty,
-}: SectionProps) => {
+const FlexChildSectionSizingPopover = () => {
   return (
     <FloatingPanel
       title="Sizing"
@@ -253,12 +249,7 @@ const FlexChildSectionSizingPopover = ({
               description={propertyDescriptions.flexGrow}
               label="Grow"
             />
-            <TextControl
-              property="flexGrow"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <TextControl property="flexGrow" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyLabel
@@ -266,12 +257,7 @@ const FlexChildSectionSizingPopover = ({
               description={propertyDescriptions.flexShrink}
               properties={["flexShrink"]}
             />
-            <TextControl
-              property="flexShrink"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <TextControl property="flexShrink" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyLabel
@@ -279,12 +265,7 @@ const FlexChildSectionSizingPopover = ({
               description={propertyDescriptions.flexBasis}
               properties={["flexBasis"]}
             />
-            <TextControl
-              property="flexBasis"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <TextControl property="flexBasis" />
           </Grid>
         </Grid>
       }
@@ -353,7 +334,7 @@ const FlexChildSectionOrder = (props: SectionProps) => {
             propertyValues: "order: 1;",
           },
           {
-            child: <FlexChildSectionOrderPopover {...props} />,
+            child: <FlexChildSectionOrderPopover />,
             title: "Order",
             description: "Customize order",
             value: "",
@@ -365,8 +346,7 @@ const FlexChildSectionOrder = (props: SectionProps) => {
   );
 };
 
-const FlexChildSectionOrderPopover = (props: SectionProps) => {
-  const { currentStyle, setProperty, deleteProperty } = props;
+const FlexChildSectionOrderPopover = () => {
   return (
     <FloatingPanel
       title="Order"
@@ -378,12 +358,7 @@ const FlexChildSectionOrderPopover = (props: SectionProps) => {
               description={propertyDescriptions.order}
               properties={["order"]}
             />
-            <TextControl
-              property="order"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <TextControl property="order" />
           </Grid>
         </Grid>
       }
