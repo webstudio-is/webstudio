@@ -332,11 +332,15 @@ export const parseDate = (datetimeString: string) => {
     return;
   }
   const isNumber = /^\d+$/.test(datetimeString);
-  let timestamp = Number(datetimeString);
-  if (isNumber && datetimeString.length === 10) {
-    timestamp = timestamp * 1000;
+  let date = new Date(datetimeString);
+  if (isNumber) {
+    let timestamp = Number(datetimeString);
+    // We need to normalize the 10-digit timestamp to 13-digit first
+    if (datetimeString.length === 10) {
+      timestamp *= 1000;
+    }
+    date = new Date(timestamp);
   }
-  const date = new Date(isNumber ? timestamp : datetimeString);
   const isValid = false === Number.isNaN(date.getTime());
 
   if (isValid) {
