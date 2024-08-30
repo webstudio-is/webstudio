@@ -331,19 +331,24 @@ export const parseDate = (datetimeString: string) => {
   if (datetimeString === "") {
     return;
   }
-  const isDigit = /^\d+$/.test(datetimeString);
   let date = new Date(datetimeString);
-  if (isDigit) {
+
+  // Check if the date already in valid format, e.g. "2024"
+  if (Number.isNaN(date.getTime()) === false) {
+    return date;
+  }
+
+  // If its a number, we assume it's a timestamp and we may need to normalize it
+  if (/^\d+$/.test(datetimeString)) {
     let timestamp = Number(datetimeString);
-    // We need to normalize the 10-digit timestamp to 13-digit first
+    // Normalize a 10-digit timestamp to 13-digit
     if (datetimeString.length === 10) {
       timestamp *= 1000;
     }
     date = new Date(timestamp);
   }
-  const isValid = false === Number.isNaN(date.getTime());
 
-  if (isValid) {
+  if (Number.isNaN(date.getTime()) === false) {
     return date;
   }
 };
