@@ -1,17 +1,17 @@
 import { Grid, theme } from "@webstudio-is/design-system";
-import { PositionLayout, type PositionProperty } from "./position-layout";
-import { movementMapPosition, useKeyboardNavigation } from "../shared/keyboard";
 import { useRef, useState } from "react";
+import { movementMapInset, useKeyboardNavigation } from "../shared/keyboard";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
 } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
-import { getPositionModifiersGroup, useScrub } from "../shared/scrub";
+import { getInsetModifiersGroup, useScrub } from "../shared/scrub";
 import { ValueText } from "../shared/value-text";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { InputPopover } from "../shared/input-popover";
-import { PositionTooltip } from "./position-tooltip";
+import { InsetLayout, type InsetProperty } from "./inset-layout";
+import { InsetTooltip } from "./inset-tooltip";
 
 const Cell = ({
   scrubStatus,
@@ -26,7 +26,7 @@ const Cell = ({
   onPopoverClose: () => void;
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: StyleInfo;
-  property: PositionProperty;
+  property: InsetProperty;
   onHover: (target: HoverTarget | undefined) => void;
   createBatchUpdate: CreateBatchUpdate;
 }) => {
@@ -50,7 +50,7 @@ const Cell = ({
         onClose={onPopoverClose}
         createBatchUpdate={createBatchUpdate}
       />
-      <PositionTooltip
+      <InsetTooltip
         property={property}
         style={currentStyle}
         createBatchUpdate={createBatchUpdate}
@@ -73,27 +73,27 @@ const Cell = ({
           }
           onMouseLeave={() => onHover(undefined)}
         />
-      </PositionTooltip>
+      </InsetTooltip>
     </>
   );
 };
 
 type HoverTarget = {
   element: HTMLElement;
-  property: PositionProperty;
+  property: InsetProperty;
 };
 
-type PositionControlProps = {
+type InsetControlProps = {
   deleteProperty: DeleteProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
 };
 
-export const PositionControl = ({
+export const InsetControl = ({
   createBatchUpdate,
   currentStyle,
   deleteProperty,
-}: PositionControlProps) => {
+}: InsetControlProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
 
   const scrubStatus = useScrub({
@@ -102,7 +102,7 @@ export const PositionControl = ({
         ? undefined
         : currentStyle[hoverTarget.property]?.value,
     target: hoverTarget,
-    getModifiersGroup: getPositionModifiersGroup,
+    getModifiersGroup: getInsetModifiersGroup,
     onChange: (values, options) => {
       const batch = createBatchUpdate();
       for (const property of ["top", "right", "bottom", "left"] as const) {
@@ -115,13 +115,13 @@ export const PositionControl = ({
     },
   });
 
-  const [openProperty, setOpenProperty] = useState<PositionProperty>();
+  const [openProperty, setOpenProperty] = useState<InsetProperty>();
 
   const layoutRef = useRef<HTMLDivElement>(null);
 
   const keyboardNavigation = useKeyboardNavigation({
     onOpen: setOpenProperty,
-    movementMap: movementMapPosition,
+    movementMap: movementMapInset,
   });
 
   // by deafult highlight hovered or scrubbed properties
@@ -172,7 +172,7 @@ export const PositionControl = ({
         setOpenProperty(property);
       }}
     >
-      <PositionLayout
+      <InsetLayout
         activeProperties={activeProperties}
         renderCell={(property) => (
           <Cell

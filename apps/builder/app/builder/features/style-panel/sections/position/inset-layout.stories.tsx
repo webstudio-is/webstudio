@@ -1,17 +1,17 @@
 import type { Meta } from "@storybook/react";
 import type * as React from "react";
-import { PositionLayout } from "./position-layout";
+import { InsetLayout } from "./inset-layout";
 import { Grid, theme, Text } from "@webstudio-is/design-system";
 
 const Cell = () => (
   <Text variant={"spaceSectionValueText"}>auto{/*1.275&#8203;rem*/}</Text>
 );
 
-export const PositionLayoutComponent = (
-  args: Omit<React.ComponentProps<typeof PositionLayout>, "renderCell">
+export const InsetLayoutComponent = (
+  args: Omit<React.ComponentProps<typeof InsetLayout>, "renderCell">
 ) => (
   <Grid css={{ width: theme.spacing[22], height: theme.spacing[18] }}>
-    <PositionLayout
+    <InsetLayout
       renderCell={() => <Cell />}
       activeProperties={args.activeProperties}
       onHover={(hoverProps) => {
@@ -22,8 +22,8 @@ export const PositionLayoutComponent = (
 );
 
 export default {
-  title: "Style Panel/Position",
-  component: PositionLayoutComponent,
+  title: "Style Panel/Inset",
+  component: InsetLayoutComponent,
 
   argTypes: {
     activeProperties: {
@@ -31,4 +31,4 @@ export default {
       control: { type: "check" },
     },
   },
-} as Meta<typeof PositionLayoutComponent>;
+} as Meta<typeof InsetLayoutComponent>;
