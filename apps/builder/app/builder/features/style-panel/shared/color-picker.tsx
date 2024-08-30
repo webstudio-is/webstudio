@@ -249,7 +249,7 @@ export const ColorPicker = ({
 
   return (
     <CssValueInput
-      disabled={disabled}
+      aria-disabled={disabled}
       styleSource="default"
       prefix={prefix}
       showSuffix={false}
