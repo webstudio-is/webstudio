@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
+  $hoveredInstanceSelector,
   $instances,
   $selectedInstanceOutlineAndInstance,
   $selectedInstanceSelector,
@@ -16,10 +17,17 @@ import { $ephemeralStyles } from "~/canvas/stores";
 export const SelectedInstanceOutline = () => {
   const instances = useStore($instances);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const outline = useStore($selectedInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const ephemeralStyles = useStore($ephemeralStyles);
+
+  const isHoveringSelectedInstance = areInstanceSelectorsEqual(
+    selectedInstanceSelector,
+    hoveredInstanceSelector
+  );
+
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
     areInstanceSelectorsEqual(
@@ -43,11 +51,13 @@ export const SelectedInstanceOutline = () => {
 
   return (
     <Outline rect={rect} variant={variant}>
-      <Label
-        variant={variant}
-        instance={outline.instance}
-        instanceRect={rect}
-      />
+      {isHoveringSelectedInstance && (
+        <Label
+          variant={variant}
+          instance={outline.instance}
+          instanceRect={rect}
+        />
+      )}
     </Outline>
   );
 };

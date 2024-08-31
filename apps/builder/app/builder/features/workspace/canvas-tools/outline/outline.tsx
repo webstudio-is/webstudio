@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { css, keyframes, type Rect } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
@@ -63,7 +63,7 @@ const useDynamicStyle = (rect?: Rect) => {
 };
 
 type OutlineProps = {
-  children?: JSX.Element;
+  children?: ReactNode;
   rect?: Rect;
   variant?: "default" | "collaboration" | "slot";
 };
