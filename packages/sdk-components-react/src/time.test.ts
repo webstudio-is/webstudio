@@ -1,5 +1,7 @@
 import { expect, test } from "@jest/globals";
-import { parseDate } from "./time";
+import { __testing__ } from "./time";
+
+const { parseDate } = __testing__;
 
 test("13-digit Unix timestamp", () => {
   expect(parseDate("1724938577059")).toEqual(

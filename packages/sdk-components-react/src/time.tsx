@@ -1,4 +1,4 @@
-import * as React from "react";
+import { forwardRef, type ElementRef } from "react";
 
 const languages = [
   "af",
@@ -281,14 +281,6 @@ type Country = (typeof countries)[number];
 type DateStyle = Intl.DateTimeFormatOptions["dateStyle"] | "none";
 type TimeStyle = Intl.DateTimeFormatOptions["timeStyle"] | "none";
 
-export type TimeProps = {
-  datetime?: string;
-  language?: Language;
-  country?: Country;
-  dateStyle?: DateStyle;
-  timeStyle?: TimeStyle;
-};
-
 const INITIAL_DATE_STRING = "dateTime attribute is not set";
 const INVALID_DATE_STRING = "";
 
@@ -327,7 +319,7 @@ const timeStyleOrUndefined = (
   return undefined;
 };
 
-export const parseDate = (datetimeString: string) => {
+const parseDate = (datetimeString: string) => {
   if (datetimeString === "") {
     return;
   }
@@ -353,7 +345,15 @@ export const parseDate = (datetimeString: string) => {
   }
 };
 
-export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
+type TimeProps = {
+  datetime?: string;
+  language?: Language;
+  country?: Country;
+  dateStyle?: DateStyle;
+  timeStyle?: TimeStyle;
+};
+
+export const Time = forwardRef<ElementRef<"time">, TimeProps>(
   (
     {
       language = DEFAULT_LANGUAGE,
@@ -395,3 +395,7 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
     );
   }
 );
+
+export const __testing__ = {
+  parseDate,
+};
