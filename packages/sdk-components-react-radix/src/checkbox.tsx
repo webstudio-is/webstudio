@@ -16,7 +16,7 @@ export const Checkbox = forwardRef<
   }
 >(({ checked, defaultChecked, ...props }, ref) => {
   return (
-    <Root ref={ref} defaultChecked={checked ?? defaultChecked} {...props} />
+    <Root {...props} ref={ref} defaultChecked={checked ?? defaultChecked} />
   );
 });
 

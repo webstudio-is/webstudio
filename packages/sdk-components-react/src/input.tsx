@@ -23,8 +23,18 @@ export const Input = forwardRef<
       | "week";
   }
   // Make sure children are not passed down to an input, because this will result in error.
->(({ children: _children, type = "text", ...props }, ref) => (
-  <input {...props} type={type} ref={ref} />
-));
+>(
+  (
+    { children: _children, type = "text", value, defaultValue, ...props },
+    ref
+  ) => (
+    <input
+      {...props}
+      defaultValue={value ?? defaultValue}
+      type={type}
+      ref={ref}
+    />
+  )
+);
 
 Input.displayName = "Input";
