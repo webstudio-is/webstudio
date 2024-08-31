@@ -2,6 +2,8 @@ import { json } from "@remix-run/server-runtime";
 import { prisma } from "@webstudio-is/prisma-client";
 import { parsePages } from "@webstudio-is/project-build/index.server";
 import { getStaticSiteMapXml } from "@webstudio-is/sdk";
+import { parseBuilderUrl } from "../router-utils/origins";
+import { isBuilder } from "../router-utils";
 
 /**
  * This should be a route in SvelteKit, as it can be fetched server-side without an actual HTTP request.
@@ -10,23 +12,15 @@ import { getStaticSiteMapXml } from "@webstudio-is/sdk";
  * Note: We are not moving this to routes to avoid generating an additional 30MB function on deploy.
  */
 export const loader = async ({ request }: { request: Request }) => {
-  const referer = request.headers.get("referer");
-
-  if (referer == null) {
-    throw json({ message: "No referer" }, { status: 400 });
+  if (isBuilder(request) === false) {
+    throw new Error("Only builder requests are allowed");
   }
 
-  const segments = new URL(referer).pathname.slice(1).split("/");
+  const { projectId } = parseBuilderUrl(request.url);
 
-  if (segments.length !== 2) {
-    throw json({ message: "Invalid referer" }, { status: 400 });
+  if (projectId === undefined) {
+    throw new Error("projectId is required");
   }
-
-  if (segments[0] !== "builder") {
-    throw json({ message: "Invalid referer" }, { status: 400 });
-  }
-
-  const projectId = segments[1];
 
   // get pages from the database
   const build = await prisma.build.findFirst({
