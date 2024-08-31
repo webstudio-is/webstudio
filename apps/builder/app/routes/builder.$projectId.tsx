@@ -9,10 +9,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Error("projectId is required");
   }
 
+  const url = new URL(request.url);
+
   return redirect(
     builderUrl({
       projectId: params.projectId,
       origin: request.url,
+      authToken: url.searchParams.get("authToken") ?? undefined,
+      mode: url.searchParams.get("mode") === "preview" ? "preview" : "edit",
     })
   );
 };
