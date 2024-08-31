@@ -68,7 +68,7 @@ export const Section = (props: SectionProps) => {
     >
       <Flex gap="2" direction="column">
         <TypographySectionFont {...props} />
-        <TypographySectionSizing {...props} />
+        <TypographySectionSizing />
         <TypographySectionAdvanced {...props} />
       </Flex>
     </CollapsibleSection>
@@ -112,9 +112,7 @@ export const TypographySectionFont = (props: SectionProps) => {
   );
 };
 
-export const TypographySectionSizing = (props: SectionProps) => {
-  const { currentStyle, setProperty, deleteProperty } = props;
-
+const TypographySectionSizing = () => {
   return (
     <Grid gap="2" css={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
       <Grid gap="1">
@@ -123,12 +121,7 @@ export const TypographySectionSizing = (props: SectionProps) => {
           description={propertyDescriptions.fontSize}
           properties={["fontSize"]}
         />
-        <TextControl
-          property="fontSize"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <TextControl property="fontSize" />
       </Grid>
       <Grid gap="1">
         <PropertyLabel
@@ -136,12 +129,7 @@ export const TypographySectionSizing = (props: SectionProps) => {
           description={propertyDescriptions.lineHeight}
           properties={["lineHeight"]}
         />
-        <TextControl
-          property="lineHeight"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <TextControl property="lineHeight" />
       </Grid>
       <Grid gap="1">
         <PropertyLabel
@@ -149,12 +137,7 @@ export const TypographySectionSizing = (props: SectionProps) => {
           description={propertyDescriptions.letterSpacing}
           properties={["letterSpacing"]}
         />
-        <TextControl
-          property="letterSpacing"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <TextControl property="letterSpacing" />
       </Grid>
     </Grid>
   );
