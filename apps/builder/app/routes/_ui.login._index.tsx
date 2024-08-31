@@ -33,17 +33,11 @@ export const meta: MetaFunction<typeof loader> = () => {
   const metas: ReturnType<MetaFunction> = [
     {
       name: "title",
-      content: "Webstudio Login - Access Your Web Design Platform",
+      content: "Webstudio Login",
     },
     {
       name: "description",
-      content:
-        "Log in to Webstudio to start building and designing websites with full control over CSS, dynamic content integration, and fast performance. Experience the open-source alternative to Webflow.",
-    },
-    {
-      name: "keywords",
-      content:
-        "Webstudio login, web design platform, open-source web builder, dynamic content, CSS visual builder, SEO optimized design",
+      content: "Log in to Webstudio to start creating websites.",
     },
     { name: "robots", content: "index, follow" },
   ];
