@@ -29,12 +29,7 @@ import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { humanizeString } from "~/shared/string-utils";
 import { PropertyLabel } from "../../property-label";
 
-const SizeProperty = ({
-  property,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-}: ControlProps) => {
+const SizeProperty = ({ property }: { property: StyleProperty }) => {
   return (
     <Grid gap={1}>
       <PropertyLabel
@@ -44,12 +39,7 @@ const SizeProperty = ({
         }
         properties={[property]}
       />
-      <TextControl
-        property={property}
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
+      <TextControl property={property} />
     </Grid>
   );
 };
@@ -132,53 +122,18 @@ export const Section = ({
       fullWidth
     >
       <SectionLayout columns={2}>
-        <SizeProperty
-          property="width"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-        <SizeProperty
-          property="height"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-        <SizeProperty
-          property="minWidth"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-        <SizeProperty
-          property="minHeight"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-        <SizeProperty
-          property="maxWidth"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-        <SizeProperty
-          property="maxHeight"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <SizeProperty property="width" />
+        <SizeProperty property="height" />
+        <SizeProperty property="minWidth" />
+        <SizeProperty property="minHeight" />
+        <SizeProperty property="maxWidth" />
+        <SizeProperty property="maxHeight" />
         <PropertyLabel
           label="Aspect Ratio"
           description={propertyDescriptions.aspectRatio}
           properties={["aspectRatio"]}
         />
-        <TextControl
-          property={"aspectRatio"}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <TextControl property="aspectRatio" />
       </SectionLayout>
       <Separator />
       <SectionLayout columns={2}>
