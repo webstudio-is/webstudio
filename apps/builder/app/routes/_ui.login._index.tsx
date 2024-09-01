@@ -1,4 +1,5 @@
 import {
+  type LinksFunction,
   type LoaderFunctionArgs,
   type TypedResponse,
   json,
@@ -19,8 +20,27 @@ import { lazy } from "react";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 
+export const links: LinksFunction = () => {
+  return [
+    {
+      rel: "canonical",
+      href: "https://apps.webstudio.is/login",
+    },
+  ];
+};
+
 export const meta: MetaFunction<typeof loader> = () => {
-  const metas: ReturnType<MetaFunction> = [];
+  const metas: ReturnType<MetaFunction> = [
+    {
+      name: "title",
+      content: "Webstudio Login",
+    },
+    {
+      name: "description",
+      content: "Log in to Webstudio to start creating websites.",
+    },
+    { name: "robots", content: "index, follow" },
+  ];
 
   metas.push({ title: "Webstudio Login" });
 
