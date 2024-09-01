@@ -53,7 +53,7 @@ export const writeLoginSessionBloomFilter = async (
 
   session.set(bloomFilterKey, bloomFilter.serialize());
 
-  const result = response.clone();
+  const result = new Response(response.body, response);
 
   result.headers.append(
     "Set-Cookie",

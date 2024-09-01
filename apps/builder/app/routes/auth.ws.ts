@@ -33,7 +33,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
       if (isRedirectResponse(error)) {
-        const response = setNoStoreToRedirect(error).clone();
+        const noStoreResponse = setNoStoreToRedirect(error);
+        const response = new Response(noStoreResponse.body, noStoreResponse);
 
         const url = new URL(request.url);
         let returnTo = url.searchParams.get("returnTo");

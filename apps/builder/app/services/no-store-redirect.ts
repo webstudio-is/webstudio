@@ -34,7 +34,7 @@ export const redirect: typeof remixRedirect = (url, init) => {
  */
 export const setNoStoreToRedirect = (response: Response) => {
   if (isRedirectResponse(response)) {
-    const newResponse = response.clone();
+    const newResponse = new Response(response.body, response);
     newResponse.headers.set("Cache-Control", "no-store");
     return newResponse;
   }

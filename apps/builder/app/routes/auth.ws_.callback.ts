@@ -46,7 +46,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       const sessionCodeVerifierKey = "oauth2:codeVerifier";
       session.unset(sessionStateKey);
       session.unset(sessionCodeVerifierKey);
-      const response = error.clone();
+
+      const response = new Response(error.body, error);
       // Use set instead of append to overwrite the cookie
       response.headers.set(
         "Set-Cookie",
