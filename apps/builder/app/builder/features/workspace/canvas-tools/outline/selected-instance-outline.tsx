@@ -1,6 +1,5 @@
 import { useStore } from "@nanostores/react";
 import {
-  $hoveredInstanceSelector,
   $instances,
   $selectedInstanceOutlineAndInstance,
   $selectedInstanceSelector,
