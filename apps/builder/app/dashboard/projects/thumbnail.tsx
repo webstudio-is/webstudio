@@ -1,5 +1,4 @@
 import { forwardRef } from "react";
-import { Link } from "@remix-run/react";
 import { Image, type ImageLoader } from "@webstudio-is/image";
 import { css, theme, textVariants } from "@webstudio-is/design-system";
 
@@ -32,9 +31,9 @@ export const ThumbnailLinkWithAbbr = forwardRef<
   { title: string; to: string }
 >(({ title, to }, ref) => {
   return (
-    <Link ref={ref} to={to} className={abbrStyle()} tabIndex={-1}>
+    <a ref={ref} href={to} className={abbrStyle()} tabIndex={-1}>
       {getThumbnailAbbreviation(title)}
-    </Link>
+    </a>
   );
 });
 ThumbnailLinkWithAbbr.displayName = "ThumbnailLinkWithAbbr";
@@ -76,9 +75,9 @@ export const ThumbnailLinkWithImage = forwardRef<
   { name: string; to: string; imageLoader: ImageLoader }
 >(({ name, to, imageLoader }, ref) => {
   return (
-    <Link ref={ref} to={to} className={imageContainerStyle()} tabIndex={-1}>
+    <a ref={ref} href={to} className={imageContainerStyle()} tabIndex={-1}>
       <Image src={name} loader={imageLoader} className={imageStyle()} />
-    </Link>
+    </a>
   );
 });
 ThumbnailLinkWithImage.displayName = "ThumbnailLinkWithImage";

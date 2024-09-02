@@ -15,7 +15,7 @@ import {
   Link,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import type { ImageLoader } from "@webstudio-is/image";
 import { builderUrl } from "~/shared/router-utils";
 import {
@@ -30,7 +30,6 @@ import {
   ThumbnailWithAbbr,
   ThumbnailWithImage,
 } from "./thumbnail";
-import { useNavigation } from "@remix-run/react";
 import { Spinner } from "../shared/spinner";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Card, CardContent, CardFooter } from "../shared/card";
@@ -180,11 +179,30 @@ export const ProjectCard = ({
   const [isHidden, setIsHidden] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleCloneProject = useCloneProject(id);
-  const { state, location } = useNavigation();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    const linkPath = builderUrl({ origin: window.origin, projectId: id });
+
+    const handleNavigate = (event: NavigateEvent) => {
+      if (event.destination.url === linkPath) {
+        setIsTransitioning(true);
+      }
+    };
+
+    if (window.navigation === undefined) {
+      return;
+    }
+
+    window.navigation.addEventListener("navigate", handleNavigate);
+
+    return () => {
+      window.navigation.removeEventListener("navigate", handleNavigate);
+    };
+  }, [id]);
 
   const linkPath = builderUrl({ origin: window.origin, projectId: id });
-  // Transition to the project has started, we may need to show a spinner
-  const isTransitioning = state !== "idle" && linkPath === location.pathname;
+
   return (
     <Card hidden={isHidden} tabIndex={0} onKeyDown={handleKeyDown}>
       <CardContent

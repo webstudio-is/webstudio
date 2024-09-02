@@ -128,6 +128,7 @@
     "@testing-library/react-hooks": "^8.0.1",
     "@types/cookie": "^0.6.0",
     "@types/debug": "^4.1.12",
+    "@types/dom-navigation": "^1.0.3",
     "@types/prismjs": "^1.26.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
