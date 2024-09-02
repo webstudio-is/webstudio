@@ -3,12 +3,12 @@ import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { useDebouncedCallback } from "use-debounce";
 import { RgbaColorPicker } from "react-colorful";
+import { EyedropperIcon } from "@webstudio-is/icons";
 import type {
-  InvalidValue,
-  KeywordValue,
-  RgbValue,
   StyleProperty,
   StyleValue,
+  KeywordValue,
+  RgbValue,
 } from "@webstudio-is/css-engine";
 import {
   Popover,
@@ -22,11 +22,9 @@ import {
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
-import type { StyleSource } from "./style-info";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
 import { ColorThumb } from "./color-thumb";
-import { EyedropperIcon } from "@webstudio-is/icons";
 
 // To support color names
 extend([namesPlugin]);
@@ -48,27 +46,9 @@ const colorResultToRgbValue = (rgb: RgbaColor): RgbValue => {
   };
 };
 
-const styleValueResolve = (
-  value: RgbValue | KeywordValue,
-  currentColor: RgbValue
-): RgbValue | KeywordValue => {
-  if (
-    value.type === "keyword" &&
-    value.value.toLowerCase() === "currentcolor"
-  ) {
-    return {
-      type: "rgb",
-      r: currentColor.r,
-      g: currentColor.g,
-      b: currentColor.b,
-      alpha: currentColor.alpha,
-    };
-  }
-
-  return value;
-};
-
-const styleValueToRgbaColor = (value: CssColorPickerValueInput): RgbaColor => {
+const styleValueToRgbaColor = (
+  value: StyleValue | IntermediateStyleValue
+): RgbaColor => {
   const color = colord(
     value.type === "intermediate" ? value.value : toValue(value)
   ).toRgb();
@@ -125,18 +105,16 @@ const ColorPickerPopoverContent = ({
   onChange,
   onChangeComplete,
 }: {
-  value: CssColorPickerValueInput;
-  onChange: (value: CssColorPickerValueInput | undefined) => void;
-  onChangeComplete: (event: {
-    value: RgbValue | KeywordValue | InvalidValue;
-  }) => void;
+  value: StyleValue | IntermediateStyleValue;
+  onChange: (value: StyleValue | undefined) => void;
+  onChangeComplete: (value: StyleValue) => void;
 }) => {
   const [hex, setHex] = useState(() =>
     colord(styleValueToRgbaColor(value)).toHex()
   );
   const normalizedHex = normalizeHex(hex);
   const handleCompleteDebounced = useDebouncedCallback(
-    (newValue: RgbValue) => onChangeComplete({ value: newValue }),
+    (newValue: RgbValue) => onChangeComplete(newValue),
     500
   );
   /**
@@ -167,7 +145,7 @@ const ColorPickerPopoverContent = ({
           onChange={(newHex) => {
             setHex(newHex);
             const newValue = colorResultToRgbValue(colord(newHex).toRgb());
-            onChangeComplete({ value: newValue });
+            onChangeComplete(newValue);
           }}
         />
         <InputField
@@ -187,23 +165,12 @@ const ColorPickerPopoverContent = ({
   );
 };
 
-export type CssColorPickerValueInput =
-  | RgbValue
-  | KeywordValue
-  | IntermediateStyleValue
-  | InvalidValue;
-
 type ColorPickerProps = {
-  onChange: (value: CssColorPickerValueInput | undefined) => void;
-  onChangeComplete: (event: {
-    value: RgbValue | KeywordValue | InvalidValue;
-  }) => void;
-  onHighlight: (value: StyleValue | undefined) => void;
+  onChange: (value: StyleValue) => void;
+  onChangeComplete: (value: StyleValue) => void;
   onAbort: () => void;
-  intermediateValue: CssColorPickerValueInput | undefined;
-  value: RgbValue | KeywordValue;
-  currentColor: RgbValue;
-  styleSource: StyleSource;
+  value: StyleValue;
+  currentColor: StyleValue;
   keywords?: Array<KeywordValue>;
   property: StyleProperty;
   disabled?: boolean;
@@ -212,46 +179,21 @@ type ColorPickerProps = {
 export const ColorPicker = ({
   value,
   currentColor,
-  intermediateValue,
-  onChange,
-  onChangeComplete,
-  onHighlight,
-  onAbort,
-  styleSource,
   keywords,
   property,
   disabled,
+  onChange,
+  onChangeComplete,
+  onAbort,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const currentValue =
-    intermediateValue ?? styleValueResolve(value, currentColor);
-
-  const rgbValue = styleValueToRgbaColor(currentValue);
-
-  // Change prefix color in sync with color picker, don't change during input changed
-  let prefixColor = styleValueResolve(
-    currentValue.type === "keyword" || currentValue.type === "rgb"
-      ? currentValue
-      : value,
-    currentColor
-  );
-  // consider inherit on color same as currentColor
-  if (
-    property === "color" &&
-    prefixColor.type === "keyword" &&
-    prefixColor.value === "inherit"
-  ) {
-    prefixColor = {
-      type: "rgb",
-      r: currentColor.r,
-      g: currentColor.g,
-      b: currentColor.b,
-      alpha: currentColor.alpha,
-    };
-  }
+  const [intermediateValue, setIntermediateValue] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+  const currentValue = intermediateValue ?? value;
 
   const handleOpenChange = (open: boolean) => {
     setDisplayColorPicker(open);
@@ -274,7 +216,10 @@ export const ColorPicker = ({
         aria-label="Open color picker"
         onClick={() => setDisplayColorPicker((shown) => !shown)}
       >
-        <ColorThumb color={rgbValue} css={{ margin: theme.spacing[3] }} />
+        <ColorThumb
+          color={styleValueToRgbaColor(currentColor)}
+          css={{ margin: theme.spacing[3] }}
+        />
       </PopoverTrigger>
       <PopoverContent
         css={{
@@ -285,8 +230,18 @@ export const ColorPicker = ({
       >
         <ColorPickerPopoverContent
           value={currentValue}
-          onChange={onChange}
-          onChangeComplete={onChangeComplete}
+          onChange={(styleValue) => {
+            setIntermediateValue(styleValue);
+            if (styleValue) {
+              onChange(styleValue);
+            } else {
+              onAbort();
+            }
+          }}
+          onChangeComplete={(value) => {
+            setIntermediateValue(undefined);
+            onChangeComplete(value);
+          }}
         />
       </PopoverContent>
     </Popover>
@@ -294,8 +249,8 @@ export const ColorPicker = ({
 
   return (
     <CssValueInput
-      disabled={disabled}
-      styleSource={styleSource}
+      aria-disabled={disabled}
+      styleSource="default"
       prefix={prefix}
       showSuffix={false}
       property={property}
@@ -303,33 +258,50 @@ export const ColorPicker = ({
       intermediateValue={intermediateValue}
       keywords={keywords}
       onChange={(styleValue) => {
+        if (styleValue === undefined) {
+          setIntermediateValue(styleValue);
+          onAbort();
+          return;
+        }
+        if (styleValue.type === "intermediate") {
+          setIntermediateValue(styleValue);
+          return;
+        }
         if (
-          styleValue?.type === "rgb" ||
-          styleValue?.type === "keyword" ||
-          styleValue?.type === "intermediate" ||
-          styleValue?.type === "invalid" ||
-          styleValue === undefined
+          styleValue.type === "rgb" ||
+          styleValue.type === "keyword" ||
+          styleValue.type === "invalid"
         ) {
+          setIntermediateValue(styleValue);
           onChange(styleValue);
           return;
         }
 
-        onChange({
+        setIntermediateValue({
           type: "intermediate",
           value: toValue(styleValue),
         });
       }}
-      onHighlight={onHighlight}
+      onHighlight={(styleValue) => {
+        if (styleValue) {
+          onChange(styleValue);
+        } else {
+          onAbort();
+        }
+      }}
       onChangeComplete={({ value }) => {
         if (value.type === "rgb" || value.type === "keyword") {
-          onChangeComplete({ value });
+          setIntermediateValue(undefined);
+          onChangeComplete(value);
           return;
         }
         // In case value is parsed to something wrong
-        onChange({
+        const invalidValue: StyleValue = {
           type: "invalid",
           value: toValue(value),
-        });
+        };
+        setIntermediateValue(invalidValue);
+        onChange(invalidValue);
       }}
       onAbort={onAbort}
     />

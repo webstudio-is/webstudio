@@ -44,12 +44,15 @@ const inputStyle = css({
   height: "100%",
   paddingRight: theme.spacing[2],
   paddingLeft: theme.spacing[3],
-  "&[data-color=placeholder]:not(:hover, :disabled, :focus), &::placeholder": {
-    color: theme.colors.foregroundSubtle,
-  },
+  "&[data-color=placeholder]:not(:hover, :disabled, [aria-disabled=true], :focus), &::placeholder":
+    {
+      color: theme.colors.foregroundSubtle,
+    },
   "&[data-color=error]": { color: theme.colors.foregroundDestructive },
-  "&:disabled, &:disabled::placeholder": {
-    color: theme.colors.foregroundDisabled,
+  "&:disabled, &[aria-disabled=true]": {
+    "&, &::placeholder": {
+      color: theme.colors.foregroundDisabled,
+    },
   },
   '&[type="number"]': {
     MozAppearance: "textfield",
@@ -89,7 +92,7 @@ const containerStyle = css({
     outlineColor: theme.colors.borderDestructiveMain,
   },
 
-  "&:has([data-input-field-input]:disabled)": {
+  "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
     backgroundColor: theme.colors.backgroundInputDisabled,
   },
   variants: {

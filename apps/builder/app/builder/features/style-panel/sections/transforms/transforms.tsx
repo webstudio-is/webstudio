@@ -160,9 +160,9 @@ export const Section = (props: SectionProps) => {
         </CssValueListArrowFocus>
       ) : undefined}
 
-      <BackfaceVisibility {...props} />
+      <BackfaceVisibility />
       <TransformAndPerspectiveOrigin property="transformOrigin" {...props} />
-      <TransformPerspective {...props} />
+      <TransformPerspective />
       <TransformAndPerspectiveOrigin property="perspectiveOrigin" {...props} />
     </CollapsibleSectionRoot>
   );

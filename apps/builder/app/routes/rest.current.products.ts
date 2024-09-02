@@ -1,17 +1,17 @@
-import {
-  json,
-  redirect,
-  type LoaderFunctionArgs,
-} from "@remix-run/server-runtime";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import { prisma } from "@webstudio-is/prisma-client";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { redirect } from "~/services/no-store-redirect";
 
 /**
  * Created for ebugging purposes, to check that payments and products are working
  * Showing current user's checkouts with products.
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {

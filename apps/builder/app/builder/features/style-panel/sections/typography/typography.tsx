@@ -68,7 +68,7 @@ export const Section = (props: SectionProps) => {
     >
       <Flex gap="2" direction="column">
         <TypographySectionFont {...props} />
-        <TypographySectionSizing {...props} />
+        <TypographySectionSizing />
         <TypographySectionAdvanced {...props} />
       </Flex>
     </CollapsibleSection>
@@ -107,19 +107,12 @@ export const TypographySectionFont = (props: SectionProps) => {
         description={propertyDescriptions.color}
         properties={["color"]}
       />
-      <ColorControl
-        property="color"
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
+      <ColorControl property="color" />
     </Grid>
   );
 };
 
-export const TypographySectionSizing = (props: SectionProps) => {
-  const { currentStyle, setProperty, deleteProperty } = props;
-
+const TypographySectionSizing = () => {
   return (
     <Grid gap="2" css={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
       <Grid gap="1">
@@ -128,12 +121,7 @@ export const TypographySectionSizing = (props: SectionProps) => {
           description={propertyDescriptions.fontSize}
           properties={["fontSize"]}
         />
-        <TextControl
-          property="fontSize"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <TextControl property="fontSize" />
       </Grid>
       <Grid gap="1">
         <PropertyLabel
@@ -141,12 +129,7 @@ export const TypographySectionSizing = (props: SectionProps) => {
           description={propertyDescriptions.lineHeight}
           properties={["lineHeight"]}
         />
-        <TextControl
-          property="lineHeight"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <TextControl property="lineHeight" />
       </Grid>
       <Grid gap="1">
         <PropertyLabel
@@ -154,12 +137,7 @@ export const TypographySectionSizing = (props: SectionProps) => {
           description={propertyDescriptions.letterSpacing}
           properties={["letterSpacing"]}
         />
-        <TextControl
-          property="letterSpacing"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <TextControl property="letterSpacing" />
       </Grid>
     </Grid>
   );
@@ -355,8 +333,7 @@ const advancedProperties: StyleProperty[] = [
 ];
 
 export const TypographySectionAdvancedPopover = (props: SectionProps) => {
-  const { deleteProperty, setProperty, createBatchUpdate, currentStyle } =
-    props;
+  const { createBatchUpdate, currentStyle } = props;
   return (
     <FloatingPanel
       title="Advanced Typography"
@@ -374,12 +351,7 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               description={propertyDescriptions.whiteSpaceCollapse}
               properties={["whiteSpaceCollapse"]}
             />
-            <SelectControl
-              property="whiteSpaceCollapse"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <SelectControl property="whiteSpaceCollapse" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyLabel
@@ -387,12 +359,7 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               description={propertyDescriptions.textWrapMode}
               properties={["textWrapMode"]}
             />
-            <SelectControl
-              property="textWrapMode"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <SelectControl property="textWrapMode" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyLabel
@@ -400,12 +367,7 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               description={propertyDescriptions.textWrapStyle}
               properties={["textWrapStyle"]}
             />
-            <SelectControl
-              property="textWrapStyle"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
+            <SelectControl property="textWrapStyle" />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
             <PropertyLabel

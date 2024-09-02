@@ -8,11 +8,7 @@ import { PropertyLabel } from "../property-label";
 
 export const properties = ["listStyleType"] satisfies Array<StyleProperty>;
 
-export const Section = ({
-  currentStyle: style,
-  setProperty,
-  deleteProperty,
-}: SectionProps) => {
+export const Section = ({ currentStyle: style }: SectionProps) => {
   return (
     <CollapsibleSection
       label="List Item"
@@ -25,12 +21,7 @@ export const Section = ({
           description={propertyDescriptions.listStyleType}
           properties={["listStyleType"]}
         />
-        <SelectControl
-          property={"listStyleType"}
-          currentStyle={style}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <SelectControl property="listStyleType" />
       </Grid>
     </CollapsibleSection>
   );

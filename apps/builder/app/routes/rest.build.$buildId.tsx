@@ -4,6 +4,7 @@ import { db as projectDb } from "@webstudio-is/project/index.server";
 import { loadProductionCanvasData } from "~/shared/db";
 import { createContext } from "~/shared/context.server";
 import { getUserById, type User } from "~/shared/db/user.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const loader = async ({
   params,
@@ -14,6 +15,8 @@ export const loader = async ({
     projectTitle: string;
   }
 > => {
+  preventCrossOriginCookie(request);
+
   try {
     const buildId = params.buildId;
 

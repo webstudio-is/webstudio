@@ -1,18 +1,36 @@
-// These are the utils for manipulating "build" params.
-// "Build" means user generated content — what user builds.
+import { isBuilderUrl } from "./origins";
 
-export type BuildParams = ({ pagePath: string } | { pageId: string }) &
-  ({ projectId: string } | { projectDomain: string });
-
-// A subtype of Request. To make testing easier.
-type MinimalRequest = {
-  url: string;
-  headers: { get: (name: string) => string | null };
+export const isBuilder = (request: Request): boolean => {
+  return isBuilderUrl(request.url) && false === isCanvas(request);
 };
 
-export const isCanvas = (request: MinimalRequest): boolean => {
+export const isCanvas = (request: Request): boolean => {
   const url = new URL(request.url);
-  const projectId = url.searchParams.get("projectId");
+  if (isBuilderUrl(url.origin) && url.pathname === "/canvas") {
+    return true;
+  }
 
-  return projectId !== null;
+  return false;
+};
+
+export const isDashboard = (request: Request): boolean => {
+  if (isBuilder(request) || isCanvas(request)) {
+    return false;
+  }
+  return true;
+};
+
+export const comparePathnames = (
+  pathnameOrUrlA: string,
+  pathnameOrUrlB: string
+) => {
+  const aPathname = new URL(pathnameOrUrlA, "http://localhost").pathname;
+  const bPathname = new URL(pathnameOrUrlB, "http://localhost").pathname;
+  return aPathname === bPathname;
+};
+
+export const compareUrls = (urlA: string, urlB: string) => {
+  const aPathname = new URL(urlA, "http://localhost").href;
+  const bPathname = new URL(urlB, "http://localhost").href;
+  return aPathname === bPathname;
 };

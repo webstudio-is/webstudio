@@ -101,8 +101,8 @@ export const checkProjectPermit = async (
     "05954204-fcee-407e-b47f-77a38de74431",
     "afc162c2-6396-41b7-a855-8fc04604a7b1",
     // Staging IDs
-    "e3dd56f9-ffd9-4692-8a61-e835de822e21",
-    "90b41d4e-f5e9-48d6-a954-6249b146852a",
+    "c236999d-be6b-43fb-9edc-78a2ba59e56d",
+    "a1371dce-752c-4ccf-8ea4-88bab577fe50",
   ];
 
   // @todo Delete and use tokens

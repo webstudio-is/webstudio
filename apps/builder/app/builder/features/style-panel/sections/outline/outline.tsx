@@ -49,18 +49,8 @@ export const Section = (props: SectionProps) => {
                 description={propertyDescriptions.outlineColor}
                 properties={["outlineColor"]}
               />
-
-              <Box
-                css={{
-                  gridColumn: `span 2`,
-                }}
-              >
-                <ColorControl
-                  property="outlineColor"
-                  currentStyle={currentStyle}
-                  setProperty={setProperty}
-                  deleteProperty={deleteProperty}
-                />
+              <Box css={{ gridColumn: `span 2` }}>
+                <ColorControl property="outlineColor" />
               </Box>
             </Grid>
 

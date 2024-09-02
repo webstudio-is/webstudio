@@ -1,14 +1,12 @@
-import {
-  type LoaderFunctionArgs,
-  json,
-  redirect,
-} from "@remix-run/server-runtime";
+import { type LoaderFunctionArgs, json } from "@remix-run/server-runtime";
 import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { z } from "zod";
 import { findAuthenticatedUser } from "~/services/auth.server";
-import { loginPath } from "~/shared/router-utils";
+import { isDashboard, loginPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
 import cookie from "cookie";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { redirect } from "~/services/no-store-redirect";
 
 const zN8NResponse = z.union([
   z.object({
@@ -27,6 +25,15 @@ const zWebhookEnv = z.object({
 });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
+  if (isDashboard(request) === false) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {

@@ -6,8 +6,11 @@ import {
   ResourceRequest,
 } from "@webstudio-is/sdk";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
   // Hope Remix will have customFetch by default, see https://kit.svelte.dev/docs/load#making-fetch-requests
   const customFetch: typeof fetch = (input, init) => {
     if (typeof input !== "string") {

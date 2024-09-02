@@ -5,6 +5,7 @@ import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import type { ActionData } from "~/builder/shared/assets";
 import { createAssetClient } from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const UrlBody = z.object({
   url: z.string(),
@@ -13,6 +14,8 @@ const UrlBody = z.object({
 export const action = async (
   props: ActionFunctionArgs
 ): Promise<ActionData | Array<Asset> | undefined> => {
+  preventCrossOriginCookie(props.request);
+
   const { request, params } = props;
 
   if (params.name === undefined) {

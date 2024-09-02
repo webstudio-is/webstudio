@@ -1,5 +1,4 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
-import type { Project } from "@webstudio-is/project";
 import { $authToken } from "../nano-states";
 import { publicStaticEnv } from "~/env/env.static";
 import { getAuthorizationServerOrigin } from "./origins";
@@ -16,19 +15,17 @@ const searchParams = (params: Record<string, string | undefined | null>) => {
 };
 
 export const builderPath = ({
-  projectId,
   pageId,
   authToken,
   pageHash,
   mode,
 }: {
-  projectId: string;
   pageId?: string;
   authToken?: string;
   pageHash?: string;
   mode?: "preview";
 }) => {
-  return `/builder/${projectId}${searchParams({
+  return `/${searchParams({
     pageId,
     authToken,
     pageHash,
@@ -43,31 +40,10 @@ export const builderUrl = (props: {
   authToken?: string;
   mode?: "edit" | "preview";
 }) => {
-  const { projectId, pageId, authToken } = props;
-  const url = new URL(
-    builderPath({ projectId, pageId, authToken }),
-    props.origin
-  );
-
-  if (props.mode !== undefined) {
-    url.searchParams.set("mode", props.mode);
-  }
-
-  return url.href;
-};
-
-export const builderUrlNew = (props: {
-  projectId: string;
-  pageId?: string;
-  origin: string;
-  authToken?: string;
-  mode?: "edit" | "preview";
-}) => {
   const authServerOrigin = getAuthorizationServerOrigin(props.origin);
 
-  // const { projectId, pageId, authToken } = props;
   const url = new URL(
-    "/", // builderPath({ projectId, pageId, authToken }),
+    builderPath({ pageId: props.pageId, authToken: props.authToken }),
     authServerOrigin
   );
 
@@ -90,6 +66,12 @@ export const builderUrlNew = (props: {
 
 export const dashboardPath = () => {
   return "/dashboard";
+};
+
+export const dashboardUrl = (props: { origin: string }) => {
+  const authServerOrigin = getAuthorizationServerOrigin(props.origin);
+
+  return `${authServerOrigin}/dashboard`;
 };
 
 export const builderDomainsPath = (method: string) => {
@@ -117,12 +99,6 @@ export const projectsPath = (
   urlSearchParams.set("authToken", authToken);
   return path + `?${urlSearchParams.toString()}`;
 };
-
-export const dashboardProjectsPath = (method: string) =>
-  `${dashboardPath()}/projects/${method}`;
-
-export const authorizationTokenPath = (method: string) =>
-  `/rest/authorization-token/${method}`;
 
 export const loginPath = (params: {
   error?: (typeof AUTH_PROVIDERS)[keyof typeof AUTH_PROVIDERS];
@@ -182,12 +158,8 @@ export const restPatchPath = (props: { authToken?: string }) => {
   }`;
 };
 
-export const getCanvasUrl = ({ project }: { project: Project }) => {
-  // const url = new URL(buildOrigin);
-  const searchParams = new URLSearchParams();
-  searchParams.set("projectId", project.id);
-
-  return `/canvas?${searchParams.toString()}`;
+export const getCanvasUrl = () => {
+  return `/canvas`;
 };
 
 export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>

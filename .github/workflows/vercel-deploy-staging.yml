@@ -11,6 +11,7 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
   statuses: write # This is required for the GitHub Script createCommitStatus to work
+  deployments: write
 
 jobs:
   deployment:
@@ -82,3 +83,9 @@ jobs:
     uses: ./.github/workflows/fixtures-test.yml
     with:
       builder-url: ${{ needs.deployment.outputs.builder-url }}
+
+  delete-github-deployments:
+    needs: fixtures-test
+    uses: ./.github/workflows/delete-github-deployments.yml
+    with:
+      ref: ${{ github.ref_name }}

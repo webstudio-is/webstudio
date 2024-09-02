@@ -298,6 +298,7 @@ type CssValueInputProps = Pick<
   | "text"
   | "autoFocus"
   | "disabled"
+  | "aria-disabled"
   | "fieldSizing"
   | "prefix"
   | "inputRef"
@@ -379,6 +380,7 @@ export const CssValueInput = ({
   onHighlight,
   onAbort,
   disabled,
+  ["aria-disabled"]: ariaDisabled,
   fieldSizing,
   variant,
   size,
@@ -698,6 +700,7 @@ export const CssValueInput = ({
             size={size}
             variant={variant}
             disabled={disabled}
+            aria-disabled={ariaDisabled}
             fieldSizing={fieldSizing}
             {...inputProps}
             onFocus={() => {

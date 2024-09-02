@@ -1,4 +1,4 @@
-import * as React from "react";
+import { forwardRef, type ElementRef } from "react";
 
 const languages = [
   "af",
@@ -281,14 +281,6 @@ type Country = (typeof countries)[number];
 type DateStyle = Intl.DateTimeFormatOptions["dateStyle"] | "none";
 type TimeStyle = Intl.DateTimeFormatOptions["timeStyle"] | "none";
 
-export type TimeProps = {
-  datetime?: string;
-  language?: Language;
-  country?: Country;
-  dateStyle?: DateStyle;
-  timeStyle?: TimeStyle;
-};
-
 const INITIAL_DATE_STRING = "dateTime attribute is not set";
 const INVALID_DATE_STRING = "";
 
@@ -327,7 +319,41 @@ const timeStyleOrUndefined = (
   return undefined;
 };
 
-export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
+const parseDate = (datetimeString: string) => {
+  if (datetimeString === "") {
+    return;
+  }
+  let date = new Date(datetimeString);
+
+  // Check if the date already in valid format, e.g. "2024"
+  if (Number.isNaN(date.getTime()) === false) {
+    return date;
+  }
+
+  // If its a number, we assume it's a timestamp and we may need to normalize it
+  if (/^\d+$/.test(datetimeString)) {
+    let timestamp = Number(datetimeString);
+    // Normalize a 10-digit timestamp to 13-digit
+    if (datetimeString.length === 10) {
+      timestamp *= 1000;
+    }
+    date = new Date(timestamp);
+  }
+
+  if (Number.isNaN(date.getTime()) === false) {
+    return date;
+  }
+};
+
+type TimeProps = {
+  datetime?: string;
+  language?: Language;
+  country?: Country;
+  dateStyle?: DateStyle;
+  timeStyle?: TimeStyle;
+};
+
+export const Time = forwardRef<ElementRef<"time">, TimeProps>(
   (
     {
       language = DEFAULT_LANGUAGE,
@@ -351,12 +377,10 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
     const datetimeString =
       datetime === null ? INVALID_DATE_STRING : datetime.toString();
 
-    const date = new Date(datetimeString);
-    const isValidDate = false === Number.isNaN(date.getTime());
-
+    const date = parseDate(datetimeString);
     let formattedDate = datetimeString;
 
-    if (isValidDate) {
+    if (date) {
       try {
         formattedDate = new Intl.DateTimeFormat(locale, options).format(date);
       } catch {
@@ -371,3 +395,7 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
     );
   }
 );
+
+export const __testing__ = {
+  parseDate,
+};

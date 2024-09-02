@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react";
-import { PositionControl } from "./position-control";
+import { InsetControl } from "./inset-control";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
@@ -92,7 +92,7 @@ const bigValue = {
   },
 } as const;
 
-export const PositionControlComponent = () => {
+export const InsetControlComponent = () => {
   const { styleInfo, deleteProperty, createBatchUpdate } = useStyleInfo({
     left: defaultValue,
     right: bigValue,
@@ -102,7 +102,7 @@ export const PositionControlComponent = () => {
 
   return (
     <Box css={{ marginLeft: 100 }}>
-      <PositionControl
+      <InsetControl
         createBatchUpdate={createBatchUpdate}
         currentStyle={styleInfo}
         deleteProperty={deleteProperty}
@@ -112,6 +112,6 @@ export const PositionControlComponent = () => {
 };
 
 export default {
-  title: "Style Panel/Position",
-  component: PositionControlComponent,
-} as Meta<typeof PositionControlComponent>;
+  title: "Style Panel/Inset",
+  component: InsetControlComponent,
+} as Meta<typeof InsetControlComponent>;

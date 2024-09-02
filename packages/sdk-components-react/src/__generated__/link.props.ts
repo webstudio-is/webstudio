@@ -430,6 +430,13 @@ export const props: Record<string, PropMeta> = {
     description:
       "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
   },
+  download: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Indicates that the hyperlink is to be used for downloading a resource.",
+  },
   draggable: {
     required: false,
     control: "boolean",

@@ -4,7 +4,7 @@ name: Delete github deployments
 on:
   workflow_call:
     inputs:
-      sha:
+      ref:
         type: string
         required: true
 
@@ -19,17 +19,23 @@ jobs:
       - name: Delete Previous deployments
         uses: actions/github-script@v7
         env:
-          SHA_HEAD: ${{ inputs.sha }}
+          REF: ${{ inputs.ref }}
         with:
           script: |
-            const { SHA_HEAD } = process.env
+            const { REF } = process.env;
+
+            console.log(REF);
 
             const deployments = await github.rest.repos.listDeployments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              sha: SHA_HEAD
+              ref: REF,
+              per_page: 100
             });
-            await Promise.all(
+
+            console.log(deployments);
+
+            await Promise.allSettled(
               deployments.data.map(async (deployment) => {
                 await github.rest.repos.createDeploymentStatus({
                   owner: context.repo.owner,

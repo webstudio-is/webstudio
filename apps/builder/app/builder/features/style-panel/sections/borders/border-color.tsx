@@ -1,15 +1,12 @@
-import { type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
-import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import type { SectionProps } from "../shared/section";
-import {
-  deleteAllProperties,
-  setAllProperties,
-  rowCss,
-  isAdvancedValue,
-} from "./utils";
-import { PropertyLabel } from "../../property-label";
+import { rowCss } from "./utils";
+import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
+import { ColorPicker } from "../../shared/color-picker";
+import { useComputedStyleDecl } from "../../shared/model";
+import { createBatchUpdate } from "../../shared/use-style-data";
 
 export const properties = [
   "borderTopColor",
@@ -18,21 +15,29 @@ export const properties = [
   "borderLeftColor",
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
-// We do not use shorthand properties such as borderWidth or borderRadius in our code.
-// However, in the UI, we can display a single field, and in that case, we can use any property
-// from the shorthand property set and pass it instead.
-const borderColorProperty = properties[0];
-
 const { items } = styleConfigByName("borderTopColor");
 
-export const BorderColor = (props: SectionProps) => {
-  const { currentStyle, createBatchUpdate } = props;
-  const deleteColorProperties = deleteAllProperties(
-    properties,
-    createBatchUpdate
+export const BorderColor = (_props: SectionProps) => {
+  const styles = [
+    useComputedStyleDecl("borderTopColor"),
+    useComputedStyleDecl("borderRightColor"),
+    useComputedStyleDecl("borderBottomColor"),
+    useComputedStyleDecl("borderLeftColor"),
+  ];
+  const serialized = styles.map((styleDecl) =>
+    toValue(styleDecl.cascadedValue)
   );
+  const isAdvanced = new Set(serialized).size > 1;
+  // display first set value and reference it in tooltip
+  const local =
+    styles.find(
+      (styleDecl) =>
+        styleDecl.source.name === "local" ||
+        styleDecl.source.name === "overwritten"
+    ) ?? styles[0];
 
-  const setAllproperties = setAllProperties(properties, createBatchUpdate);
+  const value = local.cascadedValue;
+  const currentColor = local.usedValue;
 
   return (
     <Grid css={rowCss}>
@@ -41,16 +46,46 @@ export const BorderColor = (props: SectionProps) => {
         description="Sets the color of the border"
         properties={properties}
       />
-
       <Box css={{ gridColumn: `span 2` }}>
-        <ColorControl
-          isAdvanced={isAdvancedValue(properties, currentStyle)}
-          property={borderColorProperty}
-          items={items}
-          currentStyle={currentStyle}
-          setProperty={setAllproperties}
-          deleteProperty={deleteColorProperties}
-        />
+        <PropertyValueTooltip
+          label="Color"
+          property={local.property as StyleProperty}
+          isAdvanced={isAdvanced}
+        >
+          <div>
+            <ColorPicker
+              disabled={isAdvanced}
+              currentColor={currentColor}
+              property={local.property as StyleProperty}
+              value={value}
+              keywords={items.map((item) => ({
+                type: "keyword",
+                value: item.name,
+              }))}
+              onChange={(styleValue) => {
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.setProperty(property)(styleValue);
+                }
+                batch.publish({ isEphemeral: true });
+              }}
+              onChangeComplete={(styleValue) => {
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.setProperty(property)(styleValue);
+                }
+                batch.publish();
+              }}
+              onAbort={() => {
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.deleteProperty(property);
+                }
+                batch.publish({ isEphemeral: true });
+              }}
+            />
+          </div>
+        </PropertyValueTooltip>
       </Box>
     </Grid>
   );

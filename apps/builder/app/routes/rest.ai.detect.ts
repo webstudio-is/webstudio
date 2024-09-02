@@ -11,12 +11,15 @@ import {
 
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const RequestParams = z.object({
   prompt: z.string().max(1200),
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  preventCrossOriginCookie(request);
+
   // @todo Reinstate isFeatureEnabled('ai')
 
   if (env.OPENAI_KEY === undefined) {

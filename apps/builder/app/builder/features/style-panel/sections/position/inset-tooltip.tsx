@@ -2,9 +2,9 @@ import { PropertyTooltip } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import { useState, type ReactElement } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";
-import { getPositionModifiersGroup } from "../shared/scrub";
+import { getInsetModifiersGroup } from "../shared/scrub";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import type { PositionProperty } from "./position-layout";
+import type { InsetProperty } from "./inset-layout";
 
 const sides = {
   top: "top",
@@ -14,7 +14,7 @@ const sides = {
 } as const;
 
 const propertyContents: {
-  properties: PositionProperty[];
+  properties: InsetProperty[];
   label: string;
   description: string;
 }[] = [
@@ -52,14 +52,14 @@ const isSameUnorderedArrays = (
   return union.size === arrA.length;
 };
 
-export const PositionTooltip = ({
+export const InsetTooltip = ({
   property,
   style,
   children,
   createBatchUpdate,
   preventOpen,
 }: {
-  property: PositionProperty;
+  property: InsetProperty;
   style: StyleInfo;
   children: ReactElement;
   createBatchUpdate: CreateBatchUpdate;
@@ -69,7 +69,7 @@ export const PositionTooltip = ({
 
   const modifiers = useModifierKeys();
 
-  const properties = [...getPositionModifiersGroup(property, modifiers)];
+  const properties = [...getInsetModifiersGroup(property, modifiers)];
 
   const propertyContent = propertyContents.find((propertyContent) =>
     isSameUnorderedArrays(propertyContent.properties, properties)

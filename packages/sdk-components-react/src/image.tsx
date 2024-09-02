@@ -22,6 +22,7 @@ export const Image = forwardRef<
       height,
       optimize = true,
       decoding: decodingProp,
+      // @todo: it's a hack made for the builder and should't be in the runtime at all.
       $webstudio$canvasOnly$assetId,
       ...props
     },

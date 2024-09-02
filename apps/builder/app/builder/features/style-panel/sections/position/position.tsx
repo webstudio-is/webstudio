@@ -4,7 +4,7 @@ import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
-import { PositionControl } from "./position-control";
+import { InsetControl } from "./inset-control";
 import { useParentStyle } from "../../parent-style";
 import { PropertyLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
@@ -28,7 +28,6 @@ const positionControlVisibleProperties = [
 const zIndexParents = ["flex", "grid", "inline-flex", "inline-grid"] as const;
 
 export const Section = ({
-  setProperty,
   deleteProperty,
   currentStyle,
   createBatchUpdate,
@@ -37,12 +36,12 @@ export const Section = ({
 
   const positionValue = currentStyle.position?.value;
 
-  const showPositionControls =
+  const showInsetControl =
     positionValue?.type === "keyword" &&
     positionControlVisibleProperties.includes(positionValue.value as never);
 
   const showZindexControl =
-    showPositionControls ||
+    showInsetControl ||
     (parentStyle?.display?.value.type === "keyword" &&
       zIndexParents.includes(parentStyle?.display?.value.value as never));
 
@@ -72,33 +71,22 @@ export const Section = ({
             description={propertyDescriptions.position}
             properties={["position"]}
           />
-          <SelectControl
-            property={"position"}
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            items={positionItems}
-          />
-          {showZindexControl && showPositionControls === false && (
+          <SelectControl property="position" items={positionItems} />
+          {showZindexControl && showInsetControl === false && (
             <>
               <PropertyLabel
                 label="Z Index"
                 description={propertyDescriptions.zIndex}
                 properties={["zIndex"]}
               />
-              <TextControl
-                property={"zIndex"}
-                currentStyle={currentStyle}
-                setProperty={setProperty}
-                deleteProperty={deleteProperty}
-              />
+              <TextControl property="zIndex" />
             </>
           )}
         </Grid>
 
-        {showPositionControls && (
+        {showInsetControl && (
           <Grid gap={3} columns={2}>
-            <PositionControl
+            <InsetControl
               currentStyle={currentStyle}
               deleteProperty={deleteProperty}
               createBatchUpdate={createBatchUpdate}
@@ -109,12 +97,7 @@ export const Section = ({
                 description={propertyDescriptions.zIndex}
                 properties={["zIndex"]}
               />
-              <TextControl
-                property={"zIndex"}
-                currentStyle={currentStyle}
-                setProperty={setProperty}
-                deleteProperty={deleteProperty}
-              />
+              <TextControl property="zIndex" />
             </Grid>
           </Grid>
         )}

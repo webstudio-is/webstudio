@@ -20,7 +20,7 @@ export const movementMapSpace = {
   paddingLeft: ["paddingTop", "paddingTop", "paddingBottom", "marginLeft"],
 } as const;
 
-export const movementMapPosition = {
+export const movementMapInset = {
   top: ["bottom", "right", "bottom", "left"],
   right: ["top", "left", "bottom", "left"],
   bottom: ["top", "right", "top", "left"],

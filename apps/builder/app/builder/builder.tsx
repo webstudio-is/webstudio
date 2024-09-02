@@ -311,9 +311,7 @@ export const Builder = ({
     return unsubscribe;
   }, []);
 
-  const canvasUrl = getCanvasUrl({
-    project,
-  });
+  const canvasUrl = getCanvasUrl();
 
   /**
    * Prevents Lexical text editor from stealing focus during rendering.

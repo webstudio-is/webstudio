@@ -1,13 +1,16 @@
-import { json, redirect, type LoaderFunction } from "@remix-run/server-runtime";
+import { json, type LoaderFunction } from "@remix-run/server-runtime";
 import { z } from "zod";
 import { createDebug } from "~/shared/debug";
 import { fromError } from "zod-validation-error";
 import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
-import { returnToCookie } from "~/services/cookie.server";
 import { createCodeToken } from "~/services/token.server";
 import { isUserAuthorizedForProject } from "~/services/builder-access.server";
+import { loginPath } from "~/shared/router-utils";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import * as session from "~/services/session.server";
+import { redirect } from "~/services/no-store-redirect";
 
 const debug = createDebug(import.meta.url);
 
@@ -68,6 +71,8 @@ const OAuthRedirectUri = z.object({
  * https://datatracker.ietf.org/doc/html/rfc7636
  */
 export const loader: LoaderFunction = async ({ request }) => {
+  preventCrossOriginCookie(request);
+
   try {
     debug("Authorize request received", request.url);
 
@@ -136,20 +141,20 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     const oAuthParams = parsedOAuthParams.data;
 
-    const user = await authenticator.isAuthenticated(request);
+    const sessionData = await authenticator.isAuthenticated(request);
 
-    if (user) {
-      debug(`User id=${user.id} is authenticated`);
+    if (sessionData) {
+      debug(`User id=${sessionData.userId} is authenticated`);
 
       const isAuthorized = await isUserAuthorizedForProject(
-        user.id,
+        sessionData.userId,
         oAuthParams.scope.projectId
       );
 
       // scope: Ensure the requested scope is valid, authorized, and within the permissions granted to the client.
       if (false === isAuthorized) {
         debug(
-          `User ${user.id} is not the owner of ${oAuthParams.scope.projectId}, denying access`
+          `User ${sessionData.userId} is not the owner of ${oAuthParams.scope.projectId}, denying access`
         );
         return oauthError(
           "unauthorized_client",
@@ -158,14 +163,14 @@ export const loader: LoaderFunction = async ({ request }) => {
       }
 
       debug(
-        `User ${user.id} is the owner of ${oAuthParams.scope.projectId}, creating token`
+        `User ${sessionData.userId} is the owner of ${oAuthParams.scope.projectId}, creating token`
       );
 
       // We do not use database now.
       // https://datatracker.ietf.org/doc/html/rfc7636#section-4.4
       const code = await createCodeToken(
         {
-          userId: user.id,
+          userId: sessionData.userId,
           projectId: oAuthParams.scope.projectId,
           codeChallenge: oAuthParams.code_challenge,
         },
@@ -184,27 +189,24 @@ export const loader: LoaderFunction = async ({ request }) => {
         `Code ${code} created, redirecting to redirect_uri: ${redirectUri.href}`
       );
 
-      return redirect(redirectUri.href);
+      const bloomFilter = await session.readLoginSessionBloomFilter(request);
+
+      await bloomFilter.add(oAuthParams.scope.projectId);
+
+      return session.writeLoginSessionBloomFilter(
+        request,
+        redirect(redirectUri.href),
+        bloomFilter
+      );
     }
 
-    user satisfies null;
+    sessionData satisfies null;
 
     debug(
       "User is not authenticated, saving current url to returnTo cookie and redirecting to login"
     );
 
-    const headers = new Headers();
-    // Issue with local development, so force https
-    const returnToUrl = new URL(request.url);
-    returnToUrl.protocol = "https";
-
-    // We don't want to have all params above in the URL, so save in returnTo cookie immediately
-    headers.append(
-      "Set-Cookie",
-      await returnToCookie.serialize(returnToUrl.href)
-    );
-
-    return redirect("/login", { headers });
+    return redirect(loginPath({ returnTo: request.url }));
   } catch (error) {
     if (error instanceof Response) {
       return error;
