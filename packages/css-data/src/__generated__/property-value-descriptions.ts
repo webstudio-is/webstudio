@@ -495,16 +495,16 @@ export const propertiesGenerated = {
   whiteSpaceCollapse:
     "Specifies how white space inside an element is collapsed",
   "-webkit-box-orient":
-    '"Controls the direction of flex items in a flex container."',
+    "Controls the direction of flex items in a flex container.",
   "-webkit-line-clamp":
-    '"Truncates text to a specific number of lines in a container."',
+    "Truncates text to a specific number of lines in a container.",
   "-webkit-overflow-scrolling":
-    '"Controls whether or not touch events trigger overflow scrolling."',
+    "Controls whether or not touch events trigger overflow scrolling.",
   "-webkit-tap-highlight-color":
-    '"Sets the highlight color of links and form controls if tapped."',
+    "Sets the highlight color of links and form controls if tapped.",
   fieldSizing:
-    '"Controls the algorithm used to calculate the width of form controls."',
-  zoom: '"Specifies the zoom level of a document."',
+    "Controls the algorithm used to calculate the width of form controls.",
+  zoom: "Specifies the zoom level of a document.",
 } as const;
 
 export const propertiesOverrides = {} as const;
@@ -515,7 +515,7 @@ export const propertySyntaxesGenerated = {
   boxShadowBlurRadius: "Controls the blur radius of the shadow.",
   boxShadowSpreadRadius: "Controls the spread radius of the shadow.",
   boxShadowColor: "Controls the color of the shadow.",
-  boxShadowPosition: "Controls the positioning of the shadow.",
+  boxShadowPosition: "Controls the position of the shadow.",
   textShadowOffsetX: "Controls the offset of the horizontal text shadow.",
   textShadowOffsetY: "Controls the offset of the vertical text shadow.",
   textShadowBlurRadius: "Controls the blur radius of the text shadow.",
@@ -524,22 +524,25 @@ export const propertySyntaxesGenerated = {
   dropShadowOffsetY: "Controls the offset of the vertical drop shadow.",
   dropShadowBlurRadius: "Controls the blur radius of the drop shadow.",
   dropShadowColor: "Controls the color of the drop shadow.",
-  translateX: "Controls the horizontal translation.",
-  translateY: "Controls the vertical translation.",
-  translateZ: "Controls the depth of the element along the z-axis.",
-  rotateX: "Rotates the element around the x-axis.",
-  rotateY: "Rotates the element around the y-axis.",
-  rotateZ: "Rotates the element around the z-axis.",
-  scaleX: "Scales the element in the x-axis direction.",
-  scaleY: "Scales the element in the y-axis direction.",
-  scaleZ: "Scales the element in the z-axis direction.",
-  skewX: "Skews the element along the x-axis.",
-  skewY: "Skews the element along the y-axis.",
-  transformOriginX: "Sets the origin for transformations in the x-axis.",
-  transformOriginY: "Sets the origin for transformations in the y-axis.",
-  transformOriginZ: "Sets the origin for transformations in the z-axis.",
-  perspectiveOriginX: "Sets the origin for the perspective view in the x-axis.",
-  perspectiveOriginY: "Sets the origin for the perspective view in the y-axis.",
+  translateX: "Moves an element along the horizontal axis.",
+  translateY: "Moves an element along the vertical axis.",
+  translateZ: "Controls the z-axis translation of a 3D element",
+  rotateX: "Rotates the element around the x-axis",
+  rotateY: "Rotates the element around the y-axis",
+  rotateZ: "Rotates the element around the z-axis",
+  scaleX: "Scales the element on the x-axis",
+  scaleY: "Scales the element on the y-axis",
+  scaleZ: "Scales the element on the z-axis",
+  skewX: "Skews the element along the x-axis",
+  skewY: "Skews the element along the y-axis",
+  transformOriginX:
+    "Sets the x-coordinate of the origin of the element's transformation",
+  transformOriginY:
+    "Sets the y-coordinate of the origin of the element's transformation",
+  transformOriginZ:
+    "Sets the z-coordinate of the origin of the element's transformation",
+  perspectiveOriginX: "Sets the x-coordinate of the perspective origin",
+  perspectiveOriginY: "Sets the y-coordinate of the perspective origin",
 } as const;
 
 export const properties = {

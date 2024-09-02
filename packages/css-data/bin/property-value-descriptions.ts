@@ -4,6 +4,8 @@ import * as path from "node:path";
 import type { CreateChatCompletionResponse } from "openai";
 import { keywordValues } from "../src/__generated__/keyword-values";
 import warnOnce from "warn-once";
+import retry from "async-retry";
+import { propertiesAndFunctionsSyntax } from "./syntaxes";
 
 const propertiesPrompt = fs.readFileSync(
   path.join(process.cwd(), "bin", "prompts", "properties.prompt.md"),
@@ -61,39 +63,6 @@ try {
 
 const batchSize = 16;
 
-const propertiesAndFunctionsSyntax = [
-  "boxShadowOffsetX",
-  "boxShadowOffsetY",
-  "boxShadowBlurRadius",
-  "boxShadowSpreadRadius",
-  "boxShadowColor",
-  "boxShadowPosition",
-  "textShadowOffsetX",
-  "textShadowOffsetY",
-  "textShadowBlurRadius",
-  "textShadowColor",
-  "dropShadowOffsetX",
-  "dropShadowOffsetY",
-  "dropShadowBlurRadius",
-  "dropShadowColor",
-  "translateX",
-  "translateY",
-  "translateZ",
-  "rotateX",
-  "rotateY",
-  "rotateZ",
-  "scaleX",
-  "scaleY",
-  "scaleZ",
-  "skewX",
-  "skewY",
-  "transformOriginX",
-  "transformOriginY",
-  "transformOriginZ",
-  "perspectiveOriginX",
-  "perspectiveOriginY",
-];
-
 /**
  * Properties descriptions
  */
@@ -114,12 +83,6 @@ const newPropertySyntaxes = propertiesAndFunctionsSyntax.filter(
       typeof propertySyntaxesGenerated[property] !== "string")
 );
 
-let retries = 0;
-
-const backoff = (num: number) => {
-  return Math.floor(Math.pow(2, Math.min(num, 4)) * 1000);
-};
-
 for (let i = 0; i < newPropertySyntaxes.length; ) {
   const syntaxes = newPropertySyntaxes.slice(i, i + batchSize);
 
@@ -139,24 +102,7 @@ for (let i = 0; i < newPropertySyntaxes.length; ) {
     syntaxes.map((name) => `- ${name}`).join("\n")
   );
 
-  const result = await generate(prompt);
-
-  if (Array.isArray(result)) {
-    // Retry
-    if (result[0] === 429) {
-      console.info(
-        `❌  Error: 429 ${result[1]}. Retrying after sleep ${backoff(
-          retries
-        )}...`
-      );
-      await new Promise((resolve) => setTimeout(resolve, backoff(retries)));
-      retries++;
-      continue;
-    }
-
-    throw new Error(`❌ Error: ${result[0]} ${result[1]}`);
-  }
-
+  const result = await generateWithRetry(prompt);
   const descriptions = grabDescriptions(result);
 
   if (syntaxes.length !== descriptions.length) {
@@ -202,29 +148,12 @@ for (let i = 0; i < newPropertiesNames.length; ) {
     continue;
   }
 
-  const result = await generate(
+  const result = await generateWithRetry(
     propertiesPrompt.replace(
       "{properties}",
       properties.map((name) => `- ${name}`).join("\n")
     )
   );
-
-  if (Array.isArray(result)) {
-    // Retry
-    if (result[0] === 429) {
-      console.info(
-        `❌  Error: 429 ${result[1]}. Retrying after sleep ${backoff(
-          retries
-        )}...`
-      );
-      await new Promise((resolve) => setTimeout(resolve, backoff(retries)));
-      retries++;
-      continue;
-    }
-
-    throw new Error(`❌ Error: ${result[0]} ${result[1]}`);
-  }
-
   const descriptions = grabDescriptions(result);
 
   if (properties.length !== descriptions.length) {
@@ -337,20 +266,9 @@ for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
-  const result = await generate(
+  const result = await generateWithRetry(
     declarationsPrompt.replace("{declarations}", list.join("\n"))
   );
-
-  if (Array.isArray(result)) {
-    // Retry
-    if (result[0] === 429) {
-      console.info(`❌  Error: 429 ${result[1]}. Retrying...`);
-      continue;
-    }
-
-    throw new Error(`❌ Error: ${result[0]} ${result[1]}`);
-  }
-
   const descriptions = grabDescriptions(result);
 
   if (list.length !== descriptions.length) {
@@ -415,6 +333,43 @@ function writeFile(descriptions: Record<string, unknown>) {
       .join("\n\n");
 
   fs.writeFileSync(path.join(targetPath, fileName), content, "utf-8");
+}
+
+async function generateWithRetry(message: string): Promise<string> {
+  return retry(
+    async (_, attempt) => {
+      const result = await generate(message);
+
+      // Check if result is an array (error response)
+      if (Array.isArray(result)) {
+        if (result[0] === 429) {
+          console.info(
+            `❌ Error: 429 ${result[1]}. Retrying attempt ${attempt}...`
+          );
+          return Promise.reject("Rate limit exceeded");
+        } else {
+          return Promise.reject(`❌ Error: ${result[0]} ${result[1]}`);
+        }
+      }
+
+      // If the result isn't a string, retry
+      if (typeof result !== "string") {
+        console.info(
+          `❌ Error: Unexpected result type. Retrying attempt ${attempt}...`
+        );
+        return Promise.reject("Unexpected result type");
+      }
+
+      // Return the result if it's a valid string
+      return result;
+    },
+    {
+      retries: 5, // Number of retries
+      factor: 2, // Exponential backoff factor
+      minTimeout: 1000, // Minimum wait between retries (1 second)
+      maxTimeout: 5000, // Maximum wait between retries (5 seconds)
+    }
+  );
 }
 
 async function generate(message: string): Promise<string | [number, string]> {
