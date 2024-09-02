@@ -12,7 +12,7 @@ import { builderAuthenticator } from "~/services/builder-auth.server";
 import { readLoginSessionBloomFilter } from "~/services/session.server";
 import type { BloomFilter } from "~/services/bloom-filter.server";
 import { isBuilder, isCanvas, isDashboard } from "./router-utils";
-import { parseBuilderUrl } from "./router-utils/origins";
+import { parseBuilderUrl } from "@webstudio-is/http-client";
 
 const createAuthorizationContext = async (
   request: Request

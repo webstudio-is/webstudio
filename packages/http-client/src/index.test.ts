@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { parseBuilderUrl } from "./origins";
+import { parseBuilderUrl } from "./index";
 
 test("parseBuilderUrl wstd.dev", async () => {
   expect(

@@ -2,7 +2,7 @@ import { json } from "@remix-run/server-runtime";
 import { prisma } from "@webstudio-is/prisma-client";
 import { parsePages } from "@webstudio-is/project-build/index.server";
 import { getStaticSiteMapXml } from "@webstudio-is/sdk";
-import { parseBuilderUrl } from "../router-utils/origins";
+import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { isBuilder } from "../router-utils";
 
 /**
