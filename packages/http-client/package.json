@@ -26,7 +26,8 @@
     "import": "./lib/index.js"
   },
   "files": [
-    "lib/*"
+    "lib/*",
+    "src/*"
   ],
   "license": "AGPL-3.0-or-later",
   "private": false,
