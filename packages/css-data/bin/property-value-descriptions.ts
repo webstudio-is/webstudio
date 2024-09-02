@@ -4,7 +4,7 @@ import * as path from "node:path";
 import type { CreateChatCompletionResponse } from "openai";
 import { keywordValues } from "../src/__generated__/keyword-values";
 import warnOnce from "warn-once";
-import retry from "async-retry";
+import pRetry from "p-retry";
 import { propertiesAndFunctionsSyntax } from "./syntaxes";
 
 const propertiesPrompt = fs.readFileSync(
@@ -336,8 +336,8 @@ function writeFile(descriptions: Record<string, unknown>) {
 }
 
 async function generateWithRetry(message: string): Promise<string> {
-  return retry(
-    async (_, attempt) => {
+  return pRetry(
+    async (attempt) => {
       const result = await generate(message);
 
       // Check if result is an array (error response)
@@ -346,9 +346,9 @@ async function generateWithRetry(message: string): Promise<string> {
           console.info(
             `❌ Error: 429 ${result[1]}. Retrying attempt ${attempt}...`
           );
-          return Promise.reject("Rate limit exceeded");
+          throw new Error("Rate limit exceeded"); // Retry on rate limit exceeded
         } else {
-          return Promise.reject(`❌ Error: ${result[0]} ${result[1]}`);
+          throw new Error(`❌ Error: ${result[0]} ${result[1]}`); // Retry on other errors
         }
       }
 
@@ -357,7 +357,7 @@ async function generateWithRetry(message: string): Promise<string> {
         console.info(
           `❌ Error: Unexpected result type. Retrying attempt ${attempt}...`
         );
-        return Promise.reject("Unexpected result type");
+        throw new Error("Unexpected result type");
       }
 
       // Return the result if it's a valid string

@@ -510,39 +510,40 @@ export const propertiesGenerated = {
 export const propertiesOverrides = {} as const;
 
 export const propertySyntaxesGenerated = {
-  boxShadowOffsetX: "Controls the offset of the horizontal shadow.",
-  boxShadowOffsetY: "Controls the offset of the vertical shadow.",
+  boxShadowOffsetX: "Controls the offset distance of the shadow on the X-axis.",
+  boxShadowOffsetY: "Controls the offset distance of the shadow on the Y-axis.",
   boxShadowBlurRadius: "Controls the blur radius of the shadow.",
   boxShadowSpreadRadius: "Controls the spread radius of the shadow.",
   boxShadowColor: "Controls the color of the shadow.",
-  boxShadowPosition: "Controls the position of the shadow.",
-  textShadowOffsetX: "Controls the offset of the horizontal text shadow.",
-  textShadowOffsetY: "Controls the offset of the vertical text shadow.",
+  boxShadowPosition: "Controls the positioning of the shadow.",
+  textShadowOffsetX:
+    "Controls the offset distance of the text shadow on the X-axis.",
+  textShadowOffsetY:
+    "Controls the offset distance of the text shadow on the Y-axis.",
   textShadowBlurRadius: "Controls the blur radius of the text shadow.",
   textShadowColor: "Controls the color of the text shadow.",
-  dropShadowOffsetX: "Controls the offset of the horizontal drop shadow.",
-  dropShadowOffsetY: "Controls the offset of the vertical drop shadow.",
+  dropShadowOffsetX:
+    "Controls the offset distance of the drop shadow on the X-axis.",
+  dropShadowOffsetY:
+    "Controls the offset distance of the drop shadow on the Y-axis.",
   dropShadowBlurRadius: "Controls the blur radius of the drop shadow.",
   dropShadowColor: "Controls the color of the drop shadow.",
-  translateX: "Moves an element along the horizontal axis.",
-  translateY: "Moves an element along the vertical axis.",
-  translateZ: "Controls the z-axis translation of a 3D element",
-  rotateX: "Rotates the element around the x-axis",
-  rotateY: "Rotates the element around the y-axis",
-  rotateZ: "Rotates the element around the z-axis",
-  scaleX: "Scales the element on the x-axis",
-  scaleY: "Scales the element on the y-axis",
-  scaleZ: "Scales the element on the z-axis",
-  skewX: "Skews the element along the x-axis",
-  skewY: "Skews the element along the y-axis",
-  transformOriginX:
-    "Sets the x-coordinate of the origin of the element's transformation",
-  transformOriginY:
-    "Sets the y-coordinate of the origin of the element's transformation",
-  transformOriginZ:
-    "Sets the z-coordinate of the origin of the element's transformation",
-  perspectiveOriginX: "Sets the x-coordinate of the perspective origin",
-  perspectiveOriginY: "Sets the y-coordinate of the perspective origin",
+  translateX: "Controls the translation of an element on the X-axis.",
+  translateY: "Controls the translation of an element on the Y-axis.",
+  translateZ: "Specifies the position of the z axis within the 3D workspace.",
+  rotateX: "Applies a 3D rotation to an element around the x-axis.",
+  rotateY: "Applies a 3D rotation to an element around the y-axis.",
+  rotateZ: "Applies a 3D rotation to an element around the z-axis.",
+  scaleX: "Applies a scale transformation to an element on the x-axis.",
+  scaleY: "Applies a scale transformation to an element on the y-axis.",
+  scaleZ: "Applies a scale transformation to an element on the z-axis.",
+  skewX: "Skews an element in the horizontal direction.",
+  skewY: "Skews an element in the vertical direction.",
+  transformOriginX: "Sets the origin of transformation for the x-axis.",
+  transformOriginY: "Sets the origin of transformation for the y-axis.",
+  transformOriginZ: "Sets the origin of transformation for the z-axis.",
+  perspectiveOriginX: "Sets the origin of perspective for the x-axis.",
+  perspectiveOriginY: "Sets the origin of perspective for the y-axis.",
 } as const;
 
 export const properties = {
