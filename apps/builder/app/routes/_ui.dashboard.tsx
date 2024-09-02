@@ -96,7 +96,7 @@ const DashboardRoute = () => {
 
   return (
     <>
-      {data.projects.slice(0, 5).map((project) => {
+      {data.projects.map((project) => {
         prefetchDNS(builderUrl({ projectId: project.id, origin: data.origin }));
       })}
       <ClientOnly>
