@@ -14,14 +14,11 @@ import type { BloomFilter } from "~/services/bloom-filter.server";
 import { isBuilder, isCanvas, isDashboard } from "./router-utils";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 
-const createAuthorizationContext = async (
-  request: Request
-): Promise<AppContext["authorization"]> => {
-  const url = new URL(request.url);
-
+export const extractAuthFromRequest = async (request: Request) => {
   if (isCanvas(request)) {
     throw new Error("Canvas requests can't have authorization context");
   }
+  const url = new URL(request.url);
 
   const authToken =
     url.searchParams.get("authToken") ??
@@ -35,6 +32,23 @@ const createAuthorizationContext = async (
   const isServiceCall =
     request.headers.has("Authorization") &&
     request.headers.get("Authorization") === env.TRPC_SERVER_API_TOKEN;
+
+  return {
+    authToken,
+    sessionData,
+    isServiceCall,
+  };
+};
+
+const createAuthorizationContext = async (
+  request: Request
+): Promise<AppContext["authorization"]> => {
+  if (isCanvas(request)) {
+    throw new Error("Canvas requests can't have authorization context");
+  }
+
+  const { authToken, isServiceCall, sessionData } =
+    await extractAuthFromRequest(request);
 
   let ownerId = sessionData?.userId;
 
