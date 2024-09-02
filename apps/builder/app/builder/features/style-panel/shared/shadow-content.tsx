@@ -200,7 +200,7 @@ export const ShadowContent = ({
             property === "boxShadow" ? "1fr 1fr" : "1fr 1fr 1fr",
         }}
       >
-        <Flex direction="column">
+        <Flex direction="column" gap="1">
           <PropertyInlineLabel
             label="X"
             title="Offset X"
@@ -224,7 +224,7 @@ export const ShadowContent = ({
           />
         </Flex>
 
-        <Flex direction="column">
+        <Flex direction="column" gap="1">
           <PropertyInlineLabel
             label="Y"
             title="Offset Y"
@@ -248,7 +248,7 @@ export const ShadowContent = ({
           />
         </Flex>
 
-        <Flex direction="column">
+        <Flex direction="column" gap="1">
           <PropertyInlineLabel
             label="Blur"
             title="Blur Radius"
@@ -273,7 +273,7 @@ export const ShadowContent = ({
         </Flex>
 
         {property === "boxShadow" ? (
-          <Flex direction="column">
+          <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Spread"
               title="Spread Radius"
@@ -308,7 +308,7 @@ export const ShadowContent = ({
           ...(property === "boxShadow" && { gridTemplateColumns: "3fr 1fr" }),
         }}
       >
-        <Flex direction="column">
+        <Flex direction="column" gap="1">
           <PropertyInlineLabel
             label="Color"
             description={shadowPropertySyntaxes[property].color}
@@ -332,7 +332,7 @@ export const ShadowContent = ({
         </Flex>
 
         {property === "boxShadow" ? (
-          <Flex direction="column">
+          <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Inset"
               description={shadowPropertySyntaxes.boxShadow.position}
