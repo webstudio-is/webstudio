@@ -24,7 +24,7 @@ import env from "~/env/env.server";
 import builderStyles from "~/builder/builder.css?url";
 import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { ClientOnly } from "~/shared/client-only";
-import { parseBuilderUrl } from "~/shared/router-utils/origins";
+import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { builderSessionStorage } from "~/services/builder-session.server";

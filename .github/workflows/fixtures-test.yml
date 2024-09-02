@@ -6,6 +6,9 @@ on:
       builder-url:
         required: true
         type: string
+      builder-host:
+        required: true
+        type: string
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -23,7 +26,8 @@ jobs:
     env:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
-      BUILDER_URL: ${{ inputs.builder-url }}
+      BUILDER_URL_DEPRECATED: ${{ inputs.builder-url }}
+      BUILDER_HOST: ${{ inputs.builder-host }}
 
     steps:
       - uses: actions/checkout@v4
