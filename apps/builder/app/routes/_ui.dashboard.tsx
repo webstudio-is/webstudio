@@ -10,7 +10,7 @@ import { ClientOnly } from "~/shared/client-only";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
 import { redirect } from "~/services/no-store-redirect";
-import { preconnect, prefetchDNS } from "react-dom";
+import { preconnect } from "react-dom";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
@@ -100,9 +100,6 @@ const DashboardRoute = () => {
         preconnect(builderUrl({ projectId: project.id, origin: data.origin }), {
           crossOrigin: "anonymous",
         });
-      })}
-      {data.projects.slice(0, 5).map((project) => {
-        prefetchDNS(builderUrl({ projectId: project.id, origin: data.origin }));
       })}
       <ClientOnly>
         <Dashboard {...data} />
