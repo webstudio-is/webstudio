@@ -96,7 +96,7 @@ const DashboardRoute = () => {
 
   return (
     <>
-      {data.projects.map((project) => {
+      {data.projects.slice(0, 5).map((project) => {
         preconnect(builderUrl({ projectId: project.id, origin: data.origin }));
       })}
       <ClientOnly>
