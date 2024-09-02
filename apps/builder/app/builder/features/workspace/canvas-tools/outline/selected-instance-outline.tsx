@@ -7,7 +7,6 @@ import {
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
-import { Label } from "./label";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
@@ -20,6 +19,7 @@ export const SelectedInstanceOutline = () => {
   const outline = useStore($selectedInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const ephemeralStyles = useStore($ephemeralStyles);
+
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
     areInstanceSelectorsEqual(
@@ -41,13 +41,5 @@ export const SelectedInstanceOutline = () => {
     : "default";
   const rect = applyScale(outline.rect, scale);
 
-  return (
-    <Outline rect={rect} variant={variant}>
-      <Label
-        variant={variant}
-        instance={outline.instance}
-        instanceRect={rect}
-      />
-    </Outline>
-  );
+  return <Outline rect={rect} variant={variant} />;
 };
