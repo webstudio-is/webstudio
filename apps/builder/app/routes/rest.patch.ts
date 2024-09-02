@@ -43,6 +43,7 @@ import { db } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
 import { publicStaticEnv } from "~/env/env.static";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { checkCsrf } from "~/services/csrf-session.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -97,6 +98,8 @@ export const action = async ({
       };
     }
 
+    await checkCsrf(request);
+
     const context = await createContext(request);
 
     if (
@@ -104,9 +107,7 @@ export const action = async ({
       context.authorization.authToken === undefined
     ) {
       return {
-        // We use version_mismatched here to support older browser client
-        // @todo change on authorization_error after 15/09/2024
-        status: "version_mismatched",
+        status: "authorization_error",
         errors:
           "Due to a recent update or a possible logout, you may need to log in again. Please reload the page and sign in to continue.",
       };
