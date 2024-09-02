@@ -34,7 +34,7 @@ import { Spinner } from "../shared/spinner";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { prefetchDNS } from "react-dom";
+import { preconnect } from "react-dom";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 const titleStyle = css({
@@ -206,7 +206,7 @@ export const ProjectCard = ({
   const linkPath = builderUrl({ origin: window.origin, projectId: id });
 
   const handleMouseEnter = useEffectEvent(() => {
-    prefetchDNS(linkPath);
+    preconnect(linkPath);
   });
 
   return (
