@@ -77,12 +77,14 @@ jobs:
 
     outputs:
       builder-url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
+      builder-host: "${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
 
   fixtures-test:
     needs: deployment
     uses: ./.github/workflows/fixtures-test.yml
     with:
       builder-url: ${{ needs.deployment.outputs.builder-url }}
+      builder-host: ${{ needs.deployment.outputs.builder-host }}
 
   delete-github-deployments:
     needs: fixtures-test
