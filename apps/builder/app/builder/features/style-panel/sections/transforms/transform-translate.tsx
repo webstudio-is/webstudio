@@ -65,7 +65,6 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Translate X"
           description={propertySyntaxes.translateX}
-          properties="translate-x"
         />
 
         <CssValueInputContainer
@@ -88,7 +87,6 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Translate Y"
           description={propertySyntaxes.translateY}
-          properties="translate-y"
         />
         <CssValueInputContainer
           key="translateX"
@@ -110,7 +108,6 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Translate Z"
           description={propertySyntaxes.translateZ}
-          properties="translate-z"
         />
         <CssValueInputContainer
           key="translateX"

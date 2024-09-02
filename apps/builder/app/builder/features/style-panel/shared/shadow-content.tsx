@@ -96,66 +96,24 @@ const boxShadowInsetValues = [
 
 const shadowPropertySyntaxes = {
   boxShadow: {
-    x: {
-      syntax: "box-shadow-offset-x",
-      description: propertySyntaxes.boxShadowOffsetX,
-    },
-    y: {
-      syntax: "box-shadow-offset-y",
-      description: propertySyntaxes.boxShadowOffsetY,
-    },
-    blur: {
-      syntax: "box-shadow-blur",
-      description: propertySyntaxes.boxShadowBlurRadius,
-    },
-    spread: {
-      syntax: "box-shadow-spread",
-      description: propertySyntaxes.boxShadowSpreadRadius,
-    },
-    color: {
-      syntax: "box-shadow-color",
-      description: propertySyntaxes.boxShadowColor,
-    },
-    position: {
-      syntax: "box-shadow-position",
-      description: propertySyntaxes.boxShadowPosition,
-    },
+    x: propertySyntaxes.boxShadowOffsetX,
+    y: propertySyntaxes.boxShadowOffsetY,
+    blur: propertySyntaxes.boxShadowBlurRadius,
+    spread: propertySyntaxes.boxShadowSpreadRadius,
+    color: propertySyntaxes.boxShadowColor,
+    position: propertySyntaxes.boxShadowPosition,
   },
   textShadow: {
-    x: {
-      syntax: "text-shadow-offset-x",
-      description: propertySyntaxes.textShadowOffsetX,
-    },
-    y: {
-      syntax: "text-shadow-offset-y",
-      description: propertySyntaxes.textShadowOffsetY,
-    },
-    blur: {
-      syntax: "text-shadow-blur",
-      description: propertySyntaxes.textShadowBlurRadius,
-    },
-    color: {
-      syntax: "text-shadow-color",
-      description: propertySyntaxes.textShadowColor,
-    },
+    x: propertySyntaxes.textShadowOffsetX,
+    y: propertySyntaxes.textShadowOffsetY,
+    blur: propertySyntaxes.textShadowBlurRadius,
+    color: propertySyntaxes.textShadowColor,
   },
   dropShadow: {
-    x: {
-      syntax: "drop-shadow-offset-x",
-      description: propertySyntaxes.dropShadowOffsetX,
-    },
-    y: {
-      syntax: "drop-shadow-offset-y",
-      description: propertySyntaxes.dropShadowOffsetY,
-    },
-    blur: {
-      syntax: "drop-shadow-blur",
-      description: propertySyntaxes.dropShadowBlurRadius,
-    },
-    color: {
-      syntax: "drop-shadow-color",
-      description: propertySyntaxes.dropShadowColor,
-    },
+    x: propertySyntaxes.dropShadowOffsetX,
+    y: propertySyntaxes.dropShadowOffsetY,
+    blur: propertySyntaxes.dropShadowBlurRadius,
+    color: propertySyntaxes.dropShadowColor,
   },
 } as const;
 
@@ -245,8 +203,8 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="X"
-            properties={shadowPropertySyntaxes[property].x.syntax}
-            description={shadowPropertySyntaxes[property].x.description}
+            title="Offset X"
+            description={shadowPropertySyntaxes[property].x}
           />
           <CssValueInputContainer
             key="boxShadowOffsetX"
@@ -269,8 +227,8 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="Y"
-            properties={shadowPropertySyntaxes[property].y.syntax}
-            description={shadowPropertySyntaxes[property].y.description}
+            title="Offset Y"
+            description={shadowPropertySyntaxes[property].y}
           />
           <CssValueInputContainer
             key="boxShadowOffsetY"
@@ -293,8 +251,8 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="Blur"
-            properties={shadowPropertySyntaxes[property].blur.syntax}
-            description={shadowPropertySyntaxes[property].blur.description}
+            title="Blur Radius"
+            description={shadowPropertySyntaxes[property].blur}
           />
           <CssValueInputContainer
             key="boxShadowBlur"
@@ -318,8 +276,8 @@ export const ShadowContent = ({
           <Flex direction="column">
             <PropertyInlineLabel
               label="Spread"
-              properties={shadowPropertySyntaxes.boxShadow.spread.syntax}
-              description={shadowPropertySyntaxes.boxShadow.spread.description}
+              title="Spread Radius"
+              description={shadowPropertySyntaxes.boxShadow.spread}
             />
             <CssValueInputContainer
               key="boxShadowSpread"
@@ -353,8 +311,7 @@ export const ShadowContent = ({
         <Flex direction="column">
           <PropertyInlineLabel
             label="Color"
-            properties={shadowPropertySyntaxes[property].color.syntax}
-            description={shadowPropertySyntaxes[property].color.description}
+            description={shadowPropertySyntaxes[property].color}
           />
           <ColorPicker
             property="color"
@@ -378,10 +335,7 @@ export const ShadowContent = ({
           <Flex direction="column">
             <PropertyInlineLabel
               label="Inset"
-              properties={shadowPropertySyntaxes.boxShadow.position.syntax}
-              description={
-                shadowPropertySyntaxes.boxShadow.position.description
-              }
+              description={shadowPropertySyntaxes.boxShadow.position}
             />
             <ToggleGroup
               type="single"

@@ -73,7 +73,6 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Skew X"
           description={propertySyntaxes.skewX}
-          properties="skew-x"
         />
         <CssValueInputContainer
           key="skewX"
@@ -99,7 +98,6 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         <PropertyInlineLabel
           label="Skew Y"
           description={propertySyntaxes.skewY}
-          properties="skew-y"
         />
         <CssValueInputContainer
           key="skewY"
