@@ -3,7 +3,6 @@ import {
   EnhancedTooltip,
   Flex,
   Grid,
-  Label,
   SmallToggleButton,
   theme,
 } from "@webstudio-is/design-system";
@@ -24,10 +23,11 @@ import {
   Link2Icon,
   Link2UnlinkedIcon,
 } from "@webstudio-is/icons";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
 import { useCallback, useState } from "react";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import type { IntermediateStyleValue } from "../../shared/css-value-input/css-value-input";
+import { PropertyInlineLabel } from "../../property-label";
 
 const property: StyleProperty = "scale";
 // When a scale shorthand proeprty is used, we can't set keywords.
@@ -175,7 +175,10 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
         >
           <XAxisIcon />
-          <Label> Scale X</Label>
+          <PropertyInlineLabel
+            label="Scale X"
+            description={propertySyntaxes.scaleX}
+          />
           <CssValueInput
             key="scaleX"
             styleSource="local"
@@ -215,7 +218,10 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
         >
           <YAxisIcon />
-          <Label> Scale Y</Label>
+          <PropertyInlineLabel
+            label="Scale Y"
+            description={propertySyntaxes.scaleY}
+          />
           <CssValueInput
             key="scaleY"
             styleSource="local"
@@ -255,7 +261,10 @@ export const ScalePanelContent = (props: TransformPanelProps) => {
           css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
         >
           <ZAxisIcon />
-          <Label> Scale Z</Label>
+          <PropertyInlineLabel
+            label="Scale Z"
+            description={propertySyntaxes.scaleZ}
+          />
           <CssValueInput
             key="scaleZ"
             styleSource="local"

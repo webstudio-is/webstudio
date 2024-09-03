@@ -90,6 +90,15 @@ export const Section = (props: SectionProps) => {
     })
   );
 
+  const isBackfaceVisibilityUsed = isTransformPanelPropertyUsed({
+    currentStyle,
+    panel: "backfaceVisibility",
+  });
+  const isPerspectiveOriginUsed = isTransformPanelPropertyUsed({
+    currentStyle,
+    panel: "perspective",
+  });
+
   return (
     <CollapsibleSectionRoot
       fullWidth
@@ -160,9 +169,9 @@ export const Section = (props: SectionProps) => {
         </CssValueListArrowFocus>
       ) : undefined}
 
-      <BackfaceVisibility />
+      {isBackfaceVisibilityUsed && <BackfaceVisibility />}
       <TransformAndPerspectiveOrigin property="transformOrigin" {...props} />
-      <TransformPerspective />
+      {isPerspectiveOriginUsed && <TransformPerspective />}
       <TransformAndPerspectiveOrigin property="perspectiveOrigin" {...props} />
     </CollapsibleSectionRoot>
   );

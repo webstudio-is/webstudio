@@ -6,6 +6,7 @@ export * from "./__generated__/units";
 export {
   properties as propertyDescriptions,
   declarations as declarationDescriptions,
+  propertySyntaxesGenerated as propertySyntaxes,
 } from "./__generated__/property-value-descriptions";
 export * from "./__generated__/animatable-properties";
 export * from "./__generated__/pseudo-elements";

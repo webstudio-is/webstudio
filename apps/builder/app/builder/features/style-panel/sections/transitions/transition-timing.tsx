@@ -5,7 +5,7 @@ import {
   type FunctionValue,
   type KeywordValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertyDescriptions } from "@webstudio-is/css-data";
 import {
   Select,
   SelectGroup,
@@ -75,7 +75,7 @@ export const TransitionTiming = ({
     <>
       <PropertyInlineLabel
         label="Easing"
-        description="Affects the look and feel of the animation by varying the speed of the transition at different points in its duration."
+        description={propertyDescriptions.transitionTimingFunction}
         properties={["transitionTimingFunction"]}
       />
       <Select options={options} value={value} onChange={handleTimingChange}>

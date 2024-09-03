@@ -320,13 +320,15 @@ export const PropertySectionLabel = ({
  */
 export const PropertyInlineLabel = ({
   label,
+  title,
   description,
   properties,
   disabled,
 }: {
   label: string;
+  title?: string;
   description: string;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties?: [StyleProperty, ...StyleProperty[]];
   disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -347,15 +349,17 @@ export const PropertyInlineLabel = ({
               gap="2"
               css={{ maxWidth: theme.spacing[28] }}
             >
-              <Text variant="titles">{label}</Text>
-              <Text
-                variant="monoBold"
-                color="moreSubtle"
-                userSelect="text"
-                css={{ whiteSpace: "break-spaces", cursor: "text" }}
-              >
-                {properties.map(hyphenateProperty).join("\n")}
-              </Text>
+              <Text variant="titles">{title ?? label}</Text>
+              {properties && (
+                <Text
+                  variant="monoBold"
+                  color="moreSubtle"
+                  userSelect="text"
+                  css={{ whiteSpace: "break-spaces", cursor: "text" }}
+                >
+                  {properties.map(hyphenateProperty).join("\n")}
+                </Text>
+              )}
               <Text>{description}</Text>
             </Flex>
           </>

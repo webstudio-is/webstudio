@@ -1,4 +1,4 @@
-import { Flex, Grid, Label } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
   type TransformPanelProps,
@@ -16,8 +16,9 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
 import { extractRotatePropertiesFromTransform } from "./transform-extractors";
+import { PropertyInlineLabel } from "../../property-label";
 
 export const RotatePanelContent = (props: TransformPanelProps) => {
   const { propertyValue, setProperty, currentStyle } = props;
@@ -69,7 +70,10 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <XAxisRotateIcon />
-        <Label> Rotate X</Label>
+        <PropertyInlineLabel
+          label="Rotate X"
+          description={propertySyntaxes.rotateX}
+        />
         <CssValueInputContainer
           key="rotateX"
           styleSource="local"
@@ -91,7 +95,10 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <YAxisRotateIcon />
-        <Label> Rotate Y</Label>
+        <PropertyInlineLabel
+          label="Rotate Y"
+          description={propertySyntaxes.rotateY}
+        />
         <CssValueInputContainer
           key="rotateY"
           styleSource="local"
@@ -113,7 +120,10 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <ZAxisRotateIcon />
-        <Label> Rotate Z</Label>
+        <PropertyInlineLabel
+          label="Rotate Z"
+          description={propertySyntaxes.rotateZ}
+        />
         <CssValueInputContainer
           key="rotateZ"
           styleSource="local"
