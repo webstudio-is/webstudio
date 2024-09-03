@@ -55,7 +55,8 @@ export const MenuControl = ({
     <DropdownMenu modal={false}>
       <PropertyValueTooltip
         label={currentItem?.label ?? humanizeString(property)}
-        property={property}
+        description={description}
+        properties={[property]}
         isAdvanced={isAdvanced}
       >
         <DropdownMenuTrigger asChild>

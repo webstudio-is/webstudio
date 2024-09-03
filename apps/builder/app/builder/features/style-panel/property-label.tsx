@@ -1,13 +1,11 @@
-import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
   toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
-import { declarationDescriptions } from "@webstudio-is/css-data";
 import {
   Button,
   Flex,
@@ -31,9 +29,19 @@ import type {
   ComputedStyleDecl,
   StyleValueSourceColor,
 } from "~/shared/style-object-model";
-import { createComputedStyleDeclStore } from "./shared/model";
+import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
+
+const renderCss = (styles: ComputedStyleDecl[]) => {
+  let css = "";
+  for (const computedStyleDecl of styles) {
+    const property = hyphenateProperty(computedStyleDecl.property);
+    const value = toValue(computedStyleDecl.cascadedValue);
+    css += `${property}: ${value};\n`;
+  }
+  return css.trimEnd();
+};
 
 export const PropertyInfo = ({
   title,
@@ -54,16 +62,14 @@ export const PropertyInfo = ({
   const metas = useStore($registeredComponentMetas);
 
   let resettable = false;
-  const properties: string[] = [];
   const breakpointSet = new Set<string>();
   const styleSourceNameSet = new Set<string>();
   const instanceSet = new Set<string>();
 
-  for (const { property, source } of styles) {
+  for (const { source } of styles) {
     if (source.name === "local" || source.name === "overwritten") {
       resettable = true;
     }
-    properties.push(hyphenateProperty(property));
     const instance = source.instanceId
       ? instances.get(source.instanceId)
       : undefined;
@@ -110,7 +116,7 @@ export const PropertyInfo = ({
         userSelect="text"
         css={{ whiteSpace: "break-spaces", cursor: "text" }}
       >
-        {code ?? properties.join("\n")}
+        {code ?? renderCss(styles)}
       </Text>
       <Text>{description}</Text>
       {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
@@ -189,14 +195,7 @@ export const PropertyLabel = ({
   description: string;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
-  const $styles = useMemo(() => {
-    return computed(
-      properties.map(createComputedStyleDeclStore),
-      (...computedStyles) => computedStyles
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, properties);
-  const styles = useStore($styles);
+  const styles = useComputedStyles(properties);
   const colors = styles.map(({ source }) => source.name);
   const styleValueSourceColor = getPriorityStyleSource(colors);
   const [isOpen, setIsOpen] = useState(false);
@@ -255,14 +254,7 @@ export const PropertySectionLabel = ({
   description: string;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
-  const $styles = useMemo(() => {
-    return computed(
-      properties.map(createComputedStyleDeclStore),
-      (...computedStyles) => computedStyles
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, properties);
-  const styles = useStore($styles);
+  const styles = useComputedStyles(properties);
   const colors = styles.map(({ source }) => source.name);
   const styleValueSourceColor = getPriorityStyleSource(colors);
   const [isOpen, setIsOpen] = useState(false);
@@ -377,32 +369,26 @@ export const PropertyInlineLabel = ({
 
 export const PropertyValueTooltip = ({
   label,
-  property,
+  description,
+  properties,
   isAdvanced,
   children,
 }: {
   label: string;
-  property: StyleProperty;
+  description: string;
+  properties: [StyleProperty, ...StyleProperty[]];
   isAdvanced?: boolean;
   children: ReactNode;
 }) => {
-  const $computedStyleDecl = useMemo(
-    () => createComputedStyleDeclStore(property),
-    [property]
-  );
-  const computedStyleDecl = useStore($computedStyleDecl);
+  const styles = useComputedStyles(properties);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
     const batch = createBatchUpdate();
-    batch.deleteProperty(property);
+    for (const property of properties) {
+      batch.deleteProperty(property);
+    }
     batch.publish();
   };
-  const value = toValue(computedStyleDecl.usedValue);
-  const css = `${hyphenateProperty(property)}: ${value};`;
-  const description =
-    declarationDescriptions[
-      `${property}:${value}` as keyof typeof declarationDescriptions
-    ];
   return (
     <Tooltip
       open={isOpen}
@@ -421,7 +407,6 @@ export const PropertyValueTooltip = ({
       content={
         <PropertyInfo
           title={label}
-          code={css}
           description={
             <Flex gap="2" direction="column">
               {description}
@@ -433,7 +418,7 @@ export const PropertyValueTooltip = ({
               )}
             </Flex>
           }
-          styles={[computedStyleDecl]}
+          styles={styles}
           onReset={() => {
             resetProperty();
             setIsOpen(false);
