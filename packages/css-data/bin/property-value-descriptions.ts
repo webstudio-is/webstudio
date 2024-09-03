@@ -5,7 +5,7 @@ import type { CreateChatCompletionResponse } from "openai";
 import { keywordValues } from "../src/__generated__/keyword-values";
 import warnOnce from "warn-once";
 import pRetry from "p-retry";
-import { propertiesAndFunctionsSyntax } from "./syntaxes";
+import { customLonghandPropertyNames } from "../src/custom-data";
 
 const propertiesPrompt = fs.readFileSync(
   path.join(process.cwd(), "bin", "prompts", "properties.prompt.md"),
@@ -76,24 +76,24 @@ const newPropertiesNames = Object.keys(keywordValues)
         typeof propertiesOverrides[property] !== "string")
   );
 
-const newPropertySyntaxes = propertiesAndFunctionsSyntax.filter(
+const newPropertySyntaxes = customLonghandPropertyNames.filter(
   (property) =>
     forceRegenerate ||
     (typeof propertySyntaxesGenerated[property] !== "string" &&
       typeof propertySyntaxesGenerated[property] !== "string")
 );
 
-for (let i = 0; i < newPropertySyntaxes.length; ) {
-  const syntaxes = newPropertySyntaxes.slice(i, i + batchSize);
+for (let index = 0; index < newPropertySyntaxes.length; ) {
+  const syntaxes = newPropertySyntaxes.slice(index, index + batchSize);
 
   console.info(
-    `[${Math.floor(i / batchSize) + 1}/${Math.ceil(
+    `[${Math.floor(index / batchSize) + 1}/${Math.ceil(
       newPropertySyntaxes.length / batchSize
     )}] Generating property syntax descriptions.`
   );
 
   if (syntaxes.length === 0) {
-    i += batchSize;
+    index += batchSize;
     continue;
   }
 
@@ -130,21 +130,21 @@ for (let i = 0; i < newPropertySyntaxes.length; ) {
     declarations: `{ ...declarationsGenerated, ...declarationsOverrides }`,
   });
 
-  i += batchSize;
+  index += batchSize;
 }
 console.info("\n✅ Properties syntax description generated!\n");
 
-for (let i = 0; i < newPropertiesNames.length; ) {
-  const properties = newPropertiesNames.slice(i, i + batchSize);
+for (let index = 0; index < newPropertiesNames.length; ) {
+  const properties = newPropertiesNames.slice(index, index + batchSize);
 
   console.info(
-    `[${Math.floor(i / batchSize) + 1}/${Math.ceil(
+    `[${Math.floor(index / batchSize) + 1}/${Math.ceil(
       newPropertiesNames.length / batchSize
     )}] Generating properties descriptions.`
   );
 
   if (properties.length === 0) {
-    i += batchSize;
+    index += batchSize;
     continue;
   }
 
@@ -181,7 +181,7 @@ for (let i = 0; i < newPropertiesNames.length; ) {
     declarations: `{ ...declarationsGenerated, ...declarationsOverrides }`,
   });
 
-  i += batchSize;
+  index += batchSize;
 }
 console.info("\n✅ Properties description generated!\n");
 
@@ -251,15 +251,18 @@ const newDeclarationsDescriptionsEntries = Object.entries(
   newDeclarationsDescriptions
 );
 
-for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
-  const batch = newDeclarationsDescriptionsEntries.slice(i, i + batchSize);
+for (let index = 0; index < newDeclarationsDescriptionsEntries.length; ) {
+  const batch = newDeclarationsDescriptionsEntries.slice(
+    index,
+    index + batchSize
+  );
 
   const list = batch.map(
     ([_descriptionKey, declaration]) => `- ${declaration}`
   );
 
   console.info(
-    `[${Math.floor(i / batchSize) + 1}/${Math.ceil(
+    `[${Math.floor(index / batchSize) + 1}/${Math.ceil(
       newDeclarationsDescriptionsEntries.length / batchSize
     )}] Generating declarations descriptions.`
   );
@@ -312,7 +315,7 @@ for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
     declarations: `{ ...declarationsGenerated, ...declarationsOverrides }`,
   });
 
-  i += batchSize;
+  index += batchSize;
 }
 
 console.info("\n✅ Declarations description generated!\n");
