@@ -37,7 +37,7 @@ const renderCss = (styles: ComputedStyleDecl[]) => {
   let css = "";
   for (const computedStyleDecl of styles) {
     const property = hyphenateProperty(computedStyleDecl.property);
-    const value = toValue(computedStyleDecl.usedValue);
+    const value = toValue(computedStyleDecl.cascadedValue);
     css += `${property}: ${value};\n`;
   }
   return css.trimEnd();
