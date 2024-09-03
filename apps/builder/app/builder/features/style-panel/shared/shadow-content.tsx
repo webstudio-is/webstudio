@@ -9,7 +9,6 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   extractShadowProperties,
-  properties,
   propertySyntaxes,
   type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
