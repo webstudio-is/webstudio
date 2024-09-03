@@ -208,6 +208,12 @@ export const ProjectCard = ({
       <CardContent
         css={{ background: theme.colors.brandBackgroundProjectCardBack }}
       >
+        <img
+          src={`${linkPath}empty.gif`}
+          loading="lazy"
+          style={{ opacity: 0, position: "absolute", left: 0, top: 0 }}
+        />
+
         {previewImageAsset ? (
           <ThumbnailLinkWithImage
             to={linkPath}
