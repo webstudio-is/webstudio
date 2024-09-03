@@ -389,6 +389,20 @@ export const action = async ({
       };
     }
 
+    if (error instanceof Response && error.ok === false) {
+      return {
+        status: "authorization_error",
+        errors: error.statusText,
+      };
+    }
+
+    if (error instanceof Response) {
+      return {
+        status: "error",
+        errors: await error.text(),
+      };
+    }
+
     console.error(error);
     return {
       status: "error",

@@ -1,5 +1,4 @@
 import { createCookieSessionStorage } from "@remix-run/node";
-import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 import { extractAuthFromRequest } from "~/shared/context.server";
 import { allowedDestinations } from "./destinations.server";
@@ -104,16 +103,25 @@ export const checkCsrf = async (request: Request) => {
   const [token, setCookieValue] = await getCsrfTokenAndCookie(request);
 
   if (setCookieValue) {
-    throw new AuthorizationError(
-      "Authentication credentials have changed. Please reload and try again."
+    throw new Response(
+      "Authentication credentials have changed. Please reload and try again.",
+      {
+        status: 403,
+        statusText:
+          "Authentication credentials have changed. Please reload and try again.",
+      }
     );
   }
 
   const csrfToken = request.headers.get("X-CSRF-Token");
 
   if (token !== csrfToken) {
-    throw new AuthorizationError(
-      "The CSRF token is invalid. Please reload and try again."
+    throw new Response(
+      `Forbidden: "The CSRF token is invalid. Please reload and try again.`,
+      {
+        status: 403,
+        statusText: `Forbidden: "The CSRF token is invalid. Please reload and try again.`,
+      }
     );
   }
 };
