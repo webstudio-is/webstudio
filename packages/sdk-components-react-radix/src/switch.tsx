@@ -1,13 +1,19 @@
-import type {
-  ForwardRefExoticComponent,
-  ComponentProps,
-  RefAttributes,
+import {
+  type ForwardRefExoticComponent,
+  type ComponentProps,
+  type RefAttributes,
+  forwardRef,
 } from "react";
 import { Root, Thumb } from "@radix-ui/react-switch";
 
-export const Switch: ForwardRefExoticComponent<
-  ComponentProps<typeof Root> & RefAttributes<HTMLButtonElement>
-> = Root;
+export const Switch = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<typeof Root>
+>(({ checked, defaultChecked, ...props }, ref) => {
+  return (
+    <Root {...props} ref={ref} defaultChecked={checked ?? defaultChecked} />
+  );
+});
 
 export const SwitchThumb: ForwardRefExoticComponent<
   ComponentProps<typeof Thumb> & RefAttributes<HTMLSpanElement>
