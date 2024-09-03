@@ -146,7 +146,7 @@ export const metaCheckboxIndicator: WsComponentMeta = {
 
 export const propsMetaCheckbox: WsComponentPropsMeta = {
   props: propsCheckbox,
-  initialProps: ["id", "className", "checked", "name", "required"],
+  initialProps: ["id", "className", "name", "value", "required", "checked"],
 };
 
 export const propsMetaCheckboxIndicator: WsComponentPropsMeta = {

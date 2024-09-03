@@ -10,7 +10,9 @@ export const defaultTag = "select";
 export const Select = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag>
->((props, ref) => <select {...props} ref={ref} />);
+>(({ value, defaultValue, ...props }, ref) => (
+  <select {...props} defaultValue={value ?? defaultValue} ref={ref} />
+));
 
 Select.displayName = "Select";
 

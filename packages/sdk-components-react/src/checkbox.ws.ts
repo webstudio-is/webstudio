@@ -59,13 +59,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: [
-    "id",
-    "className",
-    "name",
-    "value",
-    "required",
-    "checked",
-    "defaultChecked",
-  ],
+  initialProps: ["id", "className", "name", "value", "required", "checked"],
 };

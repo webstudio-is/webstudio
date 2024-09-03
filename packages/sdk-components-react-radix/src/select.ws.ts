@@ -308,7 +308,7 @@ export const metaSelectItemText: WsComponentMeta = {
 
 export const propsMetaSelect: WsComponentPropsMeta = {
   props: propsSelect,
-  initialProps: ["value", "open", "name", "required"],
+  initialProps: ["name", "value", "open", "required"],
 };
 
 export const propsMetaSelectTrigger: WsComponentPropsMeta = {

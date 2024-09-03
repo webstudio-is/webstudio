@@ -11,11 +11,12 @@ export const defaultTag = "form";
 
 export const RemixForm = forwardRef<
   ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> &
+  Omit<ComponentProps<typeof defaultTag>, "action"> &
     Pick<FormProps, "encType"> & {
       // Remix's default behavior includes method values in both uppercase and lowercase,
       // resulting in our UI displaying a list that encompasses both variants.
       method?: Lowercase<NonNullable<FormProps["method"]>>;
+      action?: string;
     }
 >(({ action, ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);

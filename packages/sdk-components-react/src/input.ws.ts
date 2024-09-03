@@ -50,6 +50,7 @@ export const propsMeta: WsComponentPropsMeta = {
     "id",
     "className",
     "name",
+    "value",
     "type",
     "placeholder",
     "required",

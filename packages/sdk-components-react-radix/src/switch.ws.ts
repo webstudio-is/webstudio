@@ -138,7 +138,7 @@ export const metaSwitchThumb: WsComponentMeta = {
 
 export const propsMetaSwitch: WsComponentPropsMeta = {
   props: propsSwitch,
-  initialProps: ["id", "className", "checked", "name", "required"],
+  initialProps: ["id", "className", "name", "value", "checked", "required"],
 };
 
 export const propsMetaSwitchThumb: WsComponentPropsMeta = {

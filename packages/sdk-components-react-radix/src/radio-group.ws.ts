@@ -165,7 +165,7 @@ export const metaRadioGroupIndicator: WsComponentMeta = {
 
 export const propsMetaRadioGroup: WsComponentPropsMeta = {
   props: propsRadioGroup,
-  initialProps: ["id", "className", "value", "name", "required"],
+  initialProps: ["id", "className", "name", "value", "required"],
 };
 
 export const propsMetaRadioGroupItem: WsComponentPropsMeta = {

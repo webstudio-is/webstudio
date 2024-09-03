@@ -52,6 +52,7 @@ export const propsMeta: WsComponentPropsMeta = {
     "id",
     "className",
     "name",
+    "value",
     "placeholder",
     "required",
     "autoFocus",
