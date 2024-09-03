@@ -10,7 +10,7 @@ export const Checkbox = forwardRef<
   return (
     <input
       {...props}
-      checked={checked ?? defaultChecked}
+      defaultChecked={checked ?? defaultChecked}
       type="checkbox"
       ref={ref}
     />
