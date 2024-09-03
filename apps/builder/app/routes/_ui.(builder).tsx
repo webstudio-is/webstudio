@@ -6,7 +6,11 @@
 import { lazy } from "react";
 import { useLoaderData } from "@remix-run/react";
 import type { MetaFunction, ShouldRevalidateFunction } from "@remix-run/react";
-import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import {
+  json,
+  type HeadersArgs,
+  type LoaderFunctionArgs,
+} from "@remix-run/server-runtime";
 
 import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
@@ -183,6 +187,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       );
     }
 
+    headers.set(
+      // Disallowing iframes from loading any content except the canvas
+      // Still possible create iframes on canvas itself (but we use credentialless attribute)
+      // Still possible create iframe without src attribute
+      // Disable workers on builder
+      "Content-Security-Policy",
+      `frame-src ${url.origin}/canvas; worker-src 'none'`
+    );
+
     return json(
       {
         project,
@@ -218,9 +231,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
  * https://web.dev/articles/bfcache
  *
  */
-export const headers = () => {
+export const headers = ({ loaderHeaders }: HeadersArgs) => {
   return {
     "Cache-Control": "no-store",
+    "Content-Security-Policy": loaderHeaders.get("Content-Security-Policy"),
   };
 };
 

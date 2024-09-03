@@ -60,12 +60,12 @@ export const action = async ({
   | { status: "authorization_error"; errors: string }
   | { status: "error"; errors: string }
 > => {
-  preventCrossOriginCookie(request);
-
-  enableMapSet();
-  enablePatches();
-
   try {
+    preventCrossOriginCookie(request);
+
+    enableMapSet();
+    enablePatches();
+
     await checkCsrf(request);
 
     const {

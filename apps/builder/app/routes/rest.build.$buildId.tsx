@@ -5,6 +5,8 @@ import { loadProductionCanvasData } from "~/shared/db";
 import { createContext } from "~/shared/context.server";
 import { getUserById, type User } from "~/shared/db/user.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { allowedDestinations } from "~/services/destinations.server";
+import { isDashboard } from "~/shared/router-utils";
 
 export const loader = async ({
   params,
@@ -16,6 +18,16 @@ export const loader = async ({
   }
 > => {
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  // CSRF check is not required here as this is a public (CLI) endpoint.
+
+  // Ensure the request is coming from the dashboard origin.
+  if (false === isDashboard(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
 
   try {
     const buildId = params.buildId;

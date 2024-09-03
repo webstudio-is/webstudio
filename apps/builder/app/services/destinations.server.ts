@@ -2,6 +2,7 @@ type Destinations = RequestDestination | "empty";
 
 /**
  * Prevent loaders of iframe injections like `<iframe src="/rest/data/98b712e5-247c-448d-b68c-8c1681125998">`
+ * or even cross domain injections like `<iframe src="https://example.com">`
  *
  * - document: The request is intended to obtain a document or an embedded resource.
  * - empty: The request is intended to obtain a resource that is not associated with a document i.e. fetch etc
