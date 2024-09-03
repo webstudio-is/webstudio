@@ -1,0 +1,44 @@
+{
+  "name": "ssg-netlify-by-project-id",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "vite build",
+    "postbuild": "prettier --write \"dist/**/*.html\" || true",
+    "dev": "vite dev",
+    "typecheck": "tsc",
+    "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
+    "fixtures:link": "pnpm cli link --link https://p-8a7358b1-7de3-459d-b7b1-56dddfb6ce1e-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=f55154e6-36b9-4920-bc81-3095cc88f8ff'",
+    "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "rm -rf pages && pnpm cli build --template ssg-netlify --template internal --preview && prettier --write ."
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "sideEffects": false,
+  "devDependencies": {
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "@vitejs/plugin-react": "^4.3.1",
+    "prettier": "3.3.3",
+    "typescript": "5.5.2",
+    "vite": "^5.4.0",
+    "webstudio": "workspace:*"
+  },
+  "dependencies": {
+    "@webstudio-is/image": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
+    "@webstudio-is/sdk-components-react-radix": "workspace:*",
+    "@webstudio-is/sdk-components-react-remix": "workspace:*",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "vike": "^0.4.182"
+  }
+}

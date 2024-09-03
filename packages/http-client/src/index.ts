@@ -37,24 +37,20 @@ export type Data = {
   assets: Array<Asset>;
 };
 
-export const loadProjectDataByProjectId = async (params: {
+// @todo: broken as expects non 200 code
+const getLatestBuildUsingProjectId = async (params: {
   projectId: string;
   origin: string;
-  authToken?: string;
-}): Promise<Data> => {
-  const result = await getLatestBuildUsingProjectId(params);
-  if (result.buildId === null) {
-    throw new Error(`The project is not published yet`);
-  }
+  authToken: string;
+}): Promise<{ buildId: string | null }> => {
+  const { origin, projectId, authToken } = params;
+  const url = new URL(origin);
+  url.pathname = `/rest/buildId/${projectId}`;
 
-  const url = new URL(params.origin);
-  url.pathname = `/rest/build/${result.buildId}`;
+  const headers = new Headers();
+  headers.set("x-auth-token", authToken);
 
-  if (params.authToken) {
-    url.searchParams.append("authToken", params.authToken);
-  }
-
-  const response = await fetch(url.href);
+  const response = await fetch(url.href, { headers });
 
   if (response.ok) {
     return await response.json();
@@ -78,11 +74,11 @@ export const loadProjectDataByBuildId = async (
   const url = new URL(params.origin);
   url.pathname = `/rest/build/${params.buildId}`;
 
-  const headers: Record<string, string> = {};
+  const headers = new Headers();
   if ("seviceToken" in params) {
-    headers.Authorization = params.seviceToken;
+    headers.set("Authorization", params.seviceToken);
   } else {
-    headers["x-auth-token"] = params.authToken;
+    headers.set("x-auth-token", params.authToken);
   }
 
   const response = await fetch(url.href, {
@@ -97,27 +93,21 @@ export const loadProjectDataByBuildId = async (
   throw new Error(message.slice(0, 1000));
 };
 
-// @todo: broken as expects non 200 code
-export const getLatestBuildUsingProjectId = async (params: {
+export const loadProjectDataByProjectId = async (params: {
   projectId: string;
   origin: string;
-  authToken?: string;
-}): Promise<{ buildId: string | null }> => {
-  const { origin, projectId, authToken } = params;
-  const url = new URL(origin);
-  url.pathname = `/rest/buildId/${projectId}`;
-
-  if (authToken) {
-    url.searchParams.append("authToken", authToken);
-  }
-  const response = await fetch(url.href);
-
-  if (response.ok) {
-    return await response.json();
+  authToken: string;
+}): Promise<Data> => {
+  const result = await getLatestBuildUsingProjectId(params);
+  if (result.buildId === null) {
+    throw new Error(`The project is not published yet`);
   }
 
-  const message = await response.text();
-  throw new Error(message.slice(0, 1000));
+  return await loadProjectDataByBuildId({
+    buildId: result.buildId,
+    origin: params.origin,
+    authToken: params.authToken,
+  });
 };
 
 // For easier detecting the builder URL
