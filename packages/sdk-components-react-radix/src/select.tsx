@@ -5,7 +5,6 @@ import {
   forwardRef,
   type RefAttributes,
   useContext,
-  type ComponentPropsWithRef,
 } from "react";
 import {
   Root,
