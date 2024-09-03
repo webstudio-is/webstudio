@@ -10,6 +10,7 @@ import { redirect, type ActionFunctionArgs } from "react-router-dom";
 import { ClientOnly } from "~/shared/client-only";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { lazy, useRef } from "react";
+import { allowedDestinations } from "~/services/destinations.server";
 
 const logoutCaller = createCallerFactory(logoutRouter);
 
@@ -29,6 +30,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
 
   const context = await createContext(request);
 

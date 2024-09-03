@@ -66,6 +66,8 @@ export const action = async ({
   enablePatches();
 
   try {
+    await checkCsrf(request);
+
     const {
       buildId,
       projectId,
@@ -97,8 +99,6 @@ export const action = async ({
         errors: "Transaction array must not be empty.",
       };
     }
-
-    await checkCsrf(request);
 
     const context = await createContext(request);
 

@@ -12,6 +12,7 @@ import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
 import { redirect } from "~/services/no-store-redirect";
 import { preconnect, prefetchDNS } from "react-dom";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { allowedDestinations } from "~/services/destinations.server";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
@@ -25,6 +26,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
 
   if (false === isDashboard(request)) {
     throw new Response(null, {

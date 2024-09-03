@@ -7,6 +7,7 @@ import * as commandQueue from "./command-queue";
 import { restPatchPath } from "~/shared/router-utils";
 import { toast } from "@webstudio-is/design-system";
 import { serverSyncStore } from "~/shared/sync";
+import { fetch } from "~/shared/fetch.client";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
 const NEW_ENTRIES_INTERVAL = 1000;

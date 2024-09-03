@@ -19,6 +19,7 @@ import { ClientOnly } from "~/shared/client-only";
 import { lazy } from "react";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
+import { allowedDestinations } from "~/services/destinations.server";
 
 export const links: LinksFunction = () => {
   return [
@@ -51,6 +52,7 @@ export const loader = async ({
   request,
 }: LoaderFunctionArgs): Promise<TypedResponse<LoginProps>> => {
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
 
   if (false === isDashboard(request)) {
     throw new Response(null, {

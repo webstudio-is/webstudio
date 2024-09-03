@@ -4,6 +4,8 @@ import { loginPath } from "~/shared/router-utils";
 import { prisma } from "@webstudio-is/prisma-client";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
+import { checkCsrf } from "~/services/csrf-session.server";
+import { allowedDestinations } from "~/services/destinations.server";
 
 /**
  * Created for ebugging purposes, to check that payments and products are working
@@ -11,6 +13,8 @@ import { redirect } from "~/services/no-store-redirect";
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  await checkCsrf(request);
 
   const user = await findAuthenticatedUser(request);
 

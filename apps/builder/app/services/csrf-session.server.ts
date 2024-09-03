@@ -2,6 +2,7 @@ import { createCookieSessionStorage } from "@remix-run/node";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 import { extractAuthFromRequest } from "~/shared/context.server";
+import { allowedDestinations } from "./destinations.server";
 
 type CsrfSessionData = {
   hash: string;
@@ -90,6 +91,16 @@ export const getCsrfTokenAndCookie = async (
 };
 
 export const checkCsrf = async (request: Request) => {
+  if (
+    request.headers.get("sec-fetch-mode") === "navigate" &&
+    request.method === "GET"
+  ) {
+    // Do not check CSRF for GET navigation requests to allow logged-in users to view the data.
+    // However, prevent loading the data from an iframe.
+    allowedDestinations(request, ["document"]);
+    return;
+  }
+
   const [token, setCookieValue] = await getCsrfTokenAndCookie(request);
 
   if (setCookieValue) {

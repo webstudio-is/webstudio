@@ -28,6 +28,7 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { builderSessionStorage } from "~/services/builder-session.server";
+import { allowedDestinations } from "~/services/destinations.server";
 
 export const links = () => {
   return [
@@ -53,6 +54,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
 
   if (isDashboard(request)) {
     throw redirect(dashboardPath());
