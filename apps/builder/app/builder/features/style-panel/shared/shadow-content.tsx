@@ -9,6 +9,7 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   extractShadowProperties,
+  properties,
   propertySyntaxes,
   type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
@@ -398,6 +399,9 @@ export const ShadowContent = ({
                   event.preventDefault();
                 }
 
+                // dropShadow is a function under the `filter` and `backdrop-filter` properties.
+                // which are managed using tupes. If we delete here. It delets the whole `filter` / `backdrop-filter` property.
+                // So, we avoid this ephermal operation for dropShadow.
                 if (event.key === "Escape" && property !== "dropShadow") {
                   deleteProperty(property, { isEphemeral: true });
                   setIntermediateValue(undefined);
