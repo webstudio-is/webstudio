@@ -74,7 +74,7 @@ export const loadProjectDataByBuildId = async (
     | { authToken: string }
   )
 ): Promise<Data> => {
-  const { sourceOrigin } = parseBuilderUrl(origin);
+  const { sourceOrigin } = parseBuilderUrl(params.origin);
 
   const url = new URL(sourceOrigin);
 
