@@ -41,7 +41,6 @@ import { BackfaceVisibility } from "./transform-backface-visibility";
 import { TransformPerspective } from "./transform-perspective";
 import { humanizeString } from "~/shared/string-utils";
 import { getDots } from "../../shared/collapsible-section";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origin";
 import { PropertySectionLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
@@ -76,10 +75,6 @@ export const properties = [
 
 export const Section = (props: SectionProps) => {
   const [isOpen, setIsOpen] = useState(true);
-
-  if (isFeatureEnabled("transforms") === false) {
-    return;
-  }
 
   const { currentStyle } = props;
 
