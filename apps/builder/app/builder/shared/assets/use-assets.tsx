@@ -32,6 +32,7 @@ import {
 import { Image } from "@webstudio-is/image";
 import invariant from "tiny-invariant";
 import { $imageLoader } from "~/shared/nano-states";
+import { fetch } from "~/shared/fetch.client";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   serverSyncStore.createTransaction([$assets], (assets) => {
