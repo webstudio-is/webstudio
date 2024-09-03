@@ -8,21 +8,24 @@ import { builderSessionStorage } from "~/services/builder-session.server";
 import { builderPath, isBuilder } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect, setNoStoreToRedirect } from "~/services/no-store-redirect";
+import { allowedDestinations } from "~/services/destinations.server";
 
 const debug = createDebug(import.meta.url);
 
 export const loader: LoaderFunction = async ({ request }) => {
-  preventCrossOriginCookie(request);
+  if (false === isBuilder(request)) {
+    debug(`Request url is not the builder URL ${request.url}`);
+
+    return new Response(null, {
+      status: 404,
+      statusText: "Only builder URL is allowed",
+    });
+  }
 
   try {
-    if (false === isBuilder(request)) {
-      debug(`Request url is not the builder URL ${request.url}`);
-
-      return new Response(null, {
-        status: 404,
-        statusText: "Only builder URL is allowed",
-      });
-    }
+    preventCrossOriginCookie(request);
+    allowedDestinations(request, ["document"]);
+    // CSRF is not needed for document only routes
 
     const returnTo = (await returnToPath(request)) ?? builderPath({});
 

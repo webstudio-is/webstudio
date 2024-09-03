@@ -5,16 +5,21 @@ import { AUTH_PROVIDERS } from "~/shared/session";
 import { clearReturnToCookie, returnToPath } from "~/services/cookie.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect, setNoStoreToRedirect } from "~/services/no-store-redirect";
+import { allowedDestinations } from "~/services/destinations.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  preventCrossOriginCookie(request);
-
   if (false === isDashboard(request)) {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
+  preventCrossOriginCookie(request);
+
+  allowedDestinations(request, ["document"]);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
 
   const returnTo = (await returnToPath(request)) ?? dashboardPath();
 

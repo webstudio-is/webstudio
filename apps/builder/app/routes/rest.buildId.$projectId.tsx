@@ -11,17 +11,18 @@ export const loader = async ({
   params,
   request,
 }: LoaderFunctionArgs): Promise<{ buildId: string | null }> => {
-  preventCrossOriginCookie(request);
-  allowedDestinations(request, ["document", "empty"]);
-  // CSRF check is not required here as this is a public (CLI) endpoint.
-
-  // Ensure the request is coming from the dashboard origin.
   if (false === isDashboard(request)) {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
+
+  preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
 
   try {
     const projectId = params.projectId;

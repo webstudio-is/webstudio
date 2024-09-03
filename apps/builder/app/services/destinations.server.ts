@@ -7,6 +7,8 @@ type Destinations = RequestDestination | "empty";
  * - document: The request is intended to obtain a document or an embedded resource.
  * - empty: The request is intended to obtain a resource that is not associated with a document i.e. fetch etc
  * - iframe: The request is intended to obtain a resource that is to be embedded in an iframe.
+ *
+ * IMPORTANT!!!: In most cases must be used in loaders only.
  **/
 export const allowedDestinations = (
   request: Request,
@@ -26,4 +28,8 @@ export const allowedDestinations = (
     status: 403,
     statusText: `Forbidden: Destination ${destination} not allowed`,
   });
+};
+
+export const isFetchDestination = (request: Request) => {
+  return request.headers.get("sec-fetch-dest") === "empty";
 };

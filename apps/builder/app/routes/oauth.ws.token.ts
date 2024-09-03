@@ -12,6 +12,7 @@ import {
 } from "~/services/token.server";
 import { isUserAuthorizedForProject } from "~/services/builder-access.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { isDashboard } from "~/shared/router-utils";
 
 /**
  * OAuth 2.0 Token Request
@@ -38,7 +39,16 @@ const debug = createDebug(import.meta.url);
  * https://datatracker.ietf.org/doc/html/rfc6749
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
+  if (false === isDashboard(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
   preventCrossOriginCookie(request);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All POST requests from the builder or canvas app are safeguarded by preventCrossOriginCookie
 
   debug("Token request received");
 

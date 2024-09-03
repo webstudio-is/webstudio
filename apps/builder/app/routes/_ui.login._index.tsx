@@ -51,15 +51,18 @@ export const meta: MetaFunction<typeof loader> = () => {
 export const loader = async ({
   request,
 }: LoaderFunctionArgs): Promise<TypedResponse<LoginProps>> => {
-  preventCrossOriginCookie(request);
-  allowedDestinations(request, ["document", "empty"]);
-
   if (false === isDashboard(request)) {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
+
+  preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
 
   const user = await findAuthenticatedUser(request);
 

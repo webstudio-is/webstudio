@@ -32,7 +32,10 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { builderSessionStorage } from "~/services/builder-session.server";
-import { allowedDestinations } from "~/services/destinations.server";
+import {
+  allowedDestinations,
+  isFetchDestination,
+} from "~/services/destinations.server";
 
 export const links = () => {
   return [
@@ -69,6 +72,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       status: 404,
       statusText: "Not Found",
     });
+  }
+
+  if (isFetchDestination(request)) {
+    // Remix does not provide a built-in way to add CSRF tokens to data fetches,
+    // such as client-side navigation or data refreshes.
+    // Therefore, ensure that all data fetched here is not sensitive and does not require CSRF protection.
+    // await checkCsrf(request);
   }
 
   const context = await createContext(request);
