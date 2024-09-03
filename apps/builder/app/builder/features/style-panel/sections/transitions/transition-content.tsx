@@ -24,6 +24,7 @@ import {
 import {
   parseCssValue,
   properties,
+  propertyDescriptions,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import type {
@@ -182,7 +183,7 @@ export const TransitionContent = ({
 
         <PropertyInlineLabel
           label="Duration"
-          description="Sets the length of time a transition animation should take to complete."
+          description={propertyDescriptions.transitionDuration}
           properties={["transitionDuration"]}
         />
         <CssValueInputContainer
@@ -210,7 +211,7 @@ export const TransitionContent = ({
 
         <PropertyInlineLabel
           label="Delay"
-          description="Specify the duration to wait before the transition begins."
+          description={propertyDescriptions.transitionDelay}
           properties={["transitionDelay"]}
         />
         <CssValueInputContainer

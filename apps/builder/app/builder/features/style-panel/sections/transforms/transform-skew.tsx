@@ -1,4 +1,4 @@
-import { Flex, Label, Grid } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import {
   updateRotateOrSkewPropertyValue,
   type TransformPanelProps,
@@ -13,7 +13,8 @@ import {
   UnitValue,
   type FunctionValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
+import { PropertyInlineLabel } from "../../property-label";
 
 // We use fakeProperty to pass for the CssValueInputContainer.
 // https://developer.mozilla.org/en-US/docs/Web/CSS/rotate#formal_syntax
@@ -69,7 +70,10 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <XAxisIcon />
-        <Label> Skew X</Label>
+        <PropertyInlineLabel
+          label="Skew X"
+          description={propertySyntaxes.skewX}
+        />
         <CssValueInputContainer
           key="skewX"
           styleSource="local"
@@ -91,7 +95,10 @@ export const SkewPanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <YAxisIcon />
-        <Label> Skew Y</Label>
+        <PropertyInlineLabel
+          label="Skew Y"
+          description={propertySyntaxes.skewY}
+        />
         <CssValueInputContainer
           key="skewY"
           styleSource="local"

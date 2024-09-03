@@ -1,4 +1,4 @@
-import { Flex, Grid, Label } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import {
   StyleValue,
   toValue,
@@ -12,7 +12,8 @@ import {
 } from "./transform-utils";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
+import { PropertyInlineLabel } from "../../property-label";
 
 const property: StyleProperty = "translate";
 
@@ -61,7 +62,11 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 2fr 2fr" }}
       >
         <XAxisIcon />
-        <Label> Translate X</Label>
+        <PropertyInlineLabel
+          label="Translate X"
+          description={propertySyntaxes.translateX}
+        />
+
         <CssValueInputContainer
           key="translateX"
           styleSource="local"
@@ -79,7 +84,10 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 2fr 2fr" }}
       >
         <YAxisIcon />
-        <Label> Translate Y</Label>
+        <PropertyInlineLabel
+          label="Translate Y"
+          description={propertySyntaxes.translateY}
+        />
         <CssValueInputContainer
           key="translateX"
           styleSource="local"
@@ -97,7 +105,10 @@ export const TranslatePanelContent = (props: TransformPanelProps) => {
         css={{ alignItems: "center", gridTemplateColumns: "auto 1fr 1fr" }}
       >
         <ZAxisIcon />
-        <Label> Translate Z</Label>
+        <PropertyInlineLabel
+          label="Translate Z"
+          description={propertySyntaxes.translateZ}
+        />
         <CssValueInputContainer
           key="translateX"
           styleSource="local"

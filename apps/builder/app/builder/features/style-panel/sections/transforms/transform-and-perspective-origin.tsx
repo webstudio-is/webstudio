@@ -1,12 +1,6 @@
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import { propertyDescriptions, propertySyntaxes } from "@webstudio-is/css-data";
 import type { SectionProps } from "../shared/section";
-import {
-  Label,
-  Flex,
-  Grid,
-  theme,
-  PositionGrid,
-} from "@webstudio-is/design-system";
+import { Flex, Grid, theme, PositionGrid } from "@webstudio-is/design-system";
 import {
   KeywordValue,
   StyleValue,
@@ -20,7 +14,7 @@ import { extractTransformOrPerspectiveOriginValues } from "./transform-extractor
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { calculatePositionFromOrigin } from "./transform-utils";
-import { PropertyLabel } from "../../property-label";
+import { PropertyInlineLabel, PropertyLabel } from "../../property-label";
 
 // Fake properties to use in the CssValueInputContainer
 // x, y axis takes length | percentage | keyword
@@ -141,14 +135,28 @@ export const TransformAndPerspectiveOrigin = (
         properties={[property]}
       />
       <Flex gap="6">
-        <Grid css={{ gridTemplateColumns: "1fr 1fr" }} align="center" gapX="2">
+        <Grid css={{ gridTemplateColumns: "1fr 2fr" }} align="center" gapX="2">
           <PositionGrid
             selectedPosition={{ x: xInfo, y: yInfo }}
             onSelect={handlePositionGridChange}
           />
           <Flex gap="2" direction="column">
-            <Flex gap="2" align="center">
-              <Label>X</Label>
+            <Grid
+              gap="2"
+              align="center"
+              css={{ gridTemplateColumns: "auto 1fr" }}
+            >
+              <PropertyInlineLabel
+                label="X"
+                title={
+                  property === "transformOrigin" ? "X Offset" : "X Position"
+                }
+                description={
+                  property === "transformOrigin"
+                    ? propertySyntaxes.transformOriginY
+                    : propertySyntaxes.perspectiveOriginX
+                }
+              />
               <CssValueInputContainer
                 value={origin.x}
                 keywords={xOriginKeywords}
@@ -159,9 +167,23 @@ export const TransformAndPerspectiveOrigin = (
                   handleValueChange(0, value, options)
                 }
               />
-            </Flex>
-            <Flex gap="2" align="center">
-              <Label>Y</Label>
+            </Grid>
+            <Grid
+              gap="2"
+              align="center"
+              css={{ gridTemplateColumns: "auto 1fr" }}
+            >
+              <PropertyInlineLabel
+                label="Y"
+                title={
+                  property === "transformOrigin" ? "Y Offset" : "Y Position"
+                }
+                description={
+                  property === "transformOrigin"
+                    ? propertySyntaxes.transformOriginY
+                    : propertySyntaxes.perspectiveOriginY
+                }
+              />
               <CssValueInputContainer
                 value={origin.y}
                 keywords={yOriginKeywords}
@@ -172,10 +194,18 @@ export const TransformAndPerspectiveOrigin = (
                   handleValueChange(1, value, options)
                 }
               />
-            </Flex>
+            </Grid>
             {property === "transformOrigin" && origin.z !== undefined && (
-              <Flex gap="2" align="center">
-                <Label>Z</Label>
+              <Grid
+                gap="2"
+                align="center"
+                css={{ gridTemplateColumns: "auto 1fr" }}
+              >
+                <PropertyInlineLabel
+                  label="Z"
+                  title="Z Offset"
+                  description={propertySyntaxes.transformOriginZ}
+                />
                 <CssValueInputContainer
                   value={origin.z}
                   keywords={[]}
@@ -186,7 +216,7 @@ export const TransformAndPerspectiveOrigin = (
                     handleValueChange(2, value, options)
                   }
                 />
-              </Flex>
+              </Grid>
             )}
           </Flex>
         </Grid>
