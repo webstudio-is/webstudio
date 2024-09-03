@@ -49,7 +49,8 @@ export const BorderColor = (_props: SectionProps) => {
       <Box css={{ gridColumn: `span 2` }}>
         <PropertyValueTooltip
           label="Color"
-          property={local.property as StyleProperty}
+          description="Sets the color of the border"
+          properties={properties}
           isAdvanced={isAdvanced}
         >
           <div>
