@@ -1,6 +1,11 @@
+import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { compareMedia, type StyleValue } from "@webstudio-is/css-engine";
+import {
+  compareMedia,
+  type StyleProperty,
+  type StyleValue,
+} from "@webstudio-is/css-engine";
 import type { Breakpoint, Instance } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -19,7 +24,6 @@ import {
   getPresetStyleDeclKey,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
-import { useMemo } from "react";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -125,10 +129,21 @@ export const useStyleObjectModel = () => {
   return useStore($model);
 };
 
-export const useComputedStyleDecl = (property: string) => {
+export const useComputedStyleDecl = (property: StyleProperty) => {
   const $store = useMemo(
     () => createComputedStyleDeclStore(property),
     [property]
   );
   return useStore($store);
+};
+
+export const useComputedStyles = (properties: StyleProperty[]) => {
+  const $styles = useMemo(() => {
+    return computed(
+      properties.map(createComputedStyleDeclStore),
+      (...computedStyles) => computedStyles
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, properties);
+  return useStore($styles);
 };

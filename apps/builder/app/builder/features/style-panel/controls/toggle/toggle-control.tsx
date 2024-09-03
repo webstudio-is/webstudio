@@ -1,4 +1,5 @@
 import { ToggleButton } from "@webstudio-is/design-system";
+import { declarationDescriptions } from "@webstudio-is/css-data";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
@@ -29,11 +30,16 @@ export const ToggleControl = ({
   // when there is no matching item
   const isAdvanced =
     computedStyleDecl.source.name !== "default" && currentItem === undefined;
+  const description =
+    declarationDescriptions[
+      `${property}:${currentValue}` as keyof typeof declarationDescriptions
+    ];
 
   return (
     <PropertyValueTooltip
       label={currentItem?.label ?? humanizeString(property)}
-      property={property}
+      description={description}
+      properties={[property]}
       isAdvanced={isAdvanced}
     >
       <ToggleButton
