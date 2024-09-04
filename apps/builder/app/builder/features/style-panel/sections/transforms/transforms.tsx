@@ -242,7 +242,6 @@ const TransformSection = (
             <SmallIconButton
               variant="destructive"
               tabIndex={-1}
-              disabled={properties.value.hidden}
               icon={<SubtractIcon />}
               onClick={() =>
                 handleDeleteTransformProperty({

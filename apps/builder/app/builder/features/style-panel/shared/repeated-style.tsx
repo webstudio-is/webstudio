@@ -168,7 +168,6 @@ export const RepeatedStyle = (props: {
                     <SmallIconButton
                       variant="destructive"
                       tabIndex={-1}
-                      disabled={primaryValue.hidden}
                       icon={<SubtractIcon />}
                       onClick={() =>
                         transformLayers((value) => deleteLayer(value, index))
