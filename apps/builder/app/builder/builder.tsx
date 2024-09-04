@@ -57,6 +57,7 @@ import { initBuilderApi } from "~/shared/builder-api";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
+import { mergeRefs } from "@react-aria/utils";
 
 registerContainers();
 
@@ -288,13 +289,10 @@ export const Builder = ({
   // because the events will fire in either one, depending on where the focus is
   useCopyPaste();
   useSetWindowTitle();
-  const iframeRefCallback = useCallback(
-    (element: HTMLIFrameElement) => {
-      publishRef.current = element;
-      onRefReadCanvas(element);
-    },
-    [publishRef, onRefReadCanvas]
-  );
+
+  const iframeRefCallback = mergeRefs((element: HTMLIFrameElement | null) => {
+    onRefReadCanvas(element);
+  }, publishRef);
 
   const { navigatorLayout } = useStore($settings);
   const dataLoadingState = useStore($dataLoadingState);
