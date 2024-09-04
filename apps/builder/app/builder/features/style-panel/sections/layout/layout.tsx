@@ -106,11 +106,7 @@ const GapTooltip = ({
       content={
         <PropertyInfo
           title={label}
-          description={
-            <Flex gap="2" direction="column">
-              {description}
-            </Flex>
-          }
+          description={description}
           styles={[styleDecl]}
           onReset={() => {
             onReset();
