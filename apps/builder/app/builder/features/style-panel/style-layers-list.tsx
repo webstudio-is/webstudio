@@ -198,7 +198,6 @@ export const LayersList = (props: LayerListProps) => {
                     <SmallIconButton
                       variant="destructive"
                       tabIndex={-1}
-                      disabled={layer.hidden}
                       icon={<SubtractIcon />}
                       onClick={() => handleDeleteLayer(index)}
                     />
