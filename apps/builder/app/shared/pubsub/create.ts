@@ -89,7 +89,7 @@ export const createPubsub = <PublishMap>() => {
     }
 
     // Hide the token from the subsequent subscribers
-    payload.token = "";
+    payload.token = undefined;
     return payload.action as Action<keyof PublishMap>;
   };
 
