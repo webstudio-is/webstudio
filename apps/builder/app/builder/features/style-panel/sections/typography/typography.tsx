@@ -37,7 +37,7 @@ import {
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSourceColor, type StyleInfo } from "../../shared/style-info";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import { PropertyLabel } from "../../property-label";
 
 export const properties = [
@@ -61,17 +61,13 @@ export const properties = [
 
 export const Section = (props: SectionProps) => {
   return (
-    <CollapsibleSection
-      label="Typography"
-      currentStyle={props.currentStyle}
-      properties={properties}
-    >
+    <StyleSection label="Typography" properties={properties}>
       <Flex gap="2" direction="column">
         <TypographySectionFont {...props} />
         <TypographySectionSizing />
         <TypographySectionAdvanced {...props} />
       </Flex>
-    </CollapsibleSection>
+    </StyleSection>
   );
 };
 

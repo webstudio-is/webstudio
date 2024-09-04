@@ -21,7 +21,7 @@ import {
   AutoScrollIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { getStyleSourceColor } from "../../shared/style-info";
@@ -114,12 +114,7 @@ export const Section = ({
   deleteProperty,
 }: SectionProps) => {
   return (
-    <CollapsibleSection
-      label="Size"
-      currentStyle={currentStyle}
-      properties={properties}
-      fullWidth
-    >
+    <StyleSection label="Size" properties={properties} fullWidth>
       <SectionLayout columns={2}>
         <SizeProperty property="width" />
         <SizeProperty property="height" />
@@ -190,6 +185,6 @@ export const Section = ({
           deleteProperty={deleteProperty}
         />
       </SectionLayout>
-    </CollapsibleSection>
+    </StyleSection>
   );
 };

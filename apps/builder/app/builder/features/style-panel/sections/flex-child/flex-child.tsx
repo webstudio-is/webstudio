@@ -7,7 +7,6 @@ import {
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section";
 import {
   ToggleGroupControl,
   ToggleGroupTooltip,
@@ -27,7 +26,7 @@ import {
   EllipsesIcon,
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import {
   getPriorityStyleValueSource,
   PropertyLabel,
@@ -45,19 +44,15 @@ export const properties = [
   "order",
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
-export const Section = (props: SectionProps) => {
+export const Section = () => {
   return (
-    <CollapsibleSection
-      label="Flex Child"
-      currentStyle={props.currentStyle}
-      properties={properties}
-    >
+    <StyleSection label="Flex Child" properties={properties}>
       <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
         <FlexChildSectionAlign />
         <FlexChildSectionSizing />
         <FlexChildSectionOrder />
       </Flex>
-    </CollapsibleSection>
+    </StyleSection>
   );
 };
 

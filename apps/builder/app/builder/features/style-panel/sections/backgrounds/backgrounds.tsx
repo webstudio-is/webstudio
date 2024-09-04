@@ -1,14 +1,13 @@
 import { useStore } from "@nanostores/react";
-import type { SectionProps } from "../shared/section";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
+import { useMemo } from "react";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   CssValueListItem,
   CssValueListArrowFocus,
   Flex,
   Grid,
   Label,
-  SectionTitle,
-  SectionTitleButton,
   SmallIconButton,
   SmallToggleButton,
   theme,
@@ -18,8 +17,9 @@ import {
   EyeconOpenIcon,
   EyeconClosedIcon,
   SubtractIcon,
-  PlusIcon,
 } from "@webstudio-is/icons";
+import type { SectionProps } from "../shared/section";
+import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { $assets } from "~/shared/nano-states";
 import type { StyleInfo } from "../../shared/style-info";
 import { ColorControl } from "../../controls/color/color-control";
@@ -37,15 +37,8 @@ import {
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
-import { useMemo } from "react";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import {
-  CollapsibleSectionRoot,
-  useOpenState,
-} from "~/builder/shared/collapsible-section";
-import { getDots } from "../../shared/collapsible-section";
-import { PropertyLabel, PropertySectionLabel } from "../../property-label";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import { RepeatedStyleSection } from "../../shared/style-section";
+import { PropertyLabel } from "../../property-label";
 
 const Layer = (props: {
   id: string;
@@ -149,48 +142,6 @@ export const properties = [
   "backgroundBlendMode",
 ] satisfies Array<StyleProperty>;
 
-const BackgroundsCollapsibleSection = ({
-  children,
-  currentStyle,
-  createBatchUpdate,
-}: SectionProps & { children: React.ReactNode }) => {
-  const label = "Backgrounds";
-  const [isOpen, setIsOpen] = useOpenState({ label });
-
-  return (
-    <CollapsibleSectionRoot
-      label={label}
-      fullWidth
-      isOpen={isOpen}
-      onOpenChange={(nextIsOpen) => {
-        setIsOpen(nextIsOpen);
-      }}
-      trigger={
-        <SectionTitle
-          dots={getDots(currentStyle, properties)}
-          suffix={
-            <SectionTitleButton
-              prefix={<PlusIcon />}
-              onClick={() => {
-                addLayer(currentStyle, createBatchUpdate);
-                setIsOpen(true);
-              }}
-            />
-          }
-        >
-          <PropertySectionLabel
-            label="Backgrounds"
-            description="Add one or more backgrounds to the instance such as a color, image, or gradient."
-            properties={layeredBackgroundProps}
-          />
-        </SectionTitle>
-      }
-    >
-      {children}
-    </CollapsibleSectionRoot>
-  );
-};
-
 export const Section = (props: SectionProps) => {
   const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
     props;
@@ -213,11 +164,13 @@ export const Section = (props: SectionProps) => {
   });
 
   return (
-    <BackgroundsCollapsibleSection
-      setProperty={setProperty}
-      deleteProperty={deleteProperty}
-      createBatchUpdate={createBatchUpdate}
-      currentStyle={currentStyle}
+    <RepeatedStyleSection
+      label="Backgrounds"
+      description="Add one or more backgrounds to the instance such as a color, image, or gradient."
+      properties={layeredBackgroundProps}
+      onAdd={() => {
+        addLayer(currentStyle, createBatchUpdate);
+      }}
     >
       <Flex gap={1} direction="column">
         <CssValueListArrowFocus dragItemId={dragItemId}>
@@ -270,6 +223,6 @@ export const Section = (props: SectionProps) => {
           <ColorControl property="backgroundColor" />
         </Grid>
       </Flex>
-    </BackgroundsCollapsibleSection>
+    </RepeatedStyleSection>
   );
 };

@@ -1,21 +1,12 @@
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
-import { useState } from "react";
-import {
-  Flex,
-  SectionTitle,
-  SectionTitleButton,
-  Tooltip,
-  Text,
-} from "@webstudio-is/design-system";
+import { Flex, Tooltip, Text } from "@webstudio-is/design-system";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { getDots } from "../../shared/collapsible-section";
-import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { RepeatedStyleSection } from "../../shared/style-section";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { LayersValue, type StyleProperty } from "@webstudio-is/css-engine";
 import { LayersList } from "../../style-layers-list";
 import { addLayer } from "../../style-layer-utils";
 import { FilterSectionContent } from "../../shared/filter-content";
-import { PropertySectionLabel } from "../../property-label";
 
 export const properties = ["filter"] satisfies [
   StyleProperty,
@@ -28,42 +19,21 @@ const initialFilter = "blur(0px)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionRoot
-      fullWidth
+    <RepeatedStyleSection
       label={label}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      trigger={
-        <SectionTitle
-          dots={getDots(currentStyle, properties)}
-          suffix={
-            <Tooltip content={"Add a filter"}>
-              <SectionTitleButton
-                prefix={<PlusIcon />}
-                onClick={() => {
-                  addLayer(
-                    property,
-                    parseCssValue(property, initialFilter) as LayersValue,
-                    currentStyle,
-                    props.createBatchUpdate
-                  );
-                  setIsOpen(true);
-                }}
-              />
-            </Tooltip>
-          }
-        >
-          <PropertySectionLabel
-            label={label}
-            description="Filter effects allow you to apply graphical effects like blurring, color shifting, and more to elements."
-            properties={properties}
-          />
-        </SectionTitle>
-      }
+      description="Filter effects allow you to apply graphical effects like blurring, color shifting, and more to elements."
+      properties={properties}
+      onAdd={() => {
+        addLayer(
+          property,
+          parseCssValue(property, initialFilter) as LayersValue,
+          currentStyle,
+          props.createBatchUpdate
+        );
+      }}
     >
       {value?.type === "tuple" && value.value.length > 0 && (
         <LayersList
@@ -106,6 +76,6 @@ export const Section = (props: SectionProps) => {
           }}
         />
       )}
-    </CollapsibleSectionRoot>
+    </RepeatedStyleSection>
   );
 };

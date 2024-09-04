@@ -40,10 +40,11 @@ import { SkewPanelContent } from "./transform-skew";
 import { BackfaceVisibility } from "./transform-backface-visibility";
 import { TransformPerspective } from "./transform-perspective";
 import { humanizeString } from "~/shared/string-utils";
-import { getDots } from "../../shared/collapsible-section";
+import { getDots } from "../../shared/style-section";
 import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origin";
 import { PropertySectionLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
+import { useComputedStyles } from "../../shared/model";
 
 export const transformPanels = [
   "translate",
@@ -94,6 +95,7 @@ export const Section = (props: SectionProps) => {
     panel: "perspective",
   });
 
+  const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
       fullWidth
@@ -102,7 +104,7 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, properties)}
+          dots={getDots(styles)}
           suffix={
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

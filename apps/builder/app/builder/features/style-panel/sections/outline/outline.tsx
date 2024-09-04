@@ -2,7 +2,7 @@ import { Flex, Grid, theme, Box } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorControl } from "../../controls";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import type { SectionProps } from "../shared/section";
 import { OutlineStyle } from "./outline-style";
 import { OutlineWidth } from "./outline-width";
@@ -25,11 +25,7 @@ export const Section = (props: SectionProps) => {
   }
 
   return (
-    <CollapsibleSection
-      label="Outline"
-      currentStyle={currentStyle}
-      properties={properties}
-    >
+    <StyleSection label="Outline" properties={properties}>
       <Flex direction="column" gap={2}>
         <OutlineStyle />
         {outlineStyle.value.value !== "none" && (
@@ -64,6 +60,6 @@ export const Section = (props: SectionProps) => {
           </>
         )}
       </Flex>
-    </CollapsibleSection>
+    </StyleSection>
   );
 };
