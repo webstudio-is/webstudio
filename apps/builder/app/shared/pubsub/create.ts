@@ -5,6 +5,7 @@ import { useEffectEvent } from "../hook-utils/effect-event";
 import invariant from "tiny-invariant";
 
 const apiTokenKey = "__webstudio__$__api_token";
+
 declare global {
   interface Window {
     [apiTokenKey]: string | undefined;
@@ -87,20 +88,19 @@ export const createPubsub = <PublishMap>() => {
       throw new Error("Invalid payload, not wrapped");
     }
 
+    // Hide the token from the subsequent subscribers
+    payload.token = "";
     return payload.action as Action<keyof PublishMap>;
   };
 
-  window.addEventListener(
-    "message",
-    (event: MessageEvent) => {
-      const action = unwrapAction(event.data);
-      const type = action.type;
+  const handleMessage = (event: MessageEvent) => {
+    const action = unwrapAction(event.data);
+    const type = action.type;
+    // Execute all updates within a single batch to improve performance
+    batchUpdate(() => emitter.emit(type, action.payload));
+  };
 
-      // Execute all updates within a single batch to improve performance
-      batchUpdate(() => emitter.emit(type, action.payload));
-    },
-    false
-  );
+  window.addEventListener("message", handleMessage, false);
 
   return {
     /**
