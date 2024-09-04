@@ -294,16 +294,6 @@ export const Builder = ({
     onRefReadCanvas(element);
   }, publishRef);
 
-  /*
-  useCallback(
-    (element: HTMLIFrameElement) => {
-
-      onRefReadCanvas(element);
-    },
-    [publishRef, onRefReadCanvas]
-  );
-  */
-
   const { navigatorLayout } = useStore($settings);
   const dataLoadingState = useStore($dataLoadingState);
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
