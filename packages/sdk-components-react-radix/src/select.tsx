@@ -25,7 +25,7 @@ import {
 } from "@webstudio-is/react-sdk/runtime";
 
 export const Select = forwardRef<HTMLDivElement, ComponentProps<typeof Root>>(
-  ({ value, defaultValue, ...props }) => {
+  ({ value, defaultValue, ...props }, _ref) => {
     return <Root {...props} defaultValue={value ?? defaultValue} />;
   }
 );
