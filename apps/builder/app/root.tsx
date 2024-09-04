@@ -14,5 +14,6 @@ export default function App() {
   const { features } = useLoaderData<typeof loader>();
   setEnv(features);
   useSetFeatures();
+
   return <Outlet />;
 }

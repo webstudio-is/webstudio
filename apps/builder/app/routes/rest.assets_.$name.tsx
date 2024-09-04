@@ -6,6 +6,7 @@ import type { ActionData } from "~/builder/shared/assets";
 import { createAssetClient } from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { checkCsrf } from "~/services/csrf-session.server";
 
 const UrlBody = z.object({
   url: z.string(),
@@ -15,6 +16,7 @@ export const action = async (
   props: ActionFunctionArgs
 ): Promise<ActionData | Array<Asset> | undefined> => {
   preventCrossOriginCookie(props.request);
+  await checkCsrf(props.request);
 
   const { request, params } = props;
 

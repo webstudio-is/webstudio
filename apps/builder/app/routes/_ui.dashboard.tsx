@@ -12,6 +12,7 @@ import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
 import { redirect } from "~/services/no-store-redirect";
 import { preconnect, prefetchDNS } from "react-dom";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { allowedDestinations } from "~/services/destinations.server";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
@@ -24,14 +25,18 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  preventCrossOriginCookie(request);
-
   if (false === isDashboard(request)) {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
+
+  preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
 
   const user = await findAuthenticatedUser(request);
 

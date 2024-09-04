@@ -5,6 +5,8 @@ import { loadProductionCanvasData } from "~/shared/db";
 import { createContext } from "~/shared/context.server";
 import { getUserById, type User } from "~/shared/db/user.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { allowedDestinations } from "~/services/destinations.server";
+import { isDashboard } from "~/shared/router-utils";
 
 export const loader = async ({
   params,
@@ -15,7 +17,18 @@ export const loader = async ({
     projectTitle: string;
   }
 > => {
+  if (false === isDashboard(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
 
   try {
     const buildId = params.buildId;

@@ -44,7 +44,10 @@ const getLatestBuildUsingProjectId = async (params: {
   authToken: string;
 }): Promise<{ buildId: string | null }> => {
   const { origin, projectId, authToken } = params;
-  const url = new URL(origin);
+
+  const { sourceOrigin } = parseBuilderUrl(origin);
+
+  const url = new URL(sourceOrigin);
   url.pathname = `/rest/buildId/${projectId}`;
 
   const headers = new Headers();
@@ -71,7 +74,10 @@ export const loadProjectDataByBuildId = async (
     | { authToken: string }
   )
 ): Promise<Data> => {
-  const url = new URL(params.origin);
+  const { sourceOrigin } = parseBuilderUrl(params.origin);
+
+  const url = new URL(sourceOrigin);
+
   url.pathname = `/rest/build/${params.buildId}`;
 
   const headers = new Headers();

@@ -5,6 +5,7 @@ import {
   RateLimitException,
   textToRateLimitMeta,
 } from "./api-exceptions";
+import { fetch } from "~/shared/fetch.client";
 
 export const fetchTranscription = async (file: File) => {
   const formData = new FormData();

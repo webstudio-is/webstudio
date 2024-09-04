@@ -10,6 +10,8 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
 
+  // No data to protect with CSRF token
+
   const url = new URL(request.url);
 
   // Redirecting asset files (e.g., .js, .css) to the dashboard should be avoided.

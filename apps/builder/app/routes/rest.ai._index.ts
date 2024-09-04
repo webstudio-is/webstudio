@@ -19,6 +19,7 @@ import { createContext } from "~/shared/context.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { checkCsrf } from "~/services/csrf-session.server";
 
 export const RequestParams = z.object({
   projectId: z.string().min(1, "nonempty"),
@@ -43,6 +44,7 @@ export const config = {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
+  await checkCsrf(request);
 
   const context = await createContext(request);
   // @todo Reinstate isFeatureEnabled('ai')

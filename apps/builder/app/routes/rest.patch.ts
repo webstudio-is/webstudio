@@ -43,6 +43,7 @@ import { db } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
 import { publicStaticEnv } from "~/env/env.static";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { checkCsrf } from "~/services/csrf-session.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -59,12 +60,14 @@ export const action = async ({
   | { status: "authorization_error"; errors: string }
   | { status: "error"; errors: string }
 > => {
-  preventCrossOriginCookie(request);
-
-  enableMapSet();
-  enablePatches();
-
   try {
+    preventCrossOriginCookie(request);
+
+    enableMapSet();
+    enablePatches();
+
+    await checkCsrf(request);
+
     const {
       buildId,
       projectId,
@@ -104,9 +107,7 @@ export const action = async ({
       context.authorization.authToken === undefined
     ) {
       return {
-        // We use version_mismatched here to support older browser client
-        // @todo change on authorization_error after 15/09/2024
-        status: "version_mismatched",
+        status: "authorization_error",
         errors:
           "Due to a recent update or a possible logout, you may need to log in again. Please reload the page and sign in to continue.",
       };
@@ -385,6 +386,20 @@ export const action = async ({
       return {
         status: "authorization_error",
         errors: error.message,
+      };
+    }
+
+    if (error instanceof Response && error.ok === false) {
+      return {
+        status: "authorization_error",
+        errors: error.statusText,
+      };
+    }
+
+    if (error instanceof Response) {
+      return {
+        status: "error",
+        errors: await error.text(),
       };
     }
 

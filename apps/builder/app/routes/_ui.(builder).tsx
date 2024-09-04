@@ -6,7 +6,11 @@
 import { lazy } from "react";
 import { useLoaderData } from "@remix-run/react";
 import type { MetaFunction, ShouldRevalidateFunction } from "@remix-run/react";
-import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import {
+  json,
+  type HeadersArgs,
+  type LoaderFunctionArgs,
+} from "@remix-run/server-runtime";
 
 import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
@@ -28,6 +32,10 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { builderSessionStorage } from "~/services/builder-session.server";
+import {
+  allowedDestinations,
+  isFetchDestination,
+} from "~/services/destinations.server";
 
 export const links = () => {
   return [
@@ -53,6 +61,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
 
   if (isDashboard(request)) {
     throw redirect(dashboardPath());
@@ -63,6 +72,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       status: 404,
       statusText: "Not Found",
     });
+  }
+
+  if (isFetchDestination(request)) {
+    // Remix does not provide a built-in way to add CSRF tokens to data fetches,
+    // such as client-side navigation or data refreshes.
+    // Therefore, ensure that all data fetched here is not sensitive and does not require CSRF protection.
+    // await checkCsrf(request);
   }
 
   const context = await createContext(request);
@@ -181,6 +197,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       );
     }
 
+    headers.set(
+      // Disallowing iframes from loading any content except the canvas
+      // Still possible create iframes on canvas itself (but we use credentialless attribute)
+      // Still possible create iframe without src attribute
+      // Disable workers on builder
+      "Content-Security-Policy",
+      `frame-src ${url.origin}/canvas; worker-src 'none'`
+    );
+
     return json(
       {
         project,
@@ -216,9 +241,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
  * https://web.dev/articles/bfcache
  *
  */
-export const headers = () => {
+export const headers = ({ loaderHeaders }: HeadersArgs) => {
   return {
     "Cache-Control": "no-store",
+    "Content-Security-Policy": loaderHeaders.get("Content-Security-Policy"),
   };
 };
 

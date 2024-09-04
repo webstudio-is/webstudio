@@ -48,7 +48,7 @@ export const clearReturnToCookie = async (
     return response;
   }
 
-  const resultResponse = response.clone();
+  const resultResponse = new Response(response.body, response);
   resultResponse.headers.append(
     "Set-Cookie",
     await returnToCookie.serialize(null, { maxAge: -1 })

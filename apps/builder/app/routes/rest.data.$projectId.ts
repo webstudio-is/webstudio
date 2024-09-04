@@ -4,9 +4,13 @@ import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.serve
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { checkCsrf } from "~/services/csrf-session.server";
+import { allowedDestinations } from "~/services/destinations.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  await checkCsrf(request);
 
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");

@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { z } from "zod";
+import { checkCsrf } from "~/services/csrf-session.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const zTranscription = z.object({
@@ -9,6 +10,7 @@ const zTranscription = z.object({
 // @todo: move to AI package
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
+  await checkCsrf(request);
 
   // @todo: validate request
   const formData = await request.formData();

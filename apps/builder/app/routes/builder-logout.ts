@@ -26,6 +26,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
+  if (request.headers.get("sec-fetch-site") === "same-origin") {
+    // To prevent logout initiated from the builder iframe
+    throw new Error("Only cross-origin requests are allowed");
+  }
+
   if (
     false === request.headers.get("Content-Type")?.includes("application/json")
   ) {

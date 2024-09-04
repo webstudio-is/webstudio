@@ -12,6 +12,7 @@ import {
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { checkCsrf } from "~/services/csrf-session.server";
 
 export const RequestParams = z.object({
   prompt: z.string().max(1200),
@@ -19,6 +20,7 @@ export const RequestParams = z.object({
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
+  await checkCsrf(request);
 
   // @todo Reinstate isFeatureEnabled('ai')
 

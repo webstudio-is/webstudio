@@ -14,6 +14,7 @@ import {
   $styleSources,
   $styles,
 } from "./nano-states";
+import { fetch } from "~/shared/fetch.client";
 
 export type BuilderData = WebstudioData & {
   marketplaceProduct: undefined | MarketplaceProduct;
@@ -71,6 +72,7 @@ export const loadBuilderData = async ({
     url.searchParams.set("authToken", authToken);
   }
   const response = await fetch(url, { signal });
+
   if (response.ok) {
     const data: Awaited<ReturnType<typeof loader>> = await response.json();
     return {
@@ -90,5 +92,15 @@ export const loadBuilderData = async ({
       marketplaceProduct: data.marketplaceProduct,
     } satisfies BuilderData & { version: number };
   }
-  throw Error("Unable to load builder data");
+
+  const text = await response.text();
+
+  // No toasts available in this context
+  alert(
+    `Unable to load builder data. Response status: ${response.status}. Response text: ${text}`
+  );
+
+  throw Error(
+    `Unable to load builder data. Response status: ${response.status}. Response text: ${text}`
+  );
 };

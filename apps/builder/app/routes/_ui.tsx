@@ -6,13 +6,24 @@ import {
   Scripts,
   ScrollRestoration,
   useRouteError,
+  type ClientLoaderFunctionArgs,
 } from "@remix-run/react";
 import interFont from "@fontsource-variable/inter/index.css?url";
 import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
 import robotoMonoFont from "@fontsource/roboto-mono/index.css?url";
 import appCss from "../shared/app.css?url";
-import type { LinksFunction } from "@remix-run/server-runtime";
+import {
+  json,
+  type LinksFunction,
+  type LoaderFunctionArgs,
+} from "@remix-run/server-runtime";
 import { ErrorMessage } from "~/shared/error/error-message";
+import { getCsrfTokenAndCookie } from "~/services/csrf-session.server";
+import invariant from "tiny-invariant";
+import {
+  csrfToken as clientCsrfToken,
+  updateCsrfToken,
+} from "~/shared/csrf.client";
 
 export const links: LinksFunction = () => {
   // `links` returns an array of objects whose
@@ -42,6 +53,44 @@ const Document = (props: { children: React.ReactNode }) => {
     </html>
   );
 };
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const [csrfToken, setCookieValue] = await getCsrfTokenAndCookie(request);
+
+  if (request.headers.get("sec-fetch-mode") !== "navigate") {
+    return json({ csrfToken: "" });
+  }
+
+  const headers = new Headers();
+
+  if (setCookieValue !== undefined) {
+    headers.set("Set-Cookie", setCookieValue);
+  }
+
+  return json(
+    { csrfToken },
+    {
+      headers,
+    }
+  );
+};
+
+export const clientLoader = async ({
+  serverLoader,
+}: ClientLoaderFunctionArgs) => {
+  const serverData = await serverLoader<typeof loader>();
+  if (clientCsrfToken === undefined) {
+    const { csrfToken } = serverData;
+    invariant(csrfToken !== "", "CSRF token is empty");
+    updateCsrfToken(csrfToken);
+  }
+
+  // Hide real CSRF token from window.__remixContext
+  serverData.csrfToken = "";
+  return serverData;
+};
+
+clientLoader.hydrate = true;
 
 export const ErrorBoundary = () => {
   const error = useRouteError();

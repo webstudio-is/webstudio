@@ -36,6 +36,7 @@ import {
   textToRateLimitMeta,
 } from "./api-exceptions";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { fetch } from "~/shared/fetch.client";
 
 const unknownArray = z.array(z.unknown());
 

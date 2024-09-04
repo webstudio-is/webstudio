@@ -10,6 +10,7 @@ import { redirect, type ActionFunctionArgs } from "react-router-dom";
 import { ClientOnly } from "~/shared/client-only";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { lazy, useRef } from "react";
+import { allowedDestinations } from "~/services/destinations.server";
 
 const logoutCaller = createCallerFactory(logoutRouter);
 
@@ -29,6 +30,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
 
   const context = await createContext(request);
 

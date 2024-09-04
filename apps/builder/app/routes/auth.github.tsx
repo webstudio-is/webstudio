@@ -11,14 +11,16 @@ export default function GH() {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  preventCrossOriginCookie(request);
-
   if (false === isDashboard(request)) {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
+
+  preventCrossOriginCookie(request);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All POST requests from the builder or canvas app are safeguarded by preventCrossOriginCookie
 
   const returnTo = (await returnToPath(request)) ?? dashboardPath();
 

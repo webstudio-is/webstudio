@@ -44,6 +44,7 @@ import {
   mergeSystem,
 } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
+import { fetch } from "~/shared/fetch.client";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],

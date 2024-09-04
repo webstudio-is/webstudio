@@ -7,10 +7,11 @@ import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
 import { createCodeToken } from "~/services/token.server";
 import { isUserAuthorizedForProject } from "~/services/builder-access.server";
-import { loginPath } from "~/shared/router-utils";
+import { isDashboard, loginPath } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import * as session from "~/services/session.server";
 import { redirect } from "~/services/no-store-redirect";
+import { allowedDestinations } from "~/services/destinations.server";
 
 const debug = createDebug(import.meta.url);
 
@@ -71,7 +72,18 @@ const OAuthRedirectUri = z.object({
  * https://datatracker.ietf.org/doc/html/rfc7636
  */
 export const loader: LoaderFunction = async ({ request }) => {
+  if (false === isDashboard(request)) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+
   preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document"]);
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
 
   try {
     debug("Authorize request received", request.url);

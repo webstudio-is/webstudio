@@ -11,6 +11,7 @@ import {
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { checkCsrf } from "~/services/csrf-session.server";
 
 export const loader = async ({
   params,
@@ -24,13 +25,14 @@ export const loader = async ({
 };
 
 export const action = async (props: ActionFunctionArgs) => {
-  preventCrossOriginCookie(props.request);
-
-  const { request } = props;
-
-  const context = await createContext(request);
-
   try {
+    preventCrossOriginCookie(props.request);
+    await checkCsrf(props.request);
+
+    const { request } = props;
+
+    const context = await createContext(request);
+
     if (request.method === "POST") {
       const formData = await request.formData();
       const projectId = formData.get("projectId") as string;
