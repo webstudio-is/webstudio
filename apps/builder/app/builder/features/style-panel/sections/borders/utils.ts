@@ -1,11 +1,10 @@
 import { theme, type CSS } from "@webstudio-is/design-system";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
   SetProperty,
 } from "../../shared/use-style-data";
-import type { StyleInfo } from "../../shared/style-info";
 
 export const deleteAllProperties: (
   styleProperties: readonly StyleProperty[],
@@ -39,20 +38,4 @@ export const rowCss: CSS = {
   // See ./border-property.tsx for more details
   gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
   gap: theme.spacing[5],
-};
-
-export const isAdvancedValue = (
-  properties: Array<StyleProperty>,
-  currentStyle: StyleInfo
-) => {
-  const values = properties.map((property) =>
-    toValue(currentStyle[property]?.value)
-  );
-
-  // We can represent the value with a toggle group if all values are the same.
-  return (
-    values[0] !== values[1] ||
-    values[0] !== values[2] ||
-    values[0] !== values[3]
-  );
 };

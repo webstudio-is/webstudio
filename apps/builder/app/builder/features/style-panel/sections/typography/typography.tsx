@@ -7,7 +7,7 @@ import {
   IconButton,
 } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
 import {
   ColorControl,
@@ -144,139 +144,99 @@ const TypographySectionSizing = () => {
 };
 
 export const TypographySectionAdvanced = (props: SectionProps) => {
-  const { currentStyle } = props;
-  const textAlignValue = toValue(currentStyle.textAlign?.value);
   return (
     <Grid gap="2" columns="2" align="end">
       <ToggleGroupControl
-        {...props}
-        property="textAlign"
-        value={
-          // Convert to logical props
-          textAlignValue === "left"
-            ? "start"
-            : textAlignValue === "right"
-              ? "end"
-              : textAlignValue
-        }
+        properties={["textAlign"]}
         items={[
           {
             child: <TextAlignLeftIcon />,
-            title: "Text Align",
             description: "Aligns the text based on the writing direction.",
             value: "start",
-            propertyValues: "text-align: start;",
           },
           {
             child: <TextAlignCenterIcon />,
-            title: "Text Align",
             description: "Centers the text horizontally within its container.",
             value: "center",
-            propertyValues: "text-align: center;",
           },
           {
             child: <TextAlignRightIcon />,
-            title: "Text Align",
             description: "Aligns the text based on the writing direction.",
             value: "end",
-            propertyValues: "text-align: end;",
           },
           {
             child: <TextAlignJustifyIcon />,
-            title: "Text Align",
             description:
               "Adjusts word spacing to align text to both the left and right edges of the container",
             value: "justify",
-            propertyValues: "text-align: justify;",
           },
         ]}
       />
       <ToggleGroupControl
-        {...props}
-        property="textDecorationLine"
+        properties={["textDecorationLine"]}
         items={[
           {
             child: <CrossSmallIcon />,
-            title: "Text Decoration Line",
             description: "No decoration is applied to the text.",
             value: "none",
-            propertyValues: "text-decoration-line: none;",
           },
           {
-            title: "Text Decoration Line",
             child: <TextUnderlineIcon />,
-            description: " Adds a horizontal line underneath the text.",
+            description: "Adds a horizontal line underneath the text.",
             value: "underline",
-            propertyValues: "text-decoration-line: underline;",
           },
           {
-            title: "Text Decoration Line",
             child: <TextStrikethroughIcon />,
             description:
               "Draws a horizontal line through the middle of the text.",
             value: "line-through",
-            propertyValues: "text-decoration-line: line-through;",
           },
         ]}
       />
       <ToggleGroupControl
-        {...props}
-        property="textTransform"
+        properties={["textTransform"]}
         items={[
           {
             child: <CrossSmallIcon />,
-            title: "Text Transform",
             description:
               "No transformation is applied to the text. The text appears as it is.",
             value: "none",
-            propertyValues: "text-transform: none;",
           },
           {
             child: <TextUppercaseIcon />,
-            title: "Text Transform",
             description:
               "Transforms the text to appear in all uppercase letters.",
             value: "uppercase",
-            propertyValues: "text-transform: uppercase;",
           },
           {
             child: <TextCapitalizeIcon />,
-            title: "Text Transform",
             description:
               "Transforms the first character of each word to uppercase, while the remaining characters are in lowercase.",
             value: "capitalize",
-            propertyValues: "text-transform: capitalize;",
           },
           {
             child: <TextLowercaseIcon />,
-            title: "Text Transform",
             description:
               " Transforms the text to appear in all lowercase letters.",
             value: "lowercase",
-            propertyValues: "text-transform: lowercase;",
           },
         ]}
       />
       <Grid align="end" gap="1" css={{ gridTemplateColumns: "3fr 1fr" }}>
         <ToggleGroupControl
-          {...props}
-          property="fontStyle"
+          properties={["fontStyle"]}
           items={[
             {
               child: <CrossSmallIcon />,
-              title: "Font Style",
               description:
                 "The default value. The text appears in a normal, upright style.",
               value: "normal",
-              propertyValues: "font-style: normal;",
             },
             {
               child: <TextItalicIcon />,
-              title: "Font Style",
               description:
                 "The text appears in italic style, where it is slanted to the right.",
               value: "italic",
-              propertyValues: "font-style: italic;",
             },
           ]}
         />
@@ -376,24 +336,19 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               properties={["direction"]}
             />
             <ToggleGroupControl
-              {...props}
-              property="direction"
+              properties={["direction"]}
               items={[
                 {
                   child: <TextDirectionLTRIcon />,
-                  title: "Direction",
                   description:
                     "Sets the text direction to left-to-right, which is the default for most languages.",
                   value: "ltr",
-                  propertyValues: "direction: ltr;",
                 },
                 {
                   child: <TextDirectionRTLIcon />,
-                  title: "Direction",
                   description:
                     "Sets the text direction to right-to-left, typically used for languages such as Arabic or Hebrew.",
                   value: "rtl",
-                  propertyValues: "direction: rtl;",
                 },
               ]}
             />
@@ -405,24 +360,19 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               properties={["hyphens"]}
             />
             <ToggleGroupControl
-              {...props}
-              property="hyphens"
+              properties={["hyphens"]}
               items={[
                 {
                   child: <CrossSmallIcon />,
-                  title: "Hyphens",
                   description:
                     "Disables hyphenation of words. Words will not be hyphenated even if they exceed the width of their container.",
                   value: "manual",
-                  propertyValues: "hyphens: none;",
                 },
                 {
                   child: <TextHyphenIcon />,
-                  title: "Hyphens",
                   description:
                     "Enables automatic hyphenation of words. The browser will hyphenate long words at appropriate points to fit within the width of their container.",
                   value: "auto",
-                  propertyValues: "hyphens: auto;",
                 },
               ]}
             />
@@ -434,24 +384,19 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               properties={["textOverflow"]}
             />
             <ToggleGroupControl
-              {...props}
-              property="textOverflow"
+              properties={["textOverflow"]}
               items={[
                 {
                   child: <CrossSmallIcon />,
-                  title: "Text Overflow",
                   description:
                     "The overflowing text is clipped and hidden without any indication.",
                   value: "clip",
-                  propertyValues: "text-overflow: clip;",
                 },
                 {
                   child: <TextTruncateIcon />,
-                  title: "Text Overflow",
                   description:
                     "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: white-space: nowrap; overflow: hidden;",
                   value: "ellipsis",
-                  propertyValues: "text-overflow: ellipsis;",
                 },
               ]}
             />

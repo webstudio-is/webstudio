@@ -112,7 +112,6 @@ export const Section = ({
   currentStyle,
   setProperty,
   deleteProperty,
-  createBatchUpdate,
 }: SectionProps) => {
   return (
     <CollapsibleSection
@@ -143,53 +142,33 @@ export const Section = ({
           properties={["overflowX", "overflowY"]}
         />
         <ToggleGroupControl
-          property="overflowX"
-          currentStyle={currentStyle}
-          setProperty={() => (value) => {
-            const batch = createBatchUpdate();
-            batch.setProperty("overflowX")(value);
-            batch.setProperty("overflowY")(value);
-            batch.publish();
-          }}
-          deleteProperty={() => {
-            const batch = createBatchUpdate();
-            batch.deleteProperty("overflowX");
-            batch.deleteProperty("overflowY");
-            batch.publish();
-          }}
+          label="Overflow"
+          properties={["overflowX", "overflowY"]}
           items={[
             {
               child: <EyeconOpenIcon />,
-              title: "Overflow",
               description:
                 "Content is fully visible and extends beyond the container if it exceeds its size.",
               value: "visible",
-              propertyValues: "overflow-x: visible;\noverflow-y: visible;",
             },
             {
               child: <EyeconClosedIcon />,
-              title: "Overflow",
               description:
                 "Content that exceeds the container's size is clipped and hidden without scrollbars.",
               value: "hidden",
-              propertyValues: "overflow-x: hidden;\noverflow-y: hidden;",
             },
             {
               child: <ScrollIcon />,
-              title: "Overflow",
               description:
                 "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
               value: "scroll",
-              propertyValues: "overflow-x: scroll;\noverflow-y: scroll;",
             },
 
             {
               child: <AutoScrollIcon />,
-              title: "Overflow",
               description:
                 "Scrollbars are added to the container only when necessary, based on the content size.",
               value: "auto",
-              propertyValues: "overflow-x: auto;\noverflow-y: auto;",
             },
           ]}
         />

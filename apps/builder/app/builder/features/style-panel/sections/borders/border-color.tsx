@@ -1,7 +1,6 @@
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
-import type { SectionProps } from "../shared/section";
 import { rowCss } from "./utils";
 import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
 import { ColorPicker } from "../../shared/color-picker";
@@ -17,7 +16,7 @@ export const properties = [
 
 const { items } = styleConfigByName("borderTopColor");
 
-export const BorderColor = (_props: SectionProps) => {
+export const BorderColor = () => {
   const styles = [
     useComputedStyleDecl("borderTopColor"),
     useComputedStyleDecl("borderRightColor"),

@@ -37,11 +37,11 @@ import {
 } from "./background-layers";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { BackgroundSize } from "./background-size";
-import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
 import { PropertyInlineLabel } from "../../property-label";
+import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
@@ -109,6 +109,86 @@ const BackgroundSection = styled("div", {
 const Spacer = styled("div", {
   height: theme.spacing[5],
 });
+
+const BackgroundRepeat = (props: BackgroundContentProps) => {
+  const { currentStyle, setProperty } = props;
+  const items = [
+    {
+      child: <CrossSmallIcon />,
+      description:
+        "This value indicates that the background image will not be repeated and will appear only once.",
+      value: "no-repeat",
+    },
+    {
+      child: <RepeatGridIcon />,
+      description:
+        "This value indicates that the background image will be repeated both horizontally and vertically to fill the entire background area.",
+      value: "repeat",
+    },
+    {
+      child: <RepeatColumnIcon />,
+      description:
+        "This value indicates that the background image will be repeated only vertically.",
+      value: "repeat-y",
+    },
+    {
+      child: <RepeatRowIcon />,
+      description:
+        "This value indicates that the background image will be repeated only horizontally.",
+      value: "repeat-x",
+    },
+  ];
+  // Issue: The tooltip's grace area is too big and overlaps with nearby buttons,
+  // preventing the tooltip from changing when the buttons are hovered over in certain cases.
+  // To solve issue and allow tooltips to change on button hover,
+  // we close the button tooltip in the ToggleGroupButton.onMouseEnter handler.
+  // onMouseEnter used to preserve default hovering behavior on tooltip.
+  const [activeTooltip, setActiveTooltip] = useState<undefined | string>();
+  return (
+    <>
+      <PropertyInlineLabel
+        label="Repeat"
+        description={propertyDescriptions.backgroundRepeat}
+        properties={["backgroundRepeat"]}
+      />
+
+      <Flex css={{ justifySelf: "end" }}>
+        <ToggleGroup
+          type="single"
+          value={toValue(currentStyle.backgroundRepeat?.value)}
+          onValueChange={(value) => {
+            setProperty("backgroundRepeat")({
+              type: "keyword",
+              value,
+            });
+          }}
+        >
+          {items.map((item) => (
+            <ToggleGroupTooltip
+              key={item.value}
+              isOpen={item.value === activeTooltip}
+              onOpenChange={(isOpen) =>
+                setActiveTooltip(isOpen ? item.value : undefined)
+              }
+              isSelected={false}
+              label="Background Repeat"
+              code={`background-repeat: ${item.value};`}
+              description={item.description}
+              properties={["backgroundRepeat"]}
+            >
+              <ToggleGroupButton
+                value={item.value}
+                onMouseEnter={() => setActiveTooltip(item.value)}
+              >
+                {item.child}
+              </ToggleGroupButton>
+            </ToggleGroupTooltip>
+          ))}
+        </ToggleGroup>
+      </Flex>
+    </>
+  );
+};
 
 export const BackgroundContent = (props: BackgroundContentProps) => {
   const setProperty = safeSetProperty(props.setProperty);
@@ -218,58 +298,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           align="center"
           gap={2}
         >
-          {imageGradientToggle === "image" && (
-            <>
-              <PropertyInlineLabel
-                label="Repeat"
-                description={propertyDescriptions.backgroundRepeat}
-                properties={["backgroundRepeat"]}
-              />
-
-              <Flex css={{ justifySelf: "end" }}>
-                <ToggleGroupControl
-                  currentStyle={currentStyle}
-                  setProperty={setProperty}
-                  deleteProperty={deleteProperty}
-                  property="backgroundRepeat"
-                  items={[
-                    {
-                      child: <CrossSmallIcon />,
-                      title: "Background Repeat",
-                      description:
-                        "This value indicates that the background image will not be repeated and will appear only once.",
-                      value: "no-repeat",
-                      propertyValues: "background-repeat: no-repeat;",
-                    },
-                    {
-                      child: <RepeatGridIcon />,
-                      title: "Background Repeat",
-                      description:
-                        "This value indicates that the background image will be repeated both horizontally and vertically to fill the entire background area.",
-                      value: "repeat",
-                      propertyValues: "background-repeat: repeat;",
-                    },
-                    {
-                      child: <RepeatColumnIcon />,
-                      title: "Background Repeat",
-                      description:
-                        "This value indicates that the background image will be repeated only vertically.",
-                      value: "repeat-y",
-                      propertyValues: "background-repeat: repeat-y;",
-                    },
-                    {
-                      child: <RepeatRowIcon />,
-                      title: "Background Repeat",
-                      description:
-                        "This value indicates that the background image will be repeated only horizontally.",
-                      value: "repeat-x",
-                      propertyValues: "background-repeat: repeat-x;",
-                    },
-                  ]}
-                />
-              </Flex>
-            </>
-          )}
+          {imageGradientToggle === "image" && <BackgroundRepeat {...props} />}
 
           <PropertyInlineLabel
             label="Attachment"

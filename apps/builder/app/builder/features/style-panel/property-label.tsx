@@ -168,8 +168,8 @@ export const PropertyInfo = ({
   );
 };
 
-const getPriorityStyleSource = (
-  styleSources: StyleValueSourceColor[]
+export const getPriorityStyleValueSource = (
+  styles: ComputedStyleDecl[]
 ): StyleValueSourceColor => {
   const customOrder: StyleValueSourceColor[] = [
     "overwritten",
@@ -178,6 +178,7 @@ const getPriorityStyleSource = (
     "preset",
     "default",
   ];
+  const styleSources = styles.map((styleDecl) => styleDecl.source.name);
   for (const color of customOrder) {
     if (styleSources.includes(color)) {
       return color;
@@ -196,8 +197,7 @@ export const PropertyLabel = ({
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
-  const colors = styles.map(({ source }) => source.name);
-  const styleValueSourceColor = getPriorityStyleSource(colors);
+  const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
     const batch = createBatchUpdate();
@@ -255,8 +255,7 @@ export const PropertySectionLabel = ({
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
-  const colors = styles.map(({ source }) => source.name);
-  const styleValueSourceColor = getPriorityStyleSource(colors);
+  const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
     const batch = createBatchUpdate();

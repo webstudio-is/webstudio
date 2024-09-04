@@ -110,7 +110,7 @@ const $model = computed(
   }
 );
 
-export const createComputedStyleDeclStore = (property: string) => {
+export const createComputedStyleDeclStore = (property: StyleProperty) => {
   return computed(
     [$model, $selectedInstanceSelector, $selectedOrLastStyleSourceSelector],
     (model, instanceSelector, styleSourceSelector) => {

@@ -6,18 +6,12 @@ import {
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import type { SectionProps } from "../shared/section";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import {
   declarationDescriptions,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import {
-  deleteAllProperties,
-  setAllProperties,
-  rowCss,
-  isAdvancedValue,
-} from "./utils";
+import { rowCss } from "./utils";
 import { PropertyLabel } from "../../property-label";
 
 export const properties: [StyleProperty, ...StyleProperty[]] = [
@@ -27,60 +21,7 @@ export const properties: [StyleProperty, ...StyleProperty[]] = [
   "borderBottomStyle",
 ];
 
-const items = [
-  {
-    child: <SmallXIcon />,
-    title: "None",
-    description: declarationDescriptions["borderBlockStyle:none"],
-    value: "none",
-    propertyValues: "border-style: none;",
-  },
-  {
-    child: <DashBorderIcon />,
-    title: "Solid",
-    description: declarationDescriptions["borderBlockStyle:solid"],
-    value: "solid",
-    propertyValues: "border-style: solid;",
-  },
-  {
-    child: <DashedBorderIcon />,
-    title: "Dashed",
-    description: declarationDescriptions["borderBlockStyle:dashed"],
-    value: "dashed",
-    propertyValues: "border-style: dashed;",
-  },
-  {
-    child: <DottedBorderIcon />,
-    title: "Dotted",
-    description: declarationDescriptions["borderBlockStyle:dotted"],
-    value: "dotted",
-    propertyValues: "border-style: dotted;",
-  },
-];
-
-export const BorderStyle = (
-  props: Pick<
-    SectionProps,
-    "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
-  >
-) => {
-  // We do not use shorthand properties such as borderWidth or borderRadius in our code.
-  // However, in the UI, we can display a single field, and in that case, we can use any property
-  // from the shorthand property set and pass it instead.
-  const firstPropertyName = properties[0];
-
-  const deleteBorderProperties = deleteAllProperties(
-    properties,
-    props.createBatchUpdate
-  );
-
-  const setBorderProperties = setAllProperties(
-    properties,
-    props.createBatchUpdate
-  )(firstPropertyName);
-
-  const handleDelete = () => deleteBorderProperties(firstPropertyName);
-
+export const BorderStyle = () => {
   return (
     <Grid css={rowCss}>
       <PropertyLabel
@@ -90,12 +31,30 @@ export const BorderStyle = (
       />
       <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
         <ToggleGroupControl
-          {...props}
-          items={items}
-          property={firstPropertyName}
-          deleteProperty={handleDelete}
-          setProperty={() => setBorderProperties}
-          isAdvanced={isAdvancedValue(properties, props.currentStyle)}
+          label="Style"
+          properties={properties}
+          items={[
+            {
+              child: <SmallXIcon />,
+              description: declarationDescriptions["borderBlockStyle:none"],
+              value: "none",
+            },
+            {
+              child: <DashBorderIcon />,
+              description: declarationDescriptions["borderBlockStyle:solid"],
+              value: "solid",
+            },
+            {
+              child: <DashedBorderIcon />,
+              description: declarationDescriptions["borderBlockStyle:dashed"],
+              value: "dashed",
+            },
+            {
+              child: <DottedBorderIcon />,
+              description: declarationDescriptions["borderBlockStyle:dotted"],
+              value: "dotted",
+            },
+          ]}
         />
       </Box>
     </Grid>

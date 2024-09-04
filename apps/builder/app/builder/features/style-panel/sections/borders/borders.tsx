@@ -34,8 +34,8 @@ export const Section = (props: SectionProps) => {
       properties={properties}
     >
       <Flex direction="column" gap={2}>
-        <BorderStyle {...props} />
-        <BorderColor {...props} />
+        <BorderStyle />
+        <BorderColor />
         <BorderWidth {...props} />
         <BorderRadius {...props} />
       </Flex>
