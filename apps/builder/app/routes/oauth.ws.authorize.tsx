@@ -2,12 +2,20 @@ import { json, type LoaderFunction } from "@remix-run/server-runtime";
 import { z } from "zod";
 import { createDebug } from "~/shared/debug";
 import { fromError } from "zod-validation-error";
-import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
+import {
+  getAuthorizationServerOrigin,
+  isBuilderUrl,
+} from "~/shared/router-utils/origins";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
 import { createCodeToken } from "~/services/token.server";
 import { isUserAuthorizedForProject } from "~/services/builder-access.server";
-import { isDashboard, loginPath } from "~/shared/router-utils";
+import {
+  builderUrl,
+  compareUrls,
+  isDashboard,
+  loginPath,
+} from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import * as session from "~/services/session.server";
 import { redirect } from "~/services/no-store-redirect";
@@ -113,7 +121,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     // It is not pre-registered but it must match the AuthorizationServerOrigin
     if (
       getAuthorizationServerOrigin(request.url) !==
-      getAuthorizationServerOrigin(redirect_uri)
+        getAuthorizationServerOrigin(redirect_uri) ||
+      new URL(redirect_uri).pathname !== "/auth/ws/callback" ||
+      false === isBuilderUrl(redirect_uri)
     ) {
       debug("redirect_uri does not match the registered redirect URIs");
 
@@ -171,6 +181,30 @@ export const loader: LoaderFunction = async ({ request }) => {
         return oauthError(
           "unauthorized_client",
           "User does not have access to the project"
+        );
+      }
+
+      // redirect_uri: Ensure the redirect_uri parameter value is valid and authorized
+      if (
+        false ===
+        compareUrls(
+          new URL(redirect_uri).origin,
+          builderUrl({
+            projectId: oAuthParams.scope.projectId,
+            origin: getAuthorizationServerOrigin(request.url),
+          })
+        )
+      ) {
+        debug("redirect_uri does not match the registered redirect URIs");
+
+        return json(
+          {
+            error: "invalid_request",
+            error_description:
+              "The redirect_uri provided does not match the registered redirect URIs.",
+            error_uri: "https://tools.ietf.org/html/rfc6749#section-3.1.2",
+          },
+          { status: 400 }
         );
       }
 
