@@ -1,4 +1,3 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme, Box } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
@@ -6,50 +5,11 @@ import {
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import type { SectionProps } from "../shared/section";
-import {
-  declarationDescriptions,
-  propertyDescriptions,
-} from "@webstudio-is/css-data";
-import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import { PropertyLabel } from "../../property-label";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 
-const property: StyleProperty = "outlineStyle";
-
-const items = [
-  {
-    child: <SmallXIcon />,
-    title: "None",
-    description: declarationDescriptions["outlineStyle:none"],
-    value: "none",
-    propertyValues: "outline-style: none;",
-  },
-  {
-    child: <DashBorderIcon />,
-    title: "Solid",
-    description: declarationDescriptions["outlineStyle:solid"],
-    value: "solid",
-    propertyValues: "outline-style: solid;",
-  },
-  {
-    child: <DashedBorderIcon />,
-    title: "Dashed",
-    description: declarationDescriptions["outlineStyle:dashed"],
-    value: "dashed",
-    propertyValues: "outline-style: dashed;",
-  },
-  {
-    child: <DottedBorderIcon />,
-    title: "Dotted",
-    description: declarationDescriptions["outlineStyle:dotted"],
-    value: "dotted",
-    propertyValues: "outline-style: dotted;",
-  },
-];
-
-export const OutlineStyle = (
-  props: Pick<SectionProps, "currentStyle" | "setProperty" | "deleteProperty">
-) => {
+export const OutlineStyle = () => {
   return (
     <Grid
       css={{
@@ -63,7 +23,16 @@ export const OutlineStyle = (
         properties={["outlineStyle"]}
       />
       <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
-        <ToggleGroupControl {...props} items={items} property={property} />{" "}
+        <ToggleGroupControl
+          label="Style"
+          properties={["outlineStyle"]}
+          items={[
+            { child: <SmallXIcon />, value: "none" },
+            { child: <DashBorderIcon />, value: "solid" },
+            { child: <DashedBorderIcon />, value: "dashed" },
+            { child: <DottedBorderIcon />, value: "dotted" },
+          ]}
+        />
       </Box>
     </Grid>
   );

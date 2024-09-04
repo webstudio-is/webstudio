@@ -31,11 +31,7 @@ export const Section = (props: SectionProps) => {
       properties={properties}
     >
       <Flex direction="column" gap={2}>
-        <OutlineStyle
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <OutlineStyle />
         {outlineStyle.value.value !== "none" && (
           <>
             <Grid
