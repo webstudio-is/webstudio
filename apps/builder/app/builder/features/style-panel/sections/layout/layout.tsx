@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Box,
   EnhancedTooltip,
   Flex,
   Grid,
   SmallToggleButton,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
@@ -41,18 +42,18 @@ import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
-import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import { getStyleSource, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
+import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import {
   type IntermediateStyleValue,
   CssValueInput,
 } from "../../shared/css-value-input";
 import { theme } from "@webstudio-is/design-system";
-import { TooltipContent } from "../../../style-panel/shared/property-name";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { ToggleControl } from "../../controls/toggle/toggle-control";
-import { PropertyLabel } from "../../property-label";
+import { PropertyInfo, PropertyLabel } from "../../property-label";
+import { useComputedStyles } from "../../shared/model";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 const GapLinked = ({
   isLinked,
@@ -71,10 +72,58 @@ const GapLinked = ({
   </EnhancedTooltip>
 );
 
+const GapTooltip = ({
+  label,
+  styleDecl,
+  onReset,
+  children,
+}: {
+  label: string;
+  styleDecl: ComputedStyleDecl;
+  onReset: () => void;
+  children: ReactNode;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const description =
+    propertyDescriptions[
+      styleDecl.property as keyof typeof propertyDescriptions
+    ];
+  return (
+    <Tooltip
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      // prevent closing tooltip on content click
+      onPointerDown={(event) => event.preventDefault()}
+      triggerProps={{
+        onClick: (event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            onReset();
+            return;
+          }
+        },
+      }}
+      content={
+        <PropertyInfo
+          title={label}
+          description={description}
+          styles={[styleDecl]}
+          onReset={() => {
+            onReset();
+            setIsOpen(false);
+          }}
+        />
+      }
+    >
+      {children}
+    </Tooltip>
+  );
+};
+
 const GapInput = ({
   icon,
-  style,
   property,
+  styleDecl,
   intermediateValue,
   onIntermediateChange,
   onPreviewChange,
@@ -82,8 +131,8 @@ const GapInput = ({
   onReset,
 }: {
   icon: JSX.Element;
-  style: StyleInfo;
   property: StyleProperty;
+  styleDecl: ComputedStyleDecl;
   intermediateValue?: StyleValue | IntermediateStyleValue;
   onIntermediateChange: (value?: StyleValue | IntermediateStyleValue) => void;
   onPreviewChange: (value?: StyleValue) => void;
@@ -95,23 +144,14 @@ const GapInput = ({
   return (
     <Box>
       <CssValueInput
-        styleSource={getStyleSource(style[property])}
+        styleSource={styleDecl.source.name}
         icon={
-          <EnhancedTooltip
-            content={
-              <TooltipContent
-                title={label}
-                style={style}
-                properties={[property]}
-                onReset={onReset}
-              />
-            }
-          >
+          <GapTooltip label={label} styleDecl={styleDecl} onReset={onReset}>
             {icon}
-          </EnhancedTooltip>
+          </GapTooltip>
         }
         property={property}
-        value={style[property]?.value}
+        value={styleDecl.cascadedValue}
         intermediateValue={intermediateValue}
         keywords={items.map((item) => ({
           type: "keyword",
@@ -146,20 +186,11 @@ const GapInput = ({
   );
 };
 
-const FlexGap = ({
-  style,
-  createBatchUpdate,
-  deleteProperty,
-}: {
-  style: StyleInfo;
-  createBatchUpdate: CreateBatchUpdate;
-  deleteProperty: SectionProps["deleteProperty"];
-}) => {
-  const batchUpdate = createBatchUpdate();
-
-  const [isLinked, setIsLinked] = useState(() => {
-    return toValue(style.columnGap?.value) === toValue(style.rowGap?.value);
-  });
+const FlexGap = () => {
+  const [columnGap, rowGap] = useComputedStyles(["columnGap", "rowGap"]);
+  const [isLinked, setIsLinked] = useState(
+    () => toValue(columnGap.cascadedValue) === toValue(rowGap.cascadedValue)
+  );
 
   const [intermediateColumnGap, setIntermediateColumnGap] = useState<
     StyleValue | IntermediateStyleValue
@@ -195,8 +226,8 @@ const FlexGap = ({
               }}
             />
           }
-          style={style}
           property="columnGap"
+          styleDecl={columnGap}
           intermediateValue={intermediateColumnGap}
           onIntermediateChange={(value) => {
             setIntermediateColumnGap(value);
@@ -205,32 +236,35 @@ const FlexGap = ({
             }
           }}
           onReset={() => {
-            batchUpdate.deleteProperty("columnGap");
+            const batch = createBatchUpdate();
+            batch.deleteProperty("columnGap");
             if (isLinked) {
-              batchUpdate.deleteProperty("rowGap");
+              batch.deleteProperty("rowGap");
             }
-            batchUpdate.publish();
+            batch.publish();
           }}
           onPreviewChange={(value) => {
+            const batch = createBatchUpdate();
             if (value === undefined) {
-              batchUpdate.deleteProperty("columnGap");
+              batch.deleteProperty("columnGap");
               if (isLinked) {
-                batchUpdate.deleteProperty("rowGap");
+                batch.deleteProperty("rowGap");
               }
             } else {
-              batchUpdate.setProperty("columnGap")(value);
+              batch.setProperty("columnGap")(value);
               if (isLinked) {
-                batchUpdate.setProperty("rowGap")(value);
+                batch.setProperty("rowGap")(value);
               }
             }
-            batchUpdate.publish({ isEphemeral: true });
+            batch.publish({ isEphemeral: true });
           }}
           onChange={(value) => {
-            batchUpdate.setProperty("columnGap")(value);
+            const batch = createBatchUpdate();
+            batch.setProperty("columnGap")(value);
             if (isLinked) {
-              batchUpdate.setProperty("rowGap")(value);
+              batch.setProperty("rowGap")(value);
             }
-            batchUpdate.publish();
+            batch.publish();
           }}
         />
       </Box>
@@ -240,9 +274,23 @@ const FlexGap = ({
           isLinked={isLinked}
           onChange={(isLinked) => {
             setIsLinked(isLinked);
-            if (isLinked && style.columnGap?.value) {
-              batchUpdate.setProperty("rowGap")(style.columnGap.value);
-              batchUpdate.publish();
+            if (isLinked === false) {
+              return;
+            }
+            const isColumnGapDefined =
+              columnGap.source.name === "local" ||
+              columnGap.source.name === "overwritten";
+            const isRowGapDefined =
+              rowGap.source.name === "local" ||
+              rowGap.source.name === "overwritten";
+            if (isColumnGapDefined) {
+              const batch = createBatchUpdate();
+              batch.setProperty("rowGap")(columnGap.cascadedValue);
+              batch.publish();
+            } else if (isRowGapDefined) {
+              const batch = createBatchUpdate();
+              batch.setProperty("columnGap")(rowGap.cascadedValue);
+              batch.publish();
             }
           }}
         />
@@ -263,8 +311,8 @@ const FlexGap = ({
               }}
             />
           }
-          style={style}
           property="rowGap"
+          styleDecl={rowGap}
           intermediateValue={intermediateRowGap}
           onIntermediateChange={(value) => {
             setIntermediateRowGap(value);
@@ -273,32 +321,35 @@ const FlexGap = ({
             }
           }}
           onReset={() => {
-            batchUpdate.deleteProperty("rowGap");
+            const batch = createBatchUpdate();
+            batch.deleteProperty("rowGap");
             if (isLinked) {
-              batchUpdate.deleteProperty("columnGap");
+              batch.deleteProperty("columnGap");
             }
-            batchUpdate.publish();
+            batch.publish();
           }}
           onPreviewChange={(value) => {
+            const batch = createBatchUpdate();
             if (value === undefined) {
-              batchUpdate.deleteProperty("rowGap");
+              batch.deleteProperty("rowGap");
               if (isLinked) {
-                batchUpdate.deleteProperty("columnGap");
+                batch.deleteProperty("columnGap");
               }
             } else {
-              batchUpdate.setProperty("rowGap")(value);
+              batch.setProperty("rowGap")(value);
               if (isLinked) {
-                batchUpdate.setProperty("columnGap")(value);
+                batch.setProperty("columnGap")(value);
               }
             }
-            batchUpdate.publish({ isEphemeral: true });
+            batch.publish({ isEphemeral: true });
           }}
           onChange={(value) => {
-            batchUpdate.setProperty("rowGap")(value);
+            const batch = createBatchUpdate();
+            batch.setProperty("rowGap")(value);
             if (isLinked) {
-              batchUpdate.setProperty("columnGap")(value);
+              batch.setProperty("columnGap")(value);
             }
-            batchUpdate.publish();
+            batch.publish();
           }}
         />
       </Box>
@@ -308,11 +359,9 @@ const FlexGap = ({
 
 const LayoutSectionFlex = ({
   currentStyle,
-  deleteProperty,
   createBatchUpdate,
 }: {
   currentStyle: SectionProps["currentStyle"];
-  deleteProperty: SectionProps["deleteProperty"];
   createBatchUpdate: SectionProps["createBatchUpdate"];
 }) => {
   const batchUpdate = createBatchUpdate();
@@ -410,11 +459,7 @@ const LayoutSectionFlex = ({
         </Flex>
       </Flex>
 
-      <FlexGap
-        style={currentStyle}
-        createBatchUpdate={createBatchUpdate}
-        deleteProperty={deleteProperty}
-      />
+      <FlexGap />
     </Flex>
   );
 };
@@ -443,11 +488,7 @@ export const properties = [
   "columnGap",
 ] satisfies Array<StyleProperty>;
 
-export const Section = ({
-  currentStyle,
-  deleteProperty,
-  createBatchUpdate,
-}: SectionProps) => {
+export const Section = ({ currentStyle, createBatchUpdate }: SectionProps) => {
   const value = toValue(currentStyle.display?.value);
 
   return (
@@ -478,7 +519,6 @@ export const Section = ({
         {(value === "flex" || value === "inline-flex") && (
           <LayoutSectionFlex
             currentStyle={currentStyle}
-            deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
           />
         )}
