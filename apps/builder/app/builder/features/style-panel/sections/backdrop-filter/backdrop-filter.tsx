@@ -1,21 +1,12 @@
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
-import { useState } from "react";
-import {
-  SectionTitle,
-  SectionTitleButton,
-  Tooltip,
-  Flex,
-  Text,
-} from "@webstudio-is/design-system";
+import { Tooltip, Flex, Text } from "@webstudio-is/design-system";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { getDots } from "../../shared/collapsible-section";
-import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { RepeatedStyleSection } from "../../shared/style-section";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
 import { LayersList } from "../../style-layers-list";
 import { FilterSectionContent } from "../../shared/filter-content";
-import { PropertySectionLabel } from "../../property-label";
 
 export const properties = ["backdropFilter"] satisfies [
   StyleProperty,
@@ -28,45 +19,21 @@ const initialBackdropFilter = "blur(0px)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionRoot
-      fullWidth
+    <RepeatedStyleSection
       label={label}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      trigger={
-        <SectionTitle
-          dots={getDots(currentStyle, properties)}
-          suffix={
-            <Tooltip content={"Add a backdrop-filter"}>
-              <SectionTitleButton
-                prefix={<PlusIcon />}
-                onClick={() => {
-                  addLayer(
-                    property,
-                    parseCssValue(
-                      property,
-                      initialBackdropFilter
-                    ) as LayersValue,
-                    currentStyle,
-                    props.createBatchUpdate
-                  );
-                  setIsOpen(true);
-                }}
-              />
-            </Tooltip>
-          }
-        >
-          <PropertySectionLabel
-            label={label}
-            description="Backdrop filters are similar to filters, but are applied to the area behind an element. This can be useful for creating frosted glass effects."
-            properties={properties}
-          />
-        </SectionTitle>
-      }
+      description="Backdrop filters are similar to filters, but are applied to the area behind an element. This can be useful for creating frosted glass effects."
+      properties={properties}
+      onAdd={() => {
+        addLayer(
+          property,
+          parseCssValue(property, initialBackdropFilter) as LayersValue,
+          currentStyle,
+          props.createBatchUpdate
+        );
+      }}
     >
       {value?.type === "tuple" && value.value.length > 0 && (
         <LayersList
@@ -109,6 +76,6 @@ export const Section = (props: SectionProps) => {
           }}
         />
       )}
-    </CollapsibleSectionRoot>
+    </RepeatedStyleSection>
   );
 };

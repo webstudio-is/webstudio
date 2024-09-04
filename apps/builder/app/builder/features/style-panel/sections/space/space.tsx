@@ -8,7 +8,7 @@ import type { SpaceStyleProperty, HoverTarget } from "./types";
 import { InputPopover } from "../shared/input-popover";
 import { SpaceTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import { movementMapSpace, useKeyboardNavigation } from "../shared/keyboard";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 
@@ -133,11 +133,7 @@ export const Section = ({
   };
 
   return (
-    <CollapsibleSection
-      label="Space"
-      currentStyle={currentStyle}
-      properties={spaceProperties}
-    >
+    <StyleSection label="Space" properties={spaceProperties}>
       <SpaceLayout
         ref={layoutRef}
         onClick={(event) => {
@@ -172,6 +168,6 @@ export const Section = ({
           />
         )}
       />
-    </CollapsibleSection>
+    </StyleSection>
   );
 };

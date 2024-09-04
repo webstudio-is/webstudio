@@ -1,5 +1,13 @@
-import { useMemo, useRef, useState } from "react";
-import { Box, Flex, Text } from "@webstudio-is/design-system";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import { PlusIcon } from "@webstudio-is/icons";
+import {
+  Box,
+  Flex,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
+  Text,
+} from "@webstudio-is/design-system";
 import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
@@ -17,10 +25,15 @@ import {
   type StyleInfo,
 } from "../../shared/style-info";
 import { Add } from "./add";
-import { CollapsibleSection } from "../../shared/collapsible-section";
 import { sections } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
 import type { DeleteProperty } from "../../shared/use-style-data";
+import {
+  CollapsibleSectionRoot,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
+import { useComputedStyles } from "../../shared/model";
+import { getDots } from "../../shared/style-section";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
@@ -82,6 +95,42 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
 // Only here to keep the same section module interface
 export const properties = [];
 
+const AdvancedStyleSection = (props: {
+  label: string;
+  properties: StyleProperty[];
+  onAdd: () => void;
+  children: ReactNode;
+}) => {
+  const { label, children, properties, onAdd } = props;
+  const [isOpen, setIsOpen] = useOpenState(props);
+  const styles = useComputedStyles(properties);
+  return (
+    <CollapsibleSectionRoot
+      label={label}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      trigger={
+        <SectionTitle
+          dots={getDots(styles)}
+          suffix={
+            <SectionTitleButton
+              prefix={<PlusIcon />}
+              onClick={() => {
+                setIsOpen(true);
+                onAdd();
+              }}
+            />
+          }
+        >
+          <SectionTitleLabel>{label}</SectionTitleLabel>
+        </SectionTitle>
+      }
+    >
+      {children}
+    </CollapsibleSectionRoot>
+  );
+};
+
 export const Section = ({
   currentStyle,
   setProperty,
@@ -97,13 +146,10 @@ export const Section = ({
   };
 
   return (
-    <CollapsibleSection
+    <AdvancedStyleSection
       label="Advanced"
-      currentStyle={currentStyle}
       properties={propertyNames}
-      onAdd={() => {
-        setAddingProp("");
-      }}
+      onAdd={() => setAddingProp("")}
     >
       {addingProp !== undefined && (
         <Add
@@ -171,6 +217,6 @@ export const Section = ({
           );
         })}
       </Box>
-    </CollapsibleSection>
+    </AdvancedStyleSection>
   );
 };

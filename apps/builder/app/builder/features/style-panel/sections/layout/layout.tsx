@@ -42,7 +42,7 @@ import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import {
   type IntermediateStyleValue,
@@ -492,11 +492,7 @@ export const Section = ({ currentStyle, createBatchUpdate }: SectionProps) => {
   const value = toValue(currentStyle.display?.value);
 
   return (
-    <CollapsibleSection
-      label="Layout"
-      currentStyle={currentStyle}
-      properties={properties}
-    >
+    <StyleSection label="Layout" properties={properties}>
       <Flex direction="column" gap="2">
         <Grid
           css={{
@@ -523,6 +519,6 @@ export const Section = ({ currentStyle, createBatchUpdate }: SectionProps) => {
           />
         )}
       </Flex>
-    </CollapsibleSection>
+    </StyleSection>
   );
 };

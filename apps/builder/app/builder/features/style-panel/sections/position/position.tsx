@@ -1,6 +1,6 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
@@ -54,11 +54,7 @@ export const Section = ({
   );
 
   return (
-    <CollapsibleSection
-      label="Position"
-      currentStyle={currentStyle}
-      properties={properties}
-    >
+    <StyleSection label="Position" properties={properties}>
       <Grid gap={2}>
         <Grid
           gap={2}
@@ -102,6 +98,6 @@ export const Section = ({
           </Grid>
         )}
       </Grid>
-    </CollapsibleSection>
+    </StyleSection>
   );
 };

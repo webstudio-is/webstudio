@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/css-data";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
-import { getDots } from "../../shared/collapsible-section";
+import { getDots } from "../../shared/style-section";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { TransitionContent } from "./transition-content";
 import {
@@ -25,6 +25,7 @@ import { RepeatedStyle } from "../../shared/repeated-style";
 import type { StyleInfo } from "../../shared/style-info";
 import { repeatUntil } from "~/shared/array-utils";
 import { PropertySectionLabel } from "../../property-label";
+import { useComputedStyles } from "../../shared/model";
 
 export { transitionLongHandProperties as properties };
 
@@ -94,6 +95,7 @@ export const Section = (props: SectionProps) => {
   const isStyleInLocalState =
     selectedOrLastStyleSourceSelector &&
     selectedOrLastStyleSourceSelector.state === undefined;
+  const styles = useComputedStyles(transitionLongHandProperties);
 
   return (
     <CollapsibleSectionRoot
@@ -103,7 +105,7 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, transitionLongHandProperties)}
+          dots={getDots(styles)}
           suffix={
             <Tooltip
               content={
@@ -116,6 +118,7 @@ export const Section = (props: SectionProps) => {
                 disabled={isStyleInLocalState === false}
                 prefix={<PlusIcon />}
                 onClick={() => {
+                  setIsOpen(true);
                   const batch = createBatchUpdate();
                   for (const property of transitionLongHandProperties) {
                     batch.setProperty(property)({

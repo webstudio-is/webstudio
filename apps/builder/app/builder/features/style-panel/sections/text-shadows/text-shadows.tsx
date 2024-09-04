@@ -1,20 +1,12 @@
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
-import { useState } from "react";
-import {
-  SectionTitle,
-  SectionTitleButton,
-  Tooltip,
-  Text,
-} from "@webstudio-is/design-system";
-import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { Tooltip, Text } from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { getDots } from "../../shared/collapsible-section";
+import { RepeatedStyleSection } from "../../shared/style-section";
 import { LayersList } from "../../style-layers-list";
 import { ShadowContent } from "../../shared/shadow-content";
-import { PropertySectionLabel } from "../../property-label";
 
 export const properties = ["textShadow"] satisfies [
   StyleProperty,
@@ -27,40 +19,21 @@ const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionRoot
-      fullWidth
+    <RepeatedStyleSection
       label={label}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      trigger={
-        <SectionTitle
-          dots={getDots(currentStyle, properties)}
-          suffix={
-            <SectionTitleButton
-              prefix={<PlusIcon />}
-              onClick={() => {
-                addLayer(
-                  property,
-                  parseCssValue(property, initialTextShadow) as LayersValue,
-                  currentStyle,
-                  createBatchUpdate
-                );
-                setIsOpen(true);
-              }}
-            />
-          }
-        >
-          <PropertySectionLabel
-            label={label}
-            description="Adds shadow effects around a text."
-            properties={properties}
-          />
-        </SectionTitle>
-      }
+      description="Adds shadow effects around a text."
+      properties={properties}
+      onAdd={() => {
+        addLayer(
+          property,
+          parseCssValue(property, initialTextShadow) as LayersValue,
+          currentStyle,
+          createBatchUpdate
+        );
+      }}
     >
       {value?.type === "layers" && value.value.length > 0 && (
         <LayersList
@@ -99,6 +72,6 @@ export const Section = (props: SectionProps) => {
           }}
         />
       )}
-    </CollapsibleSectionRoot>
+    </RepeatedStyleSection>
   );
 };

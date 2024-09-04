@@ -1,7 +1,7 @@
 import { Flex } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { StyleSection } from "../../shared/style-section";
 import {
   BorderRadius,
   properties as borderRadiusProperties,
@@ -28,17 +28,13 @@ export const properties = [
 
 export const Section = (props: SectionProps) => {
   return (
-    <CollapsibleSection
-      label="Borders"
-      currentStyle={props.currentStyle}
-      properties={properties}
-    >
+    <StyleSection label="Borders" properties={properties}>
       <Flex direction="column" gap={2}>
         <BorderStyle />
         <BorderColor />
         <BorderWidth {...props} />
         <BorderRadius {...props} />
       </Flex>
-    </CollapsibleSection>
+    </StyleSection>
   );
 };
