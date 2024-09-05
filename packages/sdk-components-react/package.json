@@ -42,8 +42,8 @@
     "typecheck": "tsc"
   },
   "peerDependencies": {
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+    "react": "19.0.0-rc-d1afcb43-20240903",
+    "react-dom": "19.0.0-rc-d1afcb43-20240903"
   },
   "dependencies": {
     "@react-aria/utils": "^3.21.0",
@@ -63,8 +63,8 @@
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "jest-environment-jsdom": "^29.7.0",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "react": "19.0.0-rc-d1afcb43-20240903",
+    "react-dom": "19.0.0-rc-d1afcb43-20240903",
     "typescript": "5.5.2"
   }
 }

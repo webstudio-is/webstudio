@@ -43,8 +43,8 @@
     "typecheck": "tsc"
   },
   "peerDependencies": {
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+    "react": "19.0.0-rc-d1afcb43-20240903",
+    "react-dom": "19.0.0-rc-d1afcb43-20240903"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
@@ -73,8 +73,8 @@
     "@webstudio-is/sdk-cli": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "react": "19.0.0-rc-d1afcb43-20240903",
+    "react-dom": "19.0.0-rc-d1afcb43-20240903",
     "tailwindcss": "^3.3.3",
     "typescript": "^5.5.2"
   }
