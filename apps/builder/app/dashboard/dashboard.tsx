@@ -13,6 +13,7 @@ import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { Resources } from "./resources";
 import { useLocation } from "@remix-run/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
+import { Toaster } from "@webstudio-is/design-system";
 
 const globalStyles = globalCss({
   body: {
@@ -86,6 +87,7 @@ const CloneProject = ({
         id: projectToClone.id,
         title: projectToClone.title,
       }}
+      authToken={projectToClone.authToken}
     />
   ) : undefined;
 };
@@ -119,6 +121,7 @@ export const Dashboard = ({
         </Section>
       </Main>
       <CloneProject projectToClone={projectToClone} />
+      <Toaster />
     </TooltipProvider>
   );
 };
