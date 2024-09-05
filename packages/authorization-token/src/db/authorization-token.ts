@@ -8,6 +8,20 @@ import {
 type AuthorizationToken =
   Database["public"]["Tables"]["AuthorizationToken"]["Row"];
 
+const applyTokenPermissions = (
+  token: AuthorizationToken
+): AuthorizationToken => {
+  if (token.relation !== "viewers") {
+    return {
+      ...token,
+      canClone: true,
+      canCopy: true,
+    };
+  }
+
+  return token;
+};
+
 export const findMany = async (
   props: { projectId: string },
   context: AppContext
@@ -35,7 +49,7 @@ export const findMany = async (
     throw dbTokens.error;
   }
 
-  return dbTokens.data;
+  return dbTokens.data.map(applyTokenPermissions);
 };
 
 export const tokenDefaultPermissions = {
@@ -45,33 +59,37 @@ export const tokenDefaultPermissions = {
 
 export type TokenPermissions = typeof tokenDefaultPermissions;
 
-export const getTokenPermissions = async (
-  props: { projectId: string; token: AuthorizationToken["token"] },
+export const getTokenInfo = async (
+  token: AuthorizationToken["token"],
   context: AppContext
-): Promise<TokenPermissions> => {
+) => {
   const dbToken = await context.postgrest.client
     .from("AuthorizationToken")
     .select()
-    .eq("projectId", props.projectId)
-    .eq("token", props.token)
+    .eq("token", token)
     .maybeSingle();
+
   if (dbToken.error) {
     throw dbToken.error;
   }
+
   if (dbToken.data === null) {
     throw new AuthorizationError("Authorization token not found");
   }
 
-  switch (dbToken.data.relation) {
-    // canClone, canCopy permissions can be applied for viewers only
-    case "viewers":
-      return {
-        canClone: dbToken.data.canClone,
-        canCopy: dbToken.data.canCopy,
-      };
-    default:
-      return tokenDefaultPermissions;
-  }
+  return applyTokenPermissions(dbToken.data);
+};
+
+export const getTokenPermissions = async (
+  props: { projectId: string; token: AuthorizationToken["token"] },
+  context: AppContext
+): Promise<TokenPermissions> => {
+  const dbToken = await getTokenInfo(props.token, context);
+
+  return {
+    canClone: dbToken.canClone,
+    canCopy: dbToken.canCopy,
+  };
 };
 
 export const create = async (

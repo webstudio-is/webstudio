@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import {
   Flex,
   TooltipProvider,
@@ -11,6 +11,8 @@ import { Projects } from "./projects";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { Resources } from "./resources";
+import { useLocation } from "@remix-run/react";
+import { CloneProjectDialog } from "~/shared/clone-project";
 
 const globalStyles = globalCss({
   body: {
@@ -49,6 +51,43 @@ export type DashboardProps = {
   userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   imageBaseUrl: string;
+  projectToClone?: {
+    authToken: string;
+    id: string;
+    title: string;
+  };
+};
+
+const CloneProject = ({
+  projectToClone,
+}: {
+  projectToClone: DashboardProps["projectToClone"];
+}) => {
+  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(projectToClone !== undefined);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const cloneProjectAuthToken = searchParams.get("projectToCloneAuthToken");
+    if (cloneProjectAuthToken === null) {
+      return;
+    }
+
+    // Use the native history API to remove query parameters without reloading the page data
+    const currentState = window.history.state;
+    window.history.replaceState(currentState, "", location.pathname);
+  }, [location.search, location.pathname]);
+
+  return projectToClone !== undefined ? (
+    <CloneProjectDialog
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      project={{
+        id: projectToClone.id,
+        title: projectToClone.title,
+      }}
+    />
+  ) : undefined;
 };
 
 export const Dashboard = ({
@@ -58,8 +97,10 @@ export const Dashboard = ({
   userPlanFeatures,
   publisherHost,
   imageBaseUrl,
+  projectToClone,
 }: DashboardProps) => {
   globalStyles();
+
   return (
     <TooltipProvider>
       <Header user={user} userPlanFeatures={userPlanFeatures} />
@@ -77,6 +118,7 @@ export const Dashboard = ({
           />
         </Section>
       </Main>
+      <CloneProject projectToClone={projectToClone} />
     </TooltipProvider>
   );
 };

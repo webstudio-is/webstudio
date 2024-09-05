@@ -74,6 +74,18 @@ export const dashboardUrl = (props: { origin: string }) => {
   return `${authServerOrigin}/dashboard`;
 };
 
+export const cloneProjectUrl = (props: {
+  origin: string;
+  sourceAuthToken: string;
+}) => {
+  const authServerOrigin = getAuthorizationServerOrigin(props.origin);
+
+  const searchParams = new URLSearchParams();
+  searchParams.set("projectToCloneAuthToken", props.sourceAuthToken);
+
+  return `${authServerOrigin}/dashboard?${searchParams.toString()}`;
+};
+
 export const builderDomainsPath = (method: string) => {
   const authToken = $authToken.get();
   const urlSearchParams = new URLSearchParams();

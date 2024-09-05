@@ -127,7 +127,7 @@ export const CloneProjectDialog = ({
   onOpenChange,
 }: {
   isOpen: boolean;
-  project: Project;
+  project: Pick<Project, "id" | "title">;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const { handleSubmit, errors, state } = useCloneProject({

@@ -52,16 +52,26 @@ export const StyledMenuItem = styled(DropdownMenuPrimitive.Item, menuItemCss, {
 export const DropdownMenuItem = forwardRef<
   ElementRef<typeof StyledMenuItem>,
   ComponentProps<typeof StyledMenuItem> & { icon?: ReactNode }
->(({ icon, children, withIndicator, ...props }, forwardedRef) => (
-  <StyledMenuItem
-    withIndicator={withIndicator || Boolean(icon)}
-    {...props}
-    ref={forwardedRef}
-  >
-    {icon && <div className={menuItemIndicatorCss()}>{icon}</div>}
-    {children}
-  </StyledMenuItem>
-));
+>(({ icon, children, withIndicator, ...props }, forwardedRef) =>
+  icon ? (
+    <StyledMenuItem
+      withIndicator={withIndicator || Boolean(icon)}
+      {...props}
+      ref={forwardedRef}
+    >
+      <div className={menuItemIndicatorCss()}>{icon}</div>
+      {children}
+    </StyledMenuItem>
+  ) : (
+    <StyledMenuItem
+      withIndicator={withIndicator || Boolean(icon)}
+      {...props}
+      ref={forwardedRef}
+    >
+      {children}
+    </StyledMenuItem>
+  )
+);
 DropdownMenuItem.displayName = "DropdownMenuItem";
 
 export const DropdownMenuItemRightSlot = styled("span", {
