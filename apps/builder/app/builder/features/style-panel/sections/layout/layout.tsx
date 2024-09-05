@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
+  theme,
   Box,
   EnhancedTooltip,
   Flex,
@@ -38,21 +40,18 @@ import {
   ACSpaceBetweenIcon,
   ACStretchIcon,
 } from "@webstudio-is/icons";
-import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
-import { StyleSection } from "../../shared/style-section";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
+import { StyleSection } from "../../shared/style-section";
 import {
   type IntermediateStyleValue,
   CssValueInput,
 } from "../../shared/css-value-input";
-import { theme } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { ToggleControl } from "../../controls/toggle/toggle-control";
 import { PropertyInfo, PropertyLabel } from "../../property-label";
-import { useComputedStyles } from "../../shared/model";
+import { useComputedStyles, useComputedStyleDecl } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 const GapLinked = ({
@@ -357,27 +356,14 @@ const FlexGap = () => {
   );
 };
 
-const LayoutSectionFlex = ({
-  currentStyle,
-  createBatchUpdate,
-}: {
-  currentStyle: SectionProps["currentStyle"];
-  createBatchUpdate: SectionProps["createBatchUpdate"];
-}) => {
-  const batchUpdate = createBatchUpdate();
-
-  const flexWrapValue = currentStyle.flexWrap?.value;
-
-  // From design: Notice that the align-content icon button is not visible by default.
-  // This property only applies when flex-wrap is set to "wrap".
-  const showAlignContent =
-    flexWrapValue?.type === "keyword" &&
-    (flexWrapValue.value === "wrap" || flexWrapValue.value === "wrap-reverse");
+const LayoutSectionFlex = () => {
+  const flexWrap = useComputedStyleDecl("flexWrap");
+  const flexWrapValue = toValue(flexWrap.cascadedValue);
 
   return (
     <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
       <Flex css={{ gap: theme.spacing[7] }} align="stretch">
-        <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
+        <FlexGrid />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
@@ -434,7 +420,7 @@ const LayoutSectionFlex = ({
                 { name: "end", label: "End", icon: JCEndIcon },
               ]}
             />
-            {showAlignContent && (
+            {(flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse") && (
               <MenuControl
                 property="alignContent"
                 items={[
@@ -488,9 +474,9 @@ export const properties = [
   "columnGap",
 ] satisfies Array<StyleProperty>;
 
-export const Section = ({ currentStyle, createBatchUpdate }: SectionProps) => {
-  const value = toValue(currentStyle.display?.value);
-
+export const Section = () => {
+  const display = useComputedStyleDecl("display");
+  const displayValue = toValue(display.cascadedValue);
   return (
     <StyleSection label="Layout" properties={properties}>
       <Flex direction="column" gap="2">
@@ -511,12 +497,8 @@ export const Section = ({ currentStyle, createBatchUpdate }: SectionProps) => {
             items={orderedDisplayValues.map((name) => ({ name, label: name }))}
           />
         </Grid>
-
-        {(value === "flex" || value === "inline-flex") && (
-          <LayoutSectionFlex
-            currentStyle={currentStyle}
-            createBatchUpdate={createBatchUpdate}
-          />
+        {(displayValue === "flex" || displayValue === "inline-flex") && (
+          <LayoutSectionFlex />
         )}
       </Flex>
     </StyleSection>
