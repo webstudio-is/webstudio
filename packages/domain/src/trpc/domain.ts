@@ -267,10 +267,19 @@ export const domainRouter = router({
 
   countTotalDomains: procedure.query(async ({ ctx }) => {
     try {
-      if (ctx.authorization.ownerId === undefined) {
+      if (
+        ctx.authorization.type !== "user" &&
+        ctx.authorization.type !== "token"
+      ) {
         throw new Error("Not authorized");
       }
-      const data = await db.countTotalDomains(ctx.authorization.ownerId);
+
+      const ownerId =
+        ctx.authorization.type === "user"
+          ? ctx.authorization.userId
+          : ctx.authorization.ownerId;
+
+      const data = await db.countTotalDomains(ownerId);
       return { success: true, data } as const;
     } catch (error) {
       return {

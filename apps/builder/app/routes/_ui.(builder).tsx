@@ -83,18 +83,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const context = await createContext(request);
 
-  if (
-    context.authorization.userId === undefined &&
-    context.authorization.authToken === undefined
-  ) {
+  if (context.authorization.type === "service") {
+    throw new AuthorizationError("Service calls are not allowed");
+  }
+
+  if (context.authorization.type === "anonymous") {
     // @todo just import loader from auth and call it
     throw redirect("/auth/ws");
   }
 
   if (
-    context.authorization.authToken === undefined &&
-    context.authorization.userId !== undefined &&
-    context.authorization.sessionCreatedAt !== undefined &&
+    context.authorization.type === "user" &&
     request.headers.get("sec-fetch-mode") === "navigate"
   ) {
     // If logout fails, or the session cookie in the dashboard is deleted or expired,
@@ -179,7 +178,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const headers = new Headers();
 
-    if (context.authorization.authToken !== undefined) {
+    if (context.authorization.type === "token") {
       // To protect against cookie overwrites, we set a null session cookie if a user is using an authToken.
       // This ensures that any existing HttpOnly, secure session cookies cannot be overwritten by client-side scripts
 

@@ -73,6 +73,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const requestContext = await createContext(request);
 
+  if (requestContext.authorization.type !== "user") {
+    return {
+      id: "ai",
+      ...createErrorResponse({
+        error: "unauthorized",
+        status: 401,
+        message: "You don't have edit access to this project",
+        debug: "Unauthorized access attempt",
+      }),
+      llmMessages: [],
+    };
+  }
+
   if (requestContext.authorization.userId === undefined) {
     return {
       id: "ai",

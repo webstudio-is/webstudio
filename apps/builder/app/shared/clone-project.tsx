@@ -21,8 +21,10 @@ import { nativeClient } from "./trpc/trpc-client";
 const useCloneProject = ({
   projectId,
   onOpenChange,
+  authToken,
 }: {
   projectId: Project["id"];
+  authToken?: string;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const [state, setState] = useState<"idle" | "loading" | "submitting">("idle");
@@ -44,6 +46,7 @@ const useCloneProject = ({
         const data = await nativeClient.project.clone.mutate({
           projectId,
           title,
+          authToken,
         });
 
         window.location.href = builderUrl({
@@ -136,6 +139,7 @@ export const CloneProjectDialog = ({
   isOpen,
   project: { id, title },
   onOpenChange,
+  authToken,
 }: {
   isOpen: boolean;
   project: Pick<Project, "id" | "title">;
@@ -145,6 +149,7 @@ export const CloneProjectDialog = ({
   const { handleSubmit, errors, state } = useCloneProject({
     projectId: id,
     onOpenChange,
+    authToken,
   });
 
   return (

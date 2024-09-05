@@ -39,8 +39,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const redirectTo = loginPath({});
 
-  if (context.authorization.userId === undefined) {
-    debug("User is not logged in redirecting to", redirectTo);
+  if (context.authorization.type !== "user") {
+    debug("User is not logged in, redirecting to", redirectTo);
     throw redirect(redirectTo);
   }
 

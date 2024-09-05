@@ -4,7 +4,6 @@ import {
   procedure,
   createCallerFactory,
 } from "@webstudio-is/trpc-interface/index.server";
-import invariant from "tiny-invariant";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
@@ -14,12 +13,11 @@ export const logoutRouter = router({
    * Therefore, instead of returning builder app endpoints, we are using projectIds.
    */
   getLoggedInProjectIds: procedure.query(async ({ ctx }) => {
-    const { isLoggedInToBuilder } = ctx.authorization;
+    if (ctx.authorization.type !== "user") {
+      return [];
+    }
 
-    invariant(
-      isLoggedInToBuilder !== undefined,
-      "isLoggedInToBuilder is not defined, check the context"
-    );
+    const { isLoggedInToBuilder } = ctx.authorization;
 
     const projectIds =
       await dashboardProjectCaller(ctx).findCurrentUserProjectIds();

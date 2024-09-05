@@ -57,11 +57,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const context = await createContext(request);
 
-  const { userId } = context.authorization;
-
-  if (userId === undefined) {
+  if (context.authorization.type !== "user") {
     throw new AuthorizationError("You must be logged in to access this page");
   }
+  const { userId } = context.authorization;
 
   const projectToCloneAuthToken = url.searchParams.get(
     "projectToCloneAuthToken"

@@ -6,6 +6,12 @@ import {
 import type { DashboardProjects } from "./schema";
 
 export const findMany = async (userId: string, context: AppContext) => {
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError(
+      "Only logged in users can view the project list"
+    );
+  }
+
   if (userId !== context.authorization.userId) {
     throw new AuthorizationError(
       "Only the project owner can view the project list"

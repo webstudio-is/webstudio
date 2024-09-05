@@ -13,6 +13,12 @@ export const findProjectIdsByUserId = async (
   userId: string,
   context: AppContext
 ) => {
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError(
+      "Only logged in users can view the project list"
+    );
+  }
+
   if (userId !== context.authorization.userId) {
     throw new AuthorizationError(
       "Only the project owner can view the project list"
@@ -90,6 +96,10 @@ export const create = async (
   context: AppContext
 ) => {
   Title.parse(title);
+
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError("Only logged in users can create a project");
+  }
 
   const userId = context.authorization.userId;
 
@@ -222,6 +232,10 @@ export const clone = async (
   const project = await loadById(projectId, context);
   if (project === null) {
     throw new Error(`Not found project "${projectId}"`);
+  }
+
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError("Only logged in users can clone a project");
   }
 
   const { userId } = context.authorization;

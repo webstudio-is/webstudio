@@ -102,10 +102,11 @@ export const action = async ({
 
     const context = await createContext(request);
 
-    if (
-      context.authorization.userId === undefined &&
-      context.authorization.authToken === undefined
-    ) {
+    if (context.authorization.type === "service") {
+      throw new AuthorizationError("Service calls are not allowed");
+    }
+
+    if (context.authorization.type === "anonymous") {
       return {
         status: "authorization_error",
         errors:
