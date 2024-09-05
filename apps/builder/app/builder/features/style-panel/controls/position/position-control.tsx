@@ -1,15 +1,19 @@
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   TupleValue,
-  type StyleValue,
   TupleValueItem,
+  type StyleValue,
+  type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
-import type { ControlProps } from "../types";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { styleConfigByName } from "../../shared/configs";
-import { getStyleSource } from "../../shared/style-info";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import type { SetValue } from "../../shared/use-style-data";
+import {
+  deleteProperty,
+  setProperty,
+  type SetValue,
+} from "../../shared/use-style-data";
 import { PropertyInlineLabel } from "../../property-label";
 
 const toPosition = (value: TupleValue) => {
@@ -46,16 +50,14 @@ const toTuple = (
 };
 
 export const PositionControl = ({
-  currentStyle,
   property,
-  setProperty,
-  deleteProperty,
-  isAdvanced,
-}: ControlProps) => {
+  styleDecl,
+}: {
+  property: StyleProperty;
+  styleDecl: ComputedStyleDecl;
+}) => {
   const { items } = styleConfigByName(property);
-  const styleInfo = currentStyle[property];
-  const value = toTuple(styleInfo?.value);
-  const styleSource = getStyleSource(styleInfo);
+  const value = toTuple(styleDecl.cascadedValue);
   const keywords = items.map((item) => ({
     type: "keyword" as const,
     value: item.name,
@@ -82,7 +84,6 @@ export const PositionControl = ({
         }
         properties={[property]}
       />
-
       <Flex gap="6">
         <PositionGrid
           selectedPosition={toPosition(value)}
@@ -97,9 +98,7 @@ export const PositionControl = ({
           }}
         />
         <Grid
-          css={{
-            gridTemplateColumns: "max-content 1fr",
-          }}
+          css={{ gridTemplateColumns: "max-content 1fr" }}
           align="center"
           gapX="2"
         >
@@ -108,31 +107,26 @@ export const PositionControl = ({
             description="Left position offset"
             properties={[property]}
           />
-
           <CssValueInputContainer
             property={property}
-            styleSource={styleSource}
+            styleSource={styleDecl.source.name}
             keywords={keywords}
             value={value.value[0]}
             setValue={setValueX}
             deleteProperty={deleteProperty}
-            disabled={isAdvanced}
           />
-
           <PropertyInlineLabel
             label="Top"
             description="Top position offset"
             properties={[property]}
           />
-
           <CssValueInputContainer
             property={property}
-            styleSource={styleSource}
+            styleSource={styleDecl.source.name}
             keywords={keywords}
             value={value.value[1]}
             setValue={setValueY}
             deleteProperty={deleteProperty}
-            disabled={isAdvanced}
           />
         </Grid>
       </Flex>
