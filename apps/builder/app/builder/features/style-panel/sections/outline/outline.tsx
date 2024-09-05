@@ -1,13 +1,17 @@
-import { Flex, Grid, theme, Box } from "@webstudio-is/design-system";
+import { theme, Grid, Box } from "@webstudio-is/design-system";
+import {
+  DashBorderIcon,
+  DashedBorderIcon,
+  DottedBorderIcon,
+  SmallXIcon,
+} from "@webstudio-is/icons";
 import { propertyDescriptions } from "@webstudio-is/css-data";
-import type { StyleProperty } from "@webstudio-is/css-engine";
-import { ColorControl } from "../../controls";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { ColorControl, TextControl } from "../../controls";
 import { StyleSection } from "../../shared/style-section";
-import type { SectionProps } from "../shared/section";
-import { OutlineStyle } from "./outline-style";
-import { OutlineWidth } from "./outline-width";
-import { OutlineOffset } from "./outline-offset";
 import { PropertyLabel } from "../../property-label";
+import { useComputedStyleDecl } from "../../shared/model";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 
 export const properties = [
   "outlineStyle",
@@ -16,50 +20,60 @@ export const properties = [
   "outlineOffset",
 ] satisfies Array<StyleProperty>;
 
-export const Section = (props: SectionProps) => {
-  const { currentStyle, setProperty, deleteProperty } = props;
-  const { outlineStyle } = currentStyle;
-
-  if (outlineStyle?.value.type !== "keyword") {
-    return;
-  }
+export const Section = () => {
+  const outlineStyle = useComputedStyleDecl("outlineStyle");
+  const outlineStyleValue = toValue(outlineStyle.cascadedValue);
 
   return (
     <StyleSection label="Outline" properties={properties}>
-      <Flex direction="column" gap={2}>
-        <OutlineStyle />
-        {outlineStyle.value.value !== "none" && (
+      <Grid
+        css={{
+          // label gap (input gap expand)
+          gridTemplateColumns: `1fr calc(${theme.spacing[20]} + ${theme.spacing[5]} + ${theme.spacing[12]})`,
+        }}
+        gap={2}
+      >
+        <PropertyLabel
+          label="Style"
+          description={propertyDescriptions.outlineStyle}
+          properties={["outlineStyle"]}
+        />
+        <Box css={{ justifySelf: "end" }}>
+          <ToggleGroupControl
+            label="Style"
+            properties={["outlineStyle"]}
+            items={[
+              { child: <SmallXIcon />, value: "none" },
+              { child: <DashBorderIcon />, value: "solid" },
+              { child: <DashedBorderIcon />, value: "dashed" },
+              { child: <DottedBorderIcon />, value: "dotted" },
+            ]}
+          />
+        </Box>
+
+        {outlineStyleValue !== "none" && (
           <>
-            <Grid
-              css={{
-                gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
-              }}
-              gapX={2}
-            >
-              <PropertyLabel
-                label="Color"
-                description={propertyDescriptions.outlineColor}
-                properties={["outlineColor"]}
-              />
-              <Box css={{ gridColumn: `span 2` }}>
-                <ColorControl property="outlineColor" />
-              </Box>
-            </Grid>
-
-            <OutlineWidth
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
+            <PropertyLabel
+              label="Color"
+              description={propertyDescriptions.outlineColor}
+              properties={["outlineColor"]}
             />
-
-            <OutlineOffset
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
+            <ColorControl property="outlineColor" />
+            <PropertyLabel
+              label="Width"
+              description={propertyDescriptions.outlineWidth}
+              properties={["outlineWidth"]}
             />
+            <TextControl property="outlineWidth" />
+            <PropertyLabel
+              label="Offset"
+              description={propertyDescriptions.outlineOffset}
+              properties={["outlineOffset"]}
+            />
+            <TextControl property="outlineOffset" />
           </>
         )}
-      </Flex>
+      </Grid>
     </StyleSection>
   );
 };
