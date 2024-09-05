@@ -7,13 +7,7 @@ import {
   Separator,
   styled,
 } from "@webstudio-is/design-system";
-import type { SectionProps } from "../shared/section";
-import {
-  PositionControl,
-  SelectControl,
-  TextControl,
-  type ControlProps,
-} from "../../controls";
+import { PositionControl, SelectControl, TextControl } from "../../controls";
 import {
   EyeconOpenIcon,
   EyeconClosedIcon,
@@ -24,10 +18,11 @@ import {
 import { StyleSection } from "../../shared/style-section";
 import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
-import { getStyleSourceColor } from "../../shared/style-info";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { humanizeString } from "~/shared/string-utils";
 import { PropertyLabel } from "../../property-label";
+import { useComputedStyleDecl } from "../../shared/model";
+import { deleteProperty } from "../../shared/use-style-data";
 
 const SizeProperty = ({ property }: { property: StyleProperty }) => {
   return (
@@ -44,40 +39,24 @@ const SizeProperty = ({ property }: { property: StyleProperty }) => {
   );
 };
 
-const ObjectPosition = ({
-  property,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  isAdvanced,
-}: ControlProps) => {
-  const styleSourceColor = getStyleSourceColor({
-    properties: [property],
-    currentStyle,
-  });
-
+const ObjectPosition = () => {
+  const styleDecl = useComputedStyleDecl("objectPosition");
   return (
     <Flex justify="end">
       <FloatingPanel
         title="Object Position"
         content={
           <Flex css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
-            <PositionControl
-              property={property}
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-              isAdvanced={isAdvanced}
-            />
+            <PositionControl property="objectPosition" styleDecl={styleDecl} />
           </Flex>
         }
       >
         <IconButton
-          variant={styleSourceColor}
+          variant={styleDecl.source.name}
           onClick={(event) => {
             if (event.altKey) {
               event.preventDefault();
-              deleteProperty(property);
+              deleteProperty("objectPosition");
             }
           }}
         >
@@ -108,11 +87,7 @@ const SectionLayout = styled(Grid, {
   px: theme.spacing[9],
 });
 
-export const Section = ({
-  currentStyle,
-  setProperty,
-  deleteProperty,
-}: SectionProps) => {
+export const Section = () => {
   return (
     <StyleSection label="Size" properties={properties} fullWidth>
       <SectionLayout columns={2}>
@@ -178,12 +153,7 @@ export const Section = ({
           description={propertyDescriptions.objectPosition}
           properties={["objectPosition"]}
         />
-        <ObjectPosition
-          property="objectPosition"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <ObjectPosition />
       </SectionLayout>
     </StyleSection>
   );
