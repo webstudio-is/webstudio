@@ -6,7 +6,6 @@ import {
   BorderRadiusTopRightIcon,
   BorderRadiusBottomLeftIcon,
 } from "@webstudio-is/icons";
-import type { SectionProps } from "../shared/section";
 import { BorderProperty } from "./border-property";
 
 export const properties = [
@@ -31,18 +30,9 @@ const borderPropertyOptions = {
   },
 } as const satisfies Partial<{ [property in StyleProperty]: unknown }>;
 
-export const BorderRadius = (
-  props: Pick<
-    SectionProps,
-    "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
-  >
-) => {
+export const BorderRadius = () => {
   return (
     <BorderProperty
-      currentStyle={props.currentStyle}
-      setProperty={props.setProperty}
-      deleteProperty={props.deleteProperty}
-      createBatchUpdate={props.createBatchUpdate}
       label="Radius"
       description="Sets the radius of border"
       borderPropertyOptions={borderPropertyOptions}

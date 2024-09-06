@@ -1,6 +1,5 @@
 import { Flex } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section";
 import { StyleSection } from "../../shared/style-section";
 import {
   BorderRadius,
@@ -26,14 +25,14 @@ export const properties = [
   ...borderWidthProperties,
 ] satisfies Array<StyleProperty>;
 
-export const Section = (props: SectionProps) => {
+export const Section = () => {
   return (
     <StyleSection label="Borders" properties={properties}>
       <Flex direction="column" gap={2}>
         <BorderStyle />
         <BorderColor />
-        <BorderWidth {...props} />
-        <BorderRadius {...props} />
+        <BorderWidth />
+        <BorderRadius />
       </Flex>
     </StyleSection>
   );
