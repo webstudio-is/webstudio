@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { buttonStyle, Text } from "@webstudio-is/design-system";
+import { buttonStyle, Text, Link } from "@webstudio-is/design-system";
 import { $authToken, $authTokenPermissions } from "~/shared/nano-states";
 import { cloneProjectUrl } from "~/shared/router-utils/path-utils";
 
@@ -12,19 +12,19 @@ export const CloneButton = () => {
   }
 
   return (
-    <a
+    <Link
       data-state="auto"
       className={buttonStyle({
         color: "positive",
       })}
+      color="contrast"
       href={cloneProjectUrl({
         origin: window.origin,
         sourceAuthToken: authToken,
       })}
+      underline="none"
     >
-      <Text css={{ pointerEvents: "none" }} variant={"labelsSentenceCase"}>
-        Clone
-      </Text>
-    </a>
+      Clone
+    </Link>
   );
 };
