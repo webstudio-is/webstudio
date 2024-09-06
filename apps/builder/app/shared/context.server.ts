@@ -139,7 +139,7 @@ const createDeploymentContext = (builderOrigin: string) => {
   const context: AppContext["deployment"] = {
     deploymentTrpc: trpcSharedClient.deployment,
     env: {
-      BUILDER_ORIGIN: builderOrigin,
+      BUILDER_ORIGIN: getRequestOrigin(builderOrigin),
       GITHUB_REF_NAME: staticEnv.GITHUB_REF_NAME ?? "undefined",
       GITHUB_SHA: staticEnv.GITHUB_SHA ?? undefined,
     },
@@ -202,29 +202,21 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const trpcCache = createTrpcCache();
   const postgrest = createPostrestContext();
 
-  return {
-    authorization,
-    domain,
-    deployment,
-    entri,
-    userPlanFeatures,
-    trpcCache,
-    postgrest,
+  const createTokenContext = async (authToken: string) => {
+    const authorization = await createTokenAuthorizationContext(authToken);
+    const userPlanFeatures = await createUserPlanContext(authorization);
+
+    return {
+      authorization,
+      domain,
+      deployment,
+      entri,
+      userPlanFeatures,
+      trpcCache,
+      postgrest,
+      createTokenContext,
+    };
   };
-};
-
-export const createTokenContext = async (
-  request: Request,
-  authToken: string
-): Promise<AppContext> => {
-  const authorization = await createTokenAuthorizationContext(authToken);
-
-  const domain = createDomainContext();
-  const deployment = createDeploymentContext(getRequestOrigin(request.url));
-  const entri = createEntriContext();
-  const userPlanFeatures = await createUserPlanContext(authorization);
-  const trpcCache = createTrpcCache();
-  const postgrest = createPostrestContext();
 
   return {
     authorization,
@@ -234,5 +226,6 @@ export const createTokenContext = async (
     userPlanFeatures,
     trpcCache,
     postgrest,
+    createTokenContext,
   };
 };

@@ -227,28 +227,34 @@ export const clone = async (
     projectId: string;
     title?: string | undefined;
   },
-  context: AppContext
+  destinationContext: AppContext,
+  sourceContext: AppContext
 ) => {
-  const project = await loadById(projectId, context);
+  const project = await loadById(projectId, sourceContext);
   if (project === null) {
     throw new Error(`Not found project "${projectId}"`);
   }
 
-  if (context.authorization.type !== "user") {
+  if (destinationContext.authorization.type !== "user") {
     throw new AuthorizationError("Only logged in users can clone a project");
   }
 
-  const { userId } = context.authorization;
+  const { userId } = destinationContext.authorization;
   if (userId === undefined) {
     throw new Error("The user must be authenticated to clone the project");
   }
 
-  const clonedProject = await context.postgrest.client.rpc("clone_project", {
-    project_id: projectId,
-    user_id: userId,
-    title: title ?? `${project.title} (copy)`,
-    domain: generateDomain(project.title),
-  });
+  // Should be some mixed context in case of RLS
+  const clonedProject = await destinationContext.postgrest.client.rpc(
+    "clone_project",
+    {
+      project_id: projectId,
+      user_id: userId,
+      title: title ?? `${project.title} (copy)`,
+      domain: generateDomain(project.title),
+    }
+  );
+
   if (clonedProject.error) {
     throw clonedProject.error;
   }

@@ -105,4 +105,5 @@ export type AppContext = {
   userPlanFeatures: UserPlanFeatures | undefined;
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
+  createTokenContext: (token: string) => Promise<AppContext>;
 };

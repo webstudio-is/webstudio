@@ -114,6 +114,10 @@ export const domainRouter = router({
 
         console.info("input.destination", input.destination);
 
+        if (env.BUILDER_ORIGIN === undefined) {
+          throw new Error("Missing env.BUILDER_ORIGIN");
+        }
+
         const result = await deploymentTrpc.publish.mutate({
           // used to load build data from the builder see routes/rest.build.$buildId.ts
           builderOrigin: env.BUILDER_ORIGIN,

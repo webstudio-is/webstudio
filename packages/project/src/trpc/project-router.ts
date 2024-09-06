@@ -30,7 +30,11 @@ export const projectRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.project.clone(input, ctx);
+      const sourceContext = input.authToken
+        ? await ctx.createTokenContext(input.authToken)
+        : ctx;
+
+      return await db.project.clone(input, ctx, sourceContext);
     }),
   create: procedure
     .input(z.object({ title: Title }))

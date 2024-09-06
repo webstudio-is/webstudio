@@ -17,7 +17,7 @@ import { preconnect, prefetchDNS } from "react-dom";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { allowedDestinations } from "~/services/destinations.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import { isUserAuthorizedForProject } from "~/services/builder-access.server";
+import { db } from "@webstudio-is/project/index.server";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
@@ -60,7 +60,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (context.authorization.type !== "user") {
     throw new AuthorizationError("You must be logged in to access this page");
   }
-  const { userId } = context.authorization;
 
   const projectToCloneAuthToken = url.searchParams.get(
     "projectToCloneAuthToken"
@@ -78,23 +77,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Clone project
     const token = await authDb.getTokenInfo(projectToCloneAuthToken, context);
     if (token.canClone === false) {
-      // last chance that user is the owner of the project
-      const isAuthorized = await isUserAuthorizedForProject(
-        userId,
-        token.projectId
+      throw new AuthorizationError(
+        "You don't have access to clone this project"
       );
-
-      if (false === isAuthorized) {
-        throw new AuthorizationError(
-          "You don't have access to clone this project"
-        );
-      }
     }
+
+    const project = await db.project.loadById(
+      token.projectId,
+      await context.createTokenContext(projectToCloneAuthToken)
+    );
 
     projectToClone = {
       id: token.projectId,
       authToken: projectToCloneAuthToken,
-      title: "",
+      title: project.title,
     };
   }
 
