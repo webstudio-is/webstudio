@@ -350,6 +350,12 @@ export const ProjectTemplateCard = ({
         isOpen={isDuplicateDialogOpen}
         onOpenChange={setIsDuplicateDialogOpen}
         project={project}
+        onCreate={(projectId) => {
+          window.location.href = builderUrl({
+            origin: window.origin,
+            projectId: projectId,
+          });
+        }}
       />
     </Card>
   );

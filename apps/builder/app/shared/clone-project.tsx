@@ -15,17 +15,17 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import { Title, Project } from "@webstudio-is/project";
-import { builderUrl } from "~/shared/router-utils";
 import { nativeClient } from "./trpc/trpc-client";
+import { useEffectEvent } from "./hook-utils/effect-event";
 
 const useCloneProject = ({
   projectId,
-  onOpenChange,
+  onCreate,
   authToken,
 }: {
   projectId: Project["id"];
   authToken?: string;
-  onOpenChange: (isOpen: boolean) => void;
+  onCreate: (projectId: Project["id"]) => void;
 }) => {
   const [state, setState] = useState<"idle" | "loading" | "submitting">("idle");
   const [errors, setErrors] = useState<string>();
@@ -49,14 +49,9 @@ const useCloneProject = ({
           authToken,
         });
 
-        window.location.href = builderUrl({
-          origin: window.origin,
-          projectId: data.id,
-        });
-
         setState("idle");
 
-        onOpenChange(false);
+        onCreate(data.id);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Unknown error");
         setState("idle");
@@ -140,16 +135,23 @@ export const CloneProjectDialog = ({
   project: { id, title },
   onOpenChange,
   authToken,
+  onCreate,
 }: {
   isOpen: boolean;
   project: Pick<Project, "id" | "title">;
   authToken?: string;
   onOpenChange: (isOpen: boolean) => void;
+  onCreate: (projectId: Project["id"]) => void;
 }) => {
+  const handleOnCreate = useEffectEvent((projectId: Project["id"]) => {
+    onCreate(projectId);
+    onOpenChange(false);
+  });
+
   const { handleSubmit, errors, state } = useCloneProject({
     projectId: id,
-    onOpenChange,
     authToken,
+    onCreate: handleOnCreate,
   });
 
   return (

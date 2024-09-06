@@ -31,7 +31,7 @@ import {
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
-import { getCanvasUrl } from "~/shared/router-utils";
+import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
@@ -400,6 +400,12 @@ export const Builder = ({
             isOpen={isCloneDialogOpen}
             onOpenChange={$isCloneDialogOpen.set}
             project={project}
+            onCreate={(projectId) => {
+              window.location.href = builderUrl({
+                origin: window.origin,
+                projectId: projectId,
+              });
+            }}
           />
         </ChromeWrapper>
         <Loading state={loadingState} />

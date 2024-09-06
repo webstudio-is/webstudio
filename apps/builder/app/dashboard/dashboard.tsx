@@ -11,7 +11,7 @@ import { Projects } from "./projects";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { Resources } from "./resources";
-import { useLocation } from "@remix-run/react";
+import { useLocation, useRevalidator } from "@remix-run/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import { Toaster } from "@webstudio-is/design-system";
 
@@ -66,6 +66,7 @@ const CloneProject = ({
 }) => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(projectToClone !== undefined);
+  const { revalidate } = useRevalidator();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -88,6 +89,9 @@ const CloneProject = ({
         title: projectToClone.title,
       }}
       authToken={projectToClone.authToken}
+      onCreate={() => {
+        revalidate();
+      }}
     />
   ) : undefined;
 };
