@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { buttonStyle, Text, Link } from "@webstudio-is/design-system";
+import { buttonStyle, Link } from "@webstudio-is/design-system";
 import { $authToken, $authTokenPermissions } from "~/shared/nano-states";
 import { cloneProjectUrl } from "~/shared/router-utils/path-utils";
 
