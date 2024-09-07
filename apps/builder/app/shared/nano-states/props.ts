@@ -32,7 +32,6 @@ import {
   $uploadingFilesDataStore,
   $memoryProps,
   $isPreviewMode,
-  $authToken,
 } from "./misc";
 import { $selectedPage, $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
@@ -643,15 +642,9 @@ export const $areResourcesLoading = computed(
 
 const loadResources = async (resourceRequests: ResourceRequest[]) => {
   $resourcesLoadingCount.set($resourcesLoadingCount.get() + 1);
-  const authToken = $authToken.get();
-  const headers = new Headers();
-  if (authToken !== undefined) {
-    headers.set("x-auth-token", authToken);
-  }
   const response = await fetch(restResourcesLoader(), {
     method: "POST",
     body: JSON.stringify(resourceRequests),
-    headers,
   });
   $resourcesLoadingCount.set($resourcesLoadingCount.get() - 1);
   if (response.ok === false) {

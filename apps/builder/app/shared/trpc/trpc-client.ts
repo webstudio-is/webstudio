@@ -9,7 +9,6 @@ import type {
 } from "@trpc/server";
 import { createRecursiveProxy } from "@trpc/server/shared";
 import { useMemo, useState } from "react";
-import { $authToken } from "../nano-states";
 import { fetch } from "~/shared/fetch.client";
 
 export const nativeClient = createTRPCProxyClient<AppRouter>({
@@ -17,18 +16,6 @@ export const nativeClient = createTRPCProxyClient<AppRouter>({
     httpBatchLink({
       fetch,
       url: "/trpc",
-      // You can pass any HTTP headers you wish here
-      async headers(_opts) {
-        const authToken = $authToken.get();
-
-        if (authToken == null) {
-          return {};
-        }
-        // Pass token to api call
-        return {
-          "x-auth-token": authToken,
-        };
-      },
     }),
   ],
 });

@@ -66,12 +66,9 @@ export const loadBuilderData = async ({
   signal: AbortSignal;
 }) => {
   const currentUrl = new URL(location.href);
-  const authToken = currentUrl.searchParams.get("authToken");
   const url = new URL(`/rest/data/${projectId}`, currentUrl.origin);
-  if (authToken) {
-    url.searchParams.set("authToken", authToken);
-  }
-  const response = await fetch(url, { signal });
+  const headers = new Headers();
+  const response = await fetch(url, { headers, signal });
 
   if (response.ok) {
     const data: Awaited<ReturnType<typeof loader>> = await response.json();
