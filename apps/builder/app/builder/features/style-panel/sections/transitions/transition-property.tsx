@@ -54,7 +54,8 @@ const $animatableDefinedProperties = computed(
   (definedProperties, model, instanceSelector, styleSourceSelector) => {
     const animatableProperties = new Set<string>();
     for (const property of definedProperties) {
-      if (isAnimatableProperty(hyphenateProperty(property))) {
+      const hyphenatedProperty = hyphenateProperty(property);
+      if (isAnimatableProperty(hyphenatedProperty)) {
         const styleDecl = getComputedStyleDecl({
           model,
           instanceSelector,
@@ -67,7 +68,7 @@ const $animatableDefinedProperties = computed(
           styleDecl.source.name === "local" ||
           styleDecl.source.name === "overwritten"
         ) {
-          animatableProperties.add(property);
+          animatableProperties.add(hyphenatedProperty);
         }
       }
     }
