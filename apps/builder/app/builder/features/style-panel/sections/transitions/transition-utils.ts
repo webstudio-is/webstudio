@@ -4,20 +4,17 @@ import {
   type KeywordValue,
   type LayersValue,
   type UnitValue,
-  type StyleProperty,
-  hyphenateProperty,
 } from "@webstudio-is/css-engine";
-import type { StyleInfo } from "../../shared/style-info";
-import type {
-  CreateBatchUpdate,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
 import {
   extractTransitionProperties,
-  isAnimatableProperty,
   properties,
   transitionLongHandProperties,
 } from "@webstudio-is/css-data";
+import {
+  createBatchUpdate,
+  type StyleUpdateOptions,
+} from "../../shared/use-style-data";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 export type TransitionProperty = (typeof transitionLongHandProperties)[number];
 
@@ -89,32 +86,8 @@ export const findTimingFunctionFromValue = (
   );
 };
 
-export const getAnimatablePropertiesOnInstance = (
-  currentStyle: StyleInfo
-): Set<string> => {
-  const properties: Set<string> = new Set();
-  let property: StyleProperty;
-  for (property in currentStyle) {
-    const value = currentStyle[property];
-    const prop = hyphenateProperty(property);
-
-    if (isAnimatableProperty(prop) === false) {
-      continue;
-    }
-
-    if (value?.local !== undefined) {
-      properties.add(prop);
-    }
-
-    if (value?.nextSource || value?.previousSource) {
-      properties.add(prop);
-    }
-  }
-  return properties;
-};
-
-export const getTransitionProperties = (
-  currentyStyle: StyleInfo
+const getTransitionProperties = (
+  styles: ComputedStyleDecl[]
 ): Record<TransitionProperty, LayersValue> => {
   const properties: Record<TransitionProperty, LayersValue> = {
     transitionProperty: { type: "layers", value: [] },
@@ -123,40 +96,14 @@ export const getTransitionProperties = (
     transitionDuration: { type: "layers", value: [] },
     transitionBehavior: { type: "layers", value: [] },
   };
-  for (const property of transitionLongHandProperties) {
-    const value = currentyStyle[property];
-
-    if (value !== undefined && value.value.type === "layers") {
-      properties[property] = value.value;
+  for (const styleDecl of styles) {
+    if (styleDecl.cascadedValue.type === "layers") {
+      properties[styleDecl.property as TransitionProperty] =
+        styleDecl.cascadedValue;
     }
   }
 
   return properties;
-};
-
-export const deleteTransitionLayer = (props: {
-  index: number;
-  createBatchUpdate: CreateBatchUpdate;
-  currentStyle: StyleInfo;
-  options?: StyleUpdateOptions;
-}) => {
-  const {
-    index,
-    createBatchUpdate,
-    currentStyle,
-    options = { isEphemeral: false },
-  } = props;
-
-  const properties = getTransitionProperties(currentStyle);
-  const batch = createBatchUpdate();
-  transitionLongHandProperties.forEach((property) => {
-    const value = properties[property].value;
-    batch.setProperty(property)({
-      type: "layers",
-      value: value.filter((_, i) => i !== index),
-    });
-  });
-  batch.publish(options);
 };
 
 // @todo support editing transition-behavior
@@ -164,10 +111,9 @@ export const editTransitionLayer = (props: {
   index: number;
   layers: LayersValue;
   options: StyleUpdateOptions;
-  currentStyle: StyleInfo;
-  createBatchUpdate: CreateBatchUpdate;
+  styles: ComputedStyleDecl[];
 }) => {
-  const { index, layers, createBatchUpdate, options, currentStyle } = props;
+  const { index, layers, options } = props;
   const batch = createBatchUpdate();
 
   const newTransitionProperties: Array<KeywordValue | UnparsedValue> = [];
@@ -198,7 +144,7 @@ export const editTransitionLayer = (props: {
     newTransitionTimingFunctions.push(timing);
   }
 
-  const existingTransitionProperties = getTransitionProperties(currentStyle);
+  const existingTransitionProperties = getTransitionProperties(props.styles);
   const {
     transitionProperty,
     transitionDelay,

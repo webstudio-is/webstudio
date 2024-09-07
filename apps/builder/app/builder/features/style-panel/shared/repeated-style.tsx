@@ -20,28 +20,20 @@ import {
   useSortable,
 } from "@webstudio-is/design-system";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import type { StyleInfo } from "./style-info";
-import type { CreateBatchUpdate } from "./use-style-data";
-import { ColorThumb } from "./color-thumb";
 import { repeatUntil } from "~/shared/array-utils";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { createBatchUpdate } from "./use-style-data";
+import { ColorThumb } from "./color-thumb";
 
 const createLayersTransformer =
-  ({
-    properties,
-    style,
-    createBatchUpdate,
-  }: {
-    properties: StyleProperty[];
-    style: StyleInfo;
-    createBatchUpdate: CreateBatchUpdate;
-  }) =>
+  (styles: ComputedStyleDecl[]) =>
   (transform: (value: LayersValue) => Partial<LayersValue>) => {
     const batch = createBatchUpdate();
-    const primaryValue = style[properties[0]]?.value;
+    const primaryValue = styles[0].cascadedValue;
     const primaryLayersCount =
       primaryValue?.type === "layers" ? primaryValue.value.length : 0;
-    for (const property of properties) {
-      const value = style[property]?.value;
+    for (const styleDecl of styles) {
+      const value = styleDecl.cascadedValue;
       if (value?.type === "layers") {
         const normalizedLayers: LayersValue = {
           type: "layers",
@@ -53,9 +45,9 @@ const createLayersTransformer =
         };
         // delete empty layers
         if (newLayers.value.length === 0) {
-          batch.deleteProperty(property);
+          batch.deleteProperty(styleDecl.property as StyleProperty);
         } else {
-          batch.setProperty(property)(newLayers);
+          batch.setProperty(styleDecl.property as StyleProperty)(newLayers);
         }
       }
     }
@@ -90,19 +82,17 @@ const swapLayers = (value: LayersValue, oldIndex: number, newIndex: number) => {
 
 export const RepeatedStyle = (props: {
   label: string;
-  properties: StyleProperty[];
-  style: StyleInfo;
-  createBatchUpdate: CreateBatchUpdate;
+  styles: ComputedStyleDecl[];
   getItemProps: (
     index: number,
     primaryValue: StyleValue
   ) => { label: string; color?: RgbaColor };
   renderItemContent: (index: number) => JSX.Element;
 }) => {
-  const transformLayers = createLayersTransformer(props);
-  const { label, properties, style, getItemProps, renderItemContent } = props;
+  const transformLayers = createLayersTransformer(props.styles);
+  const { label, styles, getItemProps, renderItemContent } = props;
   // first property should describe the amount of layers
-  const layers = style[properties[0]]?.value;
+  const layers = styles[0].cascadedValue;
   const primaryValues = layers?.type === "layers" ? layers.value : [];
 
   const sortableItems = useMemo(

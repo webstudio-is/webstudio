@@ -21,31 +21,22 @@ import {
   Text,
   Grid,
 } from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   parseCssValue,
   properties,
   propertyDescriptions,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
-import type {
-  CreateBatchUpdate,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
+import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
+import { CssValueInputContainer } from "../../shared/css-value-input";
+import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { PropertyInlineLabel } from "../../property-label";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
-import { CssValueInputContainer } from "../../shared/css-value-input";
-import { deleteTransitionLayer, editTransitionLayer } from "./transition-utils";
-import type { StyleInfo } from "../../shared/style-info";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
-import { InfoCircleIcon } from "@webstudio-is/icons";
-import { PropertyInlineLabel } from "../../property-label";
-
-type TransitionContentProps = {
-  index: number;
-  currentStyle: StyleInfo;
-  createBatchUpdate: CreateBatchUpdate;
-};
+import { editTransitionLayer } from "./transition-utils";
+import { useComputedStyles } from "../../shared/model";
 
 // We are allowing users to add/edit layers as shorthand from the style-panel
 // So, we need to use the shorthand property to validate the layer too.
@@ -55,33 +46,30 @@ const shortHandTransitionProperty = "transition" as StyleProperty;
 const getLayer = (value: undefined | StyleValue, index: number) =>
   value?.type === "layers" ? value.value[index] : undefined;
 
-export const TransitionContent = ({
-  index,
-  createBatchUpdate,
-  currentStyle,
-}: TransitionContentProps) => {
-  const onEditLayer = (
-    index: number,
-    layers: LayersValue,
-    options: StyleUpdateOptions
-  ) => {
-    editTransitionLayer({
-      index,
-      layers,
-      options,
-      createBatchUpdate,
-      currentStyle,
-    });
-  };
+export const TransitionContent = ({ index }: { index: number }) => {
+  const styles = useComputedStyles([
+    "transitionProperty",
+    "transitionDuration",
+    "transitionTimingFunction",
+    "transitionDelay",
+    "transitionBehavior",
+  ]);
+  const [
+    transitionProperty,
+    transitionDuration,
+    transitionTimingFunction,
+    transitionDelay,
+    transitionBehavior,
+  ] = styles;
 
-  const property = getLayer(currentStyle.transitionProperty?.value, index);
-  const duration = getLayer(currentStyle.transitionDuration?.value, index);
+  const property = getLayer(transitionProperty.cascadedValue, index);
+  const duration = getLayer(transitionDuration.cascadedValue, index);
   const timingFunction = getLayer(
-    currentStyle.transitionTimingFunction?.value,
+    transitionTimingFunction.cascadedValue,
     index
   );
-  const delay = getLayer(currentStyle.transitionDelay?.value, index);
-  const behavior = getLayer(currentStyle.transitionBehavior?.value, index);
+  const delay = getLayer(transitionDelay.cascadedValue, index);
+  const behavior = getLayer(transitionBehavior.cascadedValue, index);
 
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -102,7 +90,7 @@ export const TransitionContent = ({
     });
   };
 
-  const handleComplete = (options: StyleUpdateOptions) => {
+  const handleComplete = () => {
     if (intermediateValue === undefined) {
       return;
     }
@@ -129,7 +117,12 @@ export const TransitionContent = ({
       value: [tuple],
     };
 
-    onEditLayer(index, layers, options);
+    editTransitionLayer({
+      index,
+      layers,
+      options: { isEphemeral: false },
+      styles,
+    });
   };
 
   const handlePropertyUpdate = (
@@ -161,7 +154,12 @@ export const TransitionContent = ({
       value: toValue(layerTuple),
     });
 
-    onEditLayer(index, { type: "layers", value: [layerTuple] }, options);
+    editTransitionLayer({
+      index,
+      layers: { type: "layers", value: [layerTuple] },
+      options,
+      styles,
+    });
   };
 
   return (
@@ -175,10 +173,14 @@ export const TransitionContent = ({
           gridTemplateRows: theme.spacing[13],
         }}
       >
+        <PropertyInlineLabel
+          label="Property"
+          description={propertyDescriptions.transitionProperty}
+          properties={["transitionProperty"]}
+        />
         <TransitionProperty
-          currentStyle={currentStyle}
-          property={property ?? properties.transitionProperty.initial}
-          onPropertySelection={handlePropertyUpdate}
+          value={property ?? properties.transitionProperty.initial}
+          onChange={(property) => handlePropertyUpdate({ property })}
         />
 
         <PropertyInlineLabel
@@ -279,27 +281,12 @@ export const TransitionContent = ({
           color={intermediateValue?.type === "invalid" ? "error" : undefined}
           value={intermediateValue?.value ?? ""}
           onChange={handleChange}
-          onBlur={() => handleComplete({ isEphemeral: true })}
+          onBlur={handleComplete}
           onKeyDown={(event) => {
             event.stopPropagation();
 
             if (event.key === "Enter") {
-              handleComplete({ isEphemeral: false });
-              event.preventDefault();
-            }
-
-            if (event.key === "Escape") {
-              if (intermediateValue === undefined) {
-                return;
-              }
-
-              deleteTransitionLayer({
-                currentStyle,
-                createBatchUpdate,
-                index,
-                options: { isEphemeral: true },
-              });
-              setIntermediateValue(undefined);
+              handleComplete();
               event.preventDefault();
             }
           }}
