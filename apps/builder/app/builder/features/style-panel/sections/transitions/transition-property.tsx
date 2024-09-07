@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
+import { matchSorter } from "match-sorter";
 import {
   animatableProperties,
   commonTransitionProperties,
   isAnimatableProperty,
-  propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
   InputField,
@@ -19,45 +21,73 @@ import {
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import {
+  hyphenateProperty,
   toValue,
   type KeywordValue,
   type StyleValue,
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
-import { matchSorter } from "match-sorter";
 import { setUnion } from "~/shared/shim";
-import { type StyleInfo } from "../../shared/style-info";
-import { getAnimatablePropertiesOnInstance } from "./transition-utils";
-import { PropertyInlineLabel } from "../../property-label";
+import {
+  $selectedInstanceSelector,
+  $selectedOrLastStyleSourceSelector,
+} from "~/shared/nano-states";
+import { getComputedStyleDecl } from "~/shared/style-object-model";
+import { $definedProperties, $model } from "../../shared/model";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
 type TransitionPropertyProps = {
-  property: StyleValue;
-  currentStyle: StyleInfo;
-  onPropertySelection: (params: {
-    property: KeywordValue | UnparsedValue;
-  }) => void;
+  value: StyleValue;
+  onChange: (value: KeywordValue | UnparsedValue) => void;
 };
 
 const commonPropertiesSet = new Set(commonTransitionProperties);
 
+const $animatableDefinedProperties = computed(
+  [
+    $definedProperties,
+    $model,
+    $selectedInstanceSelector,
+    $selectedOrLastStyleSourceSelector,
+  ],
+  (definedProperties, model, instanceSelector, styleSourceSelector) => {
+    const animatableProperties = new Set<string>();
+    for (const property of definedProperties) {
+      const hyphenatedProperty = hyphenateProperty(property);
+      if (isAnimatableProperty(hyphenatedProperty)) {
+        const styleDecl = getComputedStyleDecl({
+          model,
+          instanceSelector,
+          styleSourceId: styleSourceSelector?.styleSourceId,
+          state: styleSourceSelector?.state,
+          property,
+        });
+        if (
+          styleDecl.source.name === "remote" ||
+          styleDecl.source.name === "local" ||
+          styleDecl.source.name === "overwritten"
+        ) {
+          animatableProperties.add(hyphenatedProperty);
+        }
+      }
+    }
+    return animatableProperties;
+  }
+);
+
 export const TransitionProperty = ({
-  property,
-  currentStyle,
-  onPropertySelection,
+  value,
+  onChange,
 }: TransitionPropertyProps) => {
-  const valueString = toValue(property);
+  const animatableDefinedProperties = useStore($animatableDefinedProperties);
+  const valueString = toValue(value);
   const [inputValue, setInputValue] = useState<string>(valueString);
   useEffect(() => setInputValue(valueString), [valueString]);
-  const propertiesDefinedOnInstanceSet = useMemo(
-    () => getAnimatablePropertiesOnInstance(currentStyle),
-    [currentStyle]
-  );
 
   const properties = Array.from(
     setUnion(
-      setUnion(propertiesDefinedOnInstanceSet, commonPropertiesSet),
+      setUnion(animatableDefinedProperties, commonPropertiesSet),
       new Set(animatableProperties)
     )
   );
@@ -105,10 +135,10 @@ export const TransitionProperty = ({
             }
 
             // Keep the proeprties on instance at the top
-            if (propertiesDefinedOnInstanceSet.has(a.item.name)) {
+            if (animatableDefinedProperties.has(a.item.name)) {
               return -1;
             }
-            if (propertiesDefinedOnInstanceSet.has(b.item.name)) {
+            if (animatableDefinedProperties.has(b.item.name)) {
               return 1;
             }
 
@@ -132,15 +162,15 @@ export const TransitionProperty = ({
   const commonProperties = items.filter(
     (item) =>
       commonPropertiesSet.has(item.name) === true &&
-      propertiesDefinedOnInstanceSet.has(item.name) === false
+      animatableDefinedProperties.has(item.name) === false
   );
   const filteredProperties = items.filter(
     (item) =>
       commonPropertiesSet.has(item.name) === false &&
-      propertiesDefinedOnInstanceSet.has(item.name) === false
+      animatableDefinedProperties.has(item.name) === false
   );
   const propertiesDefinedOnInstance: Array<NameAndLabel> = items.filter(
-    (item) => propertiesDefinedOnInstanceSet.has(item.name)
+    (item) => animatableDefinedProperties.has(item.name)
   );
 
   const saveAnimatableProperty = (propertyName: string) => {
@@ -148,9 +178,7 @@ export const TransitionProperty = ({
       return;
     }
     setInputValue(propertyName);
-    onPropertySelection({
-      property: { type: "unparsed", value: propertyName },
-    });
+    onChange({ type: "unparsed", value: propertyName });
   };
 
   const renderItem = (item: NameAndLabel, index: number) => {
@@ -169,68 +197,61 @@ export const TransitionProperty = ({
   };
 
   return (
-    <>
-      <PropertyInlineLabel
-        label="Property"
-        description={propertyDescriptions.transitionProperty}
-        properties={["transitionProperty"]}
-      />
-      <ComboboxRoot open={isOpen}>
-        <div {...getComboboxProps()}>
-          <ComboboxAnchor>
-            <InputField
-              autoFocus
-              {...getInputProps({
-                onKeyDown: (event) => {
-                  if (event.key === "Enter") {
-                    saveAnimatableProperty(inputValue);
-                  }
-                  event.stopPropagation();
-                },
-              })}
-              placeholder="all"
-              suffix={<NestedInputButton {...getToggleButtonProps()} />}
-            />
-          </ComboboxAnchor>
-          <ComboboxContent align="end" sideOffset={5}>
-            <ComboboxListbox {...getMenuProps()}>
-              <ComboboxScrollArea>
-                {isOpen && (
-                  <>
-                    {propertiesDefinedOnInstance.length > 0 && (
-                      <>
-                        <ComboboxLabel>Defined</ComboboxLabel>
-                        {propertiesDefinedOnInstance.map((property, index) =>
-                          renderItem(property, index)
-                        )}
-                        <ComboboxSeparator />
-                      </>
-                    )}
+    <ComboboxRoot open={isOpen}>
+      <div {...getComboboxProps()}>
+        <ComboboxAnchor>
+          <InputField
+            autoFocus
+            {...getInputProps({
+              onKeyDown: (event) => {
+                if (event.key === "Enter") {
+                  saveAnimatableProperty(inputValue);
+                }
+                event.stopPropagation();
+              },
+            })}
+            placeholder="all"
+            suffix={<NestedInputButton {...getToggleButtonProps()} />}
+          />
+        </ComboboxAnchor>
+        <ComboboxContent align="end" sideOffset={5}>
+          <ComboboxListbox {...getMenuProps()}>
+            <ComboboxScrollArea>
+              {isOpen && (
+                <>
+                  {propertiesDefinedOnInstance.length > 0 && (
+                    <>
+                      <ComboboxLabel>Defined</ComboboxLabel>
+                      {propertiesDefinedOnInstance.map((property, index) =>
+                        renderItem(property, index)
+                      )}
+                      <ComboboxSeparator />
+                    </>
+                  )}
 
-                    <ComboboxLabel>Common</ComboboxLabel>
-                    {commonProperties.map((property, index) =>
-                      renderItem(
-                        property,
-                        propertiesDefinedOnInstance.length + index
-                      )
-                    )}
-                    <ComboboxSeparator />
+                  <ComboboxLabel>Common</ComboboxLabel>
+                  {commonProperties.map((property, index) =>
+                    renderItem(
+                      property,
+                      propertiesDefinedOnInstance.length + index
+                    )
+                  )}
+                  <ComboboxSeparator />
 
-                    {filteredProperties.map((property, index) =>
-                      renderItem(
-                        property,
-                        propertiesDefinedOnInstance.length +
-                          commonProperties.length +
-                          index
-                      )
-                    )}
-                  </>
-                )}
-              </ComboboxScrollArea>
-            </ComboboxListbox>
-          </ComboboxContent>
-        </div>
-      </ComboboxRoot>
-    </>
+                  {filteredProperties.map((property, index) =>
+                    renderItem(
+                      property,
+                      propertiesDefinedOnInstance.length +
+                        commonProperties.length +
+                        index
+                    )
+                  )}
+                </>
+              )}
+            </ComboboxScrollArea>
+          </ComboboxListbox>
+        </ComboboxContent>
+      </div>
+    </ComboboxRoot>
   );
 };

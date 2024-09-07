@@ -79,7 +79,50 @@ const $matchingBreakpoints = computed(
   }
 );
 
-const $model = computed(
+export const $definedProperties = computed(
+  [
+    $selectedInstanceSelector,
+    $styleSourceSelections,
+    $matchingBreakpoints,
+    $styles,
+  ],
+  (
+    instanceSelector,
+    styleSourceSelections,
+    matchingBreakpointsArray,
+    styles
+  ) => {
+    const definedProperties = new Set<StyleProperty>();
+    if (instanceSelector === undefined) {
+      return definedProperties;
+    }
+    const matchingStyleSources = new Set();
+    const matchingBreakpoints = new Set(matchingBreakpointsArray);
+    for (const instanceId of instanceSelector) {
+      const styleSources = styleSourceSelections.get(instanceId)?.values;
+      if (styleSources) {
+        for (const styleSourceId of styleSources) {
+          matchingStyleSources.add(styleSourceId);
+        }
+      }
+    }
+    for (const styleDecl of styles.values()) {
+      if (
+        matchingBreakpoints.has(styleDecl.breakpointId) &&
+        matchingStyleSources.has(styleDecl.styleSourceId)
+      ) {
+        definedProperties.add(styleDecl.property);
+      }
+    }
+    return definedProperties;
+  }
+);
+
+/**
+ * Do not use directly
+ * only transition property is permitted
+ */
+export const $model = computed(
   [
     $styles,
     $styleSourceSelections,

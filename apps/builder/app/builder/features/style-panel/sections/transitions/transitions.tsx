@@ -10,68 +10,71 @@ import {
   properties,
   transitionLongHandProperties,
 } from "@webstudio-is/css-data";
+import { toValue, type LayerValueItem } from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
-import type { SectionProps } from "../shared/section";
-import { getDots } from "../../shared/style-section";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
-import { TransitionContent } from "./transition-content";
+import { humanizeString } from "~/shared/string-utils";
+import { repeatUntil } from "~/shared/array-utils";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { getDots } from "../../shared/style-section";
+import { RepeatedStyle } from "../../shared/repeated-style";
+import { PropertySectionLabel } from "../../property-label";
+import { useComputedStyles } from "../../shared/model";
+import { createBatchUpdate } from "../../shared/use-style-data";
 import {
   findTimingFunctionFromValue,
   type TransitionProperty,
 } from "./transition-utils";
-import { toValue, type LayerValueItem } from "@webstudio-is/css-engine";
-import { humanizeString } from "~/shared/string-utils";
-import { RepeatedStyle } from "../../shared/repeated-style";
-import type { StyleInfo } from "../../shared/style-info";
-import { repeatUntil } from "~/shared/array-utils";
-import { PropertySectionLabel } from "../../property-label";
-import { useComputedStyles } from "../../shared/model";
+import { TransitionContent } from "./transition-content";
 
 export { transitionLongHandProperties as properties };
 
 const label = "Transitions";
 
 const getTransitionLayers = (
-  style: StyleInfo,
+  styles: ComputedStyleDecl[],
   property: TransitionProperty
 ) => {
+  const transitionPropertyValue = styles.find(
+    (styleDecl) => styleDecl.property === "transitionProperty"
+  )?.cascadedValue;
+  const currentPropertyValue = styles.find(
+    (styleDecl) => styleDecl.property === property
+  )?.cascadedValue;
   const transitionPropertiesCount =
-    style.transitionProperty?.value?.type === "layers"
-      ? style.transitionProperty.value.value.length
+    transitionPropertyValue?.type === "layers"
+      ? transitionPropertyValue.value.length
       : 0;
   const definedLayers: LayerValueItem[] =
-    style[property]?.value.type === "layers"
-      ? style[property].value.value
+    currentPropertyValue?.type === "layers"
+      ? currentPropertyValue.value
       : [properties[property].initial];
   return repeatUntil(definedLayers, transitionPropertiesCount);
 };
 
 const getLayerLabel = ({
-  style,
+  styles,
   index,
 }: {
-  style: StyleInfo;
+  styles: ComputedStyleDecl[];
   index: number;
 }) => {
   // show label without hidden replacement
-  const propertyLayer =
-    getTransitionLayers(style, "transitionProperty")[index] ??
-    properties.transitionProperty.initial;
+  const propertyLayer = getTransitionLayers(styles, "transitionProperty")[
+    index
+  ];
   const property = humanizeString(toValue({ ...propertyLayer, hidden: false }));
   const duration = toValue(
-    getTransitionLayers(style, "transitionDuration")[index] ??
-      properties.transitionDuration.initial
+    getTransitionLayers(styles, "transitionDuration")[index]
   );
-  const timingFunctionLayer =
-    getTransitionLayers(style, "transitionTimingFunction")[index] ??
-    properties.transitionTimingFunction.initial;
+  const timingFunctionLayer = getTransitionLayers(
+    styles,
+    "transitionTimingFunction"
+  )[index];
   const timingFunction = toValue({ ...timingFunctionLayer, hidden: false });
   const humanizedTimingFunction =
     findTimingFunctionFromValue(timingFunction) ?? timingFunction;
-  const delay = toValue(
-    getTransitionLayers(style, "transitionDelay")[index] ??
-      properties.transitionDelay.initial
-  );
+  const delay = toValue(getTransitionLayers(styles, "transitionDelay")[index]);
 
   return `${property}: ${duration} ${humanizedTimingFunction} ${delay}`;
 };
@@ -84,8 +87,7 @@ const defaultTransitionLayers: Record<TransitionProperty, LayerValueItem> = {
   transitionBehavior: { type: "keyword", value: "normal" },
 };
 
-export const Section = (props: SectionProps) => {
-  const { currentStyle, createBatchUpdate } = props;
+export const Section = () => {
   const [isOpen, setIsOpen] = useState(true);
 
   const selectedOrLastStyleSourceSelector = useStore(
@@ -124,7 +126,7 @@ export const Section = (props: SectionProps) => {
                     batch.setProperty(property)({
                       type: "layers",
                       value: [
-                        ...getTransitionLayers(currentStyle, property),
+                        ...getTransitionLayers(styles, property),
                         defaultTransitionLayers[property],
                       ],
                     });
@@ -145,25 +147,11 @@ export const Section = (props: SectionProps) => {
     >
       <RepeatedStyle
         label={label}
-        properties={[
-          "transitionProperty",
-          "transitionDuration",
-          "transitionTimingFunction",
-          "transitionDelay",
-          "transitionBehavior",
-        ]}
-        style={currentStyle}
-        createBatchUpdate={createBatchUpdate}
+        styles={styles}
         getItemProps={(index) => ({
-          label: getLayerLabel({ style: currentStyle, index }),
+          label: getLayerLabel({ styles, index }),
         })}
-        renderItemContent={(index) => (
-          <TransitionContent
-            index={index}
-            currentStyle={currentStyle}
-            createBatchUpdate={createBatchUpdate}
-          />
-        )}
+        renderItemContent={(index) => <TransitionContent index={index} />}
       />
     </CollapsibleSectionRoot>
   );
