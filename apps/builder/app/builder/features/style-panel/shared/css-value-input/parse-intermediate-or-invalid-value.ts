@@ -14,19 +14,13 @@ export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
   styleValue: IntermediateStyleValue | InvalidValue
 ): StyleValue => {
-  let value = styleValue.value.trim();
+  const value = styleValue.value.trim();
 
   if (property.startsWith("--")) {
     return {
       type: "unparsed",
       value,
     };
-  }
-
-  // If input contains a number, we assume its either a value or value + unit.
-  // Users often mistype comma instead of dot and we want to be tolerant to that.
-  if (Number.isNaN(Number.parseFloat(value)) === false) {
-    value = value.replace(",", ".");
   }
 
   const valueInfo = properties[property as keyof typeof properties];
@@ -73,7 +67,6 @@ export const parseIntermediateOrInvalidValue = (
   }
 
   // Try evaluate something like 10px + 4 or 13 + 4em
-
   // Try to extract/remove anything similar to unit value
   const unitRegex = new RegExp(`(?:${unitsList.join("|")})`, "g");
   let matchedUnit = value.match(unitRegex)?.[0];
@@ -112,6 +105,15 @@ export const parseIntermediateOrInvalidValue = (
 
   if (styleInput.type !== "invalid") {
     return styleInput;
+  }
+
+  // Users often mistype comma instead of dot and we want to be tolerant to that.
+  // We need to try replace comma with dot and then try all parsing options again.
+  if (value.includes(",")) {
+    return parseIntermediateOrInvalidValue(property, {
+      ...styleValue,
+      value: value.replace(/,/g, "."),
+    });
   }
 
   // If we are here it means that value can be Valid but our parseCssValue can't handle it
