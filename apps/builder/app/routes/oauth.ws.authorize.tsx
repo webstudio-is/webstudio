@@ -237,7 +237,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       const bloomFilter = await session.readLoginSessionBloomFilter(request);
 
-      await bloomFilter.add(oAuthParams.scope.projectId);
+      bloomFilter.add(oAuthParams.scope.projectId);
 
       return session.writeLoginSessionBloomFilter(
         request,

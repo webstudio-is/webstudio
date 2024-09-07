@@ -46,6 +46,7 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
   maxWidth: "100vw",
   margin: 0,
   listStyle: "none",
+  zIndex: theme.zIndices.max,
   outline: "none",
 });
 

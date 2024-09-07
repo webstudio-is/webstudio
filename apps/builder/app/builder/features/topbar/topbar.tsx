@@ -24,6 +24,7 @@ import { ViewMode } from "./view-mode";
 import { AddressBarPopover } from "../address-bar";
 import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
 import type { ReactNode } from "react";
+import { CloneButton } from "./clone";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -113,6 +114,7 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
           <PreviewButton />
           <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
           <PublishButton projectId={project.id} />
+          <CloneButton />
         </ToolbarToggleGroup>
       </Toolbar>
       {loading}

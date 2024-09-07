@@ -12,22 +12,25 @@ import {
   DialogClose,
   Dialog,
   DialogActions,
+  toast,
 } from "@webstudio-is/design-system";
 import { Title, Project } from "@webstudio-is/project";
-import { builderUrl } from "~/shared/router-utils";
-import { trpcClient } from "./trpc/trpc-client";
+import { nativeClient } from "./trpc/trpc-client";
+import { useEffectEvent } from "./hook-utils/effect-event";
 
 const useCloneProject = ({
   projectId,
-  onOpenChange,
+  onCreate,
+  authToken,
 }: {
   projectId: Project["id"];
-  onOpenChange: (isOpen: boolean) => void;
+  authToken?: string;
+  onCreate: (projectId: Project["id"]) => void;
 }) => {
-  const { send, state } = trpcClient.project.clone.useMutation();
+  const [state, setState] = useState<"idle" | "loading" | "submitting">("idle");
   const [errors, setErrors] = useState<string>();
 
-  const handleSubmit = ({ title }: { title: string }) => {
+  const handleSubmit = async ({ title }: { title: string }) => {
     const parsed = Title.safeParse(title);
     const errors =
       "error" in parsed
@@ -37,16 +40,22 @@ const useCloneProject = ({
     setErrors(errors);
 
     if (parsed.success) {
-      send({ projectId, title }, (data) => {
-        if (data?.id) {
-          window.location.href = builderUrl({
-            origin: window.origin,
-            projectId: data.id,
-          });
+      try {
+        setState("submitting");
 
-          onOpenChange(false);
-        }
-      });
+        const data = await nativeClient.project.clone.mutate({
+          projectId,
+          title,
+          authToken,
+        });
+
+        setState("idle");
+
+        onCreate(data.id);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unknown error");
+        setState("idle");
+      }
     }
   };
 
@@ -125,14 +134,24 @@ export const CloneProjectDialog = ({
   isOpen,
   project: { id, title },
   onOpenChange,
+  authToken,
+  onCreate,
 }: {
   isOpen: boolean;
-  project: Project;
+  project: Pick<Project, "id" | "title">;
+  authToken?: string;
   onOpenChange: (isOpen: boolean) => void;
+  onCreate: (projectId: Project["id"]) => void;
 }) => {
+  const handleOnCreate = useEffectEvent((projectId: Project["id"]) => {
+    onCreate(projectId);
+    onOpenChange(false);
+  });
+
   const { handleSubmit, errors, state } = useCloneProject({
     projectId: id,
-    onOpenChange,
+    authToken,
+    onCreate: handleOnCreate,
   });
 
   return (

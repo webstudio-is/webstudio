@@ -1,13 +1,14 @@
-import invariant from "tiny-invariant";
+const fnv1a = (input: string): number => {
+  const prime = 0x01000193;
+  let hash = 0x811c9dc5;
 
-const hash = async (input: string) => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return hashBuffer;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, prime);
+  }
+
+  return hash >>> 0; // Convert to 32-bit unsigned integer
 };
-
-const SHA_SIZE = 32;
 
 const getBit = (arr: Uint8Array, i: number) => (arr[i >> 3] >> (i & 7)) & 1;
 
@@ -33,23 +34,13 @@ export class BloomFilter {
 
     this.numHashes = Math.round((bitSize / maxItems) * Math.log(2));
 
-    invariant(
-      SHA_SIZE >= this.numHashes * 2,
-      "numHashes is too large, we are using SHA-256"
-    );
-
-    invariant(
-      bitSize < 0xffff,
-      `bitSize=${bitSize} is too large, hash is 16-bit`
-    );
-
     const size = Math.ceil(bitSize / 8);
 
     this.bitArray = new Uint8Array(size);
   }
 
-  async add(item: string) {
-    const hashes = await this.#getHashes(item);
+  add(item: string) {
+    const hashes = this.#getHashes(item);
     const size = this.bitArray.length * 8;
 
     for (const hash of hashes) {
@@ -57,25 +48,19 @@ export class BloomFilter {
     }
   }
 
-  async has(item: string) {
-    const hashes = await this.#getHashes(item);
+  has(item: string) {
+    const hashes = this.#getHashes(item);
     const size = this.bitArray.length * 8;
 
     return hashes.every((hash) => getBit(this.bitArray, hash % size) === 1);
   }
 
-  async #getHashes(item: string): Promise<number[]> {
+  #getHashes(item: string): number[] {
     const hashes: number[] = [];
-    const hashBuffer = await hash(item);
-    const hashView = new DataView(hashBuffer);
-
-    invariant(
-      hashBuffer.byteLength > this.numHashes * 2,
-      "numHashes is too large"
-    );
-
+    let value = item;
     for (let i = 0; i < this.numHashes; i++) {
-      const hashValue = hashView.getUint16(i * 2, true);
+      const hashValue = fnv1a(value);
+      value = hashValue.toString();
 
       hashes.push(hashValue);
     }

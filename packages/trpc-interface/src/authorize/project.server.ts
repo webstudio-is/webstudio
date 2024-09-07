@@ -173,13 +173,11 @@ export const hasProjectPermit = async (
 ) => {
   const { authorization } = context;
 
-  const authInfo: AuthInfo | undefined = authorization.isServiceCall
-    ? { type: "service" }
-    : authorization.authToken !== undefined
-      ? { type: "token", authToken: authorization.authToken }
-      : authorization.userId !== undefined
-        ? { type: "user", userId: authorization.userId }
-        : undefined;
+  if (authorization.type === "anonymous") {
+    return false;
+  }
+
+  const authInfo: AuthInfo = authorization;
 
   if (authInfo === undefined) {
     return false;

@@ -11,7 +11,7 @@ import { prisma } from "@webstudio-is/prisma-client";
 import { builderAuthenticator } from "~/services/builder-auth.server";
 import { readLoginSessionBloomFilter } from "~/services/session.server";
 import type { BloomFilter } from "~/services/bloom-filter.server";
-import { isBuilder, isCanvas, isDashboard } from "./router-utils";
+import { isBuilder, isCanvas } from "./router-utils";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 
 export const extractAuthFromRequest = async (request: Request) => {
@@ -40,81 +40,88 @@ export const extractAuthFromRequest = async (request: Request) => {
   };
 };
 
+const createTokenAuthorizationContext = async (authToken: string) => {
+  const projectOwnerIdByToken = await prisma.authorizationToken.findUnique({
+    where: {
+      token: authToken,
+    },
+    select: {
+      project: {
+        select: {
+          id: true,
+          userId: true,
+        },
+      },
+    },
+  });
+
+  if (projectOwnerIdByToken === null) {
+    throw new Error(`Project owner can't be found for token ${authToken}`);
+  }
+
+  const ownerId = projectOwnerIdByToken.project.userId;
+  if (ownerId === null) {
+    throw new Error(
+      `Project ${projectOwnerIdByToken.project.id} has null userId`
+    );
+  }
+
+  return {
+    type: "token" as const,
+    authToken,
+    ownerId,
+  };
+};
+
 const createAuthorizationContext = async (
   request: Request
 ): Promise<AppContext["authorization"]> => {
-  if (isCanvas(request)) {
-    throw new Error("Canvas requests can't have authorization context");
-  }
-
   const { authToken, isServiceCall, sessionData } =
     await extractAuthFromRequest(request);
 
-  let ownerId = sessionData?.userId;
-
-  if (authToken != null) {
-    const projectOwnerIdByToken = await prisma.authorizationToken.findUnique({
-      where: {
-        token: authToken,
-      },
-      select: {
-        project: {
-          select: {
-            id: true,
-            userId: true,
-          },
-        },
-      },
-    });
-
-    if (projectOwnerIdByToken === null) {
-      throw new Error(`Project owner can't be found for token ${authToken}`);
-    }
-
-    const projectOwnerId = projectOwnerIdByToken.project.userId;
-    if (projectOwnerId === null) {
-      throw new Error(
-        `Project ${projectOwnerIdByToken.project.id} has null userId`
-      );
-    }
-    ownerId = projectOwnerId;
+  if (isServiceCall) {
+    return {
+      type: "service",
+      isServiceCall: true,
+    };
   }
 
-  let loginBloomFilter: BloomFilter | undefined = undefined;
-  let isLoggedInToBuilder:
-    | AppContext["authorization"]["isLoggedInToBuilder"]
-    | undefined = undefined;
+  if (authToken != null) {
+    return await createTokenAuthorizationContext(authToken);
+  }
 
-  if (isDashboard(request) && sessionData?.userId !== undefined) {
-    isLoggedInToBuilder = async (projectId: string) => {
+  if (sessionData?.userId != null) {
+    const userId = sessionData.userId;
+
+    let loginBloomFilter: BloomFilter | undefined = undefined;
+
+    let isLoggedInToBuilder = async (projectId: string) => {
       if (loginBloomFilter === undefined) {
         loginBloomFilter = await readLoginSessionBloomFilter(request);
       }
 
-      return await loginBloomFilter.has(projectId);
+      return loginBloomFilter.has(projectId);
+    };
+
+    if (isBuilder(request)) {
+      isLoggedInToBuilder = async (projectId: string) => {
+        const parsedUrl = parseBuilderUrl(request.url);
+        return parsedUrl.projectId === projectId;
+      };
+    }
+
+    return {
+      type: "user",
+      userId,
+      sessionCreatedAt: sessionData.createdAt,
+      isLoggedInToBuilder,
     };
   }
 
-  if (isBuilder(request) && sessionData?.userId !== undefined) {
-    isLoggedInToBuilder = async (projectId: string) => {
-      const parsedUrl = parseBuilderUrl(request.url);
-      return parsedUrl.projectId === projectId;
-    };
-  }
-
-  const context: AppContext["authorization"] = {
-    userId: sessionData?.userId,
-    sessionCreatedAt: sessionData?.createdAt,
-    authToken,
-    isServiceCall,
-    ownerId,
-    isLoggedInToBuilder,
-  };
-
-  return context;
+  return { type: "anonymous" };
 };
 
-const createDomainContext = (_request: Request) => {
+const createDomainContext = () => {
   const context: AppContext["domain"] = {
     domainTrpc: trpcSharedClient.domain,
   };
@@ -128,11 +135,11 @@ const getRequestOrigin = (urlStr: string) => {
   return url.origin;
 };
 
-const createDeploymentContext = (request: Request) => {
+const createDeploymentContext = (builderOrigin: string) => {
   const context: AppContext["deployment"] = {
     deploymentTrpc: trpcSharedClient.deployment,
     env: {
-      BUILDER_ORIGIN: `${getRequestOrigin(request.url)}`,
+      BUILDER_ORIGIN: getRequestOrigin(builderOrigin),
       GITHUB_REF_NAME: staticEnv.GITHUB_REF_NAME ?? "undefined",
       GITHUB_SHA: staticEnv.GITHUB_SHA ?? undefined,
     },
@@ -150,9 +157,14 @@ const createEntriContext = () => {
 const createUserPlanContext = async (
   authorization: AppContext["authorization"]
 ) => {
-  const planFeatures = authorization.ownerId
-    ? await getUserPlanFeatures(authorization.ownerId)
-    : undefined;
+  const ownerId =
+    authorization.type === "token"
+      ? authorization.ownerId
+      : authorization.type === "user"
+        ? authorization.userId
+        : undefined;
+
+  const planFeatures = ownerId ? await getUserPlanFeatures(ownerId) : undefined;
   return planFeatures;
 };
 
@@ -183,12 +195,28 @@ export const createPostrestContext = () => {
 export const createContext = async (request: Request): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request);
 
-  const domain = createDomainContext(request);
-  const deployment = createDeploymentContext(request);
+  const domain = createDomainContext();
+  const deployment = createDeploymentContext(getRequestOrigin(request.url));
   const entri = createEntriContext();
   const userPlanFeatures = await createUserPlanContext(authorization);
   const trpcCache = createTrpcCache();
   const postgrest = createPostrestContext();
+
+  const createTokenContext = async (authToken: string) => {
+    const authorization = await createTokenAuthorizationContext(authToken);
+    const userPlanFeatures = await createUserPlanContext(authorization);
+
+    return {
+      authorization,
+      domain,
+      deployment,
+      entri,
+      userPlanFeatures,
+      trpcCache,
+      postgrest,
+      createTokenContext,
+    };
+  };
 
   return {
     authorization,
@@ -198,5 +226,6 @@ export const createContext = async (request: Request): Promise<AppContext> => {
     userPlanFeatures,
     trpcCache,
     postgrest,
+    createTokenContext,
   };
 };

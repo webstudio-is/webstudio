@@ -8,11 +8,16 @@ import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
-import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
+import {
+  AuthorizationError,
+  createCallerFactory,
+} from "@webstudio-is/trpc-interface/index.server";
 import { redirect } from "~/services/no-store-redirect";
 import { preconnect, prefetchDNS } from "react-dom";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { allowedDestinations } from "~/services/destinations.server";
+import { db as authDb } from "@webstudio-is/authorization-token/index.server";
+import { db } from "@webstudio-is/project/index.server";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
@@ -40,16 +45,54 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const user = await findAuthenticatedUser(request);
 
+  const url = new URL(request.url);
+
   if (user === null) {
-    const url = new URL(request.url);
     throw redirect(
       loginPath({
-        returnTo: url.pathname,
+        returnTo: `${url.pathname}${url.search}`,
       })
     );
   }
 
   const context = await createContext(request);
+
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError("You must be logged in to access this page");
+  }
+
+  const projectToCloneAuthToken = url.searchParams.get(
+    "projectToCloneAuthToken"
+  );
+
+  let projectToClone:
+    | { id: string; title: string; authToken: string }
+    | undefined = undefined;
+
+  if (
+    // Only on navigation requests
+    request.headers.get("sec-fetch-mode") === "navigate" &&
+    projectToCloneAuthToken !== null
+  ) {
+    // Clone project
+    const token = await authDb.getTokenInfo(projectToCloneAuthToken, context);
+    if (token.canClone === false) {
+      throw new AuthorizationError(
+        "You don't have access to clone this project"
+      );
+    }
+
+    const project = await db.project.loadById(
+      token.projectId,
+      await context.createTokenContext(projectToCloneAuthToken)
+    );
+
+    projectToClone = {
+      id: token.projectId,
+      authToken: projectToCloneAuthToken,
+      title: project.title,
+    };
+  }
 
   const projects = await dashboardProjectCaller(context).findMany({
     userId: user.id,
@@ -75,6 +118,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     publisherHost: env.PUBLISHER_HOST,
     imageBaseUrl: env.IMAGE_BASE_URL,
     origin: sourceOrigin,
+    projectToClone,
   });
 };
 

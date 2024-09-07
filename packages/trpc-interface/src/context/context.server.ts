@@ -4,33 +4,41 @@ import type { Client } from "@webstudio-is/postrest/index.server";
 /**
  * All necessary parameters for Authorization
  */
-type AuthorizationContext = {
-  /**
-   * userId of the current authenticated user
-   */
-  userId: string | undefined;
-  sessionCreatedAt: number | undefined;
+type AuthorizationContext =
+  | {
+      type: "user";
+      /**
+       * userId of the current authenticated user
+       */
+      userId: string;
+      sessionCreatedAt: number;
+      /**
+       * Has projectId in the tracked sessions
+       */
+      isLoggedInToBuilder: (projectId: string) => Promise<boolean>;
+    }
+  | {
+      type: "token";
+      /**
+       * token URLSearchParams or hostname
+       */
+      authToken: string;
 
-  /**
-   * token URLSearchParams or hostname
-   */
-  authToken: string | undefined;
-
-  /**
-   * In case of authToken, this is the ownerId of the project
-   */
-  ownerId: string | undefined;
-
-  /**
-   * Allow service 2 service communications to skip authorization for view calls
-   */
-  isServiceCall: boolean;
-
-  /**
-   * Has projectId in the tracked sessions
-   */
-  isLoggedInToBuilder: undefined | ((projectId: string) => Promise<boolean>);
-};
+      /**
+       * In case of authToken, this is the ownerId of the project
+       */
+      ownerId: string;
+    }
+  | {
+      type: "service";
+      /**
+       * Allow service 2 service communications to skip authorization for view calls
+       */
+      isServiceCall: boolean;
+    }
+  | {
+      type: "anonymous";
+    };
 
 type DomainContext = {
   domainTrpc: TrpcInterfaceClient["domain"];
@@ -97,4 +105,5 @@ export type AppContext = {
   userPlanFeatures: UserPlanFeatures | undefined;
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
+  createTokenContext: (token: string) => Promise<AppContext>;
 };

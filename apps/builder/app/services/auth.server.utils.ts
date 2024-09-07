@@ -14,5 +14,5 @@ export const getSessionCookieNameVersion = () => {
 
   // IMPORTANT: Change version in the SaaS platform as well!
   // IMPORTANT: Changing the version will cause all users to be logged out.
-  return "2";
+  return "3";
 };

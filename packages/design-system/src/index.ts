@@ -23,6 +23,7 @@ export {
   MenuItemButton,
   MenuCheckedIcon,
   MenuItemIndicator,
+  menuItemCss,
 } from "./components/menu";
 export * from "./components/switch";
 export * from "./components/toolbar";

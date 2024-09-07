@@ -13,6 +13,7 @@ import {
   DropdownMenuPortal,
   Tooltip,
   Kbd,
+  menuItemCss,
 } from "@webstudio-is/design-system";
 import {
   $userPlanFeatures,
@@ -20,8 +21,12 @@ import {
   $isShareDialogOpen,
   $isPublishDialogOpen,
 } from "~/builder/shared/nano-states";
-import { dashboardUrl } from "~/shared/router-utils";
-import { $authPermit, $authTokenPermissions } from "~/shared/nano-states";
+import { cloneProjectUrl, dashboardUrl } from "~/shared/router-utils";
+import {
+  $authPermit,
+  $authToken,
+  $authTokenPermissions,
+} from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
@@ -54,6 +59,7 @@ export const Menu = () => {
   const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
   const authTokenPermission = useStore($authTokenPermissions);
+  const authToken = useStore($authToken);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
@@ -66,6 +72,9 @@ export const Menu = () => {
   const disabledShareTooltipContent = isShareEnabled
     ? undefined
     : "Only owner can share projects";
+
+  // If authToken is defined, the user is not logged into the current project and must be redirected to the dashboard to clone the project.
+  const cloneIsExternal = authToken !== undefined;
 
   return (
     <DropdownMenu>
@@ -184,11 +193,27 @@ export const Menu = () => {
           >
             <DropdownMenuItem
               onSelect={() => {
-                $isCloneDialogOpen.set(true);
+                if ($authToken.get() === undefined) {
+                  $isCloneDialogOpen.set(true);
+                  return;
+                }
               }}
               disabled={authTokenPermission.canClone === false}
+              asChild={cloneIsExternal}
             >
-              Clone
+              {cloneIsExternal ? (
+                <a
+                  className={menuItemCss()}
+                  href={cloneProjectUrl({
+                    origin: window.origin,
+                    sourceAuthToken: authToken,
+                  })}
+                >
+                  Clone
+                </a>
+              ) : (
+                "Clone"
+              )}
             </DropdownMenuItem>
           </Tooltip>
 
