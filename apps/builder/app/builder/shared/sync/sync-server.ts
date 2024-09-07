@@ -157,19 +157,21 @@ const syncServer = async function () {
     for await (const _ of retry()) {
       // in case of any error continue retrying
       try {
-        const response = await fetch(
-          restPatchPath({ authToken: details.authToken }),
-          {
-            method: "post",
-            body: JSON.stringify({
-              transactions,
-              buildId: details.buildId,
-              projectId,
-              // provide latest stored version to server
-              version: details.version,
-            }),
-          }
-        );
+        const headers = new Headers();
+        if (details.authToken) {
+          headers.append("x-auth-token", details.authToken);
+        }
+        const response = await fetch(restPatchPath(), {
+          method: "post",
+          body: JSON.stringify({
+            transactions,
+            buildId: details.buildId,
+            projectId,
+            // provide latest stored version to server
+            version: details.version,
+            headers,
+          }),
+        });
 
         if (response.ok) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -171,9 +171,15 @@ const uploadAsset = async ({
     // should be removed after fix
     metaFormData.append("filename", sanitizeS3Key(fileName));
 
-    const metaResponse = await fetch(restAssetsPath({ authToken }), {
+    const authHeaders = new Headers();
+    if (authToken !== undefined) {
+      authHeaders.set("x-auth-token", authToken);
+    }
+
+    const metaResponse = await fetch(restAssetsPath(), {
       method: "POST",
       body: metaFormData,
+      headers: authHeaders,
     });
 
     const metaData: { name: string } | { errors: string } =
@@ -188,7 +194,7 @@ const uploadAsset = async ({
         ? fileOrUrl
         : JSON.stringify({ url: fileOrUrl.href });
 
-    const headers = new Headers();
+    const headers = new Headers(authHeaders);
 
     if (fileOrUrl instanceof URL) {
       headers.set("Content-Type", "application/json");
