@@ -145,6 +145,20 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
       unit: "rem",
     });
   });
+
+  test("tolerate comma instead of dot typo while correctly parsing legit comma inside value", () => {
+    const result = parseIntermediateOrInvalidValue("transitionDuration", {
+      type: "intermediate",
+      value: "1s, 2s",
+    });
+    expect(result).toEqual({
+      type: "layers",
+      value: [
+        { type: "unit", unit: "s", value: 1 },
+        { type: "unit", unit: "s", value: 2 },
+      ],
+    });
+  });
 });
 
 describe("Parse intermediate or invalid value with math evaluation", () => {
@@ -174,6 +188,36 @@ describe("Parse intermediate or invalid value with math evaluation", () => {
       expect(result).toEqual({
         type: "unit",
         value: 20,
+        unit: "px",
+      });
+    }
+  });
+
+  test("tolerate comma instead of dot", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "1,1 + 1,2",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 2.3,
+        unit: "px",
+      });
+    }
+  });
+
+  test("tolerate comma instead of dot with unit", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "1,1px + 1,2rem",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 2.3,
         unit: "px",
       });
     }
