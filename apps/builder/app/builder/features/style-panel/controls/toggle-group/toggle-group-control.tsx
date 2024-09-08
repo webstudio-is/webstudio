@@ -164,7 +164,12 @@ export const ToggleGroupControl = ({
           <ToggleGroupButton
             aria-disabled={isAdvanced}
             value={item.value}
-            onMouseEnter={() => setActiveTooltip(item.value)}
+            onMouseEnter={() =>
+              // reset only when highlighted is not active
+              setActiveTooltip((prevValue) =>
+                prevValue === item.value ? prevValue : undefined
+              )
+            }
           >
             {item.child}
           </ToggleGroupButton>

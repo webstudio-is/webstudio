@@ -178,7 +178,12 @@ const BackgroundRepeat = (props: BackgroundContentProps) => {
             >
               <ToggleGroupButton
                 value={item.value}
-                onMouseEnter={() => setActiveTooltip(item.value)}
+                onMouseEnter={() =>
+                  // reset only when highlighted is not active
+                  setActiveTooltip((prevValue) =>
+                    prevValue === item.value ? prevValue : undefined
+                  )
+                }
               >
                 {item.child}
               </ToggleGroupButton>
