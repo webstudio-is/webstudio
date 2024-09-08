@@ -36,8 +36,7 @@ const style = css({
   height: theme.spacing[10],
   backgroundBlendMode: "difference",
   borderRadius: theme.borderRadius[2],
-  // Border becomes visible when color is close to white so that the thumb is visible in the white input.
-  borderWidth: theme.spacing[1],
+  borderWidth: 0,
   borderStyle: "solid",
 });
 
@@ -55,24 +54,25 @@ export const ColorThumb = forwardRef<
 
   // White color is invisible on white background, so we need to draw border
   // the more color is white the more border is visible
+  const borderOpacity = clamp(
+    (distanceToStartDrawBorder - distance(whiteColor, color)) /
+      distanceToStartDrawBorder,
+    0,
+    1
+  );
   const borderColor = colord(
-    lerpColor(
-      transparentColor,
-      borderColorSwatch,
-      clamp(
-        (distanceToStartDrawBorder - distance(whiteColor, color)) /
-          distanceToStartDrawBorder,
-        0,
-        1
-      )
-    )
+    lerpColor(transparentColor, borderColorSwatch, borderOpacity)
   ).toRgbString();
-
   return (
     <button
       {...rest}
       ref={ref}
-      style={{ background, borderColor }}
+      style={{
+        background,
+        borderColor,
+        // Border becomes visible when color is close to white so that the thumb is visible in the white input.
+        borderWidth: borderOpacity === 0 ? 0 : 1,
+      }}
       className={style({ css })}
     />
   );
