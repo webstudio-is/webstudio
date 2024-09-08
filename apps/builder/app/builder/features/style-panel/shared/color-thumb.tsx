@@ -45,11 +45,10 @@ export const ColorThumb = forwardRef<
   ElementRef<"button">,
   Omit<ComponentProps<"button">, "color"> & { color?: RgbaColor; css?: CSS }
 >(({ color = transparentColor, css, ...rest }, ref) => {
-  // @todo transparentColor icon can be better
-  const backgroundColor =
+  const background =
     color === undefined || color.a < 1
-      ? // Chessboard pattern 5
-        `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparentColor 0% 50%) 0% 33.33% / 40% 40%, ${colord(color).toRgbString()}`
+      ? // Chessboard pattern 5x5
+        `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${colord(color).toRgbString()}`
       : colord(color).toRgbString();
 
   const distanceToStartDrawBorder = 0.15;
@@ -73,7 +72,7 @@ export const ColorThumb = forwardRef<
     <button
       {...rest}
       ref={ref}
-      style={{ backgroundColor, borderColor }}
+      style={{ background, borderColor }}
       className={style({ css })}
     />
   );
