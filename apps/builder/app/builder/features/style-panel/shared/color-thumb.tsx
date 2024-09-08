@@ -34,8 +34,10 @@ const style = css({
   width: theme.spacing[10],
   height: theme.spacing[10],
   backgroundBlendMode: "difference",
-  borderRadius: 2,
-  borderWidth: 0,
+  borderRadius: theme.borderRadius[2],
+  // Border becomes visible when color is close to white so that the thumb is visible in the white input.
+  borderWidth: theme.spacing[1],
+  borderStyle: "solid",
 });
 
 export const ColorThumb = forwardRef<
