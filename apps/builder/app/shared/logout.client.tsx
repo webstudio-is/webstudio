@@ -6,15 +6,25 @@ export type LogoutPageProps = {
   onFinish: () => void;
 };
 
+const MAX_RETRIES = 3;
+
 export const LogoutPage = (props: LogoutPageProps) => {
   const [logoutState, setLogoutState] = useState({
-    retries: 3,
+    retries: MAX_RETRIES,
     logoutUrls: props.logoutUrls,
   });
 
   useEffect(() => {
+    if (logoutState.retries === 0) {
+      return;
+    }
+
     Promise.allSettled(
       logoutState.logoutUrls.map(async (url) => {
+        await new Promise((resolve) =>
+          setTimeout(resolve, (MAX_RETRIES - logoutState.retries) * 1000)
+        );
+
         const response = await fetch(url, {
           method: "POST",
           credentials: "include",
@@ -42,21 +52,19 @@ export const LogoutPage = (props: LogoutPageProps) => {
         return;
       }
 
-      if (logoutState.retries === 0) {
-        console.error(
-          "Logout failed for the following URLs:",
-          failedUrls.join(", ")
-        );
-        props.onFinish();
-        return;
-      }
-
       setLogoutState({
         retries: logoutState.retries - 1,
         logoutUrls: failedUrls,
       });
     });
   }, [logoutState, props]);
+
+  let message = "Logging out ...";
+
+  if (logoutState.retries === 0) {
+    // Show error message
+    message = "Logout failed.";
+  }
 
   return (
     <Grid
@@ -68,7 +76,7 @@ export const LogoutPage = (props: LogoutPageProps) => {
         justifyItems: "center",
       }}
     >
-      <Text variant={"bigTitle"}>Logging out ...</Text>
+      <Text variant={"bigTitle"}>{message}</Text>
     </Grid>
   );
 };

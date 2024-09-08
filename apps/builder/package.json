@@ -96,6 +96,7 @@
     "nanoevents": "^8.0.0",
     "nanoid": "^5.0.1",
     "nanostores": "^0.9.3",
+    "picocolors": "^1.0.1",
     "pretty-bytes": "^6.1.1",
     "prismjs": "^1.29.0",
     "react": "18.3.0-canary-14898b6a9-20240318",

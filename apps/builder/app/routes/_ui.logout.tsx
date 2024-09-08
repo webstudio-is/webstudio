@@ -11,6 +11,7 @@ import { ClientOnly } from "~/shared/client-only";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { lazy, useRef } from "react";
 import { allowedDestinations } from "~/services/destinations.server";
+export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 const logoutCaller = createCallerFactory(logoutRouter);
 
@@ -26,7 +27,9 @@ export const meta: MetaFunction<typeof loader> = () => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (false === isDashboard(request)) {
-    throw new Error("Only Dashboard can logout at this endpoint");
+    throw new Response("Not found", {
+      status: 404,
+    });
   }
 
   preventCrossOriginCookie(request);
@@ -72,7 +75,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   if (false === isDashboard(request)) {
-    throw new Error("Only Dashboard can logout at this endpoint");
+    throw new Response("Not found", {
+      status: 404,
+    });
   }
 
   preventCrossOriginCookie(request);

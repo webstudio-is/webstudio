@@ -18,9 +18,8 @@ export const loader = async ({
   }
 > => {
   if (false === isDashboard(request)) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 

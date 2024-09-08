@@ -81,9 +81,8 @@ const OAuthRedirectUri = z.object({
  */
 export const loader: LoaderFunction = async ({ request }) => {
   if (false === isDashboard(request)) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 

@@ -1,11 +1,9 @@
 import {
-  isRouteErrorResponse,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
-  useRouteError,
   type ClientLoaderFunctionArgs,
 } from "@remix-run/react";
 import interFont from "@fontsource-variable/inter/index.css?url";
@@ -17,7 +15,7 @@ import {
   type LinksFunction,
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
-import { ErrorMessage } from "~/shared/error/error-message";
+import { ErrorBoundary as ErrorBoundaryComponent } from "~/shared/error/error-boundary";
 import { getCsrfTokenAndCookie } from "~/services/csrf-session.server";
 import invariant from "tiny-invariant";
 import {
@@ -79,6 +77,7 @@ export const clientLoader = async ({
   serverLoader,
 }: ClientLoaderFunctionArgs) => {
   const serverData = await serverLoader<typeof loader>();
+
   if (clientCsrfToken === undefined) {
     const { csrfToken } = serverData;
     invariant(csrfToken !== "", "CSRF token is empty");
@@ -93,20 +92,9 @@ export const clientLoader = async ({
 clientLoader.hydrate = true;
 
 export const ErrorBoundary = () => {
-  const error = useRouteError();
-
-  const message =
-    error == null
-      ? "Uknown error"
-      : isRouteErrorResponse(error)
-        ? `${error.status} ${error.statusText} ${error.data.message ?? error.data}`
-        : typeof error === "object" && "message" in error
-          ? error.message
-          : JSON.stringify(error);
-
   return (
     <Document>
-      <ErrorMessage message={`${message}`} />
+      <ErrorBoundaryComponent />
     </Document>
   );
 };

@@ -14,9 +14,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (false === isBuilder(request)) {
     debug(`Request url is not the builder URL ${request.url}`);
 
-    return new Response(null, {
+    return new Response("Only builder URL is allowed", {
       status: 404,
-      statusText: "Only builder URL is allowed",
     });
   }
 
@@ -41,9 +40,17 @@ export const loader: LoaderFunction = async ({ request }) => {
 
         const url = new URL(request.url);
         let returnTo = url.searchParams.get("returnTo");
-        if (returnTo !== null && comparePathnames(returnTo, request.url)) {
-          // avoid loops
-          returnTo = "/";
+
+        if (returnTo !== null) {
+          if (comparePathnames(returnTo, request.url)) {
+            // avoid loops
+            returnTo = "/";
+          }
+
+          // Do not allow absolute URLs
+          if (URL.canParse(returnTo)) {
+            returnTo = "/";
+          }
         }
 
         const options = returnTo === null ? { maxAge: -1 } : {};
