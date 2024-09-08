@@ -17,15 +17,18 @@ import { humanizeString } from "~/shared/string-utils";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { getDots } from "../../shared/style-section";
-import { RepeatedStyle } from "../../shared/repeated-style";
+import {
+  addRepeatedStyleItem,
+  RepeatedStyle,
+} from "../../shared/repeated-style";
 import { PropertySectionLabel } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
-import { createBatchUpdate } from "../../shared/use-style-data";
 import {
   findTimingFunctionFromValue,
   type TransitionProperty,
 } from "./transition-utils";
 import { TransitionContent } from "./transition-content";
+import { parseCssFragment } from "../../shared/parse-css-fragment";
 
 export { transitionLongHandProperties as properties };
 
@@ -35,14 +38,12 @@ const getTransitionLayers = (
   styles: ComputedStyleDecl[],
   property: TransitionProperty
 ) => {
-  const transitionPropertyValue = styles.find(
-    (styleDecl) => styleDecl.property === "transitionProperty"
-  )?.cascadedValue;
+  const transitionPropertyValue = styles[0].cascadedValue;
   const currentPropertyValue = styles.find(
     (styleDecl) => styleDecl.property === property
   )?.cascadedValue;
   const transitionPropertiesCount =
-    transitionPropertyValue?.type === "layers"
+    transitionPropertyValue.type === "layers"
       ? transitionPropertyValue.value.length
       : 0;
   const definedLayers: LayerValueItem[] =
@@ -79,14 +80,6 @@ const getLayerLabel = ({
   return `${property}: ${duration} ${humanizedTimingFunction} ${delay}`;
 };
 
-const defaultTransitionLayers: Record<TransitionProperty, LayerValueItem> = {
-  transitionProperty: { type: "unparsed", value: "opacity" },
-  transitionDuration: { type: "unit", value: 200, unit: "ms" },
-  transitionTimingFunction: { type: "keyword", value: "ease" },
-  transitionDelay: { type: "unit", value: 0, unit: "ms" },
-  transitionBehavior: { type: "keyword", value: "normal" },
-};
-
 export const Section = () => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -121,17 +114,13 @@ export const Section = () => {
                 prefix={<PlusIcon />}
                 onClick={() => {
                   setIsOpen(true);
-                  const batch = createBatchUpdate();
-                  for (const property of transitionLongHandProperties) {
-                    batch.setProperty(property)({
-                      type: "layers",
-                      value: [
-                        ...getTransitionLayers(styles, property),
-                        defaultTransitionLayers[property],
-                      ],
-                    });
-                  }
-                  batch.publish();
+                  addRepeatedStyleItem(
+                    styles,
+                    parseCssFragment(
+                      "opacity 200ms ease 0ms normal",
+                      "transition"
+                    )
+                  );
                 }}
               />
             </Tooltip>

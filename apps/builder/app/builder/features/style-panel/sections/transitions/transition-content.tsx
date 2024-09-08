@@ -2,11 +2,6 @@ import { useState } from "react";
 import {
   toValue,
   type InvalidValue,
-  type LayersValue,
-  type TupleValue,
-  type KeywordValue,
-  type UnitValue,
-  type StyleProperty,
   type StyleValue,
   type TupleValueItem,
 } from "@webstudio-is/css-engine";
@@ -22,12 +17,7 @@ import {
   Grid,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import {
-  parseCssValue,
-  properties,
-  propertyDescriptions,
-  type ExtractedTransitionProperties,
-} from "@webstudio-is/css-data";
+import { properties, propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -35,13 +25,8 @@ import { parseCssFragment } from "../../shared/parse-css-fragment";
 import { PropertyInlineLabel } from "../../property-label";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
-import { editTransitionLayer } from "./transition-utils";
 import { useComputedStyles } from "../../shared/model";
-
-// We are allowing users to add/edit layers as shorthand from the style-panel
-// So, we need to use the shorthand property to validate the layer too.
-// We removed transition from properties list to drop support from advanced tab and so the typecasting.
-const shortHandTransitionProperty = "transition" as StyleProperty;
+import { editRepeatedStyleItem } from "../../shared/repeated-style";
 
 const getLayer = (value: undefined | StyleValue, index: number) =>
   value?.type === "layers" ? value.value[index] : undefined;
@@ -94,72 +79,41 @@ export const TransitionContent = ({ index }: { index: number }) => {
     if (intermediateValue === undefined) {
       return;
     }
-
-    const parsed = parseCssFragment(intermediateValue.value, "transition");
-    const tuple: TupleValue = {
-      type: "tuple",
-      value: [
-        getLayer(parsed.get("transitionProperty"), 0),
-        getLayer(parsed.get("transitionDuration"), 0),
-        getLayer(parsed.get("transitionTimingFunction"), 0),
-        getLayer(parsed.get("transitionDelay"), 0),
-        // @todo getLayer(parsed.get("transitionBehavior"), 0),
-      ].filter(Boolean) as TupleValueItem[],
-    };
-    if (tuple.value.length === 0) {
-      setIntermediateValue({
-        type: "invalid",
-        value: intermediateValue.value,
-      });
-    }
-    const layers: LayersValue = {
-      type: "layers",
-      value: [tuple],
-    };
-
-    editTransitionLayer({
-      index,
-      layers,
-      options: { isEphemeral: false },
+    editRepeatedStyleItem(
       styles,
-    });
+      index,
+      parseCssFragment(intermediateValue.value, "transition")
+    );
   };
 
   const handlePropertyUpdate = (
-    params: ExtractedTransitionProperties,
+    params: {
+      property?: StyleValue;
+      timing?: StyleValue;
+      delay?: StyleValue;
+      duration?: StyleValue;
+    },
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const value: Array<UnitValue | KeywordValue> = Object.values({
-      ...{ property, duration, delay, timing: timingFunction },
-      ...params,
-    }).filter<UnitValue | KeywordValue>(
-      (item): item is UnitValue | KeywordValue => item != null
-    );
-    const layerTuple: TupleValue = { type: "tuple", value };
-    const layerValue = parseCssValue(
-      shortHandTransitionProperty,
-      toValue(layerTuple)
-    );
-
-    if (layerValue.type === "invalid") {
-      setIntermediateValue({
-        type: "invalid",
-        value: toValue(layerTuple),
-      });
-      return;
-    }
-
+    const shorthand = toValue({
+      type: "tuple",
+      value: [
+        params.property ?? property,
+        params.duration ?? duration,
+        params.delay ?? delay,
+        params.timing ?? timingFunction,
+      ].filter((item): item is TupleValueItem => item !== undefined),
+    });
     setIntermediateValue({
       type: "intermediate",
-      value: toValue(layerTuple),
+      value: shorthand,
     });
-
-    editTransitionLayer({
-      index,
-      layers: { type: "layers", value: [layerTuple] },
-      options,
+    editRepeatedStyleItem(
       styles,
-    });
+      index,
+      parseCssFragment(shorthand, "transition"),
+      options
+    );
   };
 
   return (

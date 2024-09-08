@@ -22,33 +22,87 @@ import {
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { createBatchUpdate } from "./use-style-data";
+import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
+
+const normalizeStyleValue = (
+  value: undefined | StyleValue,
+  primaryValue: StyleValue
+): LayersValue => {
+  const primaryLayersCount =
+    primaryValue.type === "layers" ? primaryValue.value.length : 0;
+  const layers = value?.type === "layers" ? value.value : [];
+  const normalizedLayers: LayersValue = {
+    type: "layers",
+    value: repeatUntil(layers, primaryLayersCount),
+  };
+  return normalizedLayers;
+};
+
+export const addRepeatedStyleItem = (
+  styles: ComputedStyleDecl[],
+  newItems: Map<StyleProperty, StyleValue>
+) => {
+  const batch = createBatchUpdate();
+  const currentStyles = new Map(
+    styles.map((styleDecl) => [styleDecl.property, styleDecl.cascadedValue])
+  );
+  const primaryValue = styles[0].cascadedValue;
+  for (const [property, value] of newItems) {
+    const currentValue = currentStyles.get(property);
+    const normalizedValue = normalizeStyleValue(currentValue, primaryValue);
+    const newLayers = value.type === "layers" ? value.value : [];
+    batch.setProperty(property)({
+      type: "layers",
+      value: [...normalizedValue.value, ...newLayers],
+    });
+  }
+  batch.publish();
+};
+
+export const editRepeatedStyleItem = (
+  styles: ComputedStyleDecl[],
+  index: number,
+  newItems: Map<StyleProperty, StyleValue>,
+  options?: StyleUpdateOptions
+) => {
+  const batch = createBatchUpdate();
+  const currentStyles = new Map(
+    styles.map((styleDecl) => [styleDecl.property, styleDecl.cascadedValue])
+  );
+  const primaryValue = styles[0].cascadedValue;
+  for (const [property, value] of newItems) {
+    const currentValue = currentStyles.get(property);
+    const normalizedValue = normalizeStyleValue(currentValue, primaryValue);
+    const newLayers = value.type === "layers" ? value.value : [];
+    normalizedValue.value.splice(index, 1, ...newLayers);
+    batch.setProperty(property)({
+      type: "layers",
+      value: normalizedValue.value,
+    });
+  }
+  batch.publish(options);
+};
 
 const createLayersTransformer =
   (styles: ComputedStyleDecl[]) =>
-  (transform: (value: LayersValue) => Partial<LayersValue>) => {
+  (
+    transform: (property: string, value: LayersValue) => Partial<LayersValue>
+  ) => {
     const batch = createBatchUpdate();
     const primaryValue = styles[0].cascadedValue;
-    const primaryLayersCount =
-      primaryValue?.type === "layers" ? primaryValue.value.length : 0;
     for (const styleDecl of styles) {
       const value = styleDecl.cascadedValue;
-      if (value?.type === "layers") {
-        const normalizedLayers: LayersValue = {
-          type: "layers",
-          value: repeatUntil(value.value, primaryLayersCount),
-        };
-        const newLayers: LayersValue = {
-          ...normalizedLayers,
-          ...transform(normalizedLayers),
-        };
-        // delete empty layers
-        if (newLayers.value.length === 0) {
-          batch.deleteProperty(styleDecl.property as StyleProperty);
-        } else {
-          batch.setProperty(styleDecl.property as StyleProperty)(newLayers);
-        }
+      const normalizedValue = normalizeStyleValue(value, primaryValue);
+      const newLayers: LayersValue = {
+        ...normalizedValue,
+        ...transform(styleDecl.property, normalizedValue),
+      };
+      // delete empty layers
+      if (newLayers.value.length === 0) {
+        batch.deleteProperty(styleDecl.property as StyleProperty);
+      } else {
+        batch.setProperty(styleDecl.property as StyleProperty)(newLayers);
       }
     }
     batch.publish();
@@ -107,7 +161,9 @@ export const RepeatedStyle = (props: {
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: sortableItems,
     onSort: (newIndex, oldIndex) =>
-      transformLayers((value) => swapLayers(value, oldIndex, newIndex)),
+      transformLayers((_property, value) =>
+        swapLayers(value, oldIndex, newIndex)
+      ),
   });
 
   if (primaryValues.length === 0) {
@@ -145,7 +201,9 @@ export const RepeatedStyle = (props: {
                       disabled={false}
                       tabIndex={-1}
                       onPressedChange={() =>
-                        transformLayers((value) => hideLayer(value, index))
+                        transformLayers((_property, value) =>
+                          hideLayer(value, index)
+                        )
                       }
                       icon={
                         primaryValue.hidden ? (
@@ -160,7 +218,9 @@ export const RepeatedStyle = (props: {
                       tabIndex={-1}
                       icon={<SubtractIcon />}
                       onClick={() =>
-                        transformLayers((value) => deleteLayer(value, index))
+                        transformLayers((_property, value) =>
+                          deleteLayer(value, index)
+                        )
                       }
                     />
                   </>
