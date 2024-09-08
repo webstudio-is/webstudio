@@ -18,6 +18,19 @@ const distance = (a: RgbaColor, b: RgbaColor) => {
   );
 };
 
+// White color is invisible on white background, so we need to draw border
+// the more color is white the more border is visible
+const calcBorderColor = (color: RgbaColor) => {
+  const distanceToStartDrawBorder = 0.15;
+  const alpha = clamp(
+    (distanceToStartDrawBorder - distance(whiteColor, color)) /
+      distanceToStartDrawBorder,
+    0,
+    1
+  );
+  return colord(lerpColor(transparentColor, borderColorSwatch, alpha));
+};
+
 const lerp = (a: number, b: number, t: number) => {
   return a * (1 - t) + b * t;
 };
@@ -31,7 +44,7 @@ const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => {
   };
 };
 
-const style = css({
+const thumbStyle = css({
   width: theme.spacing[10],
   height: theme.spacing[10],
   backgroundBlendMode: "difference",
@@ -49,23 +62,7 @@ export const ColorThumb = forwardRef<
       ? // Chessboard pattern 5x5
         `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${colord(color).toRgbString()}`
       : colord(color).toRgbString();
-
-  const distanceToStartDrawBorder = 0.15;
-
-  // White color is invisible on white background, so we need to draw border
-  // the more color is white the more border is visible
-  const borderColor = colord(
-    lerpColor(
-      transparentColor,
-      borderColorSwatch,
-      clamp(
-        (distanceToStartDrawBorder - distance(whiteColor, color)) /
-          distanceToStartDrawBorder,
-        0,
-        1
-      )
-    )
-  );
+  const borderColor = calcBorderColor(color);
 
   return (
     <button
@@ -77,7 +74,7 @@ export const ColorThumb = forwardRef<
         // Border becomes visible when color is close to white so that the thumb is visible in the white input.
         borderWidth: borderColor.alpha() === 0 ? 0 : 1,
       }}
-      className={style({ css })}
+      className={thumbStyle({ css })}
     />
   );
 });
