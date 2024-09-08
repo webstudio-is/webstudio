@@ -280,6 +280,8 @@ export const InputField = forwardRef(
           // This way user can unfocus the input and then use any single-key shortcut.
           tabIndex={-1}
           ref={unfocusContainerRef}
+          // When managing focus with ArrowFocus, we don't want to focus this element.
+          data-no-arrow-focus
         />
         <Input {...inputProps} onKeyDown={handleKeyDown} ref={inputRef} />
       </Container>

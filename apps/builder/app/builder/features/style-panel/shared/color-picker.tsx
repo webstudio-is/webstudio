@@ -218,7 +218,8 @@ export const ColorPicker = ({
       >
         <ColorThumb
           color={styleValueToRgbaColor(currentColor)}
-          css={{ margin: theme.spacing[3] }}
+          css={{ margin: theme.spacing[2] }}
+          tabIndex={-1}
         />
       </PopoverTrigger>
       <PopoverContent
