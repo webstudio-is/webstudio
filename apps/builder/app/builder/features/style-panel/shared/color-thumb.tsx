@@ -3,12 +3,13 @@ import { colord, type RgbaColor } from "colord";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { clamp } from "~/shared/math-utils";
 
-const whiteColor = { r: 255, g: 255, b: 255, a: 1 };
+const whiteColor: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
 const borderColorSwatch = colord(rawTheme.colors.borderColorSwatch).toRgb();
-const transparent = colord("transparent").toRgb();
+const transparentColor: RgbaColor = { r: 0, g: 0, b: 0, a: 0 };
 
 const distance = (a: RgbaColor, b: RgbaColor) => {
-  // Use Euclidian distance, if will not give good results use https://zschuessler.github.io/DeltaE/
+  // Use Euclidian distance
+  // If results are not good, lets switch to https://zschuessler.github.io/DeltaE/
   return Math.sqrt(
     Math.pow(a.r / 255 - b.r / 255, 2) +
       Math.pow(a.g / 255 - b.g / 255, 2) +
@@ -43,14 +44,13 @@ const style = css({
 export const ColorThumb = forwardRef<
   ElementRef<typeof Box>,
   Omit<ComponentProps<typeof Box>, "color"> & { color?: RgbaColor }
->(({ color, css, ...rest }, ref) => {
-  const rgbString = colord(color ?? transparent).toRgbString();
-  // @todo transparent icon can be better
-  const background =
+>(({ color = transparentColor, css, ...rest }, ref) => {
+  // @todo transparentColor icon can be better
+  const backgroundColor =
     color === undefined || color.a < 1
       ? // Chessboard pattern 5
-        `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${rgbString}`
-      : rgbString;
+        `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparentColor 0% 50%) 0% 33.33% / 40% 40%, ${colord(color).toRgbString()}`
+      : colord(color).toRgbString();
 
   const distanceToStartDrawBorder = 0.15;
 
@@ -58,24 +58,23 @@ export const ColorThumb = forwardRef<
   // the more color is white the more border is visible
   const borderColor = colord(
     lerpColor(
-      transparent,
+      transparentColor,
       borderColorSwatch,
       clamp(
-        (distanceToStartDrawBorder -
-          distance(whiteColor, color || transparent)) /
+        (distanceToStartDrawBorder - distance(whiteColor, color)) /
           distanceToStartDrawBorder,
         0,
         1
       )
     )
-  ).toHslString();
+  ).toRgbString();
 
   return (
     <Box
       {...rest}
       ref={ref}
       css={{
-        background,
+        backgroundColor,
         borderColor,
       }}
       className={style({ css })}
