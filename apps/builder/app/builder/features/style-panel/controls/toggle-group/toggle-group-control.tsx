@@ -108,10 +108,7 @@ export const ToggleGroupControl = ({
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSource = getPriorityStyleValueSource(styles);
-  const selectedValue = toValue(
-    styles.find((styleDecl) => styleDecl.source.name !== "default")
-      ?.cascadedValue
-  );
+  const selectedValue = toValue(styles[0].cascadedValue);
   const values = styles.map((styleDecl) => toValue(styleDecl.cascadedValue));
   const isAdvanced =
     // show value as advanced when value is not represent with buttons

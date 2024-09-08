@@ -5,17 +5,10 @@ import {
   EnhancedTooltip,
   theme,
   IconButton,
+  Box,
 } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section";
-import {
-  ColorControl,
-  FontFamilyControl,
-  FontWeightControl,
-  SelectControl,
-  TextControl,
-} from "../../controls";
 import {
   CrossSmallIcon,
   EllipsesIcon,
@@ -35,10 +28,30 @@ import {
   TextUppercaseIcon,
 } from "@webstudio-is/icons";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
+import {
+  ColorControl,
+  FontFamilyControl,
+  FontWeightControl,
+  SelectControl,
+  TextControl,
+} from "../../controls";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { getStyleSourceColor, type StyleInfo } from "../../shared/style-info";
 import { StyleSection } from "../../shared/style-section";
-import { PropertyLabel } from "../../property-label";
+import {
+  getPriorityStyleValueSource,
+  PropertyLabel,
+} from "../../property-label";
+import { useComputedStyles } from "../../shared/model";
+import { createBatchUpdate } from "../../shared/use-style-data";
+
+const advancedProperties: StyleProperty[] = [
+  "whiteSpaceCollapse",
+  "textWrapMode",
+  "textWrapStyle",
+  "direction",
+  "hyphens",
+  "textOverflow",
+];
 
 export const properties = [
   "fontFamily",
@@ -51,29 +64,22 @@ export const properties = [
   "textDecorationLine",
   "letterSpacing",
   "textTransform",
-  "direction",
-  "whiteSpaceCollapse",
-  "textWrapMode",
-  "textWrapStyle",
-  "textOverflow",
-  "hyphens",
+  ...advancedProperties,
 ] satisfies Array<StyleProperty>;
 
-export const Section = (props: SectionProps) => {
+export const Section = () => {
   return (
     <StyleSection label="Typography" properties={properties}>
       <Flex gap="2" direction="column">
-        <TypographySectionFont {...props} />
+        <TypographySectionFont />
         <TypographySectionSizing />
-        <TypographySectionAdvanced {...props} />
+        <TypographySectionAdvanced />
       </Flex>
     </StyleSection>
   );
 };
 
-export const TypographySectionFont = (props: SectionProps) => {
-  const { currentStyle, setProperty, deleteProperty } = props;
-
+const TypographySectionFont = () => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
       <PropertyLabel
@@ -81,23 +87,13 @@ export const TypographySectionFont = (props: SectionProps) => {
         description={propertyDescriptions.fontFamily}
         properties={["fontFamily"]}
       />
-      <FontFamilyControl
-        property="fontFamily"
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
+      <FontFamilyControl />
       <PropertyLabel
         label="Weight"
         description={propertyDescriptions.fontWeight}
         properties={["fontWeight"]}
       />
-      <FontWeightControl
-        property="fontWeight"
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
+      <FontWeightControl />
       <PropertyLabel
         label="Color"
         description={propertyDescriptions.color}
@@ -139,7 +135,7 @@ const TypographySectionSizing = () => {
   );
 };
 
-export const TypographySectionAdvanced = (props: SectionProps) => {
+const TypographySectionAdvanced = () => {
   return (
     <Grid gap="2" columns="2" align="end">
       <ToggleGroupControl
@@ -236,7 +232,7 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
             },
           ]}
         />
-        <TypographySectionAdvancedPopover {...props} />
+        <TypographySectionAdvancedPopover />
       </Grid>
     </Grid>
   );
@@ -245,17 +241,12 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
 const AdvancedOptionsButton = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof IconButton> & {
-    currentStyle: StyleInfo;
-    properties: StyleProperty[];
-    onReset: () => void;
     /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
     "data-state"?: "open" | "closed";
   }
->(({ currentStyle, properties, onReset, onClick, ...rest }, ref) => {
-  const styleSourceColor = getStyleSourceColor({
-    properties,
-    currentStyle,
-  });
+>(({ onClick, ...rest }, ref) => {
+  const styles = useComputedStyles(advancedProperties);
+  const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
     <Flex>
       <EnhancedTooltip content="More typography options">
@@ -263,12 +254,16 @@ const AdvancedOptionsButton = forwardRef<
           {...rest}
           onClick={(event) => {
             if (event.altKey) {
-              onReset();
+              const batch = createBatchUpdate();
+              for (const property of advancedProperties) {
+                batch.deleteProperty(property);
+              }
+              batch.publish();
               return;
             }
             onClick?.(event);
           }}
-          variant={styleSourceColor}
+          variant={styleValueSourceColor}
           ref={ref}
         >
           <EllipsesIcon />
@@ -279,17 +274,7 @@ const AdvancedOptionsButton = forwardRef<
 });
 AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 
-const advancedProperties: StyleProperty[] = [
-  "whiteSpaceCollapse",
-  "textWrapMode",
-  "textWrapStyle",
-  "direction",
-  "hyphens",
-  "textOverflow",
-];
-
-export const TypographySectionAdvancedPopover = (props: SectionProps) => {
-  const { createBatchUpdate, currentStyle } = props;
+const TypographySectionAdvancedPopover = () => {
   return (
     <FloatingPanel
       title="Advanced Typography"
@@ -301,116 +286,102 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
             width: theme.spacing[30],
           }}
         >
-          <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
+          <Grid css={{ gridTemplateColumns: "5fr 5fr" }} gap={2}>
             <PropertyLabel
               label="White Space"
               description={propertyDescriptions.whiteSpaceCollapse}
               properties={["whiteSpaceCollapse"]}
             />
             <SelectControl property="whiteSpaceCollapse" />
-          </Grid>
-          <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyLabel
               label="Wrap Mode"
               description={propertyDescriptions.textWrapMode}
               properties={["textWrapMode"]}
             />
             <SelectControl property="textWrapMode" />
-          </Grid>
-          <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyLabel
               label="Wrap Style"
               description={propertyDescriptions.textWrapStyle}
               properties={["textWrapStyle"]}
             />
             <SelectControl property="textWrapStyle" />
-          </Grid>
-          <Grid css={{ gridTemplateColumns: "4fr auto" }}>
             <PropertyLabel
               label="Direction"
               description={propertyDescriptions.direction}
               properties={["direction"]}
             />
-            <ToggleGroupControl
-              properties={["direction"]}
-              items={[
-                {
-                  child: <TextDirectionLTRIcon />,
-                  description:
-                    "Sets the text direction to left-to-right, which is the default for most languages.",
-                  value: "ltr",
-                },
-                {
-                  child: <TextDirectionRTLIcon />,
-                  description:
-                    "Sets the text direction to right-to-left, typically used for languages such as Arabic or Hebrew.",
-                  value: "rtl",
-                },
-              ]}
-            />
-          </Grid>
-          <Grid css={{ gridTemplateColumns: "4fr auto" }}>
+            <Box css={{ justifySelf: "end" }}>
+              <ToggleGroupControl
+                properties={["direction"]}
+                items={[
+                  {
+                    child: <TextDirectionLTRIcon />,
+                    description:
+                      "Sets the text direction to left-to-right, which is the default for most languages.",
+                    value: "ltr",
+                  },
+                  {
+                    child: <TextDirectionRTLIcon />,
+                    description:
+                      "Sets the text direction to right-to-left, typically used for languages such as Arabic or Hebrew.",
+                    value: "rtl",
+                  },
+                ]}
+              />
+            </Box>
             <PropertyLabel
               label="Hyphens"
               description={propertyDescriptions.hyphens}
               properties={["hyphens"]}
             />
-            <ToggleGroupControl
-              properties={["hyphens"]}
-              items={[
-                {
-                  child: <CrossSmallIcon />,
-                  description:
-                    "Disables hyphenation of words. Words will not be hyphenated even if they exceed the width of their container.",
-                  value: "manual",
-                },
-                {
-                  child: <TextHyphenIcon />,
-                  description:
-                    "Enables automatic hyphenation of words. The browser will hyphenate long words at appropriate points to fit within the width of their container.",
-                  value: "auto",
-                },
-              ]}
-            />
-          </Grid>
-          <Grid css={{ gridTemplateColumns: "4fr auto" }}>
+            <Box css={{ justifySelf: "end" }}>
+              <ToggleGroupControl
+                properties={["hyphens"]}
+                items={[
+                  {
+                    child: <CrossSmallIcon />,
+                    description:
+                      "Disables hyphenation of words. Words will not be hyphenated even if they exceed the width of their container.",
+                    value: "manual",
+                  },
+                  {
+                    child: <TextHyphenIcon />,
+                    description:
+                      "Enables automatic hyphenation of words. The browser will hyphenate long words at appropriate points to fit within the width of their container.",
+                    value: "auto",
+                  },
+                ]}
+              />
+            </Box>
             <PropertyLabel
               label="Text Overflow"
               description={propertyDescriptions.textOverflow}
               properties={["textOverflow"]}
             />
-            <ToggleGroupControl
-              properties={["textOverflow"]}
-              items={[
-                {
-                  child: <CrossSmallIcon />,
-                  description:
-                    "The overflowing text is clipped and hidden without any indication.",
-                  value: "clip",
-                },
-                {
-                  child: <TextTruncateIcon />,
-                  description:
-                    "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: white-space: nowrap; overflow: hidden;",
-                  value: "ellipsis",
-                },
-              ]}
-            />
+            <Box css={{ justifySelf: "end" }}>
+              <ToggleGroupControl
+                properties={["textOverflow"]}
+                items={[
+                  {
+                    child: <CrossSmallIcon />,
+                    description:
+                      "The overflowing text is clipped and hidden without any indication.",
+                    value: "clip",
+                  },
+                  {
+                    child: <TextTruncateIcon />,
+                    description:
+                      "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: white-space: nowrap; overflow: hidden;",
+                    value: "ellipsis",
+                  },
+                ]}
+              />
+            </Box>
           </Grid>
         </Grid>
       }
     >
-      <AdvancedOptionsButton
-        currentStyle={currentStyle}
-        properties={advancedProperties}
-        onReset={() => {
-          const batch = createBatchUpdate();
-          Object.values(advancedProperties).forEach((property) => {
-            batch.deleteProperty(property);
-          });
-          batch.publish();
-        }}
-      />
+      <AdvancedOptionsButton />
     </FloatingPanel>
   );
 };

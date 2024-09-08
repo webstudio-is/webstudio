@@ -5,7 +5,6 @@ import {
   NestedInputButton,
 } from "@webstudio-is/design-system";
 import { FontsManager } from "~/builder/shared/fonts-manager";
-import type { ControlProps } from "../types";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import { toValue } from "@webstudio-is/css-engine";
@@ -15,6 +14,8 @@ import { toItems } from "~/builder/shared/fonts-manager";
 import { UploadIcon } from "@webstudio-is/icons";
 import { styleConfigByName } from "../../shared/configs";
 import { parseCssValue } from "@webstudio-is/css-data";
+import { useComputedStyleDecl } from "../../shared/model";
+import { setProperty } from "../../shared/use-style-data";
 
 type Item = { value: string; label?: string };
 
@@ -40,13 +41,10 @@ const matchOrSuggestToCreate = (
   return matched;
 };
 
-export const FontFamilyControl = ({
-  property,
-  currentStyle,
-  setProperty,
-}: ControlProps) => {
-  const value = currentStyle[property]?.value;
-  const setValue = setProperty(property);
+export const FontFamilyControl = () => {
+  const fontFamily = useComputedStyleDecl("fontFamily");
+  const value = fontFamily.cascadedValue;
+  const setValue = setProperty("fontFamily");
   const [intermediateValue, setIntermediateValue] = useState<
     string | undefined
   >();
