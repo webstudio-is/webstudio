@@ -1,4 +1,4 @@
-import { rawTheme, Box, theme, css } from "@webstudio-is/design-system";
+import { rawTheme, theme, css, type CSS } from "@webstudio-is/design-system";
 import { colord, type RgbaColor } from "colord";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { clamp } from "~/shared/math-utils";
@@ -42,8 +42,8 @@ const style = css({
 });
 
 export const ColorThumb = forwardRef<
-  ElementRef<typeof Box>,
-  Omit<ComponentProps<typeof Box>, "color"> & { color?: RgbaColor }
+  ElementRef<"button">,
+  Omit<ComponentProps<"button">, "color"> & { color?: RgbaColor; css?: CSS }
 >(({ color = transparentColor, css, ...rest }, ref) => {
   // @todo transparentColor icon can be better
   const backgroundColor =
@@ -70,13 +70,10 @@ export const ColorThumb = forwardRef<
   ).toRgbString();
 
   return (
-    <Box
+    <button
       {...rest}
       ref={ref}
-      css={{
-        backgroundColor,
-        borderColor,
-      }}
+      style={{ backgroundColor, borderColor }}
       className={style({ css })}
     />
   );
