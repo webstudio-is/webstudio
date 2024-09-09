@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { properties } from "@webstudio-is/css-data";
 import {
   compareMedia,
   type StyleProperty,
@@ -96,20 +97,32 @@ export const $definedProperties = computed(
     if (instanceSelector === undefined) {
       return definedProperties;
     }
-    const matchingStyleSources = new Set();
+    const inheritedStyleSources = new Set();
+    const instanceStyleSources = new Set();
     const matchingBreakpoints = new Set(matchingBreakpointsArray);
     for (const instanceId of instanceSelector) {
       const styleSources = styleSourceSelections.get(instanceId)?.values;
       if (styleSources) {
         for (const styleSourceId of styleSources) {
-          matchingStyleSources.add(styleSourceId);
+          if (instanceId === instanceSelector[0]) {
+            instanceStyleSources.add(styleSourceId);
+          } else {
+            inheritedStyleSources.add(styleSourceId);
+          }
         }
       }
     }
     for (const styleDecl of styles.values()) {
       if (
         matchingBreakpoints.has(styleDecl.breakpointId) &&
-        matchingStyleSources.has(styleDecl.styleSourceId)
+        instanceStyleSources.has(styleDecl.styleSourceId)
+      ) {
+        definedProperties.add(styleDecl.property);
+      }
+      if (
+        matchingBreakpoints.has(styleDecl.breakpointId) &&
+        inheritedStyleSources.has(styleDecl.styleSourceId) &&
+        properties[styleDecl.property as keyof typeof properties].inherited
       ) {
         definedProperties.add(styleDecl.property);
       }
@@ -118,11 +131,7 @@ export const $definedProperties = computed(
   }
 );
 
-/**
- * Do not use directly
- * only transition property is permitted
- */
-export const $model = computed(
+const $model = computed(
   [
     $styles,
     $styleSourceSelections,
