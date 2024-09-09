@@ -44,19 +44,19 @@ export const createImageLoader =
       return src;
     }
 
-    // const searchParams = new URLSearchParams();
+    if (format !== "raw") {
+      resultUrl.searchParams.set("width", width.toString());
+      resultUrl.searchParams.set("quality", quality.toString());
 
-    resultUrl.searchParams.set("width", width.toString());
-    resultUrl.searchParams.set("quality", quality.toString());
+      if (props.height != null) {
+        resultUrl.searchParams.set("height", props.height.toString());
+      }
+
+      if (props.fit != null) {
+        resultUrl.searchParams.set("fit", props.fit);
+      }
+    }
     resultUrl.searchParams.set("format", format ?? "auto");
-
-    if (props.format !== "raw" && props.height != null) {
-      resultUrl.searchParams.set("height", props.height.toString());
-    }
-
-    if (props.format !== "raw" && props.fit != null) {
-      resultUrl.searchParams.set("fit", props.fit);
-    }
 
     resultUrl.pathname = joinPath(resultUrl.pathname, encodePathFragment(src));
 

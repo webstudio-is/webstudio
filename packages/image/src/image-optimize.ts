@@ -232,6 +232,18 @@ const DEFAULT_SIZES = "(min-width: 1280px) 50vw, 100vw";
 
 const DEFAULT_QUALITY = 80;
 
+/**
+ * URL.canParse(props.src)
+ */
+export const UrlCanParse = (url: string) => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const getImageAttributes = (props: {
   src: string | undefined;
   srcSet: string | undefined;
@@ -272,7 +284,11 @@ export const getImageAttributes = (props: {
       src: string;
       srcSet?: string;
       sizes?: string;
-    } = { src: props.src };
+    } = {
+      src: UrlCanParse(props.src)
+        ? props.src
+        : props.loader({ src: props.src, format: "raw" }),
+    };
 
     if (props.srcSet != null) {
       resAttrs.srcSet = props.srcSet;
