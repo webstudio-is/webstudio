@@ -141,7 +141,7 @@ export const RepeatedStyle = (props: {
     index: number,
     primaryValue: StyleValue
   ) => { label: string; color?: RgbaColor };
-  renderItemContent: (index: number) => JSX.Element;
+  renderItemContent: (index: number, primaryValue: StyleValue) => JSX.Element;
 }) => {
   const transformLayers = createLayersTransformer(props.styles);
   const { label, styles, getItemProps, renderItemContent } = props;
@@ -183,7 +183,7 @@ export const RepeatedStyle = (props: {
             <FloatingPanel
               key={index}
               title={label}
-              content={renderItemContent(index)}
+              content={renderItemContent(index, primaryValue)}
             >
               <CssValueListItem
                 id={id}

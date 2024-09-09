@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import {
+  hyphenateProperty,
   toValue,
   type InvalidValue,
   type LayersValue,
@@ -17,6 +19,7 @@ import {
   Grid,
   Label,
   Separator,
+  Text,
   TextArea,
   textVariants,
   theme,
@@ -24,15 +27,15 @@ import {
   ToggleGroupButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { ShadowInsetIcon, ShadowNormalIcon } from "@webstudio-is/icons";
-import { useMemo, useState } from "react";
+import {
+  InfoCircleIcon,
+  ShadowInsetIcon,
+  ShadowNormalIcon,
+} from "@webstudio-is/icons";
 import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
 import { toPascalCase } from "../shared/keyword-utils";
-import type {
-  DeleteProperty,
-  StyleUpdateOptions,
-} from "../shared/use-style-data";
+import type { StyleUpdateOptions } from "../shared/use-style-data";
 import { parseCssFragment } from "./parse-css-fragment";
 import { PropertyInlineLabel } from "../property-label";
 import { styleConfigByName } from "./configs";
@@ -65,15 +68,13 @@ import { ColorPicker } from "./color-picker";
 type ShadowContentProps = {
   index: number;
   property: "boxShadow" | "textShadow" | "dropShadow";
-  layer: TupleValue;
+  layer: StyleValue;
   propertyValue: string;
-  tooltip: JSX.Element;
   onEditLayer: (
     index: number,
     layers: LayersValue,
     options: StyleUpdateOptions
   ) => void;
-  deleteProperty: DeleteProperty;
   hideCodeEditor?: boolean;
 };
 
@@ -122,18 +123,20 @@ export const ShadowContent = ({
   index,
   property,
   propertyValue,
-  tooltip,
   hideCodeEditor = false,
   onEditLayer,
-  deleteProperty,
 }: ShadowContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
-  >();
-  const layerValues = useMemo<ExtractedShadowProperties>(() => {
+  >({ type: "intermediate", value: propertyValue });
+  useEffect(() => {
     setIntermediateValue({ type: "intermediate", value: propertyValue });
-    return extractShadowProperties(layer);
-  }, [layer, propertyValue]);
+  }, [propertyValue]);
+  const layerValues = useMemo<ExtractedShadowProperties>(() => {
+    return extractShadowProperties(
+      layer.type === "tuple" ? layer : { type: "tuple", value: [] }
+    );
+  }, [layer]);
 
   const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
   const colorControlProp = color ?? {
@@ -379,7 +382,21 @@ export const ShadowContent = ({
             <Label>
               <Flex align={"center"} gap={1}>
                 Code
-                {tooltip}
+                <Tooltip
+                  variant="wrapped"
+                  content={
+                    <Text>
+                      Paste a {hyphenateProperty(property)} CSS code without the
+                      property name, for example:
+                      <br /> <br />
+                      <Text variant="monoBold">
+                        0px 2px 5px 0px rgba(0, 0, 0, 0.2)
+                      </Text>
+                    </Text>
+                  }
+                >
+                  <InfoCircleIcon />
+                </Tooltip>
               </Flex>
             </Label>
             <TextArea
@@ -395,15 +412,6 @@ export const ShadowContent = ({
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   handleComplete();
-                  event.preventDefault();
-                }
-
-                // dropShadow is a function under the `filter` and `backdrop-filter` properties.
-                // which are managed using tupes. If we delete here. It delets the whole `filter` / `backdrop-filter` property.
-                // So, we avoid this ephermal operation for dropShadow.
-                if (event.key === "Escape" && property !== "dropShadow") {
-                  deleteProperty(property, { isEphemeral: true });
-                  setIntermediateValue(undefined);
                   event.preventDefault();
                 }
               }}
