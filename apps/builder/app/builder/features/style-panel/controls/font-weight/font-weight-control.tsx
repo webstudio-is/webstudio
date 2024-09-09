@@ -3,8 +3,9 @@ import { type FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
 import { useAssets } from "~/builder/shared/assets";
-import type { ControlProps } from "../types";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
+import { useComputedStyles } from "../../shared/model";
+import { setProperty } from "../../shared/use-style-data";
 
 type FontWeightItem = {
   label: string;
@@ -73,19 +74,15 @@ const useLabels = (
   return { labels, selectedLabel };
 };
 
-export const FontWeightControl = ({
-  property,
-  currentStyle,
-  setProperty,
-  isAdvanced,
-}: ControlProps) => {
-  const fontWeight = currentStyle[property]?.value;
-
+export const FontWeightControl = () => {
   // We need the font family to determine which font weights are available
-  const fontFamily = currentStyle.fontFamily?.value;
+  const [fontWeight, fontFamily] = useComputedStyles([
+    "fontWeight",
+    "fontFamily",
+  ]);
 
   const availableFontWeights = useAvailableFontWeights(
-    toValue(fontFamily, (styleValue) => {
+    toValue(fontFamily.cascadedValue, (styleValue) => {
       // override default fallback with rendering only first font family
       if (styleValue.type === "fontFamily") {
         return {
@@ -97,10 +94,10 @@ export const FontWeightControl = ({
   );
   const { labels, selectedLabel } = useLabels(
     availableFontWeights,
-    toValue(fontWeight)
+    toValue(fontWeight.cascadedValue)
   );
 
-  const setValue = setProperty(property);
+  const setValue = setProperty("fontWeight");
 
   const setFontWeight = (label: string, options?: { isEphemeral: boolean }) => {
     const selected = availableFontWeights.find(
@@ -113,7 +110,6 @@ export const FontWeightControl = ({
 
   return (
     <Select
-      disabled={isAdvanced}
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""
@@ -125,7 +121,7 @@ export const FontWeightControl = ({
         // Remove preview when mouse leaves the item.
         if (label === undefined) {
           if (fontWeight !== undefined) {
-            setValue(fontWeight, { isEphemeral: true });
+            setValue(fontWeight.cascadedValue, { isEphemeral: true });
           }
           return;
         }
@@ -135,7 +131,7 @@ export const FontWeightControl = ({
       onOpenChange={(isOpen) => {
         // Remove ephemeral changes when closing the menu.
         if (isOpen === false && fontWeight !== undefined) {
-          setValue(fontWeight, { isEphemeral: true });
+          setValue(fontWeight.cascadedValue, { isEphemeral: true });
         }
       }}
     />
