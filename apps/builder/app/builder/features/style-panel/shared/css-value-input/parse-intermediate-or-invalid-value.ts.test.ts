@@ -9,6 +9,21 @@ const propertiesAndKeywords = [
   ["lineHeight", "normal" as string],
 ] as const;
 
+test("forgive trailing semicolon", () => {
+  expect(
+    parseIntermediateOrInvalidValue("width", {
+      type: "intermediate",
+      value: "20px;",
+    })
+  ).toEqual({ type: "unit", value: 20, unit: "px" });
+  expect(
+    parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "red;",
+    })
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
 describe("Parse intermediate or invalid value without math evaluation", () => {
   test("not lost unit value", () => {
     for (const propery of properties) {

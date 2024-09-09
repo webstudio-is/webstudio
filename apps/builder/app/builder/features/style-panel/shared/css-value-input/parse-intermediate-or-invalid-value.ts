@@ -14,7 +14,10 @@ export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
   styleValue: IntermediateStyleValue | InvalidValue
 ): StyleValue => {
-  const value = styleValue.value.trim();
+  let value = styleValue.value.trim();
+  if (value.endsWith(";")) {
+    value = value.slice(0, -1);
+  }
 
   if (property.startsWith("--")) {
     return {
