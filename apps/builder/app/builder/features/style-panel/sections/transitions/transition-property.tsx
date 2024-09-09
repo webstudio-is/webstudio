@@ -28,12 +28,7 @@ import {
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { setUnion } from "~/shared/shim";
-import {
-  $selectedInstanceSelector,
-  $selectedOrLastStyleSourceSelector,
-} from "~/shared/nano-states";
-import { getComputedStyleDecl } from "~/shared/style-object-model";
-import { $definedProperties, $model } from "../../shared/model";
+import { $definedProperties } from "../../shared/model";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
@@ -44,32 +39,18 @@ type TransitionPropertyProps = {
 
 const commonPropertiesSet = new Set(commonTransitionProperties);
 
+/**
+ * animatable and inherited properties
+ * on current breakpoints across all states
+ */
 const $animatableDefinedProperties = computed(
-  [
-    $definedProperties,
-    $model,
-    $selectedInstanceSelector,
-    $selectedOrLastStyleSourceSelector,
-  ],
-  (definedProperties, model, instanceSelector, styleSourceSelector) => {
+  [$definedProperties],
+  (definedProperties) => {
     const animatableProperties = new Set<string>();
     for (const property of definedProperties) {
       const hyphenatedProperty = hyphenateProperty(property);
       if (isAnimatableProperty(hyphenatedProperty)) {
-        const styleDecl = getComputedStyleDecl({
-          model,
-          instanceSelector,
-          styleSourceId: styleSourceSelector?.styleSourceId,
-          state: styleSourceSelector?.state,
-          property,
-        });
-        if (
-          styleDecl.source.name === "remote" ||
-          styleDecl.source.name === "local" ||
-          styleDecl.source.name === "overwritten"
-        ) {
-          animatableProperties.add(hyphenatedProperty);
-        }
+        animatableProperties.add(hyphenatedProperty);
       }
     }
     return animatableProperties;

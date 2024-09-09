@@ -1,10 +1,4 @@
-import type {
-  KeywordValue,
-  LayerValueItem,
-  UnitValue,
-  FunctionValue,
-  StyleProperty,
-} from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { animatableProperties } from "../__generated__/animatable-properties";
 
 type AnimatableProperty = (typeof animatableProperties)[number];
@@ -38,16 +32,5 @@ export const isAnimatableProperty = (
 
   return [...commonTransitionProperties, ...animatableProperties].some(
     (item) => item === property
-  );
-};
-
-export const isValidTransitionValue = (
-  value: LayerValueItem
-): value is KeywordValue | UnitValue | FunctionValue => {
-  return (
-    value.type === "keyword" ||
-    value.type === "unit" ||
-    value.type === "function" ||
-    value.type === "unparsed"
   );
 };
