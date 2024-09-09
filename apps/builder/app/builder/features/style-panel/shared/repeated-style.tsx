@@ -4,6 +4,8 @@ import type {
   LayersValue,
   StyleProperty,
   StyleValue,
+  TupleValue,
+  UnparsedValue,
 } from "@webstudio-is/css-engine";
 import {
   EyeconClosedIcon,
@@ -25,18 +27,20 @@ import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
 
+type ItemType = "layers" | "tuple";
+
 const normalizeStyleValue = (
   value: undefined | StyleValue,
-  primaryValue: StyleValue
-): LayersValue => {
-  const primaryLayersCount =
-    primaryValue.type === "layers" ? primaryValue.value.length : 0;
-  const layers = value?.type === "layers" ? value.value : [];
-  const normalizedLayers: LayersValue = {
-    type: "layers",
-    value: repeatUntil(layers, primaryLayersCount),
-  };
-  return normalizedLayers;
+  primaryValue: StyleValue,
+  itemType: ItemType = primaryValue.type === "tuple" ? "tuple" : "layers"
+) => {
+  const primaryItemsCount =
+    primaryValue.type === itemType ? primaryValue.value.length : 0;
+  const items = value?.type === itemType ? value.value : [];
+  return {
+    type: itemType,
+    value: repeatUntil(items, primaryItemsCount),
+  } as TupleValue | LayersValue;
 };
 
 export const addRepeatedStyleItem = (
@@ -48,14 +52,17 @@ export const addRepeatedStyleItem = (
     styles.map((styleDecl) => [styleDecl.property, styleDecl.cascadedValue])
   );
   const primaryValue = styles[0].cascadedValue;
+  // infer type from new items
+  // because current values could be css wide keywords
+  const itemType: ItemType =
+    Array.from(newItems.values())[0]?.type === "tuple" ? "tuple" : "layers";
   for (const [property, value] of newItems) {
-    const currentValue = currentStyles.get(property);
-    const normalizedValue = normalizeStyleValue(currentValue, primaryValue);
-    const newLayers = value.type === "layers" ? value.value : [];
-    batch.setProperty(property)({
-      type: "layers",
-      value: [...normalizedValue.value, ...newLayers],
-    });
+    const oldValue = currentStyles.get(property);
+    const newValue = normalizeStyleValue(oldValue, primaryValue, itemType);
+    const newItems =
+      value.type === newValue.type ? (value.value as UnparsedValue[]) : [];
+    newValue.value.push(...newItems);
+    batch.setProperty(property)(newValue);
   }
   batch.publish();
 };
@@ -72,66 +79,74 @@ export const editRepeatedStyleItem = (
   );
   const primaryValue = styles[0].cascadedValue;
   for (const [property, value] of newItems) {
-    const currentValue = currentStyles.get(property);
-    const normalizedValue = normalizeStyleValue(currentValue, primaryValue);
-    const newLayers = value.type === "layers" ? value.value : [];
-    normalizedValue.value.splice(index, 1, ...newLayers);
-    batch.setProperty(property)({
-      type: "layers",
-      value: normalizedValue.value,
-    });
+    const oldValue = currentStyles.get(property);
+    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    const newItems = value.type === newValue.type ? value.value : [];
+    newValue.value.splice(index, 1, ...newItems);
+    batch.setProperty(property)(newValue);
   }
   batch.publish(options);
 };
 
-const createLayersTransformer =
-  (styles: ComputedStyleDecl[]) =>
-  (
-    transform: (property: string, value: LayersValue) => Partial<LayersValue>
-  ) => {
-    const batch = createBatchUpdate();
-    const primaryValue = styles[0].cascadedValue;
-    for (const styleDecl of styles) {
-      const value = styleDecl.cascadedValue;
-      const normalizedValue = normalizeStyleValue(value, primaryValue);
-      const newLayers: LayersValue = {
-        ...normalizedValue,
-        ...transform(styleDecl.property, normalizedValue),
-      };
-      // delete empty layers
-      if (newLayers.value.length === 0) {
-        batch.deleteProperty(styleDecl.property as StyleProperty);
-      } else {
-        batch.setProperty(styleDecl.property as StyleProperty)(newLayers);
-      }
+export const deleteRepeatedStyleItem = (
+  styles: ComputedStyleDecl[],
+  index: number
+) => {
+  const batch = createBatchUpdate();
+  const primaryValue = styles[0].cascadedValue;
+  for (const styleDecl of styles) {
+    const oldValue = styleDecl.cascadedValue;
+    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    newValue.value.splice(index, 1);
+    if (newValue.value.length > 0) {
+      batch.setProperty(styleDecl.property as StyleProperty)(newValue);
+    } else {
+      // delete empty layers or tuple
+      batch.deleteProperty(styleDecl.property as StyleProperty);
     }
-    batch.publish();
-  };
-
-const hideLayer = (value: LayersValue, layerIndex: number) => ({
-  value: value.value.map((item, index) =>
-    index === layerIndex
-      ? { ...item, hidden: false === (item.hidden ?? false) }
-      : item
-  ),
-});
-
-const deleteLayer = (value: LayersValue, layerIndex: number) => ({
-  value: value.value.filter((_item, index) => index !== layerIndex),
-});
-
-const swapLayers = (value: LayersValue, oldIndex: number, newIndex: number) => {
-  const newValue = Array.from(value.value);
-  // You can swap only if there are at least two layers
-  // As we are checking across multiple properties, we can't be sure
-  // which property don't have two layers so we are checking here.
-  if (value.value.length >= 2) {
-    newValue.splice(oldIndex, 1);
-    newValue.splice(newIndex, 0, value.value[oldIndex]);
   }
-  return {
-    value: newValue,
-  };
+  batch.publish();
+};
+
+export const toggleRepeatedStyleItem = (
+  styles: ComputedStyleDecl[],
+  index: number
+) => {
+  const batch = createBatchUpdate();
+  const primaryValue = styles[0].cascadedValue;
+  for (const styleDecl of styles) {
+    const oldValue = styleDecl.cascadedValue;
+    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    newValue.value[index] = {
+      ...newValue.value[index],
+      hidden: false === (newValue.value[index].hidden ?? false),
+    };
+    batch.setProperty(styleDecl.property as StyleProperty)(newValue);
+  }
+  batch.publish();
+};
+
+export const swapRepeatedStyleItems = (
+  styles: ComputedStyleDecl[],
+  oldIndex: number,
+  newIndex: number
+) => {
+  const batch = createBatchUpdate();
+  const primaryValue = styles[0].cascadedValue;
+  for (const styleDecl of styles) {
+    const oldValue = styleDecl.cascadedValue;
+    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    // You can swap only if there are at least two layers
+    // As we are checking across multiple properties, we can't be sure
+    // which property don't have two layers so we are checking here.
+    if (newValue.value.length >= 2) {
+      const oldItem = newValue.value[oldIndex];
+      newValue.value.splice(oldIndex, 1);
+      newValue.value.splice(newIndex, 0, oldItem);
+    }
+    batch.setProperty(styleDecl.property as StyleProperty)(newValue);
+  }
+  batch.publish();
 };
 
 export const RepeatedStyle = (props: {
@@ -143,37 +158,37 @@ export const RepeatedStyle = (props: {
   ) => { label: string; color?: RgbaColor };
   renderItemContent: (index: number, primaryValue: StyleValue) => JSX.Element;
 }) => {
-  const transformLayers = createLayersTransformer(props.styles);
   const { label, styles, getItemProps, renderItemContent } = props;
-  // first property should describe the amount of layers
-  const layers = styles[0].cascadedValue;
-  const primaryValues = layers?.type === "layers" ? layers.value : [];
+  // first property should describe the amount of layers or tuple items
+  const primaryValue = styles[0].cascadedValue;
+  const primaryItems =
+    primaryValue.type === "layers" || primaryValue.type === "tuple"
+      ? primaryValue.value
+      : [];
 
   const sortableItems = useMemo(
     () =>
-      Array.from(Array(primaryValues.length), (_, index) => ({
+      Array.from(Array(primaryItems.length), (_, index) => ({
         id: String(index),
         index,
       })),
-    [primaryValues.length]
+    [primaryItems.length]
   );
 
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: sortableItems,
     onSort: (newIndex, oldIndex) =>
-      transformLayers((_property, value) =>
-        swapLayers(value, oldIndex, newIndex)
-      ),
+      swapRepeatedStyleItems(styles, oldIndex, newIndex),
   });
 
-  if (primaryValues.length === 0) {
+  if (primaryItems.length === 0) {
     return;
   }
 
   return (
     <CssValueListArrowFocus dragItemId={dragItemId}>
       <Flex direction="column" ref={sortableRefCallback}>
-        {primaryValues.map((primaryValue, index) => {
+        {primaryItems.map((primaryValue, index) => {
           const id = String(index);
           const { label: itemLabel, color: itemColor } = getItemProps(
             index,
@@ -201,9 +216,7 @@ export const RepeatedStyle = (props: {
                       disabled={false}
                       tabIndex={-1}
                       onPressedChange={() =>
-                        transformLayers((_property, value) =>
-                          hideLayer(value, index)
-                        )
+                        toggleRepeatedStyleItem(styles, index)
                       }
                       icon={
                         primaryValue.hidden ? (
@@ -217,11 +230,7 @@ export const RepeatedStyle = (props: {
                       variant="destructive"
                       tabIndex={-1}
                       icon={<SubtractIcon />}
-                      onClick={() =>
-                        transformLayers((_property, value) =>
-                          deleteLayer(value, index)
-                        )
-                      }
+                      onClick={() => deleteRepeatedStyleItem(styles, index)}
                     />
                   </>
                 }

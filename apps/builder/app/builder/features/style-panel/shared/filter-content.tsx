@@ -2,7 +2,6 @@ import { camelCase } from "change-case";
 import {
   type InvalidValue,
   type TupleValue,
-  type FunctionValue,
   toValue,
   StyleValue,
 } from "@webstudio-is/css-engine";
@@ -22,10 +21,7 @@ import {
   type IntermediateStyleValue,
 } from "../shared/css-value-input";
 import { parseCssValue } from "@webstudio-is/css-data";
-import type {
-  DeleteProperty,
-  StyleUpdateOptions,
-} from "../shared/use-style-data";
+import type { StyleUpdateOptions } from "../shared/use-style-data";
 import { ShadowContent } from "./shadow-content";
 import { parseCssFragment } from "./parse-css-fragment";
 
@@ -80,7 +76,7 @@ const filterFunctions = {
 type FilterContentProps = {
   index: number;
   property: "filter" | "backdropFilter";
-  layer: FunctionValue;
+  layer: StyleValue;
   propertyValue: string;
   tooltip: JSX.Element;
   onEditLayer: (
@@ -88,7 +84,6 @@ type FilterContentProps = {
     layers: TupleValue,
     options: StyleUpdateOptions
   ) => void;
-  deleteProperty: DeleteProperty;
 };
 
 type FilterFunction = keyof typeof filterFunctions;
@@ -101,7 +96,6 @@ export const FilterSectionContent = ({
   property,
   propertyValue,
   onEditLayer,
-  deleteProperty,
   tooltip,
   layer,
 }: FilterContentProps) => {
@@ -116,7 +110,11 @@ export const FilterSectionContent = ({
   >(undefined);
 
   useEffect(() => {
-    if (isFilterFunction(layer.name) === false || layer.args.type !== "tuple") {
+    if (
+      layer.type !== "function" ||
+      isFilterFunction(layer.name) === false ||
+      layer.args.type !== "tuple"
+    ) {
       return;
     }
 
@@ -217,13 +215,15 @@ export const FilterSectionContent = ({
               }
               keywords={[]}
               setValue={handleFilterFunctionValueChange}
-              deleteProperty={deleteProperty}
+              deleteProperty={() => {}}
             />
           </Grid>
         ) : undefined}
       </Flex>
 
-      {filterFunction === "drop-shadow" && layer.args.type === "tuple" ? (
+      {filterFunction === "drop-shadow" &&
+      layer.type === "function" &&
+      layer.args.type === "tuple" ? (
         <ShadowContent
           index={index}
           property="dropShadow"
@@ -276,12 +276,6 @@ export const FilterSectionContent = ({
               // On pressing Enter, the textarea is creating a new line.
               // In-order to prevent it and update the content.
               // We prevent the default behaviour
-              event.preventDefault();
-            }
-
-            if (event.key === "Escape") {
-              deleteProperty(property, { isEphemeral: true });
-              setIntermediateValue(undefined);
               event.preventDefault();
             }
           }}
