@@ -228,7 +228,6 @@ export const FilterSectionContent = ({
           index={index}
           property="dropShadow"
           layer={layer.args}
-          tooltip={<></>}
           propertyValue={toValue(layer.args)}
           onEditLayer={(_, dropShadowLayers, options) => {
             handleComplete(
@@ -236,7 +235,6 @@ export const FilterSectionContent = ({
               options
             );
           }}
-          deleteProperty={() => {}}
           hideCodeEditor={true}
         />
       ) : undefined}

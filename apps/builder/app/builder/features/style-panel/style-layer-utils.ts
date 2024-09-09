@@ -12,7 +12,6 @@ import type {
   CreateBatchUpdate,
   StyleUpdateOptions,
 } from "./shared/use-style-data";
-import { colord, type RgbaColor } from "colord";
 import { humanizeString } from "~/shared/string-utils";
 import type { LayerListProperty } from "./style-layers-list";
 
@@ -192,60 +191,6 @@ export const getHumanizedTextFromLayer = (
   layer: StyleValue
 ) => {
   switch (property) {
-    case "textShadow":
-    case "boxShadow":
-      if (layer.type === "tuple") {
-        const name = [];
-        let color: RgbaColor | undefined;
-        const properties = [...layer.value];
-
-        if (property === "boxShadow") {
-          const insetKeyword = layer.value.find(
-            (item) => item.type === "keyword" && item.value === "inset"
-          );
-          if (insetKeyword !== undefined) {
-            name.push("Inner Shadow: ");
-            properties.splice(properties.indexOf(insetKeyword), 1);
-          } else {
-            name.push("Outer Shadow: ");
-          }
-        }
-
-        if (property === "textShadow") {
-          name.push("Text Shadow: ");
-        }
-
-        for (const item of properties) {
-          if (item.type === "unit") {
-            const value = toValue(item);
-            name.push(value);
-          }
-
-          if (item.type === "rgb") {
-            color = colord(toValue(item)).toRgb();
-          }
-
-          if (item.type === "keyword") {
-            if (colord(item.value).isValid() === false) {
-              name.push(item.value);
-            } else {
-              color = colord(item.value).toRgb();
-            }
-          }
-
-          if (item.type === "unparsed") {
-            name.push(item.value);
-          }
-
-          if (item.type === "function") {
-            const value = `${item.name}(${toValue(item.args)})`;
-            name.push(value);
-          }
-        }
-
-        return { name: name.join(" "), value: toValue(layer), color };
-      }
-      break;
     case "filter":
     case "backdropFilter":
       if (layer.type === "function") {
