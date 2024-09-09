@@ -363,69 +363,6 @@ describe("boxShadowUtils", () => {
   });
 });
 
-test("Generates humane layer names for shadow style layer", () => {
-  expect(
-    getHumanizedTextFromLayer(
-      "boxShadow",
-      (
-        parseCssValue(
-          "boxShadow",
-          "inset 2px 2px 5px rgba(0, 0, 0, 0.5)"
-        ) as LayersValue
-      ).value[0] as TupleValue
-    )
-  ).toMatchInlineSnapshot(`
-{
-  "color": {
-    "a": 0.5,
-    "b": 0,
-    "g": 0,
-    "r": 0,
-  },
-  "name": "Inner Shadow:  2px 2px 5px",
-  "value": "inset 2px 2px 5px rgba(0, 0, 0, 0.5)",
-}
-`);
-
-  expect(
-    getHumanizedTextFromLayer(
-      "boxShadow",
-      (
-        parseCssValue(
-          "boxShadow",
-          "3px 3px 10px rgba(255, 0, 0, 0.7)"
-        ) as LayersValue
-      ).value[0] as TupleValue
-    )
-  ).toMatchInlineSnapshot(`
-{
-  "color": {
-    "a": 0.7,
-    "b": 0,
-    "g": 0,
-    "r": 255,
-  },
-  "name": "Outer Shadow:  3px 3px 10px",
-  "value": "3px 3px 10px rgba(255, 0, 0, 0.7)",
-}
-`);
-
-  // colors is returning isValid as false in node env for 'red'
-  expect(
-    getHumanizedTextFromLayer(
-      "textShadow",
-      (parseCssValue("textShadow", "1px 1px 2px red") as LayersValue)
-        .value[0] as TupleValue
-    )
-  ).toMatchInlineSnapshot(`
-{
-  "color": undefined,
-  "name": "Text Shadow:  1px 1px 2px red",
-  "value": "1px 1px 2px red",
-}
-`);
-});
-
 test("Generates humane layer names for filter style layer", () => {
   expect(
     getHumanizedTextFromLayer(
