@@ -49,6 +49,7 @@ export const BackgroundContentStory = () => {
           title="Background"
           content={
             <BackgroundContent
+              index={0}
               currentStyle={currentStyle}
               deleteProperty={deleteProperty}
               setProperty={setProperty}
