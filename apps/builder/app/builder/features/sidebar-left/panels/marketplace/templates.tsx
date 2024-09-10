@@ -195,7 +195,10 @@ export const Templates = ({
                                   instanceId: templateData.rootInstanceId,
                                 });
                               }
-                              if (productCategory === "pageTemplates") {
+                              if (
+                                productCategory === "pageTemplates" ||
+                                productCategory === "integrationTemplates"
+                              ) {
                                 insertPage({
                                   data,
                                   pageId: templateData.pageId,
