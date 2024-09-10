@@ -6,13 +6,38 @@ import {
 } from "~/builder/shared/floating-panel";
 import { useRef, useState } from "react";
 import type { SetProperty } from "../../shared/use-style-data";
+import {
+  $breakpoints,
+  $selectedBreakpointId,
+  $selectedInstanceSelector,
+  $styles,
+  $styleSourceSelections,
+} from "~/shared/nano-states";
+import { registerContainers } from "~/shared/sync";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
+
+const backgroundImage: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "backgroundImage",
+  value: {
+    type: "layers",
+    value: [{ type: "keyword", value: "none" }],
+  },
+};
+
+registerContainers();
+$breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
+$selectedBreakpointId.set("base");
+$styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
+$styleSourceSelections.set(
+  new Map([["box", { instanceId: "box", values: ["local"] }]])
+);
+$selectedInstanceSelector.set(["box"]);
 
 const defaultCurrentStyle = getLayerBackgroundStyleInfo(0, {
   backgroundImage: {
-    value: {
-      type: "layers",
-      value: [{ type: "keyword", value: "none" }],
-    },
+    value: backgroundImage.value,
   },
 });
 const deleteProperty = () => () => {
@@ -49,6 +74,7 @@ export const BackgroundContentStory = () => {
           title="Background"
           content={
             <BackgroundContent
+              index={0}
               currentStyle={currentStyle}
               deleteProperty={deleteProperty}
               setProperty={setProperty}

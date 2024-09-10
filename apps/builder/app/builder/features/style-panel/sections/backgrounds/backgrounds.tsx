@@ -86,6 +86,7 @@ const Layer = (props: {
       collisionPadding={{ bottom: 200, top: 200 }}
       content={
         <BackgroundContent
+          index={props.index}
           currentStyle={props.layerStyle}
           setProperty={props.setProperty}
           deleteProperty={props.deleteProperty}

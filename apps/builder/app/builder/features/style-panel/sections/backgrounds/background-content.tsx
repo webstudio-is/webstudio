@@ -44,6 +44,7 @@ import { PropertyInlineLabel } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
 
 type BackgroundContentProps = {
+  index: number;
   currentStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
   deleteProperty: DeleteBackgroundProperty;
@@ -198,7 +199,7 @@ const BackgroundRepeat = (props: BackgroundContentProps) => {
 export const BackgroundContent = (props: BackgroundContentProps) => {
   const setProperty = safeSetProperty(props.setProperty);
   const deleteProperty = safeDeleteProperty(props.deleteProperty);
-  const { currentStyle } = props;
+  const { currentStyle, index } = props;
 
   const elementRef = useRef<HTMLDivElement>(null);
   const [imageGradientToggle, setImageGradientToggle] = useState<
@@ -252,12 +253,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
               </Flex>
 
               <FloatingPanelProvider container={elementRef}>
-                <ImageControl
-                  setProperty={setProperty}
-                  deleteProperty={deleteProperty}
-                  currentStyle={currentStyle}
-                  property="backgroundImage"
-                />
+                <ImageControl property="backgroundImage" index={index} />
               </FloatingPanelProvider>
             </>
           )}

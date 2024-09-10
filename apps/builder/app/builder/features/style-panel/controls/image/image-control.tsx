@@ -3,9 +3,13 @@ import { Button, InputField, Flex } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
-import type { ControlProps } from "../types";
 import { useEffect, useState } from "react";
-import type { InvalidValue } from "@webstudio-is/css-engine";
+import type { InvalidValue, StyleProperty } from "@webstudio-is/css-engine";
+import { useComputedStyleDecl } from "../../shared/model";
+import {
+  getRepeatedStyleItem,
+  setRepeatedStyleItem,
+} from "../../shared/repeated-style";
 
 const isValidURL = (value: string) => {
   try {
@@ -22,12 +26,14 @@ type IntermediateValue = {
 
 export const ImageControl = ({
   property,
-  currentStyle,
-  setProperty,
-}: ControlProps) => {
+  index,
+}: {
+  property: StyleProperty;
+  index: number;
+}) => {
   const assets = useStore($assets);
-  const setValue = setProperty(property);
-  const styleValue = currentStyle[property]?.value;
+  const styleDecl = useComputedStyleDecl(property);
+  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
   const [remoteImageURL, setRemoteImageURL] = useState<
     IntermediateValue | InvalidValue | undefined
   >(undefined);
@@ -65,7 +71,7 @@ export const ImageControl = ({
       remoteImageURL?.type === "intermediate" &&
       isValidURL(remoteImageURL.value) === true
     ) {
-      setValue({
+      setRepeatedStyleItem(styleDecl, index, {
         type: "image",
         value: { type: "url", url: remoteImageURL.value },
       });
@@ -93,7 +99,7 @@ export const ImageControl = ({
         content={
           <ImageManager
             onChange={(assetId) => {
-              setValue({
+              setRepeatedStyleItem(styleDecl, index, {
                 type: "image",
                 value: { type: "asset", value: assetId },
               });
