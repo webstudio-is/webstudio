@@ -27,6 +27,12 @@ import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
 
+export const getRepeatedStyleItem = (styleValue: StyleValue, index: number) => {
+  if (styleValue.type === "layers" || styleValue.type === "tuple") {
+    return styleValue.value[index % styleValue.value.length];
+  }
+};
+
 type ItemType = "layers" | "tuple";
 
 const normalizeStyleValue = (
@@ -59,9 +65,13 @@ export const addRepeatedStyleItem = (
   for (const [property, value] of newItems) {
     const oldValue = currentStyles.get(property);
     const newValue = normalizeStyleValue(oldValue, primaryValue, itemType);
-    const newItems =
-      value.type === newValue.type ? (value.value as UnparsedValue[]) : [];
-    newValue.value.push(...newItems);
+    if (value.type !== itemType) {
+      console.error(
+        `Unexpected item type "${value.type}" for ${property} repeated value`
+      );
+      continue;
+    }
+    newValue.value.push(...(value.value as UnparsedValue[]));
     batch.setProperty(property)(newValue);
   }
   batch.publish();
@@ -81,11 +91,34 @@ export const editRepeatedStyleItem = (
   for (const [property, value] of newItems) {
     const oldValue = currentStyles.get(property);
     const newValue = normalizeStyleValue(oldValue, primaryValue);
-    const newItems = value.type === newValue.type ? value.value : [];
-    newValue.value.splice(index, 1, ...newItems);
+    if (value.type !== newValue.type) {
+      console.error(
+        `Unexpected item type "${value.type}" for ${property} repeated value`
+      );
+      continue;
+    }
+    newValue.value.splice(index, 1, ...value.value);
     batch.setProperty(property)(newValue);
   }
   batch.publish(options);
+};
+
+export const setRepeatedStyleItem = (
+  styleDecl: ComputedStyleDecl,
+  index: number,
+  newItem: StyleValue
+) => {
+  const batch = createBatchUpdate();
+  const value = styleDecl.cascadedValue;
+  const valueType: ItemType = value.type === "tuple" ? "tuple" : "layers";
+  const oldItems = value.type === valueType ? value.value : [];
+  const newItems: StyleValue[] = repeatUntil(oldItems, index);
+  newItems[index] = newItem;
+  batch.setProperty(styleDecl.property as StyleProperty)({
+    type: valueType,
+    value: newItems as UnparsedValue[],
+  });
+  batch.publish();
 };
 
 export const deleteRepeatedStyleItem = (

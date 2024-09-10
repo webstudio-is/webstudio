@@ -1,8 +1,11 @@
 import { beforeEach, expect, test } from "@jest/globals";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   addRepeatedStyleItem,
   deleteRepeatedStyleItem,
   editRepeatedStyleItem,
+  getRepeatedStyleItem,
+  setRepeatedStyleItem,
   swapRepeatedStyleItems,
   toggleRepeatedStyleItem,
 } from "./repeated-style";
@@ -23,6 +26,42 @@ beforeEach(() => {
   $selectedBreakpointId.set("base");
   $selectedInstanceSelector.set(["box"]);
   $styles.set(new Map());
+});
+
+test("get repeated style item by index", () => {
+  const styleValue: StyleValue = {
+    type: "layers",
+    value: [
+      { type: "keyword", value: "red" },
+      { type: "keyword", value: "green" },
+      { type: "keyword", value: "blue" },
+    ],
+  };
+  expect(getRepeatedStyleItem(styleValue, 0)).toEqual({
+    type: "keyword",
+    value: "red",
+  });
+  expect(getRepeatedStyleItem(styleValue, 1)).toEqual({
+    type: "keyword",
+    value: "green",
+  });
+  expect(getRepeatedStyleItem(styleValue, 2)).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
+  // repeat values
+  expect(getRepeatedStyleItem(styleValue, 3)).toEqual({
+    type: "keyword",
+    value: "red",
+  });
+  expect(getRepeatedStyleItem(styleValue, 4)).toEqual({
+    type: "keyword",
+    value: "green",
+  });
+  expect(getRepeatedStyleItem(styleValue, 5)).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
 });
 
 test("add layer to repeated style", () => {
@@ -137,6 +176,44 @@ test("edit tuple in repeated style", () => {
           value: [{ type: "unit", unit: "%", value: 200 }],
         },
       },
+    ],
+  });
+});
+
+test("set layers item into repeated style", () => {
+  const $transitionProperty =
+    createComputedStyleDeclStore("transitionProperty");
+  addRepeatedStyleItem(
+    [$transitionProperty.get()],
+    parseCssFragment("opacity", "transitionProperty")
+  );
+  addRepeatedStyleItem(
+    [$transitionProperty.get()],
+    parseCssFragment("transform", "transitionProperty")
+  );
+  setRepeatedStyleItem($transitionProperty.get(), 0, {
+    type: "unparsed",
+    value: "width",
+  });
+  expect($transitionProperty.get().cascadedValue).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "width" },
+      { type: "unparsed", value: "transform" },
+    ],
+  });
+  // out of bounds will repeat existing values
+  setRepeatedStyleItem($transitionProperty.get(), 3, {
+    type: "unparsed",
+    value: "left",
+  });
+  expect($transitionProperty.get().cascadedValue).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "width" },
+      { type: "unparsed", value: "transform" },
+      { type: "unparsed", value: "width" },
+      { type: "unparsed", value: "left" },
     ],
   });
 });
