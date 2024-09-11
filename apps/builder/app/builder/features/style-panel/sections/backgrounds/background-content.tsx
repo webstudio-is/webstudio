@@ -5,14 +5,13 @@
 
 import { useRef, useState } from "react";
 import { propertyDescriptions } from "@webstudio-is/css-data";
-import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   RepeatGridIcon,
   RepeatColumnIcon,
   RepeatRowIcon,
   CrossSmallIcon,
 } from "@webstudio-is/icons";
-import { toValue } from "@webstudio-is/css-engine";
+import { StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Flex,
@@ -23,18 +22,6 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { ImageControl, SelectControl } from "../../controls";
-import type { StyleInfo } from "../../shared/style-info";
-import type {
-  DeleteProperty,
-  SetProperty,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
-import {
-  type DeleteBackgroundProperty,
-  isBackgroundLayeredProperty,
-  isBackgroundStyleValue,
-  type SetBackgroundProperty,
-} from "./background-layers";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { BackgroundSize } from "./background-size";
 import { BackgroundGradient } from "./background-gradient";
@@ -42,55 +29,18 @@ import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
 import { PropertyInlineLabel } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
+import { useComputedStyleDecl } from "../../shared/model";
+import {
+  getRepeatedStyleItem,
+  setRepeatedStyleItem,
+} from "../../shared/repeated-style";
 
-type BackgroundContentProps = {
-  index: number;
-  currentStyle: StyleInfo;
-  setProperty: SetBackgroundProperty;
-  deleteProperty: DeleteBackgroundProperty;
-  setBackgroundColor: (color: StyleValue) => void;
-};
-
-const safeDeleteProperty = (
-  deleteProperty: DeleteBackgroundProperty
-): DeleteProperty => {
-  return (property, options) => {
-    const isLayered = isBackgroundLayeredProperty(property);
-    if (isLayered) {
-      return deleteProperty(property, options);
-    }
-    throw new Error(`Property ${property} should be background style property`);
-  };
-};
-
-const safeSetProperty = (setBackgroundProperty: SetBackgroundProperty) => {
-  const result: SetProperty = (property) => {
-    if (isBackgroundLayeredProperty(property)) {
-      return (style: string | StyleValue, options?: StyleUpdateOptions) => {
-        if (typeof style === "string") {
-          throw new Error("style should be StyleValue and not a string");
-        }
-
-        if (isBackgroundStyleValue(style)) {
-          return setBackgroundProperty(property)(style, options);
-        }
-
-        throw new Error("Style should be valid BackgroundStyleValue");
-      };
-    }
-
-    throw new Error(`Property ${property} should be background style property`);
-  };
-
-  return result;
-};
-
-const detectImageOrGradientToggle = (currentStyle: StyleInfo) => {
-  if (currentStyle?.backgroundImage?.value.type === "image") {
+const detectImageOrGradientToggle = (styleValue?: StyleValue) => {
+  if (styleValue?.type === "image") {
     return "image";
   }
 
-  if (currentStyle?.backgroundImage?.value.type === "keyword") {
+  if (styleValue?.type === "keyword") {
     // The only allowed keyword for backgroundImage is none
     return "image";
   }
@@ -111,8 +61,9 @@ const Spacer = styled("div", {
   height: theme.spacing[5],
 });
 
-const BackgroundRepeat = (props: BackgroundContentProps) => {
-  const { currentStyle, setProperty } = props;
+const BackgroundRepeat = ({ index }: { index: number }) => {
+  const styleDecl = useComputedStyleDecl("backgroundRepeat");
+  const value = getRepeatedStyleItem(styleDecl.cascadedValue, index);
   const items = [
     {
       child: <CrossSmallIcon />,
@@ -146,65 +97,75 @@ const BackgroundRepeat = (props: BackgroundContentProps) => {
   // onMouseEnter used to preserve default hovering behavior on tooltip.
   const [activeTooltip, setActiveTooltip] = useState<undefined | string>();
   return (
-    <>
-      <PropertyInlineLabel
-        label="Repeat"
-        description={propertyDescriptions.backgroundRepeat}
-        properties={["backgroundRepeat"]}
-      />
-
-      <Flex css={{ justifySelf: "end" }}>
-        <ToggleGroup
-          type="single"
-          value={toValue(currentStyle.backgroundRepeat?.value)}
-          onValueChange={(value) => {
-            setProperty("backgroundRepeat")({
-              type: "keyword",
-              value,
-            });
-          }}
+    <ToggleGroup
+      type="single"
+      value={toValue(value)}
+      onValueChange={(value) => {
+        setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
+      }}
+    >
+      {items.map((item) => (
+        <ToggleGroupTooltip
+          key={item.value}
+          isOpen={item.value === activeTooltip}
+          onOpenChange={(isOpen) =>
+            setActiveTooltip(isOpen ? item.value : undefined)
+          }
+          isSelected={false}
+          label="Background Repeat"
+          code={`background-repeat: ${item.value};`}
+          description={item.description}
+          properties={["backgroundRepeat"]}
         >
-          {items.map((item) => (
-            <ToggleGroupTooltip
-              key={item.value}
-              isOpen={item.value === activeTooltip}
-              onOpenChange={(isOpen) =>
-                setActiveTooltip(isOpen ? item.value : undefined)
-              }
-              isSelected={false}
-              label="Background Repeat"
-              code={`background-repeat: ${item.value};`}
-              description={item.description}
-              properties={["backgroundRepeat"]}
-            >
-              <ToggleGroupButton
-                value={item.value}
-                onMouseEnter={() =>
-                  // reset only when highlighted is not active
-                  setActiveTooltip((prevValue) =>
-                    prevValue === item.value ? prevValue : undefined
-                  )
-                }
-              >
-                {item.child}
-              </ToggleGroupButton>
-            </ToggleGroupTooltip>
-          ))}
-        </ToggleGroup>
-      </Flex>
-    </>
+          <ToggleGroupButton
+            value={item.value}
+            onMouseEnter={() =>
+              // reset only when highlighted is not active
+              setActiveTooltip((prevValue) =>
+                prevValue === item.value ? prevValue : undefined
+              )
+            }
+          >
+            {item.child}
+          </ToggleGroupButton>
+        </ToggleGroupTooltip>
+      ))}
+    </ToggleGroup>
   );
 };
 
-export const BackgroundContent = (props: BackgroundContentProps) => {
-  const setProperty = safeSetProperty(props.setProperty);
-  const deleteProperty = safeDeleteProperty(props.deleteProperty);
-  const { currentStyle, index } = props;
+const BackgroundAttachment = ({ index }: { index: number }) => {
+  const styleDecl = useComputedStyleDecl("backgroundAttachment");
+  const value = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  return (
+    <ToggleGroup
+      type="single"
+      value={toValue(value)}
+      onValueChange={(value) => {
+        setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
+      }}
+    >
+      <ToggleGroupButton value={"scroll"}>
+        <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
+      </ToggleGroupButton>
+      <ToggleGroupButton value={"fixed"}>
+        <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
+      </ToggleGroupButton>
+    </ToggleGroup>
+  );
+};
+
+export const BackgroundContent = ({ index }: { index: number }) => {
+  const backgroundImage = useComputedStyleDecl("backgroundImage");
 
   const elementRef = useRef<HTMLDivElement>(null);
   const [imageGradientToggle, setImageGradientToggle] = useState<
     "image" | "gradient"
-  >(() => detectImageOrGradientToggle(currentStyle));
+  >(() =>
+    detectImageOrGradientToggle(
+      getRepeatedStyleItem(backgroundImage.cascadedValue, index)
+    )
+  );
 
   return (
     <>
@@ -251,7 +212,6 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                   properties={["backgroundImage"]}
                 />
               </Flex>
-
               <FloatingPanelProvider container={elementRef}>
                 <ImageControl property="backgroundImage" index={index} />
               </FloatingPanelProvider>
@@ -263,33 +223,23 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             description={propertyDescriptions.backgroundClip}
             properties={["backgroundClip"]}
           />
-
-          <SelectControl property="backgroundClip" />
+          <SelectControl property="backgroundClip" index={index} />
 
           <PropertyInlineLabel
             label="Origin"
             description={propertyDescriptions.backgroundOrigin}
             properties={["backgroundOrigin"]}
           />
-
-          <SelectControl property="backgroundOrigin" />
+          <SelectControl property="backgroundOrigin" index={index} />
         </Grid>
 
         <Spacer />
 
-        <BackgroundSize
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={currentStyle}
-        />
+        <BackgroundSize index={index} />
 
         <Spacer />
 
-        <BackgroundPosition
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <BackgroundPosition index={index} />
 
         <Grid
           css={{
@@ -299,32 +249,26 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           align="center"
           gap={2}
         >
-          {imageGradientToggle === "image" && <BackgroundRepeat {...props} />}
+          {imageGradientToggle === "image" && (
+            <>
+              <PropertyInlineLabel
+                label="Repeat"
+                description={propertyDescriptions.backgroundRepeat}
+                properties={["backgroundRepeat"]}
+              />
+              <Flex css={{ justifySelf: "end" }}>
+                <BackgroundRepeat index={index} />
+              </Flex>
+            </>
+          )}
 
           <PropertyInlineLabel
             label="Attachment"
             description={propertyDescriptions.backgroundAttachment}
             properties={["backgroundAttachment"]}
           />
-
           <Flex css={{ justifySelf: "end" }}>
-            <ToggleGroup
-              type="single"
-              value={toValue(currentStyle.backgroundAttachment?.value)}
-              onValueChange={(value) => {
-                setProperty("backgroundAttachment")({
-                  type: "keyword",
-                  value,
-                });
-              }}
-            >
-              <ToggleGroupButton value={"scroll"}>
-                <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
-              </ToggleGroupButton>
-              <ToggleGroupButton value={"fixed"}>
-                <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
-              </ToggleGroupButton>
-            </ToggleGroup>
+            <BackgroundAttachment index={index} />
           </Flex>
 
           <PropertyInlineLabel
@@ -332,25 +276,15 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             description={propertyDescriptions.backgroundBlendMode}
             properties={["backgroundBlendMode"]}
           />
-
-          <SelectControl property="backgroundBlendMode" />
+          <SelectControl property="backgroundBlendMode" index={index} />
         </Grid>
       </BackgroundSection>
       <Separator css={{ gridColumn: "span 2" }} />
 
       {imageGradientToggle === "image" ? (
-        <BackgroundImage
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={currentStyle}
-        />
+        <BackgroundImage index={index} />
       ) : (
-        <BackgroundGradient
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={currentStyle}
-          setBackgroundColor={props.setBackgroundColor}
-        />
+        <BackgroundGradient index={index} />
       )}
     </>
   );

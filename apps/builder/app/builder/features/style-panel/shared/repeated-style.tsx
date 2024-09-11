@@ -106,19 +106,21 @@ export const editRepeatedStyleItem = (
 export const setRepeatedStyleItem = (
   styleDecl: ComputedStyleDecl,
   index: number,
-  newItem: StyleValue
+  newItem: StyleValue,
+  options?: StyleUpdateOptions
 ) => {
   const batch = createBatchUpdate();
   const value = styleDecl.cascadedValue;
   const valueType: ItemType = value.type === "tuple" ? "tuple" : "layers";
   const oldItems = value.type === valueType ? value.value : [];
   const newItems: StyleValue[] = repeatUntil(oldItems, index);
-  newItems[index] = newItem;
+  // unpack item when layers or tuple is provided
+  newItems[index] = newItem.type === valueType ? newItem.value[0] : newItem;
   batch.setProperty(styleDecl.property as StyleProperty)({
     type: valueType,
     value: newItems as UnparsedValue[],
   });
-  batch.publish();
+  batch.publish(options);
 };
 
 export const deleteRepeatedStyleItem = (

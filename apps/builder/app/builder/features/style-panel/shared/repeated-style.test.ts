@@ -218,6 +218,30 @@ test("set layers item into repeated style", () => {
   });
 });
 
+test("unpack item from layers value in repeated style", () => {
+  const $transitionProperty =
+    createComputedStyleDeclStore("transitionProperty");
+  addRepeatedStyleItem(
+    [$transitionProperty.get()],
+    parseCssFragment("opacity", "transitionProperty")
+  );
+  addRepeatedStyleItem(
+    [$transitionProperty.get()],
+    parseCssFragment("transform", "transitionProperty")
+  );
+  setRepeatedStyleItem($transitionProperty.get(), 1, {
+    type: "layers",
+    value: [{ type: "unparsed", value: "width" }],
+  });
+  expect($transitionProperty.get().cascadedValue).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "opacity" },
+      { type: "unparsed", value: "width" },
+    ],
+  });
+});
+
 test("delete layer from repeated style", () => {
   const $transitionProperty =
     createComputedStyleDeclStore("transitionProperty");

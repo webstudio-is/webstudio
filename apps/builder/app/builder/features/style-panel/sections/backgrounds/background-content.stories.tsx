@@ -1,11 +1,9 @@
-import { BackgroundContent } from "./background-content";
-import { getLayerBackgroundStyleInfo } from "./background-layers";
+import { useRef } from "react";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   FloatingPanel,
   FloatingPanelProvider,
 } from "~/builder/shared/floating-panel";
-import { useRef, useState } from "react";
-import type { SetProperty } from "../../shared/use-style-data";
 import {
   $breakpoints,
   $selectedBreakpointId,
@@ -14,7 +12,7 @@ import {
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
-import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
+import { BackgroundContent } from "./background-content";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -35,34 +33,8 @@ $styleSourceSelections.set(
 );
 $selectedInstanceSelector.set(["box"]);
 
-const defaultCurrentStyle = getLayerBackgroundStyleInfo(0, {
-  backgroundImage: {
-    value: backgroundImage.value,
-  },
-});
-const deleteProperty = () => () => {
-  // do nothing
-};
-
 export const BackgroundContentStory = () => {
   const elementRef = useRef<HTMLDivElement>(null);
-
-  const [currentStyle, setCurrentStyle] = useState(defaultCurrentStyle);
-
-  const setProperty: SetProperty =
-    (propertyName: string) => (style, options) => {
-      if (options?.isEphemeral) {
-        return;
-      }
-
-      setCurrentStyle({
-        ...currentStyle,
-        [propertyName]: {
-          value: style,
-          local: style,
-        },
-      });
-    };
 
   return (
     <>
@@ -72,17 +44,7 @@ export const BackgroundContentStory = () => {
         <FloatingPanel
           open={true}
           title="Background"
-          content={
-            <BackgroundContent
-              index={0}
-              currentStyle={currentStyle}
-              deleteProperty={deleteProperty}
-              setProperty={setProperty}
-              setBackgroundColor={(color) => {
-                setProperty("backgroundColor")(color);
-              }}
-            />
-          }
+          content={<BackgroundContent index={0} />}
         >
           <div>Trigger</div>
         </FloatingPanel>

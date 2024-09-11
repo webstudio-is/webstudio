@@ -1,4 +1,4 @@
-import type { LayersValue, StyleValue } from "@webstudio-is/css-engine";
+import type { LayersValue } from "@webstudio-is/css-engine";
 import type { StyleInfo, StyleValueInfo } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
@@ -20,23 +20,6 @@ export const layeredBackgroundPropsDefaults = {
 
 export type BackgroundStyleValue = LayersValue | LayersValue["value"][number];
 
-export const isBackgroundStyleValue = (
-  style: StyleValue
-): style is BackgroundStyleValue => {
-  if (
-    style.type === "unit" ||
-    style.type === "keyword" ||
-    style.type === "unparsed" ||
-    style.type === "image" ||
-    style.type === "tuple" ||
-    style.type === "invalid" ||
-    style.type === "layers"
-  ) {
-    return true;
-  }
-  return false;
-};
-
 type BackgroundProperty = keyof typeof layeredBackgroundPropsDefaults;
 
 export const layeredBackgroundProps = Object.keys(
@@ -44,12 +27,6 @@ export const layeredBackgroundProps = Object.keys(
 ) as [BackgroundProperty, ...BackgroundProperty[]];
 
 export type LayeredBackgroundProperty = (typeof layeredBackgroundProps)[number];
-
-export const isBackgroundLayeredProperty = (
-  prop: string
-): prop is LayeredBackgroundProperty => {
-  return layeredBackgroundProps.includes(prop as LayeredBackgroundProperty);
-};
 
 const getPropertyLayerCount = (style: StyleValueInfo) => {
   if (style.value.type === "layers") {

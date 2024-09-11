@@ -10,12 +10,17 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { useRef, useState, useEffect } from "react";
-import type { ControlProps } from "../../controls";
+import type {} from "../../controls";
 import { useStore } from "@nanostores/react";
 import { $assets } from "~/shared/nano-states";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { useComputedStyleDecl } from "../../shared/model";
+import {
+  getRepeatedStyleItem,
+  setRepeatedStyleItem,
+} from "../../shared/repeated-style";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -30,12 +35,11 @@ const isAbsoluteURL = (value: string) => {
   }
 };
 
-export const BackgroundImage = (
-  props: Omit<ControlProps, "property" | "items">
-) => {
+export const BackgroundImage = ({ index }: { index: number }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const assets = useStore($assets);
-  const styleValue = props.currentStyle.backgroundImage?.value;
+  const styleDecl = useComputedStyleDecl("backgroundImage");
+  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
   const [errors, setErrors] = useState<string[]>([]);
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
@@ -100,7 +104,7 @@ export const BackgroundImage = (
     const [layer] = newValue.type === "layers" ? newValue.value : [newValue];
     if (layer?.type === "keyword") {
       setIntermediateValue(undefined);
-      props.setProperty("backgroundImage")(layer, options);
+      setRepeatedStyleItem(styleDecl, index, layer, options);
     }
     if (layer?.type !== "image" || layer.value.type !== "url") {
       setIntermediateValue({
@@ -112,7 +116,7 @@ export const BackgroundImage = (
     const url = layer.value.url;
 
     if (isAbsoluteURL(url) === true) {
-      props.setProperty("backgroundImage")(layer, options);
+      setRepeatedStyleItem(styleDecl, index, layer, options);
     } else {
       const usedAsset = Array.from($assets.get().values()).find(
         (asset) => asset.type === "image" && asset.name === url
@@ -128,13 +132,12 @@ export const BackgroundImage = (
       }
 
       setErrors([]);
-      props.setProperty("backgroundImage")(
+      setRepeatedStyleItem(
+        styleDecl,
+        index,
         {
           type: "image",
-          value: {
-            type: "asset",
-            value: usedAsset.id,
-          },
+          value: { type: "asset", value: usedAsset.id },
         },
         options
       );
@@ -182,15 +185,14 @@ export const BackgroundImage = (
           color={intermediateValue?.type === "invalid" ? "error" : undefined}
           value={intermediateValue !== undefined ? intermediateValue.value : ""}
           onChange={(value) => handleChange(value, { isEphemeral: true })}
+          onBlur={() => {
+            if (intermediateValue !== undefined) {
+              handleChange(intermediateValue.value, { isEphemeral: false });
+            }
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && intermediateValue !== undefined) {
               handleChange(intermediateValue.value, { isEphemeral: false });
-              event.preventDefault();
-            }
-
-            if (event.key === "Escape") {
-              props.deleteProperty("backgroundImage", { isEphemeral: true });
-              setIntermediateValue(undefined);
               event.preventDefault();
             }
           }}
