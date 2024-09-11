@@ -161,11 +161,11 @@ type ProjectCardProps = {
 };
 
 const EmptyImage = styled("img", {
-  display: "none",
   position: "absolute",
   width: 1,
   height: 1,
-  overflow: "hidden",
+  left: 0,
+  top: 0,
   opacity: 0,
 });
 
