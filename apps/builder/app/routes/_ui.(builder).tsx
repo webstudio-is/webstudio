@@ -202,7 +202,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       // Still possible create iframe without src attribute
       // Disable workers on builder
       "Content-Security-Policy",
-      `frame-src ${url.origin}/canvas; worker-src 'none'`
+      `frame-src ${url.origin}/canvas https://app.goentri.com/; worker-src 'none'`
     );
 
     return json(
