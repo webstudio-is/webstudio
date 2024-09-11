@@ -13,6 +13,7 @@ import {
   Tooltip,
   rawTheme,
   Link,
+  styled,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
@@ -159,6 +160,14 @@ type ProjectCardProps = {
   imageLoader: ImageLoader;
 };
 
+const EmptyImage = styled("img", {
+  display: "none",
+  position: "absolute",
+  width: 0,
+  height: 0,
+  overflow: "hidden",
+});
+
 export const ProjectCard = ({
   project: {
     id,
@@ -206,8 +215,17 @@ export const ProjectCard = ({
   return (
     <Card hidden={isHidden} tabIndex={0} onKeyDown={handleKeyDown}>
       <CardContent
-        css={{ background: theme.colors.brandBackgroundProjectCardBack }}
+        css={{
+          background: theme.colors.brandBackgroundProjectCardBack,
+          [`&:hover ${EmptyImage}`]: { display: "block" },
+        }}
       >
+        {/* This image is used to prefetch DNS and preconnect to the project domain on hover. */}
+        {/* See CSS above: */}
+        {/* [`&:hover ${EmptyImage}`]: { display: "block" } */}
+        {/* The "loading='lazy'" attribute is mandatory as it prevents loading the image until it is displayed. */}
+        <EmptyImage src={`${linkPath}cgi/empty.gif`} loading="lazy" />
+
         {previewImageAsset ? (
           <ThumbnailLinkWithImage
             to={linkPath}
