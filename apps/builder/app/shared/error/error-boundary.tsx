@@ -50,9 +50,18 @@ const parseErrorObject = (
     };
   }
 
+  const parsed = PageError.safeParse(error);
+  if (parsed.success) {
+    return {
+      message: parsed.data.message,
+      description: parsed.data.description,
+      status: 1001,
+    };
+  }
+
   return {
     message: JSON.stringify(error ?? "unknown error"),
-    status: 500,
+    status: 1001,
     statusText: undefined,
   };
 };

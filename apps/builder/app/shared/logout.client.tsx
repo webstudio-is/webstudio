@@ -1,14 +1,18 @@
 import { Text, Grid } from "@webstudio-is/design-system";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useEffectEvent } from "./hook-utils/effect-event";
+import { fetch } from "~/shared/fetch.client";
+import { z } from "zod";
+import { restLogoutPath } from "./router-utils";
 
-export type LogoutPageProps = {
+export type LogoutProps = {
   logoutUrls: string[];
-  onFinish: () => void;
+  onFinish: (failedProjects?: string[]) => void;
 };
 
 const MAX_RETRIES = 3;
 
-export const LogoutPage = (props: LogoutPageProps) => {
+const Logout = (props: LogoutProps) => {
   const [logoutState, setLogoutState] = useState({
     retries: MAX_RETRIES,
     logoutUrls: props.logoutUrls,
@@ -16,6 +20,11 @@ export const LogoutPage = (props: LogoutPageProps) => {
 
   useEffect(() => {
     if (logoutState.retries === 0) {
+      if (logoutState.retries === 0) {
+        // Show error message
+        props.onFinish(logoutState.logoutUrls);
+      }
+
       return;
     }
 
@@ -59,14 +68,6 @@ export const LogoutPage = (props: LogoutPageProps) => {
     });
   }, [logoutState, props]);
 
-  let message = "Logging out ...";
-
-  if (logoutState.retries === 0) {
-    // Show error message
-    message = "Logout failed.";
-    throw new Error("Logout failed.");
-  }
-
   return (
     <Grid
       gap={2}
@@ -77,7 +78,82 @@ export const LogoutPage = (props: LogoutPageProps) => {
         justifyItems: "center",
       }}
     >
-      <Text variant={"bigTitle"}>{message}</Text>
+      <Text variant={"bigTitle"}>Logging out ...</Text>
     </Grid>
+  );
+};
+
+export type LogoutPageProps = {
+  logoutUrls: string[];
+};
+
+const LogoutResponse = z.object({
+  redirectTo: z.string(),
+});
+
+export const LogoutPage = (props: LogoutPageProps) => {
+  const refForm = useRef<HTMLFormElement>(null);
+
+  const handleLogout = useEffectEvent(async (formData: FormData) => {
+    const response = await fetch(restLogoutPath(), {
+      method: "POST",
+      body: JSON.stringify(Object.fromEntries(formData.entries())),
+      headers: { "content-type": "application/json" },
+      redirect: "manual",
+    });
+
+    if (false === response.ok) {
+      throw {
+        message: "Logout failed. Please try again later.",
+        description: `Logout request failed with status ${response.status}: ${await response.text()}`,
+      };
+    }
+
+    const data = await response.json();
+    const parsedData = LogoutResponse.safeParse(data);
+
+    if (false === parsedData.success) {
+      throw {
+        message: "Logout failed. Please try again later",
+        description: "Logout request failed: Unsupported endpoint response",
+      };
+    }
+
+    if (formData.get("error") !== null) {
+      const value = formData.get("error")!.toString();
+
+      const failedProjects = (JSON.parse(value) as string[])
+        .map((project) => `- ${new URL(project).origin}`)
+        .join("\n");
+
+      throw {
+        message: "Logout failed. Please try again later",
+        description: `Something went wrong during the projects logout. Please try again later.\nProjects failed to logout:\n${failedProjects}`,
+      };
+    }
+
+    window.location.href = parsedData.data.redirectTo;
+    return;
+  });
+
+  const handleFinish = useEffectEvent((failedProjects?: string[]) => {
+    if (failedProjects !== undefined) {
+      const elt = document.createElement("button");
+      elt.type = "submit";
+      elt.name = "error";
+      elt.value = JSON.stringify(failedProjects);
+      elt.style.display = "none";
+      refForm.current?.appendChild(elt);
+      refForm.current?.requestSubmit(elt);
+      return;
+    }
+
+    refForm.current?.requestSubmit();
+  });
+
+  return (
+    <form ref={refForm} action={handleLogout}>
+      <Logout logoutUrls={props.logoutUrls} onFinish={handleFinish} />
+    </form>
   );
 };

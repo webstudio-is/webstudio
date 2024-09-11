@@ -70,7 +70,10 @@ export const ErrorMessage = ({
         </Text>
 
         {error.description && (
-          <Text css={{ wordBreak: "break-word" }} variant={"regular"}>
+          <Text
+            css={{ wordBreak: "break-word", whiteSpace: "pre-line" }}
+            variant={"regular"}
+          >
             {error.description}
           </Text>
         )}
