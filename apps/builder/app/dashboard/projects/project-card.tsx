@@ -163,9 +163,10 @@ type ProjectCardProps = {
 const EmptyImage = styled("img", {
   display: "none",
   position: "absolute",
-  width: 0,
-  height: 0,
+  width: 1,
+  height: 1,
   overflow: "hidden",
+  opacity: 0,
 });
 
 export const ProjectCard = ({
