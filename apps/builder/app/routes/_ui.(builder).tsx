@@ -101,8 +101,8 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     // enforce reauthorization on builder reload or navigation (sec-fetch-mode === 'navigate') after a timeout.
     const RELOAD_ON_NAVIGATE_TIMEOUT =
       env.DEPLOYMENT_ENVIRONMENT === "production"
-        ? 1000 * 60 * 3 // 3 minutes
-        : 1000 * 30; // 30 seconds
+        ? 1000 * 60 * 60 * 24 * 7 // 1 week
+        : 1000 * 60 * 60 * 1; // 1 hour
 
     if (
       Date.now() - context.authorization.sessionCreatedAt >
