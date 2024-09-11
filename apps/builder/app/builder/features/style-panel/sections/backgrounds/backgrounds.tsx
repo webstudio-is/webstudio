@@ -84,15 +84,7 @@ const Layer = (props: {
       // This is a workaround to prevent the panel from moving around too much when the tabs are changed from the popover trigger.
       align="center"
       collisionPadding={{ bottom: 200, top: 200 }}
-      content={
-        <BackgroundContent
-          index={props.index}
-          currentStyle={props.layerStyle}
-          setProperty={props.setProperty}
-          deleteProperty={props.deleteProperty}
-          setBackgroundColor={props.setBackgroundColor}
-        />
-      }
+      content={<BackgroundContent index={props.index} />}
     >
       <CssValueListItem
         id={props.id}
