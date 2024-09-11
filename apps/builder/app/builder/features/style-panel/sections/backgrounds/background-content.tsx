@@ -35,12 +35,12 @@ import {
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
 
-const detectImageOrGradientToggle = (styleValue: StyleValue) => {
-  if (styleValue.type === "image") {
+const detectImageOrGradientToggle = (styleValue?: StyleValue) => {
+  if (styleValue?.type === "image") {
     return "image";
   }
 
-  if (styleValue.type === "keyword") {
+  if (styleValue?.type === "keyword") {
     // The only allowed keyword for backgroundImage is none
     return "image";
   }
@@ -161,7 +161,11 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const [imageGradientToggle, setImageGradientToggle] = useState<
     "image" | "gradient"
-  >(() => detectImageOrGradientToggle(backgroundImage.cascadedValue));
+  >(() =>
+    detectImageOrGradientToggle(
+      getRepeatedStyleItem(backgroundImage.cascadedValue, index)
+    )
+  );
 
   return (
     <>
