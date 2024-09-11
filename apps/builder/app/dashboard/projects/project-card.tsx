@@ -160,7 +160,8 @@ type ProjectCardProps = {
   imageLoader: ImageLoader;
 };
 
-const EmptyImage = styled("img", {
+const EmptyImage = styled("div", {
+  visibility: "hidden",
   position: "absolute",
   width: 1,
   height: 1,
@@ -219,18 +220,16 @@ export const ProjectCard = ({
         css={{
           background: theme.colors.brandBackgroundProjectCardBack,
           position: "relative",
-          [`&:hover ${EmptyImage}`]: { display: "block" },
+          [`&:hover ${EmptyImage}`]: {
+            backgroundImage: `url(${linkPath}cgi/empty.gif)`,
+          },
         }}
       >
         {/* This image is used to prefetch DNS and preconnect to the project domain on hover. */}
         {/* See CSS above: */}
         {/* [`&:hover ${EmptyImage}`]: { display: "block" } */}
         {/* The "loading='lazy'" attribute is mandatory as it prevents loading the image until it is displayed. */}
-        <EmptyImage
-          css={{ display: "none" }}
-          src={`${linkPath}cgi/empty.gif`}
-          loading="lazy"
-        />
+        <EmptyImage />
 
         {previewImageAsset ? (
           <ThumbnailLinkWithImage
