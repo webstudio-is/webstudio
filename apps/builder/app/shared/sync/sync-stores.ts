@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { Store, type Change } from "immerhin";
-import { enableMapSet } from "immer";
+import { enableMapSet, setAutoFreeze } from "immer";
 import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
@@ -45,6 +45,8 @@ import {
 import { $ephemeralStyles } from "~/canvas/stores";
 
 enableMapSet();
+// safari structuredClone fix
+setAutoFreeze(false);
 
 const appId = nanoid();
 
