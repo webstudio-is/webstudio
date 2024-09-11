@@ -64,6 +64,7 @@ export const LogoutPage = (props: LogoutPageProps) => {
   if (logoutState.retries === 0) {
     // Show error message
     message = "Logout failed.";
+    throw new Error("Logout failed.");
   }
 
   return (
