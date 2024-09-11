@@ -224,7 +224,11 @@ export const ProjectCard = ({
         {/* See CSS above: */}
         {/* [`&:hover ${EmptyImage}`]: { display: "block" } */}
         {/* The "loading='lazy'" attribute is mandatory as it prevents loading the image until it is displayed. */}
-        <EmptyImage src={`${linkPath}cgi/empty.gif`} loading="lazy" />
+        <EmptyImage
+          css={{ display: "none" }}
+          src={`${linkPath}cgi/empty.gif`}
+          loading="lazy"
+        />
 
         {previewImageAsset ? (
           <ThumbnailLinkWithImage
