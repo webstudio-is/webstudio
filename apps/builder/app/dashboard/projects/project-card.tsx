@@ -217,6 +217,7 @@ export const ProjectCard = ({
       <CardContent
         css={{
           background: theme.colors.brandBackgroundProjectCardBack,
+          position: "relative",
           [`&:hover ${EmptyImage}`]: { display: "block" },
         }}
       >
