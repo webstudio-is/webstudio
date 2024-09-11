@@ -225,10 +225,8 @@ export const ProjectCard = ({
           },
         }}
       >
-        {/* This image is used to prefetch DNS and preconnect to the project domain on hover. */}
+        {/* This div with backgorundImage on card hover is used to prefetch DNS of the project domain on hover. */}
         {/* See CSS above: */}
-        {/* [`&:hover ${EmptyImage}`]: { display: "block" } */}
-        {/* The "loading='lazy'" attribute is mandatory as it prevents loading the image until it is displayed. */}
         <EmptyImage />
 
         {previewImageAsset ? (
