@@ -1,9 +1,4 @@
-import {
-  useState,
-  type ReactElement,
-  type ReactNode,
-  type ComponentProps,
-} from "react";
+import { useState, type ReactElement, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
@@ -11,7 +6,6 @@ import {
   theme,
   Button,
   Flex,
-  Label,
   Tooltip,
   type TooltipProps,
   Text,
@@ -39,7 +33,6 @@ import {
   type StyleInfo,
   getStyleSource,
   type StyleValueInfo,
-  getStyleSourceColor,
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { getInstanceLabel } from "~/shared/instance-utils";
@@ -361,69 +354,5 @@ export const PropertyTooltip = ({
     >
       {children}
     </Tooltip>
-  );
-};
-
-type PropertyNameProps = Pick<
-  ComponentProps<typeof Label>,
-  "text" | "color"
-> & {
-  style: StyleInfo;
-  properties: Array<StyleProperty>;
-  label: string | ReactElement;
-  title?: string;
-  description?: ReactNode;
-  onReset?: () => void;
-  disabled?: boolean;
-};
-
-export const PropertyName = ({
-  style,
-  title,
-  description,
-  properties,
-  label,
-  text,
-  color,
-  onReset,
-  disabled,
-}: PropertyNameProps) => {
-  const property = properties[0];
-  const styleSourceColor = onReset
-    ? getStyleSourceColor({
-        properties,
-        currentStyle: style,
-      })
-    : "default";
-  return (
-    <Flex align="center">
-      <PropertyTooltip
-        openWithClick={true}
-        title={title ?? (typeof label === "string" ? label : undefined)}
-        description={description}
-        properties={properties}
-        style={style}
-        onReset={onReset}
-      >
-        <Flex shrink gap={1} align="center">
-          {typeof label === "string" && property ? (
-            <Label
-              color={
-                color && styleSourceColor === "default"
-                  ? color
-                  : styleSourceColor
-              }
-              truncate
-              disabled={disabled}
-              text={text}
-            >
-              {label}
-            </Label>
-          ) : (
-            label
-          )}
-        </Flex>
-      </PropertyTooltip>
-    </Flex>
   );
 };

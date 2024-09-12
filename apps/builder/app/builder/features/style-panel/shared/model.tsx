@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { computed } from "nanostores";
+import { useMemo, useRef } from "react";
+import { computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { properties } from "@webstudio-is/css-data";
 import {
@@ -7,7 +7,7 @@ import {
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
-import type { Breakpoint, Instance } from "@webstudio-is/sdk";
+import type { Breakpoint, Instance, StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
   $instances,
@@ -23,6 +23,7 @@ import {
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
+  type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
 
@@ -80,7 +81,7 @@ const $matchingBreakpoints = computed(
   }
 );
 
-export const $definedProperties = computed(
+export const $definedStyles = computed(
   [
     $selectedInstanceSelector,
     $styleSourceSelections,
@@ -93,7 +94,7 @@ export const $definedProperties = computed(
     matchingBreakpointsArray,
     styles
   ) => {
-    const definedProperties = new Set<StyleProperty>();
+    const definedProperties = new Set<StyleDecl>();
     if (instanceSelector === undefined) {
       return definedProperties;
     }
@@ -117,14 +118,14 @@ export const $definedProperties = computed(
         matchingBreakpoints.has(styleDecl.breakpointId) &&
         instanceStyleSources.has(styleDecl.styleSourceId)
       ) {
-        definedProperties.add(styleDecl.property);
+        definedProperties.add(styleDecl);
       }
       if (
         matchingBreakpoints.has(styleDecl.breakpointId) &&
         inheritedStyleSources.has(styleDecl.styleSourceId) &&
         properties[styleDecl.property as keyof typeof properties].inherited
       ) {
-        definedProperties.add(styleDecl.property);
+        definedProperties.add(styleDecl);
       }
     }
     return definedProperties;
@@ -190,12 +191,23 @@ export const useComputedStyleDecl = (property: StyleProperty) => {
 };
 
 export const useComputedStyles = (properties: StyleProperty[]) => {
+  // cache each computed style store
+  const cachedStores = useRef(
+    new Map<StyleProperty, ReadableAtom<ComputedStyleDecl>>()
+  );
+  const stores: ReadableAtom<ComputedStyleDecl>[] = [];
+  for (const property of properties) {
+    let store = cachedStores.current.get(property);
+    if (store === undefined) {
+      store = createComputedStyleDeclStore(property);
+      cachedStores.current.set(property, store);
+    }
+    stores.push(store);
+  }
+  // combine all styles into single list
   const $styles = useMemo(() => {
-    return computed(
-      properties.map(createComputedStyleDeclStore),
-      (...computedStyles) => computedStyles
-    );
+    return computed(stores, (...computedStyles) => computedStyles);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, properties);
+  }, [properties.join()]);
   return useStore($styles);
 };
