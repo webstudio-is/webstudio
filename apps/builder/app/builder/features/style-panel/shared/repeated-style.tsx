@@ -58,11 +58,13 @@ export const addRepeatedStyleItem = (
     styles.map((styleDecl) => [styleDecl.property, styleDecl.cascadedValue])
   );
   const primaryValue = styles[0].cascadedValue;
-  // infer type from new items
-  // because current values could be css wide keywords
-  const itemType: ItemType =
-    Array.from(newItems.values())[0]?.type === "tuple" ? "tuple" : "layers";
   for (const [property, value] of newItems) {
+    if (value.type !== "layers" && value.type !== "tuple") {
+      continue;
+    }
+    // infer type from new items
+    // because current values could be css wide keywords
+    const itemType: ItemType = value.type;
     const oldValue = currentStyles.get(property);
     const newValue = normalizeStyleValue(oldValue, primaryValue, itemType);
     if (value.type !== itemType) {
@@ -191,9 +193,11 @@ export const RepeatedStyle = (props: {
     index: number,
     primaryValue: StyleValue
   ) => { label: string; color?: RgbaColor };
+  renderThumbnail?: (index: number, primaryValue: StyleValue) => JSX.Element;
   renderItemContent: (index: number, primaryValue: StyleValue) => JSX.Element;
 }) => {
-  const { label, styles, getItemProps, renderItemContent } = props;
+  const { label, styles, getItemProps, renderThumbnail, renderItemContent } =
+    props;
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
   const primaryItems =
@@ -233,6 +237,14 @@ export const RepeatedStyle = (props: {
             <FloatingPanel
               key={index}
               title={label}
+              // Background Panel is big, and the size differs when the tabs are changed.
+              // This results in the panel moving around when the tabs are changed.
+              // And sometimes, the tab moves away from the cursor,
+              // when the content change happens on the top.
+              // This is a workaround to prevent the panel from moving around
+              // too much when the tabs are changed from the popover trigger.
+              align="center"
+              collisionPadding={{ bottom: 200, top: 200 }}
               content={renderItemContent(index, primaryValue)}
             >
               <CssValueListItem
@@ -242,7 +254,10 @@ export const RepeatedStyle = (props: {
                 index={index}
                 label={<Label truncate>{itemLabel}</Label>}
                 hidden={primaryValue.hidden}
-                thumbnail={itemColor && <ColorThumb color={itemColor} />}
+                thumbnail={
+                  renderThumbnail?.(index, primaryValue) ??
+                  (itemColor && <ColorThumb color={itemColor} />)
+                }
                 buttons={
                   <>
                     <SmallToggleButton

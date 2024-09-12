@@ -117,6 +117,19 @@ test("add tuple to repeated style", () => {
   });
 });
 
+test("ignore when new item is not layers or tuple", () => {
+  const $backgroundColor = createComputedStyleDeclStore("backgroundColor");
+  addRepeatedStyleItem(
+    [$backgroundColor.get()],
+    parseCssFragment("none", "background")
+  );
+  expect($backgroundColor.get().source.name).toEqual("default");
+  expect($backgroundColor.get().cascadedValue).toEqual({
+    type: "keyword",
+    value: "transparent",
+  });
+});
+
 test("edit layer in repeated style", () => {
   const $transitionProperty =
     createComputedStyleDeclStore("transitionProperty");
