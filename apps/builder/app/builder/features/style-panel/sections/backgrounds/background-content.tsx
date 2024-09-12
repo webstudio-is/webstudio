@@ -11,11 +11,7 @@ import {
   RepeatRowIcon,
   CrossSmallIcon,
 } from "@webstudio-is/icons";
-import {
-  StyleValue,
-  toValue,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Flex,
