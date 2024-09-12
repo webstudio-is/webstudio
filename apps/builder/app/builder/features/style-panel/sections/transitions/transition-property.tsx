@@ -28,7 +28,7 @@ import {
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { setUnion } from "~/shared/shim";
-import { $definedProperties } from "../../shared/model";
+import { $definedStyles } from "../../shared/model";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
@@ -44,10 +44,10 @@ const commonPropertiesSet = new Set(commonTransitionProperties);
  * on current breakpoints across all states
  */
 const $animatableDefinedProperties = computed(
-  [$definedProperties],
-  (definedProperties) => {
+  [$definedStyles],
+  (definedStyles) => {
     const animatableProperties = new Set<string>();
-    for (const property of definedProperties) {
+    for (const { property } of definedStyles) {
       const hyphenatedProperty = hyphenateProperty(property);
       if (isAnimatableProperty(hyphenatedProperty)) {
         animatableProperties.add(hyphenatedProperty);

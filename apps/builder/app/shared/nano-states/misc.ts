@@ -1,6 +1,4 @@
-import { useMemo } from "react";
 import { atom, computed, onSet } from "nanostores";
-import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
@@ -23,7 +21,6 @@ import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { HtmlTags } from "html-tags";
 import { $instances, $selectedInstanceSelector } from "./instances";
@@ -80,22 +77,6 @@ export const $propsIndex = computed($props, (props) => {
 });
 
 export const $styles = atom<Styles>(new Map());
-
-/**
- * @deprecated
- */
-export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
-  const instance$styles = useMemo(() => {
-    return shallowComputed([$stylesIndex], (stylesIndex) => {
-      if (instanceId === undefined) {
-        return [];
-      }
-      return stylesIndex.stylesByInstanceId.get(instanceId) ?? [];
-    });
-  }, [instanceId]);
-  const instanceStyles = useStore(instance$styles);
-  return instanceStyles;
-};
 
 export const $styleSources = atom<StyleSources>(new Map());
 
