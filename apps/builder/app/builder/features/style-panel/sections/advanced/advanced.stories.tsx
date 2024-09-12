@@ -1,44 +1,40 @@
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
+import { registerContainers } from "~/shared/sync";
 import { Section } from "./advanced";
+import {
+  $breakpoints,
+  $selectedBreakpointId,
+  $selectedInstanceSelector,
+  $styles,
+  $styleSourceSelections,
+} from "~/shared/nano-states";
+import { setProperty } from "../../shared/use-style-data";
 
-const currentStyle = {
-  accentColor: {
-    value: {
-      type: "keyword",
-      value: "red",
-    },
-    local: {
-      type: "keyword",
-      value: "red",
-    },
+const backgroundImage: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "backgroundImage",
+  value: {
+    type: "layers",
+    value: [{ type: "keyword", value: "none" }],
   },
-  alignContent: {
-    value: {
-      type: "keyword",
-      value: "normal",
-    },
-    local: {
-      type: "keyword",
-      value: "normal",
-    },
-  },
-  opacity: {
-    value: {
-      type: "unit",
-      unit: "number",
-      value: 11.2,
-    },
-    local: {
-      type: "unit",
-      unit: "number",
-      value: 11.2,
-    },
-  },
-} as const;
+};
+
+registerContainers();
+$breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
+$selectedBreakpointId.set("base");
+$styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
+$styleSourceSelections.set(
+  new Map([["box", { instanceId: "box", values: ["local"] }]])
+);
+$selectedInstanceSelector.set(["box"]);
+
+setProperty("accentColor")({ type: "keyword", value: "red" });
+setProperty("alignContent")({ type: "keyword", value: "normal" });
+setProperty("opacity")({ type: "unit", unit: "number", value: 11.2 });
 
 export const Advanced = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const props = {} as any;
-  return <Section currentStyle={currentStyle} {...props} />;
+  return <Section />;
 };
 
 export default {
