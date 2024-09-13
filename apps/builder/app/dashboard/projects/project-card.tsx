@@ -14,6 +14,7 @@ import {
   rawTheme,
   Link,
   styled,
+  Box,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
@@ -160,16 +161,6 @@ type ProjectCardProps = {
   imageLoader: ImageLoader;
 };
 
-const EmptyImage = styled("div", {
-  visibility: "hidden",
-  position: "absolute",
-  width: 1,
-  height: 1,
-  left: 0,
-  top: 0,
-  opacity: 0,
-});
-
 export const ProjectCard = ({
   project: {
     id,
@@ -220,14 +211,24 @@ export const ProjectCard = ({
         css={{
           background: theme.colors.brandBackgroundProjectCardBack,
           position: "relative",
-          [`&:hover ${EmptyImage}`]: {
-            backgroundImage: `url(${linkPath}cgi/empty.gif)`,
+          [`&:hover`]: {
+            "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
           },
         }}
       >
         {/* This div with backgorundImage on card hover is used to prefetch DNS of the project domain on hover. */}
-        {/* See CSS above: */}
-        <EmptyImage />
+        <Box
+          css={{
+            backgroundImage: `var(--ws-project-card-prefetch-image-background, none)`,
+            visibility: "hidden",
+            position: "absolute",
+            width: 1,
+            height: 1,
+            left: 0,
+            top: 0,
+            opacity: 0,
+          }}
+        />
 
         {previewImageAsset ? (
           <ThumbnailLinkWithImage
