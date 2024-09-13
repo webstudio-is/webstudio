@@ -1,4 +1,3 @@
-// graph-utils.test.ts
 import { test, expect, describe } from "@jest/globals";
 import { findCycles, breakCyclesMutable } from "./graph-utils";
 import type { Instance } from "@webstudio-is/sdk";
