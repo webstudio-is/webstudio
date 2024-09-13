@@ -13,7 +13,6 @@ import {
   Tooltip,
   rawTheme,
   Link,
-  styled,
   Box,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
