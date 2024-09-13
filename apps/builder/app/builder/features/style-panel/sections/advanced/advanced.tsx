@@ -203,6 +203,16 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
   );
 };
 
+const $customProperties = computed($definedStyles, (definedStyles) => {
+  const customProperties = new Set<StyleProperty>();
+  for (const { property } of definedStyles) {
+    if (property.startsWith("--")) {
+      customProperties.add(property);
+    }
+  }
+  return customProperties;
+});
+
 const AdvancedPropertyValue = ({
   autoFocus,
   property,
@@ -211,6 +221,7 @@ const AdvancedPropertyValue = ({
   property: StyleProperty;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
+  const customProperties = useStore($customProperties);
   const { items } = styleConfigByName(property);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -227,17 +238,31 @@ const AdvancedPropertyValue = ({
       fieldSizing="content"
       property={property}
       styleSource={styleDecl.source.name}
-      keywords={items.map((item) => ({
-        type: "keyword",
-        value: item.name,
-      }))}
+      keywords={[
+        ...items.map((item) => ({
+          type: "keyword" as const,
+          value: item.name,
+        })),
+        // very basic custom properties autocomplete
+        ...Array.from(customProperties).map((name) => ({
+          type: "keyword" as const,
+          value: name,
+        })),
+      ]}
       value={styleDecl.cascadedValue}
-      setValue={(styleValue, options) =>
-        setProperty(property)(styleValue, {
-          ...options,
-          listed: true,
-        })
-      }
+      setValue={(styleValue, options) => {
+        if (
+          styleValue.type === "keyword" &&
+          styleValue.value.startsWith("--")
+        ) {
+          setProperty(property)(
+            { type: "var", value: styleValue.value.slice(2), fallbacks: [] },
+            { ...options, listed: true }
+          );
+        } else {
+          setProperty(property)(styleValue, { ...options, listed: true });
+        }
+      }}
       deleteProperty={deleteProperty}
     />
   );

@@ -165,7 +165,8 @@ const parseColor = (colorString: string): undefined | RgbValue => {
 
 const parseLiteral = (
   node: undefined | null | CssNode,
-  keywords?: readonly string[]
+  keywords?: readonly string[],
+  customProperties: boolean = false
 ):
   | undefined
   | UnitValue
@@ -233,6 +234,9 @@ const parseLiteral = (
       }
     }
     if (node.name === "var") {
+      if (customProperties === false) {
+        return;
+      }
       const [name, _comma, ...fallback] = node.children;
       const fallbackString = generate({
         type: "Value",
@@ -435,6 +439,8 @@ export const parseCssValue = (
       const matchedValue = parseLiteral(node, keywordValues[property as never]);
       if (matchedValue) {
         tuple.value.push(matchedValue as never);
+      } else {
+        tuple.value.push({ type: "unparsed", value: generate(node) });
       }
     }
     return tuple;
@@ -443,7 +449,11 @@ export const parseCssValue = (
   if (ast.type === "Value" && ast.children.size === 1) {
     // Try extract units from 1st children
     const first = ast.children.first;
-    const matchedValue = parseLiteral(first, keywordValues[property as never]);
+    const matchedValue = parseLiteral(
+      first,
+      keywordValues[property as never],
+      topLevel
+    );
     // parse only references in custom properties
     if (property.startsWith("--")) {
       if (matchedValue?.type === "var") {
