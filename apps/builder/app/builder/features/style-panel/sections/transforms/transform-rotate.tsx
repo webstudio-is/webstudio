@@ -1,67 +1,42 @@
 import { Flex, Grid } from "@webstudio-is/design-system";
 import {
-  updateRotateOrSkewPropertyValue,
-  type TransformPanelProps,
-} from "./transform-utils";
-import {
   XAxisRotateIcon,
   YAxisRotateIcon,
   ZAxisRotateIcon,
 } from "@webstudio-is/icons";
+import type { StyleValue } from "@webstudio-is/css-engine";
+import { propertySyntaxes } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import {
-  toValue,
-  UnitValue,
-  type FunctionValue,
-  type StyleValue,
-} from "@webstudio-is/css-engine";
-import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import { parseCssValue, propertySyntaxes } from "@webstudio-is/css-data";
-import { extractRotatePropertiesFromTransform } from "./transform-extractors";
 import { PropertyInlineLabel } from "../../property-label";
+import { useComputedStyleDecl } from "../../shared/model";
+import { updateTransformFunction } from "./transform-utils";
 
-export const RotatePanelContent = (props: TransformPanelProps) => {
-  const { propertyValue, setProperty, currentStyle } = props;
-  const { rotateX, rotateY, rotateZ } =
-    extractRotatePropertiesFromTransform(propertyValue);
-
-  const handlePropertyUpdate = (
-    index: number,
-    prop: string,
-    value: StyleValue,
-    options?: StyleUpdateOptions
-  ) => {
-    let newValue: UnitValue = { type: "unit", value: 0, unit: "deg" };
-
-    if (value.type === "unit") {
-      newValue = value;
+export const RotatePanelContent = () => {
+  const styleDecl = useComputedStyleDecl("transform");
+  const tuple =
+    styleDecl.cascadedValue.type === "tuple"
+      ? styleDecl.cascadedValue
+      : undefined;
+  let rotateX: StyleValue = { type: "unit", value: 0, unit: "deg" };
+  let rotateY: StyleValue = { type: "unit", value: 0, unit: "deg" };
+  let rotateZ: StyleValue = { type: "unit", value: 0, unit: "deg" };
+  for (const item of tuple?.value ?? []) {
+    if (
+      item.type === "function" &&
+      item.args.type === "layers" &&
+      item.args.value[0].type === "unit"
+    ) {
+      if (item.name === "rotateX") {
+        rotateX = item.args.value[0];
+      }
+      if (item.name === "rotateY") {
+        rotateY = item.args.value[0];
+      }
+      if (item.name === "rotateZ") {
+        rotateZ = item.args.value[0];
+      }
     }
-
-    if (value.type === "tuple" && value.value[0].type === "unit") {
-      newValue = value.value[0];
-    }
-
-    const newFunctionValue: FunctionValue = {
-      type: "function",
-      name: prop,
-      args: { type: "layers", value: [newValue] },
-    };
-
-    const newPropertyValue = updateRotateOrSkewPropertyValue({
-      panel: "rotate",
-      index,
-      currentStyle,
-      value: newFunctionValue,
-      propertyValue,
-    });
-
-    const rotate = parseCssValue("transform", toValue(newPropertyValue));
-    if (rotate.type === "invalid") {
-      return;
-    }
-
-    setProperty("transform")(rotate, options);
-  };
+  }
 
   return (
     <Flex direction="column" gap={2}>
@@ -75,18 +50,13 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
           description={propertySyntaxes.rotateX}
         />
         <CssValueInputContainer
-          key="rotateX"
           styleSource="local"
           property="rotate"
-          value={
-            rotateX?.type === "function" && rotateX.args.type === "layers"
-              ? rotateX.args.value[0]
-              : { type: "unit", value: 0, unit: "deg" }
-          }
+          value={rotateX}
           keywords={[]}
-          setValue={(value, options) => {
-            handlePropertyUpdate(0, "rotateX", value, options);
-          }}
+          setValue={(value, options) =>
+            updateTransformFunction(styleDecl, "rotateX", value, options)
+          }
           deleteProperty={() => {}}
         />
       </Grid>
@@ -100,18 +70,13 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
           description={propertySyntaxes.rotateY}
         />
         <CssValueInputContainer
-          key="rotateY"
           styleSource="local"
           property="rotate"
-          value={
-            rotateY?.type === "function" && rotateY.args.type === "layers"
-              ? rotateY.args.value[0]
-              : { type: "unit", value: 0, unit: "deg" }
-          }
+          value={rotateY}
           keywords={[]}
-          setValue={(value, options) => {
-            handlePropertyUpdate(1, "rotateY", value, options);
-          }}
+          setValue={(value, options) =>
+            updateTransformFunction(styleDecl, "rotateY", value, options)
+          }
           deleteProperty={() => {}}
         />
       </Grid>
@@ -125,18 +90,13 @@ export const RotatePanelContent = (props: TransformPanelProps) => {
           description={propertySyntaxes.rotateZ}
         />
         <CssValueInputContainer
-          key="rotateZ"
           styleSource="local"
           property="rotate"
-          value={
-            rotateZ?.type === "function" && rotateZ.args.type === "layers"
-              ? rotateZ.args.value[0]
-              : { type: "unit", value: 0, unit: "deg" }
-          }
+          value={rotateZ}
           keywords={[]}
-          setValue={(value, options) => {
-            handlePropertyUpdate(2, "rotateZ", value, options);
-          }}
+          setValue={(value, options) =>
+            updateTransformFunction(styleDecl, "rotateZ", value, options)
+          }
           deleteProperty={() => {}}
         />
       </Grid>

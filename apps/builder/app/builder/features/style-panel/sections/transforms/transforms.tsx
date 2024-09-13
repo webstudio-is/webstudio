@@ -30,7 +30,9 @@ import {
   handleDeleteTransformProperty,
   handleHideTransformProperty,
   getHumanizedTextFromTransformLayer,
-  type TransformPanelProps,
+  transformPanels,
+  transformPanelDropdown,
+  type TransformPanel,
 } from "./transform-utils";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TranslatePanelContent } from "./transform-translate";
@@ -46,24 +48,8 @@ import { PropertySectionLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { useComputedStyles } from "../../shared/model";
 
-export const transformPanels = [
-  "translate",
-  "scale",
-  "rotate",
-  "skew",
-] as const;
-
-export const transformPanelDropdown = [
-  ...transformPanels,
-  "backfaceVisibility",
-  "transformOrigin",
-  "perspective",
-  "perspectiveOrigin",
-] as const;
-
-export type TransformPanel = (typeof transformPanels)[number];
-
 const label = "Transforms";
+
 export const properties = [
   "translate",
   "scale",
@@ -194,24 +180,15 @@ const TransformSection = (
     return;
   }
 
-  const contentPanelProps: TransformPanelProps = {
-    currentStyle,
-    setProperty,
-    deleteProperty,
-    propertyValue: properties.value,
-  };
-
   return (
     <FloatingPanel
       title={humanizeString(panel)}
       content={
         <Flex direction="column" css={{ p: theme.spacing[9] }}>
-          {panel === "translate" && (
-            <TranslatePanelContent {...contentPanelProps} />
-          )}
-          {panel === "scale" && <ScalePanelContent {...contentPanelProps} />}
-          {panel === "rotate" && <RotatePanelContent {...contentPanelProps} />}
-          {panel === "skew" && <SkewPanelContent {...contentPanelProps} />}
+          {panel === "translate" && <TranslatePanelContent />}
+          {panel === "scale" && <ScalePanelContent />}
+          {panel === "rotate" && <RotatePanelContent />}
+          {panel === "skew" && <SkewPanelContent />}
         </Flex>
       }
     >

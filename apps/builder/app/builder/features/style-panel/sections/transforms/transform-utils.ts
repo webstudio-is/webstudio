@@ -4,22 +4,36 @@ import {
   StyleValue,
   toValue,
   type TupleValue,
-  type TupleValueItem,
 } from "@webstudio-is/css-engine";
-import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
+import {
+  setProperty,
+  type DeleteProperty,
+  type SetProperty,
+  type StyleUpdateOptions,
+} from "../../shared/use-style-data";
 import type { StyleInfo } from "../../shared/style-info";
-import type { TransformPanel, transformPanelDropdown } from "./transforms";
 import {
   extractRotatePropertiesFromTransform,
   extractSkewPropertiesFromTransform,
 } from "./transform-extractors";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
-export type TransformPanelProps = {
-  currentStyle: StyleInfo;
-  propertyValue: TupleValue;
-  setProperty: SetProperty;
-  deleteProperty: DeleteProperty;
-};
+export const transformPanels = [
+  "translate",
+  "scale",
+  "rotate",
+  "skew",
+] as const;
+
+export const transformPanelDropdown = [
+  ...transformPanels,
+  "backfaceVisibility",
+  "transformOrigin",
+  "perspective",
+  "perspectiveOrigin",
+] as const;
+
+export type TransformPanel = (typeof transformPanels)[number];
 
 const defaultTranslate = "0px 0px 0px";
 const defaultScale = "100% 100% 100%";
@@ -350,45 +364,6 @@ export const handleHideTransformProperty = (params: {
   }
 };
 
-export const updateTransformTuplePropertyValue = (
-  index: number,
-  newValue: TupleValueItem,
-  value: TupleValue
-): TupleValue => {
-  const newArray: TupleValueItem[] = [...value.value];
-  newArray.splice(index, 1, newValue);
-  return {
-    ...value,
-    value: newArray,
-  };
-};
-
-export const updateRotateOrSkewPropertyValue = (props: {
-  index: number;
-  panel: "rotate" | "skew";
-  currentStyle: StyleInfo;
-  value: FunctionValue;
-  propertyValue: TupleValue;
-}): TupleValue => {
-  const { index, value, propertyValue, panel } = props;
-  const newPropertyValue = updateTransformTuplePropertyValue(
-    index,
-    value,
-    propertyValue
-  );
-
-  const existingTransforms = props.currentStyle["transform"]?.value;
-  if (existingTransforms?.type === "tuple") {
-    const filteredValues = removeRotateOrSkewValues(panel, existingTransforms);
-    return {
-      ...existingTransforms,
-      value: [...newPropertyValue.value, ...filteredValues],
-    };
-  }
-
-  return newPropertyValue;
-};
-
 const keywordToValue: Record<string, number> = {
   left: 0,
   right: 100,
@@ -411,4 +386,50 @@ export const calculatePositionFromOrigin = (value: StyleValue | undefined) => {
   }
 
   return 0;
+};
+
+const transformFunctions = ["rotateX", "rotateY", "rotateZ", "skewX", "skewY"];
+
+export const updateTransformFunction = (
+  styleDecl: ComputedStyleDecl,
+  name: string,
+  newValue: StyleValue,
+  options?: StyleUpdateOptions
+) => {
+  const tuple =
+    styleDecl.cascadedValue.type === "tuple"
+      ? styleDecl.cascadedValue
+      : undefined;
+  if (tuple === undefined) {
+    return;
+  }
+
+  if (newValue.type === "tuple") {
+    [newValue] = newValue.value;
+  }
+  if (newValue.type !== "unit") {
+    newValue = { type: "unit", value: 0, unit: "deg" };
+  }
+
+  const matched = new Map<string, FunctionValue>();
+  for (const item of tuple.value) {
+    if (item.type === "function") {
+      matched.set(item.name, item);
+    }
+  }
+  matched.set(name, {
+    type: "function",
+    name,
+    args: { type: "layers", value: [newValue] },
+  });
+  const newTuple = structuredClone(tuple);
+  // recreate tuple with strictly ordered functions
+  newTuple.value = [];
+  for (const name of transformFunctions) {
+    const functionValue = matched.get(name);
+    if (functionValue) {
+      newTuple.value.push(functionValue);
+    }
+  }
+  setProperty("transform")(newTuple, options);
 };

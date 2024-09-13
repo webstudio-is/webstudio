@@ -4,12 +4,9 @@ import {
   handleDeleteTransformProperty,
   handleHideTransformProperty,
   isTransformPanelPropertyUsed,
-  updateRotateOrSkewPropertyValue,
-  updateTransformTuplePropertyValue,
 } from "./transform-utils";
 import type { StyleInfo } from "../../shared/style-info";
 import {
-  FunctionValue,
   toValue,
   TupleValue,
   type StyleProperty,
@@ -210,56 +207,5 @@ describe("Transform utils CRUD operations", () => {
     expect(rotate.rotateX?.hidden).toBe(true);
     expect(rotate.rotateY?.hidden).toBe(true);
     expect(rotate.rotateZ?.hidden).toBe(true);
-  });
-
-  test("update translate property value", () => {
-    const translate = parseCssValue("translate", "0px 0px 0px");
-    const newValue = updateTransformTuplePropertyValue(
-      1,
-      { type: "unit", value: 50, unit: "px" },
-      translate as TupleValue
-    );
-
-    expect(toValue(newValue)).toBe("0px 50px 0px");
-  });
-
-  test("update rotate values in transform property", () => {
-    const { currentStyle, setProperty } = initializeStyleInfo();
-    const transform = parseCssValue(
-      "transform",
-      "rotateX(10deg) rotateY(10deg) rotateZ(10deg) skewX(10deg) skewY(10deg)"
-    );
-    setProperty("transform")(transform);
-
-    const updatedRotateYValue: FunctionValue = {
-      type: "function",
-      name: "rotateY",
-      args: {
-        type: "layers",
-        value: [{ type: "unit", value: 50, unit: "deg" }],
-      },
-    };
-    const { rotateX, rotateY, rotateZ } =
-      extractRotatePropertiesFromTransform(transform);
-    const newValue = updateRotateOrSkewPropertyValue({
-      index: 1,
-      panel: "rotate",
-      currentStyle,
-      value: updatedRotateYValue,
-      propertyValue: {
-        type: "tuple",
-        value: [
-          rotateX as FunctionValue,
-          rotateY as FunctionValue,
-          rotateZ as FunctionValue,
-        ],
-      },
-    });
-
-    const result = extractRotatePropertiesFromTransform(newValue);
-    expect(result.rotateY).toEqual(updatedRotateYValue);
-    expect(toValue(newValue)).toBe(
-      "rotateX(10deg) rotateY(50deg) rotateZ(10deg) skewX(10deg) skewY(10deg)"
-    );
   });
 });
