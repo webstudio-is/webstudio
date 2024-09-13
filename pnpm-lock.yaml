@@ -361,6 +361,9 @@ importers:
       nanostores:
         specifier: ^0.9.3
         version: 0.9.3
+      picocolors:
+        specifier: ^1.0.1
+        version: 1.0.1
       pretty-bytes:
         specifier: ^6.1.1
         version: 6.1.1

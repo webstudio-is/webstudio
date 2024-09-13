@@ -1,6 +1,5 @@
 import { Links, Meta, Outlet } from "@remix-run/react";
-import { ErrorMessage } from "~/shared/error";
-import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import { ErrorBoundary as ErrorBoundaryComponent } from "~/shared/error/error-boundary";
 
 const Document = (props: { children: React.ReactNode }) => {
   return (
@@ -17,20 +16,9 @@ const Document = (props: { children: React.ReactNode }) => {
 };
 
 export const ErrorBoundary = () => {
-  const error = useRouteError();
-
-  console.error({ error });
-  const message = isRouteErrorResponse(error)
-    ? (error.data.message ?? error.data)
-    : error instanceof Error
-      ? error.message
-      : String(error);
-
   return (
     <Document>
-      <body>
-        <ErrorMessage message={message} />
-      </body>
+      <ErrorBoundaryComponent />
     </Document>
   );
 };

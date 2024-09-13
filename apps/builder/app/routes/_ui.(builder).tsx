@@ -36,6 +36,8 @@ import {
   allowedDestinations,
   isFetchDestination,
 } from "~/services/destinations.server";
+import { loader as authWsLoader } from "./auth.ws";
+export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const links = () => {
   return [
@@ -59,7 +61,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return metas;
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async (loaderArgs: LoaderFunctionArgs) => {
+  const { request } = loaderArgs;
   preventCrossOriginCookie(request);
   allowedDestinations(request, ["document", "empty"]);
 
@@ -68,9 +71,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   if (false === isBuilder(request)) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 
@@ -88,8 +90,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   if (context.authorization.type === "anonymous") {
-    // @todo just import loader from auth and call it
-    throw redirect("/auth/ws");
+    throw await authWsLoader(loaderArgs); // redirect("/auth/ws");
   }
 
   if (
@@ -98,17 +99,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ) {
     // If logout fails, or the session cookie in the dashboard is deleted or expired,
     // enforce reauthorization on builder reload or navigation (sec-fetch-mode === 'navigate') after a timeout.
-
     const RELOAD_ON_NAVIGATE_TIMEOUT =
       env.DEPLOYMENT_ENVIRONMENT === "production"
-        ? 1000 * 60 * 3 // 3 minutes
-        : 1000 * 30; // 30 seconds
+        ? 1000 * 60 * 60 * 24 * 7 // 1 week
+        : 1000 * 60 * 60 * 1; // 1 hour
 
     if (
       Date.now() - context.authorization.sessionCreatedAt >
       RELOAD_ON_NAVIGATE_TIMEOUT
     ) {
-      throw redirect("/auth/ws");
+      throw await authWsLoader(loaderArgs); // start immediately instead of redirect("/auth/ws");
     }
   }
 
@@ -118,14 +118,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const { projectId } = parseBuilderUrl(request.url);
 
     if (projectId === undefined) {
-      throw new Error("Project ID is not defined");
+      throw new Response("Project ID is not defined", {
+        status: 404,
+      });
     }
 
     const start = Date.now();
     const project = await db.project.loadById(projectId, context);
 
     if (project === null) {
-      throw new Error(`Project "${projectId}" not found`);
+      throw new Response(`Project "${projectId}" not found`, {
+        status: 404,
+      });
     }
 
     const authPermit =
@@ -167,7 +171,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const { userPlanFeatures } = context;
     if (userPlanFeatures === undefined) {
-      throw new Error("User plan features are not defined");
+      throw new Response("User plan features are not defined", {
+        status: 404,
+      });
     }
 
     if (project.userId === null) {

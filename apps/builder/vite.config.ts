@@ -3,6 +3,8 @@ import { defineConfig, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
 import type { IncomingMessage } from "node:http";
+import pc from "picocolors";
+
 import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
@@ -21,6 +23,29 @@ export default defineConfig(({ mode }) => {
       remix({
         presets: [vercelPreset()],
       }),
+      {
+        name: "request-timing-logger",
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const start = Date.now();
+            res.on("finish", () => {
+              const duration = Date.now() - start;
+              if (
+                !(
+                  req.url?.startsWith("/@") ||
+                  req.url?.startsWith("/app") ||
+                  req.url?.includes("/node_modules")
+                )
+              ) {
+                console.info(
+                  `[${req.method}] ${req.url} - ${duration}ms : ${pc.dim(req.headers.host)}`
+                );
+              }
+            });
+            next();
+          });
+        },
+      },
     ],
     resolve: {
       conditions: ["webstudio", "import", "module", "browser", "default"],

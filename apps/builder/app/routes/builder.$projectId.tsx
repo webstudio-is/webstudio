@@ -6,7 +6,9 @@ import { builderUrl } from "~/shared/router-utils";
 // @todo: Remove after 2024-12-31
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (params.projectId === undefined) {
-    throw new Error("projectId is required");
+    throw new Response("projectId is required", {
+      status: 404,
+    });
   }
 
   const url = new URL(request.url);

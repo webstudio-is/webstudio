@@ -2,10 +2,8 @@ import {
   type HeadersFunction,
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
-
-import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
-import { ErrorMessage } from "~/shared/error/error-message";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -22,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // In case of 404 on static assets, this route will be executed
   if (publicPaths.some((publicPath) => url.pathname.startsWith(publicPath))) {
-    return new Response("Not found", {
+    throw new Response("Not found", {
       status: 404,
       headers: {
         "Cache-Control": "public, max-age=0, must-revalidate",
@@ -34,18 +32,28 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (contentType?.includes("application/json")) {
     // Return an error to not trigger the ErrorBoundary rendering (api request)
-    return new Response(null, {
+    throw new Response("Not found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 
   // Throw an error to trigger the ErrorBoundary rendering
-  throw new Response(null, {
+  throw new Response("Not found", {
     status: 404,
-    statusText: "Not Found",
   });
 };
+
+export default function NotFound() {
+  // Placeholder component to prevent Remix warning:
+  // "Matched leaf route at location '/{SOME_LOCATION}' does not have an element or Component."
+  // Without this, an <Outlet /> with a null value would render an empty page.
+  return (
+    <div>
+      <h1>Not Found</h1>
+      <p>The page you requested could not be found.</p>
+    </div>
+  );
+}
 
 export const headers: HeadersFunction = ({ errorHeaders, loaderHeaders }) => {
   // !!!! VERY IMPORTANT !!!
@@ -61,16 +69,4 @@ export const headers: HeadersFunction = ({ errorHeaders, loaderHeaders }) => {
     };
   }
   return loaderHeaders;
-};
-
-export const ErrorBoundary = () => {
-  const error = useRouteError();
-  console.error({ error });
-  const message = isRouteErrorResponse(error)
-    ? `${error.status} ${error.statusText} ${error.data.message ?? error.data}`
-    : error instanceof Error
-      ? error.message
-      : String(error);
-
-  return <ErrorMessage message={`${message}`} />;
 };

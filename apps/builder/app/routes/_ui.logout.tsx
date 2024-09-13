@@ -1,16 +1,16 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { createDebug } from "~/shared/debug";
-import { authenticator } from "~/services/auth.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
 import { logoutRouter } from "~/services/logout-router.server";
 import { createContext } from "~/shared/context.server";
-import { redirect, type ActionFunctionArgs } from "react-router-dom";
+import { redirect } from "react-router-dom";
 import { ClientOnly } from "~/shared/client-only";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
-import { lazy, useRef } from "react";
+import { lazy } from "react";
 import { allowedDestinations } from "~/services/destinations.server";
+export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 const logoutCaller = createCallerFactory(logoutRouter);
 
@@ -26,7 +26,9 @@ export const meta: MetaFunction<typeof loader> = () => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (false === isDashboard(request)) {
-    throw new Error("Only Dashboard can logout at this endpoint");
+    throw new Response("Not found", {
+      status: 404,
+    });
   }
 
   preventCrossOriginCookie(request);
@@ -70,19 +72,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  if (false === isDashboard(request)) {
-    throw new Error("Only Dashboard can logout at this endpoint");
-  }
-
-  preventCrossOriginCookie(request);
-
-  const redirectTo = loginPath({});
-  await authenticator.logout(request, {
-    redirectTo,
-  });
-};
-
 const LogoutPage = lazy(async () => {
   const { LogoutPage } = await import("~/shared/logout.client");
   return { default: LogoutPage };
@@ -90,18 +79,10 @@ const LogoutPage = lazy(async () => {
 
 export default function Logout() {
   const data = useLoaderData<typeof loader>();
-  const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <ClientOnly>
-      <form action={"/logout"} method="post" ref={formRef}>
-        <LogoutPage
-          logoutUrls={data.logoutUrls}
-          onFinish={() => {
-            formRef.current?.submit();
-          }}
-        />
-      </form>
+      <LogoutPage logoutUrls={data.logoutUrls} />
     </ClientOnly>
   );
 }
