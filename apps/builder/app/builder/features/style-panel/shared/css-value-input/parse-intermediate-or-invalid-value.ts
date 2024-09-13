@@ -1,9 +1,10 @@
+import { parse } from "css-tree";
 import type {
   StyleProperty,
   StyleValue,
   InvalidValue,
 } from "@webstudio-is/css-engine";
-import { units, properties, parseCssValue } from "@webstudio-is/css-data";
+import { units, parseCssValue } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
 import { toKebabCase } from "../keyword-utils";
@@ -26,16 +27,14 @@ export const parseIntermediateOrInvalidValue = (
     };
   }
 
-  const valueInfo = properties[property as keyof typeof properties];
-
-  // - When user enters a number, we don't know if its a valid unit value,
+  // When user enters a number, we don't know if its a valid unit value,
   // so we are going to parse it with a unit and if its not invalid - we take it.
-  // - When value can be a custom-ident or a string - we can't do that test, because its going to be
-  // valid and we will end up adding unit to a user string.
-  if (
-    valueInfo.types.flat().includes("string") === false &&
-    valueInfo.types.flat().includes("custom-ident") === false
-  ) {
+  const ast = parse(value, { context: "value" });
+  const node =
+    "children" in ast && ast.children?.size === 1
+      ? ast.children.first
+      : undefined;
+  if (node?.type === "Number") {
     const testUnit = "unit" in styleValue ? (styleValue.unit ?? "px") : "px";
     const styleInput = parseCssValue(property, `${value}${testUnit}`);
 

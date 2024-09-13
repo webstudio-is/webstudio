@@ -120,10 +120,14 @@ export const $definedStyles = computed(
       ) {
         definedProperties.add(styleDecl);
       }
+      const inherited =
+        properties[styleDecl.property as keyof typeof properties]?.inherited ??
+        // custom properties are always inherited
+        true;
       if (
         matchingBreakpoints.has(styleDecl.breakpointId) &&
         inheritedStyleSources.has(styleDecl.styleSourceId) &&
-        properties[styleDecl.property as keyof typeof properties].inherited
+        inherited
       ) {
         definedProperties.add(styleDecl);
       }

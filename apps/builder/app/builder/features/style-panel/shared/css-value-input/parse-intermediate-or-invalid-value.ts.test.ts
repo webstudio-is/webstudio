@@ -533,3 +533,15 @@ describe("Colors", () => {
     });
   });
 });
+
+test("parse css vars", () => {
+  const result = parseIntermediateOrInvalidValue("color", {
+    type: "intermediate",
+    value: "var(--color)",
+  });
+  expect(result).toEqual({
+    type: "var",
+    value: "color",
+    fallbacks: [],
+  });
+});
