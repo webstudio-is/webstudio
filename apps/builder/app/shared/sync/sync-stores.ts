@@ -336,7 +336,6 @@ export const useBuilderStore = (publish: Publish) => {
       // @todo subscribe prematurely and compute initial changes
       // from current state whenever new app is connected
       unsubscribeStoresState = syncStoresState("builder", publish);
-      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
@@ -361,6 +360,8 @@ export const useBuilderStore = (publish: Publish) => {
           data,
         },
       });
+
+      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
     });
 
     const unsubscribeDisconnect = subscribe("disconnect", () => {

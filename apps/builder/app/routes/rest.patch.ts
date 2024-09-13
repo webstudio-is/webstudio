@@ -18,7 +18,11 @@ import {
   Resources,
   Resource,
 } from "@webstudio-is/sdk";
-import { type Build, MarketplaceProduct } from "@webstudio-is/project-build";
+import {
+  type Build,
+  findCycles,
+  MarketplaceProduct,
+} from "@webstudio-is/project-build";
 import {
   parsePages,
   parseStyleSourceSelections,
@@ -31,6 +35,7 @@ import {
   parseConfig,
   serializeConfig,
   loadRawBuildById,
+  parseInstanceData,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -183,8 +188,24 @@ export const action = async ({
 
         if (namespace === "instances") {
           const instances =
-            buildData.instances ?? parseData<Instance>(build.instances);
+            buildData.instances ?? parseInstanceData(build.instances);
+
           buildData.instances = applyPatches(instances, patches);
+
+          // Detect cycles
+          const cycles = findCycles(buildData.instances.values());
+          if (cycles.length > 0) {
+            console.error(
+              "Cycles detected in the instance tree after patching",
+              cycles
+            );
+
+            return {
+              status: "error",
+              errors: "Cycles detected in the instance tree",
+            };
+          }
+
           continue;
         }
 

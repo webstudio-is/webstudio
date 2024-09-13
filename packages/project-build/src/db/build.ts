@@ -25,14 +25,33 @@ import { parseDeployment } from "./deployment";
 import { serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "../shared//marketplace";
+import { breakCyclesMutable } from "../shared/graph-utils";
 
 const parseCompactData = <Item>(serialized: string) =>
   JSON.parse(serialized) as Item[];
+
+const parseCompactInstanceData = (serialized: string) => {
+  const instances = JSON.parse(serialized) as Instance[];
+
+  // @todo: Remove after measurements on real data
+  console.time("breakCyclesMutable");
+  breakCyclesMutable(instances, (node) => node.component === "Slot");
+  console.timeEnd("breakCyclesMutable");
+
+  return instances;
+};
 
 export const parseData = <Type extends { id: string }>(
   string: string
 ): Map<Type["id"], Type> => {
   const list = JSON.parse(string) as Type[];
+  return new Map(list.map((item) => [item.id, item]));
+};
+
+export const parseInstanceData = (
+  string: string
+): Map<Instance["id"], Instance> => {
+  const list = parseCompactInstanceData(string);
   return new Map(list.map((item) => [item.id, item]));
 };
 
@@ -71,7 +90,7 @@ const parseCompactBuild = async (
       props: parseCompactData<Prop>(build.props),
       dataSources: parseCompactData<DataSource>(build.dataSources),
       resources: parseCompactData<Resource>(build.resources),
-      instances: parseCompactData<Instance>(build.instances),
+      instances: parseCompactInstanceData(build.instances),
       deployment: parseDeployment(build.deployment),
       marketplaceProduct: parseConfig<MarketplaceProduct>(
         build.marketplaceProduct
