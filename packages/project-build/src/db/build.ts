@@ -32,7 +32,12 @@ const parseCompactData = <Item>(serialized: string) =>
 
 const parseCompactInstanceData = (serialized: string) => {
   const instances = JSON.parse(serialized) as Instance[];
+
+  // @todo: Remove after measurements on real data
+  console.time("breakCyclesMutable");
   breakCyclesMutable(instances, (node) => node.component === "Slot");
+  console.timeEnd("breakCyclesMutable");
+
   return instances;
 };
 
