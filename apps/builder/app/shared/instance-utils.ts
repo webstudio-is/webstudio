@@ -62,6 +62,7 @@ import { isBaseBreakpoint } from "./breakpoints";
 import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
+import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   serverSyncStore.createTransaction(
@@ -105,6 +106,18 @@ export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
         styles,
         assets,
       });
+
+      const cycles = findCycles(instances.values());
+
+      // Detect and fix cycles in the instance tree, then report
+      if (cycles.length > 0) {
+        toast.info("Detected and fixed cycles in the instance tree.");
+
+        breakCyclesMutable(
+          instances.values(),
+          (node) => node.component === "Slot"
+        );
+      }
     }
   );
 };

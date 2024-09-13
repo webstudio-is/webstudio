@@ -49,3 +49,45 @@ export const findCycles = (
 
   return cycles;
 };
+
+export const breakCyclesMutable = <T extends Pick<Instance, "id" | "children">>(
+  instances: Iterable<T>,
+  breakOn: (node: T) => boolean
+) => {
+  const cycles = findCycles(instances);
+  if (cycles.length === 0) {
+    return instances;
+  }
+
+  const cycleInstances = new Map<T["id"], T>();
+  const cycleInstanceIdSet = new Set<T["id"]>(cycles.flat());
+
+  // Pick all instances that are part of the cycle
+  for (const instance of instances) {
+    if (cycleInstanceIdSet.has(instance.id)) {
+      cycleInstances.set(instance.id, instance);
+    }
+  }
+
+  for (const cycle of cycles) {
+    // Find slot or take last instance
+    const slotId =
+      cycle.find((id) => breakOn(cycleInstances.get(id)!)) ??
+      cycle[cycle.length - 1];
+
+    // Remove slot from children of all instances in the cycle
+    for (const id of cycle) {
+      const instance = cycleInstances.get(id);
+      if (instance === undefined) {
+        continue;
+      }
+
+      if (instance.children.find((child) => child.value === slotId)) {
+        instance.children = instance.children.filter(
+          (child) => child.value !== slotId
+        );
+      }
+    }
+  }
+  return instances;
+};

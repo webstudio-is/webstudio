@@ -25,49 +25,14 @@ import { parseDeployment } from "./deployment";
 import { serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "../shared//marketplace";
-import { findCycles } from "../shared/graph-utils";
+import { breakCyclesMutable } from "../shared/graph-utils";
 
 const parseCompactData = <Item>(serialized: string) =>
   JSON.parse(serialized) as Item[];
 
 const parseCompactInstanceData = (serialized: string) => {
   const instances = JSON.parse(serialized) as Instance[];
-  const cycles = findCycles(instances);
-  if (cycles.length === 0) {
-    return instances;
-  }
-  // eslint-disable-next-line no-console
-  console.error("Cycles detected in instance data", cycles);
-
-  const cycleInstances = new Map<Instance["id"], Instance>();
-  const cycleInstanceIdSet = new Set<Instance["id"]>(cycles.flat());
-
-  // Pick all instances that are part of the cycle
-  for (const instance of instances) {
-    if (cycleInstanceIdSet.has(instance.id)) {
-      cycleInstances.set(instance.id, instance);
-    }
-  }
-
-  for (const cycle of cycles) {
-    // Find slot or take last instance
-    const slotId =
-      cycle.find((id) => cycleInstances.get(id)?.component === "Slot") ??
-      cycle[cycle.length - 1];
-
-    // Remove slot from children of all instances in the cycle
-    for (const id of cycle) {
-      const instance = cycleInstances.get(id);
-      if (instance === undefined) {
-        continue;
-      }
-
-      instance.children = instance.children.filter(
-        (child) => child.value !== slotId
-      );
-    }
-  }
-
+  breakCyclesMutable(instances, (node) => node.component === "Slot");
   return instances;
 };
 
