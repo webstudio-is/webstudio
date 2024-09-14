@@ -369,10 +369,8 @@ export const Tree = <Data extends { id: string }>({
           />
         </KeyboardNavigation>
       </FocusScope>
-      <Box
-        // To not intersect last element with the scroll
-        css={{ height: theme.spacing[7] }}
-      ></Box>
+      {/* To not intersect last element with the scroll */}
+      <Box css={{ height: theme.spacing[7] }}></Box>
       {shiftedDropTarget?.placement &&
         createPortal(
           <ListPositionIndicator
