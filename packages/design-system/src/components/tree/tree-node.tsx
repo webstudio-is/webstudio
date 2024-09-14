@@ -400,6 +400,7 @@ export const TreeItemBody = <Data extends { id: string }>({
     >
       <ItemButton
         type="button"
+        tabIndex={-1}
         data-drag-item-id={itemData.id}
         data-item-button-id={itemData.id}
         onFocus={handleFocus}
