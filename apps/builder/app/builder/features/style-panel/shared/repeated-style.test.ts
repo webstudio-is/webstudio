@@ -18,6 +18,7 @@ import {
   $styles,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
+import { setProperty } from "./use-style-data";
 
 registerContainers();
 
@@ -398,6 +399,33 @@ test("toggle tuple in repeated style", () => {
           value: [{ type: "unit", unit: "number", value: 0.5 }],
         },
       },
+    ],
+  });
+});
+
+test("toggle repeated style item when value is not repeated", () => {
+  const $transitionProperty =
+    createComputedStyleDeclStore("transitionProperty");
+  const $transitionBehavior =
+    createComputedStyleDeclStore("transitionBehavior");
+  addRepeatedStyleItem(
+    [$transitionProperty.get()],
+    parseCssFragment("all", "transition")
+  );
+  addRepeatedStyleItem(
+    [$transitionProperty.get()],
+    parseCssFragment("opacity", "transition")
+  );
+  setProperty("transitionBehavior")({ type: "keyword", value: "inherit" });
+  toggleRepeatedStyleItem(
+    [$transitionProperty.get(), $transitionBehavior.get()],
+    1
+  );
+  expect($transitionBehavior.get().cascadedValue).toEqual({
+    type: "layers",
+    value: [
+      { type: "keyword", value: "normal" },
+      { type: "keyword", value: "normal", hidden: true },
     ],
   });
 });
