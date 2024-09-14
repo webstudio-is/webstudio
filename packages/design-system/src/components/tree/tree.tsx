@@ -51,7 +51,6 @@ const KeyboardNavigation = ({
         if (editingItemId) {
           return;
         }
-        console.log(event.key);
         if (event.key === "ArrowUp") {
           focusManager.focusPrevious({
             accept: (node) => node.hasAttribute("data-item-button-id"),
