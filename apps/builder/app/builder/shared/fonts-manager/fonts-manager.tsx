@@ -9,6 +9,7 @@ import {
   Text,
   rawTheme,
   Link,
+  Flex,
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
@@ -145,7 +146,30 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           item.type === "uploaded" ? (
             renderMenu(index)
           ) : itemProps.state === "selected" && item.description ? (
-            <Tooltip variant="wrapped" content={item.description}>
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Flex
+                  direction="column"
+                  gap="2"
+                  css={{ maxWidth: theme.spacing[28] }}
+                >
+                  <Text variant="titles">{item.label}</Text>
+                  <Text
+                    variant="monoBold"
+                    color="moreSubtle"
+                    userSelect="text"
+                    css={{
+                      whiteSpace: "break-spaces",
+                      cursor: "text",
+                    }}
+                  >
+                    {`font-family: ${item.stack.join(", ")};`}
+                  </Text>
+                  <Text>{item.description}</Text>
+                </Flex>
+              }
+            >
               <InfoCircleIcon
                 tabIndex={0}
                 color={rawTheme.colors.foregroundSubtle}
