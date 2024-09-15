@@ -1,9 +1,6 @@
 import type { FontFormat } from "./schema";
 
 export const SYSTEM_FONTS = new Map([
-  ["Arial", ["Arial", "Roboto", "sans-serif"]],
-  ["Times New Roman", ["Times New Roman", "sans"]],
-  ["Courier New", ["Courier New", "monospace"]],
   ["System UI", ["system-ui", "sans-serif"]],
   // Modern font stacks
   // https://github.com/system-fonts/modern-font-stacks
@@ -148,6 +145,9 @@ export const SYSTEM_FONTS = new Map([
       "Segoe UI Symbol",
       "Noto Color Emoji",
     ],
+    ["Arial", ["Arial", "Roboto", "sans-serif"]],
+    ["Times New Roman", ["Times New Roman", "sans"]],
+    ["Courier New", ["Courier New", "monospace"]],
   ],
   // Chineese fonts
   ["SimSun", ["SimSun", "Songti SC, sans-serif"]],
