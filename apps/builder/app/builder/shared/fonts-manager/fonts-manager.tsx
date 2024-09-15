@@ -5,6 +5,10 @@ import {
   theme,
   useSearchFieldKeys,
   findNextListItemIndex,
+  Tooltip,
+  Text,
+  rawTheme,
+  Link,
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
@@ -14,7 +18,7 @@ import {
 } from "~/builder/shared/assets";
 import { useEffect, useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
-import { CheckMarkIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import {
   type Item,
   filterIdsByFamily,
@@ -167,7 +171,38 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
             {uploadedItems.length !== 0 && (
               <Separator css={{ mx: theme.spacing[9] }} />
             )}
-            <DeprecatedListItem state="disabled">{"System"}</DeprecatedListItem>
+            <DeprecatedListItem
+              state="disabled"
+              suffix={
+                <Tooltip
+                  variant="wrapped"
+                  content={
+                    <Text>
+                      {
+                        "System font stack CSS organized by typeface classification for every modern OS. No downloading, no layout shifts, no flashes—just instant renders. Learn more about "
+                      }
+                      <Link
+                        href="https://github.com/system-fonts/modern-font-stacks"
+                        target="_blank"
+                        color="inherit"
+                        variant="inherit"
+                      >
+                        modern font stacks
+                      </Link>
+                      .
+                    </Text>
+                  }
+                >
+                  <InfoCircleIcon
+                    tabIndex={0}
+                    color={rawTheme.colors.foregroundSubtle}
+                    style={{ pointerEvents: "auto" }}
+                  />
+                </Tooltip>
+              }
+            >
+              System
+            </DeprecatedListItem>
           </>
         )}
         {systemItems.map((item, index) =>

@@ -82,7 +82,7 @@ export const DeprecatedListItem = forwardRef<
         <Text
           variant="labelsSentenceCase"
           truncate
-          color={state === "disabled" ? "disabled" : "main"}
+          color={state === "disabled" ? "subtle" : "main"}
         >
           {children}
         </Text>
