@@ -27,7 +27,6 @@ export const SYSTEM_FONTS = new Map([
   [
     "Geometric Humanist",
     [
-      "Seravek",
       "Avenir",
       "Montserrat",
       "Corbel",
