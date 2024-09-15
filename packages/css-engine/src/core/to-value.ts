@@ -7,12 +7,11 @@ export type TransformValue = (styleValue: StyleValue) => undefined | StyleValue;
 const fallbackTransform: TransformValue = (styleValue) => {
   if (styleValue.type === "fontFamily") {
     const firstFontFamily = styleValue.value[0];
-
-    const fontFamily = styleValue.value;
+    const fontFamily = SYSTEM_FONTS.get(firstFontFamily);
     const fallbacks = SYSTEM_FONTS.get(firstFontFamily) ?? [
       DEFAULT_FONT_FALLBACK,
     ];
-    const value = Array.from(new Set([...fontFamily, ...fallbacks]));
+    const value = Array.from(new Set([...(fontFamily ?? []), ...fallbacks]));
 
     return {
       type: "fontFamily",

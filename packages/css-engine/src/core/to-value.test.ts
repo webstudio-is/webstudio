@@ -47,11 +47,14 @@ describe("Convert WS CSS Values to native CSS strings", () => {
   });
 
   test("fontFamily", () => {
-    const value = toValue({
-      type: "fontFamily",
-      value: ["Courier New"],
-    });
-    expect(value).toBe('"Courier New", monospace');
+    expect(
+      toValue({
+        type: "fontFamily",
+        value: ["Emoji"],
+      })
+    ).toBe(
+      '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'
+    );
   });
 
   test("Transform font family value to override default fallback", () => {
@@ -64,12 +67,12 @@ describe("Convert WS CSS Values to native CSS strings", () => {
         if (styleValue.type === "fontFamily") {
           return {
             type: "fontFamily",
-            value: [styleValue.value[0]],
+            value: ["A B"],
           };
         }
       }
     );
-    expect(value).toBe('"Courier New"');
+    expect(value).toBe('"A B"');
   });
 
   test("array", () => {
