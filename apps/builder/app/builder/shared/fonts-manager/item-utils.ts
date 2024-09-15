@@ -5,6 +5,7 @@ import type { AssetContainer } from "../assets";
 export type Item = {
   label: string;
   type: "uploaded" | "system";
+  description?: string;
 };
 
 export const toItems = (
@@ -13,6 +14,7 @@ export const toItems = (
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
+    description: SYSTEM_FONTS.get(label)?.description,
   }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();

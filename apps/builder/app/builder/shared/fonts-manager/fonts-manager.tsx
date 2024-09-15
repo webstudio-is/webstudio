@@ -141,7 +141,18 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         {...itemProps}
         key={key}
         prefix={itemProps.current ? <CheckMarkIcon /> : undefined}
-        suffix={item.type === "uploaded" ? renderMenu(index) : undefined}
+        suffix={
+          item.type === "uploaded" ? (
+            renderMenu(index)
+          ) : itemProps.state === "selected" && item.description ? (
+            <Tooltip variant="wrapped" content={item.description}>
+              <InfoCircleIcon
+                tabIndex={0}
+                color={rawTheme.colors.foregroundSubtle}
+              />
+            </Tooltip>
+          ) : undefined
+        }
       >
         {item.label}
       </DeprecatedListItem>
@@ -179,7 +190,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                   content={
                     <Text>
                       {
-                        "System font stack CSS organized by typeface classification for every modern OS. No downloading, no layout shifts, no flashes — just instant renders. Learn more about "
+                        "System font stack CSS organized by typeface classification for every modern OS. No downloading, no layout shifts, no flashes— just instant renders. Learn more about "
                       }
                       <Link
                         href="https://github.com/system-fonts/modern-font-stacks"
