@@ -179,7 +179,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                   content={
                     <Text>
                       {
-                        "System font stack CSS organized by typeface classification for every modern OS. No downloading, no layout shifts, no flashes—just instant renders. Learn more about "
+                        "System font stack CSS organized by typeface classification for every modern OS. No downloading, no layout shifts, no flashes — just instant renders. Learn more about "
                       }
                       <Link
                         href="https://github.com/system-fonts/modern-font-stacks"
