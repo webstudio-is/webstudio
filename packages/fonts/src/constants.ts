@@ -144,10 +144,10 @@ export const SYSTEM_FONTS = new Map([
       "Segoe UI Symbol",
       "Noto Color Emoji",
     ],
-    ["Arial", ["Arial", "Roboto", "sans-serif"]],
-    ["Times New Roman", ["Times New Roman", "sans"]],
-    ["Courier New", ["Courier New", "monospace"]],
   ],
+  ["Arial", ["Arial", "Roboto", "sans-serif"]],
+  ["Times New Roman", ["Times New Roman", "sans"]],
+  ["Courier New", ["Courier New", "monospace"]],
   // Chineese fonts
   ["SimSun", ["SimSun", "Songti SC, sans-serif"]],
   ["PingFang SC", ["PingFang SC", "Microsoft Ya Hei", "sans-serif"]],
