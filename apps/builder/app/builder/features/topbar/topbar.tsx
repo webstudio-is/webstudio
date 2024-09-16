@@ -8,6 +8,7 @@ import {
   ToolbarButton,
   Text,
   type CSS,
+  Box,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $pages, $selectedPage } from "~/shared/nano-states";
@@ -87,15 +88,15 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
         <>
           <Flex align="center">
             <PagesButton />
-            <AddressBarPopover />
-          </Flex>
-          <Flex css={{ minWidth: theme.spacing[23], ...hideOnMobile }}>
-            <BreakpointsPopover />
+            <Box css={hideOnMobile}>
+              <AddressBarPopover />
+            </Box>
           </Flex>
           <Flex grow></Flex>
           <Flex align="center" justify="center" css={hideOnMobile}>
             <BreakpointsSelectorContainer />
           </Flex>
+          <BreakpointsPopover />
         </>
       )}
       <Flex grow></Flex>
@@ -112,8 +113,13 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
           <ViewMode />
           <SyncStatus />
           <PreviewButton />
-          <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
-          <PublishButton projectId={project.id} />
+          <Box css={hideOnMobile}>
+            <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
+          </Box>
+          <Box css={hideOnMobile}>
+            <PublishButton projectId={project.id} />
+          </Box>
+
           <CloneButton />
         </ToolbarToggleGroup>
       </Toolbar>

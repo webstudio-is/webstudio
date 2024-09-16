@@ -6,7 +6,7 @@ export const BreakpointsSelectorContainer = () => {
   const breakpoints = useStore($breakpoints);
   const selectedBreakpoint = useStore($selectedBreakpoint);
   if (selectedBreakpoint === undefined) {
-    return null;
+    return;
   }
   return (
     <BreakpointsSelector
