@@ -38,7 +38,7 @@ const PagesButton = () => {
     <Tooltip
       content={
         <Text>
-          {"Toggle pages "}
+          {"Pages and page settings "}
           <Kbd value={["option", "click"]} color="moreSubtle" />
         </Text>
       }
