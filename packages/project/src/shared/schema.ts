@@ -33,13 +33,14 @@ export const Project = z.object({
       name: z.string(),
     })
     .nullable(),
-  latestBuild: z.optional(
+  latestBuildVirtual: z.optional(
     z
       .object({
         buildId: z.string(),
-        isLatestBuild: z.boolean(),
+        projectId: z.string(),
+        domain: z.string(),
         publishStatus: z.enum(["PENDING", "PUBLISHED", "FAILED"]),
-        updatedAt: z.date().transform((date) => date.toISOString()),
+        createdAt: z.date().transform((date) => date.toISOString()),
       })
       .nullable()
   ),

@@ -304,6 +304,73 @@ export type Database = {
           },
         ];
       };
+      latestBuildVirtual: {
+        Row: {
+          buildId: string;
+          createdAt: string;
+          domain: string;
+          projectId: string;
+          publishStatus: Database["public"]["Enums"]["PublishStatus"];
+        };
+        Insert: {
+          buildId: string;
+          createdAt: string;
+          domain: string;
+          projectId: string;
+          publishStatus: Database["public"]["Enums"]["PublishStatus"];
+        };
+        Update: {
+          buildId?: string;
+          createdAt?: string;
+          domain?: string;
+          projectId?: string;
+          publishStatus?: Database["public"]["Enums"]["PublishStatus"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "latestBuildVirtual_buildId_fkey";
+            columns: ["buildId"];
+            isOneToOne: true;
+            referencedRelation: "Build";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "latestBuildVirtual_buildId_fkey";
+            columns: ["buildId"];
+            isOneToOne: true;
+            referencedRelation: "LatestBuildPerProject";
+            referencedColumns: ["buildId"];
+          },
+          {
+            foreignKeyName: "latestBuildVirtual_buildId_fkey";
+            columns: ["buildId"];
+            isOneToOne: true;
+            referencedRelation: "LatestBuildPerProjectDomain";
+            referencedColumns: ["buildId"];
+          },
+          {
+            foreignKeyName: "latestBuildVirtual_buildId_fkey";
+            columns: ["buildId"];
+            isOneToOne: true;
+            referencedRelation: "LatestStaticBuildPerProject";
+            referencedColumns: ["buildId"];
+          },
+          {
+            foreignKeyName: "latestBuildVirtual_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: true;
+            referencedRelation: "DashboardProject";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "latestBuildVirtual_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: true;
+            referencedRelation: "Project";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       Product: {
         Row: {
           createdAt: string;
@@ -786,6 +853,22 @@ export type Database = {
           project_id: string;
           deployment: string;
         };
+        Returns: string;
+      };
+      latestBuildVirtual: {
+        Args: {
+          "": unknown;
+        };
+        Returns: {
+          buildId: string;
+          createdAt: string;
+          domain: string;
+          projectId: string;
+          publishStatus: Database["public"]["Enums"]["PublishStatus"];
+        }[];
+      };
+      uuid_generate_v4: {
+        Args: Record<PropertyKey, never>;
         Returns: string;
       };
     };

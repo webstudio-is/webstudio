@@ -27,6 +27,7 @@ import { Entri } from "./entri";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
 import { $publisherHost } from "~/shared/nano-states";
+import type { Database } from "@webstudio-is/postrest/index.server";
 
 export type Domain = {
   projectId: Project["id"];
@@ -86,6 +87,40 @@ export const getStatus = (projectDomain: Domain) =>
 
 export const PENDING_TIMEOUT =
   process.env.NODE_ENV === "production" ? 60 * 3 * 1000 : 35000;
+
+export const getPublishStatusAndTextNew = ({
+  createdAt,
+  publishStatus,
+}: Pick<
+  Database["public"]["Tables"]["latestBuildVirtual"]["Row"],
+  "createdAt" | "publishStatus"
+>) => {
+  let status = publishStatus;
+
+  const delta = Date.now() - new Date(createdAt).getTime();
+  // Assume build failed after 3 minutes
+
+  if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
+    status = "FAILED";
+  }
+
+  const textStart =
+    status === "PUBLISHED"
+      ? "Published"
+      : status === "FAILED"
+        ? "Publish failed"
+        : "Publishing started";
+
+  const statusText = `${textStart} ${formatDistance(
+    new Date(createdAt),
+    new Date(),
+    {
+      addSuffix: true,
+    }
+  )}`;
+
+  return { statusText, status };
+};
 
 export const getPublishStatusAndText = ({
   updatedAt,

@@ -12,7 +12,6 @@ export type {
   Domain,
   ProjectWithDomain,
   LatestBuildPerProjectDomain,
-  LatestBuildPerProject,
   PublishStatus,
   Product,
   $Enums,

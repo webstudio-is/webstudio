@@ -43,10 +43,10 @@ import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { $authPermit, $project, $publishedOrigin } from "~/shared/nano-states";
 import {
   Domains,
-  getPublishStatusAndText,
   getStatus,
   type Domain,
   PENDING_TIMEOUT,
+  getPublishStatusAndTextNew,
 } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -154,8 +154,8 @@ const ChangeProjectDomain = ({
   };
 
   const { statusText, status } =
-    project.latestBuild != null
-      ? getPublishStatusAndText(project.latestBuild)
+    project.latestBuildVirtual != null
+      ? getPublishStatusAndTextNew(project.latestBuildVirtual)
       : {
           statusText: "Not published",
           status: "PENDING" as const,
@@ -601,27 +601,11 @@ const Content = (props: {
     [domainsResult]
   );
 
-  const latestBuilds = useMemo(
-    () => [
-      projectData?.success ? (projectData.project.latestBuild ?? null) : null,
-      ...domainsToPublish.map((domain) => domain.latestBuid),
-    ],
-    [domainsToPublish, projectData]
-  );
+  const latestBuildVirtual = projectData?.success
+    ? (projectData.project.latestBuildVirtual ?? undefined)
+    : undefined;
 
-  const hasPendingState = useMemo(
-    () =>
-      latestBuilds.some((latestBuild) => {
-        if (latestBuild === null) {
-          return false;
-        }
-        const { status } = getPublishStatusAndText(latestBuild);
-        if (status === "PENDING") {
-          return true;
-        }
-      }),
-    [latestBuilds]
-  );
+  const hasPendingState = latestBuildVirtual?.publishStatus === "PENDING";
 
   const [isPublishing, setIsPublishing] = useState(hasPendingState);
 
