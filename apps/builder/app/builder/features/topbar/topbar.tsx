@@ -10,7 +10,7 @@ import {
   type CSS,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { $pages, $selectedPage } from "~/shared/nano-states";
+import { $editingPageId, $pages, $selectedPage } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -39,8 +39,11 @@ const PagesButton = () => {
         maxWidth: theme.spacing[24],
       }}
       aria-label="Toggle Pages"
-      onClick={() => {
+      onClick={(event) => {
         toggleActiveSidebarPanel("pages");
+        if (event.altKey) {
+          $editingPageId.set(page.id);
+        }
       }}
       tabIndex={0}
     >
