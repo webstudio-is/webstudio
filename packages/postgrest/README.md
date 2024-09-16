@@ -18,6 +18,14 @@ cd /workspaces/webstudio/packages/postgrest
 pnpm generate-types
 ```
 
+## Playground
+
+```bash
+pnpm playground ./playground/{file}.ts
+# OR
+pnpm tsx --env-file ../../apps/builder/.env ./playground/{file}.ts
+```
+
 ## Next steps.
 
 Use https://supabase.com/docs/reference/cli/supabase-db-start or directly https://github.com/djrobstep/migra for migrations.

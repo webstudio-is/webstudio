@@ -338,20 +338,6 @@ export type Database = {
             foreignKeyName: "latestBuildVirtual_buildId_fkey";
             columns: ["buildId"];
             isOneToOne: true;
-            referencedRelation: "LatestBuildPerProject";
-            referencedColumns: ["buildId"];
-          },
-          {
-            foreignKeyName: "latestBuildVirtual_buildId_fkey";
-            columns: ["buildId"];
-            isOneToOne: true;
-            referencedRelation: "LatestBuildPerProjectDomain";
-            referencedColumns: ["buildId"];
-          },
-          {
-            foreignKeyName: "latestBuildVirtual_buildId_fkey";
-            columns: ["buildId"];
-            isOneToOne: true;
             referencedRelation: "LatestStaticBuildPerProject";
             referencedColumns: ["buildId"];
           },
@@ -478,13 +464,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "Domain";
             referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "ProjectDomain_domainId_fkey";
-            columns: ["domainId"];
-            isOneToOne: false;
-            referencedRelation: "LatestBuildPerProjectDomain";
-            referencedColumns: ["domainId"];
           },
           {
             foreignKeyName: "ProjectDomain_projectId_fkey";
@@ -694,58 +673,6 @@ export type Database = {
           },
         ];
       };
-      LatestBuildPerProject: {
-        Row: {
-          buildId: string | null;
-          domain: string | null;
-          isLatestBuild: boolean | null;
-          projectId: string | null;
-          publishStatus: Database["public"]["Enums"]["PublishStatus"] | null;
-          updatedAt: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "Build_projectId_fkey";
-            columns: ["projectId"];
-            isOneToOne: false;
-            referencedRelation: "Project";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "Build_projectId_fkey";
-            columns: ["projectId"];
-            isOneToOne: false;
-            referencedRelation: "DashboardProject";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      LatestBuildPerProjectDomain: {
-        Row: {
-          buildId: string | null;
-          domainId: string | null;
-          isLatestBuild: boolean | null;
-          projectId: string | null;
-          publishStatus: Database["public"]["Enums"]["PublishStatus"] | null;
-          updatedAt: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "Build_projectId_fkey";
-            columns: ["projectId"];
-            isOneToOne: false;
-            referencedRelation: "Project";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "Build_projectId_fkey";
-            columns: ["projectId"];
-            isOneToOne: false;
-            referencedRelation: "DashboardProject";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       LatestStaticBuildPerProject: {
         Row: {
           buildId: string | null;
@@ -794,13 +721,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "Domain";
             referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "ProjectDomain_domainId_fkey";
-            columns: ["domainId"];
-            isOneToOne: false;
-            referencedRelation: "LatestBuildPerProjectDomain";
-            referencedColumns: ["domainId"];
           },
           {
             foreignKeyName: "ProjectDomain_projectId_fkey";
@@ -855,18 +775,31 @@ export type Database = {
         };
         Returns: string;
       };
-      latestBuildVirtual: {
-        Args: {
-          "": unknown;
-        };
-        Returns: {
-          buildId: string;
-          createdAt: string;
-          domain: string;
-          projectId: string;
-          publishStatus: Database["public"]["Enums"]["PublishStatus"];
-        }[];
-      };
+      latestBuildVirtual:
+        | {
+            Args: {
+              "": unknown;
+            };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+            }[];
+          }
+        | {
+            Args: {
+              "": unknown;
+            };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+            }[];
+          };
       uuid_generate_v4: {
         Args: Record<PropertyKey, never>;
         Returns: string;

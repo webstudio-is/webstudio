@@ -16,7 +16,8 @@
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsc",
-    "generate-types": "pnpx supabase gen types --lang=typescript --db-url postgresql://postgres:pass@localhost/webstudio > ./src/__generated__/db-types.ts"
+    "generate-types": "pnpx supabase gen types --lang=typescript --db-url postgresql://postgres:pass@localhost/webstudio > ./src/__generated__/db-types.ts",
+    "playground": "pnpm tsx --env-file ../../apps/builder/.env"
   },
   "dependencies": {
     "@supabase/postgrest-js": "^1.16.0"

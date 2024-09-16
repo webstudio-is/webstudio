@@ -1,3 +1,5 @@
+
+
 -- This is an empty migration.
 DROP TABLE IF EXISTS "latestBuildVirtual" CASCADE;
 
@@ -35,8 +37,13 @@ ROWS 1 AS $$ -- The function is expected to return 1 row
 SELECT
     b.id AS "buildId",
     b."projectId",
-    -- 'projectDomain' for backward compatibility; use the first element of 'domains' if 'projectDomain' is NULL
-    COALESCE((b.deployment::jsonb ->> 'projectDomain'), (b.deployment::jsonb -> 'domains') ->> '0') AS "domain",
+    -- Use CASE to determine which domain to select based on conditions
+    CASE
+        WHEN (b.deployment::jsonb ->> 'projectDomain') = p.domain
+             OR (b.deployment::jsonb -> 'domains') @> to_jsonb(array[p.domain])
+        THEN p.domain
+        ELSE d.domain
+    END AS "domain",
     b."createdAt",
     b."publishStatus"
 FROM "Build" b
@@ -48,8 +55,11 @@ WHERE b."projectId" = $1.id
   -- 'destination' IS NULL for backward compatibility; 'destination' = 'saas' for non-static builds
   AND ((b.deployment::jsonb ->> 'destination') IS NULL OR (b.deployment::jsonb ->> 'destination') = 'saas')
   AND (
-      COALESCE((b.deployment::jsonb ->> 'projectDomain'), (b.deployment::jsonb -> 'domains') ->> '0') = p.domain
-      OR COALESCE((b.deployment::jsonb ->> 'projectDomain'), (b.deployment::jsonb -> 'domains') ->> '0') = d.domain
+      -- Check if 'projectDomain' matches p.domain
+      (b.deployment::jsonb ->> 'projectDomain') = p.domain
+      -- Check if 'domains' contains p.domain or d.domain
+      OR (b.deployment::jsonb -> 'domains') @> to_jsonb(array[p.domain])
+      OR (b.deployment::jsonb -> 'domains') @> to_jsonb(array[d.domain])
   )
 ORDER BY b."createdAt" DESC
 LIMIT 1;
@@ -66,5 +76,42 @@ COMMENT ON FUNCTION "latestBuildVirtual"("Project") IS 'This function computes t
 -- LEFT JOIN LATERAL (
 --    SELECT * FROM "latestBuildVirtual"(p)
 -- ) lbv ON TRUE;
+
+
+
+
+
+
+-- This function defines a computed field "latestBuildVirtual" for PostgREST
+-- It returns the latest build associated with a given Project and Domain.
+-- Reference: https://docs.postgrest.org/en/v12/references/api/resource_embedding.html#computed-relationships
+
+CREATE OR REPLACE FUNCTION "latestBuildVirtual"("ProjectDomain")
+RETURNS SETOF "latestBuildVirtual"
+ROWS 1 AS $$  -- The function is expected to return at most 1 row since it fetches the latest build
+
+SELECT
+    b.id AS "buildId",         -- ID of the Build
+    b."projectId",             -- ID of the Project to which the build belongs
+    d."domain",                -- Domain associated with the build
+    b."createdAt",             -- Timestamp of when the build was created
+    b."publishStatus"          -- Status of the build (e.g., published, draft, etc.)
+FROM "Build" b
+JOIN "Domain" d ON d.id = $1."domainId"  -- Join the "Build" and "Domain" tables using the domain ID
+WHERE
+    b."projectId" = $1."projectId"  -- Ensure the Build belongs to the specified project
+    AND b.deployment IS NOT NULL    -- Ensure the Build has a non-null deployment field
+    AND (b.deployment::jsonb -> 'domains') @> to_jsonb(array[d.domain])  -- Check if the domain exists in the deployment JSON array
+ORDER BY b."createdAt" DESC  -- Order builds by creation date in descending order to get the latest one
+LIMIT 1;  -- Limit the result to the most recent build
+
+$$
+STABLE  -- Declares that the function always returns the same result for the same input parameters
+LANGUAGE sql;
+
+-- Adding a comment to provide more context about the function's purpose
+COMMENT ON FUNCTION "latestBuildVirtual"("ProjectDomain") IS 'Returns the latest build for a given project and domain as a computed field for PostgREST.';
+
+
 
 DROP VIEW IF EXISTS "LatestBuildPerProject" CASCADE;
