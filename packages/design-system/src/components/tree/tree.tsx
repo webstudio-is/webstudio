@@ -1,6 +1,7 @@
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import type { ReactNode } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { FocusScope, useFocusManager } from "@react-aria/focus";
 import { ListPositionIndicator } from "../list-position-indicator";
 import {
   TreeNode,
@@ -29,6 +30,59 @@ import {
 } from "./item-utils";
 import { ScrollArea } from "../scroll-area";
 import { theme } from "../..";
+
+const KeyboardNavigation = ({
+  editingItemId,
+  onExpandedChange,
+  children,
+}: {
+  editingItemId: ItemId | undefined;
+  onExpandedChange: (expanded?: boolean) => void;
+  children: ReactNode;
+}) => {
+  const focusManager = useFocusManager();
+  return (
+    <div
+      onKeyDown={(event) => {
+        if (event.defaultPrevented) {
+          return;
+        }
+        // prevent navigating while editing nodes
+        if (editingItemId) {
+          return;
+        }
+        if (event.key === "ArrowUp") {
+          focusManager.focusPrevious({
+            accept: (node) => node.hasAttribute("data-item-button-id"),
+          });
+          // prevent scrolling
+          event.preventDefault();
+        }
+        if (event.key === "ArrowDown") {
+          focusManager.focusNext({
+            accept: (node) => node.hasAttribute("data-item-button-id"),
+          });
+          // prevent scrolling
+          event.preventDefault();
+        }
+        if (event.key === "ArrowLeft") {
+          onExpandedChange(false);
+          //
+        }
+        if (event.key === "ArrowRight") {
+          onExpandedChange(true);
+        }
+        if (event.key === " ") {
+          onExpandedChange();
+          // prevent scrolling
+          event.preventDefault();
+        }
+      }}
+    >
+      {children}
+    </div>
+  );
+};
 
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
@@ -267,17 +321,6 @@ export const Tree = <Data extends { id: string }>({
 
   useDragCursor(dragItemSelector !== undefined);
 
-  const keyboardNavigation = useKeyboardNavigation({
-    root,
-    getItemChildren,
-    isItemHidden,
-    selectedItemSelector,
-    getIsExpanded,
-    setIsExpanded,
-    onEsc: dragHandlers.cancelCurrentDrag,
-    editingItemId,
-  });
-
   return (
     <ScrollArea
       // TODO allow resizing of the panel instead.
@@ -287,6 +330,7 @@ export const Tree = <Data extends { id: string }>({
         overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
+        "&:hover": showNestingLineVars(),
       }}
       ref={(element) => {
         rootRef.current = element;
@@ -296,35 +340,37 @@ export const Tree = <Data extends { id: string }>({
       }}
       onScroll={dropHandlers.handleScroll}
     >
-      <Box
-        ref={keyboardNavigation.rootRef}
-        onBlur={keyboardNavigation.handleBlur}
-        onKeyDown={keyboardNavigation.handleKeyDown}
-        onClick={keyboardNavigation.handleClick}
-        css={{
-          // To not intersect last element with the scroll
-          marginBottom: theme.spacing[7],
-          "&:hover": showNestingLineVars(),
-        }}
-      >
-        <TreeNode
-          renderItem={renderItem}
-          getItemChildren={getItemChildren}
-          getItemProps={getItemProps}
-          isItemHidden={isItemHidden}
-          onSelect={onSelect}
-          onHover={onHover}
-          selectedItemSelector={selectedItemSelector}
-          highlightedItemSelector={highlightedItemSelector}
-          itemData={root}
-          getIsExpanded={getIsExpanded}
-          setIsExpanded={(itemSelector, value, all) => {
-            setIsExpanded(itemSelector, value, all);
-            dropHandlers.handleDomMutation();
+      <FocusScope>
+        <KeyboardNavigation
+          editingItemId={editingItemId}
+          onExpandedChange={(expanded) => {
+            if (selectedItemSelector) {
+              expanded ??= getIsExpanded(selectedItemSelector) === false;
+              setIsExpanded(selectedItemSelector, expanded);
+            }
           }}
-          dropTargetItemSelector={shiftedDropTarget?.itemSelector}
-        />
-      </Box>
+        >
+          <TreeNode
+            renderItem={renderItem}
+            getItemChildren={getItemChildren}
+            getItemProps={getItemProps}
+            isItemHidden={isItemHidden}
+            onSelect={onSelect}
+            onHover={onHover}
+            selectedItemSelector={selectedItemSelector}
+            highlightedItemSelector={highlightedItemSelector}
+            itemData={root}
+            getIsExpanded={getIsExpanded}
+            setIsExpanded={(itemSelector, value, all) => {
+              setIsExpanded(itemSelector, value, all);
+              dropHandlers.handleDomMutation();
+            }}
+            dropTargetItemSelector={shiftedDropTarget?.itemSelector}
+          />
+        </KeyboardNavigation>
+      </FocusScope>
+      {/* To not intersect last element with the scroll */}
+      <Box css={{ height: theme.spacing[7] }}></Box>
       {shiftedDropTarget?.placement &&
         createPortal(
           <ListPositionIndicator
@@ -337,171 +383,6 @@ export const Tree = <Data extends { id: string }>({
         )}
     </ScrollArea>
   );
-};
-
-const useKeyboardNavigation = <Data extends { id: string }>({
-  root,
-  selectedItemSelector,
-  getItemChildren,
-  isItemHidden,
-  getIsExpanded,
-  setIsExpanded,
-  onEsc,
-  editingItemId,
-}: {
-  root: Data;
-  selectedItemSelector: undefined | ItemSelector;
-  getItemChildren: (itemSelector: ItemSelector) => Data[];
-  isItemHidden: (itemSelector: ItemSelector) => boolean;
-  getIsExpanded: (itemSelector: ItemSelector) => boolean;
-  setIsExpanded: (
-    itemSelector: ItemSelector,
-    value: boolean,
-    all?: boolean
-  ) => void;
-  onEsc: () => void;
-  editingItemId: ItemId | undefined;
-}) => {
-  const flatCurrentlyExpandedTree = useMemo(() => {
-    const result: ItemSelector[] = [];
-    const traverse = (itemSelector: ItemSelector) => {
-      if (isItemHidden(itemSelector) === false) {
-        result.push(itemSelector);
-      }
-      if (getIsExpanded(itemSelector)) {
-        for (const child of getItemChildren(itemSelector)) {
-          traverse([child.id, ...itemSelector]);
-        }
-      }
-    };
-    traverse([root.id]);
-    return result;
-  }, [root, getIsExpanded, getItemChildren, isItemHidden]);
-
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  const handleKeyDown = (event: ReactKeyboardEvent) => {
-    // skip if nothing is selected in the tree
-    if (selectedItemSelector === undefined) {
-      return;
-    }
-
-    if (editingItemId !== undefined) {
-      return;
-    }
-
-    if (
-      event.key === "ArrowRight" &&
-      getIsExpanded(selectedItemSelector) === false
-    ) {
-      setIsExpanded(selectedItemSelector, true);
-    }
-    if (event.key === "ArrowLeft" && getIsExpanded(selectedItemSelector)) {
-      setIsExpanded(selectedItemSelector, false);
-    }
-    if (event.key === " ") {
-      setIsExpanded(
-        selectedItemSelector,
-        getIsExpanded(selectedItemSelector) === false
-      );
-      // prevent scrolling
-      event.preventDefault();
-    }
-    if (event.key === "ArrowUp") {
-      const index = flatCurrentlyExpandedTree.findIndex((itemSelector) =>
-        areItemSelectorsEqual(itemSelector, selectedItemSelector)
-      );
-      if (index > 0) {
-        setFocus(flatCurrentlyExpandedTree[index - 1], "changing");
-        // prevent scrolling
-        event.preventDefault();
-      }
-    }
-    if (event.key === "ArrowDown") {
-      const index = flatCurrentlyExpandedTree.findIndex((itemSelector) =>
-        areItemSelectorsEqual(itemSelector, selectedItemSelector)
-      );
-      if (index < flatCurrentlyExpandedTree.length - 1) {
-        setFocus(flatCurrentlyExpandedTree[index + 1], "changing");
-        // prevent scrolling
-        event.preventDefault();
-      }
-    }
-    if (event.key === "Escape") {
-      onEsc();
-    }
-  };
-
-  const setFocus = useCallback(
-    (itemSelector: ItemSelector, reason: "restoring" | "changing") => {
-      const [itemId] = itemSelector;
-      const itemButton = getElementByItemSelector(
-        rootRef.current ?? undefined,
-        itemSelector
-      )?.querySelector(`[data-item-button-id="${itemId}"]`);
-      if (itemButton instanceof HTMLElement) {
-        itemButton.focus({ preventScroll: reason === "restoring" });
-      }
-    },
-    [rootRef]
-  );
-
-  const hadFocus = useRef(false);
-  const prevRoot = useRef(root);
-  useEffect(() => {
-    const haveFocus =
-      rootRef.current?.contains(document.activeElement) === true;
-
-    const isRootChanged = prevRoot.current !== root;
-    prevRoot.current = root;
-
-    // If we've lost focus due to a root update, we want to get it back.
-    // This can happen when we delete an item or on drag-end.
-    if (
-      isRootChanged &&
-      haveFocus === false &&
-      hadFocus.current === true &&
-      selectedItemSelector !== undefined
-    ) {
-      setFocus(selectedItemSelector, "restoring");
-    }
-  }, [root, rootRef, selectedItemSelector, setFocus]);
-
-  // onBlur doesn't fire when the activeElement is removed from the DOM
-  useEffect(() => {
-    const haveFocus =
-      rootRef.current?.contains(document.activeElement) === true;
-    hadFocus.current = haveFocus;
-  });
-
-  return {
-    rootRef,
-    handleKeyDown,
-    handleClick(event: React.MouseEvent<Element>) {
-      if (editingItemId) {
-        return;
-      }
-
-      // When clicking on an item button make sure it gets focused.
-      // (see https://zellwk.com/blog/inconsistent-button-behavior/)
-      const itemButton = (event.target as HTMLElement).closest(
-        "[data-item-button-id]"
-      );
-      if (itemButton instanceof HTMLElement) {
-        itemButton.focus();
-        return;
-      }
-
-      // When clicking anywhere else in the tree,
-      // make sure the selected item doesn't loose focus.
-      if (selectedItemSelector !== undefined) {
-        setFocus(selectedItemSelector, "restoring");
-      }
-    },
-    handleBlur() {
-      hadFocus.current = false;
-    },
-  };
 };
 
 const useExpandState = <Data extends { id: string }>({
