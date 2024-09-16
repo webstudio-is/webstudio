@@ -40,10 +40,8 @@ const PagesButton = () => {
       }}
       aria-label="Toggle Pages"
       onClick={(event) => {
+        $editingPageId.set(event.altKey ? page.id : undefined);
         toggleActiveSidebarPanel("pages");
-        if (event.altKey) {
-          $editingPageId.set(page.id);
-        }
       }}
       tabIndex={0}
     >
