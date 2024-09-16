@@ -66,3 +66,5 @@ COMMENT ON FUNCTION "latestBuildVirtual"("Project") IS 'This function computes t
 -- LEFT JOIN LATERAL (
 --    SELECT * FROM "latestBuildVirtual"(p)
 -- ) lbv ON TRUE;
+
+DROP VIEW IF EXISTS "LatestBuildPerProject" CASCADE;

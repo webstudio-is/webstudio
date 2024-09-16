@@ -149,7 +149,6 @@ model Project {
   isDeleted                 Boolean                      @default(false)
   files                     File[]
   projectDomain             ProjectDomain[]
-  latestBuild               LatestBuildPerProject?
   authorizationToken        AuthorizationToken[]
   previewImageAsset         Asset?                       @relation(fields: [previewImageAssetId, id], references: [id, projectId])
   previewImageAssetId       String?
@@ -201,7 +200,6 @@ model Build {
   deployment    String?
   publishStatus PublishStatus @default(PENDING)
 
-  latestBuildPerProject       LatestBuildPerProject?
   latestStaticBuildPerProject LatestStaticBuildPerProject?
 
   @@id([id, projectId])
@@ -307,22 +305,6 @@ view LatestBuildPerProjectDomain {
   updatedAt     DateTime
 
   @@id([projectId, domainId])
-}
-
-view LatestBuildPerProject {
-  buildId String
-  build   Build  @relation(fields: [buildId, projectId], references: [id, projectId])
-
-  projectId String
-  domain    String
-  project   Project @relation(fields: [projectId, domain], references: [id, domain])
-
-  isLatestBuild Boolean
-  publishStatus PublishStatus
-  updatedAt     DateTime
-
-  @@id([projectId, domain])
-  @@unique([buildId, projectId])
 }
 
 view LatestStaticBuildPerProject {
