@@ -214,16 +214,45 @@ export const SYSTEM_FONTS = new Map([
         "Handwritten typefaces are designed to mimic the look and feel of handwriting. Despite the vast array of handwriting styles, this font stack tend to adopt a more informal and everyday style of handwriting.",
     },
   ],
-  ["Arial", { stack: ["Arial", "Roboto", "sans-serif"], description: "" }],
-  ["Times New Roman", { stack: ["Times New Roman", "sans"], description: "" }],
-  ["Courier New", { stack: ["Courier New", "monospace"], description: "" }],
+  [
+    "Arial",
+    {
+      stack: ["Arial", "Roboto", "sans-serif"],
+      description:
+        "A clean, sans-serif font designed for legibility and versatility. Ideal for modern, minimalistic designs or digital content that requires simplicity.",
+    },
+  ],
+  [
+    "Times New Roman",
+    {
+      stack: ["Times New Roman", "sans"],
+      description:
+        "A classic serif font known for its formal, professional appearance. Best suited for traditional documents, reports, and academic writing.",
+    },
+  ],
+  [
+    "Courier New",
+    {
+      stack: ["Courier New", "monospace"],
+      description:
+        "A monospaced serif font with uniform spacing, mimicking typewriter text. Perfect for coding, technical documents, or retro-styled designs.",
+    },
+  ],
   // Chineese fonts
-  ["SimSun", { stack: ["SimSun", "Songti SC, sans-serif"], description: "" }],
+  [
+    "SimSun",
+    {
+      stack: ["SimSun", "Songti SC, sans-serif"],
+      description:
+        "A traditional serif font designed for Chinese characters, offering clear and readable text. Ideal for formal Chinese documents or multilingual content requiring both Chinese and Latin text.",
+    },
+  ],
   [
     "PingFang SC",
     {
       stack: ["PingFang SC", "Microsoft Ya Hei", "sans-serif"],
-      description: "",
+      description:
+        "A modern sans-serif font designed for simplified Chinese characters. Sleek and clean, it’s best for digital content and interfaces where modern, streamlined design is needed.",
     },
   ],
 ]);
