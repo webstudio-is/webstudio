@@ -2,7 +2,7 @@ import type { Meta } from "@storybook/react";
 import { useState } from "react";
 import { Tree } from "./tree";
 import { type Item, findItemById, reparent } from "./test-tree-data";
-import { Flex } from "../flex";
+import { Flex } from "../../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
 import type { ItemDropTarget, ItemSelector } from "./item-utils";
 

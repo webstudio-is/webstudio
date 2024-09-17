@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FocusScope, useFocusManager } from "@react-aria/focus";
-import { ListPositionIndicator } from "../list-position-indicator";
+import { ListPositionIndicator } from "../../list-position-indicator";
 import {
   TreeNode,
   INDENT,
@@ -17,8 +17,8 @@ import {
   useAutoScroll,
   useDragCursor,
   computeIndicatorPlacement,
-} from "../primitives/dnd";
-import { Box } from "../box";
+} from "../../primitives/dnd";
+import { Box } from "../../box";
 import { useHorizontalShift } from "./horizontal-shift";
 import {
   type ItemId,
@@ -28,8 +28,8 @@ import {
   getElementByItemSelector,
   getItemSelectorFromElement,
 } from "./item-utils";
-import { ScrollArea } from "../scroll-area";
-import { theme } from "../..";
+import { ScrollArea } from "../../scroll-area";
+import { theme } from "../../..";
 
 const KeyboardNavigation = ({
   editingItemId,

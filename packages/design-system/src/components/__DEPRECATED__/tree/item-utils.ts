@@ -1,4 +1,4 @@
-import type { ChildrenOrientation } from "../primitives/dnd/geometry-utils";
+import type { ChildrenOrientation } from "../../primitives/dnd/geometry-utils";
 
 export type ItemId = string;
 
