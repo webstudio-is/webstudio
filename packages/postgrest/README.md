@@ -46,4 +46,6 @@ pnpx supabase test new latest-builds
 
 ```shell
 docker run --rm --network host -v ./supabase/tests:/tests -e PGOPTIONS='--search_path=pgtap,public' supabase/pg_prove:3.36 pg_prove -d "postgresql://postgres:pass@localhost/webstudio" --ext .sql /tests
+# OR
+pnpm run db-test
 ```
