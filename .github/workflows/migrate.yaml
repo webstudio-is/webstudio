@@ -72,6 +72,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v4
+
       - name: pnpm instal
         run: pnpm -r db-test
         env:
