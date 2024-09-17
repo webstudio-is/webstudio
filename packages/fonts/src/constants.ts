@@ -214,17 +214,6 @@ export const SYSTEM_FONTS = new Map([
         "Handwritten typefaces are designed to mimic the look and feel of handwriting. Despite the vast array of handwriting styles, this font stack tend to adopt a more informal and everyday style of handwriting.",
     },
   ],
-  [
-    "Emoji",
-    {
-      stack: [
-        "Apple Color Emoji",
-        "Segoe UI Emoji",
-        "Segoe UI Symbol",
-        "Noto Color Emoji",
-      ],
-    },
-  ],
   ["Arial", { stack: ["Arial", "Roboto", "sans-serif"], description: "" }],
   ["Times New Roman", { stack: ["Times New Roman", "sans"], description: "" }],
   ["Courier New", { stack: ["Courier New", "monospace"], description: "" }],
