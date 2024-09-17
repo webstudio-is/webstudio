@@ -17,7 +17,7 @@ import {
   Separator,
   useAssets,
 } from "~/builder/shared/assets";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
 import { CheckMarkIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import {
@@ -27,14 +27,9 @@ import {
   groupItemsByType,
   toItems,
 } from "./item-utils";
+import type { FontFamilyValue } from "@webstudio-is/css-engine";
 
-const useLogic = ({
-  onChange,
-  value,
-}: {
-  onChange: (value: string) => void;
-  value: string;
-}) => {
+const useLogic = ({ onChange, value }: FontsManagerProps) => {
   const { assetContainers } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assetContainers), [assetContainers]);
@@ -66,16 +61,14 @@ const useLogic = ({
     () => groupItemsByType(filteredItems),
     [filteredItems]
   );
-  const [currentIndex, setCurrentIndex] = useState(-1);
 
-  useEffect(() => {
-    setCurrentIndex(groupedItems.findIndex((item) => item.label === value));
+  const currentIndex = useMemo(() => {
+    return groupedItems.findIndex((item) => item.label === value.value[0]);
   }, [groupedItems, value]);
 
   const handleChangeCurrent = (nextCurrentIndex: number) => {
     const item = groupedItems[nextCurrentIndex];
     if (item !== undefined) {
-      setCurrentIndex(nextCurrentIndex);
       onChange(item.label);
     }
   };
@@ -93,7 +86,7 @@ const useLogic = ({
     const ids = filterIdsByFamily(family, assetContainers);
     deleteAssets(ids);
     if (index === currentIndex) {
-      setCurrentIndex(-1);
+      onChange(undefined);
     }
   };
 
@@ -111,8 +104,8 @@ const useLogic = ({
 };
 
 type FontsManagerProps = {
-  value: string;
-  onChange: (value: string) => void;
+  value: FontFamilyValue;
+  onChange: (value?: string) => void;
 };
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
