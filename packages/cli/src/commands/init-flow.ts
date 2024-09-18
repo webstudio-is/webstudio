@@ -17,6 +17,7 @@ import { link, validateShareLink } from "./link";
 import { sync } from "./sync";
 import { build, buildOptions } from "./build";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
+import { mapToTemplatesFromOptions } from "../build-utils";
 
 type ProjectTemplates = (typeof PROJECT_TEMPLATES)[number]["value"];
 
@@ -101,23 +102,11 @@ export const initFlow = async (
 
   await sync({ buildId: undefined, origin: undefined, authToken: undefined });
 
-  const templates: string[] = [];
-  const template = PROJECT_TEMPLATES.find(
-    (template) => template.value === projectTemplate
-  );
-
-  // This check is not needed technically, as the templates are picked from PROJECT_TEMPLATES list.
-  if (template === undefined && projectTemplate !== undefined) {
-    templates.push(projectTemplate);
-  }
-
-  if (template !== undefined && "expand" in template && template.expand) {
-    templates.push(...template.expand);
-  }
-
   await build({
     ...options,
-    ...(projectTemplate && { template: templates }),
+    ...(projectTemplate && {
+      template: mapToTemplatesFromOptions([projectTemplate]),
+    }),
   });
 
   if (shouldInstallDeps === true) {
