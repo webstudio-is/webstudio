@@ -2,7 +2,6 @@ import * as csstree from "css-tree";
 import { cssTryParseValue } from "../parse-css-value";
 import { colord, extend } from "colord";
 import {
-  type InvalidValue,
   type UnitValue,
   type Unit,
   toValue,
@@ -39,10 +38,10 @@ const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
 
 export const parseLinearGradient = (
   gradient: string
-): ParsedGradient | InvalidValue => {
+): ParsedGradient | undefined => {
   const ast = cssTryParseValue(gradient);
   if (ast === undefined) {
-    return { type: "invalid", value: gradient };
+    return;
   }
 
   const match = csstree.lexer.match(
@@ -50,7 +49,7 @@ export const parseLinearGradient = (
     ast
   );
   if (match.matched === null) {
-    return { type: "invalid", value: gradient };
+    return;
   }
 
   let angle: UnitValue | undefined;

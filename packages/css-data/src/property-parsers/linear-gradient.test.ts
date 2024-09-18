@@ -266,6 +266,10 @@ describe("parses linear-gradient", () => {
     const parsed = parseLinearGradient(
       "linear-gradient(rgb(255, 0, 0), rgb(0, 255, 0), rgb(0, 0, 255))"
     );
+    if (parsed === undefined) {
+      throw new Error("parsed is undefined");
+    }
+
     expect(reconstructLinearGradient(parsed)).toEqual(
       "linear-gradient(rgba(255, 0, 0, 1), rgba(0, 255, 0, 1), rgba(0, 0, 255, 1))"
     );
