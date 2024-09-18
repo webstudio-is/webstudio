@@ -12,11 +12,11 @@ import {
   ChevronFilledDownIcon,
   ChevronFilledRightIcon,
 } from "@webstudio-is/icons";
-import { Box } from "../box";
-import { Flex } from "../flex";
-import { Text } from "../text";
-import { styled, type CSS } from "../../stitches.config";
-import { theme } from "../../stitches.config";
+import { Box } from "../../box";
+import { Flex } from "../../flex";
+import { Text } from "../../text";
+import { styled, type CSS } from "../../../stitches.config";
+import { theme } from "../../../stitches.config";
 import {
   type ItemId,
   type ItemSelector,

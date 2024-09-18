@@ -26,6 +26,7 @@ import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
+import { properties } from "@webstudio-is/css-data";
 
 export const getRepeatedStyleItem = (styleValue: StyleValue, index: number) => {
   if (styleValue.type === "layers" || styleValue.type === "tuple") {
@@ -36,13 +37,19 @@ export const getRepeatedStyleItem = (styleValue: StyleValue, index: number) => {
 type ItemType = "layers" | "tuple";
 
 const normalizeStyleValue = (
-  value: undefined | StyleValue,
+  styleDecl: ComputedStyleDecl,
   primaryValue: StyleValue,
   itemType: ItemType = primaryValue.type === "tuple" ? "tuple" : "layers"
 ) => {
   const primaryItemsCount =
     primaryValue.type === itemType ? primaryValue.value.length : 0;
-  const items = value?.type === itemType ? value.value : [];
+  const value = styleDecl.cascadedValue;
+  const items = value.type === itemType ? value.value : [];
+  // prefill initial value when no items to repeated
+  if (items.length === 0 && primaryItemsCount > 0) {
+    const meta = properties[styleDecl.property as keyof typeof properties];
+    items.push(meta.initial);
+  }
   return {
     type: itemType,
     value: repeatUntil(items, primaryItemsCount),
@@ -55,16 +62,21 @@ export const addRepeatedStyleItem = (
 ) => {
   const batch = createBatchUpdate();
   const currentStyles = new Map(
-    styles.map((styleDecl) => [styleDecl.property, styleDecl.cascadedValue])
+    styles.map((styleDecl) => [styleDecl.property, styleDecl])
   );
   const primaryValue = styles[0].cascadedValue;
-  // infer type from new items
-  // because current values could be css wide keywords
-  const itemType: ItemType =
-    Array.from(newItems.values())[0]?.type === "tuple" ? "tuple" : "layers";
   for (const [property, value] of newItems) {
-    const oldValue = currentStyles.get(property);
-    const newValue = normalizeStyleValue(oldValue, primaryValue, itemType);
+    if (value.type !== "layers" && value.type !== "tuple") {
+      continue;
+    }
+    // infer type from new items
+    // because current values could be css wide keywords
+    const itemType: ItemType = value.type;
+    const styleDecl = currentStyles.get(property);
+    if (styleDecl === undefined) {
+      continue;
+    }
+    const newValue = normalizeStyleValue(styleDecl, primaryValue, itemType);
     if (value.type !== itemType) {
       console.error(
         `Unexpected item type "${value.type}" for ${property} repeated value`
@@ -85,12 +97,15 @@ export const editRepeatedStyleItem = (
 ) => {
   const batch = createBatchUpdate();
   const currentStyles = new Map(
-    styles.map((styleDecl) => [styleDecl.property, styleDecl.cascadedValue])
+    styles.map((styleDecl) => [styleDecl.property, styleDecl])
   );
   const primaryValue = styles[0].cascadedValue;
   for (const [property, value] of newItems) {
-    const oldValue = currentStyles.get(property);
-    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    const styleDecl = currentStyles.get(property);
+    if (styleDecl === undefined) {
+      continue;
+    }
+    const newValue = normalizeStyleValue(styleDecl, primaryValue);
     if (value.type !== newValue.type) {
       console.error(
         `Unexpected item type "${value.type}" for ${property} repeated value`
@@ -130,8 +145,7 @@ export const deleteRepeatedStyleItem = (
   const batch = createBatchUpdate();
   const primaryValue = styles[0].cascadedValue;
   for (const styleDecl of styles) {
-    const oldValue = styleDecl.cascadedValue;
-    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    const newValue = normalizeStyleValue(styleDecl, primaryValue);
     newValue.value.splice(index, 1);
     if (newValue.value.length > 0) {
       batch.setProperty(styleDecl.property as StyleProperty)(newValue);
@@ -150,8 +164,7 @@ export const toggleRepeatedStyleItem = (
   const batch = createBatchUpdate();
   const primaryValue = styles[0].cascadedValue;
   for (const styleDecl of styles) {
-    const oldValue = styleDecl.cascadedValue;
-    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    const newValue = normalizeStyleValue(styleDecl, primaryValue);
     newValue.value[index] = {
       ...newValue.value[index],
       hidden: false === (newValue.value[index].hidden ?? false),
@@ -169,8 +182,7 @@ export const swapRepeatedStyleItems = (
   const batch = createBatchUpdate();
   const primaryValue = styles[0].cascadedValue;
   for (const styleDecl of styles) {
-    const oldValue = styleDecl.cascadedValue;
-    const newValue = normalizeStyleValue(oldValue, primaryValue);
+    const newValue = normalizeStyleValue(styleDecl, primaryValue);
     // You can swap only if there are at least two layers
     // As we are checking across multiple properties, we can't be sure
     // which property don't have two layers so we are checking here.
@@ -191,9 +203,11 @@ export const RepeatedStyle = (props: {
     index: number,
     primaryValue: StyleValue
   ) => { label: string; color?: RgbaColor };
+  renderThumbnail?: (index: number, primaryValue: StyleValue) => JSX.Element;
   renderItemContent: (index: number, primaryValue: StyleValue) => JSX.Element;
 }) => {
-  const { label, styles, getItemProps, renderItemContent } = props;
+  const { label, styles, getItemProps, renderThumbnail, renderItemContent } =
+    props;
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
   const primaryItems =
@@ -233,6 +247,14 @@ export const RepeatedStyle = (props: {
             <FloatingPanel
               key={index}
               title={label}
+              // Background Panel is big, and the size differs when the tabs are changed.
+              // This results in the panel moving around when the tabs are changed.
+              // And sometimes, the tab moves away from the cursor,
+              // when the content change happens on the top.
+              // This is a workaround to prevent the panel from moving around
+              // too much when the tabs are changed from the popover trigger.
+              align="center"
+              collisionPadding={{ bottom: 200, top: 200 }}
               content={renderItemContent(index, primaryValue)}
             >
               <CssValueListItem
@@ -242,7 +264,10 @@ export const RepeatedStyle = (props: {
                 index={index}
                 label={<Label truncate>{itemLabel}</Label>}
                 hidden={primaryValue.hidden}
-                thumbnail={itemColor && <ColorThumb color={itemColor} />}
+                thumbnail={
+                  renderThumbnail?.(index, primaryValue) ??
+                  (itemColor && <ColorThumb color={itemColor} />)
+                }
                 buttons={
                   <>
                     <SmallToggleButton
