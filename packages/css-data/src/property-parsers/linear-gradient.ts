@@ -69,6 +69,8 @@ export const parseLinearGradient = (
           (item.type === "Operator" && item.value === ",") ||
           node.children.last === item
         ) {
+          // If the gradientParts lenght is 1, then we need to check if it is angle or not.
+          // If it's angle, then the value is related to <angle> or else it is a <color-hint>.
           if (gradientParts.length === 1) {
             if (isAngle(gradientParts[0]) === true) {
               angle = {
@@ -104,6 +106,7 @@ export const parseLinearGradient = (
             sideOrCorner = { type: "keyword", value };
           }
 
+          // if there is a color-stop in the gradientParts, then we need to parse it for position and hint.
           const colorStop = gradientParts.find(isColorStop);
           if (colorStop !== undefined) {
             const [_, position, hint] = gradientParts;
@@ -207,6 +210,5 @@ export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
     })
     .join(", ");
 
-  // Check if there's a turn unit and handle the last gradient properly
   return `linear-gradient(${direction ? toValue(direction) + ", " : ""}${stops})`;
 };
