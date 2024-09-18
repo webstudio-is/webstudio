@@ -50,10 +50,10 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(
       toValue({
         type: "fontFamily",
-        value: ["Emoji"],
+        value: ["Humanist"],
       })
     ).toBe(
-      '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'
+      'Seravek, "Gill Sans Nova", Ubuntu, Calibri, "DejaVu Sans", source-sans-pro, sans-serif'
     );
   });
 
