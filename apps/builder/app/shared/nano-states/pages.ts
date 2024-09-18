@@ -15,3 +15,5 @@ export const $selectedPage = computed(
     return findPageByIdOrPath(selectedPageId, pages);
   }
 );
+
+export const $editingPageId = atom<undefined | Page["id"]>();

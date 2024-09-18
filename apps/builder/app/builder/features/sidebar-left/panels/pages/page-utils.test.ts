@@ -16,13 +16,13 @@ import {
   toTreeData,
   filterSelfAndChildren,
   getExistingRoutePaths,
-  $editingPagesItemId,
   $pageRootScope,
   isPathAvailable,
 } from "./page-utils";
 import {
   $dataSourceVariables,
   $dataSources,
+  $editingPageId,
   $pages,
   $resourceValues,
   $selectedPageId,
@@ -585,7 +585,7 @@ test("page root scope should rely on editing page", () => {
   });
   $pages.set(pages);
   $selectedPageId.set("homePageId");
-  $editingPagesItemId.set("pageId");
+  $editingPageId.set("pageId");
   $dataSources.set(
     toMap([
       {
@@ -619,7 +619,7 @@ test("page root scope should use variable and resource values", () => {
       systemDataSourceId: "system",
     })
   );
-  $editingPagesItemId.set("homePageId");
+  $editingPageId.set("homePageId");
   $dataSources.set(
     toMap([
       {
@@ -666,7 +666,7 @@ test("page root scope should prefill default system variable value", () => {
       systemDataSourceId: "systemId",
     })
   );
-  $editingPagesItemId.set("homePageId");
+  $editingPageId.set("homePageId");
   $dataSources.set(
     toMap([
       {

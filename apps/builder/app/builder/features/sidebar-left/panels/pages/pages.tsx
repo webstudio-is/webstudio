@@ -25,10 +25,9 @@ import type { TabContentProps } from "../../types";
 import { CloseButton, Header, Root } from "../../shared/panel";
 import { ExtendedPanel } from "../../shared/extended-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
-import { $pages, $selectedPageId } from "~/shared/nano-states";
+import { $editingPageId, $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import {
-  $editingPagesItemId,
   getAllChildrenAndSelf,
   reparentOrphansMutable,
   toTreeData,
@@ -364,7 +363,7 @@ const FolderEditor = ({
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const currentPageId = useStore($selectedPageId);
-  const editingItemId = useStore($editingPagesItemId);
+  const editingItemId = useStore($editingPageId);
   const pages = useStore($pages);
 
   if (currentPageId === undefined || pages === undefined) {
@@ -376,12 +375,12 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
       <PagesPanel
         onClose={() => onSetActiveTab("none")}
         onCreateNewFolder={() => {
-          $editingPagesItemId.set(
+          $editingPageId.set(
             editingItemId === newFolderId ? undefined : newFolderId
           );
         }}
         onCreateNewPage={() =>
-          $editingPagesItemId.set(
+          $editingPageId.set(
             editingItemId === newPageId ? undefined : newPageId
           )
         }
@@ -393,7 +392,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           onSetActiveTab("none");
         }}
         selectedPageId={currentPageId}
-        onEdit={$editingPagesItemId.set}
+        onEdit={$editingPageId.set}
         editingItemId={editingItemId}
       />
 
@@ -403,12 +402,12 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
             {isFolder(editingItemId, pages.folders) ? (
               <FolderEditor
                 editingFolderId={editingItemId}
-                setEditingFolderId={$editingPagesItemId.set}
+                setEditingFolderId={$editingPageId.set}
               />
             ) : (
               <PageEditor
                 editingPageId={editingItemId}
-                setEditingPageId={$editingPagesItemId.set}
+                setEditingPageId={$editingPageId.set}
               />
             )}
           </>

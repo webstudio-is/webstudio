@@ -1,4 +1,4 @@
-import { atom, computed } from "nanostores";
+import { computed } from "nanostores";
 import { createRootFolder } from "@webstudio-is/project-build";
 import {
   type Page,
@@ -21,6 +21,7 @@ import {
 import {
   $dataSourceVariables,
   $dataSources,
+  $editingPageId,
   $pages,
   $publishedOrigin,
   $resourceValues,
@@ -328,15 +329,13 @@ export const getExistingRoutePaths = (pages?: Pages): Set<string> => {
   return paths;
 };
 
-export const $editingPagesItemId = atom<undefined | Page["id"]>();
-
 const $editingPage = computed(
-  [$editingPagesItemId, $pages],
-  (editingPagesItemId, pages) => {
-    if (editingPagesItemId === undefined || pages === undefined) {
+  [$editingPageId, $pages],
+  (editingPageId, pages) => {
+    if (editingPageId === undefined || pages === undefined) {
       return;
     }
-    return findPageByIdOrPath(editingPagesItemId, pages);
+    return findPageByIdOrPath(editingPageId, pages);
   }
 );
 

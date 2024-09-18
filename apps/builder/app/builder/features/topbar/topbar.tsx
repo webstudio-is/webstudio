@@ -8,9 +8,11 @@ import {
   ToolbarButton,
   Text,
   type CSS,
+  Tooltip,
+  Kbd,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { $pages, $selectedPage } from "~/shared/nano-states";
+import { $editingPageId, $pages, $selectedPage } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -33,19 +35,29 @@ const PagesButton = () => {
   }
 
   return (
-    <ToolbarButton
-      css={{
-        px: theme.spacing[9],
-        maxWidth: theme.spacing[24],
-      }}
-      aria-label="Toggle Pages"
-      onClick={() => {
-        toggleActiveSidebarPanel("pages");
-      }}
-      tabIndex={0}
+    <Tooltip
+      content={
+        <Text>
+          {"Pages or page settings "}
+          <Kbd value={["option", "click"]} color="moreSubtle" />
+        </Text>
+      }
     >
-      <Text truncate>{page.name}</Text>
-    </ToolbarButton>
+      <ToolbarButton
+        css={{
+          px: theme.spacing[9],
+          maxWidth: theme.spacing[24],
+        }}
+        aria-label="Toggle Pages"
+        onClick={(event) => {
+          $editingPageId.set(event.altKey ? page.id : undefined);
+          toggleActiveSidebarPanel("pages");
+        }}
+        tabIndex={0}
+      >
+        <Text truncate>{page.name}</Text>
+      </ToolbarButton>
+    </Tooltip>
   );
 };
 
