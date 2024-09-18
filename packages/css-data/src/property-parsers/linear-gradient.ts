@@ -1,21 +1,60 @@
 import * as csstree from "css-tree";
 import { cssTryParseValue } from "../parse-css-value";
 import { colord } from "colord";
-import type { InvalidValue, UnitValue, Unit } from "@webstudio-is/css-engine";
+import {
+  type InvalidValue,
+  type UnitValue,
+  type Unit,
+  toValue,
+  KeywordValue,
+} from "@webstudio-is/css-engine";
 
 interface GradientStop {
   color: string;
-  position?: string;
-  hint?: string;
+  position?: UnitValue;
+  hint?: UnitValue;
 }
 
 interface ParsedGradient {
   angle?: UnitValue;
-  sideOrCorner?: string;
+  sideOrCorner?: KeywordValue;
   stops: GradientStop[];
 }
 
 const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
+
+const isColorStop = (
+  node: csstree.CssNode
+): node is csstree.Identifier | csstree.FunctionNode | csstree.Hash => {
+  if (node.type === "Function" && colord(node.name).isValid() === true) {
+    return true;
+  }
+
+  if (
+    node.type === "Identifier" &&
+    sideOrCorderIdentifiers.includes(node.name) === false
+  ) {
+    return true;
+  }
+
+  if (node.type === "Hash") {
+    return true;
+  }
+
+  return false;
+};
+
+const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
+  node.type === "Dimension";
+
+const isSideOrCorner = (node: csstree.CssNode): node is csstree.Identifier =>
+  node.type === "Identifier" &&
+  sideOrCorderIdentifiers.includes(node.name) === true;
+
+const isPositionOrHint = (
+  node: csstree.CssNode
+): node is csstree.Percentage | csstree.Dimension =>
+  node.type === "Percentage" || node.type === "Dimension";
 
 export const parseLinearGradient = (
   gradient: string
@@ -52,76 +91,57 @@ export const parseLinearGradient = (
     };
   }
 
-  const result: ParsedGradient = {
-    angle: undefined,
-    sideOrCorner: undefined,
-    stops: [],
-  };
+  let angle: UnitValue | undefined;
+  let sideOrCorner: KeywordValue | undefined;
+  const stops: GradientStop[] = [];
+  let currentColor: string | undefined;
 
-  let currentStop: GradientStop | undefined;
-
-  csstree.walk(gradientNode, {
-    enter: (node: csstree.CssNode) => {
-      if (isAngle(node)) {
-        result.angle = formatAngle(node);
-      } else if (isSideOrCorner(node)) {
-        result.sideOrCorner = formatSideOrCorner(node, result.sideOrCorner);
-      } else if (
-        isColorFunction(node) ||
-        isColorIdentifier(node) ||
-        isHexColor(node)
-      ) {
-        currentStop = addNewColorStop(
-          result.stops,
-          currentStop,
-          getColor(node)
-        );
-      } else if (isPositionOrHint(node)) {
-        currentStop = handlePositionOrHint(
-          result.stops,
-          currentStop,
-          formatPositionOrHint(node)
-        );
+  csstree.walk(gradientNode, (node: csstree.CssNode) => {
+    if (isAngle(node) === true) {
+      angle = {
+        type: "unit",
+        value: Number(node.value),
+        unit: node.unit as Unit,
+      };
+    } else if (isSideOrCorner(node) === true) {
+      sideOrCorner = {
+        type: "keyword",
+        value: sideOrCorner
+          ? `${toValue(sideOrCorner)} ${node.name}`
+          : node.name,
+      };
+    } else if (isColorStop(node) === true) {
+      currentColor = getColor(node);
+      stops.push({ color: currentColor });
+    } else if (isPositionOrHint(node) === true) {
+      const positionOrHint = formatPositionOrHint(node);
+      if (currentColor) {
+        if (stops[stops.length - 1].color === currentColor) {
+          if (stops[stops.length - 1].position === undefined) {
+            stops[stops.length - 1].position = positionOrHint;
+          } else if (stops[stops.length - 1].hint === undefined) {
+            stops[stops.length - 1].hint = positionOrHint;
+          } else {
+            stops.push({ color: currentColor, position: positionOrHint });
+          }
+        } else {
+          stops.push({ color: currentColor, position: positionOrHint });
+        }
+      } else {
+        stops.push({
+          color: stops[stops.length - 1]?.color || "transparent",
+          position: positionOrHint,
+        });
       }
-    },
+    }
   });
 
-  if (currentStop) {
-    result.stops.push(currentStop);
-  }
-
-  return result;
-};
-
-const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
-  node.type === "Dimension";
-
-const formatAngle = (node: csstree.Dimension): UnitValue => {
   return {
-    type: "unit",
-    value: Number(node.value),
-    unit: node.unit as Unit,
+    angle,
+    sideOrCorner,
+    stops,
   };
 };
-
-const isSideOrCorner = (node: csstree.CssNode): node is csstree.Identifier =>
-  node.type === "Identifier" &&
-  sideOrCorderIdentifiers.includes(node.name) === true;
-
-const formatSideOrCorner = (
-  node: csstree.Identifier,
-  existing: string | undefined
-): string => (existing ? `${existing} ${node.name}` : node.name);
-
-const isColorFunction = (node: csstree.CssNode): node is csstree.FunctionNode =>
-  node.type === "Function" && colord(node.name).isValid();
-
-const isColorIdentifier = (node: csstree.CssNode): node is csstree.Identifier =>
-  node.type === "Identifier" &&
-  sideOrCorderIdentifiers.includes(node.name) === false;
-
-const isHexColor = (node: csstree.CssNode): node is csstree.Hash =>
-  node.type === "Hash";
 
 const getColor = (
   node: csstree.FunctionNode | csstree.Identifier | csstree.Hash
@@ -135,65 +155,37 @@ const getColor = (
   return colord(`#${node.value}`).toRgbString();
 };
 
-const isPositionOrHint = (
-  node: csstree.CssNode
-): node is csstree.Percentage | csstree.Dimension =>
-  node.type === "Percentage" ||
-  (node.type === "Dimension" && node.unit === "px");
-
 const formatPositionOrHint = (
   node: csstree.Percentage | csstree.Dimension
-): string => `${node.value}${node.type === "Percentage" ? "%" : "px"}`;
-
-const addNewColorStop = (
-  stops: GradientStop[],
-  currentStop: GradientStop | undefined,
-  color: string
-): GradientStop => {
-  if (currentStop && (currentStop.position || currentStop.hint)) {
-    stops.push(currentStop);
+): UnitValue => {
+  if (node.type === "Percentage") {
+    return {
+      type: "unit",
+      value: parseFloat(node.value),
+      unit: "%",
+    };
   }
-  return { color };
-};
 
-const handlePositionOrHint = (
-  stops: GradientStop[],
-  currentStop: GradientStop | undefined,
-  value: string
-): GradientStop => {
-  if (currentStop) {
-    if (currentStop.position === undefined) {
-      currentStop.position = value;
-    } else if (currentStop.hint === undefined) {
-      currentStop.hint = value;
-      if (currentStop.position) {
-        stops.push(currentStop);
-        return {
-          color: currentStop.color,
-        };
-      }
-    }
-  } else {
-    const previousColor =
-      stops.length > 0 ? stops[stops.length - 1].color : "transparent";
-    return { color: previousColor, position: value, hint: undefined };
-  }
-  return currentStop;
+  return {
+    type: "unit",
+    value: parseFloat(node.value),
+    unit: node.unit as Unit,
+  };
 };
 
 export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
   const direction = parsed.angle || parsed.sideOrCorner;
-  const stops = parsed.stops.map(formatGradientStop).join(", ");
-  return `linear-gradient(${direction ? direction + ", " : ""}${stops})`;
-};
-
-const formatGradientStop = (stop: GradientStop): string => {
-  let result = stop.color;
-  if (stop.position) {
-    result += ` ${stop.position}`;
-  }
-  if (stop.hint) {
-    result += ` ${stop.hint}`;
-  }
-  return result;
+  const stops = parsed.stops
+    .map((stop: GradientStop) => {
+      let result = stop.color;
+      if (stop.position) {
+        result += ` ${toValue(stop.position)}`;
+      }
+      if (stop.hint) {
+        result += ` ${toValue(stop.hint)}`;
+      }
+      return result;
+    })
+    .join(", ");
+  return `linear-gradient(${direction ? toValue(direction) + ", " : ""}${stops})`;
 };
