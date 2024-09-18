@@ -1,3 +1,9 @@
 export type { ItemSelector, ItemDropTarget } from "./item-utils";
 export * from "./tree";
-export * from "./tree-node";
+export {
+  TreeItemBody,
+  TreeItemLabel,
+  getNodeVars,
+  getPlacementIndicatorAlignment,
+  type TreeItemRenderProps,
+} from "./tree-node";
