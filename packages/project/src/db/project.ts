@@ -5,7 +5,7 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createBuild } from "@webstudio-is/project-build/index.server";
-import { MarketplaceApprovalStatus, Project, Title } from "../shared/schema";
+import { MarketplaceApprovalStatus, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
 
@@ -39,10 +39,9 @@ export const findProjectIdsByUserId = async (
   return result.data;
 };
 
-export const loadById = async (
-  projectId: Project["id"],
-  context: AppContext
-) => {
+export type Project = Awaited<ReturnType<typeof loadById>>;
+
+export const loadById = async (projectId: string, context: AppContext) => {
   const canRead = await authorizeProject.hasProjectPermit(
     { projectId, permit: "view" },
     context
@@ -59,26 +58,27 @@ export const loadById = async (
         *,
         previewImageAsset:Asset (*),
         latestBuildVirtual(*),
-        latestStaticBuild:LatestStaticBuildPerProject (*)
+        latestStaticBuild:LatestStaticBuildPerProject (*),
+        domainsVirtual(*, latestBuildVirtual(*))
       `
     )
     .eq("id", projectId)
     .eq("isDeleted", false)
     .single();
+
   if (data.error) {
     throw data.error;
   }
-  const { latestBuildVirtual, latestStaticBuild, ...project } = data.data;
+  const { latestStaticBuild, ...project } = data.data;
 
   return {
     ...project,
-    latestBuildVirtual,
     // postgres marks all view fields as nullable
     // workaround this by casting to non nullable
     latestStaticBuild: (latestStaticBuild[0] ?? null) as null | SetNonNullable<
       NonNullable<(typeof latestStaticBuild)[0]>
     >,
-  } satisfies Project;
+  };
 };
 
 export const create = async (

@@ -252,8 +252,6 @@ model Domain {
   status        DomainStatus    @default(INITIALIZING)
   // In case of status="error", this will contain the error message
   error         String?
-
-  projectWithDomain ProjectWithDomain[]
 }
 
 model ProjectDomain {
@@ -270,25 +268,6 @@ model ProjectDomain {
 
   @@id([projectId, domainId])
   @@index([domainId])
-}
-
-view ProjectWithDomain {
-  projectId String
-
-  domainId  String
-  domain    Domain @relation(fields: [domainId], references: [id])
-  txtRecord String
-
-  createdAt DateTime @db.Timestamptz(3)
-
-  // CNAME record to point to the domain
-  cname String
-
-  verified Boolean
-  // To count statistics per user
-  userId   String?
-
-  @@id([projectId, domainId])
 }
 
 view LatestStaticBuildPerProject {

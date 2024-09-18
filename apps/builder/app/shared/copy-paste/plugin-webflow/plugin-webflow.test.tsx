@@ -100,6 +100,10 @@ beforeEach(() => {
     isDeleted: false,
     previewImageAsset: null,
     marketplaceApprovalStatus: "PENDING",
+    latestStaticBuild: null,
+    domainsVirtual: [],
+    latestBuildVirtual: null,
+    previewImageAssetId: null,
   });
 
   $breakpoints.set(

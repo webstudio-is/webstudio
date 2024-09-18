@@ -335,7 +335,7 @@ const Publish = ({
               {
                 projectId: project.id,
                 domains: domainsToPublish.map(
-                  (projectDomain) => projectDomain.domain.domain
+                  (projectDomain) => projectDomain.domain
                 ),
                 destination: "saas",
               },
@@ -355,7 +355,10 @@ const Publish = ({
 const getStaticPublishStatusAndText = ({
   updatedAt,
   publishStatus,
-}: Pick<NonNullable<Domain["latestBuid"]>, "updatedAt" | "publishStatus">) => {
+}: {
+  updatedAt: string;
+  publishStatus: string;
+}) => {
   let status = publishStatus;
 
   const delta = Date.now() - new Date(updatedAt).getTime();
@@ -573,13 +576,6 @@ const Content = (props: {
   const [newDomains, setNewDomains] = useState(new Set<string>());
 
   const {
-    data: domainsResult,
-    load: domainRefresh,
-    state: domainState,
-    error: domainSystemError,
-  } = trpcClient.domain.findMany.useQuery();
-
-  const {
     load: projectLoad,
     data: projectData,
     state: projectState,
@@ -588,17 +584,18 @@ const Content = (props: {
 
   useEffect(() => {
     projectLoad({ projectId: props.projectId });
-    domainRefresh({ projectId: props.projectId });
-  }, [domainRefresh, props.projectId, projectLoad]);
+  }, [props.projectId, projectLoad]);
+
+  projectData?.success;
 
   const domainsToPublish = useMemo(
     () =>
-      domainsResult?.success
-        ? domainsResult.data.filter(
+      projectData?.success
+        ? projectData.project.domainsVirtual.filter(
             (projectDomain) => getStatus(projectDomain) === "VERIFIED_ACTIVE"
           )
         : [],
-    [domainsResult]
+    [projectData]
   );
 
   const latestBuildVirtual = projectData?.success
@@ -653,22 +650,14 @@ const Content = (props: {
           />
         )}
 
-        {domainsResult?.success === true && (
+        {projectData?.success && (
           <Domains
             newDomains={newDomains}
-            domains={domainsResult.data}
-            refreshDomainResult={domainRefresh}
-            domainState={domainState}
+            domains={projectData.project.domainsVirtual}
+            refreshDomainResult={projectLoad}
+            domainState={projectState}
             isPublishing={isPublishing}
           />
-        )}
-
-        {domainSystemError !== undefined && (
-          <ErrorText>{domainSystemError}</ErrorText>
-        )}
-
-        {domainsResult?.success === false && (
-          <ErrorText>{domainsResult.error}</ErrorText>
         )}
       </ScrollArea>
       <Flex direction="column" justify="end" css={{ height: 0 }}>
@@ -676,8 +665,8 @@ const Content = (props: {
       </Flex>
       <AddDomain
         projectId={props.projectId}
-        refreshDomainResult={domainRefresh}
-        domainState={domainState}
+        refreshDomainResult={projectLoad}
+        domainState={projectState}
         onCreate={(domain) => {
           setNewDomains((prev) => {
             return new Set([...prev, domain]);
@@ -692,7 +681,6 @@ const Content = (props: {
           domainsToPublish={domainsToPublish}
           refresh={() => {
             projectLoad({ projectId: props.projectId });
-            domainRefresh({ projectId: props.projectId });
           }}
           isPublishing={isPublishing}
           setIsPublishing={setIsPublishing}

@@ -2,6 +2,7 @@ import type { StoryFn } from "@storybook/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Dashboard } from "./dashboard";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import type { DashboardProject } from "@webstudio-is/dashboard";
 
 export default {
   title: "Dashboard / Projects",
@@ -56,13 +57,19 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
       createdAt: new Date().toString(),
       title: "My Project",
       domain: "domain.com",
-      userId: null,
+      userId: "",
       isDeleted: false,
       isPublished: false,
       latestBuild: null,
-      previewImageAsset: null,
+      previewImageAsset: {
+        id: "0",
+        projectId: "0",
+        name: "preview.jpg",
+      },
+      previewImageAssetId: "",
+      latestBuildVirtual: null,
       marketplaceApprovalStatus: "UNLISTED" as const,
-    },
+    } as DashboardProject,
   ];
   const router = createRouter(
     <Dashboard

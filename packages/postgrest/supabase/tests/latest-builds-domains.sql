@@ -1,5 +1,7 @@
 BEGIN;
 
+-- SET LOCAL search_path = pgtap,public;
+
 -- Initialize the testing environment without planning any specific number of tests
 SELECT no_plan();
 
@@ -34,7 +36,7 @@ SELECT
     lbv."buildId"
 FROM "public"."ProjectDomain" pd
 LEFT JOIN LATERAL (
-    SELECT * FROM "latestBuildVirtual"(pd)
+    SELECT * FROM "latestBuildVirtual"(ROW('', pd."domainId", pd."projectId", '', 'INITIALIZING'::"DomainStatus", NULL, 'txt','expectedTxt','cname',TRUE, NOW(),NOW())::"domainsVirtual")
 ) lbv ON TRUE
 ORDER BY pd."domainId";
 

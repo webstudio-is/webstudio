@@ -10,7 +10,6 @@ export type {
   AuthorizationToken,
   DomainStatus,
   Domain,
-  ProjectWithDomain,
   PublishStatus,
   Product,
   $Enums,
