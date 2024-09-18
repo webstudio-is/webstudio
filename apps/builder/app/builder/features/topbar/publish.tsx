@@ -602,7 +602,9 @@ const Content = (props: {
     ? (projectData.project.latestBuildVirtual ?? undefined)
     : undefined;
 
-  const hasPendingState = latestBuildVirtual?.publishStatus === "PENDING";
+  const hasPendingState = latestBuildVirtual
+    ? getPublishStatusAndTextNew(latestBuildVirtual).status === "PENDING"
+    : false;
 
   const [isPublishing, setIsPublishing] = useState(hasPendingState);
 
