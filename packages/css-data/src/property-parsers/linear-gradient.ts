@@ -1,16 +1,20 @@
 import * as csstree from "css-tree";
 import { cssTryParseValue } from "../parse-css-value";
-import { colord } from "colord";
+import { colord, extend } from "colord";
 import {
   type InvalidValue,
   type UnitValue,
   type Unit,
   toValue,
   KeywordValue,
+  type RgbValue,
 } from "@webstudio-is/css-engine";
+import namesPlugin from "colord/plugins/names";
+
+extend([namesPlugin]);
 
 interface GradientStop {
-  color: string;
+  color?: RgbValue;
   position?: UnitValue;
   hint?: UnitValue;
 }
@@ -23,48 +27,22 @@ interface ParsedGradient {
 
 const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
 
-const isColorStop = (
-  node: csstree.CssNode
-): node is csstree.Identifier | csstree.FunctionNode | csstree.Hash => {
-  if (node.type === "Function" && colord(node.name).isValid() === true) {
-    return true;
-  }
-
-  if (
-    node.type === "Identifier" &&
-    sideOrCorderIdentifiers.includes(node.name) === false
-  ) {
-    return true;
-  }
-
-  if (node.type === "Hash") {
-    return true;
-  }
-
-  return false;
-};
-
-const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
-  node.type === "Dimension";
-
-const isSideOrCorner = (node: csstree.CssNode): node is csstree.Identifier =>
-  node.type === "Identifier" &&
-  sideOrCorderIdentifiers.includes(node.name) === true;
-
-const isPositionOrHint = (
-  node: csstree.CssNode
-): node is csstree.Percentage | csstree.Dimension =>
-  node.type === "Percentage" || node.type === "Dimension";
+// We are currently not supporting color-interpolation-method from the linear-gradient syntax.
+// There are multiple reasons to not support it:
+// - mdn-data does not have any information about it. There is a PR that is opened about it.
+//   https://github.com/mdn/data/pull/766 which needs to be released first.
+// - we can't use css-tree parser directly and by-pass using css-tree lexer.match.But there are again multiple issues
+//   css-tree package don't have information about <color-interpolation-method> for css-tree@2.3.1.
+//   They only added it after css-tree@3.0.0 which has breaking changes for us to upgrade directly.
+// - patching the css-tree package is a solution. But the issue was, we need to import esm build of the package.
+//   But in esm build the patch.json file is merged in build file. So, even if patch the json file for syntaxes it will not help.
 
 export const parseLinearGradient = (
   gradient: string
 ): ParsedGradient | InvalidValue => {
   const ast = cssTryParseValue(gradient);
   if (ast === undefined) {
-    return {
-      type: "invalid",
-      value: gradient,
-    };
+    return { type: "invalid", value: gradient };
   }
 
   const match = csstree.lexer.match(
@@ -72,112 +50,153 @@ export const parseLinearGradient = (
     ast
   );
   if (match.matched === null) {
-    return {
-      type: "invalid",
-      value: gradient,
-    };
-  }
-
-  const gradientNode = csstree.find(
-    ast,
-    (node): node is csstree.FunctionNode =>
-      node.type === "Function" && node.name === "linear-gradient"
-  );
-
-  if (!gradientNode) {
-    return {
-      type: "invalid",
-      value: gradient,
-    };
+    return { type: "invalid", value: gradient };
   }
 
   let angle: UnitValue | undefined;
   let sideOrCorner: KeywordValue | undefined;
   const stops: GradientStop[] = [];
-  let currentColor: string | undefined;
+  let gradientParts: csstree.CssNode[] = [];
 
-  csstree.walk(gradientNode, (node: csstree.CssNode) => {
-    if (isAngle(node) === true) {
-      angle = {
-        type: "unit",
-        value: Number(node.value),
-        unit: node.unit as Unit,
-      };
-    } else if (isSideOrCorner(node) === true) {
-      sideOrCorner = {
-        type: "keyword",
-        value: sideOrCorner
-          ? `${toValue(sideOrCorner)} ${node.name}`
-          : node.name,
-      };
-    } else if (isColorStop(node) === true) {
-      currentColor = getColor(node);
-      stops.push({ color: currentColor });
-    } else if (isPositionOrHint(node) === true) {
-      const positionOrHint = formatPositionOrHint(node);
-      if (currentColor) {
-        if (stops[stops.length - 1].color === currentColor) {
-          if (stops[stops.length - 1].position === undefined) {
-            stops[stops.length - 1].position = positionOrHint;
-          } else if (stops[stops.length - 1].hint === undefined) {
-            stops[stops.length - 1].hint = positionOrHint;
-          } else {
-            stops.push({ color: currentColor, position: positionOrHint });
-          }
-        } else {
-          stops.push({ color: currentColor, position: positionOrHint });
+  csstree.walk(ast, (node) => {
+    if (node.type === "Function" && node.name === "linear-gradient") {
+      for (const item of node.children) {
+        if (item.type !== "Operator") {
+          gradientParts.push(item);
         }
-      } else {
-        stops.push({
-          color: stops[stops.length - 1]?.color || "transparent",
-          position: positionOrHint,
-        });
+
+        if (
+          (item.type === "Operator" && item.value === ",") ||
+          node.children.last === item
+        ) {
+          if (gradientParts.length === 1) {
+            if (isAngle(gradientParts[0]) === true) {
+              angle = {
+                type: "unit",
+                value: parseFloat(gradientParts[0].value),
+                unit: gradientParts[0].unit as Unit,
+              };
+            }
+
+            if (
+              gradientParts[0].type === "Percentage" ||
+              (gradientParts[0].type === "Dimension" &&
+                ["deg", "grad", "rad", "turn"].includes(
+                  gradientParts[0].unit
+                ) === false)
+            ) {
+              const hint: csstree.Percentage | csstree.Dimension =
+                gradientParts[0];
+              stops.push({
+                hint: {
+                  type: "unit",
+                  value: parseFloat(hint.value),
+                  unit: hint.type === "Percentage" ? "%" : (hint.unit as Unit),
+                },
+              });
+            }
+          }
+
+          if (gradientParts.length && isSideOrCorner(gradientParts[0])) {
+            const value = gradientParts
+              .map((item) => csstree.generate(item))
+              .join(" ");
+            sideOrCorner = { type: "keyword", value };
+          }
+
+          const colorStop = gradientParts.find(isColorStop);
+          if (colorStop !== undefined) {
+            const [_, position, hint] = gradientParts;
+
+            const stop: GradientStop = {
+              color: getColor(colorStop),
+              position:
+                position &&
+                (position.type === "Percentage" ||
+                  position.type === "Dimension")
+                  ? {
+                      type: "unit",
+                      value: parseFloat(position.value),
+                      unit:
+                        position.type === "Percentage"
+                          ? "%"
+                          : (position.unit as Unit),
+                    }
+                  : undefined,
+              hint:
+                hint &&
+                (hint.type === "Percentage" || hint.type === "Dimension")
+                  ? {
+                      type: "unit",
+                      value: parseFloat(hint.value),
+                      unit:
+                        hint.type === "Percentage" ? "%" : (hint.unit as Unit),
+                    }
+                  : undefined,
+            };
+
+            stops.push(stop);
+          }
+
+          gradientParts = [];
+        }
       }
     }
   });
 
-  return {
-    angle,
-    sideOrCorner,
-    stops,
-  };
+  return { angle, sideOrCorner, stops };
+};
+
+const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
+  node.type === "Dimension" &&
+  ["deg", "grad", "rad", "turn"].includes(node.unit);
+
+const isSideOrCorner = (node: csstree.CssNode): node is csstree.Identifier =>
+  node.type === "Identifier" && sideOrCorderIdentifiers.includes(node.name);
+
+const isColorStop = (
+  node: csstree.CssNode
+): node is csstree.Identifier | csstree.FunctionNode | csstree.Hash => {
+  return (
+    (node.type === "Function" ||
+      (node.type === "Identifier" &&
+        sideOrCorderIdentifiers.includes(node.name)) === false ||
+      node.type === "Hash") &&
+    colord(csstree.generate(node)).isValid() === true
+  );
 };
 
 const getColor = (
   node: csstree.FunctionNode | csstree.Identifier | csstree.Hash
-): string => {
+): RgbValue | undefined => {
+  let color: string;
   if (node.type === "Function") {
-    return csstree.generate(node);
+    color = csstree.generate(node);
+  } else if (node.type === "Identifier") {
+    color = node.name;
+  } else {
+    color = `#${node.value}`;
   }
-  if (node.type === "Identifier") {
-    return node.name;
-  }
-  return colord(`#${node.value}`).toRgbString();
-};
 
-const formatPositionOrHint = (
-  node: csstree.Percentage | csstree.Dimension
-): UnitValue => {
-  if (node.type === "Percentage") {
+  const result = colord(color);
+  if (result.isValid()) {
+    const value = result.toRgb();
+
     return {
-      type: "unit",
-      value: parseFloat(node.value),
-      unit: "%",
+      type: "rgb",
+      r: value.r,
+      g: value.g,
+      b: value.b,
+      alpha: value.a,
     };
   }
-
-  return {
-    type: "unit",
-    value: parseFloat(node.value),
-    unit: node.unit as Unit,
-  };
 };
 
 export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
   const direction = parsed.angle || parsed.sideOrCorner;
   const stops = parsed.stops
     .map((stop: GradientStop) => {
-      let result = stop.color;
+      let result = toValue(stop.color);
       if (stop.position) {
         result += ` ${toValue(stop.position)}`;
       }
@@ -187,5 +206,7 @@ export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
       return result;
     })
     .join(", ");
+
+  // Check if there's a turn unit and handle the last gradient properly
   return `linear-gradient(${direction ? toValue(direction) + ", " : ""}${stops})`;
 };
