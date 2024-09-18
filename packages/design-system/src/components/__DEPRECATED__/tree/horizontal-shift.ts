@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { Placement } from "../primitives/dnd";
+import type { Placement } from "../../primitives/dnd";
 import type { ItemDropTarget, ItemId, ItemSelector } from "./item-utils";
 import { getPlacementIndicatorAlignment } from "./tree-node";
 
