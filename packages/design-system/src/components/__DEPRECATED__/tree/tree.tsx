@@ -52,14 +52,14 @@ const KeyboardNavigation = ({
           return;
         }
         if (event.key === "ArrowUp") {
-          focusManager.focusPrevious({
+          focusManager?.focusPrevious({
             accept: (node) => node.hasAttribute("data-item-button-id"),
           });
           // prevent scrolling
           event.preventDefault();
         }
         if (event.key === "ArrowDown") {
-          focusManager.focusNext({
+          focusManager?.focusNext({
             accept: (node) => node.hasAttribute("data-item-button-id"),
           });
           // prevent scrolling

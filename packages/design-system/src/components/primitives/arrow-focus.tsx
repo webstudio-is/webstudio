@@ -85,11 +85,11 @@ const ContextHelper = ({ render }: { render: Render }) => {
       }
 
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-        focusManager.focusNext({ wrap: true, accept, ...focusManagerOptions });
+        focusManager?.focusNext({ wrap: true, accept, ...focusManagerOptions });
         event.preventDefault(); // Prevents the page from scrolling
       }
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-        focusManager.focusPrevious({
+        focusManager?.focusPrevious({
           wrap: true,
           accept,
           ...focusManagerOptions,

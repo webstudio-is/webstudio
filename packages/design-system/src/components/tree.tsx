@@ -6,11 +6,13 @@ import {
   type ReactNode,
 } from "react";
 import { FocusScope, useFocusManager } from "@react-aria/focus";
-import { Box, styled, Text, theme } from "@webstudio-is/design-system";
 import {
   ChevronFilledDownIcon,
   ChevronFilledRightIcon,
 } from "@webstudio-is/icons";
+import { styled, theme } from "../stitches.config";
+import { Box } from "./box";
+import { Text } from "./text";
 
 const treeNodeLevel = "--tree-node-level";
 const treeActionOpacity = "--tree-action-opacity";
@@ -39,21 +41,21 @@ const TreeContainer = ({ children }: { children: ReactNode }) => {
           return;
         }
         if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-          focusManager.focusPrevious({
+          focusManager?.focusPrevious({
             accept: (node) => node.hasAttribute("data-tree-button"),
           });
           // prevent scrolling
           event.preventDefault();
         }
         if (event.key === "ArrowDown") {
-          focusManager.focusNext({
+          focusManager?.focusNext({
             accept: (node) => node.hasAttribute("data-tree-button"),
           });
           // prevent scrolling
           event.preventDefault();
         }
         if (event.key === "ArrowRight") {
-          focusManager.focusNext({
+          focusManager?.focusNext({
             accept: (node) =>
               node.hasAttribute("data-tree-button") ||
               // try to focus button inside action
