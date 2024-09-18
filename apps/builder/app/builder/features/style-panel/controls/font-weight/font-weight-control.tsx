@@ -3,7 +3,10 @@ import { type FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
 import { useAssets } from "~/builder/shared/assets";
-import { isSupportedFontWeight } from "./is-supported-font-weight";
+import {
+  isExternalFontWeightSupported,
+  isSystemFontWeightSupported,
+} from "./font-weight-support";
 import { useComputedStyles } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
 
@@ -28,19 +31,21 @@ const useAvailableFontWeights = (
   // Find all font weights that are available for the current font family.
   return useMemo(() => {
     const found = allFontWeights.filter((option) => {
-      return assetContainers.find((assetContainer) => {
-        if (
-          assetContainer.status !== "uploaded" ||
-          assetContainer.asset.type !== "font"
-        ) {
-          return false;
-        }
-        return isSupportedFontWeight(
-          assetContainer.asset,
-          option.weight,
-          currentFamily
-        );
-      });
+      return (
+        assetContainers.find((assetContainer) => {
+          if (
+            assetContainer.status !== "uploaded" ||
+            assetContainer.asset.type !== "font"
+          ) {
+            return false;
+          }
+          return isExternalFontWeightSupported(
+            assetContainer.asset,
+            option.weight,
+            currentFamily
+          );
+        }) || isSystemFontWeightSupported(currentFamily, option.weight)
+      );
     });
     return found.length === 0 ? allFontWeights : found;
   }, [currentFamily, assetContainers]);
@@ -82,15 +87,7 @@ export const FontWeightControl = () => {
   ]);
 
   const availableFontWeights = useAvailableFontWeights(
-    toValue(fontFamily.cascadedValue, (styleValue) => {
-      // override default fallback with rendering only first font family
-      if (styleValue.type === "fontFamily") {
-        return {
-          type: "fontFamily",
-          value: [styleValue.value[0]],
-        };
-      }
-    })
+    toValue(fontFamily.cascadedValue)
   );
   const { labels, selectedLabel } = useLabels(
     availableFontWeights,
