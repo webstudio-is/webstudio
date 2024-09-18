@@ -64,7 +64,6 @@ export {
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
 export * from "./components/avatar";
-export * from "./components/tree";
 export * from "./components/pro-badge";
 
 // No need to align
@@ -86,3 +85,4 @@ export * from "./components/kbd";
 
 // Deprecated
 export * from "./components/__DEPRECATED__/list";
+export * from "./components/__DEPRECATED__/tree";

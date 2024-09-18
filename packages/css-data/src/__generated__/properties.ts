@@ -7,7 +7,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   MozOsxFontSmoothing: {
     unitGroups: [],
@@ -16,7 +15,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   "-webkit-box-orient": {
     unitGroups: [],
@@ -25,7 +23,6 @@ export const properties = {
       type: "keyword",
       value: "horizontal",
     },
-    types: [],
   },
   "-webkit-line-clamp": {
     unitGroups: ["number"],
@@ -34,7 +31,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["integer"],
   },
   "-webkit-overflow-scrolling": {
     unitGroups: [],
@@ -43,7 +39,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   "-webkit-tap-highlight-color": {
     unitGroups: [],
@@ -52,7 +47,6 @@ export const properties = {
       type: "keyword",
       value: "black",
     },
-    types: ["hex-color"],
   },
   accentColor: {
     unitGroups: [],
@@ -61,7 +55,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["hex-color"],
   },
   alignContent: {
     unitGroups: [],
@@ -70,7 +63,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   alignItems: {
     unitGroups: [],
@@ -79,7 +71,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   alignSelf: {
     unitGroups: [],
@@ -88,7 +79,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   animationDelay: {
     unitGroups: ["time"],
@@ -98,7 +88,6 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    types: ["time"],
   },
   animationDirection: {
     unitGroups: [],
@@ -107,7 +96,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   animationDuration: {
     unitGroups: ["time"],
@@ -117,7 +105,6 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    types: ["time"],
   },
   animationFillMode: {
     unitGroups: [],
@@ -126,7 +113,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   animationIterationCount: {
     unitGroups: ["number"],
@@ -136,7 +122,6 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    types: ["number"],
   },
   animationName: {
     unitGroups: [],
@@ -145,7 +130,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "string"],
   },
   animationPlayState: {
     unitGroups: [],
@@ -154,7 +138,6 @@ export const properties = {
       type: "keyword",
       value: "running",
     },
-    types: [],
   },
   animationTimingFunction: {
     unitGroups: [],
@@ -163,7 +146,6 @@ export const properties = {
       type: "keyword",
       value: "ease",
     },
-    types: [],
   },
   appearance: {
     unitGroups: [],
@@ -172,7 +154,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   aspectRatio: {
     unitGroups: ["number"],
@@ -181,7 +162,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["number"],
   },
   backdropFilter: {
     unitGroups: [],
@@ -190,7 +170,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   backfaceVisibility: {
     unitGroups: [],
@@ -199,7 +178,6 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    types: [],
   },
   backgroundAttachment: {
     unitGroups: [],
@@ -208,7 +186,6 @@ export const properties = {
       type: "keyword",
       value: "scroll",
     },
-    types: [],
   },
   backgroundBlendMode: {
     unitGroups: [],
@@ -217,7 +194,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   backgroundClip: {
     unitGroups: [],
@@ -226,7 +202,6 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
-    types: [],
   },
   backgroundColor: {
     unitGroups: [],
@@ -235,7 +210,6 @@ export const properties = {
       type: "keyword",
       value: "transparent",
     },
-    types: ["hex-color"],
   },
   backgroundImage: {
     unitGroups: [],
@@ -244,7 +218,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   backgroundOrigin: {
     unitGroups: [],
@@ -253,7 +226,6 @@ export const properties = {
       type: "keyword",
       value: "padding-box",
     },
-    types: [],
   },
   backgroundPositionX: {
     unitGroups: ["length", "percentage"],
@@ -263,7 +235,6 @@ export const properties = {
       unit: "%",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   backgroundPositionY: {
     unitGroups: ["length", "percentage"],
@@ -273,7 +244,6 @@ export const properties = {
       unit: "%",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   backgroundRepeat: {
     unitGroups: [],
@@ -282,7 +252,6 @@ export const properties = {
       type: "keyword",
       value: "repeat",
     },
-    types: [],
   },
   backgroundSize: {
     unitGroups: ["length", "percentage"],
@@ -291,7 +260,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   blockSize: {
     unitGroups: ["length", "percentage"],
@@ -300,7 +268,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   borderBlockColor: {
     unitGroups: [],
@@ -309,7 +276,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderBlockStyle: {
     unitGroups: [],
@@ -318,7 +284,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderBlockWidth: {
     unitGroups: ["length"],
@@ -327,7 +292,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderBlockEndColor: {
     unitGroups: [],
@@ -336,7 +300,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderBlockEndStyle: {
     unitGroups: [],
@@ -345,7 +308,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderBlockEndWidth: {
     unitGroups: ["length"],
@@ -354,7 +316,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderBlockStartColor: {
     unitGroups: [],
@@ -363,7 +324,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderBlockStartStyle: {
     unitGroups: [],
@@ -372,7 +332,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderBlockStartWidth: {
     unitGroups: ["length"],
@@ -381,7 +340,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderBottomColor: {
     unitGroups: [],
@@ -390,7 +348,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderBottomLeftRadius: {
     unitGroups: ["length", "percentage"],
@@ -400,7 +357,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderBottomRightRadius: {
     unitGroups: ["length", "percentage"],
@@ -410,7 +366,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderBottomStyle: {
     unitGroups: [],
@@ -419,7 +374,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderBottomWidth: {
     unitGroups: ["length"],
@@ -428,7 +382,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderCollapse: {
     unitGroups: [],
@@ -437,7 +390,6 @@ export const properties = {
       type: "keyword",
       value: "separate",
     },
-    types: [],
   },
   borderEndEndRadius: {
     unitGroups: ["length", "percentage"],
@@ -447,7 +399,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderEndStartRadius: {
     unitGroups: ["length", "percentage"],
@@ -457,7 +408,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderImageOutset: {
     unitGroups: ["length", "number"],
@@ -467,7 +417,6 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["length", "number"],
   },
   borderImageRepeat: {
     unitGroups: [],
@@ -476,7 +425,6 @@ export const properties = {
       type: "keyword",
       value: "stretch",
     },
-    types: [],
   },
   borderImageSlice: {
     unitGroups: ["number", "percentage"],
@@ -486,7 +434,6 @@ export const properties = {
       unit: "%",
       value: 100,
     },
-    types: ["number", "percentage"],
   },
   borderImageSource: {
     unitGroups: [],
@@ -495,7 +442,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   borderImageWidth: {
     unitGroups: ["length", "percentage", "number"],
@@ -505,7 +451,6 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    types: ["length", "percentage", "number"],
   },
   borderInlineColor: {
     unitGroups: [],
@@ -514,7 +459,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderInlineStyle: {
     unitGroups: [],
@@ -523,7 +467,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderInlineWidth: {
     unitGroups: ["length"],
@@ -532,7 +475,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderInlineEndColor: {
     unitGroups: [],
@@ -541,7 +483,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderInlineEndStyle: {
     unitGroups: [],
@@ -550,7 +491,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderInlineEndWidth: {
     unitGroups: ["length"],
@@ -559,7 +499,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderInlineStartColor: {
     unitGroups: [],
@@ -568,7 +507,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderInlineStartStyle: {
     unitGroups: [],
@@ -577,7 +515,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderInlineStartWidth: {
     unitGroups: ["length"],
@@ -586,7 +523,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderLeftColor: {
     unitGroups: [],
@@ -595,7 +531,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderLeftStyle: {
     unitGroups: [],
@@ -604,7 +539,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderLeftWidth: {
     unitGroups: ["length"],
@@ -613,7 +547,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderRightColor: {
     unitGroups: [],
@@ -622,7 +555,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderRightStyle: {
     unitGroups: [],
@@ -631,7 +563,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderRightWidth: {
     unitGroups: ["length"],
@@ -640,7 +571,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   borderSpacing: {
     unitGroups: ["length"],
@@ -650,7 +580,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   borderStartEndRadius: {
     unitGroups: ["length", "percentage"],
@@ -660,7 +589,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderStartStartRadius: {
     unitGroups: ["length", "percentage"],
@@ -670,7 +598,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderTopColor: {
     unitGroups: [],
@@ -679,7 +606,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   borderTopLeftRadius: {
     unitGroups: ["length", "percentage"],
@@ -689,7 +615,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderTopRightRadius: {
     unitGroups: ["length", "percentage"],
@@ -699,7 +624,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   borderTopStyle: {
     unitGroups: [],
@@ -708,7 +632,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   borderTopWidth: {
     unitGroups: ["length"],
@@ -717,7 +640,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   bottom: {
     unitGroups: ["length", "percentage"],
@@ -726,7 +648,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   boxDecorationBreak: {
     unitGroups: [],
@@ -735,7 +656,6 @@ export const properties = {
       type: "keyword",
       value: "slice",
     },
-    types: [],
   },
   boxShadow: {
     unitGroups: ["length"],
@@ -744,7 +664,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length", "hex-color"],
   },
   boxSizing: {
     unitGroups: [],
@@ -753,7 +672,6 @@ export const properties = {
       type: "keyword",
       value: "content-box",
     },
-    types: [],
   },
   breakAfter: {
     unitGroups: [],
@@ -762,7 +680,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   breakBefore: {
     unitGroups: [],
@@ -771,7 +688,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   breakInside: {
     unitGroups: [],
@@ -780,7 +696,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   captionSide: {
     unitGroups: [],
@@ -789,7 +704,6 @@ export const properties = {
       type: "keyword",
       value: "top",
     },
-    types: [],
   },
   caretColor: {
     unitGroups: [],
@@ -798,7 +712,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["hex-color"],
   },
   clear: {
     unitGroups: [],
@@ -807,7 +720,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   clip: {
     unitGroups: [],
@@ -816,7 +728,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   clipPath: {
     unitGroups: [],
@@ -825,7 +736,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   color: {
     unitGroups: [],
@@ -834,7 +744,6 @@ export const properties = {
       type: "keyword",
       value: "black",
     },
-    types: ["hex-color"],
   },
   colorScheme: {
     unitGroups: [],
@@ -843,7 +752,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["custom-ident"],
   },
   columnCount: {
     unitGroups: ["number"],
@@ -852,7 +760,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["integer"],
   },
   columnFill: {
     unitGroups: [],
@@ -861,7 +768,6 @@ export const properties = {
       type: "keyword",
       value: "balance",
     },
-    types: [],
   },
   columnGap: {
     unitGroups: ["length", "percentage"],
@@ -871,7 +777,6 @@ export const properties = {
       value: 0,
       unit: "px",
     },
-    types: ["length", "percentage"],
   },
   columnRuleColor: {
     unitGroups: [],
@@ -880,7 +785,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   columnRuleStyle: {
     unitGroups: [],
@@ -889,7 +793,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   columnRuleWidth: {
     unitGroups: ["length"],
@@ -898,7 +801,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   columnSpan: {
     unitGroups: [],
@@ -907,7 +809,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   columnWidth: {
     unitGroups: ["length"],
@@ -916,7 +817,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length"],
   },
   contain: {
     unitGroups: [],
@@ -925,7 +825,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   containIntrinsicBlockSize: {
     unitGroups: ["length"],
@@ -934,7 +833,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length"],
   },
   containIntrinsicHeight: {
     unitGroups: ["length"],
@@ -943,7 +841,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length"],
   },
   containIntrinsicInlineSize: {
     unitGroups: ["length"],
@@ -952,7 +849,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length"],
   },
   containIntrinsicWidth: {
     unitGroups: ["length"],
@@ -961,7 +857,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length"],
   },
   containerName: {
     unitGroups: [],
@@ -970,7 +865,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident"],
   },
   containerType: {
     unitGroups: [],
@@ -979,7 +873,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   content: {
     unitGroups: [],
@@ -988,7 +881,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["url", "string"],
   },
   contentVisibility: {
     unitGroups: [],
@@ -997,7 +889,6 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    types: [],
   },
   counterIncrement: {
     unitGroups: ["number"],
@@ -1006,7 +897,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "integer"],
   },
   counterReset: {
     unitGroups: ["number"],
@@ -1015,7 +905,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "integer"],
   },
   counterSet: {
     unitGroups: ["number"],
@@ -1024,7 +913,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "integer"],
   },
   cursor: {
     unitGroups: [],
@@ -1033,7 +921,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["url", "x", "y"],
   },
   direction: {
     unitGroups: [],
@@ -1042,7 +929,6 @@ export const properties = {
       type: "keyword",
       value: "ltr",
     },
-    types: [],
   },
   display: {
     unitGroups: [],
@@ -1051,7 +937,6 @@ export const properties = {
       type: "keyword",
       value: "inline",
     },
-    types: [],
   },
   emptyCells: {
     unitGroups: [],
@@ -1060,7 +945,6 @@ export const properties = {
       type: "keyword",
       value: "show",
     },
-    types: [],
   },
   fieldSizing: {
     unitGroups: [],
@@ -1069,7 +953,6 @@ export const properties = {
       type: "keyword",
       value: "fixed",
     },
-    types: [],
   },
   filter: {
     unitGroups: [],
@@ -1078,7 +961,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   flexBasis: {
     unitGroups: ["length", "percentage"],
@@ -1087,7 +969,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   flexDirection: {
     unitGroups: [],
@@ -1096,7 +977,6 @@ export const properties = {
       type: "keyword",
       value: "row",
     },
-    types: [],
   },
   flexGrow: {
     unitGroups: ["number"],
@@ -1106,7 +986,6 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["number"],
   },
   flexShrink: {
     unitGroups: ["number"],
@@ -1116,7 +995,6 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    types: ["number"],
   },
   flexWrap: {
     unitGroups: [],
@@ -1125,7 +1003,6 @@ export const properties = {
       type: "keyword",
       value: "nowrap",
     },
-    types: [],
   },
   float: {
     unitGroups: [],
@@ -1134,7 +1011,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   fontFamily: {
     unitGroups: [],
@@ -1143,7 +1019,6 @@ export const properties = {
       type: "keyword",
       value: "inherit",
     },
-    types: ["string", "custom-ident"],
   },
   fontFeatureSettings: {
     unitGroups: ["number"],
@@ -1152,7 +1027,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["string", "integer"],
   },
   fontKerning: {
     unitGroups: [],
@@ -1161,7 +1035,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   fontLanguageOverride: {
     unitGroups: [],
@@ -1170,7 +1043,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["string"],
   },
   fontOpticalSizing: {
     unitGroups: [],
@@ -1179,7 +1051,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   fontVariationSettings: {
     unitGroups: ["number"],
@@ -1188,7 +1059,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["string", "number"],
   },
   fontSize: {
     unitGroups: ["length", "percentage"],
@@ -1197,7 +1067,6 @@ export const properties = {
       type: "keyword",
       value: "inherit",
     },
-    types: ["length", "percentage"],
   },
   fontSizeAdjust: {
     unitGroups: ["number"],
@@ -1206,7 +1075,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["number"],
   },
   fontStretch: {
     unitGroups: ["percentage"],
@@ -1215,7 +1083,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["percentage"],
   },
   fontStyle: {
     unitGroups: ["angle"],
@@ -1224,7 +1091,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["angle"],
   },
   fontSynthesisSmallCaps: {
     unitGroups: [],
@@ -1233,7 +1099,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   fontSynthesisStyle: {
     unitGroups: [],
@@ -1242,7 +1107,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   fontSynthesisWeight: {
     unitGroups: [],
@@ -1251,7 +1115,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   fontVariantAlternates: {
     unitGroups: [],
@@ -1260,7 +1123,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   fontVariantCaps: {
     unitGroups: [],
@@ -1269,7 +1131,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   fontVariantEastAsian: {
     unitGroups: [],
@@ -1278,7 +1139,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   fontVariantLigatures: {
     unitGroups: [],
@@ -1287,7 +1147,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   fontVariantNumeric: {
     unitGroups: [],
@@ -1296,7 +1155,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   fontVariantPosition: {
     unitGroups: [],
@@ -1305,7 +1163,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   fontWeight: {
     unitGroups: ["number"],
@@ -1314,7 +1171,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["number"],
   },
   gridAutoColumns: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1323,7 +1179,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage", "flex"],
   },
   gridAutoFlow: {
     unitGroups: [],
@@ -1332,7 +1187,6 @@ export const properties = {
       type: "keyword",
       value: "row",
     },
-    types: [],
   },
   gridAutoRows: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1341,7 +1195,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage", "flex"],
   },
   gridColumnEnd: {
     unitGroups: ["number"],
@@ -1350,7 +1203,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer"],
   },
   gridColumnStart: {
     unitGroups: ["number"],
@@ -1359,7 +1211,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer"],
   },
   gridRowEnd: {
     unitGroups: ["number"],
@@ -1368,7 +1219,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer"],
   },
   gridRowStart: {
     unitGroups: ["number"],
@@ -1377,7 +1227,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer"],
   },
   gridTemplateAreas: {
     unitGroups: [],
@@ -1386,7 +1235,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["string"],
   },
   gridTemplateColumns: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1395,7 +1243,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "length", "percentage", "flex"],
   },
   gridTemplateRows: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1404,7 +1251,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "length", "percentage", "flex"],
   },
   hangingPunctuation: {
     unitGroups: [],
@@ -1413,7 +1259,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   height: {
     unitGroups: ["length", "percentage"],
@@ -1422,7 +1267,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   hyphenateCharacter: {
     unitGroups: [],
@@ -1431,7 +1275,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["string"],
   },
   hyphenateLimitChars: {
     unitGroups: ["number"],
@@ -1440,7 +1283,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["integer"],
   },
   hyphens: {
     unitGroups: [],
@@ -1449,7 +1291,6 @@ export const properties = {
       type: "keyword",
       value: "manual",
     },
-    types: [],
   },
   imageOrientation: {
     unitGroups: ["angle"],
@@ -1458,7 +1299,6 @@ export const properties = {
       type: "keyword",
       value: "from-image",
     },
-    types: ["angle"],
   },
   imageRendering: {
     unitGroups: [],
@@ -1467,7 +1307,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   inlineSize: {
     unitGroups: ["length", "percentage"],
@@ -1476,7 +1315,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   insetBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1485,7 +1323,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   insetBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -1494,7 +1331,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   insetInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -1503,7 +1339,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   insetInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -1512,7 +1347,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   isolation: {
     unitGroups: [],
@@ -1521,7 +1355,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   justifyContent: {
     unitGroups: [],
@@ -1530,7 +1363,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   justifyItems: {
     unitGroups: [],
@@ -1539,7 +1371,6 @@ export const properties = {
       type: "keyword",
       value: "legacy",
     },
-    types: [],
   },
   justifySelf: {
     unitGroups: [],
@@ -1548,7 +1379,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   left: {
     unitGroups: ["length", "percentage"],
@@ -1557,7 +1387,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   letterSpacing: {
     unitGroups: ["length"],
@@ -1566,7 +1395,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["length"],
   },
   lineBreak: {
     unitGroups: [],
@@ -1575,7 +1403,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   lineHeight: {
     unitGroups: ["number", "length", "percentage"],
@@ -1584,7 +1411,6 @@ export const properties = {
       type: "keyword",
       value: "inherit",
     },
-    types: ["number", "length", "percentage"],
   },
   listStyleImage: {
     unitGroups: [],
@@ -1593,7 +1419,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   listStylePosition: {
     unitGroups: [],
@@ -1602,7 +1427,6 @@ export const properties = {
       type: "keyword",
       value: "outside",
     },
-    types: [],
   },
   listStyleType: {
     unitGroups: [],
@@ -1611,7 +1435,6 @@ export const properties = {
       type: "keyword",
       value: "disc",
     },
-    types: ["custom-ident", "string"],
   },
   marginBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1621,7 +1444,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   marginBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -1631,7 +1453,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   marginBottom: {
     unitGroups: ["length", "percentage"],
@@ -1641,7 +1462,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   marginInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -1651,7 +1471,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   marginInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -1661,7 +1480,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   marginLeft: {
     unitGroups: ["length", "percentage"],
@@ -1671,7 +1489,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   marginRight: {
     unitGroups: ["length", "percentage"],
@@ -1681,7 +1498,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   marginTop: {
     unitGroups: ["length", "percentage"],
@@ -1691,7 +1507,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   maskBorderMode: {
     unitGroups: [],
@@ -1700,7 +1515,6 @@ export const properties = {
       type: "keyword",
       value: "alpha",
     },
-    types: [],
   },
   maskBorderOutset: {
     unitGroups: ["length", "number"],
@@ -1710,7 +1524,6 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["length", "number"],
   },
   maskBorderRepeat: {
     unitGroups: [],
@@ -1719,7 +1532,6 @@ export const properties = {
       type: "keyword",
       value: "stretch",
     },
-    types: [],
   },
   maskBorderSlice: {
     unitGroups: ["number", "percentage"],
@@ -1729,7 +1541,6 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["number", "percentage"],
   },
   maskBorderSource: {
     unitGroups: [],
@@ -1738,7 +1549,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   maskBorderWidth: {
     unitGroups: ["length", "percentage", "number"],
@@ -1747,7 +1557,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage", "number"],
   },
   maskClip: {
     unitGroups: [],
@@ -1756,7 +1565,6 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
-    types: [],
   },
   maskComposite: {
     unitGroups: [],
@@ -1765,7 +1573,6 @@ export const properties = {
       type: "keyword",
       value: "add",
     },
-    types: [],
   },
   maskImage: {
     unitGroups: [],
@@ -1774,7 +1581,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   maskMode: {
     unitGroups: [],
@@ -1783,7 +1589,6 @@ export const properties = {
       type: "keyword",
       value: "match-source",
     },
-    types: [],
   },
   maskOrigin: {
     unitGroups: [],
@@ -1792,7 +1597,6 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
-    types: [],
   },
   maskPosition: {
     unitGroups: ["length", "percentage"],
@@ -1812,7 +1616,6 @@ export const properties = {
         },
       ],
     },
-    types: ["length", "percentage"],
   },
   maskRepeat: {
     unitGroups: [],
@@ -1821,7 +1624,6 @@ export const properties = {
       type: "keyword",
       value: "repeat",
     },
-    types: [],
   },
   maskSize: {
     unitGroups: ["length", "percentage"],
@@ -1830,7 +1632,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   maskType: {
     unitGroups: [],
@@ -1839,7 +1640,6 @@ export const properties = {
       type: "keyword",
       value: "luminance",
     },
-    types: [],
   },
   mathDepth: {
     unitGroups: ["number"],
@@ -1849,7 +1649,6 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["integer"],
   },
   mathShift: {
     unitGroups: [],
@@ -1858,7 +1657,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   mathStyle: {
     unitGroups: [],
@@ -1867,7 +1665,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   maxBlockSize: {
     unitGroups: ["length", "percentage"],
@@ -1876,7 +1673,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length", "percentage"],
   },
   maxHeight: {
     unitGroups: ["length", "percentage"],
@@ -1885,7 +1681,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length", "percentage"],
   },
   maxInlineSize: {
     unitGroups: ["length", "percentage"],
@@ -1894,7 +1689,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length", "percentage"],
   },
   maxWidth: {
     unitGroups: ["length", "percentage"],
@@ -1903,7 +1697,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length", "percentage"],
   },
   minBlockSize: {
     unitGroups: ["length", "percentage"],
@@ -1913,7 +1706,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   minHeight: {
     unitGroups: ["length", "percentage"],
@@ -1922,7 +1714,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   minInlineSize: {
     unitGroups: ["length", "percentage"],
@@ -1932,7 +1723,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   minWidth: {
     unitGroups: ["length", "percentage"],
@@ -1941,7 +1731,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   mixBlendMode: {
     unitGroups: [],
@@ -1950,7 +1739,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   objectFit: {
     unitGroups: [],
@@ -1959,7 +1747,6 @@ export const properties = {
       type: "keyword",
       value: "fill",
     },
-    types: [],
   },
   objectPosition: {
     unitGroups: ["length", "percentage"],
@@ -1979,7 +1766,6 @@ export const properties = {
         },
       ],
     },
-    types: ["length", "percentage"],
   },
   offsetAnchor: {
     unitGroups: ["length", "percentage"],
@@ -1988,7 +1774,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   offsetDistance: {
     unitGroups: ["length", "percentage"],
@@ -1998,7 +1783,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   offsetPath: {
     unitGroups: [],
@@ -2007,7 +1791,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["offset-path", "coord-box"],
   },
   offsetPosition: {
     unitGroups: ["length", "percentage"],
@@ -2016,7 +1799,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["length", "percentage"],
   },
   offsetRotate: {
     unitGroups: ["angle"],
@@ -2025,7 +1807,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["angle"],
   },
   opacity: {
     unitGroups: ["number", "percentage"],
@@ -2035,7 +1816,6 @@ export const properties = {
       unit: "number",
       value: 1,
     },
-    types: ["number", "percentage"],
   },
   order: {
     unitGroups: ["number"],
@@ -2045,7 +1825,6 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["integer"],
   },
   orphans: {
     unitGroups: ["number"],
@@ -2055,7 +1834,6 @@ export const properties = {
       unit: "number",
       value: 2,
     },
-    types: ["integer"],
   },
   outlineColor: {
     unitGroups: [],
@@ -2064,7 +1842,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["hex-color"],
   },
   outlineOffset: {
     unitGroups: ["length"],
@@ -2074,7 +1851,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   outlineStyle: {
     unitGroups: [],
@@ -2083,7 +1859,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   outlineWidth: {
     unitGroups: ["length"],
@@ -2092,7 +1867,6 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
-    types: ["length"],
   },
   overflowWrap: {
     unitGroups: [],
@@ -2101,7 +1875,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   overflowX: {
     unitGroups: [],
@@ -2110,7 +1883,6 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    types: [],
   },
   overflowY: {
     unitGroups: [],
@@ -2119,7 +1891,6 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    types: [],
   },
   overscrollBehavior: {
     unitGroups: [],
@@ -2128,7 +1899,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   overscrollBehaviorBlock: {
     unitGroups: [],
@@ -2137,7 +1907,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   overscrollBehaviorInline: {
     unitGroups: [],
@@ -2146,7 +1915,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   overscrollBehaviorX: {
     unitGroups: [],
@@ -2155,7 +1923,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   overscrollBehaviorY: {
     unitGroups: [],
@@ -2164,7 +1931,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   paddingBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -2174,7 +1940,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   paddingBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -2184,7 +1949,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   paddingBottom: {
     unitGroups: ["length", "percentage"],
@@ -2194,7 +1958,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   paddingInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -2204,7 +1967,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   paddingInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -2214,7 +1976,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   paddingLeft: {
     unitGroups: ["length", "percentage"],
@@ -2224,7 +1985,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   paddingRight: {
     unitGroups: ["length", "percentage"],
@@ -2234,7 +1994,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   paddingTop: {
     unitGroups: ["length", "percentage"],
@@ -2244,7 +2003,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   page: {
     unitGroups: [],
@@ -2253,7 +2011,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident"],
   },
   pageBreakAfter: {
     unitGroups: [],
@@ -2262,7 +2019,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   pageBreakBefore: {
     unitGroups: [],
@@ -2271,7 +2027,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   pageBreakInside: {
     unitGroups: [],
@@ -2280,7 +2035,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   paintOrder: {
     unitGroups: [],
@@ -2289,7 +2043,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   perspective: {
     unitGroups: ["length"],
@@ -2298,7 +2051,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length"],
   },
   perspectiveOrigin: {
     unitGroups: ["length", "percentage"],
@@ -2318,7 +2070,6 @@ export const properties = {
         },
       ],
     },
-    types: ["length", "percentage"],
   },
   pointerEvents: {
     unitGroups: [],
@@ -2327,7 +2078,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   position: {
     unitGroups: [],
@@ -2336,7 +2086,6 @@ export const properties = {
       type: "keyword",
       value: "static",
     },
-    types: [],
   },
   printColorAdjust: {
     unitGroups: [],
@@ -2345,7 +2094,6 @@ export const properties = {
       type: "keyword",
       value: "economy",
     },
-    types: [],
   },
   quotes: {
     unitGroups: [],
@@ -2354,7 +2102,6 @@ export const properties = {
       type: "keyword",
       value: "dependsOnUserAgent",
     },
-    types: ["string"],
   },
   resize: {
     unitGroups: [],
@@ -2363,7 +2110,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   right: {
     unitGroups: ["length", "percentage"],
@@ -2372,7 +2118,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   rotate: {
     unitGroups: ["angle", "number"],
@@ -2381,7 +2126,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["angle", "number"],
   },
   rowGap: {
     unitGroups: ["length", "percentage"],
@@ -2391,7 +2135,6 @@ export const properties = {
       value: 0,
       unit: "px",
     },
-    types: ["length", "percentage"],
   },
   scale: {
     unitGroups: ["number"],
@@ -2400,7 +2143,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["number"],
   },
   scrollbarColor: {
     unitGroups: [],
@@ -2409,7 +2151,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["hex-color"],
   },
   scrollbarGutter: {
     unitGroups: [],
@@ -2418,7 +2159,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   scrollbarWidth: {
     unitGroups: [],
@@ -2427,7 +2167,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   scrollBehavior: {
     unitGroups: [],
@@ -2436,7 +2175,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   scrollMarginBlockStart: {
     unitGroups: ["length"],
@@ -2446,7 +2184,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollMarginBlockEnd: {
     unitGroups: ["length"],
@@ -2456,7 +2193,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollMarginBottom: {
     unitGroups: ["length"],
@@ -2466,7 +2202,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollMarginInlineStart: {
     unitGroups: ["length"],
@@ -2476,7 +2211,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollMarginInlineEnd: {
     unitGroups: ["length"],
@@ -2486,7 +2220,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollMarginLeft: {
     unitGroups: ["length"],
@@ -2496,7 +2229,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollMarginRight: {
     unitGroups: ["length"],
@@ -2506,7 +2238,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollMarginTop: {
     unitGroups: ["length"],
@@ -2516,7 +2247,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length"],
   },
   scrollPaddingBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -2525,7 +2255,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollPaddingBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -2534,7 +2263,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollPaddingBottom: {
     unitGroups: ["length", "percentage"],
@@ -2543,7 +2271,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollPaddingInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -2552,7 +2279,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollPaddingInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -2561,7 +2287,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollPaddingLeft: {
     unitGroups: ["length", "percentage"],
@@ -2570,7 +2295,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollPaddingRight: {
     unitGroups: ["length", "percentage"],
@@ -2579,7 +2303,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollPaddingTop: {
     unitGroups: ["length", "percentage"],
@@ -2588,7 +2311,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   scrollSnapAlign: {
     unitGroups: [],
@@ -2597,7 +2319,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   scrollSnapStop: {
     unitGroups: [],
@@ -2606,7 +2327,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   scrollSnapType: {
     unitGroups: [],
@@ -2615,7 +2335,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   shapeImageThreshold: {
     unitGroups: ["number", "percentage"],
@@ -2625,7 +2344,6 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["number", "percentage"],
   },
   shapeMargin: {
     unitGroups: ["length", "percentage"],
@@ -2635,7 +2353,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   shapeOutside: {
     unitGroups: [],
@@ -2644,7 +2361,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["url"],
   },
   tabSize: {
     unitGroups: ["number", "length"],
@@ -2654,7 +2370,6 @@ export const properties = {
       unit: "number",
       value: 8,
     },
-    types: ["integer", "length"],
   },
   tableLayout: {
     unitGroups: [],
@@ -2663,7 +2378,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   textAlign: {
     unitGroups: [],
@@ -2672,7 +2386,6 @@ export const properties = {
       type: "keyword",
       value: "start",
     },
-    types: [],
   },
   textAlignLast: {
     unitGroups: [],
@@ -2681,7 +2394,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   textCombineUpright: {
     unitGroups: ["number"],
@@ -2690,7 +2402,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["integer"],
   },
   textDecorationColor: {
     unitGroups: [],
@@ -2699,7 +2410,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   textDecorationLine: {
     unitGroups: [],
@@ -2708,7 +2418,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   textDecorationSkipInk: {
     unitGroups: [],
@@ -2717,7 +2426,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   textDecorationStyle: {
     unitGroups: [],
@@ -2726,7 +2434,6 @@ export const properties = {
       type: "keyword",
       value: "solid",
     },
-    types: [],
   },
   textDecorationThickness: {
     unitGroups: ["length", "percentage"],
@@ -2735,7 +2442,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   textEmphasisColor: {
     unitGroups: [],
@@ -2744,7 +2450,6 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
-    types: ["hex-color"],
   },
   textEmphasisPosition: {
     unitGroups: [],
@@ -2762,7 +2467,6 @@ export const properties = {
         },
       ],
     },
-    types: [],
   },
   textEmphasisStyle: {
     unitGroups: [],
@@ -2771,7 +2475,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["string"],
   },
   textIndent: {
     unitGroups: ["length", "percentage"],
@@ -2781,7 +2484,6 @@ export const properties = {
       unit: "px",
       value: 0,
     },
-    types: ["length", "percentage"],
   },
   textJustify: {
     unitGroups: [],
@@ -2790,7 +2492,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   textOrientation: {
     unitGroups: [],
@@ -2799,7 +2500,6 @@ export const properties = {
       type: "keyword",
       value: "mixed",
     },
-    types: [],
   },
   textOverflow: {
     unitGroups: [],
@@ -2808,7 +2508,6 @@ export const properties = {
       type: "keyword",
       value: "clip",
     },
-    types: ["string"],
   },
   textRendering: {
     unitGroups: [],
@@ -2817,7 +2516,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   textShadow: {
     unitGroups: ["length"],
@@ -2826,7 +2524,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length", "hex-color"],
   },
   textSizeAdjust: {
     unitGroups: ["percentage"],
@@ -2835,7 +2532,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["percentage"],
   },
   textTransform: {
     unitGroups: [],
@@ -2844,7 +2540,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   textUnderlineOffset: {
     unitGroups: ["length", "percentage"],
@@ -2853,7 +2548,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   textUnderlinePosition: {
     unitGroups: [],
@@ -2862,7 +2556,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   textWrapMode: {
     unitGroups: [],
@@ -2871,7 +2564,6 @@ export const properties = {
       type: "keyword",
       value: "wrap",
     },
-    types: [],
   },
   textWrapStyle: {
     unitGroups: [],
@@ -2880,7 +2572,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   top: {
     unitGroups: ["length", "percentage"],
@@ -2889,7 +2580,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   touchAction: {
     unitGroups: [],
@@ -2898,7 +2588,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   transform: {
     unitGroups: [],
@@ -2907,7 +2596,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: [],
   },
   transformBox: {
     unitGroups: [],
@@ -2916,7 +2604,6 @@ export const properties = {
       type: "keyword",
       value: "view-box",
     },
-    types: [],
   },
   transformOrigin: {
     unitGroups: ["length", "percentage"],
@@ -2941,7 +2628,6 @@ export const properties = {
         },
       ],
     },
-    types: ["length", "percentage"],
   },
   transformStyle: {
     unitGroups: [],
@@ -2950,7 +2636,6 @@ export const properties = {
       type: "keyword",
       value: "flat",
     },
-    types: [],
   },
   transitionBehavior: {
     unitGroups: [],
@@ -2959,7 +2644,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   transitionDelay: {
     unitGroups: ["time"],
@@ -2969,7 +2653,6 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    types: ["time"],
   },
   transitionDuration: {
     unitGroups: ["time"],
@@ -2979,7 +2662,6 @@ export const properties = {
       unit: "s",
       value: 0,
     },
-    types: ["time"],
   },
   transitionProperty: {
     unitGroups: [],
@@ -2988,7 +2670,6 @@ export const properties = {
       type: "keyword",
       value: "all",
     },
-    types: ["custom-ident"],
   },
   transitionTimingFunction: {
     unitGroups: [],
@@ -2997,7 +2678,6 @@ export const properties = {
       type: "keyword",
       value: "ease",
     },
-    types: [],
   },
   translate: {
     unitGroups: ["length", "percentage"],
@@ -3006,7 +2686,6 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["length", "percentage"],
   },
   unicodeBidi: {
     unitGroups: [],
@@ -3015,7 +2694,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   userSelect: {
     unitGroups: [],
@@ -3024,7 +2702,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: [],
   },
   verticalAlign: {
     unitGroups: ["percentage", "length"],
@@ -3033,7 +2710,6 @@ export const properties = {
       type: "keyword",
       value: "baseline",
     },
-    types: ["percentage", "length"],
   },
   visibility: {
     unitGroups: [],
@@ -3042,7 +2718,6 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
-    types: [],
   },
   whiteSpaceCollapse: {
     unitGroups: [],
@@ -3051,7 +2726,6 @@ export const properties = {
       type: "keyword",
       value: "collapse",
     },
-    types: [],
   },
   widows: {
     unitGroups: ["number"],
@@ -3061,7 +2735,6 @@ export const properties = {
       unit: "number",
       value: 2,
     },
-    types: ["integer"],
   },
   width: {
     unitGroups: ["length", "percentage"],
@@ -3070,7 +2743,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["length", "percentage"],
   },
   willChange: {
     unitGroups: [],
@@ -3079,7 +2751,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident"],
   },
   wordBreak: {
     unitGroups: [],
@@ -3088,7 +2759,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   wordSpacing: {
     unitGroups: ["length"],
@@ -3097,7 +2767,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["length"],
   },
   wordWrap: {
     unitGroups: [],
@@ -3106,7 +2775,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: [],
   },
   writingMode: {
     unitGroups: [],
@@ -3115,7 +2783,6 @@ export const properties = {
       type: "keyword",
       value: "horizontal-tb",
     },
-    types: [],
   },
   zIndex: {
     unitGroups: ["number"],
@@ -3124,7 +2791,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["integer"],
   },
   zoom: {
     unitGroups: ["number", "percentage"],
@@ -3133,6 +2799,5 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["number", "percentage"],
   },
 } as const;

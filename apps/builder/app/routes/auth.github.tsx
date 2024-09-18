@@ -12,9 +12,8 @@ export default function GH() {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   if (false === isDashboard(request)) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 

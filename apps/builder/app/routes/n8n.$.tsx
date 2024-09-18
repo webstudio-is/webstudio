@@ -27,9 +27,8 @@ const zWebhookEnv = z.object({
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (isDashboard(request) === false) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 

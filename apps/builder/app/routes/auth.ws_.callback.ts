@@ -16,9 +16,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (false === isBuilder(request)) {
     debug(`Request url is not the builder URL ${request.url}`);
 
-    return new Response(null, {
+    return new Response("Only builder URL is allowed", {
       status: 404,
-      statusText: "Only builder URL is allowed",
     });
   }
 

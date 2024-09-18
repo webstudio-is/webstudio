@@ -18,6 +18,7 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { allowedDestinations } from "~/services/destinations.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { db } from "@webstudio-is/project/index.server";
+export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
@@ -31,9 +32,8 @@ export const meta: MetaFunction<typeof loader> = () => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (false === isDashboard(request)) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 
@@ -105,7 +105,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { userPlanFeatures } = context;
 
   if (userPlanFeatures === undefined) {
-    throw new Error("User plan features are not defined");
+    throw new Response("User plan features are not defined", {
+      status: 404,
+    });
   }
 
   const { sourceOrigin } = parseBuilderUrl(request.url);

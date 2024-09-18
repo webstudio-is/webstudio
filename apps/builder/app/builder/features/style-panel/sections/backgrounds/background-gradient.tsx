@@ -14,9 +14,15 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
-import type { ControlProps } from "../../controls";
 import { parseCssFragment } from "../../shared/parse-css-fragment";
 import { InfoCircleIcon } from "@webstudio-is/icons";
+import { setProperty } from "../../shared/use-style-data";
+import { useComputedStyleDecl } from "../../shared/model";
+import {
+  editRepeatedStyleItem,
+  getRepeatedStyleItem,
+  setRepeatedStyleItem,
+} from "../../shared/repeated-style";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -26,16 +32,11 @@ type IntermediateValue = {
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
 
-export const BackgroundGradient = (
-  props: Omit<ControlProps, "property" | "items"> & {
-    setBackgroundColor: (color: StyleValue) => void;
-  }
-) => {
-  const property = "backgroundImage";
+export const BackgroundGradient = ({ index }: { index: number }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-
-  const styleInfo = props.currentStyle[property];
-  const styleValue = styleInfo?.value;
+  const property = "backgroundImage";
+  const styleDecl = useComputedStyleDecl(property);
+  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
 
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
@@ -57,12 +58,14 @@ export const BackgroundGradient = (
     const newValue = parseCssValue(property, value);
 
     if (newValue.type === "unparsed") {
-      props.setProperty(property)(newValue, { isEphemeral: true });
+      setRepeatedStyleItem(styleDecl, index, newValue, { isEphemeral: true });
       return;
     }
 
     // Set backgroundImage at layer to none if it's invalid
-    props.setProperty(property)(
+    setRepeatedStyleItem(
+      styleDecl,
+      index,
       { type: "keyword", value: "none" },
       { isEphemeral: true }
     );
@@ -89,15 +92,23 @@ export const BackgroundGradient = (
       firstLayer.type === "invalid"
     ) {
       setIntermediateValue({ type: "invalid", value: intermediateValue.value });
-      props.deleteProperty(property, { isEphemeral: true });
+      if (styleValue) {
+        setRepeatedStyleItem(styleDecl, index, styleValue, {
+          isEphemeral: true,
+        });
+      }
       return;
     }
     setIntermediateValue(undefined);
     if (backgroundColor && isTransparent(backgroundColor) === false) {
-      props.setBackgroundColor(backgroundColor);
+      setProperty("backgroundColor")(backgroundColor);
     }
     // insert all new layers at current position
-    props.setProperty(property)(layers);
+    editRepeatedStyleItem(
+      [styleDecl],
+      index,
+      new Map([["backgroundImage", layers]])
+    );
   };
 
   const handleOnCompleteRef = useRef(handleOnComplete);
@@ -156,15 +167,6 @@ export const BackgroundGradient = (
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             handleOnComplete();
-            event.preventDefault();
-          }
-
-          if (event.key === "Escape") {
-            if (intermediateValue === undefined) {
-              return;
-            }
-            props.deleteProperty(property, { isEphemeral: true });
-            setIntermediateValue(undefined);
             event.preventDefault();
           }
         }}

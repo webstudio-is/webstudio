@@ -75,7 +75,12 @@ const FallbackComponent = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (
     // body is required to prevent breaking collapsed instances logic
     <body>
-      <ErrorMessage message={error.message} />
+      <ErrorMessage
+        error={{
+          message: error instanceof Error ? error.message : "Unknown error",
+          status: 500,
+        }}
+      />
     </body>
   );
 };

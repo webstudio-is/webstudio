@@ -1,8 +1,7 @@
 import { css, textVariants, theme } from "@webstudio-is/design-system";
 import type { ComponentProps } from "react";
 
-const buttonStyle = css({
-  all: "unset",
+export const buttonStyle = css({
   boxSizing: "border-box",
   minWidth: 0,
   display: "inline-flex",
@@ -15,7 +14,7 @@ const buttonStyle = css({
   border: "2px solid transparent",
   whiteSpace: "nowrap",
   backgroundImage: `
-    linear-gradient(${theme.colors.backgroundPanel}, ${theme.colors.backgroundPanel}), 
+    linear-gradient(${theme.colors.backgroundPanel}, ${theme.colors.backgroundPanel}),
     ${theme.colors.brandBorderFullGradient}
   `,
   backgroundOrigin: "border-box",
@@ -41,7 +40,7 @@ const buttonStyle = css({
 });
 
 type BrandButtonProps = ComponentProps<"button"> & {
-  icon: JSX.Element;
+  icon?: JSX.Element;
 };
 
 export const BrandButton = ({ icon, children, ...props }: BrandButtonProps) => {

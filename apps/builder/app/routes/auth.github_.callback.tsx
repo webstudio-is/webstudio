@@ -9,9 +9,8 @@ import { allowedDestinations } from "~/services/destinations.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (false === isDashboard(request)) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
   preventCrossOriginCookie(request);

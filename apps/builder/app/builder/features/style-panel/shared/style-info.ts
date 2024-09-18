@@ -867,67 +867,7 @@ export const useStyleInfoByInstanceId = (
   );
 };
 
-const getPriorityStyleSource = (styleSources: StyleSource[]): StyleSource => {
-  const customOrder: StyleSource[] = [
-    "overwritten",
-    "local",
-    "remote",
-    "preset",
-    "default",
-  ];
-
-  for (const style of customOrder) {
-    if (styleSources.includes(style)) {
-      return style;
-    }
-  }
-
-  return "default";
-};
-
-export const getStyleSourceColor = ({
-  properties,
-  currentStyle,
-}: {
-  properties: Array<StyleProperty>;
-  currentStyle: StyleInfo;
-}) => {
-  // When there are multiple properties. We need to make a consolidated choice.
-  // As we can't show multiple badges in the property name.
-  // Eg: flex-grow, flex-shrink, flex-basis
-  // All three managed by single section. If flex-basis is set, but if we pick only flex-grow from the three.
-  // The section does't show the badge. So, we need to pick the one which is being used.
-
-  const styleSourcesList = properties.map((property) =>
-    getStyleSource(currentStyle[property])
-  );
-
-  return styleSourcesList.length === 0
-    ? "default"
-    : getPriorityStyleSource(styleSourcesList);
-};
-
-/**
- * Has any value defined on that particular instance,
- * excluding preset and inherited values.
- */
-export const hasInstanceValue = (
-  currentStyle: StyleInfo,
-  property: StyleProperty
-) => {
-  const info = currentStyle[property];
-  return Boolean(
-    info?.cascaded ??
-      info?.local ??
-      info?.stateful ??
-      info?.stateless ??
-      info?.nextSource?.value ??
-      info?.previousSource?.value
-  );
-};
-
 export const __testing__ = {
-  getPriorityStyleSource,
   instanceToTag: undefined as Map<Instance["id"], HtmlTags> | undefined,
   setInstanceToTag: (instanceToTag: Map<Instance["id"], HtmlTags>) => {
     __testing__.instanceToTag = instanceToTag;

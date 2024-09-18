@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { Store, type Change } from "immerhin";
-import { enableMapSet } from "immer";
+import { enableMapSet, setAutoFreeze } from "immer";
 import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
@@ -45,6 +45,8 @@ import {
 import { $ephemeralStyles } from "~/canvas/stores";
 
 enableMapSet();
+// safari structuredClone fix
+setAutoFreeze(false);
 
 const appId = nanoid();
 
@@ -334,7 +336,6 @@ export const useBuilderStore = (publish: Publish) => {
       // @todo subscribe prematurely and compute initial changes
       // from current state whenever new app is connected
       unsubscribeStoresState = syncStoresState("builder", publish);
-      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
@@ -359,6 +360,8 @@ export const useBuilderStore = (publish: Publish) => {
           data,
         },
       });
+
+      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
     });
 
     const unsubscribeDisconnect = subscribe("disconnect", () => {

@@ -304,16 +304,9 @@ const propertiesData = {
 let property: Property;
 for (property in filteredProperties) {
   const config = filteredProperties[property];
-  // collect node types to improve parsing of css values
   const unitGroups = new Set<customData.UnitGroup>();
-  const types = new Set<customData.RawPropertyData["types"][number]>();
   walkSyntax(config.syntax, (node) => {
     if (node.type === "Type") {
-      const name = node.name as customData.RawPropertyData["types"][number];
-      if (customData.valueTypes.includes(name) === false) {
-        throw Error(`Unknown value type "${node.name}"`);
-      }
-      types.add(name);
       if (node.name === "integer" || node.name === "number") {
         unitGroups.add("number");
         return;
@@ -339,7 +332,6 @@ for (property in filteredProperties) {
     unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
     initial: parseInitialValue(property, config.initial, unitGroups),
-    types: Array.from(types),
   };
 }
 

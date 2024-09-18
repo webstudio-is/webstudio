@@ -13,7 +13,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // At the SaaS proxy side, only the allowed "access-control-allow-origin" header is set for OPTIONS requests.
 
   if (false === isBuilder(request)) {
-    throw new Error("Only Builder can logout at this endpoint");
+    throw new Response("Not found", {
+      status: 404,
+    });
   }
 
   if (request.method !== "POST") {
@@ -21,21 +23,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       { message: "Method not allowed" },
       {
         status: 405,
-        statusText: "Method Not Allowed",
       }
     );
   }
 
   if (request.headers.get("sec-fetch-site") === "same-origin") {
     // To prevent logout initiated from the builder iframe
-    throw new Error("Only cross-origin requests are allowed");
+
+    throw new Response("Only cross-origin requests are allowed", {
+      status: 403,
+    });
   }
 
   if (
     false === request.headers.get("Content-Type")?.includes("application/json")
   ) {
     // Enforce preflight request, preflight is checked on allowed origin
-    throw new Error("Invalid content type, only application/json is allowed");
+
+    throw new Response(
+      "Invalid content type, only application/json is allowed",
+      {
+        status: 415,
+      }
+    );
   }
 
   const redirectTo = `${getAuthorizationServerOrigin(request.url)}${loginPath({})}`;
@@ -62,5 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throw error;
   }
 
-  throw new Error("Should not reach this point");
+  throw new Response("Should not reach this point", {
+    status: 500,
+  });
 };

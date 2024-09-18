@@ -13,6 +13,7 @@ import {
   Tooltip,
   rawTheme,
   Link,
+  Box,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
@@ -206,8 +207,28 @@ export const ProjectCard = ({
   return (
     <Card hidden={isHidden} tabIndex={0} onKeyDown={handleKeyDown}>
       <CardContent
-        css={{ background: theme.colors.brandBackgroundProjectCardBack }}
+        css={{
+          background: theme.colors.brandBackgroundProjectCardBack,
+          position: "relative",
+          [`&:hover`]: {
+            "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
+          },
+        }}
       >
+        {/* This div with backgorundImage on card hover is used to prefetch DNS of the project domain on hover. */}
+        <Box
+          css={{
+            backgroundImage: `var(--ws-project-card-prefetch-image-background, none)`,
+            visibility: "hidden",
+            position: "absolute",
+            width: 1,
+            height: 1,
+            left: 0,
+            top: 0,
+            opacity: 0,
+          }}
+        />
+
         {previewImageAsset ? (
           <ThumbnailLinkWithImage
             to={linkPath}

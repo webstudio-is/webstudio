@@ -550,6 +550,21 @@ test("support custom properties var reference", () => {
   });
 });
 
+test("support deeply nested var reference", () => {
+  expect(parseCssValue("color", "rgb(var(--r), var(--g), var(--b))")).toEqual({
+    type: "unparsed",
+    value: "rgb(var(--r), var(--g), var(--b))",
+  });
+  expect(parseCssValue("transitionDuration", "var(--time)")).toEqual({
+    type: "layers",
+    value: [{ type: "unparsed", value: "var(--time)" }],
+  });
+  expect(parseCssValue("filter", "var(--filter)")).toEqual({
+    type: "tuple",
+    value: [{ type: "unparsed", value: "var(--filter)" }],
+  });
+});
+
 test("support custom properties var reference in custom property", () => {
   expect(parseCssValue("--bg", "var(--color)")).toEqual({
     type: "var",

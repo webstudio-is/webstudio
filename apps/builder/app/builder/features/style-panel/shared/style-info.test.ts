@@ -42,7 +42,7 @@ jest.unstable_mockModule("~/shared/canvas-api", () => ({
   },
 }));
 
-const { getPriorityStyleSource, setInstanceToTag } = __testing__;
+const { setInstanceToTag } = __testing__;
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
@@ -960,20 +960,5 @@ describe("active states", () => {
       type: "keyword",
       value: "green",
     });
-  });
-
-  test("get the style source from ['local', 'default', 'preset']", () => {
-    const result = getPriorityStyleSource(["local", "default", "preset"]);
-    expect(result).toBe("local");
-  });
-
-  test("get the style source from ['local', 'overwritten', 'preset']", () => {
-    const result = getPriorityStyleSource(["local", "overwritten", "preset"]);
-    expect(result).toBe("overwritten");
-  });
-
-  test("get the style source from ['default', 'default', 'preset']", () => {
-    const result = getPriorityStyleSource(["default", "default", "preset"]);
-    expect(result).toBe("preset");
   });
 });

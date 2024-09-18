@@ -92,6 +92,7 @@ export const loginPath = (params: {
 }) => `/login${searchParams(params)}`;
 
 export const logoutPath = () => "/logout";
+export const restLogoutPath = () => "/dashboard-logout";
 
 export const userPlanSubscriptionPath = () => {
   const urlSearchParams = new URLSearchParams();

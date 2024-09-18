@@ -7,12 +7,12 @@ import { createImageLoader } from "@webstudio-is/image";
 import env from "~/env/env.server";
 import { isCanvas } from "~/shared/router-utils";
 import { ClientOnly } from "~/shared/client-only";
+export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (isCanvas(request) === false) {
-    throw new Response(null, {
+    throw new Response("Not Found", {
       status: 404,
-      statusText: "Not Found",
     });
   }
 

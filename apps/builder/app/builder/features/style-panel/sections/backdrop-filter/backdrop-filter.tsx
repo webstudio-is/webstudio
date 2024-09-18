@@ -34,7 +34,7 @@ const getItemProps = (_index: number, value: StyleValue) => {
 };
 
 export const Section = () => {
-  const styleDecl = useComputedStyleDecl("filter");
+  const styleDecl = useComputedStyleDecl("backdropFilter");
 
   return (
     <RepeatedStyleSection
