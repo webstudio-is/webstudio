@@ -46,7 +46,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("var(--namespace, normal, 10px)");
   });
 
-  test("fontFamily", () => {
+  test("fontFamily stack", () => {
     expect(
       toValue({
         type: "fontFamily",
@@ -55,6 +55,15 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     ).toBe(
       'Seravek, "Gill Sans Nova", Ubuntu, Calibri, "DejaVu Sans", source-sans-pro, sans-serif'
     );
+  });
+
+  test("fontFamily unknown", () => {
+    expect(
+      toValue({
+        type: "fontFamily",
+        value: ["something-random"],
+      })
+    ).toBe("something-random, sans-serif");
   });
 
   test("Transform font family value to override default fallback", () => {
