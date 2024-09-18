@@ -5,6 +5,11 @@ import {
   theme,
   useSearchFieldKeys,
   findNextListItemIndex,
+  Tooltip,
+  Text,
+  rawTheme,
+  Link,
+  Flex,
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
@@ -12,9 +17,9 @@ import {
   Separator,
   useAssets,
 } from "~/builder/shared/assets";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
-import { CheckMarkIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import {
   type Item,
   filterIdsByFamily,
@@ -22,14 +27,9 @@ import {
   groupItemsByType,
   toItems,
 } from "./item-utils";
+import type { FontFamilyValue } from "@webstudio-is/css-engine";
 
-const useLogic = ({
-  onChange,
-  value,
-}: {
-  onChange: (value: string) => void;
-  value: string;
-}) => {
+const useLogic = ({ onChange, value }: FontsManagerProps) => {
   const { assetContainers } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assetContainers), [assetContainers]);
@@ -61,16 +61,14 @@ const useLogic = ({
     () => groupItemsByType(filteredItems),
     [filteredItems]
   );
-  const [currentIndex, setCurrentIndex] = useState(-1);
 
-  useEffect(() => {
-    setCurrentIndex(groupedItems.findIndex((item) => item.label === value));
+  const currentIndex = useMemo(() => {
+    return groupedItems.findIndex((item) => item.label === value.value[0]);
   }, [groupedItems, value]);
 
   const handleChangeCurrent = (nextCurrentIndex: number) => {
     const item = groupedItems[nextCurrentIndex];
     if (item !== undefined) {
-      setCurrentIndex(nextCurrentIndex);
       onChange(item.label);
     }
   };
@@ -88,7 +86,7 @@ const useLogic = ({
     const ids = filterIdsByFamily(family, assetContainers);
     deleteAssets(ids);
     if (index === currentIndex) {
-      setCurrentIndex(-1);
+      onChange(undefined);
     }
   };
 
@@ -106,8 +104,8 @@ const useLogic = ({
 };
 
 type FontsManagerProps = {
-  value: string;
-  onChange: (value: string) => void;
+  value: FontFamilyValue;
+  onChange: (value?: string) => void;
 };
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
@@ -137,7 +135,41 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         {...itemProps}
         key={key}
         prefix={itemProps.current ? <CheckMarkIcon /> : undefined}
-        suffix={item.type === "uploaded" ? renderMenu(index) : undefined}
+        suffix={
+          item.type === "uploaded" ? (
+            renderMenu(index)
+          ) : itemProps.state === "selected" && item.description ? (
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Flex
+                  direction="column"
+                  gap="2"
+                  css={{ maxWidth: theme.spacing[28] }}
+                >
+                  <Text variant="titles">{item.label}</Text>
+                  <Text
+                    variant="monoBold"
+                    color="moreSubtle"
+                    userSelect="text"
+                    css={{
+                      whiteSpace: "break-spaces",
+                      cursor: "text",
+                    }}
+                  >
+                    {`font-family: ${item.stack.join(", ")};`}
+                  </Text>
+                  <Text>{item.description}</Text>
+                </Flex>
+              }
+            >
+              <InfoCircleIcon
+                tabIndex={0}
+                color={rawTheme.colors.foregroundSubtle}
+              />
+            </Tooltip>
+          ) : undefined
+        }
       >
         {item.label}
       </DeprecatedListItem>
@@ -167,7 +199,38 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
             {uploadedItems.length !== 0 && (
               <Separator css={{ mx: theme.spacing[9] }} />
             )}
-            <DeprecatedListItem state="disabled">{"System"}</DeprecatedListItem>
+            <DeprecatedListItem
+              state="disabled"
+              suffix={
+                <Tooltip
+                  variant="wrapped"
+                  content={
+                    <Text>
+                      {
+                        "System font stack CSS organized by typeface classification for every modern OS. No downloading, no layout shifts, no flashes— just instant renders. Learn more about "
+                      }
+                      <Link
+                        href="https://github.com/system-fonts/modern-font-stacks"
+                        target="_blank"
+                        color="inherit"
+                        variant="inherit"
+                      >
+                        modern font stacks
+                      </Link>
+                      .
+                    </Text>
+                  }
+                >
+                  <InfoCircleIcon
+                    tabIndex={0}
+                    color={rawTheme.colors.foregroundSubtle}
+                    style={{ pointerEvents: "auto" }}
+                  />
+                </Tooltip>
+              }
+            >
+              System
+            </DeprecatedListItem>
           </>
         )}
         {systemItems.map((item, index) =>
