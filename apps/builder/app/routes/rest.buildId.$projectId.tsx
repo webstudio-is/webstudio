@@ -34,7 +34,7 @@ export const loader = async ({
     const context = await createContext(request);
 
     const project = await projectDb.project.loadById(projectId, context);
-    const buildId = project.latestBuild?.buildId ?? null;
+    const buildId = project.latestBuildVirtual?.buildId ?? null;
 
     return {
       buildId,

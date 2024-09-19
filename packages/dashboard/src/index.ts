@@ -1,2 +1,2 @@
 export type { DashboardProjectRouter } from "./trpc";
-export * from "./db/schema";
+export type { DashboardProject } from "./db/projects";

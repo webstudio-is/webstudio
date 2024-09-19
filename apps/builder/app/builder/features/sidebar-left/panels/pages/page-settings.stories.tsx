@@ -71,11 +71,18 @@ $project.set({
   isDeleted: false,
   userId: "userId",
   domain: "new-2x9tcd",
-  previewImageAsset: {
-    id: "0",
-    name: "0",
-  },
+
   marketplaceApprovalStatus: "UNLISTED",
+
+  latestStaticBuild: null,
+  previewImageAssetId: null,
+  previewImageAsset: {
+    projectId: "projectId",
+    id: "imageId",
+    name: "very-very-very-long-long-image-name.jpg",
+  },
+  latestBuildVirtual: null,
+  domainsVirtual: [],
 });
 
 export const PageSettingsEdit = () => {

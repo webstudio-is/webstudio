@@ -3,7 +3,8 @@ import {
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import type { DashboardProjects } from "./schema";
+
+export type DashboardProject = Awaited<ReturnType<typeof findMany>>[number];
 
 export const findMany = async (userId: string, context: AppContext) => {
   if (context.authorization.type !== "user") {
@@ -20,7 +21,7 @@ export const findMany = async (userId: string, context: AppContext) => {
 
   const data = await context.postgrest.client
     .from("DashboardProject")
-    .select("*, previewImageAsset:Asset (*)")
+    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
     .eq("userId", userId)
     .eq("isDeleted", false)
     .order("createdAt", { ascending: false })
@@ -28,9 +29,16 @@ export const findMany = async (userId: string, context: AppContext) => {
   if (data.error) {
     throw data.error;
   }
+
   return data.data as SetNonNullable<
-    (typeof data.data)[number]
-  >[] satisfies DashboardProjects;
+    (typeof data.data)[number],
+    | "id"
+    | "title"
+    | "domain"
+    | "isDeleted"
+    | "createdAt"
+    | "marketplaceApprovalStatus"
+  >[];
 };
 
 export const findManyByIds = async (
@@ -42,7 +50,7 @@ export const findManyByIds = async (
   }
   const data = await context.postgrest.client
     .from("DashboardProject")
-    .select("*, previewImageAsset:Asset (*)")
+    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
     .in("id", projectIds)
     .eq("isDeleted", false)
     .order("createdAt", { ascending: false })
@@ -51,6 +59,12 @@ export const findManyByIds = async (
     throw data.error;
   }
   return data.data as SetNonNullable<
-    (typeof data.data)[number]
-  >[] satisfies DashboardProjects;
+    (typeof data.data)[number],
+    | "id"
+    | "title"
+    | "domain"
+    | "isDeleted"
+    | "createdAt"
+    | "marketplaceApprovalStatus"
+  >[];
 };

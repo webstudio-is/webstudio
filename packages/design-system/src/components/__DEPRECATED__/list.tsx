@@ -27,22 +27,13 @@ const ListItemBase = styled("li", {
   listStyle: "none",
   outline: 0,
   position: "relative",
-  variants: {
-    state: {
-      disabled: {
-        pointerEvents: "none",
-      },
-      selected: {
-        "&:before": {
-          content: "''",
-          position: "absolute",
-          pointerEvents: "none",
-          inset: `0 ${theme.spacing[3]}`,
-          borderRadius: theme.borderRadius[4],
-          border: `2px solid ${theme.colors.borderFocus}`,
-        },
-      },
-    },
+  "&[aria-selected]::before": {
+    content: "''",
+    position: "absolute",
+    pointerEvents: "none",
+    inset: `0 ${theme.spacing[3]}`,
+    borderRadius: theme.borderRadius[4],
+    border: `2px solid ${theme.colors.borderFocus}`,
   },
 });
 
@@ -66,9 +57,9 @@ export const DeprecatedListItem = forwardRef<
   return (
     <ListItemBase
       ref={ref}
-      state={state}
       tabIndex={state === "disabled" ? -1 : 0}
       role="option"
+      {...(state === "disabled" ? { "aria-disabled": true } : undefined)}
       {...(state === "selected" ? { "aria-selected": true } : undefined)}
       {...(current ? { "aria-current": true } : undefined)}
       {...props}
@@ -82,7 +73,7 @@ export const DeprecatedListItem = forwardRef<
         <Text
           variant="labelsSentenceCase"
           truncate
-          color={state === "disabled" ? "disabled" : "main"}
+          color={state === "disabled" ? "subtle" : "main"}
         >
           {children}
         </Text>
@@ -122,6 +113,9 @@ export const useDeprecatedList = ({
       },
       onMouseEnter() {
         onSelect(index);
+      },
+      onMouseLeave() {
+        onSelect(-1);
       },
       onClick() {
         onChangeCurrent(index);

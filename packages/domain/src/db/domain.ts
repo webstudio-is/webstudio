@@ -1,11 +1,4 @@
 import {
-  prisma,
-  type Project,
-  type Domain,
-  type ProjectWithDomain,
-  type LatestBuildPerProjectDomain,
-} from "@webstudio-is/prisma-client";
-import {
   authorizeProject,
   type AppContext,
   AuthorizationError,
@@ -13,53 +6,8 @@ import {
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
-
-export type ProjectDomain = ProjectWithDomain & {
-  domain: Domain;
-  latestBuid: null | LatestBuildPerProjectDomain;
-};
-
-const getProjectDomains = async (
-  projectId: Project["id"]
-): Promise<ProjectDomain[]> =>
-  await prisma.projectWithDomain.findMany({
-    where: {
-      projectId,
-    },
-    include: {
-      domain: true,
-      latestBuid: true,
-    },
-    orderBy: [
-      {
-        createdAt: "asc",
-      },
-    ],
-  });
-
-export const findMany = async (
-  props: { projectId: Project["id"] },
-  context: AppContext
-): Promise<
-  { success: false; error: string } | { success: true; data: ProjectDomain[] }
-> => {
-  // Only builder of the project can list domains
-  const canList = await authorizeProject.hasProjectPermit(
-    { projectId: props.projectId, permit: "view" },
-    context
-  );
-
-  if (canList === false) {
-    throw new Error("You don't have access to list this project domains");
-  }
-
-  const projectDomains = await getProjectDomains(props.projectId);
-
-  return {
-    success: true,
-    data: projectDomains,
-  };
-};
+import type { Project } from "@webstudio-is/project";
+import type { Database } from "@webstudio-is/postrest/index.server";
 
 type Result = { success: false; error: string } | { success: true };
 
@@ -95,7 +43,7 @@ export const create = async (
     throw new AuthorizationError("Project must have project userId defined");
   }
 
-  const totalDomainsCount = await countTotalDomains(ownerId);
+  const totalDomainsCount = await countTotalDomains(ownerId, context);
 
   if (totalDomainsCount >= props.maxDomainsAllowedPerUser) {
     return {
@@ -114,30 +62,47 @@ export const create = async (
   const { domain } = validationResult;
 
   // Create domain in domain table
-  const dbDomain = await prisma.domain.upsert({
-    update: {
-      domain,
-    },
-    create: {
-      domain,
-      status: "INITIALIZING",
-    },
-    where: {
-      domain,
-    },
-  });
+  const upsertResult = await context.postgrest.client
+    .from("Domain")
+    .upsert(
+      {
+        id: crypto.randomUUID(),
+        domain,
+        status: "INITIALIZING",
+      },
+      // Do not update if exists
+      { onConflict: "domain", ignoreDuplicates: true }
+    )
+    .eq("domain", domain);
 
+  if (upsertResult.error) {
+    return { success: false, error: upsertResult.error.message };
+  }
+
+  // Get domain id (upsert in postgrest does not return anything in case of conflict and ignoreDuplicates)
+  const domainRow = await context.postgrest.client
+    .from("Domain")
+    .select("id")
+    .eq("domain", domain)
+    .single();
+
+  if (domainRow.error) {
+    return { success: false, error: domainRow.error.message };
+  }
+
+  const domainId = domainRow.data.id;
   const txtRecord = crypto.randomUUID();
 
-  // Create project domain relation
-  await prisma.projectDomain.create({
-    data: {
-      domainId: dbDomain.id,
-      projectId: props.projectId,
-      txtRecord,
-      cname: await cnameFromUserId(ownerId),
-    },
+  const result = await context.postgrest.client.from("ProjectDomain").insert({
+    domainId,
+    projectId: props.projectId,
+    txtRecord,
+    cname: await cnameFromUserId(ownerId),
   });
+
+  if (result.error) {
+    return { success: false, error: result.error.message };
+  }
 
   return { success: true };
 };
@@ -162,35 +127,50 @@ export const verify = async (
     throw new Error("You don't have access to create this project domains");
   }
 
-  const projectDomain = await prisma.projectWithDomain.findFirstOrThrow({
-    where: {
-      projectId: props.projectId,
-      domainId: props.domainId,
-    },
-    include: {
-      domain: true,
-    },
-  });
+  const projectDomain = await context.postgrest.client
+    .from("ProjectDomain")
+    .select(
+      `
+      txtRecord,
+      cname,
+      domain:Domain(*)
+      `
+    )
+    .eq("domainId", props.domainId)
+    .eq("projectId", props.projectId)
+    .single();
+
+  if (projectDomain.error) {
+    return { success: false, error: projectDomain.error.message };
+  }
+
+  const domain = projectDomain.data.domain?.domain;
+
+  if (domain == null) {
+    return { success: false, error: "Domain not found" };
+  }
 
   // @todo: TXT verification and domain initialization should be implemented in the future as queue service
   const createDomainResult = await context.domain.domainTrpc.create.mutate({
-    domain: projectDomain.domain.domain,
-    txtRecord: projectDomain.txtRecord,
+    domain,
+    txtRecord: projectDomain.data.txtRecord,
   });
 
   if (createDomainResult.success === false) {
     return createDomainResult;
   }
 
-  await prisma.domain.update({
-    where: {
-      id: props.domainId,
-    },
-    data: {
+  const domainUpdateResult = await context.postgrest.client
+    .from("Domain")
+    .update({
       status: "PENDING",
-      txtRecord: projectDomain.txtRecord,
-    },
-  });
+      txtRecord: projectDomain.data.txtRecord,
+    })
+    .eq("id", props.domainId);
+
+  if (domainUpdateResult.error) {
+    return { success: false, error: domainUpdateResult.error.message };
+  }
 
   return { success: true };
 };
@@ -215,18 +195,23 @@ export const remove = async (
     throw new Error("You don't have access to delete this project domains");
   }
 
-  await prisma.projectDomain.deleteMany({
-    where: {
-      projectId: props.projectId,
-      domainId: props.domainId,
-    },
-  });
+  const deleteResult = await context.postgrest.client
+    .from("ProjectDomain")
+    .delete()
+    .eq("domainId", props.domainId)
+    .eq("projectId", props.projectId);
+
+  if (deleteResult.error) {
+    return { success: false, error: deleteResult.error.message };
+  }
 
   return { success: true };
 };
 
 type Status = "active" | "pending" | "error";
 type StatusEnum = Uppercase<Status>;
+
+type Domain = Database["public"]["Tables"]["Domain"]["Row"];
 
 type RefreshResult =
   | { success: false; error: string }
@@ -277,39 +262,40 @@ export const updateStatus = async (
 
   const { data } = statusResult;
 
-  if (data.status === "error") {
-    // update domain status
-    const updatedDomain = await prisma.domain.update({
-      where: {
-        domain,
-      },
-      data: {
-        status: statusToStatusEnum(data.status),
-        error: data.error,
-      },
-    });
+  // update domain status
+  const updatedDomainResult = await context.postgrest.client
+    .from("Domain")
+    .update({
+      status: statusToStatusEnum(data.status),
+      error: data.status === "error" ? data.error : null,
+    })
+    .eq("domain", domain)
+    .select("*")
+    .single();
 
-    return { success: true, domain: updatedDomain };
+  if (updatedDomainResult.error) {
+    return { success: false, error: updatedDomainResult.error.message };
   }
 
-  // update domain status
-  const updatedDomain = await prisma.domain.update({
-    where: {
-      domain,
-    },
-    data: {
-      status: statusToStatusEnum(data.status),
-      error: null,
-    },
-  });
-
-  return { success: true, domain: updatedDomain };
+  return { success: true, domain: updatedDomainResult.data };
 };
 
-export const countTotalDomains = async (userId: string): Promise<number> => {
-  return await prisma.projectWithDomain.count({
-    where: {
-      userId,
-    },
-  });
+export const countTotalDomains = async (
+  userId: string,
+  context: AppContext
+): Promise<number> => {
+  const result = await context.postgrest.client
+    .from("Domain")
+    .select("Project!ProjectDomain!inner(id)", {
+      count: "exact",
+      head: true,
+    })
+    .eq("Project.userId", userId)
+    .eq("Project.isDeleted", false);
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result.count ?? 0;
 };

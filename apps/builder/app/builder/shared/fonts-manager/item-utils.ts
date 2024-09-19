@@ -5,15 +5,13 @@ import type { AssetContainer } from "../assets";
 export type Item = {
   label: string;
   type: "uploaded" | "system";
+  description?: string;
+  stack: Array<string>;
 };
 
 export const toItems = (
   assetContainers: Array<AssetContainer>
 ): Array<Item> => {
-  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
-    label,
-    type: "system",
-  }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
   for (const assetContainer of assetContainers) {
@@ -29,6 +27,16 @@ export const toItems = (
         type: "uploaded",
       });
     }
+  }
+
+  const system = [];
+  for (const [label, config] of SYSTEM_FONTS) {
+    system.push({
+      label,
+      type: "system",
+      description: config.description,
+      stack: config.stack,
+    });
   }
   return [...uploaded.values(), ...system];
 };

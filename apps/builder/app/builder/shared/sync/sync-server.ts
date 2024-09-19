@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { atom } from "nanostores";
-import { Project } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import * as commandQueue from "./command-queue";
