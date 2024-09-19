@@ -69,7 +69,7 @@ export const loader = async ({
       throw error;
     }
 
-    console.error({ error });
+    console.error(error);
 
     // We have no idea what happened, so we'll return a 500 error.
     throw json(parseError(error), {

@@ -7,6 +7,7 @@ import { createAssetClient } from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
+import { parseError } from "~/shared/error/error-parse";
 
 const UrlBody = z.object({
   url: z.string(),
@@ -68,11 +69,10 @@ export const action = async (
       };
     }
   } catch (error) {
-    if (error instanceof Error) {
-      console.error({ error });
-      return {
-        errors: error.message,
-      };
-    }
+    console.error(error);
+
+    return {
+      errors: parseError(error).message,
+    };
   }
 };
