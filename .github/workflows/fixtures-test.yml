@@ -52,19 +52,11 @@ jobs:
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
-        run: |
-          git diff --name-only HEAD --exit-code
-          exit_code=$?
+        run: git diff --name-only HEAD --exit-code
 
-          if [ $exit_code -ne 0 ]; then
-            echo "$(git diff --name-only | wc -l) differences"
-            git diff | head -n 100
-          fi
-
-          exit $exit_code
-
-      - name: Show changed files
+      - name: Show changed files and diff
         if: ${{ failure() }}
         run: |
           echo "Changed files are:"
           git diff --name-only HEAD
+          git diff HEAD | head -n 1000
