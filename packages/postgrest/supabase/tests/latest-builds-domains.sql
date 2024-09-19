@@ -1,4 +1,5 @@
 BEGIN;
+SET LOCAL search_path = pgtap, public;
 
 -- SET LOCAL search_path = pgtap,public;
 

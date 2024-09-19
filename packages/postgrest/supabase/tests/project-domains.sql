@@ -1,5 +1,5 @@
 BEGIN;
--- SET LOCAL search_path = pgtap,public;
+SET LOCAL search_path = pgtap, public;
 -- Initialize the testing environment without planning any specific number of tests
 -- We are using SELECT no_plan() because we don't specify the exact number of tests upfront.
 SELECT no_plan();
