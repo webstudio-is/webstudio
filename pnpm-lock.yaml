@@ -1460,9 +1460,9 @@ importers:
 
   packages/domain:
     dependencies:
-      '@webstudio-is/prisma-client':
+      '@webstudio-is/postrest':
         specifier: workspace:*
-        version: link:../prisma-client
+        version: link:../postgrest
       '@webstudio-is/project':
         specifier: workspace:*
         version: link:../project
@@ -1478,6 +1478,9 @@ importers:
       nanoid:
         specifier: ^5.0.1
         version: 5.0.1
+      type-fest:
+        specifier: ^4.24.0
+        version: 4.24.0
       zod:
         specifier: ^3.22.4
         version: 3.22.4

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# !/usr/bin/env pnpm playground will not work
+# The shebang line only takes a single path to an executable,
+# and everything after the path is treated as a single string, not as separate arguments.
+
+pnpm playground "$@"
+

@@ -14,7 +14,7 @@ import {
   DialogActions,
   toast,
 } from "@webstudio-is/design-system";
-import { Title, Project } from "@webstudio-is/project";
+import { Title, type Project } from "@webstudio-is/project";
 import { nativeClient } from "./trpc/trpc-client";
 import { useEffectEvent } from "./hook-utils/effect-event";
 

@@ -33,8 +33,8 @@ model File {
   format            String
   size              Int
   description       String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @default(now()) @updatedAt
+  createdAt         DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime     @default(now()) @updatedAt @db.Timestamptz(3)
   meta              String       @default("{}")
   status            UploadStatus @default(UPLOADING)
   isDeleted         Boolean      @default(false)
@@ -60,7 +60,7 @@ model User {
   provider         String?
   image            String?
   username         String?
-  createdAt        DateTime           @default(now())
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
   team             Team?              @relation(fields: [teamId], references: [id])
   teamId           String?
   projects         Project[]
@@ -73,7 +73,7 @@ model User {
 model ClientReferences {
   reference String   @default(dbgenerated())
   service   String
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
   user      User     @relation(fields: [userId], references: [id])
   userId    String
 
@@ -89,7 +89,7 @@ model Product {
   images      String[]
   meta        Json
 
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime         @default(now()) @db.Timestamptz(3)
   checkout     TransactionLog[]
   userProducts UserProduct[]
 }
@@ -103,7 +103,7 @@ model TransactionLog {
   productId String?
   product   Product? @relation(fields: [productId], references: [id])
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   eventData Json? @default(dbgenerated())
 
@@ -140,7 +140,7 @@ view UserProduct {
 
 model Project {
   id                        String                       @id @default(uuid())
-  createdAt                 DateTime                     @default(now())
+  createdAt                 DateTime                     @default(now()) @db.Timestamptz(3)
   title                     String
   domain                    String                       @unique
   user                      User?                        @relation(fields: [userId], references: [id])
@@ -149,7 +149,6 @@ model Project {
   isDeleted                 Boolean                      @default(false)
   files                     File[]
   projectDomain             ProjectDomain[]
-  latestBuild               LatestBuildPerProject?
   authorizationToken        AuthorizationToken[]
   previewImageAsset         Asset?                       @relation(fields: [previewImageAssetId, id], references: [id, projectId])
   previewImageAssetId       String?
@@ -180,7 +179,7 @@ model Build {
   id                String   @unique @default(uuid())
   version           Int      @default(0)
   lastTransactionId String?
-  createdAt         DateTime @default(now())
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime @default(now()) @updatedAt @db.Timestamptz(3)
 
   pages String
@@ -201,7 +200,6 @@ model Build {
   deployment    String?
   publishStatus PublishStatus @default(PENDING)
 
-  latestBuildPerProject       LatestBuildPerProject?
   latestStaticBuildPerProject LatestStaticBuildPerProject?
 
   @@id([id, projectId])
@@ -222,7 +220,7 @@ model AuthorizationToken {
   project   Project               @relation(fields: [projectId], references: [id])
   name      String                @default("")
   relation  AuthorizationRelation @default(viewers)
-  createdAt DateTime              @default(now())
+  createdAt DateTime              @default(now()) @db.Timestamptz(3)
 
   canClone Boolean @default(true)
   canCopy  Boolean @default(true)
@@ -244,8 +242,8 @@ enum DomainStatus {
 model Domain {
   id        String   @id @default(uuid())
   domain    String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
 
   ProjectDomain ProjectDomain[]
   // Last known txtRecord of the domain (to check domain ownership)
@@ -254,8 +252,6 @@ model Domain {
   status        DomainStatus    @default(INITIALIZING)
   // In case of status="error", this will contain the error message
   error         String?
-
-  projectWithDomain ProjectWithDomain[]
 }
 
 model ProjectDomain {
@@ -263,7 +259,7 @@ model ProjectDomain {
   project   Project  @relation(fields: [projectId], references: [id])
   domainId  String
   domain    Domain   @relation(fields: [domainId], references: [id])
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
   // Generated txt record to check domain ownership
   txtRecord String   @unique @default(uuid())
 
@@ -274,57 +270,6 @@ model ProjectDomain {
   @@index([domainId])
 }
 
-view ProjectWithDomain {
-  projectId String
-
-  domainId  String
-  domain    Domain @relation(fields: [domainId], references: [id])
-  txtRecord String
-
-  createdAt DateTime
-
-  // CNAME record to point to the domain
-  cname String
-
-  verified Boolean
-  // To count statistics per user
-  userId   String?
-
-  // We can deploy on per domain basis, here for each project domain we have latest build
-  latestBuid LatestBuildPerProjectDomain?
-
-  @@id([projectId, domainId])
-}
-
-view LatestBuildPerProjectDomain {
-  domainId          String
-  buildId           String
-  projectId         String
-  projectWithDomain ProjectWithDomain @relation(fields: [projectId, domainId], references: [projectId, domainId])
-
-  isLatestBuild Boolean
-  publishStatus PublishStatus
-  updatedAt     DateTime
-
-  @@id([projectId, domainId])
-}
-
-view LatestBuildPerProject {
-  buildId String
-  build   Build  @relation(fields: [buildId, projectId], references: [id, projectId])
-
-  projectId String
-  domain    String
-  project   Project @relation(fields: [projectId, domain], references: [id, domain])
-
-  isLatestBuild Boolean
-  publishStatus PublishStatus
-  updatedAt     DateTime
-
-  @@id([projectId, domain])
-  @@unique([buildId, projectId])
-}
-
 view LatestStaticBuildPerProject {
   buildId String
   build   Build  @relation(fields: [buildId, projectId], references: [id, projectId])
@@ -333,7 +278,7 @@ view LatestStaticBuildPerProject {
   project   Project @relation(fields: [projectId], references: [id])
 
   publishStatus PublishStatus
-  updatedAt     DateTime
+  updatedAt     DateTime      @db.Timestamptz(3)
 
   @@id([projectId])
   @@unique([buildId, projectId])
@@ -342,7 +287,7 @@ view LatestStaticBuildPerProject {
 // Dashboard
 view DashboardProject {
   id                        String                    @id @default(uuid())
-  createdAt                 DateTime                  @default(now())
+  createdAt                 DateTime                  @default(now()) @db.Timestamptz(3)
   title                     String
   domain                    String
   userId                    String?

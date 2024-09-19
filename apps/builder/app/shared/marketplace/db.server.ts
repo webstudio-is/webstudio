@@ -5,7 +5,7 @@ import {
   parseConfig,
 } from "@webstudio-is/project-build/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { Project } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 
 export const getBuildProdData = async (

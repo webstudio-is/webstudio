@@ -167,7 +167,7 @@ export const ProjectCard = ({
     domain,
     isPublished,
     createdAt,
-    latestBuild,
+    latestBuildVirtual,
     previewImageAsset,
   },
   hasProPlan,
@@ -256,10 +256,10 @@ export const ProjectCard = ({
               content={
                 <Text variant="small">
                   Created on {formatDate(createdAt)}
-                  {latestBuild?.publishStatus === "PUBLISHED" && (
+                  {latestBuildVirtual?.publishStatus === "PUBLISHED" && (
                     <>
                       <br />
-                      Published on {formatDate(latestBuild.updatedAt)}
+                      Published on {formatDate(latestBuildVirtual.createdAt)}
                     </>
                   )}
                 </Text>

@@ -21,34 +21,14 @@ import {
 import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import { useCallback, useEffect, useState } from "react";
-import type { PublishStatus } from "@webstudio-is/prisma-client";
 import { formatDistance } from "date-fns/formatDistance";
 import { Entri } from "./entri";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
 import { $publisherHost } from "~/shared/nano-states";
+import type { Database } from "@webstudio-is/postrest/index.server";
 
-export type Domain = {
-  projectId: Project["id"];
-  domainId: string;
-  domain: {
-    domain: string;
-    error: string | null;
-    status: DomainStatus;
-    updatedAt: string;
-  };
-  txtRecord: string;
-  cname: string;
-  verified: boolean;
-  latestBuid: null | {
-    projectId: string;
-    buildId: string;
-    isLatestBuild: boolean;
-    publishStatus: PublishStatus;
-    updatedAt: string;
-    domainId: string;
-  };
-};
+export type Domain = Project["domainsVirtual"][number];
 
 const InputEllipsis = styled(InputField, {
   "&>input": {
@@ -79,21 +59,24 @@ const getCname = (domain: string) => {
   return cnameArray.join(".");
 };
 
-export const getStatus = (projectDomain: Domain) =>
+export const getStatus = (projectDomain: Project["domainsVirtual"][number]) =>
   projectDomain.verified
-    ? (`VERIFIED_${projectDomain.domain.status}` as const)
+    ? (`VERIFIED_${projectDomain.status}` as const)
     : `UNVERIFIED`;
 
 export const PENDING_TIMEOUT =
   process.env.NODE_ENV === "production" ? 60 * 3 * 1000 : 35000;
 
-export const getPublishStatusAndText = ({
-  updatedAt,
+export const getPublishStatusAndTextNew = ({
+  createdAt,
   publishStatus,
-}: Pick<NonNullable<Domain["latestBuid"]>, "updatedAt" | "publishStatus">) => {
+}: Pick<
+  Database["public"]["Tables"]["latestBuildVirtual"]["Row"],
+  "createdAt" | "publishStatus"
+>) => {
   let status = publishStatus;
 
-  const delta = Date.now() - new Date(updatedAt).getTime();
+  const delta = Date.now() - new Date(createdAt).getTime();
   // Assume build failed after 3 minutes
 
   if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
@@ -108,7 +91,41 @@ export const getPublishStatusAndText = ({
         : "Publishing started";
 
   const statusText = `${textStart} ${formatDistance(
-    new Date(updatedAt),
+    new Date(createdAt),
+    new Date(),
+    {
+      addSuffix: true,
+    }
+  )}`;
+
+  return { statusText, status };
+};
+
+export const getPublishStatusAndText = ({
+  createdAt,
+  publishStatus,
+}: Pick<
+  NonNullable<Domain["latestBuildVirtual"]>,
+  "createdAt" | "publishStatus"
+>) => {
+  let status = publishStatus;
+
+  const delta = Date.now() - new Date(createdAt).getTime();
+  // Assume build failed after 3 minutes
+
+  if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
+    status = "FAILED";
+  }
+
+  const textStart =
+    status === "PUBLISHED"
+      ? "Published"
+      : status === "FAILED"
+        ? "Publish failed"
+        : "Publishing started";
+
+  const statusText = `${textStart} ${formatDistance(
+    new Date(createdAt),
     new Date(),
     {
       addSuffix: true,
@@ -142,9 +159,9 @@ const getStatusText = (props: {
       isVerifiedActive = true;
       text = "Status: Active, not published";
 
-      if (props.projectDomain.latestBuid !== null) {
+      if (props.projectDomain.latestBuildVirtual !== null) {
         const publishText = getPublishStatusAndText(
-          props.projectDomain.latestBuid
+          props.projectDomain.latestBuildVirtual
         );
 
         text = publishText.statusText;
@@ -152,7 +169,7 @@ const getStatusText = (props: {
       }
       break;
     case "VERIFIED_ERROR":
-      text = props.projectDomain.domain.error ?? text;
+      text = props.projectDomain.error ?? text;
       break;
 
     default:
@@ -237,16 +254,16 @@ const DomainItem = (props: {
     props.domainState !== "idle";
 
   const status = props.projectDomain.verified
-    ? (`VERIFIED_${props.projectDomain.domain.status}` as `VERIFIED_${DomainStatus}`)
+    ? (`VERIFIED_${props.projectDomain.status}` as `VERIFIED_${DomainStatus}`)
     : `UNVERIFIED`;
 
   const { initiallyOpen } = props;
 
   const domainId = props.projectDomain.domainId;
-  const domain = props.projectDomain.domain.domain;
-  const domainStatus = props.projectDomain.domain.status;
-  const domainError = props.projectDomain.domain.error;
-  const domainUpdatedAt = props.projectDomain.domain.updatedAt;
+  const domain = props.projectDomain.domain;
+  const domainStatus = props.projectDomain.status;
+  const domainError = props.projectDomain.error;
+  const domainUpdatedAt = props.projectDomain.updatedAt;
 
   const projectId = props.projectDomain.projectId;
   // const domain
@@ -365,7 +382,7 @@ const DomainItem = (props: {
   const txtRecord = {
     type: "TXT",
     host: txtEntryName,
-    value: props.projectDomain.txtRecord,
+    value: props.projectDomain.expectedTxtRecord,
     ttl: 300,
   } as const;
 
@@ -589,9 +606,9 @@ export const Domains = ({
     <>
       {domains.map((projectDomain) => (
         <DomainItem
-          key={projectDomain.domain.domain}
+          key={projectDomain.domain}
           projectDomain={projectDomain}
-          initiallyOpen={newDomains.has(projectDomain.domain.domain)}
+          initiallyOpen={newDomains.has(projectDomain.domain)}
           refreshDomainResult={refreshDomainResult}
           domainState={domainState}
           isPublishing={isPublishing}

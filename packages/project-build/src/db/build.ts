@@ -182,29 +182,29 @@ export const loadApprovedProdBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]
 ) => {
-  const latestBuild = await context.postgrest.client
-    .from("LatestBuildPerProject")
+  const project = await context.postgrest.client
+    .from("Project")
     .select(
       `
-        buildId,
-        project:Project!inner (id)
+        id,
+        latestBuildVirtual(buildId)
       `
     )
-    .eq("projectId", projectId)
-    .eq("isLatestBuild", true)
-    .eq("project.isDeleted", false)
-    .eq("project.marketplaceApprovalStatus", "APPROVED")
+    .eq("id", projectId)
+    .eq("isDeleted", false)
+    .eq("marketplaceApprovalStatus", "APPROVED")
     .single();
-  if (latestBuild.error) {
-    throw latestBuild.error;
+  if (project.error) {
+    throw project.error;
   }
-  if (latestBuild.data.buildId === null) {
+  if (project.data.latestBuildVirtual === null) {
     throw Error("Build not found");
   }
+
   const build = await context.postgrest.client
     .from("Build")
     .select()
-    .eq("id", latestBuild.data.buildId);
+    .eq("id", project.data.latestBuildVirtual.buildId);
   // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
 
   if (build.error) {

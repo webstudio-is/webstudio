@@ -9,12 +9,13 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/postrest": "workspace:*",
     "nanoid": "^5.0.1",
+    "type-fest": "^4.24.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
