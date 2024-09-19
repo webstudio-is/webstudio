@@ -9,12 +9,12 @@ const PageError = z.union([
     .object({
       message: z.string(),
       details: z.string(),
-      hint: z.string(),
+      hint: z.string().nullable(),
       code: z.string(),
     })
     .transform(({ message, details, hint, code }) => ({
       message,
-      description: `${details} ${hint} ${code}`,
+      description: `details: ${details}; hint: ${hint}; code: ${code}`,
     })),
   z.object({
     message: z.string(),

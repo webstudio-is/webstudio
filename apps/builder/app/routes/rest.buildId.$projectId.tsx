@@ -53,6 +53,8 @@ export const loader = async ({
       throw error;
     }
 
+    console.error(error);
+
     throw json(parseError(error), {
       status: 500,
     });
