@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "0f80ffe8-7059-4577-8ef3-232f3aded028",
+    "id": "5df1744d-0383-4775-819c-1648300d55cd",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
     "version": 300,
-    "createdAt": "2024-08-07T15:25:00.822",
-    "updatedAt": "2024-08-07T15:25:00.822+00:00",
+    "createdAt": "2024-09-19T19:27:53.953+00:00",
+    "updatedAt": "2024-09-19T19:27:53.953+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -3498,8 +3498,7 @@
       "destination": "saas",
       "domains": [],
       "projectDomain": "webstudio-fixture-project-a-0su3o"
-    },
-    "marketplaceProduct": {}
+    }
   },
   "page": {
     "id": "7Db64ZXgYiRqKSQNR-qTQ",
@@ -3653,7 +3652,7 @@
       "size": 268326,
       "type": "image",
       "format": "png",
-      "createdAt": "2023-10-30T13:51:08.416",
+      "createdAt": "2023-10-30T13:51:08.416+00:00",
       "meta": {
         "width": 790,
         "height": 786
@@ -3667,7 +3666,7 @@
       "size": 2906,
       "type": "image",
       "format": "webp",
-      "createdAt": "2023-09-12T09:44:22.12",
+      "createdAt": "2023-09-12T09:44:22.12+00:00",
       "meta": {
         "width": 100,
         "height": 100
@@ -3681,7 +3680,7 @@
       "size": 210614,
       "type": "image",
       "format": "jpeg",
-      "createdAt": "2023-09-06T11:28:43.031",
+      "createdAt": "2023-09-06T11:28:43.031+00:00",
       "meta": {
         "width": 1024,
         "height": 1024

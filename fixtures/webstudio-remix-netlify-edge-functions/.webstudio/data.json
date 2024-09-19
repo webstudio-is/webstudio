@@ -3,7 +3,7 @@
     "id": "a2e8de30-03d5-4514-a3a6-406b3266a3af",
     "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
     "version": 38,
-    "createdAt": "2024-07-29T12:50:07.515",
+    "createdAt": "2024-07-29T12:50:07.515+00:00",
     "updatedAt": "2024-07-29T12:50:07.515+00:00",
     "pages": {
       "meta": {
@@ -468,7 +468,7 @@
       "size": 999,
       "type": "image",
       "format": "svg",
-      "createdAt": "2024-07-26T13:39:48.678",
+      "createdAt": "2024-07-26T13:39:48.678+00:00",
       "meta": {
         "width": 14,
         "height": 16

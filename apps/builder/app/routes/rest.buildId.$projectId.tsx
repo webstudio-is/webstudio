@@ -1,8 +1,13 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import {
+  json,
+  type LoaderFunctionArgs,
+  type TypedResponse,
+} from "@remix-run/server-runtime";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { allowedDestinations } from "~/services/destinations.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createContext } from "~/shared/context.server";
+import { parseError } from "~/shared/error/error-parse";
 import { isDashboard } from "~/shared/router-utils";
 
 // This loader is only accessible from the dashboard origin
@@ -10,7 +15,9 @@ import { isDashboard } from "~/shared/router-utils";
 export const loader = async ({
   params,
   request,
-}: LoaderFunctionArgs): Promise<{ buildId: string | null }> => {
+}: LoaderFunctionArgs): Promise<
+  { buildId: string | null } | TypedResponse<{ error: string; message: string }>
+> => {
   if (false === isDashboard(request)) {
     throw new Response("Not Found", {
       status: 404,
@@ -46,10 +53,9 @@ export const loader = async ({
       throw error;
     }
 
-    console.error({ error });
+    console.error(error);
 
-    // We have no idea what happened, so we'll return a 500 error.
-    throw json(error instanceof Error ? error.message : String(error), {
+    throw json(parseError(error), {
       status: 500,
     });
   }

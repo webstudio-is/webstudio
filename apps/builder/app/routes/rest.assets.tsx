@@ -12,6 +12,7 @@ import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
+import { parseError } from "~/shared/error/error-parse";
 
 export const loader = async ({
   params,
@@ -55,11 +56,10 @@ export const action = async (props: ActionFunctionArgs) => {
       };
     }
   } catch (error) {
-    if (error instanceof Error) {
-      console.error({ error });
-      return {
-        errors: error.message,
-      };
-    }
+    console.error(error);
+
+    return {
+      errors: parseError(error).message,
+    };
   }
 };

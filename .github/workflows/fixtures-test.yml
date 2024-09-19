@@ -54,8 +54,9 @@ jobs:
         # This command will fail if there are uncommitted changes, i.e something has broken
         run: git diff --name-only HEAD --exit-code
 
-      - name: Show changed files
+      - name: Show changed files and diff
         if: ${{ failure() }}
         run: |
           echo "Changed files are:"
           git diff --name-only HEAD
+          git diff HEAD | head -n 1000

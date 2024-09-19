@@ -103,7 +103,8 @@ export const sync = async (
     } catch (error) {
       // catch errors about unpublished project
       syncing.stop((error as Error).message, 2);
-      return;
+
+      throw error;
     }
   }
 
