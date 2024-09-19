@@ -1,4 +1,8 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import {
+  json,
+  type LoaderFunctionArgs,
+  type TypedResponse,
+} from "@remix-run/server-runtime";
 import type { Data } from "@webstudio-is/http-client";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { loadProductionCanvasData } from "~/shared/db";
@@ -12,10 +16,11 @@ export const loader = async ({
   params,
   request,
 }: LoaderFunctionArgs): Promise<
-  Data & { user: { email: User["email"] } | undefined } & {
-    projectDomain: string;
-    projectTitle: string;
-  }
+  | (Data & { user: { email: User["email"] } | undefined } & {
+      projectDomain: string;
+      projectTitle: string;
+    })
+  | TypedResponse<{ error: string; message: string }>
 > => {
   if (false === isDashboard(request)) {
     throw new Response("Not Found", {
@@ -66,8 +71,13 @@ export const loader = async ({
     console.error({ error });
 
     // We have no idea what happened, so we'll return a 500 error.
-    throw json(error instanceof Error ? error.message : String(error), {
-      status: 500,
-    });
+    return json(
+      error instanceof Error
+        ? { error: "rest.buildId error", message: error.message }
+        : { error: "rest.buildId error", message: String(error) },
+      {
+        status: 500,
+      }
+    );
   }
 };
