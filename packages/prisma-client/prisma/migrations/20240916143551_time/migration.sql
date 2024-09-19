@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS "LatestBuildPerProject" CASCADE;
 DROP VIEW IF EXISTS "LatestBuildPerProjectDomain" CASCADE;
 DROP VIEW IF EXISTS  "LatestStaticBuildPerProject" CASCADE;
 DROP VIEW "ApprovedMarketplaceProduct";
