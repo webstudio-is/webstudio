@@ -11,6 +11,7 @@ import { getUserById, type User } from "~/shared/db/user.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { allowedDestinations } from "~/services/destinations.server";
 import { isDashboard } from "~/shared/router-utils";
+import { parseError } from "~/shared/error/error-parse";
 
 export const loader = async ({
   params,
@@ -71,13 +72,8 @@ export const loader = async ({
     console.error({ error });
 
     // We have no idea what happened, so we'll return a 500 error.
-    return json(
-      error instanceof Error
-        ? { error: "rest.buildId error", message: error.message }
-        : { error: "rest.buildId error", message: String(error) },
-      {
-        status: 500,
-      }
-    );
+    throw json(parseError(error), {
+      status: 500,
+    });
   }
 };

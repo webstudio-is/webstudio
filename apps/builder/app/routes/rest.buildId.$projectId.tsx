@@ -7,6 +7,7 @@ import { db as projectDb } from "@webstudio-is/project/index.server";
 import { allowedDestinations } from "~/services/destinations.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createContext } from "~/shared/context.server";
+import { parseError } from "~/shared/error/error-parse";
 import { isDashboard } from "~/shared/router-utils";
 
 // This loader is only accessible from the dashboard origin
@@ -52,15 +53,8 @@ export const loader = async ({
       throw error;
     }
 
-    console.error({ error });
-
-    return json(
-      error instanceof Error
-        ? { error: "rest.buildId error", message: error.message }
-        : { error: "rest.buildId error", message: String(error) },
-      {
-        status: 500,
-      }
-    );
+    throw json(parseError(error), {
+      status: 500,
+    });
   }
 };
