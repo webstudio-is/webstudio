@@ -72,11 +72,7 @@ export const parseLinearGradient = (
           // If it's angle, then the value is related to <angle> or else it is a <color-hint>.
           if (gradientParts.length === 1) {
             if (isAngle(gradientParts[0]) === true) {
-              angle = {
-                type: "unit",
-                value: parseFloat(gradientParts[0].value),
-                unit: gradientParts[0].unit as Unit,
-              };
+              angle = mapPercenTageOrDimentionToUnit(gradientParts[0]);
             }
 
             if (
@@ -86,14 +82,8 @@ export const parseLinearGradient = (
                   gradientParts[0].unit
                 ) === false)
             ) {
-              const hint: csstree.Percentage | csstree.Dimension =
-                gradientParts[0];
               stops.push({
-                hint: {
-                  type: "unit",
-                  value: parseFloat(hint.value),
-                  unit: hint.type === "Percentage" ? "%" : (hint.unit as Unit),
-                },
+                hint: mapPercenTageOrDimentionToUnit(gradientParts[0]),
               });
             }
           }
@@ -112,29 +102,8 @@ export const parseLinearGradient = (
 
             const stop: GradientStop = {
               color: getColor(colorStop),
-              position:
-                position &&
-                (position.type === "Percentage" ||
-                  position.type === "Dimension")
-                  ? {
-                      type: "unit",
-                      value: parseFloat(position.value),
-                      unit:
-                        position.type === "Percentage"
-                          ? "%"
-                          : (position.unit as Unit),
-                    }
-                  : undefined,
-              hint:
-                hint &&
-                (hint.type === "Percentage" || hint.type === "Dimension")
-                  ? {
-                      type: "unit",
-                      value: parseFloat(hint.value),
-                      unit:
-                        hint.type === "Percentage" ? "%" : (hint.unit as Unit),
-                    }
-                  : undefined,
+              position: mapPercenTageOrDimentionToUnit(position),
+              hint: mapPercenTageOrDimentionToUnit(hint),
             };
 
             stops.push(stop);
@@ -147,6 +116,24 @@ export const parseLinearGradient = (
   });
 
   return { angle, sideOrCorner, stops };
+};
+
+const mapPercenTageOrDimentionToUnit = (
+  node?: csstree.CssNode
+): UnitValue | undefined => {
+  if (node === undefined) {
+    return;
+  }
+
+  if (node.type !== "Percentage" && node.type !== "Dimension") {
+    return;
+  }
+
+  return {
+    type: "unit",
+    value: parseFloat(node.value),
+    unit: node.type === "Percentage" ? "%" : (node.unit as Unit),
+  };
 };
 
 const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
@@ -177,7 +164,7 @@ const getColor = (
   } else if (node.type === "Identifier") {
     color = node.name;
   } else {
-    color = `#${node.value}`;
+    color = csstree.generate(node);
   }
 
   const result = colord(color);

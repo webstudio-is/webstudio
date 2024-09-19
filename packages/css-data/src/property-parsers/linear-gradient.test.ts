@@ -11,35 +11,17 @@ describe("parses linear-gradient", () => {
       sideOrCorner: undefined,
       stops: [
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 0,
-            r: 255,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
         {
-          color: {
-            alpha: 1,
-            b: 255,
-            g: 0,
-            r: 0,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 255,
-            r: 255,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
@@ -51,47 +33,17 @@ describe("parses linear-gradient", () => {
     expect(
       parseLinearGradient("linear-gradient(135deg, orange 60% 20%, 40%, cyan)")
     ).toEqual({
-      angle: {
-        type: "unit",
-        unit: "deg",
-        value: 135,
-      },
+      angle: { type: "unit", unit: "deg", value: 135 },
       sideOrCorner: undefined,
       stops: [
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 165,
-            r: 255,
-            type: "rgb",
-          },
-          hint: {
-            type: "unit",
-            unit: "%",
-            value: 20,
-          },
-          position: {
-            type: "unit",
-            unit: "%",
-            value: 60,
-          },
+          color: { alpha: 1, b: 0, g: 165, r: 255, type: "rgb" },
+          hint: { type: "unit", unit: "%", value: 20 },
+          position: { type: "unit", unit: "%", value: 60 },
         },
+        { hint: { type: "unit", unit: "%", value: 40 } },
         {
-          hint: {
-            type: "unit",
-            unit: "%",
-            value: 40,
-          },
-        },
-        {
-          color: {
-            alpha: 1,
-            b: 255,
-            g: 255,
-            r: 0,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 255, g: 255, r: 0, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
@@ -106,52 +58,25 @@ describe("parses linear-gradient", () => {
       )
     ).toEqual({
       angle: undefined,
-      sideOrCorner: {
-        type: "keyword",
-        value: "to top right",
-      },
+      sideOrCorner: { type: "keyword", value: "to top right" },
       stops: [
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 165,
-            r: 255,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 0, g: 165, r: 255, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 255,
-            r: 255,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
         {
-          color: {
-            alpha: 1,
-            b: 255,
-            g: 0,
-            r: 0,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 128,
-            r: 0,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 0, g: 128, r: 0, type: "rgb" },
           hint: undefined,
           position: undefined,
         },
@@ -166,97 +91,32 @@ describe("parses linear-gradient", () => {
       )
     ).toEqual({
       angle: undefined,
-      sideOrCorner: {
-        type: "keyword",
-        value: "to right",
-      },
+      sideOrCorner: { type: "keyword", value: "to right" },
       stops: [
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 0,
-            r: 255,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
           hint: undefined,
-          position: {
-            type: "unit",
-            unit: "%",
-            value: 20,
-          },
+          position: { type: "unit", unit: "%", value: 20 },
         },
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 165,
-            r: 255,
-            type: "rgb",
-          },
-          hint: {
-            type: "unit",
-            unit: "%",
-            value: 40,
-          },
-          position: {
-            type: "unit",
-            unit: "%",
-            value: 20,
-          },
+          color: { alpha: 1, b: 0, g: 165, r: 255, type: "rgb" },
+          hint: { type: "unit", unit: "%", value: 40 },
+          position: { type: "unit", unit: "%", value: 20 },
         },
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 255,
-            r: 255,
-            type: "rgb",
-          },
-          hint: {
-            type: "unit",
-            unit: "%",
-            value: 60,
-          },
-          position: {
-            type: "unit",
-            unit: "%",
-            value: 40,
-          },
+          color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
+          hint: { type: "unit", unit: "%", value: 60 },
+          position: { type: "unit", unit: "%", value: 40 },
         },
         {
-          color: {
-            alpha: 1,
-            b: 0,
-            g: 128,
-            r: 0,
-            type: "rgb",
-          },
-          hint: {
-            type: "unit",
-            unit: "%",
-            value: 80,
-          },
-          position: {
-            type: "unit",
-            unit: "%",
-            value: 60,
-          },
+          color: { alpha: 1, b: 0, g: 128, r: 0, type: "rgb" },
+          hint: { type: "unit", unit: "%", value: 80 },
+          position: { type: "unit", unit: "%", value: 60 },
         },
         {
-          color: {
-            alpha: 1,
-            b: 255,
-            g: 0,
-            r: 0,
-            type: "rgb",
-          },
+          color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
           hint: undefined,
-          position: {
-            type: "unit",
-            unit: "%",
-            value: 80,
-          },
+          position: { type: "unit", unit: "%", value: 80 },
         },
       ],
     });
