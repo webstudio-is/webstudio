@@ -58,11 +58,6 @@ describe("Unit menu options", () => {
     "label": "ch",
     "type": "unit",
   },
-  {
-    "id": "auto",
-    "label": "auto",
-    "type": "keyword",
-  },
 ]
 `);
   });
@@ -131,11 +126,6 @@ describe("Unit menu options", () => {
     "label": "ch",
     "type": "unit",
   },
-  {
-    "id": "auto",
-    "label": "auto",
-    "type": "keyword",
-  },
 ]
 `);
   });
@@ -147,16 +137,6 @@ describe("Unit menu options", () => {
         { value: 10, type: "unit", unit: "ch" },
         nestedSelectButtonUnitless
       ).some((option) => option.id === "ch")
-    ).toBe(true);
-  });
-
-  test("Should add keyword to options", () => {
-    expect(
-      buildOptions(
-        "width",
-        { value: "inherit", type: "keyword" },
-        nestedSelectButtonUnitless
-      ).some((option) => option.id === "inherit")
     ).toBe(true);
   });
 });
