@@ -151,7 +151,10 @@ const $flatPagesTree = computed(
       const folder = folders.get(itemId);
       const page = pages.get(itemId);
       if (folder) {
-        const isExpanded = level === 0 || expandedItems.has(folder.id);
+        let isExpanded: undefined | boolean;
+        if (level > 0 && folder.children.length > 0) {
+          isExpanded = expandedItems.has(folder.id);
+        }
         // hide root folder
         if (itemId !== ROOT_FOLDER_ID) {
           flatPagesTree.push({
@@ -162,7 +165,7 @@ const $flatPagesTree = computed(
             folder,
           });
         }
-        if (isExpanded) {
+        if (level === 0 || isExpanded) {
           for (const childId of folder.children) {
             traverse(childId, level + 1);
           }
