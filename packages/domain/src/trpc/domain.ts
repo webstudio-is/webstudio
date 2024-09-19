@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import type { Project } from "@webstudio-is/project";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
@@ -29,10 +28,7 @@ export const domainRouter = router({
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input, ctx }) => {
       try {
-        const project: Project = await projectDb.project.loadById(
-          input.projectId,
-          ctx
-        );
+        const project = await projectDb.project.loadById(input.projectId, ctx);
 
         return {
           success: true,
@@ -69,22 +65,13 @@ export const domainRouter = router({
         let domains: string[] = [];
 
         if (input.destination === "saas") {
-          const currentProjectDomainsResult = await db.findMany(
-            { projectId: input.projectId },
-            ctx
-          );
-
-          if (currentProjectDomainsResult.success === false) {
-            throw new Error(currentProjectDomainsResult.error);
-          }
-
-          const currentProjectDomains = currentProjectDomainsResult.data;
+          const currentProjectDomains = project.domainsVirtual;
 
           domains = input.domains.filter((domain) =>
             currentProjectDomains.some(
               (projectDomain) =>
-                projectDomain.domain.domain === domain &&
-                projectDomain.domain.status === "ACTIVE" &&
+                projectDomain.domain === domain &&
+                projectDomain.status === "ACTIVE" &&
                 projectDomain.verified
             )
           );
@@ -252,23 +239,6 @@ export const domainRouter = router({
         } as const;
       }
     }),
-  findMany: procedure
-    .input(
-      z.object({
-        projectId: z.string(),
-      })
-    )
-    .query(async ({ input, ctx }) => {
-      try {
-        return await db.findMany({ projectId: input.projectId }, ctx);
-      } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        } as const;
-      }
-    }),
-
   countTotalDomains: procedure.query(async ({ ctx }) => {
     try {
       if (
@@ -283,7 +253,7 @@ export const domainRouter = router({
           ? ctx.authorization.userId
           : ctx.authorization.ownerId;
 
-      const data = await db.countTotalDomains(ownerId);
+      const data = await db.countTotalDomains(ownerId, ctx);
       return { success: true, data } as const;
     } catch (error) {
       return {

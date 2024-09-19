@@ -57,6 +57,29 @@ jobs:
         env:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
+  # Execute db tests (@todo: can be done only after applying the migrations, now always())
+  db-tests:
+    if: always()
+
+    needs: [migrate]
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ (startsWith(github.ref_name, 'release') && endsWith(github.ref_name, '.staging')) && 'postgres_production' || 'postgres_development' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v4
+
+      - name: pnpm instal
+        run: pnpm -r db-test
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
   # Prints pending migrations
   pending:
     if: always()
