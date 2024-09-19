@@ -1,10 +1,5 @@
 import type { CssValueInputValue } from "./css-value-input";
-import {
-  keywordValues,
-  properties,
-  units,
-  isValidDeclaration,
-} from "@webstudio-is/css-data";
+import { properties, units, isValidDeclaration } from "@webstudio-is/css-data";
 import type { UnitOption } from "./unit-select";
 
 // To make sorting stable
@@ -119,40 +114,6 @@ export const buildOptions = (
       indexSortValue(preferedSorting.indexOf(optionA.id)) -
       indexSortValue(preferedSorting.indexOf(optionB.id))
   );
-
-  // This value can't have units, skip select
-  // (show keywords menu instead)
-  if (options.length === 0) {
-    return [];
-  }
-
-  const propertyKeywordsSet = new Set(
-    keywordValues[property as keyof typeof keywordValues]
-  );
-
-  // Opinionated set of keywords to show
-  const webstudioKeywords = ["auto", "normal", "none"].filter((keyword) =>
-    propertyKeywordsSet.has(keyword as never)
-  );
-
-  for (const keyword of webstudioKeywords) {
-    options.push({
-      id: keyword,
-      label: keyword,
-      type: "keyword",
-    });
-  }
-
-  if (
-    value.type === "keyword" &&
-    options.some((option) => option.id === value.value) === false
-  ) {
-    options.push({
-      id: value.value,
-      label: value.value,
-      type: "keyword",
-    });
-  }
 
   return options;
 };
