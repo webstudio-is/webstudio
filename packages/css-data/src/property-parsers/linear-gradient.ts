@@ -98,7 +98,7 @@ export const parseLinearGradient = (
           // if there is a color-stop in the gradientParts, then we need to parse it for position and hint.
           const colorStop = gradientParts.find(isColorStop);
           if (colorStop !== undefined) {
-            const [_, position, hint] = gradientParts;
+            const [_colorStop, position, hint] = gradientParts;
 
             const stop: GradientStop = {
               color: getColor(colorStop),
