@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  TreeItemLabel,
-  TreeItemBody,
-  TreeNode,
-  type TreeItemRenderProps,
-  type ItemSelector,
   Tooltip,
   Box,
   Button,
   SmallIconButton,
+  TreeNode,
+  TreeRoot,
+  TreeNodeLabel,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
@@ -30,8 +28,6 @@ import { switchPage } from "~/shared/pages";
 import {
   getAllChildrenAndSelf,
   reparentOrphansMutable,
-  toTreeData,
-  type TreeData,
 } from "./page-utils";
 import {
   FolderSettings,
@@ -40,8 +36,8 @@ import {
 } from "./folder-settings";
 import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
-import { ROOT_FOLDER_ID, type Folder } from "@webstudio-is/sdk";
-import { atom } from "nanostores";
+import { ROOT_FOLDER_ID, type Folder, type Page } from "@webstudio-is/sdk";
+import { atom, computed } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
 
 const ItemSuffix = ({
@@ -86,10 +82,13 @@ const ItemSuffix = ({
   return (
     <Tooltip content={menuLabel} disableHoverableContent>
       <SmallIconButton
+        tabIndex={-1}
         aria-label={menuLabel}
         state={isParentSelected ? "open" : undefined}
         onClick={() => onEdit(isEditing ? undefined : itemId)}
         ref={buttonRef}
+        // forces to highlight tree node and show action
+        aria-current={isEditing}
         icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
       />
     </Tooltip>
@@ -117,7 +116,68 @@ const isFolder = (id: string, folders: Array<Folder>) => {
 };
 
 // We want to keep the state when panel is closed and opened again.
-const $expandedItems = atom<Set<string>>(new Set());
+const $expandedItems = atom(new Set<string>());
+
+type PagesTreeItem =
+  | {
+      id: string;
+      level: number;
+      isExpanded?: boolean;
+      type: "page";
+      page: Page;
+    }
+  | {
+      id: string;
+      level: number;
+      isExpanded?: boolean;
+      type: "folder";
+      folder: Folder;
+    };
+
+const $flatPagesTree = computed(
+  [$pages, $expandedItems],
+  (pagesData, expandedItems) => {
+    const flatPagesTree: PagesTreeItem[] = [];
+    if (pagesData === undefined) {
+      return flatPagesTree;
+    }
+    const folders = new Map(
+      pagesData.folders.map((folder) => [folder.id, folder])
+    );
+    const pages = new Map(pagesData.pages.map((page) => [page.id, page]));
+    pages.set(pagesData.homePage.id, pagesData.homePage);
+    const traverse = (itemId: string, level = 0) => {
+      const folder = folders.get(itemId);
+      const page = pages.get(itemId);
+      if (folder) {
+        let isExpanded: undefined | boolean;
+        if (level > 0 && folder.children.length > 0) {
+          isExpanded = expandedItems.has(folder.id);
+        }
+        // hide root folder
+        if (itemId !== ROOT_FOLDER_ID) {
+          flatPagesTree.push({
+            id: itemId,
+            level,
+            isExpanded,
+            type: "folder",
+            folder,
+          });
+        }
+        if (level === 0 || isExpanded) {
+          for (const childId of folder.children) {
+            traverse(childId, level + 1);
+          }
+        }
+      }
+      if (page) {
+        flatPagesTree.push({ id: itemId, level, type: "page", page });
+      }
+    };
+    traverse(ROOT_FOLDER_ID);
+    return flatPagesTree;
+  }
+);
 
 const PagesPanel = ({
   onClose,
@@ -137,80 +197,10 @@ const PagesPanel = ({
   editingItemId?: string;
 }) => {
   const pages = useStore($pages);
-  const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
-  const expandedItems = useStore($expandedItems);
+  const flatPagesTree = useStore($flatPagesTree);
   useReparentOrphans();
-  const renderItem = useCallback(
-    (props: TreeItemRenderProps<TreeData>) => {
-      const isEditing = editingItemId === props.itemData.id;
 
-      if (props.itemData.id === ROOT_FOLDER_ID) {
-        return null;
-      }
-
-      return (
-        <TreeItemBody
-          {...props}
-          suffix={
-            <ItemSuffix
-              type={props.itemData.type}
-              isParentSelected={props.isSelected ?? false}
-              itemId={props.itemData.id}
-              editingItemId={editingItemId}
-              onEdit={onEdit}
-            />
-          }
-          alwaysShowSuffix={isEditing}
-          forceFocus={isEditing}
-        >
-          {props.itemData.type === "folder" && (
-            <TreeItemLabel prefix={<FolderIcon />}>
-              {props.itemData.name}
-            </TreeItemLabel>
-          )}
-          {props.itemData.type === "page" && (
-            <TreeItemLabel
-              prefix={
-                props.itemData.id === pages?.homePage.id ? (
-                  <HomeIcon />
-                ) : isPathnamePattern(props.itemData.data.path) ? (
-                  <DynamicPageIcon />
-                ) : (
-                  <PageIcon />
-                )
-              }
-            >
-              {props.itemData.data.name}
-            </TreeItemLabel>
-          )}
-        </TreeItemBody>
-      );
-    },
-    [editingItemId, onEdit, pages]
-  );
-
-  const selectTreeNode = useCallback(
-    ([itemId]: ItemSelector, all?: boolean) => {
-      const folders = pages?.folders ?? [];
-      if (isFolder(itemId, folders)) {
-        const items = all
-          ? getAllChildrenAndSelf(itemId, folders, "folder")
-          : [itemId];
-        const nextExpandedItems = new Set(expandedItems);
-        items.forEach((itemId) => {
-          nextExpandedItems.has(itemId)
-            ? nextExpandedItems.delete(itemId)
-            : nextExpandedItems.add(itemId);
-        });
-        $expandedItems.set(nextExpandedItems);
-        return;
-      }
-      onSelect(itemId);
-    },
-    [onSelect, pages?.folders, expandedItems]
-  );
-
-  if (treeData === undefined || pages === undefined) {
+  if (pages === undefined) {
     return null;
   }
 
@@ -241,44 +231,75 @@ const PagesPanel = ({
         }
       />
       <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
-        <TreeNode<TreeData>
-          selectedItemSelector={[selectedPageId, treeData.root.id]}
-          onSelect={selectTreeNode}
-          itemData={treeData.root}
-          renderItem={renderItem}
-          getItemChildren={([nodeId]) => {
-            if (nodeId === ROOT_FOLDER_ID) {
-              return treeData.root.children;
-            }
-            const item = treeData.index.get(nodeId);
-            if (item?.type === "folder") {
-              return item.children;
-            }
-            // Page can't have children.
-            return [];
-          }}
-          isItemHidden={() => false}
-          getIsExpanded={([itemId]) => {
-            return expandedItems.has(itemId);
-          }}
-          setIsExpanded={([itemId], isExpanded, all) => {
-            const nextExpandedItems = new Set(expandedItems);
-            if (itemId === undefined) {
-              return;
-            }
-            const items = all
-              ? getAllChildrenAndSelf(itemId, pages.folders, "folder")
-              : [itemId];
-            items.forEach((itemId) => {
-              if (isExpanded) {
-                nextExpandedItems.add(itemId);
-                return;
+        <TreeRoot>
+          {flatPagesTree.map((item, index) => {
+            const handleExpand = (isExpanded: boolean, all: boolean) => {
+              const expandedItems = new Set($expandedItems.get());
+              const items = all
+                ? getAllChildrenAndSelf(item.id, pages.folders, "folder")
+                : [item.id];
+              for (const itemId of items) {
+                if (isExpanded) {
+                  expandedItems.add(itemId);
+                } else {
+                  expandedItems.delete(itemId);
+                }
               }
-              nextExpandedItems.delete(itemId);
-            });
-            $expandedItems.set(nextExpandedItems);
-          }}
-        />
+              $expandedItems.set(expandedItems);
+            };
+
+            return (
+              <TreeNode
+                key={item.id}
+                level={item.level}
+                tabbable={index === 0}
+                isSelected={item.id === selectedPageId}
+                isExpanded={item.isExpanded}
+                onExpand={handleExpand}
+                buttonProps={{
+                  onClick: (event) => {
+                    if (item.type === "folder") {
+                      handleExpand(item.isExpanded === false, event.altKey);
+                    }
+                    if (item.type === "page") {
+                      onSelect(item.id);
+                    }
+                  },
+                }}
+                action={
+                  <ItemSuffix
+                    type={item.type}
+                    isParentSelected={item.id === selectedPageId}
+                    itemId={item.id}
+                    editingItemId={editingItemId}
+                    onEdit={onEdit}
+                  />
+                }
+              >
+                {item.type === "folder" && (
+                  <TreeNodeLabel prefix={<FolderIcon />}>
+                    {item.folder.name}
+                  </TreeNodeLabel>
+                )}
+                {item.type === "page" && (
+                  <TreeNodeLabel
+                    prefix={
+                      item.id === pages?.homePage.id ? (
+                        <HomeIcon />
+                      ) : isPathnamePattern(item.page.path) ? (
+                        <DynamicPageIcon />
+                      ) : (
+                        <PageIcon />
+                      )
+                    }
+                  >
+                    {item.page.name}
+                  </TreeNodeLabel>
+                )}
+              </TreeNode>
+            );
+          })}
+        </TreeRoot>
       </Box>
     </Root>
   );

@@ -100,7 +100,6 @@ import {
   deletePageMutable,
   $pageRootScope,
   duplicatePage,
-  toTreeData,
   isPathAvailable,
 } from "./page-utils";
 import { Form } from "./form";
@@ -773,8 +772,8 @@ const FormFields = ({
                     }}
                     color="subtle"
                   >
-                    Move this page to the “{toTreeData(pages).root.name}” folder
-                    to set it as your home page
+                    Move this page to the “Root” folder to set it as your home
+                    page
                   </Text>
                 </>
               ) : values.documentType === "xml" ? (

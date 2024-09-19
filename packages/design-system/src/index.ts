@@ -45,6 +45,7 @@ export * from "./components/ai-command-bar";
 export * from "./components/link";
 export * from "./components/panel-banner";
 export * from "./components/focus-ring";
+export * from "./components/tree";
 
 // Not aligned
 
