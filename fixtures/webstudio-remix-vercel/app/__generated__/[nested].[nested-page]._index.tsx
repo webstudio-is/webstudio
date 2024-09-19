@@ -17,7 +17,7 @@ export const favIconAsset: ImageAsset | undefined = {
   size: 268326,
   type: "image",
   format: "png",
-  createdAt: "2023-10-30T13:51:08.416",
+  createdAt: "2023-10-30T13:51:08.416+00:00",
   meta: { width: 790, height: 786 },
 };
 
