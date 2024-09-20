@@ -2,15 +2,12 @@ import { access } from "node:fs/promises";
 import { exit } from "node:process";
 import { log } from "@clack/prompts";
 import { prebuild } from "../prebuild";
-import {
-  INTERNAL_TEMPLATES,
-  LOCAL_DATA_FILE,
-  PROJECT_TEMPLATES,
-} from "../config";
+import { LOCAL_DATA_FILE, PROJECT_TEMPLATES } from "../config";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
+import { mapToTemplatesFromOptions } from "../build-utils";
 
 export const buildOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -29,28 +26,7 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
       string: true,
       default: [] as string[],
 
-      coerce: (values: string[]) => {
-        const templates = [];
-        for (const value of values) {
-          const template =
-            PROJECT_TEMPLATES.find((item) => item.value === value) ??
-            INTERNAL_TEMPLATES.find((item) => item.value === value);
-
-          if (template == null) {
-            templates.push(value);
-            continue;
-          }
-
-          if ("expand" in template && template.expand != null) {
-            templates.push(...template.expand);
-            continue;
-          }
-
-          templates.push(value);
-        }
-
-        return templates;
-      },
+      coerce: mapToTemplatesFromOptions,
 
       describe: `Template to use for the build [choices: ${PROJECT_TEMPLATES.map(
         (item) => item.value

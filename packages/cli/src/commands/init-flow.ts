@@ -17,6 +17,7 @@ import { link, validateShareLink } from "./link";
 import { sync } from "./sync";
 import { build, buildOptions } from "./build";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
+import { mapToTemplatesFromOptions } from "../build-utils";
 
 type ProjectTemplates = (typeof PROJECT_TEMPLATES)[number]["value"];
 
@@ -103,7 +104,9 @@ export const initFlow = async (
 
   await build({
     ...options,
-    ...(projectTemplate && { template: [projectTemplate] }),
+    ...(projectTemplate && {
+      template: mapToTemplatesFromOptions([projectTemplate]),
+    }),
   });
 
   if (shouldInstallDeps === true) {
