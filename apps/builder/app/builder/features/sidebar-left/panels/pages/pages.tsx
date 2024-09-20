@@ -25,10 +25,7 @@ import { ExtendedPanel } from "../../shared/extended-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $editingPageId, $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
-import {
-  getAllChildrenAndSelf,
-  reparentOrphansMutable,
-} from "./page-utils";
+import { getAllChildrenAndSelf, reparentOrphansMutable } from "./page-utils";
 import {
   FolderSettings,
   NewFolderSettings,
