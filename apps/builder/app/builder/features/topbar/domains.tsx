@@ -26,6 +26,7 @@ import { Entri } from "./entri";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
 import { $publisherHost } from "~/shared/nano-states";
+import { extractCname } from "./cname";
 import type { Database } from "@webstudio-is/postrest/index.server";
 
 export type Domain = Project["domainsVirtual"][number];
@@ -50,16 +51,7 @@ const CopyToClipboard = (props: { text: string }) => {
   );
 };
 
-const getCname = (domain: string) => {
-  const domainArray = domain.split(".");
-  const cnameArray = domainArray.slice(0, -2);
-  if (cnameArray.length === 0) {
-    return "@";
-  }
-  return cnameArray.join(".");
-};
-
-export const getStatus = (projectDomain: Project["domainsVirtual"][number]) =>
+export const getStatus = (projectDomain: Domain) =>
   projectDomain.verified
     ? (`VERIFIED_${projectDomain.status}` as const)
     : `UNVERIFIED`;
@@ -359,13 +351,13 @@ const DomainItem = (props: {
   ]);
 
   const publisherHost = useStore($publisherHost);
-  const cnameEntryName = getCname(domain);
+  const cnameEntryName = extractCname(domain);
   const cnameEntryValue = `${props.projectDomain.cname}.customers.${publisherHost}`;
 
   const txtEntryName =
     cnameEntryName === "@"
-      ? "__webstudio_is"
-      : `__webstudio_is.${cnameEntryName}`;
+      ? "_webstudio_is"
+      : `_webstudio_is.${cnameEntryName}`;
 
   const { isVerifiedActive, text } = getStatusText({
     projectDomain: props.projectDomain,
