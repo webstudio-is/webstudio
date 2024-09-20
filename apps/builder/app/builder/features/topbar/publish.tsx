@@ -1,10 +1,9 @@
 import {
-  useCallback,
   useEffect,
-  useMemo,
   useState,
   useOptimistic,
   useTransition,
+  startTransition,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -24,7 +23,6 @@ import {
   InputField,
   Separator,
   ScrollArea,
-  Box,
   rawTheme,
   Select,
   theme,
@@ -33,6 +31,7 @@ import {
   PanelBanner,
   buttonStyle,
   toast,
+  RadioGroup,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
 import {
@@ -41,13 +40,7 @@ import {
 } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { $authPermit, $project, $publishedOrigin } from "~/shared/nano-states";
-import {
-  Domains,
-  getStatus,
-  type Domain,
-  PENDING_TIMEOUT,
-  getPublishStatusAndTextNew,
-} from "./domains";
+import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   CheckCircleIcon,
@@ -61,74 +54,29 @@ import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { Templates } from "@webstudio-is/sdk";
 import { formatDistance } from "date-fns/formatDistance";
-
-type ProjectData =
-  | {
-      success: true;
-      project: Project;
-    }
-  | {
-      success: false;
-      error: string;
-    };
+import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 
 type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
-  isPublishing: boolean;
-  projectLoad: (
-    props: { projectId: Project["id"] },
-    callback: (projectData: ProjectData) => void
-  ) => void;
+  refresh: () => void;
 };
 
-type TimeoutId = undefined | ReturnType<typeof setTimeout>;
+// type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
 const ChangeProjectDomain = ({
   project,
-  projectLoad,
-  projectState,
-  isPublishing,
+  refresh,
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
 
-  const {
-    send: updateProjectDomain,
-    state: updateProjectDomainState,
-    error: updateProjectSystemError,
-  } = trpcClient.domain.updateProjectDomain.useMutation();
-
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
+  const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
 
-  const refreshProject = useCallback(
-    () =>
-      projectLoad({ projectId: project.id }, (projectData) => {
-        if (projectData?.success === false) {
-          setError(projectData.error);
-          return;
-        }
-
-        const currenProject = $project.get();
-
-        if (currenProject?.id === projectData.project.id) {
-          $project.set({
-            ...currenProject,
-            domain: projectData.project.domain,
-          });
-        }
-
-        setDomain(projectData.project.domain);
-      }),
-    [projectLoad, project.id]
-  );
-
-  useEffect(() => {
-    refreshProject();
-  }, [refreshProject]);
-
-  const handleUpdateProjectDomain = () => {
+  const updateProjectDomain = async () => {
+    setIsUpdateInProgress(true);
     const validationResult = validateProjectDomain(domain);
 
     if (validationResult.success === false) {
@@ -136,26 +84,28 @@ const ChangeProjectDomain = ({
       return;
     }
 
-    if (updateProjectDomainState !== "idle") {
-      return;
-    }
-    if (domain === project.domain) {
+    const updateResult = await nativeClient.domain.updateProjectDomain.mutate({
+      domain,
+      projectId: project.id,
+    });
+
+    if (updateResult.success === false) {
+      setError(updateResult.error);
       return;
     }
 
-    updateProjectDomain({ domain, projectId: project.id }, (data) => {
-      if (data?.success === false) {
-        setError(data.error);
-        return;
-      }
+    await refresh();
+  };
 
-      refreshProject();
+  const handleUpdateProjectDomain = () => {
+    startTransition(async () => {
+      await updateProjectDomain();
     });
   };
 
   const { statusText, status } =
     project.latestBuildVirtual != null
-      ? getPublishStatusAndTextNew(project.latestBuildVirtual)
+      ? getPublishStatusAndText(project.latestBuildVirtual)
       : {
           statusText: "Not published",
           status: "PENDING" as const,
@@ -164,8 +114,15 @@ const ChangeProjectDomain = ({
   return (
     <CollapsibleDomainSection
       title={new URL(publishedOrigin).host}
+      prefix={
+        <DomainCheckbox
+          defaultChecked={project.latestBuildVirtual?.domain === domain}
+          buildId={project.latestBuildVirtual?.buildId}
+          domain={domain}
+        ></DomainCheckbox>
+      }
       suffix={
-        <Grid flow="column">
+        <Grid flow="column" align="center">
           <Tooltip content={error !== undefined ? error : statusText}>
             <Flex
               align={"center"}
@@ -190,7 +147,6 @@ const ChangeProjectDomain = ({
           <Tooltip content={`Proceed to ${publishedOrigin}`}>
             <IconButton
               tabIndex={-1}
-              disabled={error !== undefined || status !== "PUBLISHED"}
               onClick={(event) => {
                 window.open(publishedOrigin, "_blank");
                 event.preventDefault();
@@ -210,11 +166,7 @@ const ChangeProjectDomain = ({
             id={id}
             placeholder="Domain"
             value={domain}
-            disabled={
-              isPublishing ||
-              updateProjectDomainState !== "idle" ||
-              projectState !== "idle"
-            }
+            disabled={isUpdateInProgress}
             onChange={(event) => {
               setError(undefined);
               setDomain(event.target.value);
@@ -232,16 +184,9 @@ const ChangeProjectDomain = ({
                 }
               }
             }}
-            color={
-              error !== undefined || updateProjectSystemError !== undefined
-                ? "error"
-                : undefined
-            }
+            color={error !== undefined ? "error" : undefined}
           />
           {error !== undefined && <Text color="destructive">{error}</Text>}
-          {updateProjectSystemError !== undefined && (
-            <Text color="destructive">{updateProjectSystemError}</Text>
-          )}
         </Grid>
       </Grid>
     </CollapsibleDomainSection>
@@ -250,55 +195,90 @@ const ChangeProjectDomain = ({
 
 const Publish = ({
   project,
-  domainsToPublish,
   refresh,
-
-  isPublishing,
-  setIsPublishing,
 }: {
   project: Project;
-  domainsToPublish: Domain[];
-  refresh: () => void;
 
-  isPublishing: boolean;
-  setIsPublishing: (isPublishing: boolean) => void;
+  refresh: () => Promise<void>;
 }) => {
-  const {
-    send: publish,
-    state: publishState,
-    data: publishData,
-    error: publishSystemError,
-  } = trpcClient.domain.publish.useMutation();
+  const [publishError, setPublishError] = useState<string | undefined>();
+  const [isPublishing, setIsPublishing] = useOptimistic(false);
 
-  useEffect(() => {
-    if (isPublishing) {
-      let timeoutHandle: TimeoutId;
-      let totalCalls = 0;
-      const timeout = 10000;
-      // Repeat few more times than timeout
-      const repeat = PENDING_TIMEOUT / timeout + 5;
+  const handlePublish = async (formData: FormData) => {
+    setPublishError(undefined);
+    setIsPublishing(true);
 
-      // Call refresh
-      const execRefresh = () => {
-        if (totalCalls < repeat) {
-          totalCalls += 1;
-          clearTimeout(timeoutHandle);
-          timeoutHandle = setTimeout(() => {
-            refresh();
-            execRefresh();
-          }, timeout);
-        }
-      };
+    const domains = formData
+      .getAll(domainToPublishName)
+      .map((domainEntry) => domainEntry.toString());
 
-      execRefresh();
-
-      return () => {
-        clearTimeout(timeoutHandle);
-      };
+    if (domains.length === 0) {
+      toast.error("Please select at least one domain to publish");
+      return;
     }
-  }, [isPublishing, refresh]);
 
-  const isPublishInProgress = publishState !== "idle" || isPublishing;
+    const publishResult = await nativeClient.domain.publish.mutate({
+      projectId: project.id,
+      domains,
+      destination: "saas",
+    });
+
+    if (publishResult.success === false) {
+      console.error(publishResult.error);
+
+      setPublishError(publishResult.error);
+      toast.error(publishResult.error);
+
+      if (process.env.NODE_ENV === "development") {
+        // Refresh locally as it's always an error
+        await refresh();
+      }
+
+      return;
+    }
+
+    let sleepTime = 15000;
+    const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
+
+    // Wait until project is published or failed
+    while (Date.now() < timeToFinish) {
+      await refresh();
+
+      const project = $project.get();
+
+      if (project == null) {
+        throw new Error("Project not found");
+      }
+
+      const { statusText, status } =
+        project.latestBuildVirtual != null
+          ? getPublishStatusAndText(project.latestBuildVirtual)
+          : {
+              statusText: "Not published",
+              status: "PENDING" as const,
+            };
+
+      if (status === "PUBLISHED") {
+        break;
+      }
+
+      if (status === "FAILED") {
+        toast.error(statusText);
+        setPublishError(statusText);
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, sleepTime));
+
+      sleepTime = Math.max(5000, sleepTime - 5000);
+    }
+  };
+
+  const hasPendingState = project.latestBuildVirtual
+    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
+    : false;
+
+  const isPublishInProgress = isPublishing || hasPendingState;
 
   return (
     <Flex
@@ -312,13 +292,7 @@ const Publish = ({
       shrink={false}
       direction={"column"}
     >
-      {publishSystemError !== undefined && (
-        <Text color="destructive">{publishSystemError}</Text>
-      )}
-
-      {publishData?.success === false && (
-        <Text color="destructive">{publishData.error}</Text>
-      )}
+      {publishError && <Text color="destructive">{publishError}</Text>}
 
       <Tooltip
         content={
@@ -326,24 +300,9 @@ const Publish = ({
         }
       >
         <Button
+          formAction={handlePublish}
           color="positive"
           state={isPublishInProgress ? "pending" : undefined}
-          onClick={() => {
-            setIsPublishing(true);
-
-            publish(
-              {
-                projectId: project.id,
-                domains: domainsToPublish.map(
-                  (projectDomain) => projectDomain.domain
-                ),
-                destination: "saas",
-              },
-              () => {
-                refresh();
-              }
-            );
-          }}
         >
           Publish
         </Button>
@@ -386,33 +345,6 @@ const getStaticPublishStatusAndText = ({
   return { statusText, status };
 };
 
-const fetchProjectDataStatus = async (projectId: Project["id"]) => {
-  const projectData = await nativeClient.domain.project.query({
-    projectId,
-  });
-
-  if (projectData.success === false) {
-    throw new Error(projectData.error);
-  }
-
-  if (projectData.project.latestStaticBuild == null) {
-    return {
-      status: "LOADED" as const,
-      statusText: "Not published",
-    };
-  }
-
-  const { status, statusText } = getStaticPublishStatusAndText(
-    projectData.project.latestStaticBuild
-  );
-
-  return { status, statusText };
-};
-
-type StaticProjectStatus =
-  | Awaited<ReturnType<typeof fetchProjectDataStatus>>
-  | { status: "INITIAL"; statusText: string };
-
 const PublishStatic = ({
   projectId,
   templates,
@@ -420,58 +352,38 @@ const PublishStatic = ({
   projectId: Project["id"];
   templates: readonly Templates[];
 }) => {
+  const project = useStore($project);
   const [_, startTransition] = useTransition();
 
-  const [projectDataStatus, setProjectDataStatus] =
-    useState<StaticProjectStatus>({
-      status: "INITIAL",
-      statusText: "Loading",
-    });
+  if (project == null) {
+    throw new Error("Project not found");
+  }
 
-  useEffect(() => {
-    startTransition(async () => {
-      try {
-        const projectDataStatus = await fetchProjectDataStatus(projectId);
-        setProjectDataStatus(projectDataStatus);
-      } catch (error) {
-        setProjectDataStatus({
-          status: "FAILED",
-          statusText: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    });
-  }, [projectId]);
+  const { status, statusText } =
+    project.latestStaticBuild == null
+      ? { status: "LOADED" as const, statusText: "Not published" }
+      : getStaticPublishStatusAndText(project.latestStaticBuild);
 
-  const [optimisticPendingStatus, setOptimisticPendingStatus] = useOptimistic(
-    projectDataStatus,
-    (_currentState, optimisticValue: StaticProjectStatus) => {
-      return optimisticValue;
-    }
-  );
+  const [isPending, setIsPendingOptimistic] = useOptimistic(false);
 
   const isPublishInProgress =
-    optimisticPendingStatus.status === "PENDING" ||
-    optimisticPendingStatus.status === "INITIAL";
+    project.latestStaticBuild?.publishStatus === "PENDING" || isPending;
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
-      {optimisticPendingStatus.status === "FAILED" && (
-        <Text color="destructive">{optimisticPendingStatus.statusText}</Text>
-      )}
+      {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
 
       <Tooltip
         content={isPublishInProgress ? "Preparing static site" : undefined}
       >
         <Button
+          type="button"
           color="positive"
           state={isPublishInProgress ? "pending" : undefined}
           onClick={() => {
             startTransition(async () => {
               try {
-                setOptimisticPendingStatus({
-                  status: "PENDING",
-                  statusText: "Publishing",
-                });
+                setIsPendingOptimistic(true);
 
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,
@@ -496,30 +408,40 @@ const PublishStatic = ({
                 // Repeat few more times than timeout
                 const repeat = PENDING_TIMEOUT / timeout + 5;
 
-                let projectDataStatus: StaticProjectStatus | undefined;
-
                 for (let i = 0; i !== repeat; i++) {
                   await new Promise((resolve) => setTimeout(resolve, timeout));
 
-                  projectDataStatus = await fetchProjectDataStatus(projectId);
+                  await refreshProject();
 
-                  if (projectDataStatus.status !== "PENDING") {
+                  const latestStaticBuild = $project.get()?.latestStaticBuild;
+
+                  if (latestStaticBuild == null) {
+                    continue;
+                  }
+
+                  const { status } =
+                    getStaticPublishStatusAndText(latestStaticBuild);
+
+                  if (status !== "PENDING") {
                     break;
                   }
                 }
 
-                if (projectDataStatus == null) {
-                  return;
+                const latestStaticBuild = $project.get()?.latestStaticBuild;
+
+                if (latestStaticBuild == null) {
+                  throw new Error("Static build not found");
                 }
 
-                setProjectDataStatus(projectDataStatus);
+                const { status, statusText } =
+                  getStaticPublishStatusAndText(latestStaticBuild);
 
-                if (projectDataStatus.status === "FAILED") {
+                if (status === "FAILED") {
                   // Report if Export failed
-                  toast.error(projectDataStatus.statusText);
+                  toast.error(statusText);
                 }
 
-                if (projectDataStatus.status === "PUBLISHED") {
+                if (status === "PUBLISHED") {
                   window.location.href = `/cgi/static/ssg/${name}`;
                 }
               } catch (error) {
@@ -536,20 +458,6 @@ const PublishStatic = ({
     </Flex>
   );
 };
-
-const ErrorText = ({ children }: { children: string }) => (
-  <Flex
-    css={{
-      m: theme.spacing[9],
-      overflowWrap: "anywhere",
-    }}
-    gap={2}
-    direction={"column"}
-  >
-    <Text color="destructive">{children}</Text>
-    <Text color="subtle">Please try again later</Text>
-  </Flex>
-);
 
 const useCanAddDomain = () => {
   const { load, data } = trpcClient.domain.countTotalDomains.useQuery();
@@ -569,53 +477,40 @@ const useCanAddDomain = () => {
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
+const refreshProject = async () => {
+  const result = await nativeClient.domain.project.query(
+    {
+      projectId: $project.get()!.id,
+    }
+    // Pass abort signal
+    // { signal: undefined }
+  );
+
+  if (result.success) {
+    $project.set(result.project);
+    return;
+  }
+
+  toast.error(result.error);
+};
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
 }) => {
   const [newDomains, setNewDomains] = useState(new Set<string>());
 
-  const {
-    load: projectLoad,
-    data: projectData,
-    state: projectState,
-    error: projectSystemError,
-  } = trpcClient.domain.project.useQuery();
+  const project = useStore($project);
 
-  useEffect(() => {
-    projectLoad({ projectId: props.projectId });
-  }, [props.projectId, projectLoad]);
-
-  projectData?.success;
-
-  const domainsToPublish = useMemo(
-    () =>
-      projectData?.success
-        ? projectData.project.domainsVirtual.filter(
-            (projectDomain) => getStatus(projectDomain) === "VERIFIED_ACTIVE"
-          )
-        : [],
-    [projectData]
-  );
-
-  const latestBuildVirtual = projectData?.success
-    ? (projectData.project.latestBuildVirtual ?? undefined)
-    : undefined;
-
-  const hasPendingState = latestBuildVirtual
-    ? getPublishStatusAndTextNew(latestBuildVirtual).status === "PENDING"
-    : false;
-
-  const [isPublishing, setIsPublishing] = useState(hasPendingState);
-
-  useEffect(() => {
-    setIsPublishing(hasPendingState);
-  }, [hasPendingState, setIsPublishing]);
+  if (project == null) {
+    throw new Error("Project not found");
+  }
+  const projectState = "idle";
 
   const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
 
   return (
-    <>
+    <form>
       <ScrollArea>
         {canAddDomain === false && (
           <PanelBanner>
@@ -639,59 +534,38 @@ const Content = (props: {
             </Link>
           </PanelBanner>
         )}
-        {projectSystemError !== undefined && (
-          <ErrorText>{projectSystemError}</ErrorText>
-        )}
-
-        {projectData?.success && (
+        <RadioGroup name="publishDomain">
           <ChangeProjectDomain
-            projectLoad={projectLoad}
+            refresh={refreshProject}
             projectState={projectState}
-            project={projectData.project}
-            isPublishing={isPublishing}
+            project={project}
           />
-        )}
 
-        {projectData?.success && (
           <Domains
             newDomains={newDomains}
-            domains={projectData.project.domainsVirtual}
-            refreshDomainResult={projectLoad}
-            domainState={projectState}
-            isPublishing={isPublishing}
+            domains={project.domainsVirtual}
+            refresh={refreshProject}
+            project={project}
           />
-        )}
+        </RadioGroup>
       </ScrollArea>
       <Flex direction="column" justify="end" css={{ height: 0 }}>
         <Separator />
       </Flex>
+
       <AddDomain
         projectId={props.projectId}
-        refreshDomainResult={projectLoad}
-        domainState={projectState}
+        refresh={refreshProject}
         onCreate={(domain) => {
           setNewDomains((prev) => {
             return new Set([...prev, domain]);
           });
         }}
-        isPublishing={isPublishing}
         onExportClick={props.onExportClick}
       />
-      {projectData?.success === true && (
-        <Publish
-          project={projectData.project}
-          domainsToPublish={domainsToPublish}
-          refresh={() => {
-            projectLoad({ projectId: props.projectId });
-          }}
-          isPublishing={isPublishing}
-          setIsPublishing={setIsPublishing}
-        />
-      )}
-      {projectData?.success !== true && (
-        <Box css={{ height: theme.spacing[8] }} />
-      )}
-    </>
+
+      <Publish project={project} refresh={refreshProject} />
+    </form>
   );
 };
 
@@ -845,6 +719,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
 
           <Tooltip content={"Copy to clipboard"}>
             <Button
+              type="button"
               color="neutral"
               onClick={() => {
                 navigator.clipboard.writeText(npxCommand);
@@ -886,6 +761,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           />
           <Tooltip content={"Copy to clipboard"}>
             <Button
+              type="button"
               css={{ flexShrink: 0 }}
               color="neutral"
               onClick={() => {
@@ -959,7 +835,11 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           sideOffset={Number.parseFloat(rawTheme.spacing[5])}
         >
           <FloatingPanelPopoverTrigger asChild>
-            <Button disabled={isPublishEnabled === false} color="positive">
+            <Button
+              type="button"
+              disabled={isPublishEnabled === false}
+              color="positive"
+            >
               Publish
             </Button>
           </FloatingPanelPopoverTrigger>

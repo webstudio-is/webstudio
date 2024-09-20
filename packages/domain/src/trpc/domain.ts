@@ -62,18 +62,31 @@ export const domainRouter = router({
 
         const name = `${project.id}-${nanoid()}.zip`;
 
-        let domains: string[] = [];
+        const domains: string[] = [];
+
+        let hasCustomDomain = false;
 
         if (input.destination === "saas") {
           const currentProjectDomains = project.domainsVirtual;
 
-          domains = input.domains.filter((domain) =>
-            currentProjectDomains.some(
-              (projectDomain) =>
-                projectDomain.domain === domain &&
-                projectDomain.status === "ACTIVE" &&
-                projectDomain.verified
+          if (input.domains.includes(project.domain)) {
+            domains.push(project.domain);
+          }
+
+          domains.push(
+            ...input.domains.filter((domain) =>
+              currentProjectDomains.some(
+                (projectDomain) =>
+                  projectDomain.domain === domain &&
+                  projectDomain.status === "ACTIVE" &&
+                  projectDomain.verified
+              )
             )
+          );
+
+          hasCustomDomain = currentProjectDomains.some(
+            (projectDomain) =>
+              projectDomain.status === "ACTIVE" && projectDomain.verified
           );
         }
 
@@ -85,7 +98,8 @@ export const domainRouter = router({
                 ? {
                     destination: input.destination,
                     domains: domains,
-                    projectDomain: project.domain,
+                    assetsDomain: project.domain,
+                    excludeWstdDomainFromSearch: hasCustomDomain,
                   }
                 : {
                     destination: input.destination,
@@ -114,7 +128,7 @@ export const domainRouter = router({
           branchName: env.GITHUB_REF_NAME,
           destination: input.destination,
           // action log helper (not used for deployment, but for action logs readablity)
-          projectDomainName: project.domain,
+          logProjectName: `${project.title} - ${project.id}`,
         });
 
         if (input.destination === "static" && result.success) {

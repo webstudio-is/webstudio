@@ -83,7 +83,7 @@ VALUES
 --------------------------------------------------------------------------------
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -92,7 +92,7 @@ SELECT is (
             )
         )
     ),
-    'build1',
+    ARRAY['build1', 'project1-domain1'],
     'Test Case 1: Should return the latest build for project1 with domain matching projectDomain.'
 );
 
@@ -165,7 +165,7 @@ VALUES
 -- Verify that the latest build now reflects the updated domain
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -174,7 +174,7 @@ SELECT is (
             )
         )
     ),
-    'build1-for-domain2',
+    ARRAY['build1-for-domain2','project1-domain2'],
     'Test Case 4: Should return the latest build for project1 with the updated domain in domains array.'
 );
 
@@ -229,7 +229,7 @@ VALUES
 -- Verify that the latest build reflects the custom domain association
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -238,7 +238,7 @@ SELECT is (
             )
         )
     ),
-    'build1-for-custom-domain-1',
+    ARRAY['build1-for-custom-domain-1','project-1-custom-domain-1.com'],
     'Test Case 5: Should return the latest build for project1 with a registered custom domain in domains array.'
 );
 
@@ -261,7 +261,7 @@ VALUES
     '2023-01-03 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["project1-domain2"]}'::text,
+    '{"domains": ["project-1-custom-domain-1.com", "project1-domain2"]}'::text,
     '2023-01-03 00:00:00+00',
     'PUBLISHED'
   );
@@ -269,7 +269,7 @@ VALUES
 -- Verify that the latest build reflects the preview domain
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -278,7 +278,7 @@ SELECT is (
             )
         )
     ),
-    'build1-for-domain2-new',
+    ARRAY['build1-for-domain2-new', 'project1-domain2'],
     'Test Case 6: Should return the latest build for project1 with the preview domain in domains array.'
 );
 

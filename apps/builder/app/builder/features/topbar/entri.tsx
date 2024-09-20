@@ -10,12 +10,10 @@ export const Entri = ({
   dnsRecords,
   domain,
   onClose,
-  isPublishing,
 }: {
   dnsRecords: DnsRecord[];
   domain: string;
   onClose: (detail: EntriCloseDetail) => void;
-  isPublishing: boolean;
 }) => {
   entriGlobalStyles();
   const { error, isOpen, showDialog } = useEntri({
@@ -29,9 +27,10 @@ export const Entri = ({
       {error !== undefined && <Text color="destructive">{error}</Text>}
 
       <Button
-        disabled={isOpen || isPublishing}
+        disabled={isOpen}
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
+        type="button"
         onClick={() => {
           showDialog();
         }}

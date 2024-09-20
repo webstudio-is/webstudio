@@ -7,46 +7,38 @@ import {
   theme,
   Text,
   Grid,
+  toast,
 } from "@webstudio-is/design-system";
 import { validateDomain } from "@webstudio-is/domain";
 import type { Project } from "@webstudio-is/project";
-import { useId, useState } from "react";
+import { useId, useOptimistic, useRef, useState } from "react";
 import { CustomCodeIcon } from "@webstudio-is/icons";
-import { trpcClient } from "~/shared/trpc/trpc-client";
+import { nativeClient } from "~/shared/trpc/trpc-client";
 
 type DomainsAddProps = {
   projectId: Project["id"];
   onCreate: (domain: string) => void;
   onExportClick: () => void;
-  refreshDomainResult: (
-    input: { projectId: Project["id"] },
-    onSuccess: () => void
-  ) => void;
-  domainState: "idle" | "submitting";
-  isPublishing: boolean;
+  refresh: () => Promise<void>;
 };
 
 export const AddDomain = ({
   projectId,
   onCreate,
-  refreshDomainResult,
-  domainState,
-  isPublishing,
+  refresh,
   onExportClick,
 }: DomainsAddProps) => {
   const id = useId();
-  const {
-    send: create,
-    state: сreateState,
-    error: сreateSystemError,
-  } = trpcClient.domain.create.useMutation();
   const [isOpen, setIsOpen] = useState(false);
-  const [domain, setDomain] = useState("");
   const [error, setError] = useState<string>();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isPending, setIsPendingOptimistic] = useOptimistic(false);
 
-  const handleCreate = () => {
-    setError(undefined);
+  const handleCreateDomain = async (formData: FormData) => {
+    // Will be automatically reset on action end
+    setIsPendingOptimistic(true);
 
+    const domain = formData.get("domain")?.toString() ?? "";
     const validationResult = validateDomain(domain);
 
     if (validationResult.success === false) {
@@ -54,18 +46,22 @@ export const AddDomain = ({
       return;
     }
 
-    create({ domain: validationResult.domain, projectId }, (data) => {
-      if (data.success === false) {
-        setError(data.error);
-        return;
-      }
-
-      refreshDomainResult({ projectId }, () => {
-        setDomain("");
-        setIsOpen(false);
-        onCreate(validationResult.domain);
-      });
+    const result = await nativeClient.domain.create.mutate({
+      domain,
+      projectId,
     });
+
+    if (result.success === false) {
+      toast.error(result.error);
+      setError(result.error);
+      return;
+    }
+
+    onCreate(domain);
+
+    await refresh();
+
+    setIsOpen(false);
   };
 
   return (
@@ -81,7 +77,6 @@ export const AddDomain = ({
         direction={"column"}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
-            setDomain("");
             setIsOpen(false);
             event.preventDefault();
           }
@@ -94,25 +89,20 @@ export const AddDomain = ({
             </Label>
             <InputField
               id={id}
+              name="domain"
               autoFocus
               placeholder="your-domain.com"
-              value={domain}
-              disabled={
-                isPublishing || сreateState !== "idle" || domainState !== "idle"
-              }
+              disabled={isPending}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
-                  handleCreate();
+                  buttonRef.current
+                    ?.closest("form")
+                    ?.requestSubmit(buttonRef.current);
                 }
                 if (event.key === "Escape") {
-                  setDomain("");
                   setIsOpen(false);
                   event.preventDefault();
                 }
-              }}
-              onChange={(event) => {
-                setError(undefined);
-                setDomain(event.target.value);
               }}
               color={error !== undefined ? "error" : undefined}
             />
@@ -121,29 +111,21 @@ export const AddDomain = ({
                 <Text color="destructive">{error}</Text>
               </>
             )}
-            {сreateSystemError !== undefined && (
-              <>
-                {/* Something happened with network, api etc */}
-                <Text color="destructive">{сreateSystemError}</Text>
-                <Text color="subtle">Please try again later</Text>
-              </>
-            )}
           </>
         )}
 
         <Grid gap={2} columns={2}>
           <Button
-            disabled={
-              isPublishing || сreateState !== "idle" || domainState !== "idle"
-            }
+            ref={buttonRef}
+            formAction={handleCreateDomain}
+            state={isPending ? "pending" : undefined}
             color={isOpen ? "primary" : "neutral"}
-            onClick={() => {
+            onClick={(event) => {
               if (isOpen === false) {
                 setIsOpen(true);
+                event.preventDefault();
                 return;
               }
-
-              handleCreate();
             }}
           >
             {isOpen ? "Add domain" : "Add a new domain"}
@@ -152,6 +134,7 @@ export const AddDomain = ({
           <Button
             color={"dark"}
             prefix={<CustomCodeIcon />}
+            type="button"
             onClick={onExportClick}
           >
             Export

@@ -56,24 +56,49 @@ const iconByState = {
   indeterminate: CheckboxMixedFilledIcon,
 };
 
+type ButtonProps = ComponentProps<"button"> &
+  Pick<ComponentProps<typeof Primitive.Checkbox>, "aria-checked">;
+
+type AriaChecked = ComponentProps<typeof Primitive.Checkbox>["aria-checked"];
+
+const ariaCheckedToDataState = (
+  ariaChecked: AriaChecked
+): keyof typeof iconByState => {
+  if (ariaChecked === "true" || ariaChecked === true) {
+    return "checked";
+  }
+  if (ariaChecked === "false" || ariaChecked === false) {
+    return "unchecked";
+  }
+
+  if (ariaChecked === "mixed" || ariaChecked === undefined) {
+    return "indeterminate";
+  }
+
+  ariaChecked satisfies never;
+  return "indeterminate";
+};
+
 // We need this component basicslly just to get access to "data-state".
 // We could render all icons and hide one using CSS,
 // but that probably will be less performant.
-const Button = forwardRef(
-  (
-    props: ComponentProps<"button"> & {
-      "data-state"?: "checked" | "unchecked" | "indeterminate";
-    },
-    ref: Ref<HTMLButtonElement>
-  ) => {
-    const Icon = iconByState[props["data-state"] ?? "unchecked"];
-    return (
-      <button {...props} ref={ref}>
-        <Icon className={iconStyle()} />
-      </button>
-    );
-  }
-);
+const Button = forwardRef((props: ButtonProps, ref: Ref<HTMLButtonElement>) => {
+  // Using aria-checked instead of data-state ensures compatibility with Tooltip,
+  // as Tooltip overrides the Checkbox's data-state attribute.
+  const dataState = ariaCheckedToDataState(props["aria-checked"]);
+  const Icon = iconByState[dataState];
+
+  return (
+    <button
+      {...props}
+      data-state={dataState}
+      type={props.type ?? "button"}
+      ref={ref}
+    >
+      <Icon className={iconStyle()} />
+    </button>
+  );
+});
 Button.displayName = "Button";
 
 export const Checkbox = forwardRef(
