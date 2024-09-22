@@ -235,6 +235,7 @@ const getTreeDropTarget = (instruction: null | Instruction) => {
   return treeDropTarget;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const useCallbackRef = <Fn extends Function>(fn: Fn) => {
   const ref = useRef(fn);
   useInsertionEffect(() => {
