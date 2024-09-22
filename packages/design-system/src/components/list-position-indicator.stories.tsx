@@ -1,4 +1,7 @@
-import { ListPositionIndicator } from "./list-position-indicator";
+import {
+  ListPositionIndicator,
+  TreePositionIndicator,
+} from "./list-position-indicator";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -31,7 +34,7 @@ export const Demo = () => (
             height: 30,
           }}
         >
-          <ListPositionIndicator x={0} y={0} length={200} withNub />
+          <TreePositionIndicator x={0} y={0} length={200} />
         </div>
       </StoryGrid>
     </StorySection>
@@ -56,7 +59,7 @@ export const Demo = () => (
             height: 30,
           }}
         >
-          <ListPositionIndicator x={0} y={0} length={200} withNub />
+          <TreePositionIndicator x={0} y={0} length={200} />
         </div>
       </StoryGrid>
     </StorySection>

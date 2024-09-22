@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FocusScope, useFocusManager } from "@react-aria/focus";
-import { ListPositionIndicator } from "../../list-position-indicator";
+import { TreePositionIndicator } from "../../list-position-indicator";
 import {
   TreeNode,
   INDENT,
@@ -373,11 +373,10 @@ export const Tree = <Data extends { id: string }>({
       <Box css={{ height: theme.spacing[7] }}></Box>
       {shiftedDropTarget?.placement &&
         createPortal(
-          <ListPositionIndicator
+          <TreePositionIndicator
             x={shiftedDropTarget.placement.x}
             y={shiftedDropTarget.placement.y}
             length={shiftedDropTarget.placement.length}
-            withNub
           />,
           document.body
         )}
