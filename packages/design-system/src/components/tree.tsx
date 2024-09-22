@@ -358,7 +358,17 @@ export const TreeSortableItem = <Data,>({
       }),
       autoScrollWindowForElements()
     );
-  }, [level, isExpanded, isLastChild, data]);
+  }, [
+    level,
+    isExpanded,
+    isLastChild,
+    data,
+    handleCanDrag,
+    handleCanDrop,
+    handleDrop,
+    handleDropTargetChange,
+    handleExpand,
+  ]);
 
   return (
     <Box
