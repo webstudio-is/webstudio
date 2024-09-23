@@ -1,11 +1,26 @@
 import {
   useEffect,
+  useInsertionEffect,
   useRef,
+  useState,
   type ComponentPropsWithoutRef,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
 import { FocusScope, useFocusManager } from "@react-aria/focus";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import {
+  draggable,
+  dropTargetForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { disableNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/disable-native-drag-preview";
+import {
+  attachInstruction,
+  extractInstruction,
+  type Instruction,
+  type ItemMode,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
+import { autoScrollWindowForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import {
   ChevronFilledDownIcon,
   ChevronFilledRightIcon,
@@ -13,8 +28,10 @@ import {
 import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Text } from "./text";
+import { TreePositionIndicator } from "./list-position-indicator";
 
 const treeNodeLevel = "--tree-node-level";
+const treeNodeOutline = "--tree-node-outline";
 const treeActionOpacity = "--tree-action-opacity";
 const treeDepthBarsVisibility = "--tree-depth-bars-visibility";
 const treeDepthBarsColor = "--tree-depth-bars-color";
@@ -83,7 +100,7 @@ const NodeContainer = styled("div", {
   position: "relative",
   height: ITEM_HEIGHT,
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    outline: `var(${treeNodeOutline}, 2px solid ${theme.colors.borderFocus})`,
     outlineOffset: -3,
     borderRadius: theme.borderRadius[6],
     [treeActionOpacity]: 1,
@@ -154,6 +171,227 @@ const ActionContainer = styled("div", {
   justifyContent: "center",
   alignItems: "center",
 });
+
+const DropIndicator = ({
+  instruction,
+}: {
+  instruction: null | Instruction;
+}) => {
+  if (instruction?.type === "reorder-above") {
+    const indent = instruction.currentLevel * instruction.indentPerLevel;
+    return (
+      <TreePositionIndicator
+        x={indent}
+        y="0"
+        length={`calc(100% - ${indent}px)`}
+      />
+    );
+  }
+  if (instruction?.type === "reorder-below") {
+    const indent = instruction.currentLevel * instruction.indentPerLevel;
+    return (
+      <TreePositionIndicator
+        x={indent}
+        y="100%"
+        length={`calc(100% - ${indent}px)`}
+      />
+    );
+  }
+  if (instruction?.type === "reparent") {
+    const indent = instruction.desiredLevel * instruction.indentPerLevel;
+    return (
+      <TreePositionIndicator
+        x={indent}
+        y="100%"
+        length={`calc(100% - ${indent}px)`}
+      />
+    );
+  }
+};
+
+export type TreeDropTarget = {
+  parentLevel: number;
+  beforeLevel?: number;
+  afterLevel?: number;
+};
+
+const getTreeDropTarget = (instruction: null | Instruction) => {
+  let treeDropTarget: undefined | TreeDropTarget;
+  if (instruction?.type === "make-child") {
+    treeDropTarget = { parentLevel: instruction.currentLevel };
+  }
+  if (instruction?.type === "reorder-below") {
+    const afterLevel = instruction.currentLevel;
+    treeDropTarget = { parentLevel: afterLevel - 1, afterLevel };
+  }
+  if (instruction?.type === "reorder-above") {
+    const beforeLevel = instruction.currentLevel;
+    treeDropTarget = { parentLevel: beforeLevel - 1, beforeLevel };
+  }
+  if (instruction?.type === "reparent") {
+    const afterLevel = instruction.desiredLevel;
+    treeDropTarget = { parentLevel: afterLevel - 1, afterLevel };
+  }
+  return treeDropTarget;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+const useCallbackRef = <Fn extends Function>(fn: Fn) => {
+  const ref = useRef(fn);
+  useInsertionEffect(() => {
+    ref.current = fn;
+  });
+  return ref;
+};
+
+export const TreeSortableItem = <Data,>({
+  level,
+  isExpanded,
+  isLastChild,
+  data,
+  canDrag,
+  canDrop,
+  onDropTargetChange,
+  onDrop,
+  onExpand,
+  children,
+}: {
+  level: number;
+  isExpanded: undefined | boolean;
+  isLastChild: boolean;
+  data: Data;
+  canDrag: () => boolean;
+  canDrop: (dropTarge: TreeDropTarget) => boolean;
+  onDropTargetChange: (dropTarget: undefined | TreeDropTarget) => void;
+  onDrop: (data: Data) => void;
+  onExpand: (isExpanded: boolean) => void;
+  children: ReactNode;
+}) => {
+  const elementRef = useRef<HTMLDivElement>(null);
+  const [instruction, setInstruction] = useState<null | Instruction>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDropOver, setIsDropOver] = useState(false);
+  const handleDropTargetChange = useCallbackRef(onDropTargetChange);
+  const handleDrop = useCallbackRef(onDrop);
+  const handleExpand = useCallbackRef(onExpand);
+  const handleCanDrag = useCallbackRef(canDrag);
+  const handleCanDrop = useCallbackRef(canDrop);
+  const expandTimeout = useRef<number>();
+
+  useEffect(() => {
+    if (elementRef.current === null) {
+      return;
+    }
+    return combine(
+      draggable({
+        element: elementRef.current,
+        onGenerateDragPreview: ({ nativeSetDragImage }) => {
+          disableNativeDragPreview({ nativeSetDragImage });
+        },
+        getInitialData: () => ({
+          itemData: data,
+        }),
+        canDrag: () => handleCanDrag.current(),
+        onDrag: () => {
+          setIsDragging(true);
+        },
+        onDrop: () => {
+          setIsDragging(false);
+        },
+      }),
+      dropTargetForElements({
+        element: elementRef.current,
+        getData: ({ input, element }) => {
+          // this will 'attach' the instruction to your `data` object
+          let mode: ItemMode = "standard";
+          if (isLastChild) {
+            mode = "last-in-group";
+          }
+          if (isExpanded) {
+            mode = "expanded";
+          }
+          return attachInstruction(
+            {},
+            {
+              input,
+              element,
+              currentLevel: level,
+              indentPerLevel: BARS_GAP,
+              mode,
+            }
+          );
+        },
+        onDrag: (args) => {
+          let instruction = extractInstruction(args.self.data);
+          const dropTarget = getTreeDropTarget(instruction);
+          if (dropTarget) {
+            if (handleCanDrop.current(dropTarget)) {
+              handleDropTargetChange.current(dropTarget);
+            } else {
+              handleDropTargetChange.current(undefined);
+              instruction = null;
+            }
+          }
+          setInstruction(instruction);
+        },
+        onDragEnter: () => {
+          // timeout in browser use only number as timeout id
+          window.clearTimeout(expandTimeout.current);
+          expandTimeout.current = window.setTimeout(() => {
+            handleExpand.current(true);
+          }, 600);
+          setIsDropOver(true);
+        },
+        onDragLeave: () => {
+          window.clearTimeout(expandTimeout.current);
+          setIsDropOver(false);
+          setInstruction(null);
+          handleDropTargetChange.current(undefined);
+        },
+        onDrop: (args) => {
+          window.clearTimeout(expandTimeout.current);
+          handleDropTargetChange.current(undefined);
+          handleDrop.current(args.source.data.itemData as Data);
+          setIsDropOver(false);
+          setInstruction(null);
+        },
+      }),
+      autoScrollWindowForElements()
+    );
+  }, [
+    level,
+    isExpanded,
+    isLastChild,
+    data,
+    handleCanDrag,
+    handleCanDrop,
+    handleDrop,
+    handleDropTargetChange,
+    handleExpand,
+  ]);
+
+  return (
+    <Box
+      ref={elementRef}
+      data-tree-sortable-item
+      data-level={level}
+      data-is-dragging={isDragging}
+      data-is-drop-over={isDropOver}
+      css={{
+        position: "relative",
+        "&[data-is-drop-over=true]": {
+          zIndex: 1,
+        },
+        "&[data-is-dragging=true]": {
+          [treeNodeOutline]: "none",
+        },
+      }}
+    >
+      {children}
+      <DropIndicator instruction={instruction} />
+    </Box>
+  );
+};
 
 export const TreeNode = ({
   level,
