@@ -6,10 +6,12 @@ export type TransformValue = (styleValue: StyleValue) => undefined | StyleValue;
 
 const fallbackTransform: TransformValue = (styleValue) => {
   if (styleValue.type === "fontFamily") {
-    const fonts = SYSTEM_FONTS.get(styleValue.value[0])?.stack ?? [
-      styleValue.value[0],
-      DEFAULT_FONT_FALLBACK,
-    ];
+    const fallback =
+      styleValue.value.length > 1
+        ? // Its a custom stack, we won't add a fallback
+          styleValue.value
+        : [...styleValue.value, DEFAULT_FONT_FALLBACK];
+    const fonts = SYSTEM_FONTS.get(styleValue.value[0])?.stack ?? fallback;
     const value = Array.from(new Set(fonts));
 
     return {

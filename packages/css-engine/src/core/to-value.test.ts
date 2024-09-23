@@ -46,7 +46,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("var(--namespace, normal, 10px)");
   });
 
-  test("fontFamily stack", () => {
+  test("fontFamily predefined stack", () => {
     expect(
       toValue({
         type: "fontFamily",
@@ -55,6 +55,15 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     ).toBe(
       'Seravek, "Gill Sans Nova", Ubuntu, Calibri, "DejaVu Sans", source-sans-pro, sans-serif'
     );
+  });
+
+  test("fontFamily custom stack", () => {
+    expect(
+      toValue({
+        type: "fontFamily",
+        value: ["DejaVu Sans Mono", "monospace"],
+      })
+    ).toBe('"DejaVu Sans Mono", monospace');
   });
 
   test("fontFamily unknown", () => {
