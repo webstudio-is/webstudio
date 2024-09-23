@@ -61,11 +61,7 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
       isDeleted: false,
       isPublished: false,
       latestBuild: null,
-      previewImageAsset: {
-        id: "0",
-        projectId: "0",
-        name: "preview.jpg",
-      },
+      previewImageAsset: null,
       previewImageAssetId: "",
       latestBuildVirtual: null,
       marketplaceApprovalStatus: "UNLISTED" as const,
