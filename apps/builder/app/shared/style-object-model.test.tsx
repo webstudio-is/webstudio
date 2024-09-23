@@ -843,6 +843,32 @@ test("fallback cascaded value to inherited computed value", () => {
   ).toEqual({ type: "keyword", value: "currentColor" });
 });
 
+test("work with unknown or invalid properties", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        unknown-property: [object Object];
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  const instanceSelector = ["body"];
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector,
+      property: "unknownProperty",
+    }).usedValue
+  ).toEqual({ type: "unparsed", value: "[object Object]" });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector,
+      property: "undefinedProperty",
+    }).usedValue
+  ).toEqual({ type: "invalid", value: "" });
+});
+
 describe("selected style", () => {
   test("access selected style source value within cascade", () => {
     const model = createModel({
