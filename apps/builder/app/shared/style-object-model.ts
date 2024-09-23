@@ -236,6 +236,11 @@ const customPropertyData = {
   initial: guaranteedInvalidValue,
 };
 
+const invalidPropertyData = {
+  inherited: false,
+  initial: invalidValue,
+};
+
 export type ComputedStyleDecl = {
   property: string;
   source: StyleValueSource;
@@ -269,7 +274,7 @@ export const getComputedStyleDecl = ({
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
-    : properties[property as keyof typeof properties];
+    : (properties[property as keyof typeof properties] ?? invalidPropertyData);
   const inherited = propertyData.inherited;
   const initialValue: StyleValue = propertyData.initial;
   let computedValue: StyleValue = initialValue;
