@@ -800,7 +800,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           Step 1
         </Text>
         <Text color="subtle">
-          Download and install Node v18+ from{" "}
+          Download and install Node v20+ from{" "}
           <Link
             variant="inherit"
             color="inherit"
