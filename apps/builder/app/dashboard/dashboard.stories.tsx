@@ -33,7 +33,7 @@ const userPlanFeatures: UserPlanFeatures = {
   allowShareAdminLinks: false,
   allowDynamicData: false,
   allowContactEmail: false,
-  maxDomainsAllowedPerUser: 5,
+  maxDomainsAllowedPerUser: 1,
 };
 
 export const Empty: StoryFn<typeof Dashboard> = () => {
@@ -61,11 +61,7 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
       isDeleted: false,
       isPublished: false,
       latestBuild: null,
-      previewImageAsset: {
-        id: "0",
-        projectId: "0",
-        name: "preview.jpg",
-      },
+      previewImageAsset: null,
       previewImageAssetId: "",
       latestBuildVirtual: null,
       marketplaceApprovalStatus: "UNLISTED" as const,
