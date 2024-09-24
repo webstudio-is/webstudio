@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@prisma/client": "^5.12.1",
-    "@types/node": "^20.12.7",
+    "@types/node": "^22.6.1",
     "@webstudio-is/tsconfig": "workspace:*",
     "prisma": "^5.12.1",
     "typescript": "5.5.2",
