@@ -70,6 +70,7 @@ const testFontWeights = (fontFamily: string) => {
     }
     return supported;
   };
+
   // 400 is the baseline that's always supported, from there we test in both directions
   // each step must result in a different width to be considered supported
   // if for e.g. 400-300 is compared and has not change in width, it means 300 is not supported

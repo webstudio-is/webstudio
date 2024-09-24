@@ -1,4 +1,4 @@
-import { Select } from "@webstudio-is/design-system";
+import { Flex, Select, Text } from "@webstudio-is/design-system";
 import { type FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
@@ -9,28 +9,30 @@ import {
 } from "./font-weight-support";
 import { useComputedStyles } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
+import { AlertIcon, WrapIcon } from "@webstudio-is/icons";
 
 type FontWeightItem = {
   label: string;
   weight: FontWeight;
+  isSupported?: boolean;
 };
 
-const allFontWeights: Array<FontWeightItem> = (
-  Object.keys(fontWeights) as Array<FontWeight>
-).map((weight) => ({
-  label: `${weight} - ${fontWeights[weight].label}`,
-  weight,
-}));
+const allFontWeights = Object.keys(fontWeights) as Array<FontWeight>;
+
+const labels = new Map(
+  allFontWeights.map((weight) => [
+    weight,
+    `${weight} - ${fontWeights[weight as FontWeight].label}`,
+  ])
+);
 
 // All font weights for the current family
-const useAvailableFontWeights = (
-  currentFamily: string
-): Array<FontWeightItem> => {
+const useSupportedFontWeights = (currentFamily: string) => {
   const { assetContainers } = useAssets("font");
 
   // Find all font weights that are available for the current font family.
   return useMemo(() => {
-    const found = allFontWeights.filter((option) => {
+    const found = allFontWeights.filter((weight) => {
       return (
         assetContainers.find((assetContainer) => {
           if (
@@ -41,18 +43,22 @@ const useAvailableFontWeights = (
           }
           return isExternalFontWeightSupported(
             assetContainer.asset,
-            option.weight,
+            weight,
             currentFamily
           );
-        }) || isSystemFontWeightSupported(currentFamily, option.weight)
+        }) || isSystemFontWeightSupported(currentFamily, weight)
       );
     });
-    return found.length === 0 ? allFontWeights : found;
+    return new Map(
+      found.map((weight) => {
+        return [weight, true];
+      })
+    );
   }, [currentFamily, assetContainers]);
 };
 
 const useLabels = (
-  availableFontWeights: Array<FontWeightItem>,
+  supportedFontWeights: Array<FontWeight>,
   currentWeight: string
 ) => {
   // support named aliases
@@ -62,21 +68,17 @@ const useLabels = (
   if (currentWeight === "bold") {
     currentWeight = "700";
   }
-  const labels = useMemo(
-    () => availableFontWeights.map((option) => option.label),
-    [availableFontWeights]
-  );
 
-  const selectedLabel = useMemo(() => {
-    const selectedOption =
-      availableFontWeights.find((option) => option.weight === currentWeight) ??
+  const selectedWeight = useMemo(() => {
+    return (
+      supportedFontWeights.find((weight) => weight === currentWeight) ??
       // In case available weights a custom font supports does not include the current weight,
       // we show the first available weight.
-      availableFontWeights[0];
-    return selectedOption?.label;
-  }, [currentWeight, availableFontWeights]);
+      supportedFontWeights[0]
+    );
+  }, [currentWeight, supportedFontWeights]);
 
-  return { labels, selectedLabel };
+  return { selectedWeight };
 };
 
 export const FontWeightControl = () => {
@@ -86,22 +88,25 @@ export const FontWeightControl = () => {
     "fontFamily",
   ]);
 
-  const availableFontWeights = useAvailableFontWeights(
+  const supportedFontWeights = useSupportedFontWeights(
     toValue(fontFamily.cascadedValue)
   );
-  const { labels, selectedLabel } = useLabels(
-    availableFontWeights,
+  const { selectedWeight } = useLabels(
+    supportedFontWeights,
     toValue(fontWeight.cascadedValue)
   );
 
   const setValue = setProperty("fontWeight");
 
-  const setFontWeight = (label: string, options?: { isEphemeral: boolean }) => {
-    const selected = availableFontWeights.find(
-      (option) => option.label === label
+  const setFontWeight = (
+    nextWeight: FontWeight,
+    options?: { isEphemeral: boolean }
+  ) => {
+    const selected = supportedFontWeights.find(
+      (weight) => weight === nextWeight
     );
     if (selected) {
-      setValue({ type: "keyword", value: selected.weight }, options);
+      setValue({ type: "keyword", value: selected }, options);
     }
   };
 
@@ -110,9 +115,18 @@ export const FontWeightControl = () => {
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""
-      options={labels}
+      options={allFontWeights}
+      getLabel={(weight: FontWeight) => {
+        return (
+          <Text
+            color={supportedFontWeights.includes(weight) ? "main" : "subtle"}
+          >
+            {labels.get(weight)}
+          </Text>
+        );
+      }}
       // We use a weight as a value, because there are only 9 weights and they are unique.
-      value={selectedLabel}
+      value={selectedWeight}
       onChange={setFontWeight}
       onItemHighlight={(label) => {
         // Remove preview when mouse leaves the item.
