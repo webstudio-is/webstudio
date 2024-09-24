@@ -84,6 +84,15 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     ).toBe("sans-serif");
   });
 
+  test("fontFamily has duplicates", () => {
+    expect(
+      toValue({
+        type: "fontFamily",
+        value: ["a", "a", "b"],
+      })
+    ).toBe("a, b");
+  });
+
   test("Transform font family value to override default fallback", () => {
     const value = toValue(
       {

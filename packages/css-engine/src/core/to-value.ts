@@ -9,34 +9,23 @@ const fallbackTransform: TransformValue = (styleValue) => {
     return;
   }
 
+  // By default we assume its a custom font stack.
+  let { value } = styleValue;
+
   // Shouldn't be possible, but just in case.
-  if (styleValue.value.length === 0) {
-    return {
-      type: "fontFamily",
-      value: [DEFAULT_FONT_FALLBACK],
-    };
+  if (value.length === 0) {
+    value = [DEFAULT_FONT_FALLBACK];
   }
 
   // User provided a single name. It could be a specific font name or a stack name.
-  if (styleValue.value.length === 1) {
-    const stack = SYSTEM_FONTS.get(styleValue.value[0])?.stack;
-    if (stack !== undefined) {
-      return {
-        type: "fontFamily",
-        value: stack,
-      };
-    }
-    // It's a specific font family.
-    return {
-      type: "fontFamily",
-      value: [styleValue.value[0], DEFAULT_FONT_FALLBACK],
-    };
+  if (value.length === 1) {
+    const stack = SYSTEM_FONTS.get(value[0])?.stack;
+    value = stack ?? [value[0], DEFAULT_FONT_FALLBACK];
   }
 
-  // Its a custom stack, we won't add a fallback
   return {
     type: "fontFamily",
-    value: styleValue.value,
+    value: Array.from(new Set(value)),
   };
 };
 
