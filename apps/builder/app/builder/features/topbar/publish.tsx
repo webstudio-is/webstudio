@@ -204,8 +204,13 @@ const Publish = ({
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
+  const hasProPlan = useStore($userPlanFeatures).hasProPlan;
 
   useEffect(() => {
+    if (hasProPlan === false) {
+      setHasSelectedDomains(true);
+      return;
+    }
     const form = buttonRef.current?.closest("form");
 
     if (form == null) {
@@ -234,15 +239,22 @@ const Publish = ({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [hasProPlan]);
 
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
     setIsPublishing(true);
 
-    const domains = formData
-      .getAll(domainToPublishName)
-      .map((domainEntry) => domainEntry.toString());
+    const domains = hasProPlan
+      ? formData
+          .getAll(domainToPublishName)
+          .map((domainEntry) => domainEntry.toString())
+      : [
+          project.domain,
+          ...project.domainsVirtual
+            .filter((domain) => domain.verified && domain.status === "ACTIVE")
+            .map((domain) => domain.domain),
+        ];
 
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
