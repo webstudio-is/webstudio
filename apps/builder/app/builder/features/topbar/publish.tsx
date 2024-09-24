@@ -512,9 +512,19 @@ const PublishStatic = ({
 const useCanAddDomain = () => {
   const { load, data } = trpcClient.domain.countTotalDomains.useQuery();
   const { maxDomainsAllowedPerUser, hasProPlan } = useStore($userPlanFeatures);
+  const project = useStore($project);
+
+  const activeDomainsCount = project?.domainsVirtual.filter(
+    (domain) => domain.status === "ACTIVE" && domain.verified
+  ).length;
+
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, activeDomainsCount]);
+
+  if (hasProPlan) {
+    return { canAddDomain: true, maxDomainsAllowedPerUser };
+  }
 
   if (data?.success === false) {
     return { canAddDomain: false, maxDomainsAllowedPerUser };
@@ -524,6 +534,7 @@ const useCanAddDomain = () => {
     ? data.success && data.data < maxDomainsAllowedPerUser
     : true;
   const canAddDomain = hasProPlan || withinFreeLimit;
+
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
