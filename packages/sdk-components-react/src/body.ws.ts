@@ -13,6 +13,10 @@ const presetStyle = {
   body: [
     ...body,
     {
+      property: "backgroundColor",
+      value: { type: "keyword", value: "white" },
+    },
+    {
       property: "WebkitFontSmoothing",
       value: { type: "keyword", value: "antialiased" },
     },
