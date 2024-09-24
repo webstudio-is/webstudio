@@ -16,8 +16,8 @@ VALUES
 -- Insert projects associated with the user
 INSERT INTO "public"."Project" ("id", "title", "domain", "userId", "isDeleted", "createdAt")
 VALUES
-  ('project1', 'Project One', 'project1-domain1', 'user1', false, '2023-01-01 00:00:00+00'),
-  ('project2', 'Project Two', 'project2-domain1', 'user1', false, '2023-01-01 00:00:00+00');
+  ('project1', 'Project One', '517cce32-9af3-project1-domain1', 'user1', false, '2023-01-01 00:00:00+00'),
+  ('project2', 'Project Two', '517cce32-9af3-project2-domain1', 'user1', false, '2023-01-01 00:00:00+00');
 
 -- Insert builds with different deployment formats
 INSERT INTO "public"."Build" (
@@ -36,7 +36,7 @@ VALUES
     '2023-01-01 00:00:00+00',
     'home',
     'project1',
-    '{"projectDomain": "project1-domain1", "domains": [""]}'::text,
+    '{"projectDomain": "517cce32-9af3-project1-domain1", "domains": [""]}'::text,
     '2023-01-01 00:00:00+00',
     'PUBLISHED'
   ),
@@ -45,7 +45,7 @@ VALUES
     '2022-01-01 00:00:00+00',
     'home',
     'project1',
-    '{"projectDomain": "project1-domain1", "domains": [""]}'::text,
+    '{"projectDomain": "517cce32-9af3-project1-domain1", "domains": [""]}'::text,
     '2022-01-01 00:00:00+00',
     'PUBLISHED'
   ),
@@ -64,7 +64,7 @@ VALUES
     '2023-01-02 00:00:00+00',
     'home',
     'project2',
-    '{"domains": ["project2-domain1"]}'::text,
+    '{"domains": ["517cce32-9af3-project2-domain1"]}'::text,
     '2023-01-02 00:00:00+00',
     'PENDING'
   ),
@@ -73,7 +73,7 @@ VALUES
     '2022-01-02 00:00:00+00',
     'home',
     'project2',
-    '{"domains": ["project2-domain1"]}'::text,
+    '{"domains": ["517cce32-9af3-project2-domain1"]}'::text,
     '2022-01-02 00:00:00+00',
     'PENDING'
   );
@@ -92,7 +92,7 @@ SELECT is (
             )
         )
     ),
-    ARRAY['build1', 'project1-domain1'],
+    ARRAY['build1', '517cce32-9af3-project1-domain1'],
     'Test Case 1: Should return the latest build for project1 with domain matching projectDomain.'
 );
 
@@ -190,8 +190,8 @@ INSERT INTO "public"."Domain" (
     "updatedAt"
 )
 VALUES
-  ('project-1-custom-domain-1', 'project-1-custom-domain-1.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00'),
-  ('project-1-custom-domain-2', 'project-1-custom-domain-2.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00');
+  ('project-1-custom-domain-1', '517cce32-9af3-project-1-custom-domain-1.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00'),
+  ('project-1-custom-domain-2', '517cce32-9af3-project-1-custom-domain-2.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00');
 
 -- Establish relationships between project1 and custom domains
 INSERT INTO "public"."ProjectDomain" (
@@ -221,7 +221,7 @@ VALUES
     '2023-01-02 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2023-01-02 00:00:00+00',
     'PUBLISHED'
   );
@@ -238,7 +238,7 @@ SELECT is (
             )
         )
     ),
-    ARRAY['build1-for-custom-domain-1','project-1-custom-domain-1.com'],
+    ARRAY['build1-for-custom-domain-1','517cce32-9af3-project-1-custom-domain-1.com'],
     'Test Case 5: Should return the latest build for project1 with a registered custom domain in domains array.'
 );
 
@@ -261,7 +261,7 @@ VALUES
     '2023-01-03 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["project-1-custom-domain-1.com", "project1-domain2"]}'::text,
+    '{"domains": ["517cce32-9af3-project-1-custom-domain-1.com", "project1-domain2"]}'::text,
     '2023-01-03 00:00:00+00',
     'PUBLISHED'
   );
@@ -301,7 +301,7 @@ VALUES
     '2023-01-04 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2023-01-04 00:00:00+00',
     'PUBLISHED'
   );
