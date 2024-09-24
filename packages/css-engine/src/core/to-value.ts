@@ -5,20 +5,39 @@ import type { StyleValue } from "../schema";
 export type TransformValue = (styleValue: StyleValue) => undefined | StyleValue;
 
 const fallbackTransform: TransformValue = (styleValue) => {
-  if (styleValue.type === "fontFamily") {
-    const fallback =
-      styleValue.value.length > 1
-        ? // Its a custom stack, we won't add a fallback
-          styleValue.value
-        : [...styleValue.value, DEFAULT_FONT_FALLBACK];
-    const fonts = SYSTEM_FONTS.get(styleValue.value[0])?.stack ?? fallback;
-    const value = Array.from(new Set(fonts));
+  if (styleValue.type !== "fontFamily") {
+    return;
+  }
 
+  // Shouldn't be possible, but just in case.
+  if (styleValue.value.length === 0) {
     return {
       type: "fontFamily",
-      value,
+      value: [DEFAULT_FONT_FALLBACK],
     };
   }
+
+  // User provided a single name. It could be a specific font name or a stack name.
+  if (styleValue.value.length === 1) {
+    const stack = SYSTEM_FONTS.get(styleValue.value[0])?.stack;
+    if (stack !== undefined) {
+      return {
+        type: "fontFamily",
+        value: stack,
+      };
+    }
+    // It's a specific font family.
+    return {
+      type: "fontFamily",
+      value: [styleValue.value[0], DEFAULT_FONT_FALLBACK],
+    };
+  }
+
+  // Its a custom stack, we won't add a fallback
+  return {
+    type: "fontFamily",
+    value: styleValue.value,
+  };
 };
 
 // Use JSON.stringify to escape double quotes and backslashes in strings as it automatically replaces " with \" and \ with \\.
