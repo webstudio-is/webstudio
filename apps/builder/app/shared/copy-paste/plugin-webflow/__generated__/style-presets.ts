@@ -16,8 +16,8 @@ export const styles = {
       selector: "html",
       property: "fontFamily",
       value: {
-        type: "keyword",
-        value: "sans-serif",
+        type: "fontFamily",
+        value: ["sans-serif"],
       },
     },
     {
@@ -126,8 +126,8 @@ export const styles = {
       selector: "body",
       property: "fontFamily",
       value: {
-        type: "unparsed",
-        value: "Arial,sans-serif",
+        type: "fontFamily",
+        value: ["Arial", "sans-serif"],
       },
     },
     {
@@ -1050,8 +1050,8 @@ export const styles = {
       selector: "pre",
       property: "fontFamily",
       value: {
-        type: "keyword",
-        value: "monospace",
+        type: "fontFamily",
+        value: ["monospace"],
       },
     },
     {
@@ -1069,8 +1069,8 @@ export const styles = {
       selector: "code",
       property: "fontFamily",
       value: {
-        type: "keyword",
-        value: "monospace",
+        type: "fontFamily",
+        value: ["monospace"],
       },
     },
     {
@@ -1088,8 +1088,8 @@ export const styles = {
       selector: "kbd",
       property: "fontFamily",
       value: {
-        type: "keyword",
-        value: "monospace",
+        type: "fontFamily",
+        value: ["monospace"],
       },
     },
     {
@@ -1107,8 +1107,8 @@ export const styles = {
       selector: "samp",
       property: "fontFamily",
       value: {
-        type: "keyword",
-        value: "monospace",
+        type: "fontFamily",
+        value: ["monospace"],
       },
     },
     {
@@ -12524,8 +12524,15 @@ export const styles = {
       selector: "w-lightbox-backdrop",
       property: "fontFamily",
       value: {
-        type: "unparsed",
-        value: "Helvetica Neue,Helvetica,Ubuntu,Segoe UI,Verdana,sans-serif",
+        type: "fontFamily",
+        value: [
+          "Helvetica Neue",
+          "Helvetica",
+          "Ubuntu",
+          "Segoe UI",
+          "Verdana",
+          "sans-serif",
+        ],
       },
     },
     {

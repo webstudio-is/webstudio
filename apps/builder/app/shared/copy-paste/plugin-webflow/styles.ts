@@ -440,6 +440,16 @@ const mapComponentAndPresetStyles = (
     case "NavbarButton":
       presetStyles.push("w-nav-button");
       return presetStyles;
+
+    case "RichText":
+      presetStyles.push("w-richtext");
+      return presetStyles;
+    case "Figure": {
+      const { align } = wfNode.data.figure;
+      presetStyles.push("w-richtext-figure-type-image");
+      presetStyles.push(`w-richtext-align-${align}`);
+      return presetStyles;
+    }
   }
 
   return presetStyles;

@@ -127,6 +127,8 @@ export const wfNodeTypes = [
   "NavbarContainer",
   "Icon",
   "LightboxWrapper",
+  "Figure",
+  "Figcaption",
 ] as const;
 
 const WfElementNode = z.union([
@@ -190,6 +192,23 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Grid"]) }),
   WfBaseNode.extend({ type: z.enum(["Row"]) }),
   WfBaseNode.extend({ type: z.enum(["Column"]) }),
+  WfBaseNode.extend({ type: z.enum(["Figcaption"]) }),
+  WfBaseNode.extend({
+    type: z.enum(["Figure"]),
+    data: WfNodeData.extend({
+      style: z.record(styleProperty, styleValue).optional(),
+      figure: z.object({
+        type: z.enum(["image"]), // @todo add more types
+        align: z.enum([
+          "normal",
+          "center",
+          "fullwidth",
+          "floatleft",
+          "floatright",
+        ]),
+      }),
+    }),
+  }),
   WfBaseNode.extend({
     type: z.enum(["CodeBlock"]),
     data: WfNodeData.extend({
@@ -209,8 +228,9 @@ const WfElementNode = z.union([
         alt: z.string().optional(),
         loading: z.enum(["lazy", "eager", "auto"]),
         src: z.string(),
-        width: z.string(),
-        height: z.string(),
+        // width/height is not provided for rich text image
+        width: z.string().optional(),
+        height: z.string().optional(),
       }),
     }),
   }),

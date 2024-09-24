@@ -534,38 +534,6 @@ test("Section", async () => {
   `);
 });
 
-test("Figure", async () => {
-  const fragment = await toWebstudioFragment({
-    type: "@webflow/XscpData",
-    payload: {
-      nodes: [
-        {
-          _id: "7c6bc1fd-128d-514b-167b-605a910e435c",
-          type: "Block",
-          tag: "figure",
-          classes: [],
-          children: [],
-        },
-      ],
-      styles: [],
-      assets: [],
-    },
-  });
-
-  equalFragment(fragment, <$.Box tag="figure" />);
-  expect(toCss(fragment)).toMatchInlineSnapshot(`
-    "@media all {
-      figure {
-        display: block;
-        margin-top: 0;
-        margin-right: 0;
-        margin-bottom: 10px;
-        margin-left: 0
-      }
-    }"
-  `);
-});
-
 test("BlockContainer", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
@@ -1545,6 +1513,163 @@ test("RichText", async () => {
         line-height: 0;
         position: relative;
         bottom: -0.25em
+      }
+    }"
+  `);
+});
+
+test("RichText with Figure and Figcaption", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "a7a2b490-c6c5-30aa-1827-b38a0ae42a08",
+          type: "RichText",
+          tag: "div",
+          classes: [],
+          children: ["3ddc1727-a0f4-33c5-3879-cb1d9d932c59"],
+        },
+        {
+          _id: "3ddc1727-a0f4-33c5-3879-cb1d9d932c59",
+          type: "Figure",
+          tag: "figure",
+          classes: [],
+          children: [
+            "72cdf71c-b2da-c44a-3ecd-9ec9891f6023",
+            "f48219da-c3ef-2439-07e3-a843ef8c0891",
+          ],
+          data: {
+            figure: {
+              type: "image",
+              align: "center",
+              maxWidth: "",
+            },
+          },
+        },
+        {
+          _id: "72cdf71c-b2da-c44a-3ecd-9ec9891f6023",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: ["4b0dc79a-bbb0-b136-d913-f1e3581f2b36"],
+          data: {
+            text: false,
+          },
+        },
+        {
+          _id: "4b0dc79a-bbb0-b136-d913-f1e3581f2b36",
+          type: "Image",
+          tag: "img",
+          classes: [],
+          children: [],
+          data: {
+            //srcsetDisabled: false,
+            attr: {
+              width: "auto",
+              height: "auto",
+              alt: "__wf_reserved_inherit",
+              src: "https://test.com/image.jpg",
+              loading: "lazy",
+              id: "",
+            },
+            sizes: [],
+            devlink: {
+              runtimeProps: {},
+              slot: "",
+            },
+            displayName: "",
+            xattr: [],
+            search: {
+              exclude: false,
+            },
+            visibility: {
+              conditions: [],
+            },
+          },
+        },
+        {
+          _id: "f48219da-c3ef-2439-07e3-a843ef8c0891",
+          type: "Figcaption",
+          tag: "figcaption",
+          classes: [],
+          children: ["d5e8480a-f395-38d5-530b-78cb05b6888f"],
+        },
+        {
+          _id: "d5e8480a-f395-38d5-530b-78cb05b6888f",
+          text: true,
+          v: "test",
+        },
+      ],
+      styles: [],
+      assets: [
+        {
+          cdnUrl: "https://test.com/image.jpg",
+          siteId: "66ab8a32bcc969149d6a7a1a",
+          width: 174,
+          height: 136,
+          fileName:
+            "66d8522c8e9dbb5e2b2de76c_Screenshot 2024-09-02 at 18.20.14.png",
+          createdOn: "2024-09-04T12:27:24.621Z",
+          origFileName: "Screenshot 2024-09-02 at 18.20.14.png",
+          fileHash: "496bace14fbde33d31e0417dd70216d0",
+          //translationLoading: false,
+          variants: [],
+          mimeType: "image/png",
+          _id: "66d8522c8e9dbb5e2b2de76c",
+          updatedOn: "2024-09-04T12:55:38.572Z",
+          fileSize: 20599,
+          localizedSettings: {},
+        },
+      ],
+      ix1: [],
+      ix2: {
+        interactions: [],
+        events: [],
+        actionLists: [],
+      },
+    },
+    meta: {
+      droppedLinks: 0,
+      dynBindRemovedCount: 0,
+      dynListBindRemovedCount: 0,
+      paginationRemovedCount: 0,
+      universalBindingsRemovedCount: 0,
+      unlinkedSymbolCount: 0,
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Box>
+      <$.Box tag="figure">
+        <$.Box>
+          <$.Image loading="lazy" src="https://test.com/image.jpg" />
+        </$.Box>
+        <$.Text tag="figcaption">test</$.Text>
+      </$.Box>
+    </$.Box>
+  );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      figure {
+        display: block;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0
+      }
+      img {
+        vertical-align: middle;
+        max-width: 100%;
+        display: inline-block;
+        border: 0 none currentcolor
+      }
+      figcaption {
+        display: block;
+        text-align: center;
+        margin-top: 5px
       }
     }"
   `);

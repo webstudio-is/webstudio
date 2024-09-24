@@ -162,10 +162,48 @@ export const parseCss = (css: string) => {
     }
 
     const selectors: Selector[] = [];
+    //console.log(csstree.generate(this.rule.prelude));
 
-    for (const node of this.rule.prelude.children) {
-      if (node.type !== "Selector") {
-        continue;
+    csstree.walk(this.rule.prelude, (node, item) => {
+      if (node.type !== "ClassSelector" && node.type !== "TypeSelector") {
+        return;
+      }
+
+      // Previous item is a combinator
+      if (item.prev?.data.type === "Combinator") {
+        selectors[selectors.length - 1].name += node.name;
+        return;
+      }
+
+      if (item.next?.data.type === "Combinator") {
+        const { name } = item.next.data;
+        // keep space as-is, but add space around other combinators
+        selectors[selectors.length - 1].name +=
+          name === " " ? name : ` ${name} `;
+        return;
+      }
+
+      let { name } = node;
+      let state: string | undefined;
+
+      if (item.next?.data.type === "PseudoElementSelector") {
+        state = `::${item.next.data.name}`;
+      } else if (item.next?.data.type === "PseudoClassSelector") {
+        state = `:${item.next.data.name}`;
+      } else if (selectors.length !== 0) {
+        // a.b
+        name = `.${node.name}`;
+      }
+
+      console.log(item);
+      if (selectors.length === 0) {
+        selectors.push({ name, state });
+      } else {
+        const selector = selectors[selectors.length - 1];
+        selector.name += name;
+        if (state) {
+          selector.state = (selector.state ?? "") + state;
+        }
       }
       let selector: Selector | undefined = undefined;
       for (const childNode of node.children) {

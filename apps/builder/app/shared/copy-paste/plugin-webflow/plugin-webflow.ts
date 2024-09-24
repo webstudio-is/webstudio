@@ -117,7 +117,7 @@ const parse = (clipboardData: string) => {
   if (data.type !== "@webflow/XscpData") {
     return;
   }
-
+  console.log(data);
   const unsupportedNodeTypes: Set<string> = new Set(
     data.payload.nodes
       .filter((node: { type: string }) => {
@@ -139,7 +139,7 @@ const parse = (clipboardData: string) => {
   const result = WfData.safeParse(data);
 
   if (result.success) {
-    const unpasedTypes = new Set<string>();
+    const unparsedTypes = new Set<string>();
 
     for (let i = 0; i !== result.data.payload.nodes.length; ++i) {
       if ("type" in result.data.payload.nodes[i]) {
@@ -156,11 +156,11 @@ const parse = (clipboardData: string) => {
         continue;
       }
 
-      unpasedTypes.add(probablyUnparsedType);
+      unparsedTypes.add(probablyUnparsedType);
     }
 
-    if (unpasedTypes.size !== 0) {
-      const message = `The following types were skipped due to a parsing error: ${[...unpasedTypes.values()].join(", ")}`;
+    if (unparsedTypes.size !== 0) {
+      const message = `The following types were skipped due to a parsing error: ${[...unparsedTypes.values()].join(", ")}`;
       toast.info(message);
       console.info(message);
     }

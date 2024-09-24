@@ -243,7 +243,7 @@ describe("Parse CSS", () => {
     ]);
   });
 
-  test("parse multiple selectors, both with state", () => {
+  test.only("parse multiple selectors, both with state", () => {
     expect(parseCss(`a:active, a:hover { color: #ff0000 }`)).toEqual([
       {
         selector: "a",
