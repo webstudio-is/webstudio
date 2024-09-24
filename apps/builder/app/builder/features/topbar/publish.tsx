@@ -4,6 +4,7 @@ import {
   useOptimistic,
   useTransition,
   startTransition,
+  useRef,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -62,15 +63,12 @@ type ChangeProjectDomainProps = {
   refresh: () => void;
 };
 
-// type TimeoutId = undefined | ReturnType<typeof setTimeout>;
-
 const ChangeProjectDomain = ({
   project,
   refresh,
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
-  const hasProPlan = useStore($userPlanFeatures).hasProPlan;
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
@@ -112,19 +110,15 @@ const ChangeProjectDomain = ({
           status: "PENDING" as const,
         };
 
-  const hideDomainCheckbox = project.domainsVirtual.length === 0 && hasProPlan;
-
   return (
     <CollapsibleDomainSection
       title={new URL(publishedOrigin).host}
       prefix={
-        hideDomainCheckbox ? null : (
-          <DomainCheckbox
-            defaultChecked={project.latestBuildVirtual?.domain === domain}
-            buildId={project.latestBuildVirtual?.buildId}
-            domain={domain}
-          ></DomainCheckbox>
-        )
+        <DomainCheckbox
+          defaultChecked={project.latestBuildVirtual?.domain === domain}
+          buildId={project.latestBuildVirtual?.buildId}
+          domain={domain}
+        />
       }
       suffix={
         <Grid flow="column" align="center">
@@ -208,6 +202,39 @@ const Publish = ({
 }) => {
   const [publishError, setPublishError] = useState<string | undefined>();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
+
+  useEffect(() => {
+    const form = buttonRef.current?.closest("form");
+
+    if (form == null) {
+      return;
+    }
+
+    const handleFormInput = () => {
+      const formData = new FormData(form);
+      const domainsSelected = formData.getAll(domainToPublishName).length;
+      setHasSelectedDomains(domainsSelected > 0);
+    };
+
+    const observer = new MutationObserver(() => {
+      handleFormInput();
+    });
+
+    observer.observe(form, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      attributeFilter: ["value", "checked"],
+    });
+
+    handleFormInput();
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
@@ -301,13 +328,19 @@ const Publish = ({
 
       <Tooltip
         content={
-          isPublishInProgress ? "Publish process in progress" : undefined
+          isPublishInProgress
+            ? "Publish process in progress"
+            : hasSelectedDomains
+              ? undefined
+              : "Select at least one domain to publish"
         }
       >
         <Button
+          ref={buttonRef}
           formAction={handlePublish}
           color="positive"
           state={isPublishInProgress ? "pending" : undefined}
+          disabled={hasSelectedDomains === false}
         >
           Publish
         </Button>

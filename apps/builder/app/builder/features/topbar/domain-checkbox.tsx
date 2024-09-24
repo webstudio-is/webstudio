@@ -9,6 +9,7 @@ import {
   Checkbox,
 } from "@webstudio-is/design-system";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
+import { $project } from "~/shared/nano-states";
 
 export const domainToPublishName = "domainToPublish[]";
 
@@ -21,6 +22,11 @@ interface DomainCheckboxProps {
 
 const DomainCheckbox = (props: DomainCheckboxProps) => {
   const hasProPlan = useStore($userPlanFeatures).hasProPlan;
+  const project = useStore($project);
+
+  if (project === undefined) {
+    return;
+  }
 
   const tooltipContentForFreeUsers = hasProPlan ? undefined : (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
@@ -52,17 +58,24 @@ const DomainCheckbox = (props: DomainCheckboxProps) => {
   const defaultChecked = hasProPlan ? props.defaultChecked : true;
   const disabled = hasProPlan ? props.disabled : true;
 
+  const hideDomainCheckbox =
+    project.domainsVirtual.filter(
+      (domain) => domain.status === "ACTIVE" && domain.verified
+    ).length === 0 && hasProPlan;
+
   return (
-    <Tooltip content={tooltipContentForFreeUsers} variant="wrapped">
-      <Checkbox
-        disabled={disabled}
-        key={props.buildId ?? "-"}
-        defaultChecked={defaultChecked}
-        css={{ pointerEvents: "all" }}
-        name={domainToPublishName}
-        value={props.domain}
-      />
-    </Tooltip>
+    <div style={{ display: hideDomainCheckbox ? "none" : "contents" }}>
+      <Tooltip content={tooltipContentForFreeUsers} variant="wrapped">
+        <Checkbox
+          disabled={disabled}
+          key={props.buildId ?? "-"}
+          defaultChecked={hideDomainCheckbox || defaultChecked}
+          css={{ pointerEvents: "all" }}
+          name={domainToPublishName}
+          value={props.domain}
+        />
+      </Tooltip>
+    </div>
   );
 };
 
