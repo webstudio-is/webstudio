@@ -32,7 +32,7 @@ const DomainCheckbox = (props: DomainCheckboxProps) => {
           <>
             <br />
             <br />
-            Upgrade to Pro to be able to publish to each domain individually.
+            Upgrade to Pro account to publish to each domain individually.
             <br /> <br />
             <Link
               className={buttonStyle({ color: "gradient" })}

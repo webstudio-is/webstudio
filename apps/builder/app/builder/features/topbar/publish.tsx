@@ -70,6 +70,7 @@ const ChangeProjectDomain = ({
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
+  const hasProPlan = useStore($userPlanFeatures).hasProPlan;
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
@@ -111,15 +112,19 @@ const ChangeProjectDomain = ({
           status: "PENDING" as const,
         };
 
+  const hideDomainCheckbox = project.domainsVirtual.length === 0 && hasProPlan;
+
   return (
     <CollapsibleDomainSection
       title={new URL(publishedOrigin).host}
       prefix={
-        <DomainCheckbox
-          defaultChecked={project.latestBuildVirtual?.domain === domain}
-          buildId={project.latestBuildVirtual?.buildId}
-          domain={domain}
-        ></DomainCheckbox>
+        hideDomainCheckbox ? null : (
+          <DomainCheckbox
+            defaultChecked={project.latestBuildVirtual?.domain === domain}
+            buildId={project.latestBuildVirtual?.buildId}
+            domain={domain}
+          ></DomainCheckbox>
+        )
       }
       suffix={
         <Grid flow="column" align="center">
@@ -521,7 +526,7 @@ const Content = (props: {
               <Text variant="regularBold" inline>
                 Upgrade to a Pro account
               </Text>{" "}
-              to add unlimited domains.
+              to add unlimited domains and publish to each domain individually.
             </Text>
             <Link
               className={buttonStyle({ color: "gradient" })}
