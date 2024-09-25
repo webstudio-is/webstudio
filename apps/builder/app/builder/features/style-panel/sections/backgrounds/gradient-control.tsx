@@ -23,15 +23,29 @@ const defaultAngle: UnitValue = {
 export const GradientControl = (props: GradientControlProps) => {
   const [stops, setStops] = useState<Array<GradientStop>>(props.gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
-  const positions = stops.map((stop) => stop.position?.value);
+  const positions = stops
+    .map((stop) => stop.position?.value)
+    .filter((item) => item !== undefined);
   const hints = props.gradient.stops
     .map((stop) => stop.hint?.value)
-    .filter(Boolean);
+    .filter((item) => item !== undefined);
   const background = reconstructLinearGradient({
     stops,
     sideOrCorner: props.gradient.sideOrCorner,
     angle: defaultAngle,
   });
+
+  // Every color stop should have a asociated position for us in-order to display the slider thumb.
+  // But when users manually enter linear-gradient from the advanced-panle. They might add something like this
+  // linear-gradient(to right, red, blue), or linear-gradient(150deg, red, blue 50%, yellow 50px)
+  // Browsers handles all these cases by following the rules of the css spec.
+  // https://www.w3.org/TR/css-images-4/#color-stop-fixup
+  // In order to handle such examples from the advanced tab too. We need to implement the color-stop-fix-up spec during parsing.
+  // But for now, we are just checking if every stop has a position or not. Since the main use-case if to add gradients from ui.
+  // We will never run into this case of a color-stop missing a position associated with it.
+  const isEveryStopHasAPosition = stops.every(
+    (stop) => stop.position !== undefined && stop.color !== undefined
+  );
 
   const handleValueChange = useCallback(
     (newPositions: number[]) => {
@@ -61,6 +75,10 @@ export const GradientControl = (props: GradientControlProps) => {
     },
     [stops, selectedStop]
   );
+
+  if (isEveryStopHasAPosition === false) {
+    return;
+  }
 
   return (
     <Flex
@@ -93,6 +111,16 @@ export const GradientControl = (props: GradientControlProps) => {
           />
         ))}
 
+        {/*
+            Hints are displayed as a chevron icon below the slider thumb.
+            Usually hints are used to display the behaviour of the color-stop that is preciding.
+            But, if we just move them along the UI. We will be basically altering the gradient itself.
+            Because the position of the hint is the position of the color-stop. And moving it along, might associate the hint
+            with a different color-stop. So, we are not allowing the user to move the hint along the slider.
+
+            None of the tools are even displaying the hints at the moment. We are just displaying them so users can know
+            they are hints associated too.
+        */}
         {hints.map((hint) => {
           return (
             <Flex
