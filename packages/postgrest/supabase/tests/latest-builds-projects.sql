@@ -93,7 +93,23 @@ SELECT is (
         )
     ),
     ARRAY['build1', '517cce32-9af3-project1-domain1'],
-    'Test Case 1: Should return the latest build for project1 with domain matching projectDomain.'
+    'Test Case 1.1: Should return the latest build for project1 with domain matching projectDomain.'
+);
+
+
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1', '517cce32-9af3-project1-domain1'],
+    'Test Case 1.2: Should return the latest build for project1 with domain matching projectDomain.'
 );
 
 --------------------------------------------------------------------------------
@@ -111,9 +127,23 @@ SELECT is (
         )
     ),
     'build2',
-    'Test Case 2: Should return the latest build for project2 with domain present in domains array.'
+    'Test Case 2.1: Should return the latest build for project2 with domain present in domains array.'
 );
 
+SELECT is (
+    (
+        SELECT "buildId"
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project2'
+            )
+        )
+    ),
+    'build2',
+    'Test Case 2.2: Should return the latest build for project2 domain with domain present in domains array.'
+);
 --------------------------------------------------------------------------------
 -- Test Case 3: Update Project Domain and Verify No Build Exists for the New Domain
 --------------------------------------------------------------------------------
@@ -135,7 +165,22 @@ SELECT is (
         )
     ),
     0,
-    'Test Case 3: Should return 0 as no build exists for the updated domain project1-domain2.'
+    'Test Case 3.1: Should return 0 as no build exists for the updated domain project1-domain2.'
+);
+
+SELECT is (
+    (
+        SELECT COUNT(*)::integer
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    0,
+    'Test Case 3.2: Should return 0 as no build exists for the updated domain project1-domain2.'
 );
 
 --------------------------------------------------------------------------------
@@ -175,8 +220,24 @@ SELECT is (
         )
     ),
     ARRAY['build1-for-domain2','project1-domain2'],
-    'Test Case 4: Should return the latest build for project1 with the updated domain in domains array.'
+    'Test Case 4.1: Should return the latest build for project1 with the updated domain in domains array.'
 );
+
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1-for-domain2','project1-domain2'],
+    'Test Case 4.2: Should return the latest build for project1 domain with the updated domain in domains array.'
+);
+
 
 --------------------------------------------------------------------------------
 -- Test Case 5: Register Custom Domains and Verify Latest Build for a Custom Domain
@@ -239,7 +300,25 @@ SELECT is (
         )
     ),
     ARRAY['build1-for-custom-domain-1','517cce32-9af3-project-1-custom-domain-1.com'],
-    'Test Case 5: Should return the latest build for project1 with a registered custom domain in domains array.'
+    'Test Case 5.1: Should return the latest build for project1 with a registered custom domain in domains array.'
+);
+
+
+-- Ensure the latest project domain build has not changed
+-- The difference between latestProjectDomainBuildVirtual and latestBuildVirtual is that the first returns data only for the project domain
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1-for-domain2','project1-domain2'],
+    'Test Case 5.2: Should return the latest build for project1 domain and not affected by custom domains'
 );
 
 --------------------------------------------------------------------------------
@@ -279,8 +358,24 @@ SELECT is (
         )
     ),
     ARRAY['build1-for-domain2-new', 'project1-domain2'],
-    'Test Case 6: Should return the latest build for project1 with the preview domain in domains array.'
+    'Test Case 6.1: Should return the latest build for project1 with the preview domain in domains array.'
 );
+
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1-for-domain2-new', 'project1-domain2'],
+    'Test Case 6.2: Should return the latest build for project1 with the preview domain in domains array.'
+);
+
 
 --------------------------------------------------------------------------------
 -- Test Case 7: Publish a New Build for a Custom Domain, Delete the Custom Domain, and Verify Latest Build Update
