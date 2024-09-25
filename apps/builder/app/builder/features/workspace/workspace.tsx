@@ -24,6 +24,8 @@ const workspaceStyle = css({
 const canvasContainerStyle = css({
   position: "absolute",
   transformOrigin: "0 0",
+  // We had a case where some Windows 10 + Chrome 129 users couldn't scroll iframe canvas.
+  willChange: "transform",
 });
 
 const useMeasureWorkspace = () => {
