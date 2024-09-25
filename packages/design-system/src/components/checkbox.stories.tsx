@@ -1,6 +1,7 @@
 import { Label } from "./label";
 import { Checkbox, CheckboxAndLabel } from "./checkbox";
 import { StorySection, StoryGrid } from "./storybook";
+import { Tooltip } from "./tooltip";
 
 export default {
   title: "Library/Checkbox",
@@ -44,6 +45,15 @@ export const Demo = () => {
           <Checkbox id="B" />
           <Label htmlFor="B">Label B</Label>
         </CheckboxAndLabel>
+      </StorySection>
+
+      <StorySection title="With Tooltip">
+        <Tooltip content="Tooltip content">
+          <Checkbox defaultChecked />
+        </Tooltip>
+        <Tooltip content="Tooltip content">
+          <Checkbox disabled />
+        </Tooltip>
       </StorySection>
     </>
   );

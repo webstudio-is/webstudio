@@ -23,7 +23,12 @@ export const Deployment = z.union([
   z.object({
     destination: z.literal("saas").optional(),
     domains: z.array(z.string()),
-    projectDomain: z.string(),
+    assetsDomain: z.string().optional(),
+    /**
+     * @deprecated This field is deprecated, use `domains` instead.
+     */
+    projectDomain: z.string().optional(),
+    excludeWstdDomainFromSearch: z.boolean().optional(),
   }),
 ]);
 
