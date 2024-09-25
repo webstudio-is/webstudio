@@ -6,6 +6,8 @@ const ScrollAreaRoot = styled(Root, {
   boxSizing: "border-box",
   overflow: "hidden",
   display: "grid",
+  // We had a case where some Windows 10 + Chrome 129 users couldn't scroll style panel.
+  willChange: "transform",
 });
 
 const ScrollAreaThumb = styled(Thumb, {
