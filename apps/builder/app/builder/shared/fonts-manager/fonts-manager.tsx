@@ -63,7 +63,7 @@ const useLogic = ({ onChange, value }: FontsManagerProps) => {
   );
 
   const currentIndex = useMemo(() => {
-    return groupedItems.findIndex((item) => item.label === value.value[0]);
+    return groupedItems.findIndex((item) => item.label === value?.value[0]);
   }, [groupedItems, value]);
 
   const handleChangeCurrent = (nextCurrentIndex: number) => {
@@ -104,7 +104,7 @@ const useLogic = ({ onChange, value }: FontsManagerProps) => {
 };
 
 type FontsManagerProps = {
-  value: FontFamilyValue;
+  value?: FontFamilyValue;
   onChange: (value?: string) => void;
 };
 
