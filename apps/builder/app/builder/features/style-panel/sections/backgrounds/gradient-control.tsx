@@ -1,4 +1,4 @@
-import { toValue, UnitValue } from "@webstudio-is/css-engine";
+import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
 import { Root, Range, Thumb, Track } from "@radix-ui/react-slider";
 import { useState, useCallback } from "react";
 import {
@@ -8,6 +8,10 @@ import {
 } from "@webstudio-is/css-data";
 import { styled, theme, Flex } from "@webstudio-is/design-system";
 import { ChevronBigUpIcon } from "@webstudio-is/icons";
+import { colord, extend } from "colord";
+import mixPlugin from "colord/plugins/mix";
+
+extend([mixPlugin]);
 
 type GradientControlProps = {
   gradient: ParsedGradient;
@@ -76,6 +80,62 @@ export const GradientControl = (props: GradientControlProps) => {
     [stops, selectedStop]
   );
 
+  const handlePointerDown = useCallback(
+    (event: React.MouseEvent<HTMLSpanElement>) => {
+      if (event.target === undefined || event.target === null) {
+        return;
+      }
+
+      // radix-slider automatically brings the closest thumb to the clicked position.
+      // But, we want it be prevented. So, we can add a new color-stop where the user is cliked.
+      // And handle the even for scrubing when the user is dragging the thumb.
+      const sliderWidth = event.currentTarget.offsetWidth;
+      const clickedPosition =
+        event.clientX - event.currentTarget.getBoundingClientRect().left;
+      const newPosition = Math.ceil((clickedPosition / sliderWidth) * 100);
+      const isExistingPosition = positions.some(
+        (position) => Math.abs(newPosition - position) <= 8
+      );
+
+      if (isExistingPosition === true) {
+        return;
+      }
+
+      event.preventDefault();
+      const newStopIndex = positions.findIndex(
+        (position) => position > newPosition
+      );
+
+      const index = newStopIndex === -1 ? stops.length : newStopIndex;
+      const prevColor = stops[index === 0 ? 0 : index - 1].color;
+      const nextColor =
+        stops[index === positions.length ? index - 1 : index].color;
+
+      const interpolationColor = colord(toValue(prevColor))
+        .mix(colord(toValue(nextColor)), newPosition / 100)
+        .toRgb();
+
+      const newColorStop: RgbValue = {
+        type: "rgb",
+        alpha: interpolationColor.a,
+        r: interpolationColor.r,
+        g: interpolationColor.g,
+        b: interpolationColor.b,
+      };
+
+      const newStops: GradientStop[] = [
+        ...stops.slice(0, index),
+        {
+          color: newColorStop,
+          position: { type: "unit", value: newPosition, unit: "%" },
+        },
+        ...stops.slice(index),
+      ];
+      setStops(newStops);
+    },
+    [stops, positions]
+  );
+
   if (isEveryStopHasAPosition === false) {
     return;
   }
@@ -95,6 +155,7 @@ export const GradientControl = (props: GradientControlProps) => {
         value={positions}
         onValueChange={handleValueChange}
         onKeyDown={handleKeyDown}
+        onPointerDown={handlePointerDown}
       >
         <Track>
           <SliderRange css={{ cursor: "copy" }} />
@@ -119,7 +180,7 @@ export const GradientControl = (props: GradientControlProps) => {
             with a different color-stop. So, we are not allowing the user to move the hint along the slider.
 
             None of the tools are even displaying the hints at the moment. We are just displaying them so users can know
-            they are hints associated too.
+            they are hints associated with stops if they managed to add gradient from the advanced tab.
         */}
         {hints.map((hint) => {
           return (
