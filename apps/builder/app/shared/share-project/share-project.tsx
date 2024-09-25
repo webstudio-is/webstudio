@@ -31,6 +31,7 @@ import {
 } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 import { useIds } from "../form-utils";
+import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -316,35 +317,21 @@ const SharedLinkItem = ({
   hasProPlan,
 }: SharedLinkItemType) => {
   const [currentName, setCurrentName] = useState(value.name);
-  const [isCopied, setIsCopied] = useState(false);
 
   return (
     <Box className={itemStyle()}>
       <Label css={{ flexGrow: 1 }}>{currentName}</Label>
-      <Tooltip
-        content={isCopied ? "Copied" : "Copy link"}
-        open={isCopied === true ? true : undefined}
-        onOpenChange={(isOpen) => {
-          if (isOpen === false) {
-            setIsCopied(false);
-          }
-        }}
+      <CopyToClipboard
+        text={builderUrl({
+          authToken: value.token,
+          mode: value.relation === "viewers" ? "preview" : "edit",
+        })}
+        copyText="Copy link"
       >
-        <IconButton
-          aria-label="Copy link"
-          onClick={() => {
-            navigator.clipboard.writeText(
-              builderUrl({
-                authToken: value.token,
-                mode: value.relation === "viewers" ? "preview" : "edit",
-              })
-            );
-            setIsCopied(true);
-          }}
-        >
+        <IconButton aria-label="Copy link">
           <CopyIcon aria-hidden />
         </IconButton>
-      </Tooltip>
+      </CopyToClipboard>
       <Menu
         name={currentName}
         value={value}

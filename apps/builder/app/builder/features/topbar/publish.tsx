@@ -56,6 +56,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { Templates } from "@webstudio-is/sdk";
 import { formatDistance } from "date-fns/formatDistance";
 import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
+import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -778,18 +779,11 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
             value={npxCommand}
           />
 
-          <Tooltip content={"Copy to clipboard"}>
-            <Button
-              type="button"
-              color="neutral"
-              onClick={() => {
-                navigator.clipboard.writeText(npxCommand);
-              }}
-              prefix={<CopyIcon />}
-            >
+          <CopyToClipboard text={npxCommand}>
+            <Button type="button" color="neutral" prefix={<CopyIcon />}>
               Copy
             </Button>
-          </Tooltip>
+          </CopyToClipboard>
         </Flex>
       </Grid>
       <Grid columns={1} gap={2}>
@@ -820,21 +814,17 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
               .trimStart()
               .replace(/ +$/, "")}
           />
-          <Tooltip content={"Copy to clipboard"}>
+
+          <CopyToClipboard text={deployTargets[deployTarget].command}>
             <Button
               type="button"
               css={{ flexShrink: 0 }}
               color="neutral"
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  deployTargets[deployTarget].command
-                );
-              }}
               prefix={<CopyIcon />}
             >
               Copy
             </Button>
-          </Tooltip>
+          </CopyToClipboard>
         </Flex>
       </Grid>
       <Grid columns={1} gap={1}>
