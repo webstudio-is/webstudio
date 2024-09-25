@@ -218,7 +218,11 @@ export const InputErrorsTooltip = ({
         collisionBoundary={collisionBoundary as never}
         collisionPadding={-8}
         hideWhenDetached={true}
-        content={content ?? " "}
+        content={
+          errors !== undefined && errors.length !== 0
+            ? (content ?? " ")
+            : undefined
+        }
         open={errors !== undefined && errors.length !== 0}
         side={side ?? "right"}
         css={css}
