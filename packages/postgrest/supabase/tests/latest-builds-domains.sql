@@ -9,19 +9,19 @@ SELECT no_plan();
 -- Insert a new user into the User table
 INSERT INTO "public"."User" ("id", "createdAt", "email", "username")
 VALUES
-  ('user1', '2023-01-01 00:00:00+00', 'user1@example.com', 'user1');
+  ('user1', '2023-01-01 00:00:00+00', 'user1@517cce32-9af3-example.com', 'user1');
 
 -- Insert projects associated with the user
 INSERT INTO "public"."Project" ("id", "title", "domain", "userId", "isDeleted", "createdAt")
 VALUES
-  ('project1', 'Project One', 'project1-domain1', 'user1', false, '2023-01-01 00:00:00+00'),
-  ('project2', 'Project Two', 'project2-domain1', 'user1', false, '2023-01-01 00:00:00+00');
+  ('project1', 'Project One', '517cce32-9af3-project1-domain1', 'user1', false, '2023-01-01 00:00:00+00'),
+  ('project2', 'Project Two', '517cce32-9af3-project2-domain1', 'user1', false, '2023-01-01 00:00:00+00');
 
 -- Insert custom domains into the Domain table
 INSERT INTO "public"."Domain" ("id", "domain", "createdAt", "status", "updatedAt")
 VALUES
-  ('project-1-custom-domain-1', 'project-1-custom-domain-1.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00'),
-  ('project-1-custom-domain-2', 'project-1-custom-domain-2.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00');
+  ('project-1-custom-domain-1', '517cce32-9af3-project-1-custom-domain-1.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00'),
+  ('project-1-custom-domain-2', '517cce32-9af3-project-1-custom-domain-2.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00');
 
 -- Establish relationships between projects and custom domains
 INSERT INTO "public"."ProjectDomain" ("projectId", "domainId", "createdAt", "txtRecord", "cname")
@@ -76,7 +76,7 @@ VALUES
     '2023-01-02 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2023-01-02 00:00:00+00',
     'PUBLISHED'
 );
@@ -113,7 +113,7 @@ VALUES
     '2024-01-02 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2024-01-02 00:00:00+00',
     'PUBLISHED'
 );
@@ -150,7 +150,7 @@ VALUES
     '2024-01-03 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-2.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-2.com"]}'::text,
     '2024-01-03 00:00:00+00',
     'PUBLISHED'
 );
@@ -187,7 +187,7 @@ VALUES
     '2024-01-04 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-2.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-2.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2024-01-04 00:00:00+00',
     'PUBLISHED'
 );
@@ -230,7 +230,7 @@ VALUES
     '2025-01-04 00:00:00+00',
     'home',
     'project2',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-2.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-2.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2025-01-04 00:00:00+00',
     'PUBLISHED'
 );
