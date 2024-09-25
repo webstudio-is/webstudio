@@ -1,12 +1,13 @@
 import { toValue, UnitValue } from "@webstudio-is/css-engine";
 import { Root, Range, Thumb, Track } from "@radix-ui/react-slider";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   reconstructLinearGradient,
   type GradientStop,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
 import { styled, theme, Flex } from "@webstudio-is/design-system";
+import { ChevronBigUpIcon } from "@webstudio-is/icons";
 
 type GradientControlProps = {
   gradient: ParsedGradient;
@@ -22,25 +23,15 @@ const defaultAngle: UnitValue = {
 export const GradientControl = (props: GradientControlProps) => {
   const [stops, setStops] = useState<Array<GradientStop>>(props.gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
-  const positions = stops.map((stop) => stop.position?.value) as number[];
+  const positions = stops.map((stop) => stop.position?.value);
+  const hints = props.gradient.stops
+    .map((stop) => stop.hint?.value)
+    .filter(Boolean);
   const background = reconstructLinearGradient({
     stops,
     sideOrCorner: props.gradient.sideOrCorner,
     angle: defaultAngle,
   });
-
-  useEffect(() => {
-    const newStops: Array<GradientStop> = [];
-    for (const stop of props.gradient.stops || []) {
-      if (stop.color !== undefined && stop.position?.value !== undefined) {
-        newStops.push({
-          color: stop.color,
-          position: stop.position,
-        });
-      }
-    }
-    setStops(newStops);
-  }, [props.gradient]);
 
   const handleValueChange = useCallback(
     (newPositions: number[]) => {
@@ -52,7 +43,7 @@ export const GradientControl = (props: GradientControlProps) => {
       setStops(newStops);
       props.onChange({
         angle: props.gradient.angle,
-        stops,
+        stops: newStops,
         sideOrCorner: props.gradient.sideOrCorner,
       });
     },
@@ -101,6 +92,23 @@ export const GradientControl = (props: GradientControlProps) => {
             }}
           />
         ))}
+
+        {hints.map((hint) => {
+          return (
+            <Flex
+              key={hint}
+              align="center"
+              justify="center"
+              css={{
+                position: "absolute",
+                left: `${hint}%`,
+                top: theme.spacing[9],
+              }}
+            >
+              <ChevronBigUpIcon color={theme.colors.borderMain} />
+            </Flex>
+          );
+        })}
       </SliderRoot>
     </Flex>
   );
