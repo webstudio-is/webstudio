@@ -36,6 +36,7 @@ import { $publisherHost } from "~/shared/nano-states";
 import { extractCname } from "./cname";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import DomainCheckbox from "./domain-checkbox";
+import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -44,21 +45,6 @@ const InputEllipsis = styled(InputField, {
     textOverflow: "ellipsis",
   },
 });
-
-const CopyToClipboard = (props: { text: string }) => {
-  return (
-    <Tooltip content={"Copy to clipboard"}>
-      <NestedInputButton
-        type="button"
-        onClick={() => {
-          navigator.clipboard.writeText(props.text);
-        }}
-      >
-        <CopyIcon />
-      </NestedInputButton>
-    </Tooltip>
-  );
-};
 
 export const getStatus = (projectDomain: Domain) =>
   projectDomain.verified
@@ -456,24 +442,48 @@ const DomainItem = (props: {
           <InputEllipsis
             readOnly
             value={cnameRecord.host}
-            suffix={<CopyToClipboard text={cnameRecord.host} />}
+            suffix={
+              <CopyToClipboard text={cnameRecord.host}>
+                <NestedInputButton type="button">
+                  <CopyIcon />
+                </NestedInputButton>
+              </CopyToClipboard>
+            }
           />
           <InputEllipsis
             readOnly
             value={cnameRecord.value}
-            suffix={<CopyToClipboard text={cnameRecord.value} />}
+            suffix={
+              <CopyToClipboard text={cnameRecord.value}>
+                <NestedInputButton type="button">
+                  <CopyIcon />
+                </NestedInputButton>
+              </CopyToClipboard>
+            }
           />
 
           <InputEllipsis readOnly value="TXT" />
           <InputEllipsis
             readOnly
             value={txtRecord.host}
-            suffix={<CopyToClipboard text={txtRecord.host} />}
+            suffix={
+              <CopyToClipboard text={txtRecord.host}>
+                <NestedInputButton type="button">
+                  <CopyIcon />
+                </NestedInputButton>
+              </CopyToClipboard>
+            }
           />
           <InputEllipsis
             readOnly
             value={txtRecord.value}
-            suffix={<CopyToClipboard text={txtRecord.value} />}
+            suffix={
+              <CopyToClipboard text={txtRecord.value}>
+                <NestedInputButton type="button">
+                  <CopyIcon />
+                </NestedInputButton>
+              </CopyToClipboard>
+            }
           />
         </Grid>
 
