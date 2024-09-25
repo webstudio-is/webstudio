@@ -61,10 +61,6 @@ export const FontFamilyControl = () => {
     return toValue(value, (value) => value).replace(/"/g, "");
   }, [value]);
 
-  if (value.type !== "fontFamily") {
-    return;
-  }
-
   return (
     <Flex>
       <Combobox<Item>
@@ -73,7 +69,7 @@ export const FontFamilyControl = () => {
             title="Fonts"
             content={
               <FontsManager
-                value={value}
+                value={value.type === "fontFamily" ? value : undefined}
                 onChange={(newValue = itemValue) => {
                   setValue({ type: "fontFamily", value: [newValue] });
                 }}
