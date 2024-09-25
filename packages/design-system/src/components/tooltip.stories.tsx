@@ -1,12 +1,37 @@
-import { InputErrorsTooltip, TooltipProvider } from "./tooltip";
+import {
+  InputErrorsTooltip,
+  TooltipProvider,
+  Tooltip as TooltipDesign,
+} from "./tooltip";
 import { Button } from "./button";
 import { Box } from "./box";
+import { InputField } from "./input-field";
 
 export default {
   title: "Library/Tooltip",
 };
 
-const TooltipStory = () => {
+export const TooltipDelay = () => {
+  return (
+    <TooltipProvider>
+      <TooltipDesign content="HELLO" delayDuration={1000}>
+        <Button>Hover me</Button>
+      </TooltipDesign>
+
+      <InputErrorsTooltip errors={[]} side={"right"}>
+        <InputField
+          id="input"
+          placeholder="Input"
+          css={{
+            width: 200,
+          }}
+        />
+      </InputErrorsTooltip>
+    </TooltipProvider>
+  );
+};
+
+export const Tooltip = () => {
   return (
     <TooltipProvider>
       <Box>Some content</Box>
@@ -59,5 +84,3 @@ const TooltipStory = () => {
     </TooltipProvider>
   );
 };
-
-export { TooltipStory as Tooltip };
