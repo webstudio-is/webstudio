@@ -175,7 +175,7 @@ const ActionContainer = styled("div", {
 const DropIndicator = ({
   instruction,
 }: {
-  instruction: null | Instruction;
+  instruction: undefined | Instruction;
 }) => {
   if (instruction?.type === "reorder-above") {
     const indent = instruction.currentLevel * instruction.indentPerLevel;
@@ -238,7 +238,7 @@ const getTreeDropTarget = (
 
 const getInstruction = (
   treeDropTarget: undefined | TreeDropTarget
-): null | Instruction => {
+): undefined | Instruction => {
   if (treeDropTarget?.beforeLevel !== undefined) {
     return {
       type: "reorder-above",
@@ -253,7 +253,6 @@ const getInstruction = (
       indentPerLevel: BARS_GAP,
     };
   }
-  return null;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
