@@ -435,7 +435,8 @@ export const TreeNode = ({
   useEffect(() => {
     if (isSelected) {
       containerRef.current?.scrollIntoView({
-        behavior: "smooth",
+        // smooth behavior in both canvas and navigator confuses chrome
+        behavior: "auto",
         block: "nearest",
       });
     }
