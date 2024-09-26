@@ -327,7 +327,6 @@ export const NavigatorTree = () => {
         return <></>;
       }
       const label = getInstanceLabel(itemData, meta);
-      const isEditing = shallowEqual(itemSelector, editingItemSelector);
       const instanceProps = propValues.get(JSON.stringify(itemSelector));
       const show = Boolean(instanceProps?.get(showAttribute) ?? true);
 
@@ -346,7 +345,7 @@ export const NavigatorTree = () => {
         >
           <TreeItem
             isEditable={true}
-            isEditing={isEditing}
+            isEditing={false}
             onChangeValue={(val) => {
               updateInstanceLabel(props.itemData.id, val);
             }}
