@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { nanoid } from "nanoid";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
@@ -438,6 +438,26 @@ export const NavigatorTree = () => {
   const editingItemSelector = useStore($editingItemSelector);
   const dragAndDropState = useStore($dragAndDropState);
   const dropTargetKey = dragAndDropState.dropTarget?.itemSelector.join();
+
+  // expand selected instance ancestors
+  useEffect(() => {
+    if (selectedInstanceSelector) {
+      const newExpandedItems = new Set($expandedItems.get());
+      let expanded = 0;
+      // do not expand the selected instance itself, start with parent
+      for (let index = 1; index < selectedInstanceSelector.length; index += 1) {
+        const key = selectedInstanceSelector.slice(index).join();
+        if (newExpandedItems.has(key) === false) {
+          newExpandedItems.add(key);
+          expanded += 1;
+        }
+      }
+      // prevent rerender if nothing new is expanded
+      if (expanded > 0) {
+        $expandedItems.set(newExpandedItems);
+      }
+    }
+  }, [selectedInstanceSelector]);
 
   return (
     <ScrollArea
