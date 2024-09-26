@@ -28,6 +28,7 @@ export const isExternalFontWeightSupported = (
 // Test a font if it supports a certain weight by rendering it.
 // For system fonts we can actually do it.
 const testFontWeights = (fontFamily: string) => {
+  console.log(document);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   const supportedWeights: Array<FontWeight> = ["400"];
@@ -87,10 +88,31 @@ export const isSystemFontWeightSupported = (
   fontFamily: string,
   fontWeight: FontWeight
 ) => {
+  try {
+    //console.log(document.fonts.status);
+    //document.fonts.ready.then(console.log);
+    //console.log(
+    //  "16px " + fontFamily,
+    //  document.fonts.check(`16px ${fontFamily}`)
+    //);
+    // We need to wait, font is still loading. We don't want to cache the wrong result
+    if (
+      document.fonts.status !== "loaded" &&
+      document.fonts.check(`16px ${fontFamily}`) === false
+    ) {
+      return false;
+    }
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+
   let supportedWeights = cache.get(fontFamily);
   if (supportedWeights === undefined) {
     supportedWeights = testFontWeights(fontFamily);
     cache.set(fontFamily, supportedWeights);
   }
+  console.log(fontFamily, fontWeight, supportedWeights);
+
   return supportedWeights.includes(fontWeight);
 };

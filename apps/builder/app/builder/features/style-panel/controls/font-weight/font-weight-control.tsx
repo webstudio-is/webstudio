@@ -13,6 +13,7 @@ import {
 } from "./font-weight-support";
 import { useComputedStyles } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
+import { canvasApi } from "~/shared/canvas-api";
 
 const allFontWeights = Object.keys(fontWeights) as Array<FontWeight>;
 
@@ -29,21 +30,7 @@ const getSupportedFontWeights = (
   assetContainers: Array<AssetContainer>
 ) => {
   const found = allFontWeights.filter((weight) => {
-    return (
-      assetContainers.find((assetContainer) => {
-        if (
-          assetContainer.status !== "uploaded" ||
-          assetContainer.asset.type !== "font"
-        ) {
-          return false;
-        }
-        return isExternalFontWeightSupported(
-          assetContainer.asset,
-          weight,
-          currentFamily
-        );
-      }) || isSystemFontWeightSupported(currentFamily, weight)
-    );
+    return canvasApi.isSystemFontWeightSupported(currentFamily, weight);
   });
   return new Map(found.map((weight) => [weight, true]));
 };
