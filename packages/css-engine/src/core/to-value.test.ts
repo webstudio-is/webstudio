@@ -46,7 +46,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("var(--namespace, normal, 10px)");
   });
 
-  test("fontFamily stack", () => {
+  test("fontFamily is known stack name", () => {
     expect(
       toValue({
         type: "fontFamily",
@@ -57,13 +57,40 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     );
   });
 
-  test("fontFamily unknown", () => {
+  test("fontFamily is a custom stack", () => {
+    expect(
+      toValue({
+        type: "fontFamily",
+        value: ["DejaVu Sans Mono", "monospace"],
+      })
+    ).toBe('"DejaVu Sans Mono", monospace');
+  });
+
+  test("fontFamily is unknown family name", () => {
     expect(
       toValue({
         type: "fontFamily",
         value: ["something-random"],
       })
     ).toBe("something-random, sans-serif");
+  });
+
+  test("fontFamily is empty", () => {
+    expect(
+      toValue({
+        type: "fontFamily",
+        value: [],
+      })
+    ).toBe("sans-serif");
+  });
+
+  test("fontFamily has duplicates", () => {
+    expect(
+      toValue({
+        type: "fontFamily",
+        value: ["a", "a", "b"],
+      })
+    ).toBe("a, b");
   });
 
   test("Transform font family value to override default fallback", () => {

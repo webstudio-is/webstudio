@@ -8,19 +8,19 @@ SELECT no_plan();
 -- We're inserting user_1 as the user for the test projects
 INSERT INTO "public"."User" ("id", "createdAt", "email", "username")
 VALUES
-  ('user_1', '2023-01-01 00:00:00+00', 'user1@example.com', 'user1');
+  ('user_1', '2023-01-01 00:00:00+00', 'user1@517cce32-9af3-example.com', 'user1');
 
 -- Insert test projects into the Project table
 -- project_1 and project_2 belong to user_1 and are not deleted (isDeleted = false)
 INSERT INTO "Project" (id, title, domain, "userId", "isDeleted") VALUES
-('project_1', 'Test Project 1', 'testproject1.com', 'user_1', false),
-('project_2', 'Test Project 1', 'testproject2.com', 'user_1', false);
+('project_1', 'Test Project 1', '517cce32-9af3-testproject1.com', 'user_1', false),
+('project_2', 'Test Project 1', '517cce32-9af3-testproject2.com', 'user_1', false);
 
 -- Insert test domains into the Domain table
--- We are inserting two domains: example.com and example.org with different statuses
+-- We are inserting two domains: 517cce32-9af3-example.com and 517cce32-9af3-example.org with different statuses
 INSERT INTO "Domain" (id, domain, status, "txtRecord") VALUES
-('domain_1', 'example.com', 'INITIALIZING', 'txtRecord1'),
-('domain_2', 'example.org', 'ACTIVE', 'txtRecord21');
+('domain_1', '517cce32-9af3-example.com', 'INITIALIZING', 'txtRecord1'),
+('domain_2', '517cce32-9af3-example.org', 'ACTIVE', 'txtRecord21');
 
 -- Insert test data into the ProjectDomain table
 -- Mapping domains to projects, project_1 has two domains, project_2 has one domain
@@ -43,8 +43,8 @@ SELECT results_eq(
   $$
     SELECT * FROM (
         VALUES
-            ('example.com','INITIALIZING'::"DomainStatus",NULL,E'txtRecord1',E'txtRecord1',TRUE), -- Verified domain (TXT records match)
-            ('example.org','ACTIVE'::"DomainStatus",NULL,E'txtRecord21',E'txtRecord22',FALSE) -- Not verified domain (TXT records do not match)
+            ('517cce32-9af3-example.com','INITIALIZING'::"DomainStatus",NULL,E'txtRecord1',E'txtRecord1',TRUE), -- Verified domain (TXT records match)
+            ('517cce32-9af3-example.org','ACTIVE'::"DomainStatus",NULL,E'txtRecord21',E'txtRecord22',FALSE) -- Not verified domain (TXT records do not match)
     ) AS expected(domain, status, error, "domainTxtRecord", "expectedTxtRecord", verified)
     ORDER BY "domain"
   $$,
@@ -63,7 +63,7 @@ SELECT results_eq(
   $$
     SELECT * FROM (
         VALUES
-            ('example.com','INITIALIZING'::"DomainStatus",NULL,E'txtRecord1',E'txtRecord3',FALSE) -- Not verified domain (TXT records do not match)
+            ('517cce32-9af3-example.com','INITIALIZING'::"DomainStatus",NULL,E'txtRecord1',E'txtRecord3',FALSE) -- Not verified domain (TXT records do not match)
     ) AS expected(domain, status, error, "domainTxtRecord", "expectedTxtRecord", verified)
     ORDER BY "domain"
   $$,

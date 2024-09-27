@@ -5,18 +5,28 @@ import type { StyleValue } from "../schema";
 export type TransformValue = (styleValue: StyleValue) => undefined | StyleValue;
 
 const fallbackTransform: TransformValue = (styleValue) => {
-  if (styleValue.type === "fontFamily") {
-    const fonts = SYSTEM_FONTS.get(styleValue.value[0])?.stack ?? [
-      styleValue.value[0],
-      DEFAULT_FONT_FALLBACK,
-    ];
-    const value = Array.from(new Set(fonts));
-
-    return {
-      type: "fontFamily",
-      value,
-    };
+  if (styleValue.type !== "fontFamily") {
+    return;
   }
+
+  // By default we assume its a custom font stack.
+  let { value } = styleValue;
+
+  // Shouldn't be possible, but just in case.
+  if (value.length === 0) {
+    value = [DEFAULT_FONT_FALLBACK];
+  }
+
+  // User provided a single name. It could be a specific font name or a stack name.
+  if (value.length === 1) {
+    const stack = SYSTEM_FONTS.get(value[0])?.stack;
+    value = stack ?? [value[0], DEFAULT_FONT_FALLBACK];
+  }
+
+  return {
+    type: "fontFamily",
+    value: Array.from(new Set(value)),
+  };
 };
 
 // Use JSON.stringify to escape double quotes and backslashes in strings as it automatically replaces " with \" and \ with \\.

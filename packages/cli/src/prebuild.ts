@@ -430,23 +430,25 @@ export const prebuild = async (options: {
 
   const assetsToDownload: Promise<void>[] = [];
 
-  const appDomain = options.preview ? "wstd.work" : "wstd.io";
-
-  const domain =
-    siteData.build.deployment?.destination === "static"
-      ? siteData.build.deployment?.assetsDomain
-      : siteData.build.deployment?.projectDomain;
-  if (domain === undefined) {
-    throw new Error(`Project domain is missing from the project data`);
-  }
-
-  const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
-
-  const imageLoader = createImageLoader({
-    imageBaseUrl: assetBuildUrl,
-  });
-
   if (options.assets === true) {
+    const appDomain = options.preview ? "wstd.work" : "wstd.io";
+    const domain =
+      siteData.build.deployment?.assetsDomain ??
+      // fallback to project domain should not be used since 2025-01-01 (for now is used for backward compatibility)
+      (siteData.build.deployment?.destination !== "static"
+        ? siteData.build.deployment?.projectDomain
+        : undefined);
+
+    if (domain === undefined) {
+      throw new Error(`Project domain is missing from the project data`);
+    }
+
+    const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
+
+    const imageLoader = createImageLoader({
+      imageBaseUrl: assetBuildUrl,
+    });
+
     for (const asset of siteData.assets) {
       if (asset.type === "image") {
         const imageSrc = imageLoader({

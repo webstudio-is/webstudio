@@ -32,6 +32,9 @@ const containerStyle = css({
   height: theme.spacing[15],
   [buttonContentColor]: theme.colors.foregroundIconMain,
   [labelTextColor]: theme.colors.foregroundMain,
+  "&:hover": {
+    [chevronOpacity]: 1,
+  },
 });
 
 const titleButtonLayoutStyle = css({
@@ -54,9 +57,6 @@ const labelContainerStyle = css({
 
 const titleButtonStyle = css(titleButtonLayoutStyle, {
   "&:focus-visible": focusRingStyle(),
-  "&:hover": {
-    [chevronOpacity]: 1,
-  },
 });
 
 const suffixSlotStyle = css({

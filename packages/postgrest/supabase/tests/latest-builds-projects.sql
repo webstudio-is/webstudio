@@ -16,8 +16,8 @@ VALUES
 -- Insert projects associated with the user
 INSERT INTO "public"."Project" ("id", "title", "domain", "userId", "isDeleted", "createdAt")
 VALUES
-  ('project1', 'Project One', 'project1-domain1', 'user1', false, '2023-01-01 00:00:00+00'),
-  ('project2', 'Project Two', 'project2-domain1', 'user1', false, '2023-01-01 00:00:00+00');
+  ('project1', 'Project One', '517cce32-9af3-project1-domain1', 'user1', false, '2023-01-01 00:00:00+00'),
+  ('project2', 'Project Two', '517cce32-9af3-project2-domain1', 'user1', false, '2023-01-01 00:00:00+00');
 
 -- Insert builds with different deployment formats
 INSERT INTO "public"."Build" (
@@ -36,7 +36,7 @@ VALUES
     '2023-01-01 00:00:00+00',
     'home',
     'project1',
-    '{"projectDomain": "project1-domain1", "domains": [""]}'::text,
+    '{"projectDomain": "517cce32-9af3-project1-domain1", "domains": [""]}'::text,
     '2023-01-01 00:00:00+00',
     'PUBLISHED'
   ),
@@ -45,7 +45,7 @@ VALUES
     '2022-01-01 00:00:00+00',
     'home',
     'project1',
-    '{"projectDomain": "project1-domain1", "domains": [""]}'::text,
+    '{"projectDomain": "517cce32-9af3-project1-domain1", "domains": [""]}'::text,
     '2022-01-01 00:00:00+00',
     'PUBLISHED'
   ),
@@ -64,7 +64,7 @@ VALUES
     '2023-01-02 00:00:00+00',
     'home',
     'project2',
-    '{"domains": ["project2-domain1"]}'::text,
+    '{"domains": ["517cce32-9af3-project2-domain1"]}'::text,
     '2023-01-02 00:00:00+00',
     'PENDING'
   ),
@@ -73,7 +73,7 @@ VALUES
     '2022-01-02 00:00:00+00',
     'home',
     'project2',
-    '{"domains": ["project2-domain1"]}'::text,
+    '{"domains": ["517cce32-9af3-project2-domain1"]}'::text,
     '2022-01-02 00:00:00+00',
     'PENDING'
   );
@@ -83,7 +83,7 @@ VALUES
 --------------------------------------------------------------------------------
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -92,8 +92,24 @@ SELECT is (
             )
         )
     ),
-    'build1',
-    'Test Case 1: Should return the latest build for project1 with domain matching projectDomain.'
+    ARRAY['build1', '517cce32-9af3-project1-domain1'],
+    'Test Case 1.1: Should return the latest build for project1 with domain matching projectDomain.'
+);
+
+
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1', '517cce32-9af3-project1-domain1'],
+    'Test Case 1.2: Should return the latest build for project1 with domain matching projectDomain.'
 );
 
 --------------------------------------------------------------------------------
@@ -111,9 +127,23 @@ SELECT is (
         )
     ),
     'build2',
-    'Test Case 2: Should return the latest build for project2 with domain present in domains array.'
+    'Test Case 2.1: Should return the latest build for project2 with domain present in domains array.'
 );
 
+SELECT is (
+    (
+        SELECT "buildId"
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project2'
+            )
+        )
+    ),
+    'build2',
+    'Test Case 2.2: Should return the latest build for project2 domain with domain present in domains array.'
+);
 --------------------------------------------------------------------------------
 -- Test Case 3: Update Project Domain and Verify No Build Exists for the New Domain
 --------------------------------------------------------------------------------
@@ -135,7 +165,22 @@ SELECT is (
         )
     ),
     0,
-    'Test Case 3: Should return 0 as no build exists for the updated domain project1-domain2.'
+    'Test Case 3.1: Should return 0 as no build exists for the updated domain project1-domain2.'
+);
+
+SELECT is (
+    (
+        SELECT COUNT(*)::integer
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    0,
+    'Test Case 3.2: Should return 0 as no build exists for the updated domain project1-domain2.'
 );
 
 --------------------------------------------------------------------------------
@@ -165,7 +210,7 @@ VALUES
 -- Verify that the latest build now reflects the updated domain
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -174,9 +219,25 @@ SELECT is (
             )
         )
     ),
-    'build1-for-domain2',
-    'Test Case 4: Should return the latest build for project1 with the updated domain in domains array.'
+    ARRAY['build1-for-domain2','project1-domain2'],
+    'Test Case 4.1: Should return the latest build for project1 with the updated domain in domains array.'
 );
+
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1-for-domain2','project1-domain2'],
+    'Test Case 4.2: Should return the latest build for project1 domain with the updated domain in domains array.'
+);
+
 
 --------------------------------------------------------------------------------
 -- Test Case 5: Register Custom Domains and Verify Latest Build for a Custom Domain
@@ -190,8 +251,8 @@ INSERT INTO "public"."Domain" (
     "updatedAt"
 )
 VALUES
-  ('project-1-custom-domain-1', 'project-1-custom-domain-1.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00'),
-  ('project-1-custom-domain-2', 'project-1-custom-domain-2.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00');
+  ('project-1-custom-domain-1', '517cce32-9af3-project-1-custom-domain-1.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00'),
+  ('project-1-custom-domain-2', '517cce32-9af3-project-1-custom-domain-2.com', '2023-01-01 00:00:00+00', 'INITIALIZING', '2023-01-01 00:00:00+00');
 
 -- Establish relationships between project1 and custom domains
 INSERT INTO "public"."ProjectDomain" (
@@ -221,7 +282,7 @@ VALUES
     '2023-01-02 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2023-01-02 00:00:00+00',
     'PUBLISHED'
   );
@@ -229,7 +290,7 @@ VALUES
 -- Verify that the latest build reflects the custom domain association
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -238,8 +299,26 @@ SELECT is (
             )
         )
     ),
-    'build1-for-custom-domain-1',
-    'Test Case 5: Should return the latest build for project1 with a registered custom domain in domains array.'
+    ARRAY['build1-for-custom-domain-1','517cce32-9af3-project-1-custom-domain-1.com'],
+    'Test Case 5.1: Should return the latest build for project1 with a registered custom domain in domains array.'
+);
+
+
+-- Ensure the latest project domain build has not changed
+-- The difference between latestProjectDomainBuildVirtual and latestBuildVirtual is that the first returns data only for the project domain
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1-for-domain2','project1-domain2'],
+    'Test Case 5.2: Should return the latest build for project1 domain and not affected by custom domains'
 );
 
 --------------------------------------------------------------------------------
@@ -261,7 +340,7 @@ VALUES
     '2023-01-03 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["project1-domain2"]}'::text,
+    '{"domains": ["517cce32-9af3-project-1-custom-domain-1.com", "project1-domain2"]}'::text,
     '2023-01-03 00:00:00+00',
     'PUBLISHED'
   );
@@ -269,7 +348,7 @@ VALUES
 -- Verify that the latest build reflects the preview domain
 SELECT is (
     (
-        SELECT "buildId"
+        SELECT ARRAY["buildId", "domain"]
         FROM "public"."latestBuildVirtual"(
             (
                 SELECT (p.*)::"Project"
@@ -278,9 +357,25 @@ SELECT is (
             )
         )
     ),
-    'build1-for-domain2-new',
-    'Test Case 6: Should return the latest build for project1 with the preview domain in domains array.'
+    ARRAY['build1-for-domain2-new', 'project1-domain2'],
+    'Test Case 6.1: Should return the latest build for project1 with the preview domain in domains array.'
 );
+
+SELECT is (
+    (
+        SELECT ARRAY["buildId", "domain"]
+        FROM "public"."latestProjectDomainBuildVirtual"(
+            (
+                SELECT (p.*)::"Project"
+                FROM "public"."Project" p
+                WHERE p."id" = 'project1'
+            )
+        )
+    ),
+    ARRAY['build1-for-domain2-new', 'project1-domain2'],
+    'Test Case 6.2: Should return the latest build for project1 with the preview domain in domains array.'
+);
+
 
 --------------------------------------------------------------------------------
 -- Test Case 7: Publish a New Build for a Custom Domain, Delete the Custom Domain, and Verify Latest Build Update
@@ -301,7 +396,7 @@ VALUES
     '2023-01-04 00:00:00+00',
     'home',
     'project1',
-    '{"domains": ["some-other-domain.com", "project-1-custom-domain-1.com"]}'::text,
+    '{"domains": ["some-other-domain.com", "517cce32-9af3-project-1-custom-domain-1.com"]}'::text,
     '2023-01-04 00:00:00+00',
     'PUBLISHED'
   );
