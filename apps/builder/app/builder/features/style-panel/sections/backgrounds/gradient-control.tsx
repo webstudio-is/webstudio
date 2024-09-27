@@ -1,15 +1,24 @@
 import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
 import { Root, Range, Thumb, Track } from "@radix-ui/react-slider";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   reconstructLinearGradient,
   type GradientStop,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
-import { styled, theme, Flex } from "@webstudio-is/design-system";
+import {
+  styled,
+  theme,
+  Flex,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Box,
+} from "@webstudio-is/design-system";
 import { ChevronBigUpIcon } from "@webstudio-is/icons";
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
+import { RgbaColorPicker, type RgbColor } from "react-colorful";
 
 extend([mixPlugin]);
 
@@ -82,7 +91,7 @@ export const GradientControl = (props: GradientControlProps) => {
     [stops, selectedStop]
   );
 
-  const isStopExistsAtPosition = useCallback(
+  const checkIfStopExistsAtPosition = useCallback(
     (
       event: React.MouseEvent<HTMLSpanElement>
     ): { isStopExistingAtPosition: boolean; newPosition: number } => {
@@ -110,8 +119,10 @@ export const GradientControl = (props: GradientControlProps) => {
       // But, we want it be prevented. For adding a new color-stop where the user clicked.
       // And handle the change in values only even for scrubing when the user is dragging the thumb.
       const { isStopExistingAtPosition, newPosition } =
-        isStopExistsAtPosition(event);
+        checkIfStopExistsAtPosition(event);
+
       if (isStopExistingAtPosition === true) {
+        event.stopPropagation();
         return;
       }
 
@@ -154,13 +165,42 @@ export const GradientControl = (props: GradientControlProps) => {
         sideOrCorner: props.gradient.sideOrCorner,
       });
     },
-    [stops, positions, isStopExistsAtPosition, props]
+    [stops, positions, checkIfStopExistsAtPosition, props]
   );
 
   const handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>) => {
-    const { isStopExistingAtPosition } = isStopExistsAtPosition(event);
+    const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(event);
     setIsHoveredOnStop(isStopExistingAtPosition);
   };
+
+  const handleStopSelected = useCallback(
+    (index: number, stop: GradientStop) => {
+      setSelectedStop(index);
+      props.onThumbSelected(index, stop);
+    },
+    [props]
+  );
+
+  const handleStopColorChange = useCallback(
+    (color: RgbValue, stopIndex: number) => {
+      const newStops = stops.map((stop, index) => {
+        if (index === stopIndex) {
+          return {
+            ...stop,
+            color,
+          };
+        }
+        return stop;
+      });
+      setStops(newStops);
+      props.onChange({
+        angle: props.gradient.angle,
+        stops: newStops,
+        sideOrCorner: props.gradient.sideOrCorner,
+      });
+    },
+    [stops, props]
+  );
 
   if (isEveryStopHasAPosition === false) {
     return;
@@ -192,18 +232,21 @@ export const GradientControl = (props: GradientControlProps) => {
         <Track>
           <SliderRange />
         </Track>
-        {stops.map((stop, index) => (
-          <SliderThumb
-            key={index}
-            onClick={() => {
-              setSelectedStop(index);
-              props.onThumbSelected(index, stop);
-            }}
-            style={{
-              background: toValue(stop.color),
-            }}
-          />
-        ))}
+        {stops.map((stop, index) => {
+          if (stop.color === undefined || stop.position === undefined) {
+            return;
+          }
+
+          return (
+            <SliderThumbComponent
+              key={index}
+              index={index}
+              stop={stop}
+              onSelected={handleStopSelected}
+              onColorChange={handleStopColorChange}
+            />
+          );
+        })}
 
         {/*
             Hints are displayed as a chevron icon below the slider thumb.
@@ -236,6 +279,71 @@ export const GradientControl = (props: GradientControlProps) => {
   );
 };
 
+const SliderThumbComponent = (props: {
+  index: number;
+  stop: GradientStop;
+  onSelected: (index: number, stop: GradientStop) => void;
+  onColorChange: (color: RgbValue, index: number) => void;
+}) => {
+  const { index, stop, onSelected } = props;
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const value = useMemo(
+    () => colord(toValue(stop.color)).toRgb(),
+    [stop.color]
+  );
+
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLSpanElement>) => {
+      if (event.detail === 1) {
+        onSelected(index, stop);
+      }
+
+      if (event.detail === 2) {
+        setIsPopoverOpen(!isPopoverOpen);
+      }
+    },
+    [index, stop, onSelected, isPopoverOpen]
+  );
+
+  const handleOnColorChange = (color: RgbColor) => {
+    const colordInstance = colord(color).toRgb();
+    props.onColorChange(
+      {
+        type: "rgb",
+        alpha: colordInstance.a,
+        r: color.r,
+        g: color.g,
+        b: color.b,
+      },
+      index
+    );
+  };
+
+  return (
+    <SliderThumb
+      style={{
+        background: toValue(stop.color),
+      }}
+      onClick={handleClick}
+    >
+      <Popover modal open={isPopoverOpen}>
+        <PopoverTrigger asChild>
+          <SliderThumbTrigger />
+        </PopoverTrigger>
+        <PopoverContent css={{ zIndex: theme.zIndices.max }}>
+          <RgbaColorPicker
+            color={value}
+            onPointerDown={(event) => event.stopPropagation()}
+            onMouseLeave={() => setIsPopoverOpen(false)}
+            onClick={(event) => event.stopPropagation()}
+            onChange={handleOnColorChange}
+          />
+        </PopoverContent>
+      </Popover>
+    </SliderThumb>
+  );
+};
+
 const SliderRoot = styled(Root, {
   position: "relative",
   width: "100%",
@@ -264,12 +372,15 @@ const SliderRange = styled(Range, {
 
 const SliderThumb = styled(Thumb, {
   position: "absolute",
+  top: `-${theme.spacing[11]}`,
+  translate: "-9px",
+});
+
+const SliderThumbTrigger = styled(Box, {
   width: theme.spacing[9],
   height: theme.spacing[9],
   border: `1px solid ${theme.colors.borderInfo}`,
   borderRadius: theme.borderRadius[3],
-  top: `-${theme.spacing[11]}`,
-  translate: "-9px",
 });
 
 export default GradientControl;
