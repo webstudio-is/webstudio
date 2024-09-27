@@ -48,7 +48,7 @@ const normalizeStyleValue = (
   // prefill initial value when no items to repeated
   if (items.length === 0 && primaryItemsCount > 0) {
     const meta = properties[styleDecl.property as keyof typeof properties];
-    items.push(meta.initial);
+    items.push(meta.initial as unknown as UnparsedValue);
   }
   return {
     type: itemType,

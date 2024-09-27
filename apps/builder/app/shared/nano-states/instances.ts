@@ -35,10 +35,6 @@ export const $virtualInstances = computed($selectedPage, (selectedPage) => {
   return virtualInstances;
 });
 
-export const $rootInstance = computed($virtualInstances, (virtualInstances) =>
-  virtualInstances.get(ROOT_INSTANCE_ID)
-);
-
 export const $selectedInstance = computed(
   [$instances, $virtualInstances, $selectedInstanceSelector],
   (instances, virtualInstances, selectedInstanceSelector) => {
