@@ -179,6 +179,12 @@ const recalculate = () => {
     }
   }
 
+  // If most elements are collapsed at the next step, scrollHeight becomes equal to clientHeight,
+  // which resets the scroll position. To prevent this, we set the document's height to the current scrollHeight
+  // to preserve the scroll position.
+  const preserveHeight = document.documentElement.style.height;
+  document.documentElement.style.height = `${document.documentElement.scrollHeight}px`;
+
   // Now combine all operations in batches.
 
   // 1. Remove all collapsed attributes
@@ -222,6 +228,8 @@ const recalculate = () => {
   for (const [element, value] of collapsedElements.entries()) {
     element.setAttribute(collapsedAttribute, value);
   }
+
+  document.documentElement.style.height = preserveHeight;
 };
 
 /**
