@@ -46,6 +46,7 @@ import {
   $pages,
   $resources,
   $selectedPage,
+  ROOT_INSTANCE_ID,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -376,6 +377,9 @@ export const findClosestDroppableTarget = (
   instanceSelector: InstanceSelector,
   insertConstraints: InsertConstraints
 ): undefined | DroppableTarget => {
+  if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+    return;
+  }
   // We want to always allow dropping into the root.
   // For example when body has text content and the only viable option is to insert at the end.
   if (instanceSelector.length === 1) {
