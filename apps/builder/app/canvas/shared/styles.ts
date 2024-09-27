@@ -447,7 +447,9 @@ const subscribeEphemeralStyle = () => {
           property: styleDecl.property,
           value: toVarValue(styleDecl) ?? styleDecl.value,
         });
-        document.body.style.removeProperty(getEphemeralProperty(styleDecl));
+        document.documentElement.style.removeProperty(
+          getEphemeralProperty(styleDecl)
+        );
       }
       userSheet.setTransformer($transformValue.get());
       userSheet.render();
@@ -462,7 +464,7 @@ const subscribeEphemeralStyle = () => {
       let ephemetalSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
         // update custom property
-        document.body.style.setProperty(
+        document.documentElement.style.setProperty(
           getEphemeralProperty(styleDecl),
           toValue(styleDecl.value, $transformValue.get())
         );
