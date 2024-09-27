@@ -22,6 +22,7 @@ export const GradientWithoutAngle = () => {
         onChange={(value) => {
           setGradient(reconstructLinearGradient(value));
         }}
+        onThumbSelected={() => {}}
       />
       <Text>{gradient}</Text>
     </Flex>
@@ -40,6 +41,7 @@ export const GradientWithAngleAndHints = () => {
         onChange={(value) => {
           setGradient(reconstructLinearGradient(value));
         }}
+        onThumbSelected={() => {}}
       />
       <Text>{gradient}</Text>
     </Flex>
@@ -58,6 +60,7 @@ export const GradientWithSideOrCorner = () => {
         onChange={(value) => {
           setGradient(reconstructLinearGradient(value));
         }}
+        onThumbSelected={() => {}}
       />
       <Text>{gradient}</Text>
     </Flex>

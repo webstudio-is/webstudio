@@ -16,6 +16,7 @@ extend([mixPlugin]);
 type GradientControlProps = {
   gradient: ParsedGradient;
   onChange: (value: ParsedGradient) => void;
+  onThumbSelected: (index: number, stop: GradientStop) => void;
 };
 
 const defaultAngle: UnitValue = {
@@ -27,6 +28,7 @@ const defaultAngle: UnitValue = {
 export const GradientControl = (props: GradientControlProps) => {
   const [stops, setStops] = useState<Array<GradientStop>>(props.gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
+  const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
   const positions = stops
     .map((stop) => stop.position?.value)
     .filter((item) => item !== undefined);
@@ -80,6 +82,24 @@ export const GradientControl = (props: GradientControlProps) => {
     [stops, selectedStop]
   );
 
+  const isStopExistsAtPosition = useCallback(
+    (
+      event: React.MouseEvent<HTMLSpanElement>
+    ): { isStopExistingAtPosition: boolean; newPosition: number } => {
+      const sliderWidth = event.currentTarget.offsetWidth;
+      const clickedPosition =
+        event.clientX - event.currentTarget.getBoundingClientRect().left;
+      const newPosition = Math.ceil((clickedPosition / sliderWidth) * 100);
+      // The 8px buffer here is the width of the thumb. We don't want to add a new stop if the user clicks on the thumb.
+      const isStopExistingAtPosition = positions.some(
+        (position) => Math.abs(newPosition - position) <= 8
+      );
+
+      return { isStopExistingAtPosition, newPosition };
+    },
+    [positions]
+  );
+
   const handlePointerDown = useCallback(
     (event: React.MouseEvent<HTMLSpanElement>) => {
       if (event.target === undefined || event.target === null) {
@@ -87,17 +107,11 @@ export const GradientControl = (props: GradientControlProps) => {
       }
 
       // radix-slider automatically brings the closest thumb to the clicked position.
-      // But, we want it be prevented. So, we can add a new color-stop where the user is cliked.
-      // And handle the even for scrubing when the user is dragging the thumb.
-      const sliderWidth = event.currentTarget.offsetWidth;
-      const clickedPosition =
-        event.clientX - event.currentTarget.getBoundingClientRect().left;
-      const newPosition = Math.ceil((clickedPosition / sliderWidth) * 100);
-      const isExistingPosition = positions.some(
-        (position) => Math.abs(newPosition - position) <= 8
-      );
-
-      if (isExistingPosition === true) {
+      // But, we want it be prevented. For adding a new color-stop where the user clicked.
+      // And handle the change in values only even for scrubing when the user is dragging the thumb.
+      const { isStopExistingAtPosition, newPosition } =
+        isStopExistsAtPosition(event);
+      if (isStopExistingAtPosition === true) {
         return;
       }
 
@@ -131,10 +145,22 @@ export const GradientControl = (props: GradientControlProps) => {
         },
         ...stops.slice(index),
       ];
+
       setStops(newStops);
+      setIsHoveredOnStop(true);
+      props.onChange({
+        angle: props.gradient.angle,
+        stops: newStops,
+        sideOrCorner: props.gradient.sideOrCorner,
+      });
     },
-    [stops, positions]
+    [stops, positions, isStopExistsAtPosition, props]
   );
+
+  const handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>) => {
+    const { isStopExistingAtPosition } = isStopExistsAtPosition(event);
+    setIsHoveredOnStop(isStopExistingAtPosition);
+  };
 
   if (isEveryStopHasAPosition === false) {
     return;
@@ -156,15 +182,22 @@ export const GradientControl = (props: GradientControlProps) => {
         onValueChange={handleValueChange}
         onKeyDown={handleKeyDown}
         onPointerDown={handlePointerDown}
+        isHoveredOnStop={isHoveredOnStop}
+        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseEnter}
+        onMouseLeave={() => {
+          setIsHoveredOnStop(false);
+        }}
       >
         <Track>
-          <SliderRange css={{ cursor: "copy" }} />
+          <SliderRange />
         </Track>
         {stops.map((stop, index) => (
           <SliderThumb
             key={index}
             onClick={() => {
               setSelectedStop(index);
+              props.onThumbSelected(index, stop);
             }}
             style={{
               background: toValue(stop.color),
@@ -211,6 +244,16 @@ const SliderRoot = styled(Root, {
   borderRadius: theme.borderRadius[3],
   touchAction: "none",
   userSelect: "none",
+  variants: {
+    isHoveredOnStop: {
+      true: {
+        cursor: "default",
+      },
+      false: {
+        cursor: "copy",
+      },
+    },
+  },
 });
 
 const SliderRange = styled(Range, {
