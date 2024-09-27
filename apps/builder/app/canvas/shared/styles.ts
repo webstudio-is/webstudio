@@ -32,6 +32,7 @@ import {
   $selectedStyleState,
   $styleSourceSelections,
   $styles,
+  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles, $params } from "../stores";
@@ -262,7 +263,10 @@ export const subscribeStyles = () => {
       const addedSelections = setDifference(selectionsSet, prevSelectionsSet);
       prevSelectionsSet = selectionsSet;
       for (const { instanceId, values } of addedSelections) {
-        const selector = `[${idAttribute}="${instanceId}"]`;
+        const selector =
+          instanceId === ROOT_INSTANCE_ID
+            ? ":root"
+            : `[${idAttribute}="${instanceId}"]`;
         const rule = userSheet.addNestingRule(selector);
         rule.applyMixins(values);
       }

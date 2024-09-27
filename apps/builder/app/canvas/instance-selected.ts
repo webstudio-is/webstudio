@@ -14,6 +14,7 @@ import {
   $styles,
   $selectedInstanceStates,
   $styleSourceSelections,
+  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import htmlTags, { type HtmlTags } from "html-tags";
 import {
@@ -87,7 +88,9 @@ export const getElementAndAncestorInstanceTags = (
 
   const [element] = elements;
 
-  const instanceToTag = new Map<Instance["id"], HtmlTags>();
+  const instanceToTag = new Map<Instance["id"], HtmlTags>([
+    [ROOT_INSTANCE_ID, "html"],
+  ]);
   for (
     let ancestorOrSelf: HTMLElement | null = element;
     ancestorOrSelf !== null;

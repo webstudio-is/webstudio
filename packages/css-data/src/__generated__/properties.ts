@@ -1016,8 +1016,8 @@ export const properties = {
     unitGroups: [],
     inherited: true,
     initial: {
-      type: "keyword",
-      value: "inherit",
+      type: "fontFamily",
+      value: ["serif"],
     },
   },
   fontFeatureSettings: {
@@ -1065,7 +1065,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "keyword",
-      value: "inherit",
+      value: "medium",
     },
   },
   fontSizeAdjust: {
@@ -1409,7 +1409,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "keyword",
-      value: "inherit",
+      value: "normal",
     },
   },
   listStyleImage: {

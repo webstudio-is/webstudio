@@ -23,6 +23,7 @@ import {
   $instances,
   $registeredComponentMetas,
   $styleSources,
+  $virtualInstances,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import type {
@@ -58,6 +59,7 @@ export const PropertyInfo = ({
 }) => {
   const breakpoints = useStore($breakpoints);
   const instances = useStore($instances);
+  const virtualInstances = useStore($virtualInstances);
   const styleSources = useStore($styleSources);
   const metas = useStore($registeredComponentMetas);
 
@@ -71,7 +73,8 @@ export const PropertyInfo = ({
       resettable = true;
     }
     const instance = source.instanceId
-      ? instances.get(source.instanceId)
+      ? (instances.get(source.instanceId) ??
+        virtualInstances.get(source.instanceId))
       : undefined;
     if (instance === undefined) {
       continue;

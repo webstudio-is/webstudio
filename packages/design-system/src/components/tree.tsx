@@ -423,18 +423,19 @@ export const TreeNode = ({
   tabbable?: boolean;
   isSelected: boolean;
   isHighlighted?: boolean;
-  isExpanded: undefined | boolean;
-  onExpand: (expanded: boolean, all: boolean) => void;
+  isExpanded?: undefined | boolean;
+  onExpand?: (expanded: boolean, all: boolean) => void;
   nodeProps?: ComponentPropsWithoutRef<"div">;
   buttonProps: ComponentPropsWithoutRef<"button">;
   action?: ReactNode;
   children: ReactNode;
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   // scroll the selected button into view when selected from canvas.
   useEffect(() => {
     if (isSelected) {
-      containerRef.current?.scrollIntoView({
+      buttonRef.current?.focus();
+      buttonRef.current?.scrollIntoView({
         // smooth behavior in both canvas and navigator confuses chrome
         behavior: "auto",
         block: "nearest",
@@ -447,17 +448,17 @@ export const TreeNode = ({
       return;
     }
     if (event.key === "ArrowLeft" && isExpanded === true) {
-      onExpand(false, event.altKey);
+      onExpand?.(false, event.altKey);
       // allow to collapse and then navigate to previous node
       event.preventDefault();
     }
     if (event.key === "ArrowRight" && isExpanded === false) {
-      onExpand(true, event.altKey);
+      onExpand?.(true, event.altKey);
       // allow to expand and then navigate to next node
       event.preventDefault();
     }
     if (event.key === " ") {
-      onExpand(isExpanded === false, event.altKey);
+      onExpand?.(isExpanded === false, event.altKey);
       // prevent scrolling
       event.preventDefault();
     }
@@ -466,13 +467,13 @@ export const TreeNode = ({
   return (
     <NodeContainer
       {...nodeProps}
-      ref={containerRef}
       css={{ [treeNodeLevel]: level }}
       onKeyDown={handleKeydown}
     >
       <DepthBars />
       <NodeButton
         {...buttonProps}
+        ref={buttonRef}
         tabIndex={tabbable || level === 0 ? undefined : -1}
         aria-selected={isSelected}
         aria-current={isHighlighted}
@@ -483,7 +484,7 @@ export const TreeNode = ({
       {isExpanded !== undefined && (
         <ExpandButton
           tabIndex={-1}
-          onClick={(event) => onExpand(isExpanded === false, event.altKey)}
+          onClick={(event) => onExpand?.(isExpanded === false, event.altKey)}
         >
           {isExpanded ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />}
         </ExpandButton>

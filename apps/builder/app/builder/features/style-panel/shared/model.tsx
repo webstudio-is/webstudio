@@ -19,6 +19,7 @@ import {
   $selectedOrLastStyleSourceSelector,
   $styles,
   $styleSourceSelections,
+  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import {
   getComputedStyleDecl,
@@ -98,14 +99,15 @@ export const $definedStyles = computed(
     if (instanceSelector === undefined) {
       return definedProperties;
     }
+    const instanceAndRootSelector = [...instanceSelector, ROOT_INSTANCE_ID];
     const inheritedStyleSources = new Set();
     const instanceStyleSources = new Set();
     const matchingBreakpoints = new Set(matchingBreakpointsArray);
-    for (const instanceId of instanceSelector) {
+    for (const instanceId of instanceAndRootSelector) {
       const styleSources = styleSourceSelections.get(instanceId)?.values;
       if (styleSources) {
         for (const styleSourceId of styleSources) {
-          if (instanceId === instanceSelector[0]) {
+          if (instanceId === instanceAndRootSelector[0]) {
             instanceStyleSources.add(styleSourceId);
           } else {
             inheritedStyleSources.add(styleSourceId);
@@ -171,9 +173,12 @@ export const createComputedStyleDeclStore = (property: StyleProperty) => {
   return computed(
     [$model, $selectedInstanceSelector, $selectedOrLastStyleSourceSelector],
     (model, instanceSelector, styleSourceSelector) => {
+      const instanceAndRootSelector = instanceSelector
+        ? [...instanceSelector, ROOT_INSTANCE_ID]
+        : undefined;
       return getComputedStyleDecl({
         model,
-        instanceSelector,
+        instanceSelector: instanceAndRootSelector,
         styleSourceId: styleSourceSelector?.styleSourceId,
         state: styleSourceSelector?.state,
         property,
