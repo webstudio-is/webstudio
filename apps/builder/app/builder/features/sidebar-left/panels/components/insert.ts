@@ -54,7 +54,7 @@ export const insert = (component: string) => {
     selectedPage.rootInstanceId,
   ];
   if (instanceSelector[0] === ROOT_INSTANCE_ID) {
-    toast.error(`${component} cannot be added into :root`);
+    toast.error(`${component} cannot be added into Global Root`);
     return;
   }
   const metas = $registeredComponentMetas.get();

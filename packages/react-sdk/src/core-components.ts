@@ -13,7 +13,7 @@ export const rootComponent = "ws:root";
 const rootMeta: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: ":root",
+  label: "Global Root",
   icon: EmbedIcon,
 };
 

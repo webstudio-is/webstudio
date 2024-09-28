@@ -484,7 +484,7 @@ export const NavigatorTree = () => {
             }}
           >
             <TreeNodeLabel prefix={<MetaIcon icon={rootMeta.icon} />}>
-              :root
+              {rootMeta.label}
             </TreeNodeLabel>
           </TreeNode>
         )}
