@@ -1,5 +1,7 @@
 import type { Instance, Instances } from "./schema/instances";
 
+export const ROOT_INSTANCE_ID = ":root";
+
 const traverseInstances = (
   instances: Instances,
   instanceId: Instance["id"],

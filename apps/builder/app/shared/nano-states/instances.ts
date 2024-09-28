@@ -1,5 +1,5 @@
 import { atom, computed } from "nanostores";
-import type { Instances } from "@webstudio-is/sdk";
+import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $selectedPage } from "./pages";
 import { rootComponent } from "@webstudio-is/react-sdk";
@@ -19,8 +19,6 @@ export const $textEditingInstanceSelector = atom<
 >();
 
 export const $instances = atom<Instances>(new Map());
-
-export const ROOT_INSTANCE_ID = ":root";
 
 export const $virtualInstances = computed($selectedPage, (selectedPage) => {
   const virtualInstances: Instances = new Map();

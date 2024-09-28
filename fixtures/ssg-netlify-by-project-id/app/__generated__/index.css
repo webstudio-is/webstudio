@@ -1,9 +1,8 @@
-html {
-  margin: 0;
-  display: grid;
-  min-height: 100%;
-}
 @media all {
+  :root {
+    display: grid;
+    min-height: 100%;
+  }
   :where(body.w-body) {
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;

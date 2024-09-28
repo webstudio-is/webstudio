@@ -60,22 +60,10 @@ span {
   outline-width: 1px;
 }
 
-/* @todo for now not applied to html, as we don't have html element */
-/**
- * 1. Correct the line height in all browsers.
- * 2. Prevent adjustments of font size after orientation changes in iOS.
- * 3. Use a more readable tab size (opinionated).
- */
 html {
-  /* 1 */
-  line-height: 1.15;
-  /* 2 */
-  -webkit-text-size-adjust: 100%;
-  /* 3 */
-  tab-size: 4;
-  /* webstudio custom opinionated presets */
-  box-sizing: border-box;
-  border-width: 1px;
+  /* Layout source https://twitter.com/ChallengesCss/status/1471128244720181258 */
+  display: grid;
+  min-height: 100%;
 }
 
 /**
