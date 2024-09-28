@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
+import { rootComponent } from "@webstudio-is/react-sdk";
 import {
   theme,
   PanelTabs,
@@ -103,7 +104,9 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
 
   const availablePanels = {
     style: documentType === "html" && (meta?.stylable ?? true),
-    settings: true,
+    // @todo hide root component settings until
+    // global data sources are implemented
+    settings: selectedInstance.component !== rootComponent,
   };
 
   return (
@@ -119,7 +122,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
             value={
               availablePanels[activeInspectorPanel]
                 ? activeInspectorPanel
-                : "settings"
+                : Object.keys(availablePanels)[0]
             }
             onValueChange={(panel) => {
               $activeInspectorPanel.set(panel as keyof typeof availablePanels);
@@ -143,22 +146,24 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                     </div>
                   </Tooltip>
                 )}
-                <Tooltip
-                  variant="wrapped"
-                  content={
-                    <Text>
-                      Settings, properties and attributes of the selected
-                      instance&nbsp;&nbsp;
-                      <Kbd value={["D"]} color="moreSubtle" />
-                    </Text>
-                  }
-                >
-                  <div>
-                    <PanelTabsTrigger value="settings">
-                      Settings
-                    </PanelTabsTrigger>
-                  </div>
-                </Tooltip>
+                {availablePanels.settings && (
+                  <Tooltip
+                    variant="wrapped"
+                    content={
+                      <Text>
+                        Settings, properties and attributes of the selected
+                        instance&nbsp;&nbsp;
+                        <Kbd value={["D"]} color="moreSubtle" />
+                      </Text>
+                    }
+                  >
+                    <div>
+                      <PanelTabsTrigger value="settings">
+                        Settings
+                      </PanelTabsTrigger>
+                    </div>
+                  </Tooltip>
+                )}
               </PanelTabsList>
               <Separator />
               <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>

@@ -545,6 +545,44 @@ describe("find closest droppable target", () => {
       position: 2,
     });
   });
+
+  test("finds closest container that doesn't have an expression as a child", () => {
+    const instances = new Map([
+      createInstancePair("body", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "paragraph" },
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("paragraph", "Paragraph", [
+        { type: "expression", value: '"bla"' },
+      ]),
+      createInstancePair("box1", "Box1", []),
+      createInstancePair("box2", "Box2", []),
+    ]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["paragraph", "body"],
+        emptyInsertConstraints
+      )
+    ).toEqual({
+      parentSelector: ["body"],
+      position: 2,
+    });
+  });
+
+  test("forbids inserting into :root", () => {
+    const instances = new Map([createInstancePair("body", "Body", [])]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        [":root"],
+        emptyInsertConstraints
+      )
+    ).toEqual(undefined);
+  });
 });
 
 describe("insert instance children", () => {

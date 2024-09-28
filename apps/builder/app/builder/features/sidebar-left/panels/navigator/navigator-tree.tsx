@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   rawTheme,
   ScrollArea,
@@ -20,6 +21,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   collectionComponent,
+  rootComponent,
   showAttribute,
   WsComponentMeta,
 } from "@webstudio-is/react-sdk";
@@ -37,6 +39,7 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
   getIndexedInstanceId,
+  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -438,6 +441,7 @@ export const NavigatorTree = () => {
   const editingItemSelector = useStore($editingItemSelector);
   const dragAndDropState = useStore($dragAndDropState);
   const dropTargetKey = dragAndDropState.dropTarget?.itemSelector.join();
+  const rootMeta = metas.get(rootComponent);
 
   // expand selected instance ancestors
   useEffect(() => {
@@ -470,6 +474,21 @@ export const NavigatorTree = () => {
       }}
     >
       <TreeRoot>
+        {isFeatureEnabled("cssVars") && rootMeta && (
+          <TreeNode
+            level={0}
+            isSelected={selectedKey === ROOT_INSTANCE_ID}
+            buttonProps={{
+              onClick: () => $selectedInstanceSelector.set([ROOT_INSTANCE_ID]),
+              onFocus: () => $selectedInstanceSelector.set([ROOT_INSTANCE_ID]),
+            }}
+          >
+            <TreeNodeLabel prefix={<MetaIcon icon={rootMeta.icon} />}>
+              {rootMeta.label}
+            </TreeNodeLabel>
+          </TreeNode>
+        )}
+
         {flatTree.map((item) => {
           const key = item.selector.join();
           const propValues = propValuesByInstanceSelector.get(

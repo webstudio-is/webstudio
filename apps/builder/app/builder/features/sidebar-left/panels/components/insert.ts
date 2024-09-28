@@ -5,6 +5,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedPage,
+  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import {
   computeInstancesConstraints,
@@ -52,6 +53,10 @@ export const insert = (component: string) => {
   const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
+  if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+    toast.error(`${component} cannot be added into Global Root`);
+    return;
+  }
   const metas = $registeredComponentMetas.get();
   const dropTarget = findClosestDroppableTarget(
     metas,

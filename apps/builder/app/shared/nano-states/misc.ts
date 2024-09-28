@@ -23,8 +23,7 @@ import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { HtmlTags } from "html-tags";
-import { $instances, $selectedInstanceSelector } from "./instances";
-import { $selectedPage } from "./pages";
+import { $selectedInstanceSelector } from "./instances";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
@@ -40,16 +39,6 @@ export const $imageLoader = atom<ImageLoader>(
 export const $publishedOrigin = computed(
   [$project, $publisherHost],
   (project, publisherHost) => `https://${project?.domain}.${publisherHost}`
-);
-
-export const $rootInstance = computed(
-  [$instances, $selectedPage],
-  (instances, selectedPage) => {
-    if (selectedPage === undefined) {
-      return undefined;
-    }
-    return instances.get(selectedPage.rootInstanceId);
-  }
 );
 
 export const $dataSources = atom<DataSources>(new Map());

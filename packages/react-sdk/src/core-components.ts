@@ -1,8 +1,25 @@
-import { ListViewIcon, PaintBrushIcon } from "@webstudio-is/icons/svg";
+import {
+  ListViewIcon,
+  PaintBrushIcon,
+  EmbedIcon,
+} from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "./components/component-meta";
+
+export const rootComponent = "ws:root";
+
+const rootMeta: WsComponentMeta = {
+  category: "hidden",
+  type: "container",
+  label: "Global Root",
+  icon: EmbedIcon,
+};
+
+const rootPropsMeta: WsComponentPropsMeta = {
+  props: {},
+};
 
 export const portalComponent = "Slot";
 
@@ -104,11 +121,13 @@ const descendantPropsMeta: WsComponentPropsMeta = {
 };
 
 export const coreMetas = {
+  [rootComponent]: rootMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
 };
 
 export const corePropsMetas = {
+  [rootComponent]: rootPropsMeta,
   [collectionComponent]: collectionPropsMeta,
   [descendantComponent]: descendantPropsMeta,
 };
@@ -116,4 +135,6 @@ export const corePropsMetas = {
 // components with custom implementation
 // should not be imported as react component
 export const isCoreComponent = (component: string) =>
-  component === collectionComponent || component === descendantComponent;
+  component === rootComponent ||
+  component === collectionComponent ||
+  component === descendantComponent;
