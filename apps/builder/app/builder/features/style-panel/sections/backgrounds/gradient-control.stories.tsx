@@ -12,7 +12,7 @@ export default {
 };
 
 export const GradientWithoutAngle = () => {
-  const gradientString = "linear-gradient(#e66465 0%, #9198e5 100%)";
+  const gradientString = "linear-gradient(black 0%, white 100%)";
   const [gradient, setGradient] = useState<string>(gradientString);
 
   return (

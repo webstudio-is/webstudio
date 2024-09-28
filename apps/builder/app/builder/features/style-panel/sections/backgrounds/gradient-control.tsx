@@ -50,13 +50,13 @@ export const GradientControl = (props: GradientControlProps) => {
     angle: defaultAngle,
   });
 
-  // Every color stop should have a asociated position for us in-order to display the slider thumb.
-  // But when users manually enter linear-gradient from the advanced-panle. They might add something like this
+  // Every color stop should have a position asociated for us in-order to display the slider thumb.
+  // But when users manually enter linear-gradient from the advanced-panel. They might add something like this
   // linear-gradient(to right, red, blue), or linear-gradient(150deg, red, blue 50%, yellow 50px)
-  // Browsers handles all these cases by following the rules of the css spec.
+  // Browsers handels all these cases by following the rules of the css spec.
   // https://www.w3.org/TR/css-images-4/#color-stop-fixup
-  // In order to handle such examples from the advanced tab too. We need to implement the color-stop-fix-up spec during parsing.
-  // But for now, we are just checking if every stop has a position or not. Since the main use-case if to add gradients from ui.
+  // In order to handle such inputs from the advanced tab too. We need to implement the color-stop-fix-up spec during parsing.
+  // But for now, we are just checking if every stop has a position or not. Since the main use-case is to add gradients from ui.
   // We will never run into this case of a color-stop missing a position associated with it.
   const isEveryStopHasAPosition = stops.every(
     (stop) => stop.position !== undefined && stop.color !== undefined
@@ -99,7 +99,8 @@ export const GradientControl = (props: GradientControlProps) => {
       const clickedPosition =
         event.clientX - event.currentTarget.getBoundingClientRect().left;
       const newPosition = Math.ceil((clickedPosition / sliderWidth) * 100);
-      // The 8px buffer here is the width of the thumb. We don't want to add a new stop if the user clicks on the thumb.
+      // The 8px buffer here is the width of the thumb.
+      // We don't want to add a new stop if the user clicks on the thumb.
       const isStopExistingAtPosition = positions.some(
         (position) => Math.abs(newPosition - position) <= 8
       );
@@ -122,15 +123,14 @@ export const GradientControl = (props: GradientControlProps) => {
         checkIfStopExistsAtPosition(event);
 
       if (isStopExistingAtPosition === true) {
-        event.stopPropagation();
         return;
       }
 
       event.preventDefault();
+      // Adding a new stop when user clicks on the slider.
       const newStopIndex = positions.findIndex(
         (position) => position > newPosition
       );
-
       const index = newStopIndex === -1 ? stops.length : newStopIndex;
       const prevColor = stops[index === 0 ? 0 : index - 1].color;
       const nextColor =
@@ -168,11 +168,6 @@ export const GradientControl = (props: GradientControlProps) => {
     [stops, positions, checkIfStopExistsAtPosition, props]
   );
 
-  const handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>) => {
-    const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(event);
-    setIsHoveredOnStop(isStopExistingAtPosition);
-  };
-
   const handleStopSelected = useCallback(
     (index: number, stop: GradientStop) => {
       setSelectedStop(index);
@@ -183,15 +178,8 @@ export const GradientControl = (props: GradientControlProps) => {
 
   const handleStopColorChange = useCallback(
     (color: RgbValue, stopIndex: number) => {
-      const newStops = stops.map((stop, index) => {
-        if (index === stopIndex) {
-          return {
-            ...stop,
-            color,
-          };
-        }
-        return stop;
-      });
+      const newStops = stops;
+      newStops[stopIndex].color = color;
       setStops(newStops);
       props.onChange({
         angle: props.gradient.angle,
@@ -201,6 +189,11 @@ export const GradientControl = (props: GradientControlProps) => {
     },
     [stops, props]
   );
+
+  const handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>) => {
+    const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(event);
+    setIsHoveredOnStop(isStopExistingAtPosition);
+  };
 
   if (isEveryStopHasAPosition === false) {
     return;
@@ -225,12 +218,10 @@ export const GradientControl = (props: GradientControlProps) => {
         isHoveredOnStop={isHoveredOnStop}
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseEnter}
-        onMouseLeave={() => {
-          setIsHoveredOnStop(false);
-        }}
+        onMouseLeave={() => setIsHoveredOnStop(false)}
       >
-        <Track>
-          <SliderRange />
+        <Track asChild>
+          <SliderRange asChild />
         </Track>
         {stops.map((stop, index) => {
           if (stop.color === undefined || stop.position === undefined) {
@@ -382,5 +373,3 @@ const SliderThumbTrigger = styled(Box, {
   border: `1px solid ${theme.colors.borderInfo}`,
   borderRadius: theme.borderRadius[3],
 });
-
-export default GradientControl;
