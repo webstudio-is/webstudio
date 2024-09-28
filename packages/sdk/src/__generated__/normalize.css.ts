@@ -79,6 +79,15 @@ export const span = div;
 export const html: StyleDecl[] = [
   { property: "display", value: { type: "keyword", value: "grid" } },
   { property: "minHeight", value: { type: "unit", unit: "%", value: 100 } },
+  {
+    property: "fontFamily",
+    value: { type: "fontFamily", value: ["Arial", "Roboto", "sans-serif"] },
+  },
+  { property: "fontSize", value: { type: "unit", unit: "px", value: 16 } },
+  {
+    property: "lineHeight",
+    value: { type: "unit", unit: "number", value: 1.2 },
+  },
 ];
 
 export const body: StyleDecl[] = [
@@ -92,15 +101,6 @@ export const body: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 0 },
   },
   { property: "marginLeft", value: { type: "unit", unit: "number", value: 0 } },
-  {
-    property: "fontFamily",
-    value: { type: "fontFamily", value: ["Arial", "Roboto", "sans-serif"] },
-  },
-  { property: "fontSize", value: { type: "unit", unit: "px", value: 16 } },
-  {
-    property: "lineHeight",
-    value: { type: "unit", unit: "number", value: 1.2 },
-  },
   { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
   { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {

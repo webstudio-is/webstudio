@@ -17,7 +17,7 @@ const rootMeta: WsComponentMeta = {
   label: "Global Root",
   icon: EmbedIcon,
   presetStyle: {
-    html: [...html],
+    html,
   },
 };
 

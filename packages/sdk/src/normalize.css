@@ -60,23 +60,26 @@ span {
   outline-width: 1px;
 }
 
-html {
-  /* Layout source https://twitter.com/ChallengesCss/status/1471128244720181258 */
-  display: grid;
-  min-height: 100%;
-}
-
 /**
- * 1. Remove the margin in all browsers.
+ * 1. Layout source https://twitter.com/ChallengesCss/status/1471128244720181258
  * 2. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
  */
-body {
+html {
   /* 1 */
-  margin: 0;
+  display: grid;
+  min-height: 100%;
   /* 2 */
   font-family: Arial, Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.2;
+}
+
+/**
+ * 1. Remove the margin in all browsers.
+ */
+body {
+  /* 1 */
+  margin: 0;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
   border-width: 1px;
