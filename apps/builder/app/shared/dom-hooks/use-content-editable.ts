@@ -85,9 +85,13 @@ export const useContentEditable = ({
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
+    if (isEditing === false) {
+      return;
+    }
+    // prevent keyboard navigation on parent elements
+    event.stopPropagation();
     if (event.key === "Enter") {
       handleComplete(event);
-      return;
     }
     if (event.key === "Escape" && elementRef.current !== null) {
       elementRef.current.textContent = value;

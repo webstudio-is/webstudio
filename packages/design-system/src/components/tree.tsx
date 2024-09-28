@@ -175,7 +175,7 @@ const ActionContainer = styled("div", {
 const DropIndicator = ({
   instruction,
 }: {
-  instruction: null | Instruction;
+  instruction: undefined | Instruction;
 }) => {
   if (instruction?.type === "reorder-above") {
     const indent = instruction.currentLevel * instruction.indentPerLevel;
@@ -215,24 +215,44 @@ export type TreeDropTarget = {
   afterLevel?: number;
 };
 
-const getTreeDropTarget = (instruction: null | Instruction) => {
-  let treeDropTarget: undefined | TreeDropTarget;
+const getTreeDropTarget = (
+  instruction: null | Instruction
+): undefined | TreeDropTarget => {
   if (instruction?.type === "make-child") {
-    treeDropTarget = { parentLevel: instruction.currentLevel };
+    const afterLevel = instruction.currentLevel + 1;
+    return { parentLevel: afterLevel - 1, afterLevel };
   }
   if (instruction?.type === "reorder-below") {
     const afterLevel = instruction.currentLevel;
-    treeDropTarget = { parentLevel: afterLevel - 1, afterLevel };
+    return { parentLevel: afterLevel - 1, afterLevel };
   }
   if (instruction?.type === "reorder-above") {
     const beforeLevel = instruction.currentLevel;
-    treeDropTarget = { parentLevel: beforeLevel - 1, beforeLevel };
+    return { parentLevel: beforeLevel - 1, beforeLevel };
   }
   if (instruction?.type === "reparent") {
     const afterLevel = instruction.desiredLevel;
-    treeDropTarget = { parentLevel: afterLevel - 1, afterLevel };
+    return { parentLevel: afterLevel - 1, afterLevel };
   }
-  return treeDropTarget;
+};
+
+const getInstruction = (
+  treeDropTarget: undefined | TreeDropTarget
+): undefined | Instruction => {
+  if (treeDropTarget?.beforeLevel !== undefined) {
+    return {
+      type: "reorder-above",
+      currentLevel: treeDropTarget.beforeLevel,
+      indentPerLevel: BARS_GAP,
+    };
+  }
+  if (treeDropTarget?.afterLevel !== undefined) {
+    return {
+      type: "reorder-below",
+      currentLevel: treeDropTarget.afterLevel,
+      indentPerLevel: BARS_GAP,
+    };
+  }
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -250,7 +270,7 @@ export const TreeSortableItem = <Data,>({
   isLastChild,
   data,
   canDrag,
-  canDrop,
+  dropTarget,
   onDropTargetChange,
   onDrop,
   onExpand,
@@ -261,21 +281,22 @@ export const TreeSortableItem = <Data,>({
   isLastChild: boolean;
   data: Data;
   canDrag: () => boolean;
-  canDrop: (dropTarge: TreeDropTarget) => boolean;
-  onDropTargetChange: (dropTarget: undefined | TreeDropTarget) => void;
+  dropTarget: undefined | TreeDropTarget;
+  onDropTargetChange: (
+    dropTarget: undefined | TreeDropTarget,
+    draggingData: Data
+  ) => void;
   onDrop: (data: Data) => void;
   onExpand: (isExpanded: boolean) => void;
   children: ReactNode;
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
-  const [instruction, setInstruction] = useState<null | Instruction>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isDropOver, setIsDropOver] = useState(false);
   const handleDropTargetChange = useCallbackRef(onDropTargetChange);
   const handleDrop = useCallbackRef(onDrop);
   const handleExpand = useCallbackRef(onExpand);
   const handleCanDrag = useCallbackRef(canDrag);
-  const handleCanDrop = useCallbackRef(canDrop);
   const expandTimeout = useRef<number>();
 
   useEffect(() => {
@@ -322,17 +343,12 @@ export const TreeSortableItem = <Data,>({
           );
         },
         onDrag: (args) => {
-          let instruction = extractInstruction(args.self.data);
+          const instruction = extractInstruction(args.self.data);
           const dropTarget = getTreeDropTarget(instruction);
+          const draggingData = args.source.data.itemData as Data;
           if (dropTarget) {
-            if (handleCanDrop.current(dropTarget)) {
-              handleDropTargetChange.current(dropTarget);
-            } else {
-              handleDropTargetChange.current(undefined);
-              instruction = null;
-            }
+            handleDropTargetChange.current(dropTarget, draggingData);
           }
-          setInstruction(instruction);
         },
         onDragEnter: () => {
           // timeout in browser use only number as timeout id
@@ -342,18 +358,17 @@ export const TreeSortableItem = <Data,>({
           }, 600);
           setIsDropOver(true);
         },
-        onDragLeave: () => {
+        onDragLeave: (args) => {
           window.clearTimeout(expandTimeout.current);
           setIsDropOver(false);
-          setInstruction(null);
-          handleDropTargetChange.current(undefined);
+          const draggingData = args.source.data.itemData as Data;
+          handleDropTargetChange.current(undefined, draggingData);
         },
         onDrop: (args) => {
+          const draggingData = args.source.data.itemData as Data;
           window.clearTimeout(expandTimeout.current);
-          handleDropTargetChange.current(undefined);
-          handleDrop.current(args.source.data.itemData as Data);
+          handleDrop.current(draggingData);
           setIsDropOver(false);
-          setInstruction(null);
         },
       }),
       autoScrollWindowForElements()
@@ -364,7 +379,6 @@ export const TreeSortableItem = <Data,>({
     isLastChild,
     data,
     handleCanDrag,
-    handleCanDrop,
     handleDrop,
     handleDropTargetChange,
     handleExpand,
@@ -388,7 +402,7 @@ export const TreeSortableItem = <Data,>({
       }}
     >
       {children}
-      <DropIndicator instruction={instruction} />
+      <DropIndicator instruction={getInstruction(dropTarget)} />
     </Box>
   );
 };
@@ -400,6 +414,7 @@ export const TreeNode = ({
   isHighlighted,
   isExpanded,
   onExpand,
+  nodeProps,
   buttonProps,
   action,
   children,
@@ -410,6 +425,7 @@ export const TreeNode = ({
   isHighlighted?: boolean;
   isExpanded: undefined | boolean;
   onExpand: (expanded: boolean, all: boolean) => void;
+  nodeProps?: ComponentPropsWithoutRef<"div">;
   buttonProps: ComponentPropsWithoutRef<"button">;
   action?: ReactNode;
   children: ReactNode;
@@ -419,7 +435,8 @@ export const TreeNode = ({
   useEffect(() => {
     if (isSelected) {
       containerRef.current?.scrollIntoView({
-        behavior: "smooth",
+        // smooth behavior in both canvas and navigator confuses chrome
+        behavior: "auto",
         block: "nearest",
       });
     }
@@ -448,6 +465,7 @@ export const TreeNode = ({
 
   return (
     <NodeContainer
+      {...nodeProps}
       ref={containerRef}
       css={{ [treeNodeLevel]: level }}
       onKeyDown={handleKeydown}

@@ -16,6 +16,7 @@ const OVERLAP = 2;
 
 const Container = styled(Box, {
   position: "absolute",
+  zIndex: 1,
 });
 
 const CircleOutline = styled(Box, {

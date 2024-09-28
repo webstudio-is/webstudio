@@ -1,21 +1,13 @@
 import { NavigatorIcon } from "@webstudio-is/icons";
 import { Kbd, Text, Flex, Separator } from "@webstudio-is/design-system";
-import { useHotkeys } from "react-hotkeys-hook";
-import { NavigatorTree } from "~/builder/shared/navigator-tree";
-import { emitCommand } from "~/builder/shared/commands";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton, Root } from "../../shared/panel";
 import { CssPreview } from "./css-preview";
+import { NavigatorTree } from "./navigator-tree";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
-  const shortcutRef = useHotkeys<HTMLDivElement>(
-    "enter",
-    () => emitCommand("editInstanceText"),
-    []
-  );
-
   return (
-    <Root ref={shortcutRef}>
+    <Root>
       <Header
         title="Navigator"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}

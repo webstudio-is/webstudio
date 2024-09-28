@@ -25,6 +25,7 @@ type FlatNode = {
   level: number;
   isExpanded?: boolean;
   isLastChild: boolean;
+  dropTarget?: TreeDropTarget;
 };
 
 const findNode = (data: Node, name?: string) => {
@@ -116,7 +117,7 @@ type DropTarget = {
   afterName?: string;
 };
 
-const getDropTarget = (
+const getStoriesDropTarget = (
   node: FlatNode,
   dropTarget: undefined | TreeDropTarget
 ): undefined | DropTarget => {
@@ -141,6 +142,7 @@ export const Tree = () => {
   const [selectedItemId, setSelectedItemId] = useState("");
   const [expandedItems, setExpandedItems] = useState(new Set<string>());
   const [data, setData] = useState(initialData);
+  const [dropTarget, setDropTarget] = useState<undefined | DropTarget>();
   const flatTree = useMemo(() => {
     const flatTree: FlatNode[] = [];
     const traverse = (
@@ -154,24 +156,43 @@ export const Tree = () => {
         isExpanded = expandedItems.has(node.name);
       }
       // hide root folder
-      flatTree.push({
+      const flatNode: FlatNode = {
         name: node.name,
         selector,
         level,
         isExpanded,
         isLastChild,
-      });
+      };
+      flatTree.push(flatNode);
+      let lastFlatNode = flatNode;
       if (level === 0 || isExpanded) {
         for (const child of node.children) {
           const isLastChild = node.children.at(-1) === child;
-          traverse(child, [child.name, ...selector], isLastChild, level + 1);
+          lastFlatNode = traverse(
+            child,
+            [child.name, ...selector],
+            isLastChild,
+            level + 1
+          );
         }
       }
+      if (dropTarget?.beforeName === node.name) {
+        flatNode.dropTarget = {
+          parentLevel: level - 1,
+          beforeLevel: level,
+        };
+      }
+      if (dropTarget?.afterName === node.name) {
+        lastFlatNode.dropTarget = {
+          parentLevel: level - 1,
+          afterLevel: level,
+        };
+      }
+      return lastFlatNode;
     };
     traverse(data, [data.name], false);
     return flatTree;
-  }, [data, expandedItems]);
-  const [dropTarget, setDropTarget] = useState<undefined | DropTarget>();
+  }, [data, expandedItems, dropTarget]);
 
   return (
     <Box css={{ maxWidth: 300 }}>
@@ -198,12 +219,16 @@ export const Tree = () => {
               data={node}
               // prevent dragging root
               canDrag={() => node.level > 0}
-              // prevent dropping into toplevel
-              canDrop={(dropTarget) => dropTarget.parentLevel > 0}
               onExpand={handleExpand}
-              onDropTargetChange={(dropTarget) =>
-                setDropTarget(getDropTarget(node, dropTarget))
-              }
+              dropTarget={node.dropTarget}
+              onDropTargetChange={(dropTarget) => {
+                // prevent dropping into toplevel
+                if (dropTarget && dropTarget.parentLevel > 0) {
+                  setDropTarget(getStoriesDropTarget(node, dropTarget));
+                } else {
+                  setDropTarget(undefined);
+                }
+              }}
               onDrop={(sourceNode) => {
                 if (dropTarget) {
                   setData((data) =>
@@ -215,6 +240,7 @@ export const Tree = () => {
                     })
                   );
                 }
+                setDropTarget(undefined);
               }}
             >
               <TreeNode

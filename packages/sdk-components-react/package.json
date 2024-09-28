@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react",
-  "version": "0.181.0",
+  "version": "0.182.0",
   "description": "Webstudio default library for react",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -46,7 +46,7 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "dependencies": {
-    "@react-aria/utils": "^3.21.0",
+    "@react-aria/utils": "^3.25.2",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
