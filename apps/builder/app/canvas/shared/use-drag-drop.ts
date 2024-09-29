@@ -2,7 +2,6 @@ import { useLayoutEffect, useRef } from "react";
 import type { Instance } from "@webstudio-is/sdk";
 import {
   type Point,
-  type ItemDropTarget,
   useAutoScroll,
   useDrag,
   useDrop,
@@ -12,6 +11,7 @@ import {
   $dragAndDropState,
   $instances,
   $registeredComponentMetas,
+  type ItemDropTarget,
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {

@@ -1,7 +1,7 @@
 import { atom, computed, onSet } from "nanostores";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
+import type { Placement } from "@webstudio-is/design-system";
 import type {
   Assets,
   DataSources,
@@ -27,6 +27,7 @@ import { $selectedInstanceSelector } from "./instances";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
+import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
 
 export const $project = atom<Project | undefined>();
 
@@ -313,6 +314,16 @@ export const $authTokenPermissions = atom<TokenPermissions>({
 export const $authToken = atom<string | undefined>(undefined);
 
 export const $toastErrors = atom<string[]>([]);
+
+export type ItemDropTarget = {
+  itemSelector: InstanceSelector;
+  indexWithinChildren: number;
+  placement: {
+    closestChildIndex: number;
+    indexAdjustment: number;
+    childrenOrientation: ChildrenOrientation;
+  };
+};
 
 export type DragAndDropState = {
   isDragging: boolean;
