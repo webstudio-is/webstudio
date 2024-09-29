@@ -154,7 +154,7 @@ export const generateCss = ({
     if (instanceId === ROOT_INSTANCE_ID) {
       const rule = sheet.addNestingRule(`:root`);
       rule.applyMixins(values);
-      instanceByRule.set(rule, instanceId);
+      // avoid storing in instanceByRule to prevent conversion into atomic styles
       continue;
     }
     let descendantSuffix = "";
@@ -187,7 +187,7 @@ export const generateCss = ({
 
   if (atomic) {
     const { cssText } = generateAtomic(sheet, {
-      getKey: (rule) => instanceByRule.get(rule) ?? "",
+      getKey: (rule) => instanceByRule.get(rule),
       transformValue: imageValueTransformer,
       classes,
     });

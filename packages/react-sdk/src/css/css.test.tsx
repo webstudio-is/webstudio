@@ -517,7 +517,7 @@ Map {
 });
 
 test("generate :root preset and user styles", () => {
-  const { cssText, classes } = generateAllCss({
+  const { cssText, atomicCssText, classes, atomicClasses } = generateAllCss({
     assets: new Map(),
     ...renderJsx(
       <$.Body ws:id="body">
@@ -536,6 +536,15 @@ test("generate :root preset and user styles", () => {
           breakpointId: "base",
           property: "color",
           value: { type: "keyword", value: "blue" },
+        },
+      ],
+      [
+        "local:base:fontSize",
+        {
+          styleSourceId: "local",
+          breakpointId: "base",
+          property: "fontSize",
+          value: { type: "keyword", value: "medium" },
         },
       ],
     ]),
@@ -567,9 +576,24 @@ test("generate :root preset and user styles", () => {
 }
 @media all {
   :root {
-    color: blue
+    color: blue;
+    font-size: medium
   }
 }"
 `);
   expect(classes).toEqual(new Map());
+  expect(atomicCssText).toMatchInlineSnapshot(`
+"@media all {
+  :root {
+    display: grid
+  }
+}
+@media all {
+  :root {
+    color: blue;
+    font-size: medium
+  }
+}"
+`);
+  expect(atomicClasses).toEqual(new Map());
 });
