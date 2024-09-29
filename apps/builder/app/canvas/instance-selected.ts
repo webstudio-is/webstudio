@@ -25,7 +25,10 @@ import {
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
-import { setDataCollapsed } from "~/canvas/collapsed";
+import {
+  hasCollapsedMutationRecord,
+  setDataCollapsed,
+} from "~/canvas/collapsed";
 import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";
 import type { InstanceSelector } from "~/shared/tree-utils";
 
@@ -238,27 +241,41 @@ const subscribeSelectedInstance = (
   };
 
   // Lightweight update
-  const updateOutline = () => {
+  const updateOutline: MutationCallback = (mutationRecords) => {
+    if (hasCollapsedMutationRecord(mutationRecords)) {
+      return;
+    }
+
     showOutline();
   };
 
   const resizeObserver = new ResizeObserver(update);
 
+  const mutationHandler: MutationCallback = (mutationRecords) => {
+    if (hasCollapsedMutationRecord(mutationRecords)) {
+      return;
+    }
+
+    update();
+  };
+
   // detect movement of the element within same parent
   // React prevent remount when key stays the same
   // `attributes: true` fixes issues with popups after trigger text editing
   // that cause radix to incorrectly set content in a wrong position at first render
-  const mutationObserver = new MutationObserver(update);
+  const mutationObserver = new MutationObserver(mutationHandler);
 
   const updateObservers = () => {
     for (const element of visibleElements) {
       resizeObserver.observe(element);
 
       const parent = element?.parentElement;
+
       if (parent) {
         mutationObserver.observe(parent, {
           childList: true,
           attributes: true,
+          attributeOldValue: true,
           attributeFilter: ["style", "class"],
         });
       }
@@ -266,9 +283,11 @@ const subscribeSelectedInstance = (
   };
 
   const bodyStyleMutationObserver = new MutationObserver(updateOutline);
+
   // previewStyle variables
   bodyStyleMutationObserver.observe(document.body, {
     attributes: true,
+    attributeOldValue: true,
     attributeFilter: ["style", "class"],
   });
 

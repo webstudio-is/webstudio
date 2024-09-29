@@ -39,6 +39,22 @@ const isSelectorSupported = (selector: string) => {
   }
 };
 
+// This mark helps us detect if mutations were caused by the collapse algorithm
+const markCollapsedMutationProperty = `--ws-sys-collapsed-mutation`;
+
+/**
+ * Avoid infinite loop of mutations
+ */
+export const hasCollapsedMutationRecord = (
+  mutationRecords: MutationRecord[]
+) => {
+  return mutationRecords.some((record) =>
+    record.type === "attributes"
+      ? (record.oldValue?.includes(markCollapsedMutationProperty) ?? false)
+      : false
+  );
+};
+
 const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
   const metas = $registeredComponentMetas.get();
   const breakpoints = $breakpoints.get();
@@ -183,6 +199,12 @@ const recalculate = () => {
   // which resets the scroll position. To prevent this, we set the document's height to the current scrollHeight
   // to preserve the scroll position.
   const preserveHeight = document.documentElement.style.height;
+
+  // Mark that we are in the process of recalculating collapsed elements
+  document.documentElement.style.setProperty(
+    markCollapsedMutationProperty,
+    `true`
+  );
   document.documentElement.style.height = `${document.documentElement.scrollHeight}px`;
 
   // Now combine all operations in batches.
@@ -230,6 +252,7 @@ const recalculate = () => {
   }
 
   document.documentElement.style.height = preserveHeight;
+  document.documentElement.style.removeProperty(markCollapsedMutationProperty);
 };
 
 /**
