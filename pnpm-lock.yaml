@@ -1405,9 +1405,6 @@ importers:
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.3.0-canary-14898b6a9-20240318)
-      immer:
-        specifier: ^10.0.3
-        version: 10.0.3
       match-sorter:
         specifier: ^6.3.4
         version: 6.3.4
@@ -1430,9 +1427,6 @@ importers:
       '@jest/globals':
         specifier: ^29.7.0
         version: 29.7.0
-      '@testing-library/react-hooks':
-        specifier: ^8.0.1
-        version: 8.0.1(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react-test-renderer@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
