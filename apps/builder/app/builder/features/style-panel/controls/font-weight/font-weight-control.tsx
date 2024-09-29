@@ -5,7 +5,7 @@ import {
   fontWeights,
 } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
-import { startTransition, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useComputedStyles } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
 import { canvasApi } from "~/shared/canvas-api";
