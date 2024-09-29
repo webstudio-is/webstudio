@@ -5,7 +5,7 @@ import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { $canvasIframeState } from "./nano-states";
 import { getElementAndAncestorInstanceTags } from "~/canvas/instance-selected";
-import { detectSupportedFontWeights } from "~/builder/features/style-panel/controls/font-weight/font-weight-support";
+import { detectSupportedFontWeights } from "~/canvas/shared/font-weight-support";
 
 const apiWindowNamespace = "__webstudio__$__canvasApi";
 
