@@ -1,34 +1,21 @@
-import type { FontAsset } from "@webstudio-is/sdk";
 import type { FontWeight } from "@webstudio-is/fonts";
+import { $detectedFontsWeights } from "~/shared/nano-states";
 
-// Trying to check if the font asset supports a certain weight without rendering the font and testing.
-export const isExternalFontWeightSupported = (
-  asset: FontAsset,
-  weight: string,
-  // @todo support a comma separated list instead of one
-  currentFamily: string
-) => {
-  const { meta } = asset;
-  const weightNumber = Number(weight);
-  if (asset?.meta?.family !== currentFamily) {
-    return false;
-  }
-  if ("variationAxes" in meta) {
-    const { variationAxes } = meta;
-    return (
-      variationAxes.wght !== undefined &&
-      variationAxes.wght.min <= weightNumber &&
-      variationAxes.wght.max >= weightNumber
-    );
-  }
-
-  return meta.weight === weightNumber;
-};
+const fontWeights: Array<FontWeight> = [
+  "100",
+  "200",
+  "300",
+  "400",
+  "500",
+  "600",
+  "700",
+  "800",
+  "900",
+];
 
 // Test a font if it supports a certain weight by rendering it.
 // For system fonts we can actually do it.
 const testFontWeights = (fontFamily: string) => {
-  console.log(document);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   const supportedWeights: Array<FontWeight> = ["400"];
@@ -38,17 +25,7 @@ const testFontWeights = (fontFamily: string) => {
   }
 
   const weightWidthMap: Map<FontWeight, number> = new Map();
-  const fontWeights: Array<FontWeight> = [
-    "100",
-    "200",
-    "300",
-    "400",
-    "500",
-    "600",
-    "700",
-    "800",
-    "900",
-  ];
+
   for (const testWeight of fontWeights) {
     context.font = `${testWeight} 16px ${fontFamily}`;
     weightWidthMap.set(
@@ -82,37 +59,22 @@ const testFontWeights = (fontFamily: string) => {
   return supportedWeights.sort();
 };
 
-const cache = new Map<string, Array<FontWeight>>();
-
-export const isSystemFontWeightSupported = (
-  fontFamily: string,
-  fontWeight: FontWeight
-) => {
-  try {
-    //console.log(document.fonts.status);
-    //document.fonts.ready.then(console.log);
-    //console.log(
-    //  "16px " + fontFamily,
-    //  document.fonts.check(`16px ${fontFamily}`)
-    //);
-    // We need to wait, font is still loading. We don't want to cache the wrong result
-    if (
-      document.fonts.status !== "loaded" &&
-      document.fonts.check(`16px ${fontFamily}`) === false
-    ) {
-      return false;
-    }
-  } catch (err) {
-    console.error(err);
-    return false;
+document.fonts.addEventListener("loadingdone", () => {
+  const cache = new Map($detectedFontsWeights.get());
+  // We need to re-detect all fonts because we don't know which fonts were loaded.
+  for (const [stack] of cache) {
+    const supportedWeights = testFontWeights(stack);
+    cache.set(stack, supportedWeights);
   }
+  $detectedFontsWeights.set(cache);
+});
 
-  let supportedWeights = cache.get(fontFamily);
-  if (supportedWeights === undefined) {
-    supportedWeights = testFontWeights(fontFamily);
-    cache.set(fontFamily, supportedWeights);
-  }
-  console.log(fontFamily, fontWeight, supportedWeights);
-
-  return supportedWeights.includes(fontWeight);
+export const detectSupportedFontWeights = (stack: string) => {
+  const cache = new Map($detectedFontsWeights.get());
+  // Detecting immediately in case its a font that is already loaded, otheriwese
+  // it will be detected correctly when the font is loaded and in the meantime the detected
+  // value may be incorrect due to the fallback font.
+  const supportedWeights = testFontWeights(stack);
+  cache.set(stack, supportedWeights);
+  $detectedFontsWeights.set(cache);
 };

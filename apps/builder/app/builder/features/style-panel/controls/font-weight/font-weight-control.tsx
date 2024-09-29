@@ -5,15 +5,12 @@ import {
   fontWeights,
 } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
-import { useMemo } from "react";
-import { useAssets, type AssetContainer } from "~/builder/shared/assets";
-import {
-  isExternalFontWeightSupported,
-  isSystemFontWeightSupported,
-} from "./font-weight-support";
+import { startTransition, useEffect, useState } from "react";
 import { useComputedStyles } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
 import { canvasApi } from "~/shared/canvas-api";
+import { useStore } from "@nanostores/react";
+import { $detectedFontsWeights } from "~/shared/nano-states";
 
 const allFontWeights = Object.keys(fontWeights) as Array<FontWeight>;
 
@@ -24,31 +21,21 @@ const labels = new Map(
   ])
 );
 
-// Find all font weights that are available for the current font family.
-const getSupportedFontWeights = (
-  currentFamily: string,
-  assetContainers: Array<AssetContainer>
-) => {
-  const found = allFontWeights.filter((weight) => {
-    return canvasApi.isSystemFontWeightSupported(currentFamily, weight);
-  });
-  return new Map(found.map((weight) => [weight, true]));
-};
-
 export const FontWeightControl = () => {
   // We need the font family to determine which font weights are available
   const [fontWeight, fontFamily] = useComputedStyles([
     "fontWeight",
     "fontFamily",
   ]);
-  const { assetContainers } = useAssets("font");
-  const fontFamilyCss = toValue(fontFamily.cascadedValue);
+  const detectedFontsWeights = useStore($detectedFontsWeights);
+  const fontFamilyCss = toValue(fontFamily.usedValue);
   const fontWeightCss = toValue(fontWeight.cascadedValue);
+  const supportedFontWeights = detectedFontsWeights.get(fontFamilyCss) ?? [];
 
-  const supportedFontWeights = useMemo(
-    () => getSupportedFontWeights(fontFamilyCss, assetContainers),
-    [fontFamilyCss, assetContainers]
-  );
+  useEffect(() => {
+    canvasApi.detectSupportedFontWeights(fontFamilyCss);
+  }, [fontFamilyCss]);
+
   const selectedWeight =
     fontWeightNames.get(fontWeightCss) ?? (fontWeightCss as FontWeight);
 
@@ -69,7 +56,9 @@ export const FontWeightControl = () => {
       options={allFontWeights}
       getLabel={(weight: FontWeight) => {
         return (
-          <Text color={supportedFontWeights.get(weight) ? "main" : "subtle"}>
+          <Text
+            color={supportedFontWeights.includes(weight) ? "main" : "subtle"}
+          >
             {labels.get(weight)}
           </Text>
         );
