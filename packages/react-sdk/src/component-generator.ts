@@ -133,6 +133,7 @@ const generatePropValue = ({
 };
 
 export const generateJsxElement = ({
+  context = "jsx",
   scope,
   instance,
   props,
@@ -142,6 +143,7 @@ export const generateJsxElement = ({
   children,
   classesMap,
 }: {
+  context?: "expression" | "jsx";
   scope: Scope;
   instance: Instance;
   props: Props;
@@ -250,7 +252,13 @@ export const generateJsxElement = ({
   // {dataSourceVariable && <Instance>}
   if (conditionValue) {
     let conditionalElement = "";
-    conditionalElement += `{(${conditionValue}) &&\n`;
+    let before = "";
+    let after = "";
+    if (context === "jsx") {
+      before = "{";
+      after = "}";
+    }
+    conditionalElement += `${before}(${conditionValue}) &&\n`;
     // wrap collection with fragment when rendered inside condition
     // {dataSourceVariable &&
     //  <>
@@ -264,7 +272,7 @@ export const generateJsxElement = ({
     } else {
       conditionalElement += generatedElement;
     }
-    conditionalElement += `}\n`;
+    conditionalElement += `${after}\n`;
     return conditionalElement;
   }
 
@@ -323,6 +331,7 @@ export const generateJsxChildren = ({
         continue;
       }
       generatedChildren += generateJsxElement({
+        context: "jsx",
         scope,
         instance,
         props,
@@ -377,6 +386,7 @@ export const generateWebstudioComponent = ({
 
   const usedDataSources: DataSources = new Map();
   const generatedJsx = generateJsxElement({
+    context: "expression",
     scope,
     instance,
     props,
