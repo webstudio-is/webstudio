@@ -788,6 +788,42 @@ return <Body>
 `);
 });
 
+test("generate conditional body", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: toMap<DataSource>([
+        {
+          id: "conditionId",
+          scopeInstanceId: "list",
+          name: "conditionName",
+          type: "variable",
+          value: { type: "boolean", value: false },
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body
+          ws:id="body"
+          data-ws-show={new ExpressionValue("$ws$dataSource$conditionId")}
+        ></$.Body>
+      ),
+    })
+  ).toMatchInlineSnapshot(`
+"const Page = () => {
+let [conditionName, set$conditionName] = useVariableState<any>(false)
+return (conditionName) &&
+<Body />
+
+}
+"
+`);
+});
+
 test("generate resource prop", () => {
   expect(
     generateWebstudioComponent({
