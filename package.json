@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm -r --filter='!./fixtures/*' build",
     "dts": "pnpm -r dts",
-    "dev": "pnpm --filter='@webstudio-is/builder' --filter='@webstudio-is/prisma-client' --parallel --recursive dev",
+    "dev": "pnpm --filter='@webstudio-is/builder' dev",
     "lint": "eslint \"**/*.{ts,tsx}\" --max-warnings 0",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
