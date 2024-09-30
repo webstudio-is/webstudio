@@ -55,6 +55,7 @@ export const FontFamilyControl = () => {
       value: label,
     }));
   }, [assetContainers]);
+  const [isFontManagerOpen, setIsFontMangerOpen] = useState(false);
 
   const itemValue = useMemo(() => {
     // Replacing the quotes just to make it look cleaner in the UI
@@ -67,6 +68,7 @@ export const FontFamilyControl = () => {
         suffix={
           <FloatingPanel
             title="Fonts"
+            onOpenChange={setIsFontMangerOpen}
             content={
               <FontsManager
                 value={value.type === "fontFamily" ? value : undefined}
@@ -103,6 +105,9 @@ export const FontFamilyControl = () => {
           setIntermediateValue(value);
         }}
         onBlur={() => {
+          if (isFontManagerOpen) {
+            return;
+          }
           setValue(parseCssValue("fontFamily", itemValue));
         }}
         match={matchOrSuggestToCreate}
