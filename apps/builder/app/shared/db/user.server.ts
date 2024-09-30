@@ -1,18 +1,9 @@
+import type { Database } from "@webstudio-is/postrest/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { GitHubProfile } from "remix-auth-github";
 import type { GoogleProfile } from "remix-auth-google";
-import { z } from "zod";
 
-const User = z.object({
-  id: z.string(),
-  email: z.string().nullable(),
-  image: z.string().nullable(),
-  username: z.string().nullable(),
-  createdAt: z.string(),
-  teamId: z.string().nullable(),
-});
-
-export type User = z.infer<typeof User>;
+export type User = Database["public"]["Tables"]["User"]["Row"];
 
 export const getUserById = async (context: AppContext, id: User["id"]) => {
   const dbUser = await context.postgrest.client
@@ -26,7 +17,7 @@ export const getUserById = async (context: AppContext, id: User["id"]) => {
     throw new Error("User not found");
   }
 
-  return User.parse(dbUser.data);
+  return dbUser.data;
 };
 
 const genericCreateAccount = async (
@@ -45,8 +36,7 @@ const genericCreateAccount = async (
     .single();
 
   if (dbUser.error == null) {
-    const user = User.parse(dbUser.data);
-    return user;
+    return dbUser.data;
   }
 
   // https://github.com/PostgREST/postgrest/blob/bfbd033c6e9f38cfbc8b1cfe19ee009a9379e3dd/docs/references/errors.rst#L234
@@ -69,7 +59,7 @@ const genericCreateAccount = async (
     throw new Error("Failed to create user");
   }
 
-  return User.parse(newUser.data);
+  return newUser.data;
 };
 
 export const createOrLoginWithOAuth = async (
