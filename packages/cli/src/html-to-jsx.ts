@@ -141,6 +141,11 @@ export const htmlToJsx = (html: string) => {
       case "text": {
         const escapedValue = escape(walkNode.value);
 
+        const re = /^\s$/g;
+        if (re.test(walkNode.value)) {
+          break;
+        }
+
         result += escapedValue ? "{" + escapedValue + "}" : "";
         break;
       }
