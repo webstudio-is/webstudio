@@ -582,10 +582,10 @@ test("add classes and merge classes", () => {
   ).toEqual(
     validateJSX(
       clear(`
-    const Page = () => {
-    return <Body
-    className="cls1 cls2 \\"cls3\\"" />
-    }
+        const Page = () => {
+        return <Body
+        className={"cls1 cls2 \\"cls3\\""} />
+        }
     `)
     )
   );
