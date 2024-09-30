@@ -83,9 +83,14 @@ export const FontFamilyControl = () => {
         items={items}
         itemToString={(item) => item?.label ?? item?.value ?? ""}
         onItemHighlight={(item) => {
-          const value = item === null ? itemValue : item.value;
+          if (item === null) {
+            setValue(parseCssValue("fontFamily", itemValue), {
+              isEphemeral: true,
+            });
+            return;
+          }
           setValue(
-            { type: "fontFamily", value: [value] },
+            { type: "fontFamily", value: [item.value] },
             { isEphemeral: true }
           );
         }}
@@ -98,10 +103,7 @@ export const FontFamilyControl = () => {
           setIntermediateValue(value);
         }}
         onBlur={() => {
-          setValue({
-            type: "fontFamily",
-            value: [itemValue],
-          });
+          setValue(parseCssValue("fontFamily", itemValue));
         }}
         match={matchOrSuggestToCreate}
       />
