@@ -44,14 +44,15 @@ const genericCreateAccount = async (
     .eq("email", userData.email)
     .single();
 
-  if (dbUser.error) {
-    console.error(dbUser.error);
-    throw new Error("User not found");
-  }
-
-  if (dbUser) {
+  if (dbUser.error == null) {
     const user = User.parse(dbUser.data);
     return user;
+  }
+
+  // https://github.com/PostgREST/postgrest/blob/bfbd033c6e9f38cfbc8b1cfe19ee009a9379e3dd/docs/references/errors.rst#L234
+  if (dbUser.error.code !== "PGRST116") {
+    console.error(dbUser.error);
+    throw new Error("User not found");
   }
 
   const newUser = await context.postgrest.client
@@ -60,7 +61,8 @@ const genericCreateAccount = async (
       id: crypto.randomUUID(),
       ...userData,
     })
-    .select();
+    .select()
+    .single();
 
   if (newUser.error) {
     console.error(newUser.error);
