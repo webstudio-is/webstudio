@@ -11,6 +11,7 @@ import env from "~/env/env.server";
 import { builderAuthenticator } from "./builder-auth.server";
 import { staticEnv } from "~/env/env.static.server";
 import type { SessionData } from "./auth.server.utils";
+import { createContext } from "~/shared/context.server";
 
 const transformRefToAlias = (input: string) => {
   const rawAlias = input.endsWith(".staging") ? input.slice(0, -8) : input;
@@ -32,11 +33,15 @@ export const callbackOrigin =
 
 const strategyCallback = async ({
   profile,
+  request,
 }: {
   profile: GitHubProfile | GoogleProfile;
+  request: Request;
 }) => {
+  const context = await createContext(request);
+
   try {
-    const user = await db.user.createOrLoginWithOAuth(profile);
+    const user = await db.user.createOrLoginWithOAuth(context, profile);
     return { userId: user.id, createdAt: Date.now() };
   } catch (error) {
     if (error instanceof Error) {
@@ -83,7 +88,7 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
 
 if (env.DEV_LOGIN === "true") {
   authenticator.use(
-    new FormStrategy(async ({ form }) => {
+    new FormStrategy(async ({ form, request }) => {
       const secretValue = form.get("secret");
 
       if (secretValue == null) {
@@ -96,7 +101,9 @@ if (env.DEV_LOGIN === "true") {
 
       if (secret === env.AUTH_SECRET?.slice(0, 4)) {
         try {
-          const user = await db.user.createOrLoginWithDev(email);
+          const context = await createContext(request);
+
+          const user = await db.user.createOrLoginWithDev(context, email);
           return {
             userId: user.id,
             createdAt: Date.now(),
@@ -128,9 +135,10 @@ export const findAuthenticatedUser = async (request: Request) => {
   if (user == null) {
     return null;
   }
+  const context = await createContext(request);
 
   try {
-    return await getUserById(user.userId);
+    return await getUserById(context, user.userId);
   } catch (error) {
     return null;
   }
