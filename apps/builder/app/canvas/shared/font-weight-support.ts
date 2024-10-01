@@ -13,8 +13,7 @@ const fontWeights: Array<FontWeight> = [
   "900",
 ];
 
-// Test a font if it supports a certain weight by rendering it.
-// For system fonts we can actually do it.
+// Render a font on canvas in each width and compare the amount of inked pixels.
 const testFontWeights = (fontFamily: string) => {
   const canvas = document.createElement("canvas");
   canvas.width = 200;
@@ -40,16 +39,14 @@ const testFontWeights = (fontFamily: string) => {
     const pixels = imageData.data;
 
     let inkedPixels = 0;
-    // Loop through all pixel data and count "inked" pixels (non-transparent ones)
-    for (let i = 3; i < pixels.length; i += 4) {
-      // Loop through alpha channel
-      if (pixels[i] > 0) {
-        // If alpha > 0, it's an inked pixel
+    // Loop through all pixel data and count non-transparent pixels.
+    for (let index = 3; index < pixels.length; index += 4) {
+      if (pixels[index] > 0) {
         inkedPixels++;
       }
     }
 
-    return inkedPixels; // Return the count of inked pixels
+    return inkedPixels;
   };
 
   for (const testWeight of fontWeights) {
