@@ -16,7 +16,6 @@ import {
   TreeNodeLabel,
   TreeRoot,
   TreeSortableItem,
-  type ItemDropTarget,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
 import {
@@ -39,6 +38,7 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
   getIndexedInstanceId,
+  type ItemDropTarget,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";

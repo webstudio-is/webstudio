@@ -86,4 +86,3 @@ export * from "./components/kbd";
 
 // Deprecated
 export * from "./components/__DEPRECATED__/list";
-export * from "./components/__DEPRECATED__/tree";
