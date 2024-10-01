@@ -64,6 +64,7 @@ import { $params } from "./stores";
 import { useScrollNewInstanceIntoView } from "./shared/use-scroll-new-instance-into-view";
 import { subscribeInspectorEdits } from "./inspector-edits";
 import { initCanvasApi } from "~/shared/canvas-api";
+import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 
 registerContainers();
 
@@ -143,6 +144,7 @@ const DesignMode = () => {
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
   useEffect(subscribeInspectorEdits, []);
+  useEffect(subscribeFontLoadingDone, []);
   return null;
 };
 

@@ -41,6 +41,7 @@ import {
   $canvasIframeState,
   $uploadingFilesDataStore,
   $memoryProps,
+  $detectedFontsWeights,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -126,6 +127,7 @@ export const registerContainers = () => {
   clientStores.set("canvasIframeState", $canvasIframeState);
   clientStores.set("uploadingFilesDataStore", $uploadingFilesDataStore);
   clientStores.set("memoryProps", $memoryProps);
+  clientStores.set("detectedFontsWeights", $detectedFontsWeights);
 
   for (const [name, store] of $synchronizedBreakpoints) {
     clientStores.set(name, store);
