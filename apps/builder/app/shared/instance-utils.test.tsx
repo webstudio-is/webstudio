@@ -3177,15 +3177,15 @@ describe("insert webstudio fragment copy", () => {
 
 describe("support copy paste of :root styles", () => {
   const css = (strings: TemplateStringsArray, ...values: string[]) => {
-    let css = "";
-    strings.forEach((string, i) => {
-      css += string + (values[i] || "");
+    let cssString = "";
+    strings.forEach((string, index) => {
+      cssString += string + (values[index] ?? "");
     });
     const styleSourceSelections: StyleSourceSelections = new Map();
     const styleSources: StyleSources = new Map();
     const styles: Styles = new Map();
     const parsed = mapGroupBy(
-      parseCss(css),
+      parseCss(cssString),
       (parsedStyleDecl) => parsedStyleDecl.selector
     );
     for (const [selector, parsedStyles] of parsed) {
