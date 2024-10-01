@@ -217,7 +217,7 @@ export const generateJsxElement = ({
   }
 
   if (classes.length !== 0) {
-    generatedProps += `\nclassName=${JSON.stringify(classes.join(" "))}`;
+    generatedProps += `\nclassName={${JSON.stringify(classes.join(" "))}}`;
   }
 
   let generatedElement = "";

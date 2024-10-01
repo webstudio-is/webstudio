@@ -39,32 +39,32 @@ const Page = ({}: { system: any }) => {
   let [formState, set$formState] = useVariableState<any>("initial");
   let [formState_1, set$formState_1] = useVariableState<any>("initial");
   return (
-    <Body className="w-body">
+    <Body className={"w-body"}>
       <Form
         state={formState}
         onStateChange={(state: any) => {
           formState = state;
           set$formState(formState);
         }}
-        className="w-webhook-form"
+        className={"w-webhook-form"}
       >
         {(formState === "initial" || formState === "error") && (
-          <Box className="w-box">
-            <Heading tag={"h3"} className="w-heading">
+          <Box className={"w-box"}>
+            <Heading tag={"h3"} className={"w-heading"}>
               {"Default form"}
             </Heading>
-            <Label className="w-input-label">{"Name"}</Label>
-            <Input name={"name"} className="w-text-input" />
-            <Label className="w-input-label">{"Email"}</Label>
-            <Input name={"email"} className="w-text-input" />
-            <Button className="w-button">{"Submit"}</Button>
+            <Label className={"w-input-label"}>{"Name"}</Label>
+            <Input name={"name"} className={"w-text-input"} />
+            <Label className={"w-input-label"}>{"Email"}</Label>
+            <Input name={"email"} className={"w-text-input"} />
+            <Button className={"w-button"}>{"Submit"}</Button>
           </Box>
         )}
         {formState === "success" && (
-          <Box className="w-box">{"Thank you for getting in touch!"}</Box>
+          <Box className={"w-box"}>{"Thank you for getting in touch!"}</Box>
         )}
         {formState === "error" && (
-          <Box className="w-box">{"Sorry, something went wrong."}</Box>
+          <Box className={"w-box"}>{"Sorry, something went wrong."}</Box>
         )}
       </Form>
       <Form
@@ -74,25 +74,25 @@ const Page = ({}: { system: any }) => {
           set$formState_1(formState_1);
         }}
         action={"action"}
-        className="w-webhook-form"
+        className={"w-webhook-form"}
       >
         {(formState_1 === "initial" || formState_1 === "error") && (
-          <Box className="w-box">
-            <Heading tag={"h3"} className="w-heading">
+          <Box className={"w-box"}>
+            <Heading tag={"h3"} className={"w-heading"}>
               {"Form with custom action and method"}
             </Heading>
-            <Label className="w-input-label">{"Name"}</Label>
-            <Input name={"name"} className="w-text-input" />
-            <Label className="w-input-label">{"Email"}</Label>
-            <Input name={"email"} className="w-text-input" />
-            <Button className="w-button">{"Submit"}</Button>
+            <Label className={"w-input-label"}>{"Name"}</Label>
+            <Input name={"name"} className={"w-text-input"} />
+            <Label className={"w-input-label"}>{"Email"}</Label>
+            <Input name={"email"} className={"w-text-input"} />
+            <Button className={"w-button"}>{"Submit"}</Button>
           </Box>
         )}
         {formState_1 === "success" && (
-          <Box className="w-box">{"Thank you for getting in touch!"}</Box>
+          <Box className={"w-box"}>{"Thank you for getting in touch!"}</Box>
         )}
         {formState_1 === "error" && (
-          <Box className="w-box">{"Sorry, something went wrong."}</Box>
+          <Box className={"w-box"}>{"Sorry, something went wrong."}</Box>
         )}
       </Form>
     </Body>

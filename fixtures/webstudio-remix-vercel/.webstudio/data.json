@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "5df1744d-0383-4775-819c-1648300d55cd",
+    "id": "40962d82-ea2d-4536-b94f-dece81312190",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 300,
-    "createdAt": "2024-09-19T19:27:53.953+00:00",
-    "updatedAt": "2024-09-19T19:27:53.953+00:00",
+    "version": 315,
+    "createdAt": "2024-09-30T13:22:48.689+00:00",
+    "updatedAt": "2024-09-30T13:22:48.689+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -134,6 +134,27 @@
             "include": false
           },
           "path": "/expressions"
+        },
+        {
+          "id": "lTS5DKrDEC_mXSAc5ZDDA",
+          "name": "class-names",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "mdyCS8QnKx3fL1MLXifmy",
+          "systemDataSourceId": "5o_tom3ekCqphQfInC6NH",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "200",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": []
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/class-names"
         }
       ],
       "folders": [
@@ -149,7 +170,8 @@
             "-J9I4Oo6mONfQlf_3-OqG",
             "TS39WeBd0Qr3QgbSlzdf2",
             "42cWhASQ3tTtKDnsvzhUF",
-            "9xlwLSHxuk8HmS3-EEGcf"
+            "9xlwLSHxuk8HmS3-EEGcf",
+            "lTS5DKrDEC_mXSAc5ZDDA"
           ]
         },
         {
@@ -1505,6 +1527,19 @@
             "value": "hidden"
           }
         }
+      ],
+      [
+        "o9VRyqmvIarF6HrGMccU8:UoTkWyaFuTYJihS3MFYK5:width:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "o9VRyqmvIarF6HrGMccU8",
+          "property": "width",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 300
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -1675,6 +1710,13 @@
           "type": "local",
           "id": "y8DFYnVCeQ_smp3u6CSTn"
         }
+      ],
+      [
+        "o9VRyqmvIarF6HrGMccU8",
+        {
+          "type": "local",
+          "id": "o9VRyqmvIarF6HrGMccU8"
+        }
       ]
     ],
     "styleSourceSelections": [
@@ -1844,6 +1886,13 @@
         {
           "instanceId": "81ejLVXyFEV1SxiJrWhyw",
           "values": ["y8DFYnVCeQ_smp3u6CSTn"]
+        }
+      ],
+      [
+        "drCx7m8q_gnNQLrhPDA-g",
+        {
+          "instanceId": "drCx7m8q_gnNQLrhPDA-g",
+          "values": ["o9VRyqmvIarF6HrGMccU8"]
         }
       ]
     ],
@@ -2228,6 +2277,26 @@
           "type": "expression",
           "value": "`<script>\nconst a = ${$ws$dataSource$LYqm_7uq8W4T7BKky9zcj.data.args}\n\nconst b = ${$ws$dataSource$KqMdUAQ4YmObkN1ofVzeO}\n\nconsole.log(a, b);\n</script>`"
         }
+      ],
+      [
+        "8GVa_kUsGQz9Ppne_hLj-",
+        {
+          "id": "8GVa_kUsGQz9Ppne_hLj-",
+          "instanceId": "drCx7m8q_gnNQLrhPDA-g",
+          "name": "className",
+          "type": "string",
+          "value": "custom-class \"broken 'with `symbols"
+        }
+      ],
+      [
+        "UVdfQwl7RfYB2wI__NFXr",
+        {
+          "id": "UVdfQwl7RfYB2wI__NFXr",
+          "instanceId": "drCx7m8q_gnNQLrhPDA-g",
+          "name": "id",
+          "type": "string",
+          "value": "\"broken'with`symbols"
+        }
       ]
     ],
     "dataSources": [
@@ -2384,6 +2453,15 @@
               "hello": "world"
             }
           }
+        }
+      ],
+      [
+        "5o_tom3ekCqphQfInC6NH",
+        {
+          "type": "parameter",
+          "id": "5o_tom3ekCqphQfInC6NH",
+          "scopeInstanceId": "mdyCS8QnKx3fL1MLXifmy",
+          "name": "system"
         }
       ]
     ],
@@ -3492,12 +3570,36 @@
           "component": "HtmlEmbed",
           "children": []
         }
+      ],
+      [
+        "mdyCS8QnKx3fL1MLXifmy",
+        {
+          "type": "instance",
+          "id": "mdyCS8QnKx3fL1MLXifmy",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "drCx7m8q_gnNQLrhPDA-g"
+            }
+          ]
+        }
+      ],
+      [
+        "drCx7m8q_gnNQLrhPDA-g",
+        {
+          "type": "instance",
+          "id": "drCx7m8q_gnNQLrhPDA-g",
+          "component": "Box",
+          "children": []
+        }
       ]
     ],
     "deployment": {
       "destination": "saas",
-      "domains": [],
-      "projectDomain": "webstudio-fixture-project-a-0su3o"
+      "domains": ["webstudio-fixture-project-a-0su3o"],
+      "assetsDomain": "webstudio-fixture-project-a-0su3o",
+      "excludeWstdDomainFromSearch": false
     }
   },
   "page": {
@@ -3641,6 +3743,27 @@
         "include": false
       },
       "path": "/expressions"
+    },
+    {
+      "id": "lTS5DKrDEC_mXSAc5ZDDA",
+      "name": "class-names",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "mdyCS8QnKx3fL1MLXifmy",
+      "systemDataSourceId": "5o_tom3ekCqphQfInC6NH",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": []
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/class-names"
     }
   ],
   "assets": [

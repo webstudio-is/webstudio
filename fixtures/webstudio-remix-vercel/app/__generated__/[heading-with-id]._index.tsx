@@ -28,8 +28,8 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className="w-body">
-      <Heading id={"my-heading"} className="w-heading">
+    <Body className={"w-body"}>
+      <Heading id={"my-heading"} className={"w-heading"}>
         {"Heading you can edit"}
       </Heading>
     </Body>
