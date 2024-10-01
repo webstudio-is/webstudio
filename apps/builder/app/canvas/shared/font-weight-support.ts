@@ -84,7 +84,7 @@ const testFontWeights = (fontFamily: string) => {
   return supportedWeights.sort();
 };
 
-export const subscribeFondLoadingDone = ({
+export const subscribeFontLoadingDone = ({
   signal,
 }: {
   signal: AbortSignal;

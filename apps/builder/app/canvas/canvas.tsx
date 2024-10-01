@@ -64,7 +64,7 @@ import { $params } from "./stores";
 import { useScrollNewInstanceIntoView } from "./shared/use-scroll-new-instance-into-view";
 import { subscribeInspectorEdits } from "./inspector-edits";
 import { initCanvasApi } from "~/shared/canvas-api";
-import { subscribeFondLoadingDone } from "./shared/font-weight-support";
+import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 
 registerContainers();
 
@@ -130,7 +130,7 @@ const useElementsTree = (
 };
 
 const DesignMode = () => {
-  const { signal } = new AbortController();
+  const abortController = new AbortController();
   useManageDesignModeStyles();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
@@ -145,7 +145,10 @@ const DesignMode = () => {
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
   useEffect(subscribeInspectorEdits, []);
-  useMount(subscribeFondLoadingDone({ signal }));
+  useMount(subscribeFontLoadingDone({ signal: abortController.signal }));
+  useEffect(() => () => {
+    abortController.abort();
+  });
   return null;
 };
 
