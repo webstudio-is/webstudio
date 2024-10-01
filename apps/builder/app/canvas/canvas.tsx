@@ -130,7 +130,6 @@ const useElementsTree = (
 };
 
 const DesignMode = () => {
-  const abortController = new AbortController();
   useManageDesignModeStyles();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
@@ -145,10 +144,7 @@ const DesignMode = () => {
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
   useEffect(subscribeInspectorEdits, []);
-  useMount(subscribeFontLoadingDone({ signal: abortController.signal }));
-  useEffect(() => () => {
-    abortController.abort();
-  });
+  useEffect(subscribeFontLoadingDone, []);
   return null;
 };
 

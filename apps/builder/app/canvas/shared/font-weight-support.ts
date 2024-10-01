@@ -84,25 +84,25 @@ const testFontWeights = (fontFamily: string) => {
   return supportedWeights.sort();
 };
 
-export const subscribeFontLoadingDone = ({
-  signal,
-}: {
-  signal: AbortSignal;
-}) => {
+export const subscribeFontLoadingDone = () => {
+  // @todo move it to the call-site
+  const abortController = new AbortController();
+  document.fonts.addEventListener(
+    "loadingdone",
+    () => {
+      const cache = new Map($detectedFontsWeights.get());
+      // We need to re-detect all fonts because we don't know which fonts were loaded.
+      for (const [stack] of cache) {
+        const supportedWeights = testFontWeights(stack);
+        cache.set(stack, supportedWeights);
+      }
+      $detectedFontsWeights.set(cache);
+    },
+    { signal: abortController.signal }
+  );
+
   return () => {
-    document.fonts.addEventListener(
-      "loadingdone",
-      () => {
-        const cache = new Map($detectedFontsWeights.get());
-        // We need to re-detect all fonts because we don't know which fonts were loaded.
-        for (const [stack] of cache) {
-          const supportedWeights = testFontWeights(stack);
-          cache.set(stack, supportedWeights);
-        }
-        $detectedFontsWeights.set(cache);
-      },
-      { signal }
-    );
+    abortController.abort();
   };
 };
 
