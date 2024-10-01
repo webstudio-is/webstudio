@@ -24,6 +24,7 @@ import {
   encodeDataSourceVariable,
   transpileExpression,
   getExpressionIdentifiers,
+  ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
@@ -46,7 +47,6 @@ import {
   $pages,
   $resources,
   $selectedPage,
-  ROOT_INSTANCE_ID,
 } from "./nano-states";
 import {
   type DroppableTarget,

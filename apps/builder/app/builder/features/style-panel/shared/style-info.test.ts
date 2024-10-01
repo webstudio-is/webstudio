@@ -233,17 +233,6 @@ test("compute inherited styles", () => {
           "value": "antialiased",
         },
       },
-      "fontFamily": {
-        "instanceId": "1",
-        "value": {
-          "type": "fontFamily",
-          "value": [
-            "Arial",
-            "Roboto",
-            "sans-serif",
-          ],
-        },
-      },
       "fontSize": {
         "instanceId": "1",
         "styleSourceId": "styleSourceId1",
@@ -259,14 +248,6 @@ test("compute inherited styles", () => {
         "value": {
           "type": "keyword",
           "value": "600",
-        },
-      },
-      "lineHeight": {
-        "instanceId": "1",
-        "value": {
-          "type": "unit",
-          "unit": "number",
-          "value": 1.2,
         },
       },
     }

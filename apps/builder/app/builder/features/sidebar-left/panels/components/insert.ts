@@ -1,11 +1,11 @@
-import { type WsComponentMeta } from "@webstudio-is/react-sdk";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import { toast } from "@webstudio-is/design-system";
 import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedPage,
-  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import {
   computeInstancesConstraints,

@@ -7,7 +7,13 @@ import {
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
-import type { Breakpoint, Instance, StyleDecl } from "@webstudio-is/sdk";
+import {
+  ROOT_INSTANCE_ID,
+  type Breakpoint,
+  type Instance,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
+import { rootComponent } from "@webstudio-is/react-sdk";
 import {
   $breakpoints,
   $instances,
@@ -19,7 +25,6 @@ import {
   $selectedOrLastStyleSourceSelector,
   $styles,
   $styleSourceSelections,
-  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import {
   getComputedStyleDecl,
@@ -49,7 +54,9 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
 const $instanceComponents = computed(
   [$selectedInstanceSelector, $instances],
   (instanceSelector, instances) => {
-    const instanceComponents = new Map<Instance["id"], Instance["component"]>();
+    const instanceComponents = new Map<Instance["id"], Instance["component"]>([
+      [ROOT_INSTANCE_ID, rootComponent],
+    ]);
     if (instanceSelector === undefined) {
       return instanceComponents;
     }

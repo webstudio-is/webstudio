@@ -3,6 +3,7 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Instance,
+  ROOT_INSTANCE_ID,
   getStyleDeclKey,
   type StyleDecl,
   type StyleSourceSelection,
@@ -14,6 +15,7 @@ import {
   createImageValueTransformer,
   descendantComponent,
   type Params,
+  rootComponent,
 } from "@webstudio-is/react-sdk";
 import {
   type VarValue,
@@ -32,7 +34,6 @@ import {
   $selectedStyleState,
   $styleSourceSelections,
   $styles,
-  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles, $params } from "../stores";
@@ -330,9 +331,11 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
     presetSheet.addMediaRule("presets");
     for (const [component, meta] of metas) {
       for (const [tag, styles] of Object.entries(meta.presetStyle ?? {})) {
-        const rule = presetSheet.addNestingRule(
-          `${tag}:where([data-ws-component="${component}"])`
-        );
+        const selector =
+          component === rootComponent
+            ? ":root"
+            : `${tag}:where([data-ws-component="${component}"])`;
+        const rule = presetSheet.addNestingRule(selector);
         for (const declaration of styles) {
           rule.setDeclaration({
             breakpoint: "presets",

@@ -6,16 +6,15 @@
   src: url("/custom-folder/CormorantGaramond-Medium_-nWJ-OtHncaW9xDHQ9hSA_CBl88Oo59QKH_z9pCWva2.woff2")
     format("woff2");
 }
-html {
-  margin: 0;
-  display: grid;
-  min-height: 100%;
-}
 @media all {
-  :where(body.w-body) {
+  :root {
+    display: grid;
+    min-height: 100%;
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
+  }
+  :where(body.w-body) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

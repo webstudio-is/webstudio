@@ -1,4 +1,4 @@
-import type { Instance } from "@webstudio-is/sdk";
+import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
@@ -14,7 +14,6 @@ import {
   $styles,
   $selectedInstanceStates,
   $styleSourceSelections,
-  ROOT_INSTANCE_ID,
 } from "~/shared/nano-states";
 import htmlTags, { type HtmlTags } from "html-tags";
 import {

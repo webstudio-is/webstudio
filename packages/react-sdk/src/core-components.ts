@@ -3,6 +3,7 @@ import {
   PaintBrushIcon,
   EmbedIcon,
 } from "@webstudio-is/icons/svg";
+import { html } from "@webstudio-is/sdk/normalize.css";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -15,6 +16,9 @@ const rootMeta: WsComponentMeta = {
   type: "container",
   label: "Global Root",
   icon: EmbedIcon,
+  presetStyle: {
+    html,
+  },
 };
 
 const rootPropsMeta: WsComponentPropsMeta = {
