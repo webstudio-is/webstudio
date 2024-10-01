@@ -17,6 +17,8 @@ const fontWeights: Array<FontWeight> = [
 // For system fonts we can actually do it.
 const testFontWeights = (fontFamily: string) => {
   const canvas = document.createElement("canvas");
+  canvas.width = 200;
+  canvas.height = 20;
   const context = canvas.getContext("2d");
   const supportedWeights: Array<FontWeight> = ["400"];
 
@@ -26,11 +28,34 @@ const testFontWeights = (fontFamily: string) => {
 
   const weightWidthMap: Map<FontWeight, number> = new Map();
 
+  // Function to render text with a given font weight and measure "inked" pixels
+  // We can't just compare the text width using `context.measureText(..).width api` because many monospace
+  // fonts have the same width for all weights.
+  const measureInkCoverage = (fontWeight: string) => {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.font = `${fontWeight} 16px ${fontFamily}`;
+    context.fillText("abcdefgsw1234567890", 0, 16);
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+
+    let inkedPixels = 0;
+    // Loop through all pixel data and count "inked" pixels (non-transparent ones)
+    for (let i = 3; i < pixels.length; i += 4) {
+      // Loop through alpha channel
+      if (pixels[i] > 0) {
+        // If alpha > 0, it's an inked pixel
+        inkedPixels++;
+      }
+    }
+
+    return inkedPixels; // Return the count of inked pixels
+  };
+
   for (const testWeight of fontWeights) {
-    context.font = `${testWeight} 16px ${fontFamily}`;
     weightWidthMap.set(
       testWeight as FontWeight,
-      context.measureText("abcdefgsw1234567890").width
+      measureInkCoverage(testWeight)
     );
   }
 
