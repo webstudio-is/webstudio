@@ -107,11 +107,14 @@ export const subscribeFondLoadingDone = ({
 };
 
 export const detectSupportedFontWeights = (stack: string) => {
-  const cache = new Map($detectedFontsWeights.get());
-  // Detecting immediately in case its a font that is already loaded, otheriwese
-  // it will be detected correctly when the font is loaded and in the meantime the detected
-  // value may be incorrect due to the fallback font.
-  const supportedWeights = testFontWeights(stack);
-  cache.set(stack, supportedWeights);
-  $detectedFontsWeights.set(cache);
+  // Delaying it to potentially have less work done in the previous frame.
+  requestAnimationFrame(() => {
+    const cache = new Map($detectedFontsWeights.get());
+    // Detecting immediately in case its a font that is already loaded, otheriwese
+    // it will be detected correctly when the font is loaded and in the meantime the detected
+    // value may be incorrect due to the fallback font.
+    const supportedWeights = testFontWeights(stack);
+    cache.set(stack, supportedWeights);
+    $detectedFontsWeights.set(cache);
+  });
 };
