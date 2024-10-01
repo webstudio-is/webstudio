@@ -16,6 +16,7 @@ const user = {
   image: null,
   username: "Taylor",
   teamId: null,
+  provider: "github",
 };
 
 const createRouter = (element: JSX.Element) =>

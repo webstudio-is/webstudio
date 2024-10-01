@@ -65,7 +65,6 @@
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/postrest": "workspace:*",
-    "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",

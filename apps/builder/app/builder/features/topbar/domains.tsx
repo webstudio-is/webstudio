@@ -19,7 +19,6 @@ import {
   ExternalLinkIcon,
   CopyIcon,
 } from "@webstudio-is/icons";
-import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   startTransition,
@@ -39,6 +38,7 @@ import DomainCheckbox from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 
 export type Domain = Project["domainsVirtual"][number];
+type DomainStatus = Project["domainsVirtual"][number]["status"];
 
 const InputEllipsis = styled(InputField, {
   "&>input": {

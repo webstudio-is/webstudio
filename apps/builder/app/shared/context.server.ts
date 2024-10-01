@@ -7,7 +7,6 @@ import { entryApi } from "./entri/entri-api.server";
 import { getUserPlanFeatures } from "./db/user-plan-features.server";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postrest/index.server";
-import { prisma } from "@webstudio-is/prisma-client";
 import { builderAuthenticator } from "~/services/builder-auth.server";
 import { readLoginSessionBloomFilter } from "~/services/session.server";
 import type { BloomFilter } from "~/services/bloom-filter.server";
@@ -40,29 +39,24 @@ export const extractAuthFromRequest = async (request: Request) => {
   };
 };
 
-const createTokenAuthorizationContext = async (authToken: string) => {
-  const projectOwnerIdByToken = await prisma.authorizationToken.findUnique({
-    where: {
-      token: authToken,
-    },
-    select: {
-      project: {
-        select: {
-          id: true,
-          userId: true,
-        },
-      },
-    },
-  });
+const createTokenAuthorizationContext = async (
+  authToken: string,
+  postgrest: AppContext["postgrest"]
+) => {
+  const projectOwnerIdByToken = await postgrest.client
+    .from("AuthorizationToken")
+    .select("project:Project(id, userId)")
+    .eq("token", authToken)
+    .single();
 
-  if (projectOwnerIdByToken === null) {
+  if (projectOwnerIdByToken.error) {
     throw new Error(`Project owner can't be found for token ${authToken}`);
   }
 
-  const ownerId = projectOwnerIdByToken.project.userId;
+  const ownerId = projectOwnerIdByToken.data.project?.userId ?? null;
   if (ownerId === null) {
     throw new Error(
-      `Project ${projectOwnerIdByToken.project.id} has null userId`
+      `Project ${projectOwnerIdByToken.data.project?.id} has null userId`
     );
   }
 
@@ -74,7 +68,8 @@ const createTokenAuthorizationContext = async (authToken: string) => {
 };
 
 const createAuthorizationContext = async (
-  request: Request
+  request: Request,
+  postgrest: AppContext["postgrest"]
 ): Promise<AppContext["authorization"]> => {
   const { authToken, isServiceCall, sessionData } =
     await extractAuthFromRequest(request);
@@ -87,7 +82,7 @@ const createAuthorizationContext = async (
   }
 
   if (authToken != null) {
-    return await createTokenAuthorizationContext(authToken);
+    return await createTokenAuthorizationContext(authToken, postgrest);
   }
 
   if (sessionData?.userId != null) {
@@ -155,7 +150,8 @@ const createEntriContext = () => {
 };
 
 const createUserPlanContext = async (
-  authorization: AppContext["authorization"]
+  authorization: AppContext["authorization"],
+  postgrest: AppContext["postgrest"]
 ) => {
   const ownerId =
     authorization.type === "token"
@@ -164,7 +160,9 @@ const createUserPlanContext = async (
         ? authorization.userId
         : undefined;
 
-  const planFeatures = ownerId ? await getUserPlanFeatures(ownerId) : undefined;
+  const planFeatures = ownerId
+    ? await getUserPlanFeatures(ownerId, postgrest)
+    : undefined;
   return planFeatures;
 };
 
@@ -193,18 +191,27 @@ export const createPostrestContext = () => {
  * argument buildEnv==="prod" only if we are loading project with production build
  */
 export const createContext = async (request: Request): Promise<AppContext> => {
-  const authorization = await createAuthorizationContext(request);
+  const postgrest = createPostrestContext();
+  const authorization = await createAuthorizationContext(request, postgrest);
 
   const domain = createDomainContext();
   const deployment = createDeploymentContext(getRequestOrigin(request.url));
   const entri = createEntriContext();
-  const userPlanFeatures = await createUserPlanContext(authorization);
+  const userPlanFeatures = await createUserPlanContext(
+    authorization,
+    postgrest
+  );
   const trpcCache = createTrpcCache();
-  const postgrest = createPostrestContext();
 
   const createTokenContext = async (authToken: string) => {
-    const authorization = await createTokenAuthorizationContext(authToken);
-    const userPlanFeatures = await createUserPlanContext(authorization);
+    const authorization = await createTokenAuthorizationContext(
+      authToken,
+      postgrest
+    );
+    const userPlanFeatures = await createUserPlanContext(
+      authorization,
+      postgrest
+    );
 
     return {
       authorization,
