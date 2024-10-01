@@ -32,7 +32,6 @@ import {
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
-import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
@@ -58,6 +57,7 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
+import { initCopyPaste } from "~/shared/copy-paste";
 
 registerContainers();
 
@@ -285,9 +285,7 @@ export const Builder = ({
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
-  // We need to initialize this in both canvas and builder,
-  // because the events will fire in either one, depending on where the focus is
-  useCopyPaste();
+
   useSetWindowTitle();
 
   const iframeRefCallback = mergeRefs((element: HTMLIFrameElement | null) => {
@@ -299,6 +297,13 @@ export const Builder = ({
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
 
   useEffect(() => {
+    const abortController = new AbortController();
+    // We need to initialize this in both canvas and builder,
+    // because the events will fire in either one, depending on where the focus is
+    // @todo we need to forward the events from canvas to builder and avoid importing this
+    // in both places
+    initCopyPaste(abortController);
+
     const unsubscribe = $loadingState.subscribe((loadingState) => {
       setLoadingState(loadingState);
       // We need to stop updating it once it's ready in case in the future it changes again.
@@ -306,7 +311,10 @@ export const Builder = ({
         unsubscribe();
       }
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      abortController.abort();
+    };
   }, []);
 
   const canvasUrl = getCanvasUrl();

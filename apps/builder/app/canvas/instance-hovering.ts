@@ -11,7 +11,11 @@ import type { InstanceSelector } from "~/shared/tree-utils";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
-export const subscribeInstanceHovering = () => {
+export const subscribeInstanceHovering = ({
+  signal,
+}: {
+  signal: AbortSignal;
+}) => {
   let hoveredElement: undefined | Element = undefined;
   let isScrolling = false;
 
@@ -50,7 +54,7 @@ export const subscribeInstanceHovering = () => {
     });
   };
 
-  const eventOptions = { passive: true };
+  const eventOptions = { passive: true, signal };
   window.addEventListener("mouseover", handleMouseOver, eventOptions);
   window.addEventListener("mouseout", handleMouseOut, eventOptions);
 
@@ -115,8 +119,6 @@ export const subscribeInstanceHovering = () => {
   );
 
   return () => {
-    window.removeEventListener("mouseover", handleMouseOver);
-    window.removeEventListener("mouseout", handleMouseOut);
     unsubscribeScrollState();
     clearTimeout(mouseOutTimeoutId);
     unsubscribeHoveredInstanceId();

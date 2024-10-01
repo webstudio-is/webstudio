@@ -7,7 +7,11 @@ import {
   $collaborativeInstanceRect,
 } from "~/shared/nano-states";
 
-export const updateCollaborativeInstanceRect = () => {
+export const updateCollaborativeInstanceRect = ({
+  signal,
+}: {
+  signal: AbortSignal;
+}) => {
   let frameHandler: number = -1;
   let elements: HTMLElement[] = [];
 
@@ -43,8 +47,8 @@ export const updateCollaborativeInstanceRect = () => {
     }
   });
 
-  return () => {
+  signal.addEventListener("abort", () => {
     unsubscribe();
     cancelAnimationFrame(frameHandler);
-  };
+  });
 };

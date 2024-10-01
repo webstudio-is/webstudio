@@ -81,9 +81,11 @@ const testFontWeights = (fontFamily: string) => {
   return supportedWeights.sort();
 };
 
-export const subscribeFontLoadingDone = () => {
-  // @todo move it to the call-site
-  const abortController = new AbortController();
+export const subscribeFontLoadingDone = ({
+  signal,
+}: {
+  signal: AbortSignal;
+}) => {
   document.fonts.addEventListener(
     "loadingdone",
     () => {
@@ -95,12 +97,8 @@ export const subscribeFontLoadingDone = () => {
       }
       $detectedFontsWeights.set(cache);
     },
-    { signal: abortController.signal }
+    { signal }
   );
-
-  return () => {
-    abortController.abort();
-  };
 };
 
 export const detectSupportedFontWeights = (stack: string) => {
