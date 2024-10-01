@@ -6,27 +6,36 @@ import {
 import { Button } from "./button";
 import { Box } from "./box";
 import { InputField } from "./input-field";
+import { useState } from "react";
 
 export default {
   title: "Library/Tooltip",
 };
 
 export const TooltipDelay = () => {
+  const [error, setError] = useState<string[]>([]);
   return (
     <TooltipProvider>
       <TooltipDesign content="HELLO" delayDuration={1000}>
         <Button>Hover me</Button>
       </TooltipDesign>
 
-      <InputErrorsTooltip errors={[]} side={"right"}>
+      <InputErrorsTooltip errors={error} side={"right"}>
         <InputField
           id="input"
           placeholder="Input"
           css={{
             width: 200,
           }}
+          onChange={(event) => {
+            setError(event.target.value !== "" ? ["Error"] : []);
+          }}
         />
       </InputErrorsTooltip>
+
+      <TooltipDesign content={undefined} delayDuration={1000}>
+        <Button>Hover me</Button>
+      </TooltipDesign>
     </TooltipProvider>
   );
 };
