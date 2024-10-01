@@ -91,10 +91,6 @@ export const Tooltip = forwardRef(
       }
     }, [open]);
 
-    if (content == null) {
-      return children;
-    }
-
     return (
       <TooltipPrimitive.Root
         open={open}
