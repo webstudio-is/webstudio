@@ -89,19 +89,21 @@ export const subscribeFontLoadingDone = ({
 }: {
   signal: AbortSignal;
 }) => {
-  document.fonts.addEventListener(
-    "loadingdone",
-    () => {
-      const cache = new Map($detectedFontsWeights.get());
-      // We need to re-detect all fonts because we don't know which fonts were loaded.
-      for (const [stack] of cache) {
-        const supportedWeights = testFontWeights(stack);
-        cache.set(stack, supportedWeights);
-      }
-      $detectedFontsWeights.set(cache);
-    },
-    { signal }
-  );
+  return () => {
+    document.fonts.addEventListener(
+      "loadingdone",
+      () => {
+        const cache = new Map($detectedFontsWeights.get());
+        // We need to re-detect all fonts because we don't know which fonts were loaded.
+        for (const [stack] of cache) {
+          const supportedWeights = testFontWeights(stack);
+          cache.set(stack, supportedWeights);
+        }
+        $detectedFontsWeights.set(cache);
+      },
+      { signal }
+    );
+  };
 };
 
 export const detectSupportedFontWeights = (stack: string) => {

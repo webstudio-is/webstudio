@@ -130,6 +130,7 @@ const useElementsTree = (
 };
 
 const DesignMode = () => {
+  const abortController = new AbortController();
   useManageDesignModeStyles();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
@@ -137,18 +138,16 @@ const DesignMode = () => {
   // @todo we need to forward the events from canvas to builder and avoid importing this
   // in both places
   useCopyPaste();
+
   useScrollNewInstanceIntoView();
   useSelectedInstance();
-  useMount(() => {
-    const abortController = new AbortController();
-    updateCollaborativeInstanceRect();
-    subscribeInstanceSelection();
-    subscribeInstanceHovering();
-    subscribeInspectorEdits();
-    subscribeFontLoadingDone({ signal: abortController.signal });
-    return () => {
-      abortController.abort();
-    };
+  useEffect(updateCollaborativeInstanceRect, []);
+  useEffect(subscribeInstanceSelection, []);
+  useEffect(subscribeInstanceHovering, []);
+  useEffect(subscribeInspectorEdits, []);
+  useMount(subscribeFontLoadingDone({ signal: abortController.signal }));
+  useEffect(() => () => {
+    abortController.abort();
   });
   return null;
 };
