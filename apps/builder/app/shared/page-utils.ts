@@ -10,6 +10,7 @@ import {
   type Page,
   type Pages,
   type WebstudioData,
+  ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import {
   extractWebstudioFragment,
@@ -94,10 +95,16 @@ export const insertPageCopyMutable = ({
   if (page === undefined) {
     return;
   }
-  const fragment = extractWebstudioFragment(source.data, page.rootInstanceId);
+  // copy paste project :root
+  insertWebstudioFragmentCopy({
+    data: target.data,
+    fragment: extractWebstudioFragment(source.data, ROOT_INSTANCE_ID),
+    availableDataSources: new Set(),
+  });
+  // copy paste page body
   const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
     data: target.data,
-    fragment,
+    fragment: extractWebstudioFragment(source.data, page.rootInstanceId),
     availableDataSources: new Set(),
   });
   const newPageId = nanoid();
