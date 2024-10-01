@@ -146,6 +146,7 @@ const DesignMode = () => {
   useEffect(subscribeInstanceHovering, []);
   useEffect(subscribeInspectorEdits, []);
   useMount(subscribeFondLoadingDone({ signal }));
+  return null;
 };
 
 type CanvasProps = {
