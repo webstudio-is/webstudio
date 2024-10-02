@@ -151,10 +151,6 @@ const DesignMode = () => {
   }, [debounceEffect]);
 
   useEffect(() => {
-    return subscribeSelected(debounceEffect);
-  }, [debounceEffect]);
-
-  useEffect(() => {
     const abortController = new AbortController();
     // We need to initialize this in both canvas and builder,
     // because the events will fire in either one, depending on where the focus is
