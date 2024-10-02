@@ -194,6 +194,17 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test("parse first pseudo class as selector", () => {
+    expect(parseCss(`:first-pseudo:my-state { color: #ff0000 }`)).toEqual([
+      {
+        selector: ":first-pseudo",
+        state: ":my-state",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
+  });
+
   test("parse pseudo element", () => {
     expect(parseCss(`input::placeholder { color: #ff0000 }`)).toEqual([
       {

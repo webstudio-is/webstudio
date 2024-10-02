@@ -37,6 +37,14 @@ test("find all tree instances excluding slot descendants", () => {
   ).toEqual(new Set(["box1", "slot", "box2"]));
 });
 
+test("include not existing/virtual instance", () => {
+  const { instances } = renderJsx(<$.Body ws:id="1"></$.Body>);
+  expect(findTreeInstanceIds(instances, ":root")).toEqual(new Set([":root"]));
+  expect(
+    findTreeInstanceIdsExcludingSlotDescendants(instances, ":root")
+  ).toEqual(new Set([":root"]));
+});
+
 test("extract short name and namespace from component name", () => {
   expect(parseComponentName("Box")).toEqual([undefined, "Box"]);
   expect(parseComponentName("radix:Box")).toEqual(["radix", "Box"]);

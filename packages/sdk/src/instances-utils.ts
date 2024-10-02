@@ -26,7 +26,7 @@ export const findTreeInstanceIds = (
   instances: Instances,
   rootInstanceId: Instance["id"]
 ) => {
-  const ids = new Set<Instance["id"]>();
+  const ids = new Set<Instance["id"]>([rootInstanceId]);
   traverseInstances(instances, rootInstanceId, (instance) => {
     ids.add(instance.id);
   });
@@ -37,7 +37,7 @@ export const findTreeInstanceIdsExcludingSlotDescendants = (
   instances: Instances,
   rootInstanceId: Instance["id"]
 ) => {
-  const ids = new Set<Instance["id"]>();
+  const ids = new Set<Instance["id"]>([rootInstanceId]);
   traverseInstances(instances, rootInstanceId, (instance) => {
     ids.add(instance.id);
     if (instance.component === "Slot") {
