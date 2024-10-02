@@ -248,6 +248,8 @@ export const ColorPicker = ({
     </Popover>
   );
 
+  return prefix;
+
   return (
     <CssValueInput
       aria-disabled={disabled}
