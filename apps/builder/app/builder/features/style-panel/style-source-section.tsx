@@ -11,6 +11,7 @@ import {
   type StyleSources,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
+import { parseCss } from "@webstudio-is/css-data";
 import {
   Flex,
   Dialog,
@@ -40,6 +41,7 @@ import {
   $styleSourceSelections,
   $styleSources,
   $styles,
+  $selectedBreakpoint,
 } from "~/shared/nano-states";
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
@@ -392,6 +394,30 @@ const renameStyleSource = (
   });
 };
 
+const pasteStyles = async (
+  styleSourceId: StyleSource["id"],
+  state: undefined | string
+) => {
+  const text = await navigator.clipboard.readText();
+  const parsedStyles = parseCss(`selector{${text}}`);
+  const breakpointId = $selectedBreakpoint.get()?.id;
+  if (breakpointId === undefined) {
+    return;
+  }
+  serverSyncStore.createTransaction([$styles], (styles) => {
+    for (const { property, value } of parsedStyles) {
+      const styleDecl: StyleDecl = {
+        breakpointId,
+        styleSourceId,
+        state,
+        property,
+        value,
+      };
+      styles.set(getStyleDeclKey(styleDecl), styleDecl);
+    }
+  });
+};
+
 const clearStyles = (styleSourceId: StyleSource["id"]) => {
   serverSyncStore.createTransaction([$styles], (styles) => {
     for (const [styleDeclKey, styleDecl] of styles) {
@@ -535,6 +561,12 @@ export const StyleSourcesSection = () => {
         onConvertToToken={(id) => {
           convertLocalStyleSourceToToken(id);
           setEditingItem(id);
+        }}
+        onPasteStyles={(styleSourceSelector) => {
+          pasteStyles(
+            styleSourceSelector.styleSourceId,
+            styleSourceSelector.state
+          );
         }}
         onClearStyles={clearStyles}
         onRemoveItem={(id) => {
