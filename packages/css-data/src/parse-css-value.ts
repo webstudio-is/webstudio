@@ -243,14 +243,14 @@ const parseLiteral = (
         children: new List<CssNode>().fromArray(fallback),
       }).trim();
       if (name.type === "Identifier") {
-        return {
+        const value: VarValue = {
           type: "var",
           value: name.name.slice("--".length),
-          fallbacks:
-            fallback.length === 0
-              ? []
-              : [{ type: "unparsed", value: fallbackString }],
         };
+        if (fallback.length > 0) {
+          value.fallback = { type: "unparsed", value: fallbackString };
+        }
+        return value;
       }
     }
 

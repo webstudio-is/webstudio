@@ -1,6 +1,10 @@
 import type { HtmlTags } from "html-tags";
 import { html, properties } from "@webstudio-is/css-data";
-import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
+import type {
+  StyleValue,
+  StyleProperty,
+  VarFallback,
+} from "@webstudio-is/css-engine";
 import {
   type Instance,
   type StyleDecl,
@@ -350,7 +354,7 @@ export const getComputedStyleDecl = ({
       }
       usedCustomProperties.add(customProperty);
 
-      const fallback = computedValue.fallbacks.at(0);
+      const fallback: undefined | VarFallback = computedValue.fallback;
       const customPropertyValue = getComputedStyleDecl({
         model,
         // resolve custom properties on instance they are defined

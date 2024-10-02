@@ -256,7 +256,7 @@ const AdvancedPropertyValue = ({
           styleValue.value.startsWith("--")
         ) {
           setProperty(property)(
-            { type: "var", value: styleValue.value.slice(2), fallbacks: [] },
+            { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {

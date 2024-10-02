@@ -17,7 +17,7 @@ export const property = (
   if (value.startsWith("--")) {
     return {
       property,
-      value: { type: "var", value: value.slice(2), fallbacks: [] },
+      value: { type: "var", value: value.slice(2) },
     };
   }
   return {

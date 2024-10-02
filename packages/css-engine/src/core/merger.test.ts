@@ -53,9 +53,9 @@ test("merge border with vars", () => {
     toStringMap(
       mergeStyles(
         new Map([
-          ["border-width", { type: "var", value: "width", fallbacks: [] }],
-          ["border-style", { type: "var", value: "style", fallbacks: [] }],
-          ["border-color", { type: "var", value: "color", fallbacks: [] }],
+          ["border-width", { type: "var", value: "width" }],
+          ["border-style", { type: "var", value: "style" }],
+          ["border-color", { type: "var", value: "color" }],
         ])
       )
     )
@@ -72,11 +72,11 @@ test("should not merge border with initial, inherit or unset", () => {
             {
               type: "var",
               value: "width",
-              fallbacks: [{ type: "keyword", value: "unset" }],
+              fallback: { type: "keyword", value: "unset" },
             },
           ],
-          ["border-style", { type: "var", value: "style", fallbacks: [] }],
-          ["border-color", { type: "var", value: "color", fallbacks: [] }],
+          ["border-style", { type: "var", value: "style" }],
+          ["border-color", { type: "var", value: "color" }],
         ])
       )
     )
@@ -238,12 +238,7 @@ test("merge white-space with vars", () => {
   expect(
     toStringMap(
       mergeStyles(
-        new Map([
-          [
-            "white-space-collapse",
-            { type: "var", value: "collapse", fallbacks: [] },
-          ],
-        ])
+        new Map([["white-space-collapse", { type: "var", value: "collapse" }]])
       )
     )
   ).toEqual([["white-space-collapse", "var(--collapse)"]]);
@@ -284,8 +279,8 @@ test("merge text-wrap with vars", () => {
     toStringMap(
       mergeStyles(
         new Map([
-          ["text-wrap-mode", { type: "var", value: "mode", fallbacks: [] }],
-          ["text-wrap-style", { type: "var", value: "style", fallbacks: [] }],
+          ["text-wrap-mode", { type: "var", value: "mode" }],
+          ["text-wrap-style", { type: "var", value: "style" }],
         ])
       )
     )
@@ -293,9 +288,7 @@ test("merge text-wrap with vars", () => {
   expect(
     toStringMap(
       mergeStyles(
-        new Map([
-          ["text-wrap-style", { type: "var", value: "style", fallbacks: [] }],
-        ])
+        new Map([["text-wrap-style", { type: "var", value: "style" }]])
       )
     )
   ).toEqual([["text-wrap", "var(--style)"]]);
