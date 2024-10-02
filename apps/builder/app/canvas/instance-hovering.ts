@@ -28,35 +28,41 @@ export const subscribeInstanceHovering = ({
 
   let mouseOutTimeoutId: TimeoutId = undefined;
 
-  const handleMouseOver = (event: MouseEvent) => {
-    if (event.target instanceof Element) {
-      const element = event.target.closest(`[${idAttribute}]`) ?? undefined;
-      if (element !== undefined) {
-        clearTimeout(mouseOutTimeoutId);
-        // store hovered element locally to update outline when scroll ends
-        hoveredElement = element;
-        updateHoveredInstance(element);
-      }
-    }
-  };
-
-  const handleMouseOut = () => {
-    mouseOutTimeoutId = setTimeout(() => {
-      hoveredElement = undefined;
-      $hoveredInstanceSelector.set(undefined);
-      $hoveredInstanceOutline.set(undefined);
-    }, 100);
-
-    // Fixes the bug, that new hover occures during timeout
-    const unsubscribe = $hoveredInstanceSelector.listen(() => {
-      clearTimeout(mouseOutTimeoutId);
-      unsubscribe();
-    });
-  };
-
   const eventOptions = { passive: true, signal };
-  window.addEventListener("mouseover", handleMouseOver, eventOptions);
-  window.addEventListener("mouseout", handleMouseOut, eventOptions);
+
+  window.addEventListener(
+    "mouseover",
+    (event: MouseEvent) => {
+      if (event.target instanceof Element) {
+        const element = event.target.closest(`[${idAttribute}]`) ?? undefined;
+        if (element !== undefined) {
+          clearTimeout(mouseOutTimeoutId);
+          // store hovered element locally to update outline when scroll ends
+          hoveredElement = element;
+          updateHoveredInstance(element);
+        }
+      }
+    },
+    eventOptions
+  );
+
+  window.addEventListener(
+    "mouseout",
+    () => {
+      mouseOutTimeoutId = setTimeout(() => {
+        hoveredElement = undefined;
+        $hoveredInstanceSelector.set(undefined);
+        $hoveredInstanceOutline.set(undefined);
+      }, 100);
+
+      // Fixes the bug, that new hover occures during timeout
+      const unsubscribe = $hoveredInstanceSelector.listen(() => {
+        clearTimeout(mouseOutTimeoutId);
+        unsubscribe();
+      });
+    },
+    eventOptions
+  );
 
   const updateHoveredRect = (
     elements: Element[],
@@ -118,9 +124,9 @@ export const subscribeInstanceHovering = ({
     }
   );
 
-  return () => {
+  signal.addEventListener("abort", () => {
     unsubscribeScrollState();
     clearTimeout(mouseOutTimeoutId);
     unsubscribeHoveredInstanceId();
-  };
+  });
 };
