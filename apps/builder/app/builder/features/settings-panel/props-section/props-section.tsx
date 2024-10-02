@@ -181,11 +181,8 @@ export const PropsSection = (props: PropsSectionProps) => {
               }}
             />
           )}
-          {logic.addedProps.map((item, index) =>
-            renderProperty(props, item, {
-              deletable: true,
-              autoFocus: index === 0,
-            })
+          {logic.addedProps.map((item) =>
+            renderProperty(props, item, { deletable: true })
           )}
           {logic.initialProps.map((item) => renderProperty(props, item))}
         </Flex>
