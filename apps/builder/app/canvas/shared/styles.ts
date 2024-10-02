@@ -159,7 +159,7 @@ const toVarValue = (styleDecl: StyleDecl): undefined | VarValue => {
       // escape complex selectors in state like ":hover"
       // setProperty and removeProperty escape automatically
       value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
-      fallbacks: [value],
+      fallback: { type: "unparsed", value: toValue(value) },
     };
   }
 };

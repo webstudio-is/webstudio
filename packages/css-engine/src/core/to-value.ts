@@ -53,12 +53,10 @@ export const toValue = (
     return families.join(", ");
   }
   if (value.type === "var") {
-    const fallbacks = [];
-    for (const fallback of value.fallbacks) {
-      fallbacks.push(toValue(fallback, transformValue));
+    let fallbacksString = "";
+    if (value.fallback) {
+      fallbacksString = `, ${toValue(value.fallback, transformValue)}`;
     }
-    const fallbacksString =
-      fallbacks.length > 0 ? `, ${fallbacks.join(", ")}` : "";
     return `var(--${value.value}${fallbacksString})`;
   }
 

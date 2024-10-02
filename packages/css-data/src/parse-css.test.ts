@@ -410,7 +410,7 @@ describe("Parse CSS", () => {
       {
         selector: "a",
         property: "color",
-        value: { type: "var", value: "color", fallbacks: [] },
+        value: { type: "var", value: "color" },
       },
       {
         selector: "a",
@@ -418,7 +418,7 @@ describe("Parse CSS", () => {
         value: {
           type: "var",
           value: "color",
-          fallbacks: [{ type: "unparsed", value: "red" }],
+          fallback: { type: "unparsed", value: "red" },
         },
       },
     ]);

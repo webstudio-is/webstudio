@@ -752,8 +752,8 @@ const traverseStyleValue = (
     return;
   }
   if (value.type === "var") {
-    for (const item of value.fallbacks) {
-      traverseStyleValue(item, callback);
+    if (value.fallback) {
+      traverseStyleValue(value.fallback, callback);
     }
     return;
   }

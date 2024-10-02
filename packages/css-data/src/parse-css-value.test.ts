@@ -541,12 +541,11 @@ test("support custom properties var reference", () => {
   expect(parseCssValue("color", "var(--color)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [],
   });
   expect(parseCssValue("color", "var(--color, red)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [{ type: "unparsed", value: "red" }],
+    fallback: { type: "unparsed", value: "red" },
   });
 });
 
@@ -569,12 +568,11 @@ test("support custom properties var reference in custom property", () => {
   expect(parseCssValue("--bg", "var(--color)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [],
   });
   expect(parseCssValue("--bg", "var(--color, red)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [{ type: "unparsed", value: "red" }],
+    fallback: { type: "unparsed", value: "red" },
   });
 });
 
