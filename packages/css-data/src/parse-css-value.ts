@@ -456,7 +456,11 @@ export const parseCssValue = (
     );
     // parse only references in custom properties
     if (property.startsWith("--")) {
-      if (matchedValue?.type === "var") {
+      if (
+        matchedValue?.type === "var" ||
+        matchedValue?.type === "unit" ||
+        matchedValue?.type === "rgb"
+      ) {
         return matchedValue;
       }
       return { type: "unparsed", value: input };

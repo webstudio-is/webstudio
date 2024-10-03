@@ -48,10 +48,10 @@ export const buildOptions = (
 
   const options: UnitOption[] = [];
 
-  if (property in properties === false) {
-    return options;
-  }
-  const { unitGroups } = properties[property as keyof typeof properties];
+  // show at least current unit when no property meta is available
+  // for example in custom properties
+  const unitGroups =
+    properties[property as keyof typeof properties]?.unitGroups ?? [];
 
   for (const unitGroup of unitGroups) {
     if (unitGroup === "number") {

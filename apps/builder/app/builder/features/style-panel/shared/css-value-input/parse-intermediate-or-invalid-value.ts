@@ -20,13 +20,6 @@ export const parseIntermediateOrInvalidValue = (
     value = value.slice(0, -1);
   }
 
-  if (property.startsWith("--")) {
-    return {
-      type: "unparsed",
-      value,
-    };
-  }
-
   // When user enters a number, we don't know if its a valid unit value,
   // so we are going to parse it with a unit and if its not invalid - we take it.
   const ast = parse(value, { context: "value" });
