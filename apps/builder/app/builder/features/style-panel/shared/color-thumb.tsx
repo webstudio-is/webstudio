@@ -1,6 +1,11 @@
 import { rawTheme, theme, css, type CSS } from "@webstudio-is/design-system";
 import { colord, type RgbaColor } from "colord";
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import {
+  forwardRef,
+  type ElementRef,
+  type ComponentProps,
+  type CSSProperties,
+} from "react";
 import { clamp } from "~/shared/math-utils";
 
 const whiteColor: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
@@ -44,39 +49,47 @@ const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => {
   };
 };
 
+const colorThumbSize = "--color-thumb-size";
+
 const thumbStyle = css({
-  width: theme.spacing[10],
-  height: theme.spacing[10],
+  width: `var(${colorThumbSize}, 20px)`,
+  height: `var(${colorThumbSize}, 20px)`,
   backgroundBlendMode: "difference",
   borderRadius: theme.borderRadius[2],
   borderWidth: 0,
   borderStyle: "solid",
 });
 
-export const ColorThumb = forwardRef<
-  ElementRef<"button">,
-  Omit<ComponentProps<"button">, "color"> & { color?: RgbaColor; css?: CSS }
->(({ color = transparentColor, css, ...rest }, ref) => {
-  const background =
-    color === undefined || color.a < 1
-      ? // Chessboard pattern 5x5
-        `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${colord(color).toRgbString()}`
-      : colord(color).toRgbString();
-  const borderColor = calcBorderColor(color);
+type Props = Omit<ComponentProps<"button">, "color"> & {
+  color?: RgbaColor;
+  css?: CSS;
+  size?: 1 | 2;
+};
 
-  return (
-    <button
-      {...rest}
-      ref={ref}
-      style={{
-        background,
-        borderColor: borderColor.toRgbString(),
-        // Border becomes visible when color is close to white so that the thumb is visible in the white input.
-        borderWidth: borderColor.alpha() === 0 ? 0 : 1,
-      }}
-      className={thumbStyle({ css })}
-    />
-  );
-});
+export const ColorThumb = forwardRef<ElementRef<"button">, Props>(
+  ({ color = transparentColor, size = 2, css, ...rest }, ref) => {
+    const background =
+      color === undefined || color.a < 1
+        ? // Chessboard pattern 5x5
+          `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${colord(color).toRgbString()}`
+        : colord(color).toRgbString();
+    const borderColor = calcBorderColor(color);
+
+    return (
+      <button
+        {...rest}
+        ref={ref}
+        style={{
+          background,
+          borderColor: borderColor.toRgbString(),
+          // Border becomes visible when color is close to white so that the thumb is visible in the white input.
+          borderWidth: borderColor.alpha() === 0 ? 0 : 1,
+          [colorThumbSize as keyof CSSProperties]: size === 1 ? "16px" : "20px",
+        }}
+        className={thumbStyle({ css })}
+      />
+    );
+  }
+);
 
 ColorThumb.displayName = "ColorThumb";
