@@ -1,5 +1,6 @@
 import { colord } from "colord";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -20,7 +21,7 @@ import {
   properties as propertiesData,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import { useStore } from "@nanostores/react";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
   hyphenateProperty,
   toValue,
@@ -35,6 +36,8 @@ import { styleConfigByName } from "../../shared/configs";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 import {
   $definedStyles,
+  $matchingBreakpoints,
+  getDefinedStyles,
   useComputedStyleDecl,
   useComputedStyles,
 } from "../../shared/model";
@@ -42,6 +45,11 @@ import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
 import { sections } from "../sections";
 import { ColorPopover } from "../../shared/color-picker";
+import {
+  $selectedInstanceSelector,
+  $styles,
+  $styleSourceSelections,
+} from "~/shared/nano-states";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -206,7 +214,7 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
   );
 };
 
-const $customProperties = computed($definedStyles, (definedStyles) => {
+const $availableCustomProperties = computed($definedStyles, (definedStyles) => {
   const customProperties = new Set<StyleProperty>();
   for (const { property } of definedStyles) {
     if (property.startsWith("--")) {
@@ -224,7 +232,7 @@ const AdvancedPropertyValue = ({
   property: StyleProperty;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
-  const customProperties = useStore($customProperties);
+  const availableCustomProperties = useStore($availableCustomProperties);
   const { items } = styleConfigByName(property);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -267,7 +275,7 @@ const AdvancedPropertyValue = ({
           value: item.name,
         })),
         // very basic custom properties autocomplete
-        ...Array.from(customProperties).map((name) => ({
+        ...Array.from(availableCustomProperties).map((name) => ({
           type: "keyword" as const,
           value: name,
         })),
@@ -299,23 +307,46 @@ const initialProperties = new Set<StyleProperty>([
   "opacity",
 ]);
 
-const $advancedProperties = computed($definedStyles, (definedStyles) => {
-  // All properties used by the panels except the advanced panel
-  const baseProperties = new Set<StyleProperty>([]);
-  for (const { properties } of sections.values()) {
-    for (const property of properties) {
-      baseProperties.add(property);
+const $advancedProperties = computed(
+  [
+    $selectedInstanceSelector,
+    $styleSourceSelections,
+    $matchingBreakpoints,
+    $styles,
+  ],
+  (instanceSelector, styleSourceSelections, matchingBreakpoints, styles) => {
+    if (instanceSelector === undefined) {
+      return [];
     }
-  }
-  const advancedProperties = new Set<StyleProperty>(initialProperties);
-  for (const { property, listed } of definedStyles) {
-    // exclude properties from style panel UI unless edited in advanced section
-    if (baseProperties.has(property) === false || listed) {
-      advancedProperties.add(property);
+    const instanceAndRootSelector =
+      instanceSelector[0] === ROOT_INSTANCE_ID
+        ? instanceSelector
+        : // prevent showing properties inherited from root
+          // to not bloat advanced panel
+          instanceSelector;
+    const definedStyles = getDefinedStyles({
+      instanceSelector: instanceAndRootSelector,
+      matchingBreakpoints,
+      styleSourceSelections,
+      styles,
+    });
+    // All properties used by the panels except the advanced panel
+    const baseProperties = new Set<StyleProperty>([]);
+    for (const { properties } of sections.values()) {
+      for (const property of properties) {
+        baseProperties.add(property);
+      }
     }
+    const advancedProperties = new Set<StyleProperty>(initialProperties);
+    for (const { property, listed } of definedStyles) {
+      // exclude properties from style panel UI unless edited in advanced section
+      if (baseProperties.has(property) === false || listed) {
+        advancedProperties.add(property);
+      }
+    }
+    return Array.from(advancedProperties).reverse();
   }
-  return Array.from(advancedProperties).reverse();
-});
+);
 
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);

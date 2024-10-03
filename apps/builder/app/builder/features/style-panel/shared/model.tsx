@@ -9,6 +9,8 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   ROOT_INSTANCE_ID,
+  Styles,
+  StyleSourceSelections,
   type Breakpoint,
   type Instance,
   type StyleDecl,
@@ -73,7 +75,7 @@ const $instanceComponents = computed(
   }
 );
 
-const $matchingBreakpoints = computed(
+export const $matchingBreakpoints = computed(
   [$breakpoints, $selectedBreakpoint],
   (breakpoints, selectedBreakpoint) => {
     const sortedBreakpoints = Array.from(breakpoints.values()).sort(
@@ -90,6 +92,55 @@ const $matchingBreakpoints = computed(
   }
 );
 
+export const getDefinedStyles = ({
+  instanceSelector,
+  matchingBreakpoints: matchingBreakpointsArray,
+  styleSourceSelections,
+  styles,
+}: {
+  instanceSelector: InstanceSelector;
+  matchingBreakpoints: Breakpoint["id"][];
+  styleSourceSelections: StyleSourceSelections;
+  styles: Styles;
+}) => {
+  const definedStyles = new Set<StyleDecl>();
+  const inheritedStyleSources = new Set();
+  const instanceStyleSources = new Set();
+  const matchingBreakpoints = new Set(matchingBreakpointsArray);
+  for (const instanceId of instanceSelector) {
+    const styleSources = styleSourceSelections.get(instanceId)?.values;
+    if (styleSources) {
+      for (const styleSourceId of styleSources) {
+        if (instanceId === instanceSelector[0]) {
+          instanceStyleSources.add(styleSourceId);
+        } else {
+          inheritedStyleSources.add(styleSourceId);
+        }
+      }
+    }
+  }
+  for (const styleDecl of styles.values()) {
+    if (
+      matchingBreakpoints.has(styleDecl.breakpointId) &&
+      instanceStyleSources.has(styleDecl.styleSourceId)
+    ) {
+      definedStyles.add(styleDecl);
+    }
+    const inherited =
+      properties[styleDecl.property as keyof typeof properties]?.inherited ??
+      // custom properties are always inherited
+      true;
+    if (
+      matchingBreakpoints.has(styleDecl.breakpointId) &&
+      inheritedStyleSources.has(styleDecl.styleSourceId) &&
+      inherited
+    ) {
+      definedStyles.add(styleDecl);
+    }
+  }
+  return definedStyles;
+};
+
 export const $definedStyles = computed(
   [
     $selectedInstanceSelector,
@@ -97,55 +148,20 @@ export const $definedStyles = computed(
     $matchingBreakpoints,
     $styles,
   ],
-  (
-    instanceSelector,
-    styleSourceSelections,
-    matchingBreakpointsArray,
-    styles
-  ) => {
-    const definedProperties = new Set<StyleDecl>();
+  (instanceSelector, styleSourceSelections, matchingBreakpoints, styles) => {
     if (instanceSelector === undefined) {
-      return definedProperties;
+      return new Set<StyleDecl>();
     }
     const instanceAndRootSelector =
       instanceSelector[0] === ROOT_INSTANCE_ID
         ? instanceSelector
         : [...instanceSelector, ROOT_INSTANCE_ID];
-    const inheritedStyleSources = new Set();
-    const instanceStyleSources = new Set();
-    const matchingBreakpoints = new Set(matchingBreakpointsArray);
-    for (const instanceId of instanceAndRootSelector) {
-      const styleSources = styleSourceSelections.get(instanceId)?.values;
-      if (styleSources) {
-        for (const styleSourceId of styleSources) {
-          if (instanceId === instanceAndRootSelector[0]) {
-            instanceStyleSources.add(styleSourceId);
-          } else {
-            inheritedStyleSources.add(styleSourceId);
-          }
-        }
-      }
-    }
-    for (const styleDecl of styles.values()) {
-      if (
-        matchingBreakpoints.has(styleDecl.breakpointId) &&
-        instanceStyleSources.has(styleDecl.styleSourceId)
-      ) {
-        definedProperties.add(styleDecl);
-      }
-      const inherited =
-        properties[styleDecl.property as keyof typeof properties]?.inherited ??
-        // custom properties are always inherited
-        true;
-      if (
-        matchingBreakpoints.has(styleDecl.breakpointId) &&
-        inheritedStyleSources.has(styleDecl.styleSourceId) &&
-        inherited
-      ) {
-        definedProperties.add(styleDecl);
-      }
-    }
-    return definedProperties;
+    return getDefinedStyles({
+      instanceSelector: instanceAndRootSelector,
+      matchingBreakpoints,
+      styleSourceSelections,
+      styles,
+    });
   }
 );
 
