@@ -190,10 +190,13 @@ export const isValidStaticStyleValue = (
   );
 };
 
+export const VarFallback = z.union([UnparsedValue, KeywordValue]);
+export type VarFallback = z.infer<typeof VarFallback>;
+
 const VarValue = z.object({
   type: z.literal("var"),
   value: z.string(),
-  fallbacks: z.array(ValidStaticStyleValue),
+  fallback: VarFallback.optional(),
   hidden: z.boolean().optional(),
 });
 export type VarValue = z.infer<typeof VarValue>;

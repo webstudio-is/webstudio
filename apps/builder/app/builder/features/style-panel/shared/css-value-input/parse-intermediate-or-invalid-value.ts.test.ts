@@ -542,6 +542,5 @@ test("parse css vars", () => {
   expect(result).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [],
   });
 });

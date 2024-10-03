@@ -102,12 +102,17 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const meta = metas.get(selectedInstance.component);
   const documentType = selectedPage?.meta.documentType ?? "html";
 
-  const availablePanels = {
-    style: documentType === "html" && (meta?.stylable ?? true),
-    // @todo hide root component settings until
-    // global data sources are implemented
-    settings: selectedInstance.component !== rootComponent,
-  };
+  type PanelName = "style" | "settings";
+
+  const availablePanels = new Set<PanelName>();
+  if (documentType === "html" && (meta?.stylable ?? true)) {
+    availablePanels.add("style");
+  }
+  // @todo hide root component settings until
+  // global data sources are implemented
+  if (selectedInstance.component !== rootComponent) {
+    availablePanels.add("settings");
+  }
 
   return (
     <EnhancedTooltipProvider
@@ -120,18 +125,18 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
           <PanelTabs
             ref={tabsRef}
             value={
-              availablePanels[activeInspectorPanel]
+              availablePanels.has(activeInspectorPanel)
                 ? activeInspectorPanel
-                : Object.keys(availablePanels)[0]
+                : Array.from(availablePanels)[0]
             }
             onValueChange={(panel) => {
-              $activeInspectorPanel.set(panel as keyof typeof availablePanels);
+              $activeInspectorPanel.set(panel as PanelName);
             }}
             asChild
           >
             <Flex direction="column">
               <PanelTabsList>
-                {availablePanels.style && (
+                {availablePanels.has("style") && (
                   <Tooltip
                     variant="wrapped"
                     content={
@@ -146,7 +151,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                     </div>
                   </Tooltip>
                 )}
-                {availablePanels.settings && (
+                {availablePanels.has("settings") && (
                   <Tooltip
                     variant="wrapped"
                     content={

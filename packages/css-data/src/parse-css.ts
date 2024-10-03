@@ -173,34 +173,40 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
     }
 
     const selectors: Selector[] = [];
-    csstree.walk(this.rule.prelude, (node, item) => {
-      if (node.type !== "ClassSelector" && node.type !== "TypeSelector") {
-        return;
+    if (this.rule.prelude.type === "SelectorList") {
+      for (const selector of this.rule.prelude.children) {
+        if (selector.type !== "Selector" || selector.children.size > 2) {
+          continue;
+        }
+        const [nameNode, stateNode] = selector.children;
+        let name;
+        if (
+          nameNode.type === "ClassSelector" ||
+          nameNode.type === "TypeSelector"
+        ) {
+          name = nameNode.name;
+        } else if (nameNode.type === "PseudoClassSelector") {
+          name = `:${nameNode.name}`;
+        } else {
+          continue;
+        }
+        if (stateNode?.type === "PseudoClassSelector") {
+          selectors.push({
+            name,
+            state: `:${stateNode.name}`,
+          });
+        } else if (stateNode?.type === "PseudoElementSelector") {
+          selectors.push({
+            name,
+            state: `::${stateNode.name}`,
+          });
+        } else {
+          selectors.push({
+            name,
+          });
+        }
       }
-      // We don't support nesting yet.
-      if (
-        (item?.prev && item.prev.data.type === "Combinator") ||
-        (item?.next && item.next.data.type === "Combinator")
-      ) {
-        return;
-      }
-
-      if (item?.next && item.next.data.type === "PseudoElementSelector") {
-        selectors.push({
-          name: node.name,
-          state: `::${item.next.data.name}`,
-        });
-      } else if (item?.next && item.next.data.type === "PseudoClassSelector") {
-        selectors.push({
-          name: node.name,
-          state: `:${item.next.data.name}`,
-        });
-      } else {
-        selectors.push({
-          name: node.name,
-        });
-      }
-    });
+    }
 
     const stringValue = csstree.generate(node.value);
 

@@ -5,6 +5,10 @@ import {
   collectionComponent,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
+import type { Project } from "@webstudio-is/project";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { parseCss } from "@webstudio-is/css-data";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Asset,
@@ -16,10 +20,13 @@ import type {
   Resource,
   StyleDecl,
   StyleDeclKey,
+  Styles,
   StyleSource,
+  StyleSources,
+  StyleSourceSelections,
   WebstudioData,
 } from "@webstudio-is/sdk";
-import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   computeInstancesConstraints,
@@ -50,8 +57,7 @@ import {
   $resources,
 } from "./nano-states";
 import { registerContainers } from "./sync";
-import type { Project } from "@webstudio-is/project";
-import { createDefaultPages } from "@webstudio-is/project-build";
+import { mapGroupBy } from "./shim";
 
 enableMapSet();
 registerContainers();
@@ -3165,6 +3171,101 @@ describe("insert webstudio fragment copy", () => {
       availableDataSources: new Set(),
     });
     expect(data.instances.size).toEqual(4);
-    expect(newInstanceIds.size).toEqual(4);
+    expect(newInstanceIds.size).toEqual(5);
+  });
+});
+
+describe("support copy paste of :root styles", () => {
+  const css = (strings: TemplateStringsArray, ...values: string[]) => {
+    let cssString = "";
+    strings.forEach((string, index) => {
+      cssString += string + (values[index] ?? "");
+    });
+    const styleSourceSelections: StyleSourceSelections = new Map();
+    const styleSources: StyleSources = new Map();
+    const styles: Styles = new Map();
+    const parsed = mapGroupBy(
+      parseCss(cssString),
+      (parsedStyleDecl) => parsedStyleDecl.selector
+    );
+    for (const [selector, parsedStyles] of parsed) {
+      const [instanceId, styleSourceId] = selector.split("__");
+      styleSourceSelections.set(instanceId, {
+        instanceId: instanceId,
+        values: [styleSourceId],
+      });
+      styleSources.set(styleSourceId, { id: styleSourceId, type: "local" });
+      for (const { property, value } of parsedStyles) {
+        const styleDecl: StyleDecl = {
+          breakpointId: "baseId",
+          styleSourceId,
+          property,
+          value,
+        };
+        styles.set(getStyleDeclKey(styleDecl), styleDecl);
+      }
+    }
+    return { styleSourceSelections, styleSources, styles };
+  };
+
+  test("should add :root local styles", () => {
+    const oldProject = getWebstudioDataStub({
+      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
+      ...css`
+        :root__oldprojectlocalid {
+          color: red;
+        }
+      `,
+    });
+    const newProject = getWebstudioDataStub();
+    const fragment = extractWebstudioFragment(oldProject, ":root");
+    insertWebstudioFragmentCopy({
+      data: newProject,
+      fragment,
+      availableDataSources: new Set(),
+    });
+    const [newStyleSourceId] = newProject.styleSources.keys();
+    expect(newProject).toEqual(
+      expect.objectContaining(css`
+        :root__${newStyleSourceId} {
+          color: red;
+        }
+      `)
+    );
+  });
+
+  test("should merge :root local styles", () => {
+    const oldProject = getWebstudioDataStub({
+      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
+      ...css`
+        :root__oldprojectlocalid {
+          color: red;
+        }
+      `,
+    });
+    const newProject = getWebstudioDataStub({
+      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
+      ...css`
+        :root__newprojectlocalid {
+          font-size: medium;
+        }
+      `,
+    });
+    const fragment = extractWebstudioFragment(oldProject, ":root");
+    insertWebstudioFragmentCopy({
+      data: newProject,
+      fragment,
+      availableDataSources: new Set(),
+    });
+    expect({
+      styleSourceSelections: newProject.styleSourceSelections,
+      styleSources: newProject.styleSources,
+      styles: newProject.styles,
+    }).toEqual(css`
+      :root__newprojectlocalid {
+        font-size: medium;
+        color: red;
+      }
+    `);
   });
 });

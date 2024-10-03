@@ -91,10 +91,6 @@ export const Tooltip = forwardRef(
       }
     }, [open]);
 
-    if (content == null) {
-      return children;
-    }
-
     return (
       <TooltipPrimitive.Root
         open={open}
@@ -106,22 +102,24 @@ export const Tooltip = forwardRef(
         <TooltipPrimitive.Trigger asChild {...triggerProps}>
           {children}
         </TooltipPrimitive.Trigger>
-        <TooltipPrimitive.Portal>
-          <Content
-            ref={ref}
-            side="top"
-            align="center"
-            sideOffset={2}
-            collisionPadding={8}
-            arrowPadding={8}
-            {...props}
-          >
-            {typeof content === "string" ? <Text>{content}</Text> : content}
-            <Box css={{ color: theme.colors.transparentExtreme }}>
-              <Arrow offset={5} width={11} height={5} />
-            </Box>
-          </Content>
-        </TooltipPrimitive.Portal>
+        {content != null && (
+          <TooltipPrimitive.Portal>
+            <Content
+              ref={ref}
+              side="top"
+              align="center"
+              sideOffset={2}
+              collisionPadding={8}
+              arrowPadding={8}
+              {...props}
+            >
+              {typeof content === "string" ? <Text>{content}</Text> : content}
+              <Box css={{ color: theme.colors.transparentExtreme }}>
+                <Arrow offset={5} width={11} height={5} />
+              </Box>
+            </Content>
+          </TooltipPrimitive.Portal>
+        )}
       </TooltipPrimitive.Root>
     );
   }
@@ -206,12 +204,11 @@ export const InputErrorsTooltip = ({
     }
   }, []);
 
-  // We intentionally always pass non empty content to avoid optimization inside Tooltip
-  // where it renders {children} directly if content is empty.
-  // If this optimization accur, the input will remount which will cause focus loss
-  // and current value loss.
+  // Wrap the error tooltip with its own provider to avoid logic intersection with ordinary tooltips.
+  // This is especially important for hover delays.
+  // Here we ensure that hovering over the tooltip trigger after any input will not show the tooltip immediately.
   return (
-    <>
+    <TooltipProvider>
       <Box ref={ref as never} css={{ display: "contents" }}></Box>
       <Tooltip
         {...rest}
@@ -229,6 +226,6 @@ export const InputErrorsTooltip = ({
       >
         {children}
       </Tooltip>
-    </>
+    </TooltipProvider>
   );
 };
