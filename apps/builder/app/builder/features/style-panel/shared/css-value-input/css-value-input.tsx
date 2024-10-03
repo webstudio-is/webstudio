@@ -446,7 +446,6 @@ export const CssValueInput = ({
     highlightedIndex,
   } = useCombobox<CssValueInputValue>({
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
-    defaultHighlightedIndex: 0,
     items: keywords,
     value,
     selectedItem: props.value,
