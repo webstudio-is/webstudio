@@ -152,17 +152,18 @@ const DesignMode = () => {
 
   useEffect(() => {
     const abortController = new AbortController();
+    const options = { signal: abortController.signal };
     // We need to initialize this in both canvas and builder,
     // because the events will fire in either one, depending on where the focus is
     // @todo we need to forward the events from canvas to builder and avoid importing this
     // in both places
-    initCopyPaste(abortController);
-    manageDesignModeStyles(abortController);
-    updateCollaborativeInstanceRect(abortController);
-    subscribeInstanceSelection(abortController);
-    subscribeInstanceHovering(abortController);
-    subscribeInspectorEdits(abortController);
-    subscribeFontLoadingDone(abortController);
+    initCopyPaste(options);
+    manageDesignModeStyles(options);
+    updateCollaborativeInstanceRect(options);
+    subscribeInstanceSelection(options);
+    subscribeInstanceHovering(options);
+    subscribeInspectorEdits(options);
+    subscribeFontLoadingDone(options);
     return () => {
       abortController.abort();
     };
