@@ -401,21 +401,39 @@ const pasteStyles = async (
   const text = await navigator.clipboard.readText();
   const parsedStyles = parseCss(`selector{${text}}`);
   const breakpointId = $selectedBreakpoint.get()?.id;
-  if (breakpointId === undefined) {
+  const instanceId = $selectedInstanceSelector.get()?.[0];
+  if (breakpointId === undefined || instanceId === undefined) {
     return;
   }
-  serverSyncStore.createTransaction([$styles], (styles) => {
-    for (const { property, value } of parsedStyles) {
-      const styleDecl: StyleDecl = {
-        breakpointId,
-        styleSourceId,
-        state,
-        property,
-        value,
-      };
-      styles.set(getStyleDeclKey(styleDecl), styleDecl);
+  serverSyncStore.createTransaction(
+    [$styles, $styleSources, $styleSourceSelections],
+    (styles, styleSources, styleSourceSelections) => {
+      // add local style source if does not exist yet
+      if (styleSources.has(styleSourceId) === false) {
+        styleSources.set(styleSourceId, { type: "local", id: styleSourceId });
+        let styleSourceSelection = styleSourceSelections.get(instanceId);
+        // create new style source selection
+        if (styleSourceSelection === undefined) {
+          styleSourceSelection = { instanceId, values: [styleSourceId] };
+          styleSourceSelections.set(instanceId, styleSourceSelection);
+        }
+        // append style source to existing selection
+        if (styleSourceSelection.values.includes(styleSourceId) === false) {
+          styleSourceSelection.values.push(styleSourceId);
+        }
+      }
+      for (const { property, value } of parsedStyles) {
+        const styleDecl: StyleDecl = {
+          breakpointId,
+          styleSourceId,
+          state,
+          property,
+          value,
+        };
+        styles.set(getStyleDeclKey(styleDecl), styleDecl);
+      }
     }
-  });
+  );
 };
 
 const clearStyles = (styleSourceId: StyleSource["id"]) => {
