@@ -18,7 +18,7 @@ const testFontWeights = (fontFamily: string) => {
   const canvas = document.createElement("canvas");
   canvas.width = 200;
   canvas.height = 20;
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
   const supportedWeights: Array<FontWeight> = ["400"];
 
   if (context === null) {
