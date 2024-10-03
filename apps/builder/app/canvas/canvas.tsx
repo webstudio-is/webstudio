@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useLayoutEffect } from "react";
+import { useMemo, useEffect, useState, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import type { Instances } from "@webstudio-is/sdk";
@@ -28,10 +28,10 @@ import {
   useCanvasStore,
 } from "~/shared/sync";
 import {
-  useManageDesignModeStyles,
   GlobalStyles,
   subscribeStyles,
   mountStyles,
+  manageDesignModeStyles,
 } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
@@ -48,23 +48,24 @@ import {
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { useCopyPaste } from "~/shared/copy-paste";
+import { initCopyPaste } from "~/shared/copy-paste";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
-import { useSelectedInstance } from "./use-selected-instance";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
-import { useScrollNewInstanceIntoView } from "./shared/use-scroll-new-instance-into-view";
 import { subscribeInspectorEdits } from "./inspector-edits";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
+import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
+import { subscribeSelected } from "./instance-selected";
+import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 
 registerContainers();
 
@@ -130,21 +131,43 @@ const useElementsTree = (
 };
 
 const DesignMode = () => {
-  useManageDesignModeStyles();
-  useDragAndDrop();
-  // We need to initialize this in both canvas and builder,
-  // because the events will fire in either one, depending on where the focus is
-  // @todo we need to forward the events from canvas to builder and avoid importing this
-  // in both places
-  useCopyPaste();
+  const debounceEffect = useDebounceEffect();
+  const ref = useRef<Instances>();
 
-  useScrollNewInstanceIntoView();
-  useSelectedInstance();
-  useEffect(updateCollaborativeInstanceRect, []);
-  useEffect(subscribeInstanceSelection, []);
-  useEffect(subscribeInstanceHovering, []);
-  useEffect(subscribeInspectorEdits, []);
-  useEffect(subscribeFontLoadingDone, []);
+  useDragAndDrop();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    subscribeScrollNewInstanceIntoView(
+      debounceEffect,
+      ref,
+      abortController.signal
+    );
+    const unsubscribeSelected = subscribeSelected(debounceEffect);
+    return () => {
+      unsubscribeSelected();
+      abortController.abort();
+    };
+  }, [debounceEffect]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    const options = { signal: abortController.signal };
+    // We need to initialize this in both canvas and builder,
+    // because the events will fire in either one, depending on where the focus is
+    // @todo we need to forward the events from canvas to builder and avoid importing this
+    // in both places
+    initCopyPaste(options);
+    manageDesignModeStyles(options);
+    updateCollaborativeInstanceRect(options);
+    subscribeInstanceSelection(options);
+    subscribeInstanceHovering(options);
+    subscribeInspectorEdits(options);
+    subscribeFontLoadingDone(options);
+    return () => {
+      abortController.abort();
+    };
+  }, []);
   return null;
 };
 

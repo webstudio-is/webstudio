@@ -8,7 +8,11 @@ import {
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { emitCommand } from "./shared/commands";
 
-export const subscribeInstanceSelection = () => {
+export const subscribeInstanceSelection = ({
+  signal,
+}: {
+  signal: AbortSignal;
+}) => {
   let pointerDownElement: undefined | Element = undefined;
   let lastPointerUpTime = 0;
   let clickCount = 1;
@@ -78,11 +82,6 @@ export const subscribeInstanceSelection = () => {
     }
   };
 
-  addEventListener("pointerdown", handlePointerDown, { passive: true });
-  addEventListener("pointerup", handlePointerUp, { passive: true });
-
-  return () => {
-    removeEventListener("pointerdown", handlePointerDown);
-    removeEventListener("pointerup", handlePointerUp);
-  };
+  addEventListener("pointerdown", handlePointerDown, { passive: true, signal });
+  addEventListener("pointerup", handlePointerUp, { passive: true, signal });
 };

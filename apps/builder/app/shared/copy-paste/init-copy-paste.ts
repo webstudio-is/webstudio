@@ -3,6 +3,10 @@ import {
   $authTokenPermissions,
   $textEditingInstanceSelector,
 } from "../nano-states";
+import * as instance from "./plugin-instance";
+import * as embedTemplate from "./plugin-embed-template";
+import * as markdown from "./plugin-markdown";
+import * as webflow from "./plugin-webflow/plugin-webflow";
 
 const isTextEditing = (event: ClipboardEvent) => {
   // Text is edited on the Canvas using the default Canvas text editor settings.
@@ -80,7 +84,13 @@ type Plugin = {
   onPaste?: (data: string) => boolean | Promise<boolean>;
 };
 
-export const initCopyPaste = (plugins: Plugin[]) => {
+const initPlugins = ({
+  plugins,
+  signal,
+}: {
+  plugins: Array<Plugin>;
+  signal: AbortSignal;
+}) => {
   const handleCopy = async (event: ClipboardEvent) => {
     if (validateClipboardEvent(event) === false) {
       return;
@@ -127,15 +137,16 @@ export const initCopyPaste = (plugins: Plugin[]) => {
     }
   };
 
-  document.addEventListener("copy", handleCopy);
-  document.addEventListener("cut", handleCut);
+  document.addEventListener("copy", handleCopy, { signal });
+  document.addEventListener("cut", handleCut, { signal });
   // Capture is required so we get the element before content-editable removes it
   // This way we can detect when we are inside content-editable and ignore the event
-  document.addEventListener("paste", handlePaste, { capture: true });
+  document.addEventListener("paste", handlePaste, { capture: true, signal });
+};
 
-  return () => {
-    document.removeEventListener("copy", handleCopy);
-    document.removeEventListener("cut", handleCut);
-    document.removeEventListener("paste", handlePaste, { capture: true });
-  };
+export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
+  initPlugins({
+    plugins: [instance, embedTemplate, markdown, webflow],
+    signal,
+  });
 };

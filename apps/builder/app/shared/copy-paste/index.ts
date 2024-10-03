@@ -1,1 +1,1 @@
-export { useCopyPaste } from "./use-copy-paste";
+export { initCopyPaste } from "./init-copy-paste";

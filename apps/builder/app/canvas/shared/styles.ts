@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -307,10 +307,15 @@ export const subscribeStyles = () => {
   };
 };
 
-export const useManageDesignModeStyles = () => {
-  useEffect(subscribeStateStyles, []);
-  useEffect(subscribeEphemeralStyle, []);
-  useEffect(subscribePreviewMode, []);
+export const manageDesignModeStyles = ({ signal }: { signal: AbortSignal }) => {
+  const unsubscribeStateStyles = subscribeStateStyles();
+  const unsubscribeEphemeralStyle = subscribeEphemeralStyle();
+  const unsubscribePreviewMode = subscribePreviewMode();
+  signal.addEventListener("abort", () => {
+    unsubscribeStateStyles();
+    unsubscribeEphemeralStyle();
+    unsubscribePreviewMode();
+  });
 };
 
 export const GlobalStyles = ({ params }: { params: Params }) => {
