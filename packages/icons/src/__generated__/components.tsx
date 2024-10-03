@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import type { IconComponent } from "../types";
 
-export const ACCenterIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ACCenterIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -30,7 +30,7 @@ export const ACCenterIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ACCenterIcon.displayName = "ACCenterIcon";
 
-export const ACEndIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ACEndIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -59,7 +59,7 @@ export const ACEndIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ACEndIcon.displayName = "ACEndIcon";
 
-export const ACSpaceAroundIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ACSpaceAroundIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -88,7 +88,7 @@ export const ACSpaceAroundIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ACSpaceAroundIcon.displayName = "ACSpaceAroundIcon";
 
-export const ACSpaceBetweenIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ACSpaceBetweenIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -117,7 +117,7 @@ export const ACSpaceBetweenIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ACSpaceBetweenIcon.displayName = "ACSpaceBetweenIcon";
 
-export const ACStartIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ACStartIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -146,7 +146,7 @@ export const ACStartIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ACStartIcon.displayName = "ACStartIcon";
 
-export const ACStretchIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ACStretchIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -175,7 +175,7 @@ export const ACStretchIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ACStretchIcon.displayName = "ACStretchIcon";
 
-export const AIBaselineIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AIBaselineIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -203,7 +203,7 @@ export const AIBaselineIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AIBaselineIcon.displayName = "AIBaselineIcon";
 
-export const AICenterIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AICenterIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -227,7 +227,7 @@ export const AICenterIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AICenterIcon.displayName = "AICenterIcon";
 
-export const AIEndIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AIEndIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -246,7 +246,7 @@ export const AIEndIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AIEndIcon.displayName = "AIEndIcon";
 
-export const AIStartIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AIStartIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -270,7 +270,7 @@ export const AIStartIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AIStartIcon.displayName = "AIStartIcon";
 
-export const AIStretchIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AIStretchIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -299,7 +299,7 @@ export const AIStretchIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AIStretchIcon.displayName = "AIStretchIcon";
 
-export const ASBaselineIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ASBaselineIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -327,7 +327,7 @@ export const ASBaselineIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ASBaselineIcon.displayName = "ASBaselineIcon";
 
-export const ASCenterIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ASCenterIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -351,7 +351,7 @@ export const ASCenterIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ASCenterIcon.displayName = "ASCenterIcon";
 
-export const ASEndIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ASEndIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -375,7 +375,7 @@ export const ASEndIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ASEndIcon.displayName = "ASEndIcon";
 
-export const ASStartIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ASStartIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -399,7 +399,7 @@ export const ASStartIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ASStartIcon.displayName = "ASStartIcon";
 
-export const ASStretchIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ASStretchIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -428,7 +428,7 @@ export const ASStretchIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ASStretchIcon.displayName = "ASStretchIcon";
 
-export const AccordionContentIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AccordionContentIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -452,7 +452,7 @@ export const AccordionContentIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AccordionContentIcon.displayName = "AccordionContentIcon";
 
-export const AccordionTriggerIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AccordionTriggerIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -476,7 +476,7 @@ export const AccordionTriggerIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AccordionTriggerIcon.displayName = "AccordionTriggerIcon";
 
-export const AccordionIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AccordionIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -500,7 +500,7 @@ export const AccordionIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AccordionIcon.displayName = "AccordionIcon";
 
-export const AiLoadingIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AiLoadingIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -594,7 +594,7 @@ export const AiLoadingIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AiLoadingIcon.displayName = "AiLoadingIcon";
 
-export const AiIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AiIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -617,7 +617,7 @@ export const AiIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AiIcon.displayName = "AiIcon";
 
-export const AlertCircleIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AlertCircleIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -639,7 +639,7 @@ export const AlertCircleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AlertCircleIcon.displayName = "AlertCircleIcon";
 
-export const AlertIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AlertIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -667,7 +667,7 @@ export const AlertIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AlertIcon.displayName = "AlertIcon";
 
-export const ArrowDownIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ArrowDownIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -690,7 +690,7 @@ export const ArrowDownIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ArrowDownIcon.displayName = "ArrowDownIcon";
 
-export const ArrowLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ArrowLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -713,7 +713,7 @@ export const ArrowLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ArrowLeftIcon.displayName = "ArrowLeftIcon";
 
-export const ArrowRightIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ArrowRightIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -736,7 +736,7 @@ export const ArrowRightIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ArrowRightIcon.displayName = "ArrowRightIcon";
 
-export const ArrowUpIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ArrowUpIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -759,7 +759,7 @@ export const ArrowUpIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ArrowUpIcon.displayName = "ArrowUpIcon";
 
-export const AspectRatioIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AspectRatioIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -782,7 +782,7 @@ export const AspectRatioIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AspectRatioIcon.displayName = "AspectRatioIcon";
 
-export const AttachmentIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AttachmentIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -805,7 +805,7 @@ export const AttachmentIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AttachmentIcon.displayName = "AttachmentIcon";
 
-export const AutoScrollIcon = forwardRef<SVGSVGElement, IconProps>(
+export const AutoScrollIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -829,7 +829,7 @@ export const AutoScrollIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 AutoScrollIcon.displayName = "AutoScrollIcon";
 
-export const BagIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BagIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -852,7 +852,7 @@ export const BagIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BagIcon.displayName = "BagIcon";
 
-export const BlockquoteIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BlockquoteIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -871,7 +871,7 @@ export const BlockquoteIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BlockquoteIcon.displayName = "BlockquoteIcon";
 
-export const BodyIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BodyIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -894,7 +894,7 @@ export const BodyIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BodyIcon.displayName = "BodyIcon";
 
-export const BoldIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BoldIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -916,7 +916,7 @@ export const BoldIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BoldIcon.displayName = "BoldIcon";
 
-export const BorderRadiusBottomLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderRadiusBottomLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -945,7 +945,7 @@ export const BorderRadiusBottomLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderRadiusBottomLeftIcon.displayName = "BorderRadiusBottomLeftIcon";
 
-export const BorderRadiusBottomRightIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderRadiusBottomRightIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -974,7 +974,7 @@ export const BorderRadiusBottomRightIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderRadiusBottomRightIcon.displayName = "BorderRadiusBottomRightIcon";
 
-export const BorderRadiusIndividualIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderRadiusIndividualIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -997,7 +997,7 @@ export const BorderRadiusIndividualIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderRadiusIndividualIcon.displayName = "BorderRadiusIndividualIcon";
 
-export const BorderRadiusTopLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderRadiusTopLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1026,7 +1026,7 @@ export const BorderRadiusTopLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderRadiusTopLeftIcon.displayName = "BorderRadiusTopLeftIcon";
 
-export const BorderRadiusTopRightIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderRadiusTopRightIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1055,7 +1055,7 @@ export const BorderRadiusTopRightIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderRadiusTopRightIcon.displayName = "BorderRadiusTopRightIcon";
 
-export const BorderRadiusIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderRadiusIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1078,7 +1078,7 @@ export const BorderRadiusIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderRadiusIcon.displayName = "BorderRadiusIcon";
 
-export const BorderWidthBottomIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderWidthBottomIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1107,7 +1107,7 @@ export const BorderWidthBottomIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderWidthBottomIcon.displayName = "BorderWidthBottomIcon";
 
-export const BorderWidthIndividualIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderWidthIndividualIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1130,7 +1130,7 @@ export const BorderWidthIndividualIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderWidthIndividualIcon.displayName = "BorderWidthIndividualIcon";
 
-export const BorderWidthLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderWidthLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1159,7 +1159,7 @@ export const BorderWidthLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderWidthLeftIcon.displayName = "BorderWidthLeftIcon";
 
-export const BorderWidthRightIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderWidthRightIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1188,7 +1188,7 @@ export const BorderWidthRightIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderWidthRightIcon.displayName = "BorderWidthRightIcon";
 
-export const BorderWidthTopIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BorderWidthTopIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1217,7 +1217,7 @@ export const BorderWidthTopIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BorderWidthTopIcon.displayName = "BorderWidthTopIcon";
 
-export const BoxIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BoxIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1240,7 +1240,7 @@ export const BoxIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BoxIcon.displayName = "BoxIcon";
 
-export const BpStarOffIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BpStarOffIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1268,7 +1268,7 @@ export const BpStarOffIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BpStarOffIcon.displayName = "BpStarOffIcon";
 
-export const BpStarOnIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BpStarOnIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1296,7 +1296,7 @@ export const BpStarOnIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BpStarOnIcon.displayName = "BpStarOnIcon";
 
-export const BugIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BugIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1320,7 +1320,7 @@ export const BugIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 BugIcon.displayName = "BugIcon";
 
-export const ButtonElementIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ButtonElementIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1343,7 +1343,7 @@ export const ButtonElementIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ButtonElementIcon.displayName = "ButtonElementIcon";
 
-export const CalendarIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CalendarIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1366,7 +1366,7 @@ export const CalendarIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CalendarIcon.displayName = "CalendarIcon";
 
-export const CheckCircleIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CheckCircleIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1394,7 +1394,7 @@ export const CheckCircleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CheckCircleIcon.displayName = "CheckCircleIcon";
 
-export const CheckMarkIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CheckMarkIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1417,7 +1417,7 @@ export const CheckMarkIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CheckMarkIcon.displayName = "CheckMarkIcon";
 
-export const CheckboxCheckedFilledIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CheckboxCheckedFilledIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1440,7 +1440,7 @@ export const CheckboxCheckedFilledIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CheckboxCheckedFilledIcon.displayName = "CheckboxCheckedFilledIcon";
 
-export const CheckboxCheckedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CheckboxCheckedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1468,7 +1468,7 @@ export const CheckboxCheckedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CheckboxCheckedIcon.displayName = "CheckboxCheckedIcon";
 
-export const CheckboxEmptyIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CheckboxEmptyIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1491,7 +1491,7 @@ export const CheckboxEmptyIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CheckboxEmptyIcon.displayName = "CheckboxEmptyIcon";
 
-export const CheckboxMixedFilledIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CheckboxMixedFilledIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1514,7 +1514,7 @@ export const CheckboxMixedFilledIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CheckboxMixedFilledIcon.displayName = "CheckboxMixedFilledIcon";
 
-export const ChevronBigDownIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronBigDownIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1533,7 +1533,7 @@ export const ChevronBigDownIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronBigDownIcon.displayName = "ChevronBigDownIcon";
 
-export const ChevronBigLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronBigLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1552,7 +1552,7 @@ export const ChevronBigLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronBigLeftIcon.displayName = "ChevronBigLeftIcon";
 
-export const ChevronBigRightIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronBigRightIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1571,7 +1571,7 @@ export const ChevronBigRightIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronBigRightIcon.displayName = "ChevronBigRightIcon";
 
-export const ChevronBigUpIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronBigUpIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1590,7 +1590,7 @@ export const ChevronBigUpIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronBigUpIcon.displayName = "ChevronBigUpIcon";
 
-export const ChevronDownIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronDownIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1609,7 +1609,7 @@ export const ChevronDownIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronDownIcon.displayName = "ChevronDownIcon";
 
-export const ChevronFilledDownIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronFilledDownIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1628,7 +1628,7 @@ export const ChevronFilledDownIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronFilledDownIcon.displayName = "ChevronFilledDownIcon";
 
-export const ChevronFilledLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronFilledLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1647,7 +1647,7 @@ export const ChevronFilledLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronFilledLeftIcon.displayName = "ChevronFilledLeftIcon";
 
-export const ChevronFilledRightIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronFilledRightIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1666,7 +1666,7 @@ export const ChevronFilledRightIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronFilledRightIcon.displayName = "ChevronFilledRightIcon";
 
-export const ChevronFilledUpIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronFilledUpIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1685,7 +1685,7 @@ export const ChevronFilledUpIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronFilledUpIcon.displayName = "ChevronFilledUpIcon";
 
-export const ChevronLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1711,7 +1711,7 @@ export const ChevronLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronLeftIcon.displayName = "ChevronLeftIcon";
 
-export const ChevronRightIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronRightIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1737,7 +1737,7 @@ export const ChevronRightIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronRightIcon.displayName = "ChevronRightIcon";
 
-export const ChevronUpIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ChevronUpIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1763,7 +1763,7 @@ export const ChevronUpIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ChevronUpIcon.displayName = "ChevronUpIcon";
 
-export const CloudIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CloudIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1785,7 +1785,7 @@ export const CloudIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CloudIcon.displayName = "CloudIcon";
 
-export const CodeTextIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CodeTextIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1808,7 +1808,7 @@ export const CodeTextIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CodeTextIcon.displayName = "CodeTextIcon";
 
-export const CollapsibleIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CollapsibleIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1831,7 +1831,7 @@ export const CollapsibleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CollapsibleIcon.displayName = "CollapsibleIcon";
 
-export const CommitIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CommitIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1854,7 +1854,7 @@ export const CommitIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CommitIcon.displayName = "CommitIcon";
 
-export const ContentEmbedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ContentEmbedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1879,7 +1879,7 @@ export const ContentEmbedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ContentEmbedIcon.displayName = "ContentEmbedIcon";
 
-export const ContentIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ContentIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1902,7 +1902,7 @@ export const ContentIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ContentIcon.displayName = "ContentIcon";
 
-export const CopyIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CopyIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1925,7 +1925,7 @@ export const CopyIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CopyIcon.displayName = "CopyIcon";
 
-export const CustomCodeIcon = forwardRef<SVGSVGElement, IconProps>(
+export const CustomCodeIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1953,7 +1953,7 @@ export const CustomCodeIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 CustomCodeIcon.displayName = "CustomCodeIcon";
 
-export const DashBorderIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DashBorderIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1976,7 +1976,7 @@ export const DashBorderIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DashBorderIcon.displayName = "DashBorderIcon";
 
-export const DashIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DashIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -1999,7 +1999,7 @@ export const DashIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DashIcon.displayName = "DashIcon";
 
-export const DashedBorderIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DashedBorderIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2022,7 +2022,7 @@ export const DashedBorderIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DashedBorderIcon.displayName = "DashedBorderIcon";
 
-export const DeleteIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DeleteIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2042,7 +2042,7 @@ export const DeleteIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DeleteIcon.displayName = "DeleteIcon";
 
-export const DescriptionIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DescriptionIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2076,7 +2076,7 @@ export const DescriptionIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DescriptionIcon.displayName = "DescriptionIcon";
 
-export const DialogIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DialogIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2106,7 +2106,7 @@ export const DialogIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DialogIcon.displayName = "DialogIcon";
 
-export const DimensionsIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DimensionsIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2129,7 +2129,7 @@ export const DimensionsIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DimensionsIcon.displayName = "DimensionsIcon";
 
-export const DiscordIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DiscordIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2149,7 +2149,7 @@ export const DiscordIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DiscordIcon.displayName = "DiscordIcon";
 
-export const DivIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DivIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2172,7 +2172,7 @@ export const DivIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DivIcon.displayName = "DivIcon";
 
-export const DotIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DotIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2191,7 +2191,7 @@ export const DotIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DotIcon.displayName = "DotIcon";
 
-export const DottedBorderIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DottedBorderIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2214,7 +2214,7 @@ export const DottedBorderIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DottedBorderIcon.displayName = "DottedBorderIcon";
 
-export const DragHandleIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DragHandleIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2236,7 +2236,7 @@ export const DragHandleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DragHandleIcon.displayName = "DragHandleIcon";
 
-export const DynamicPageIcon = forwardRef<SVGSVGElement, IconProps>(
+export const DynamicPageIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2264,7 +2264,7 @@ export const DynamicPageIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 DynamicPageIcon.displayName = "DynamicPageIcon";
 
-export const EllipsesIcon = forwardRef<SVGSVGElement, IconProps>(
+export const EllipsesIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2283,7 +2283,7 @@ export const EllipsesIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 EllipsesIcon.displayName = "EllipsesIcon";
 
-export const EmailIcon = forwardRef<SVGSVGElement, IconProps>(
+export const EmailIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2306,7 +2306,7 @@ export const EmailIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 EmailIcon.displayName = "EmailIcon";
 
-export const EmbedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const EmbedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2329,7 +2329,7 @@ export const EmbedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 EmbedIcon.displayName = "EmbedIcon";
 
-export const ExtensionIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ExtensionIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2359,7 +2359,7 @@ export const ExtensionIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ExtensionIcon.displayName = "ExtensionIcon";
 
-export const ExternalLinkIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ExternalLinkIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2382,7 +2382,7 @@ export const ExternalLinkIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ExternalLinkIcon.displayName = "ExternalLinkIcon";
 
-export const EyeconClosedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const EyeconClosedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2401,7 +2401,7 @@ export const EyeconClosedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 EyeconClosedIcon.displayName = "EyeconClosedIcon";
 
-export const EyeconOpenIcon = forwardRef<SVGSVGElement, IconProps>(
+export const EyeconOpenIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2425,7 +2425,7 @@ export const EyeconOpenIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 EyeconOpenIcon.displayName = "EyeconOpenIcon";
 
-export const EyedropperIcon = forwardRef<SVGSVGElement, IconProps>(
+export const EyedropperIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2447,7 +2447,7 @@ export const EyedropperIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 EyedropperIcon.displayName = "EyedropperIcon";
 
-export const FolderIcon = forwardRef<SVGSVGElement, IconProps>(
+export const FolderIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2471,7 +2471,7 @@ export const FolderIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 FolderIcon.displayName = "FolderIcon";
 
-export const FooterIcon = forwardRef<SVGSVGElement, IconProps>(
+export const FooterIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2494,7 +2494,7 @@ export const FooterIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 FooterIcon.displayName = "FooterIcon";
 
-export const FormTextAreaIcon = forwardRef<SVGSVGElement, IconProps>(
+export const FormTextAreaIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2517,7 +2517,7 @@ export const FormTextAreaIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 FormTextAreaIcon.displayName = "FormTextAreaIcon";
 
-export const FormTextFieldIcon = forwardRef<SVGSVGElement, IconProps>(
+export const FormTextFieldIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2540,7 +2540,7 @@ export const FormTextFieldIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 FormTextFieldIcon.displayName = "FormTextFieldIcon";
 
-export const FormIcon = forwardRef<SVGSVGElement, IconProps>(
+export const FormIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2563,7 +2563,7 @@ export const FormIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 FormIcon.displayName = "FormIcon";
 
-export const GapHorizontalIcon = forwardRef<SVGSVGElement, IconProps>(
+export const GapHorizontalIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2582,7 +2582,7 @@ export const GapHorizontalIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 GapHorizontalIcon.displayName = "GapHorizontalIcon";
 
-export const GapVerticalIcon = forwardRef<SVGSVGElement, IconProps>(
+export const GapVerticalIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2601,7 +2601,7 @@ export const GapVerticalIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 GapVerticalIcon.displayName = "GapVerticalIcon";
 
-export const GithubIcon = forwardRef<SVGSVGElement, IconProps>(
+export const GithubIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2624,7 +2624,7 @@ export const GithubIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 GithubIcon.displayName = "GithubIcon";
 
-export const GoogleIcon = forwardRef<SVGSVGElement, IconProps>(
+export const GoogleIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2658,7 +2658,7 @@ export const GoogleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 GoogleIcon.displayName = "GoogleIcon";
 
-export const GrowIcon = forwardRef<SVGSVGElement, IconProps>(
+export const GrowIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2681,7 +2681,7 @@ export const GrowIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 GrowIcon.displayName = "GrowIcon";
 
-export const HamburgerMenuIcon = forwardRef<SVGSVGElement, IconProps>(
+export const HamburgerMenuIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2704,7 +2704,7 @@ export const HamburgerMenuIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 HamburgerMenuIcon.displayName = "HamburgerMenuIcon";
 
-export const HeaderIcon = forwardRef<SVGSVGElement, IconProps>(
+export const HeaderIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2727,7 +2727,7 @@ export const HeaderIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 HeaderIcon.displayName = "HeaderIcon";
 
-export const HeadingIcon = forwardRef<SVGSVGElement, IconProps>(
+export const HeadingIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2750,7 +2750,7 @@ export const HeadingIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 HeadingIcon.displayName = "HeadingIcon";
 
-export const HelpIcon = forwardRef<SVGSVGElement, IconProps>(
+export const HelpIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2770,7 +2770,7 @@ export const HelpIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 HelpIcon.displayName = "HelpIcon";
 
-export const HomeIcon = forwardRef<SVGSVGElement, IconProps>(
+export const HomeIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2793,7 +2793,7 @@ export const HomeIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 HomeIcon.displayName = "HomeIcon";
 
-export const ImageIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ImageIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2816,7 +2816,7 @@ export const ImageIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ImageIcon.displayName = "ImageIcon";
 
-export const InfoCircleIcon = forwardRef<SVGSVGElement, IconProps>(
+export const InfoCircleIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2842,7 +2842,7 @@ export const InfoCircleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 InfoCircleIcon.displayName = "InfoCircleIcon";
 
-export const ItemIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ItemIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2866,7 +2866,7 @@ export const ItemIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ItemIcon.displayName = "ItemIcon";
 
-export const JCCenterIcon = forwardRef<SVGSVGElement, IconProps>(
+export const JCCenterIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2891,7 +2891,7 @@ export const JCCenterIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 JCCenterIcon.displayName = "JCCenterIcon";
 
-export const JCEndIcon = forwardRef<SVGSVGElement, IconProps>(
+export const JCEndIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2915,7 +2915,7 @@ export const JCEndIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 JCEndIcon.displayName = "JCEndIcon";
 
-export const JCSpaceAroundIcon = forwardRef<SVGSVGElement, IconProps>(
+export const JCSpaceAroundIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2944,7 +2944,7 @@ export const JCSpaceAroundIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 JCSpaceAroundIcon.displayName = "JCSpaceAroundIcon";
 
-export const JCSpaceBetweenIcon = forwardRef<SVGSVGElement, IconProps>(
+export const JCSpaceBetweenIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2973,7 +2973,7 @@ export const JCSpaceBetweenIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 JCSpaceBetweenIcon.displayName = "JCSpaceBetweenIcon";
 
-export const JCStartIcon = forwardRef<SVGSVGElement, IconProps>(
+export const JCStartIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -2997,7 +2997,7 @@ export const JCStartIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 JCStartIcon.displayName = "JCStartIcon";
 
-export const LabelIcon = forwardRef<SVGSVGElement, IconProps>(
+export const LabelIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3020,7 +3020,7 @@ export const LabelIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 LabelIcon.displayName = "LabelIcon";
 
-export const LargeXIcon = forwardRef<SVGSVGElement, IconProps>(
+export const LargeXIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3043,7 +3043,7 @@ export const LargeXIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 LargeXIcon.displayName = "LargeXIcon";
 
-export const Link2UnlinkedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const Link2UnlinkedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3066,7 +3066,7 @@ export const Link2UnlinkedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 Link2UnlinkedIcon.displayName = "Link2UnlinkedIcon";
 
-export const Link2Icon = forwardRef<SVGSVGElement, IconProps>(
+export const Link2Icon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3089,7 +3089,7 @@ export const Link2Icon = forwardRef<SVGSVGElement, IconProps>(
 );
 Link2Icon.displayName = "Link2Icon";
 
-export const LinkIcon = forwardRef<SVGSVGElement, IconProps>(
+export const LinkIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3112,7 +3112,7 @@ export const LinkIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 LinkIcon.displayName = "LinkIcon";
 
-export const ListItemIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ListItemIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3136,7 +3136,7 @@ export const ListItemIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ListItemIcon.displayName = "ListItemIcon";
 
-export const ListViewIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ListViewIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3159,7 +3159,7 @@ export const ListViewIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ListViewIcon.displayName = "ListViewIcon";
 
-export const ListIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ListIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3195,7 +3195,7 @@ export const ListIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ListIcon.displayName = "ListIcon";
 
-export const LoadingDotsIcon = forwardRef<SVGSVGElement, IconProps>(
+export const LoadingDotsIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3239,7 +3239,7 @@ export const LoadingDotsIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 LoadingDotsIcon.displayName = "LoadingDotsIcon";
 
-export const LocalStyleIcon = forwardRef<SVGSVGElement, IconProps>(
+export const LocalStyleIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3269,7 +3269,7 @@ export const LocalStyleIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 LocalStyleIcon.displayName = "LocalStyleIcon";
 
-export const MarkdownEmbedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const MarkdownEmbedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3293,7 +3293,7 @@ export const MarkdownEmbedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 MarkdownEmbedIcon.displayName = "MarkdownEmbedIcon";
 
-export const MaximizeIcon = forwardRef<SVGSVGElement, IconProps>(
+export const MaximizeIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3315,7 +3315,7 @@ export const MaximizeIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 MaximizeIcon.displayName = "MaximizeIcon";
 
-export const MicOffIcon = forwardRef<SVGSVGElement, IconProps>(
+export const MicOffIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3338,7 +3338,7 @@ export const MicOffIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 MicOffIcon.displayName = "MicOffIcon";
 
-export const MicIcon = forwardRef<SVGSVGElement, IconProps>(
+export const MicIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3361,7 +3361,7 @@ export const MicIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 MicIcon.displayName = "MicIcon";
 
-export const MinimizeIcon = forwardRef<SVGSVGElement, IconProps>(
+export const MinimizeIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3383,7 +3383,7 @@ export const MinimizeIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 MinimizeIcon.displayName = "MinimizeIcon";
 
-export const MinusIcon = forwardRef<SVGSVGElement, IconProps>(
+export const MinusIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3406,7 +3406,7 @@ export const MinusIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 MinusIcon.displayName = "MinusIcon";
 
-export const NavigationMenuIcon = forwardRef<SVGSVGElement, IconProps>(
+export const NavigationMenuIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3425,7 +3425,7 @@ export const NavigationMenuIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 NavigationMenuIcon.displayName = "NavigationMenuIcon";
 
-export const NavigatorIcon = forwardRef<SVGSVGElement, IconProps>(
+export const NavigatorIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3447,7 +3447,7 @@ export const NavigatorIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 NavigatorIcon.displayName = "NavigatorIcon";
 
-export const NoWrapIcon = forwardRef<SVGSVGElement, IconProps>(
+export const NoWrapIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3466,7 +3466,7 @@ export const NoWrapIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 NoWrapIcon.displayName = "NoWrapIcon";
 
-export const OfflineIcon = forwardRef<SVGSVGElement, IconProps>(
+export const OfflineIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3488,7 +3488,7 @@ export const OfflineIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 OfflineIcon.displayName = "OfflineIcon";
 
-export const OrderFirstIcon = forwardRef<SVGSVGElement, IconProps>(
+export const OrderFirstIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3512,7 +3512,7 @@ export const OrderFirstIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 OrderFirstIcon.displayName = "OrderFirstIcon";
 
-export const OrderLastIcon = forwardRef<SVGSVGElement, IconProps>(
+export const OrderLastIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3536,7 +3536,7 @@ export const OrderLastIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 OrderLastIcon.displayName = "OrderLastIcon";
 
-export const OverlayIcon = forwardRef<SVGSVGElement, IconProps>(
+export const OverlayIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3558,7 +3558,7 @@ export const OverlayIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 OverlayIcon.displayName = "OverlayIcon";
 
-export const PageIcon = forwardRef<SVGSVGElement, IconProps>(
+export const PageIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3581,7 +3581,7 @@ export const PageIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 PageIcon.displayName = "PageIcon";
 
-export const PaintBrushIcon = forwardRef<SVGSVGElement, IconProps>(
+export const PaintBrushIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3603,7 +3603,7 @@ export const PaintBrushIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 PaintBrushIcon.displayName = "PaintBrushIcon";
 
-export const PhoneIcon = forwardRef<SVGSVGElement, IconProps>(
+export const PhoneIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3626,7 +3626,7 @@ export const PhoneIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 PhoneIcon.displayName = "PhoneIcon";
 
-export const PlayIcon = forwardRef<SVGSVGElement, IconProps>(
+export const PlayIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3645,7 +3645,7 @@ export const PlayIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 PlayIcon.displayName = "PlayIcon";
 
-export const PluginIcon = forwardRef<SVGSVGElement, IconProps>(
+export const PluginIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3668,7 +3668,7 @@ export const PluginIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 PluginIcon.displayName = "PluginIcon";
 
-export const PlusIcon = forwardRef<SVGSVGElement, IconProps>(
+export const PlusIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3696,7 +3696,7 @@ export const PlusIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 PlusIcon.displayName = "PlusIcon";
 
-export const PopoverIcon = forwardRef<SVGSVGElement, IconProps>(
+export const PopoverIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3719,7 +3719,7 @@ export const PopoverIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 PopoverIcon.displayName = "PopoverIcon";
 
-export const RadioCheckedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const RadioCheckedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3743,7 +3743,7 @@ export const RadioCheckedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 RadioCheckedIcon.displayName = "RadioCheckedIcon";
 
-export const RadioDotIcon = forwardRef<SVGSVGElement, IconProps>(
+export const RadioDotIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3762,7 +3762,7 @@ export const RadioDotIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 RadioDotIcon.displayName = "RadioDotIcon";
 
-export const RadioUncheckedIcon = forwardRef<SVGSVGElement, IconProps>(
+export const RadioUncheckedIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3785,7 +3785,7 @@ export const RadioUncheckedIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 RadioUncheckedIcon.displayName = "RadioUncheckedIcon";
 
-export const RefreshIcon = forwardRef<SVGSVGElement, IconProps>(
+export const RefreshIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3808,7 +3808,7 @@ export const RefreshIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 RefreshIcon.displayName = "RefreshIcon";
 
-export const RepeatColumnIcon = forwardRef<SVGSVGElement, IconProps>(
+export const RepeatColumnIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3827,7 +3827,7 @@ export const RepeatColumnIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 RepeatColumnIcon.displayName = "RepeatColumnIcon";
 
-export const RepeatGridIcon = forwardRef<SVGSVGElement, IconProps>(
+export const RepeatGridIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3846,7 +3846,7 @@ export const RepeatGridIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 RepeatGridIcon.displayName = "RepeatGridIcon";
 
-export const RepeatRowIcon = forwardRef<SVGSVGElement, IconProps>(
+export const RepeatRowIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3865,7 +3865,7 @@ export const RepeatRowIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 RepeatRowIcon.displayName = "RepeatRowIcon";
 
-export const ResetIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ResetIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3888,7 +3888,7 @@ export const ResetIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ResetIcon.displayName = "ResetIcon";
 
-export const ScrollIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ScrollIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3912,7 +3912,7 @@ export const ScrollIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ScrollIcon.displayName = "ScrollIcon";
 
-export const SectionLinkIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SectionLinkIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3935,7 +3935,7 @@ export const SectionLinkIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SectionLinkIcon.displayName = "SectionLinkIcon";
 
-export const SelectIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SelectIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3959,7 +3959,7 @@ export const SelectIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SelectIcon.displayName = "SelectIcon";
 
-export const ShadowInsetIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ShadowInsetIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -3983,7 +3983,7 @@ export const ShadowInsetIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ShadowInsetIcon.displayName = "ShadowInsetIcon";
 
-export const ShadowNormalIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ShadowNormalIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4007,7 +4007,7 @@ export const ShadowNormalIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ShadowNormalIcon.displayName = "ShadowNormalIcon";
 
-export const ShrinkIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ShrinkIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4030,7 +4030,7 @@ export const ShrinkIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ShrinkIcon.displayName = "ShrinkIcon";
 
-export const SliderIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SliderIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4053,7 +4053,7 @@ export const SliderIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SliderIcon.displayName = "SliderIcon";
 
-export const SlotComponentIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SlotComponentIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4072,7 +4072,7 @@ export const SlotComponentIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SlotComponentIcon.displayName = "SlotComponentIcon";
 
-export const SmallXIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SmallXIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4095,7 +4095,7 @@ export const SmallXIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SmallXIcon.displayName = "SmallXIcon";
 
-export const SpinnerIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SpinnerIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4134,7 +4134,7 @@ export const SpinnerIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SpinnerIcon.displayName = "SpinnerIcon";
 
-export const StopIcon = forwardRef<SVGSVGElement, IconProps>(
+export const StopIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4153,7 +4153,7 @@ export const StopIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 StopIcon.displayName = "StopIcon";
 
-export const SubscriptIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SubscriptIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4177,7 +4177,7 @@ export const SubscriptIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SubscriptIcon.displayName = "SubscriptIcon";
 
-export const SubtractIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SubtractIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4200,7 +4200,7 @@ export const SubtractIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SubtractIcon.displayName = "SubtractIcon";
 
-export const SuperscriptIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SuperscriptIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4224,7 +4224,7 @@ export const SuperscriptIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SuperscriptIcon.displayName = "SuperscriptIcon";
 
-export const SwitchIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SwitchIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4247,7 +4247,7 @@ export const SwitchIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 SwitchIcon.displayName = "SwitchIcon";
 
-export const TabsIcon = forwardRef<SVGSVGElement, IconProps>(
+export const TabsIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4270,7 +4270,7 @@ export const TabsIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 TabsIcon.displayName = "TabsIcon";
 
-export const TextAlignLeftIcon = forwardRef<SVGSVGElement, IconProps>(
+export const TextAlignLeftIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4293,7 +4293,7 @@ export const TextAlignLeftIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 TextAlignLeftIcon.displayName = "TextAlignLeftIcon";
 
-export const TextItalicIcon = forwardRef<SVGSVGElement, IconProps>(
+export const TextItalicIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4315,7 +4315,7 @@ export const TextItalicIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 TextItalicIcon.displayName = "TextItalicIcon";
 
-export const TextIcon = forwardRef<SVGSVGElement, IconProps>(
+export const TextIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4338,7 +4338,7 @@ export const TextIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 TextIcon.displayName = "TextIcon";
 
-export const TooltipIcon = forwardRef<SVGSVGElement, IconProps>(
+export const TooltipIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4361,7 +4361,7 @@ export const TooltipIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 TooltipIcon.displayName = "TooltipIcon";
 
-export const TriggerIcon = forwardRef<SVGSVGElement, IconProps>(
+export const TriggerIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4384,7 +4384,7 @@ export const TriggerIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 TriggerIcon.displayName = "TriggerIcon";
 
-export const UpgradeIcon = forwardRef<SVGSVGElement, IconProps>(
+export const UpgradeIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4412,7 +4412,7 @@ export const UpgradeIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 UpgradeIcon.displayName = "UpgradeIcon";
 
-export const UploadIcon = forwardRef<SVGSVGElement, IconProps>(
+export const UploadIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4436,7 +4436,7 @@ export const UploadIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 UploadIcon.displayName = "UploadIcon";
 
-export const VideoIcon = forwardRef<SVGSVGElement, IconProps>(
+export const VideoIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4460,7 +4460,7 @@ export const VideoIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 VideoIcon.displayName = "VideoIcon";
 
-export const ViewportIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ViewportIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4483,7 +4483,7 @@ export const ViewportIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ViewportIcon.displayName = "ViewportIcon";
 
-export const VimeoIcon = forwardRef<SVGSVGElement, IconProps>(
+export const VimeoIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4502,7 +4502,7 @@ export const VimeoIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 VimeoIcon.displayName = "VimeoIcon";
 
-export const WebhookFormIcon = forwardRef<SVGSVGElement, IconProps>(
+export const WebhookFormIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4524,7 +4524,7 @@ export const WebhookFormIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 WebhookFormIcon.displayName = "WebhookFormIcon";
 
-export const Webstudio1cIcon = forwardRef<SVGSVGElement, IconProps>(
+export const Webstudio1cIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4557,7 +4557,7 @@ export const Webstudio1cIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 Webstudio1cIcon.displayName = "Webstudio1cIcon";
 
-export const WebstudioIcon = forwardRef<SVGSVGElement, IconProps>(
+export const WebstudioIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4908,7 +4908,7 @@ export const WebstudioIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 WebstudioIcon.displayName = "WebstudioIcon";
 
-export const WrapIcon = forwardRef<SVGSVGElement, IconProps>(
+export const WrapIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4928,7 +4928,7 @@ export const WrapIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 WrapIcon.displayName = "WrapIcon";
 
-export const XAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
+export const XAxisRotateIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4950,7 +4950,7 @@ export const XAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 XAxisRotateIcon.displayName = "XAxisRotateIcon";
 
-export const XAxisIcon = forwardRef<SVGSVGElement, IconProps>(
+export const XAxisIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4972,7 +4972,7 @@ export const XAxisIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 XAxisIcon.displayName = "XAxisIcon";
 
-export const XIcon = forwardRef<SVGSVGElement, IconProps>(
+export const XIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -4991,7 +4991,7 @@ export const XIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 XIcon.displayName = "XIcon";
 
-export const XmlIcon = forwardRef<SVGSVGElement, IconProps>(
+export const XmlIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -5016,7 +5016,7 @@ export const XmlIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 XmlIcon.displayName = "XmlIcon";
 
-export const YAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
+export const YAxisRotateIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -5038,7 +5038,7 @@ export const YAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 YAxisRotateIcon.displayName = "YAxisRotateIcon";
 
-export const YAxisIcon = forwardRef<SVGSVGElement, IconProps>(
+export const YAxisIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -5060,7 +5060,7 @@ export const YAxisIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 YAxisIcon.displayName = "YAxisIcon";
 
-export const Youtube1cIcon = forwardRef<SVGSVGElement, IconProps>(
+export const Youtube1cIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -5083,7 +5083,7 @@ export const Youtube1cIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 Youtube1cIcon.displayName = "Youtube1cIcon";
 
-export const ZAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ZAxisRotateIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
@@ -5105,7 +5105,7 @@ export const ZAxisRotateIcon = forwardRef<SVGSVGElement, IconProps>(
 );
 ZAxisRotateIcon.displayName = "ZAxisRotateIcon";
 
-export const ZAxisIcon = forwardRef<SVGSVGElement, IconProps>(
+export const ZAxisIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       <svg

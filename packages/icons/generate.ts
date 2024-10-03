@@ -48,7 +48,7 @@ export const generateStringExport = (options: GenerateOptions) => {
   return `export const ${options.exportName} = \`${optimized.trim()}\`;`;
 };
 
-export const generateComponentExport = (options: GenerateOptions) => {
+const generateComponentExport = (options: GenerateOptions) => {
   const { jsx } = convertSvgToJsx({
     target: "react-dom",
     file: options.file,
@@ -63,7 +63,7 @@ export const generateComponentExport = (options: GenerateOptions) => {
     plugins: sharedPlugins,
   });
   return `
-export const ${options.exportName} = forwardRef<SVGSVGElement, IconProps>(
+export const ${options.exportName}: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       ${jsx}
@@ -83,7 +83,7 @@ const transformComponentName = (filename: string) => {
 let stringContent = "";
 let componentsContent = `
 import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import type { IconComponent } from "../types";
 
 `.trimStart();
 

@@ -1,13 +1,17 @@
 import * as React from "react";
-import type { IconProps } from "./types";
+import type { IconComponent } from "./types";
 
 const fillVar = "--ws-gear-icon-fill";
 
-export const gearIconCssVars = ({ fill }: { fill: string }) => ({
+export const gearIconCssVars = ({
+  fill,
+}: {
+  fill: string;
+}): { "--ws-gear-icon-fill": string } => ({
   [fillVar]: fill,
 });
 
-export const GearIcon = React.forwardRef<SVGSVGElement, IconProps>(
+export const GearIcon: IconComponent = React.forwardRef(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg
