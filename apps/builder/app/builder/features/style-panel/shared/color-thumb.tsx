@@ -45,6 +45,7 @@ const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => {
 };
 
 const thumbStyle = css({
+  display: "block",
   width: theme.spacing[10],
   height: theme.spacing[10],
   backgroundBlendMode: "difference",
