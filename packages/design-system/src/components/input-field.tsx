@@ -72,6 +72,8 @@ const inputStyle = css({
   },
 });
 
+const prefixMarginLeft = "--input-field-prefix-margin-left";
+
 const containerStyle = css({
   display: "flex",
   boxSizing: "border-box",
@@ -113,6 +115,7 @@ const containerStyle = css({
       },
       3: {
         height: theme.spacing[12],
+        [prefixMarginLeft]: theme.spacing[1],
       },
     },
   },
@@ -126,7 +129,7 @@ const suffixSlotStyle = css({
 });
 
 const prefixSlotStyle = css({
-  marginLeft: theme.spacing[1],
+  marginLeft: `var(${prefixMarginLeft})`,
 });
 
 const Container = forwardRef(
