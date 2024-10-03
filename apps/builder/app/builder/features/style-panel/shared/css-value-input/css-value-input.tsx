@@ -716,7 +716,7 @@ export const CssValueInput = ({
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
             suffix={suffix}
-            css={{ cursor: "default", minWidth: "2em" }}
+            css={{ cursor: "default", minWidth: "3em" }}
             text={text}
           />
         </ComboboxAnchor>
