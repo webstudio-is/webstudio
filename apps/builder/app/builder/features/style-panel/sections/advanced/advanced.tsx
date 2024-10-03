@@ -1,3 +1,4 @@
+import { colord } from "colord";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
@@ -22,6 +23,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   hyphenateProperty,
+  toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import {
@@ -39,6 +41,7 @@ import {
 import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
 import { sections } from "../sections";
+import { ColorPopover } from "../../shared/color-picker";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -229,6 +232,7 @@ const AdvancedPropertyValue = ({
       inputRef.current?.focus();
     }
   }, [autoFocus]);
+  const isColor = colord(toValue(styleDecl.usedValue)).isValid();
   return (
     <CssValueInputContainer
       inputRef={inputRef}
@@ -236,6 +240,25 @@ const AdvancedPropertyValue = ({
       size="2"
       text="mono"
       fieldSizing="content"
+      prefix={
+        isColor && (
+          <ColorPopover
+            size={1}
+            value={styleDecl.usedValue}
+            onChange={(styleValue) => {
+              const options = { isEphemeral: true, listed: true };
+              if (styleValue) {
+                setProperty(property)(styleValue, options);
+              } else {
+                deleteProperty(property, options);
+              }
+            }}
+            onChangeComplete={(styleValue) => {
+              setProperty(property)(styleValue);
+            }}
+          />
+        )
+      }
       property={property}
       styleSource={styleDecl.source.name}
       keywords={[

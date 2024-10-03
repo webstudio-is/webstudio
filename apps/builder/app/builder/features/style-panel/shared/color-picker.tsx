@@ -176,24 +176,20 @@ type ColorPickerProps = {
   disabled?: boolean;
 };
 
-export const ColorPicker = ({
+export const ColorPopover = ({
+  size,
   value,
-  currentColor,
-  keywords,
-  property,
-  disabled,
   onChange,
   onChangeComplete,
-  onAbort,
-}: ColorPickerProps) => {
+}: {
+  size?: 1 | 2;
+  value: StyleValue;
+  onChange: (value: undefined | StyleValue) => void;
+  onChangeComplete: (value: StyleValue) => void;
+}) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
-
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
-  const currentValue = intermediateValue ?? value;
 
   const handleOpenChange = (open: boolean) => {
     setDisplayColorPicker(open);
@@ -209,7 +205,7 @@ export const ColorPicker = ({
     enableCanvasPointerEvents();
   };
 
-  const prefix = (
+  return (
     <Popover modal open={displayColorPicker} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         asChild
@@ -217,7 +213,8 @@ export const ColorPicker = ({
         onClick={() => setDisplayColorPicker((shown) => !shown)}
       >
         <ColorThumb
-          color={styleValueToRgbaColor(currentColor)}
+          color={styleValueToRgbaColor(value)}
+          size={size}
           css={{ margin: theme.spacing[2] }}
           tabIndex={-1}
         />
@@ -230,7 +227,36 @@ export const ColorPicker = ({
         }}
       >
         <ColorPickerPopoverContent
-          value={currentValue}
+          value={value}
+          onChange={onChange}
+          onChangeComplete={onChangeComplete}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export const ColorPicker = ({
+  value,
+  currentColor,
+  keywords,
+  property,
+  disabled,
+  onChange,
+  onChangeComplete,
+  onAbort,
+}: ColorPickerProps) => {
+  const [intermediateValue, setIntermediateValue] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
+  return (
+    <CssValueInput
+      aria-disabled={disabled}
+      styleSource="default"
+      prefix={
+        <ColorPopover
+          value={currentColor}
           onChange={(styleValue) => {
             setIntermediateValue(styleValue);
             if (styleValue) {
@@ -244,15 +270,7 @@ export const ColorPicker = ({
             onChangeComplete(value);
           }}
         />
-      </PopoverContent>
-    </Popover>
-  );
-
-  return (
-    <CssValueInput
-      aria-disabled={disabled}
-      styleSource="default"
-      prefix={prefix}
+      }
       showSuffix={false}
       property={property}
       value={value}

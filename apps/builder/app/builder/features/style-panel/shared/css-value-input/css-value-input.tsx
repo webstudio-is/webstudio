@@ -51,12 +51,11 @@ import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 
 // We need to enable scrub on properties that can have numeric value.
-const canBeNumber = (property: StyleProperty) => {
-  if (property in properties === false) {
-    return true;
-  }
-  const { unitGroups } = properties[property as keyof typeof properties];
-  return unitGroups.length !== 0;
+const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
+  const unitGroups =
+    properties[property as keyof typeof properties]?.unitGroups ?? [];
+  // allow scrubbing css variables with unit value
+  return unitGroups.length !== 0 || value.type === "unit";
 };
 
 // Subjective adjust ment based on how it feels on macbook/trackpad.
@@ -111,7 +110,7 @@ const useScrub = ({
     if (
       inputRefCurrent === null ||
       scrubRefCurrent === null ||
-      canBeNumber(property) === false
+      canBeNumber(property, valueRef.current) === false
     ) {
       return;
     }
@@ -446,7 +445,6 @@ export const CssValueInput = ({
     highlightedIndex,
   } = useCombobox<CssValueInputValue>({
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
-    defaultHighlightedIndex: 0,
     items: keywords,
     value,
     selectedItem: props.value,
@@ -718,7 +716,7 @@ export const CssValueInput = ({
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
             suffix={suffix}
-            css={{ cursor: "default", minWidth: "2em" }}
+            css={{ cursor: "default", minWidth: "3em" }}
             text={text}
           />
         </ComboboxAnchor>
