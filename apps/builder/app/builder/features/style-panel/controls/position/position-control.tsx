@@ -110,7 +110,7 @@ export const PositionControl = ({
           <CssValueInputContainer
             property={property}
             styleSource={styleDecl.source.name}
-            keywords={keywords}
+            options={keywords}
             value={value.value[0]}
             setValue={setValueX}
             deleteProperty={deleteProperty}
@@ -123,7 +123,7 @@ export const PositionControl = ({
           <CssValueInputContainer
             property={property}
             styleSource={styleDecl.source.name}
-            keywords={keywords}
+            options={keywords}
             value={value.value[1]}
             setValue={setValueY}
             deleteProperty={deleteProperty}

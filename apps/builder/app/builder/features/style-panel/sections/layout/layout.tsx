@@ -152,7 +152,7 @@ const GapInput = ({
         property={property}
         value={styleDecl.cascadedValue}
         intermediateValue={intermediateValue}
-        keywords={items.map((item) => ({
+        options={items.map((item) => ({
           type: "keyword",
           value: item.name,
         }))}

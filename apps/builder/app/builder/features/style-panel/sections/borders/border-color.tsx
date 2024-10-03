@@ -58,7 +58,7 @@ export const BorderColor = () => {
               currentColor={currentColor}
               property={local.property as StyleProperty}
               value={value}
-              keywords={items.map((item) => ({
+              options={items.map((item) => ({
                 type: "keyword",
                 value: item.name,
               }))}

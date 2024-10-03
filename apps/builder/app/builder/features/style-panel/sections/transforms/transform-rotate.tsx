@@ -53,7 +53,6 @@ export const RotatePanelContent = () => {
           styleSource="local"
           property="rotate"
           value={rotateX}
-          keywords={[]}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateX", value, options)
           }
@@ -73,7 +72,6 @@ export const RotatePanelContent = () => {
           styleSource="local"
           property="rotate"
           value={rotateY}
-          keywords={[]}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateY", value, options)
           }
@@ -93,7 +91,6 @@ export const RotatePanelContent = () => {
           styleSource="local"
           property="rotate"
           value={rotateZ}
-          keywords={[]}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateZ", value, options)
           }

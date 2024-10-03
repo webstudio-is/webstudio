@@ -35,7 +35,7 @@ import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 import {
-  $definedStyles,
+  $availableVariables,
   $matchingBreakpoints,
   getDefinedStyles,
   useComputedStyleDecl,
@@ -210,16 +210,6 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
   );
 };
 
-const $availableCustomProperties = computed($definedStyles, (definedStyles) => {
-  const customProperties = new Set<StyleProperty>();
-  for (const { property } of definedStyles) {
-    if (property.startsWith("--")) {
-      customProperties.add(property);
-    }
-  }
-  return customProperties;
-});
-
 const AdvancedPropertyValue = ({
   autoFocus,
   property,
@@ -228,7 +218,7 @@ const AdvancedPropertyValue = ({
   property: StyleProperty;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
-  const availableCustomProperties = useStore($availableCustomProperties);
+  const availableVariables = useStore($availableVariables);
   const { items } = styleConfigByName(property);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -265,16 +255,12 @@ const AdvancedPropertyValue = ({
       }
       property={property}
       styleSource={styleDecl.source.name}
-      keywords={[
+      options={[
         ...items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
-        // very basic custom properties autocomplete
-        ...Array.from(availableCustomProperties).map((name) => ({
-          type: "keyword" as const,
-          value: name,
-        })),
+        ...availableVariables,
       ]}
       value={styleDecl.cascadedValue}
       setValue={(styleValue, options) => {

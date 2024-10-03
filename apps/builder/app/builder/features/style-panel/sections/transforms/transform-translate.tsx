@@ -59,7 +59,6 @@ export const TranslatePanelContent = () => {
           styleSource="local"
           property={property}
           value={translateX}
-          keywords={[]}
           setValue={(newValue, options) => setAxis(0, newValue, options)}
           deleteProperty={() => {}}
         />
@@ -77,7 +76,6 @@ export const TranslatePanelContent = () => {
           styleSource="local"
           property={property}
           value={translateY}
-          keywords={[]}
           setValue={(newValue, options) => setAxis(1, newValue, options)}
           deleteProperty={() => {}}
         />
@@ -95,7 +93,6 @@ export const TranslatePanelContent = () => {
           styleSource="local"
           property={property}
           value={translateZ}
-          keywords={[]}
           setValue={(newValue, options) => setAxis(2, newValue, options)}
           deleteProperty={() => {}}
         />

@@ -159,7 +159,7 @@ export const TransformAndPerspectiveOrigin = (
               />
               <CssValueInputContainer
                 value={origin.x}
-                keywords={xOriginKeywords}
+                options={xOriginKeywords}
                 styleSource="local"
                 property={fakePropertyX}
                 deleteProperty={() => {}}
@@ -186,7 +186,7 @@ export const TransformAndPerspectiveOrigin = (
               />
               <CssValueInputContainer
                 value={origin.y}
-                keywords={yOriginKeywords}
+                options={yOriginKeywords}
                 styleSource="local"
                 property={fakePropertyY}
                 deleteProperty={() => {}}
@@ -208,7 +208,6 @@ export const TransformAndPerspectiveOrigin = (
                 />
                 <CssValueInputContainer
                   value={origin.z}
-                  keywords={[]}
                   styleSource="local"
                   property={fakePropertyZ}
                   deleteProperty={() => {}}

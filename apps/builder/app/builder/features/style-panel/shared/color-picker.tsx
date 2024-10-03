@@ -9,6 +9,7 @@ import type {
   StyleValue,
   KeywordValue,
   RgbValue,
+  VarValue,
 } from "@webstudio-is/css-engine";
 import {
   Popover,
@@ -171,7 +172,7 @@ type ColorPickerProps = {
   onAbort: () => void;
   value: StyleValue;
   currentColor: StyleValue;
-  keywords?: Array<KeywordValue>;
+  options?: Array<KeywordValue | VarValue>;
   property: StyleProperty;
   disabled?: boolean;
 };
@@ -239,7 +240,7 @@ export const ColorPopover = ({
 export const ColorPicker = ({
   value,
   currentColor,
-  keywords,
+  options,
   property,
   disabled,
   onChange,
@@ -275,7 +276,7 @@ export const ColorPicker = ({
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      keywords={keywords}
+      options={options}
       onChange={(styleValue) => {
         if (styleValue === undefined) {
           setIntermediateValue(styleValue);
@@ -289,6 +290,7 @@ export const ColorPicker = ({
         if (
           styleValue.type === "rgb" ||
           styleValue.type === "keyword" ||
+          styleValue.type === "var" ||
           styleValue.type === "invalid"
         ) {
           setIntermediateValue(styleValue);
@@ -309,7 +311,11 @@ export const ColorPicker = ({
         }
       }}
       onChangeComplete={({ value }) => {
-        if (value.type === "rgb" || value.type === "keyword") {
+        if (
+          value.type === "rgb" ||
+          value.type === "keyword" ||
+          value.type === "var"
+        ) {
           setIntermediateValue(undefined);
           onChangeComplete(value);
           return;

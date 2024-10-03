@@ -6,6 +6,7 @@ import {
   compareMedia,
   type StyleProperty,
   type StyleValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import {
   ROOT_INSTANCE_ID,
@@ -164,6 +165,20 @@ export const $definedStyles = computed(
     });
   }
 );
+
+export const $availableVariables = computed($definedStyles, (definedStyles) => {
+  const availableVariables = new Map<string, VarValue>();
+  for (const { property } of definedStyles) {
+    if (property.startsWith("--")) {
+      // deduplicate by property name
+      availableVariables.set(property, {
+        type: "var",
+        value: property.slice(2),
+      });
+    }
+  }
+  return Array.from(availableVariables.values());
+});
 
 const $model = computed(
   [
