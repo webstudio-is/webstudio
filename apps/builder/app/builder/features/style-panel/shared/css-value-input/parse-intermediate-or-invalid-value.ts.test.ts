@@ -534,13 +534,75 @@ describe("Colors", () => {
   });
 });
 
-test("parse css vars", () => {
-  const result = parseIntermediateOrInvalidValue("color", {
-    type: "intermediate",
-    value: "var(--color)",
-  });
-  expect(result).toEqual({
+test("parse css variable reference", () => {
+  expect(
+    parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "var(--color)",
+    })
+  ).toEqual({
     type: "var",
     value: "color",
+  });
+});
+
+test("parse unit in css variable", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "10px",
+    })
+  ).toEqual({
+    type: "unit",
+    value: 10,
+    unit: "px",
+  });
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "10",
+      unit: "px",
+    })
+  ).toEqual({
+    type: "unit",
+    value: 10,
+    unit: "px",
+  });
+});
+
+test("parse color in css variable", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "#0f0f0f",
+    })
+  ).toEqual({
+    type: "rgb",
+    r: 15,
+    g: 15,
+    b: 15,
+    alpha: 1,
+  });
+});
+
+test("parse css variables as unparsed", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "url(https://my-image.com)",
+    })
+  ).toEqual({
+    type: "unparsed",
+    value: "url(https://my-image.com)",
+  });
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "url(https://my-image.com)",
+      unit: "px",
+    })
+  ).toEqual({
+    type: "unparsed",
+    value: "url(https://my-image.com)",
   });
 });

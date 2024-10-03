@@ -32,6 +32,7 @@ import {
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -106,7 +107,10 @@ export const $definedStyles = computed(
     if (instanceSelector === undefined) {
       return definedProperties;
     }
-    const instanceAndRootSelector = [...instanceSelector, ROOT_INSTANCE_ID];
+    const instanceAndRootSelector =
+      instanceSelector[0] === ROOT_INSTANCE_ID
+        ? instanceSelector
+        : [...instanceSelector, ROOT_INSTANCE_ID];
     const inheritedStyleSources = new Set();
     const instanceStyleSources = new Set();
     const matchingBreakpoints = new Set(matchingBreakpointsArray);
@@ -180,9 +184,13 @@ export const createComputedStyleDeclStore = (property: StyleProperty) => {
   return computed(
     [$model, $selectedInstanceSelector, $selectedOrLastStyleSourceSelector],
     (model, instanceSelector, styleSourceSelector) => {
-      const instanceAndRootSelector = instanceSelector
-        ? [...instanceSelector, ROOT_INSTANCE_ID]
-        : undefined;
+      let instanceAndRootSelector: undefined | InstanceSelector;
+      if (instanceSelector) {
+        instanceAndRootSelector =
+          instanceSelector[0] === ROOT_INSTANCE_ID
+            ? instanceSelector
+            : [...instanceSelector, ROOT_INSTANCE_ID];
+      }
       return getComputedStyleDecl({
         model,
         instanceSelector: instanceAndRootSelector,
