@@ -1408,9 +1408,6 @@ importers:
       match-sorter:
         specifier: ^6.3.4
         version: 6.3.4
-      react-field-sizing-content:
-        specifier: ^1.0.0
-        version: 1.0.0(react@18.3.0-canary-14898b6a9-20240318)
       react-hot-toast:
         specifier: ^2.4.1
         version: 2.4.1(csstype@3.1.1)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -8145,11 +8142,6 @@ packages:
 
   react-error-boundary@4.0.12:
     resolution: {integrity: sha512-kJdxdEYlb7CPC1A0SeUY38cHpjuu6UkvzKiAmqmOFL21VRfMhOcWxTCBgLVCO0VEMh9JhFNcVaXlV4/BTpiwOA==}
-    peerDependencies:
-      react: 18.3.0-canary-14898b6a9-20240318
-
-  react-field-sizing-content@1.0.0:
-    resolution: {integrity: sha512-Wu9kaurnMn4AZ4kVxcR0rmbLKdCetqOSszB8KuauwU91cAKv1YPjhOLsbUyBB+11+yYpdFPoDSuasuQ5ruz0pg==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
@@ -16405,10 +16397,6 @@ snapshots:
   react-error-boundary@4.0.12(react@18.3.0-canary-14898b6a9-20240318):
     dependencies:
       '@babel/runtime': 7.22.3
-      react: 18.3.0-canary-14898b6a9-20240318
-
-  react-field-sizing-content@1.0.0(react@18.3.0-canary-14898b6a9-20240318):
-    dependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
   react-hot-toast@2.4.1(csstype@3.1.1)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
