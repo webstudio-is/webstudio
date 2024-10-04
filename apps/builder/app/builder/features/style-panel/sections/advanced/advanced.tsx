@@ -176,41 +176,37 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
     styleDecl.source.name === "default" ? "code" : styleDecl.source.name;
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
-        triggerProps={{
-          onClick: (event) => {
-            if (event.altKey) {
-              event.preventDefault();
-              deleteProperty(property);
-              return;
-            }
-            setIsOpen(true);
-          },
-        }}
-        content={
-          <PropertyInfo
-            title={label}
-            description={description}
-            styles={[styleDecl]}
-            onReset={() => {
-              deleteProperty(property);
-              setIsOpen(false);
-            }}
-          />
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <Label color={color} text="mono" truncate>
-            {label}
-          </Label>
-        </Flex>
-      </Tooltip>
-    </Flex>
+    <Tooltip
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      // prevent closing tooltip on content click
+      onPointerDown={(event) => event.preventDefault()}
+      triggerProps={{
+        onClick: (event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            deleteProperty(property);
+            return;
+          }
+          setIsOpen(true);
+        },
+      }}
+      content={
+        <PropertyInfo
+          title={label}
+          description={description}
+          styles={[styleDecl]}
+          onReset={() => {
+            deleteProperty(property);
+            setIsOpen(false);
+          }}
+        />
+      }
+    >
+      <Label color={color} text="mono">
+        {label}
+      </Label>
+    </Tooltip>
   );
 };
 
@@ -374,7 +370,7 @@ export const Section = () => {
       )}
       <Box>
         {advancedProperties.map((property) => (
-          <Flex key={property} wrap="wrap" align="center">
+          <Flex key={property} wrap="wrap" align="center" justify="start">
             <AdvancedPropertyLabel property={property} />
             <Text>:</Text>
             <AdvancedPropertyValue

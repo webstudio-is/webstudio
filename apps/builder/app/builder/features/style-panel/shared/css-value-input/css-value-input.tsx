@@ -692,8 +692,8 @@ export const CssValueInput = ({
 
   return (
     <ComboboxRoot open={isOpen}>
-      <Box {...getComboboxProps()} css={{ width: "100%" }}>
-        <ComboboxAnchor>
+      <Box {...getComboboxProps()}>
+        <ComboboxAnchor asChild>
           <InputField
             size={size}
             variant={variant}
@@ -716,7 +716,7 @@ export const CssValueInput = ({
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
             suffix={suffix}
-            css={{ cursor: "default", minWidth: "3em" }}
+            css={{ cursor: "default", minWidth: "2em" }}
             text={text}
           />
         </ComboboxAnchor>
