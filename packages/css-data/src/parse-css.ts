@@ -188,9 +188,7 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
             name = childNode.name;
             break;
           case "ClassSelector":
-            // .a => a
-            // .a.b => a.b
-            name = selector ? `.${childNode.name}` : childNode.name;
+            name = `.${childNode.name}`;
             break;
           case "AttributeSelector":
             name = csstree.generate(childNode);
@@ -204,13 +202,13 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
             }
             break;
           }
+          case "PseudoElementSelector":
+            state = `::${childNode.name}`;
+            break;
           case "Combinator":
             // " " vs " > "
             name =
               childNode.name === " " ? childNode.name : ` ${childNode.name} `;
-            break;
-          case "PseudoElementSelector":
-            state = `::${childNode.name}`;
             break;
         }
 

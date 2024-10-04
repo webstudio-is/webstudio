@@ -5,7 +5,7 @@ describe("Parse CSS", () => {
   test("longhand property name with keyword value", () => {
     expect(parseCss(`.test { background-color: red }`)).toEqual([
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundColor",
         value: { type: "keyword", value: "red" },
       },
@@ -15,7 +15,7 @@ describe("Parse CSS", () => {
   test("one class selector rules", () => {
     expect(parseCss(`.test { color: #ff0000 }`)).toEqual([
       {
-        selector: "test",
+        selector: ".test",
         property: "color",
         value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
       },
@@ -30,7 +30,7 @@ describe("Parse CSS", () => {
     `;
     expect(parseCss(css)).toEqual([
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundImage",
         value: {
           type: "layers",
@@ -45,7 +45,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundPositionX",
         value: {
           type: "layers",
@@ -56,7 +56,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundPositionY",
         value: {
           type: "layers",
@@ -67,7 +67,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundSize",
         value: {
           type: "layers",
@@ -90,7 +90,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundRepeat",
         value: {
           type: "layers",
@@ -101,7 +101,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundAttachment",
         value: {
           type: "layers",
@@ -112,7 +112,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundOrigin",
         value: {
           type: "layers",
@@ -123,7 +123,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundClip",
         value: {
           type: "layers",
@@ -134,7 +134,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundColor",
         value: { alpha: 1, b: 252, g: 255, r: 235, type: "rgb" },
       },
@@ -149,7 +149,7 @@ describe("Parse CSS", () => {
     `;
     expect(parseCss(css)).toEqual([
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundImage",
         value: {
           type: "layers",
@@ -157,7 +157,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundPositionX",
         value: {
           type: "layers",
@@ -165,7 +165,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundPositionY",
         value: {
           type: "layers",
@@ -173,7 +173,7 @@ describe("Parse CSS", () => {
         },
       },
       {
-        selector: "test",
+        selector: ".test",
         property: "backgroundSize",
         value: {
           type: "layers",
@@ -494,7 +494,7 @@ describe("Parse CSS", () => {
   test("parse space combinator", () => {
     expect(parseCss(`.a b { color: #ff0000 }`)).toEqual([
       {
-        selector: "a b",
+        selector: ".a b",
         property: "color",
         value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
       },
