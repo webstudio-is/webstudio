@@ -948,3 +948,54 @@ test("generate resource prop", () => {
     "
   `);
 });
+
+test("skip unsafe properties", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+
+      instances: toMap([
+        { type: "instance", id: "body", component: "Body", children: [] },
+      ]),
+      props: toMap([
+        {
+          id: "unsafeProp",
+          instanceId: "body",
+          name: "",
+          type: "string",
+          value: "unsafe",
+        },
+
+        {
+          id: "unsafeProp-2",
+          instanceId: "body",
+          name: "1-numeric-unsafe",
+          type: "string",
+          value: "unsafe",
+        },
+
+        {
+          id: "unsafeProp-3",
+          instanceId: "body",
+          name: "click.prevent",
+          type: "string",
+          value: "unsafe",
+        },
+      ]),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body />
+        }
+    `)
+    )
+  );
+});

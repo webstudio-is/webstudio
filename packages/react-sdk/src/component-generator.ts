@@ -13,7 +13,7 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
-import { indexAttribute, showAttribute } from "./props";
+import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
 import { collectionComponent, descendantComponent } from "./core-components";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
@@ -181,6 +181,11 @@ export const generateJsxElement = ({
       dataSources,
       usedDataSources,
     });
+
+    if (isAttributeNameSafe(prop.name) === false) {
+      continue;
+    }
+
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
       // prevent generating unnecessary condition
