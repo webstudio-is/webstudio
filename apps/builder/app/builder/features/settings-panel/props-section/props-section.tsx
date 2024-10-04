@@ -114,7 +114,7 @@ const AddPropertyOrAttribute = ({
         autoFocus
         color={isValid ? undefined : "error"}
         placeholder="Select or create"
-        items={availableProps}
+        getItems={() => availableProps}
         itemToString={itemToString}
         onItemSelect={(item) => {
           if (

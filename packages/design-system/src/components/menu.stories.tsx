@@ -154,7 +154,7 @@ const ComboboxDemo = () => {
     getMenuProps,
     getItemProps,
   } = useCombobox<Fruit>({
-    items: fruits,
+    getItems: () => fruits,
     itemToString: (item) => item ?? "",
     value: null,
     selectedItem,

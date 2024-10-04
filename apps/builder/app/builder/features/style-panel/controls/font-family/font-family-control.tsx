@@ -82,7 +82,7 @@ export const FontFamilyControl = () => {
           </FloatingPanel>
         }
         defaultHighlightedIndex={0}
-        items={items}
+        getItems={() => items}
         itemToString={(item) => item?.label ?? item?.value ?? ""}
         onItemHighlight={(item) => {
           if (item === null) {

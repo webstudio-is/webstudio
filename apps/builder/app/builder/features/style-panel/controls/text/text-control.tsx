@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useStore } from "@nanostores/react";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   CssValueInput,
@@ -16,20 +15,18 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
-  const items = styleConfigByName(property).items;
-  const availableVariables = useStore($availableVariables);
   return (
     <CssValueInput
       styleSource={computedStyleDecl.source.name}
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      options={[
-        ...items.map((item) => ({
+      getOptions={() => [
+        ...styleConfigByName(property).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
-        ...availableVariables,
+        ...$availableVariables.get(),
       ]}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);

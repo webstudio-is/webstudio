@@ -73,7 +73,7 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
           <CssValueInputContainer
             property="backgroundPositionX"
             styleSource="default"
-            options={[
+            getOptions={() => [
               { type: "keyword", value: "center" },
               { type: "keyword", value: "left" },
               { type: "keyword", value: "right" },
@@ -96,7 +96,7 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
           <CssValueInputContainer
             property="backgroundPositionY"
             styleSource="default"
-            options={[
+            getOptions={() => [
               { type: "keyword", value: "center" },
               { type: "keyword", value: "top" },
               { type: "keyword", value: "bottom" },

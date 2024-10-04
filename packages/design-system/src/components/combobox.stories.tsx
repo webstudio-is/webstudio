@@ -24,7 +24,7 @@ export const Basic = () => {
     <Combobox<string>
       value={value}
       itemToString={(item) => item ?? ""}
-      items={["Apple", "Banana", "Orange"]}
+      getItems={() => ["Apple", "Banana", "Orange"]}
       onItemSelect={setValue}
       onChange={(value) => {
         setValue(value ?? "");
@@ -79,7 +79,7 @@ export const Complex = () => {
     getInputProps,
     isOpen,
   } = useCombobox<string>({
-    items: ["Apple", "Banana", "Orange"],
+    getItems: () => ["Apple", "Banana", "Orange"],
     value,
     selectedItem: value,
     itemToString: (item) => item ?? "",

@@ -311,7 +311,7 @@ type CssValueInputProps = Pick<
   /**
    * Selected item in the dropdown
    */
-  options?: Array<KeywordValue | VarValue>;
+  getOptions?: () => Array<KeywordValue | VarValue>;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
@@ -376,7 +376,7 @@ export const CssValueInput = ({
   showSuffix = true,
   styleSource,
   property,
-  options = [],
+  getOptions = () => [],
   onHighlight,
   onAbort,
   disabled,
@@ -446,7 +446,7 @@ export const CssValueInput = ({
     highlightedIndex,
   } = useCombobox<CssValueInputValue>({
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
-    items: options,
+    getItems: getOptions,
     value,
     selectedItem: props.value,
     itemToString,

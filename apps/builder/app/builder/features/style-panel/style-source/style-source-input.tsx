@@ -476,7 +476,7 @@ export const StyleSourceInput = (
     getItemProps,
     isOpen,
   } = useCombobox<IntermediateItem>({
-    items: markAddedValues(props.items ?? [], value),
+    getItems: () => markAddedValues(props.items ?? [], value),
     value: {
       label,
       disabled: false,

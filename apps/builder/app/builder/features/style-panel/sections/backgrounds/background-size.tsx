@@ -146,7 +146,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           disabled={customSizeDisabled}
           property={property}
           styleSource="default"
-          options={customSizeOptions}
+          getOptions={() => customSizeOptions}
           value={customSizeValue.value[0]}
           setValue={setValueX}
           deleteProperty={() => {}}
@@ -156,7 +156,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           disabled={customSizeDisabled}
           property={property}
           styleSource="default"
-          options={customSizeOptions}
+          getOptions={() => customSizeOptions}
           value={customSizeValue.value[1]}
           setValue={setValueY}
           deleteProperty={() => {}}

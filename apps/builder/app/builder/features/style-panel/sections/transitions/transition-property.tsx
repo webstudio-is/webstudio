@@ -82,10 +82,11 @@ export const TransitionProperty = ({
     getMenuProps,
     getItemProps,
   } = useCombobox<NameAndLabel>({
-    items: properties.map((prop) => ({
-      name: prop,
-      label: prop === "transform" ? `${prop} (rotate, skew)` : prop,
-    })),
+    getItems: () =>
+      properties.map((prop) => ({
+        name: prop,
+        label: prop === "transform" ? `${prop} (rotate, skew)` : prop,
+      })),
     value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
     itemToString: (value) => value?.label || "",
