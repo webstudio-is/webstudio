@@ -98,23 +98,28 @@ const replaceAtImages = (
       return `none`;
     }
 
-    return url.encode(asset.s3Url);
+    return url.encode(asset.cdnUrl);
   });
 };
+
+// Making a token name from a selector to look a little more readable
+const toTokenName = (selector: string) => selector.replace(/(^|\s)\./g, "$1");
 
 const processStyles = (parsedStyles: ParsedStyleDecl[]) => {
   const styles = new Map();
   for (const parsedStyleDecl of parsedStyles) {
     const { breakpoint, selector, state, property } = parsedStyleDecl;
-    const key = `${breakpoint}:${selector}:${state}:${property}`;
+    const tokenName = toTokenName(selector);
+    const key = `${breakpoint}:${tokenName}:${state}:${property}`;
     styles.set(key, parsedStyleDecl);
   }
   for (const parsedStyleDecl of styles.values()) {
     const { breakpoint, selector, state, property } = parsedStyleDecl;
-    const key = `${breakpoint}:${selector}:${state}:${property}`;
+    const tokenName = toTokenName(selector);
+    const key = `${breakpoint}:${tokenName}:${state}:${property}`;
     styles.set(key, parsedStyleDecl);
     if (property === "backgroundClip") {
-      const colorKey = `${breakpoint}:${selector}:${state}:color`;
+      const colorKey = `${breakpoint}:${tokenName}:${state}:color`;
       styles.delete(colorKey);
       styles.set(colorKey, {
         ...parsedStyleDecl,
@@ -324,87 +329,87 @@ const mapComponentAndPresetStyles = (
     case "Link": {
       const data = wfNode.data;
       if (data.button) {
-        presetStyles.push("w-button");
+        presetStyles.push(".w-button");
       }
       if (data.block === "inline") {
-        presetStyles.push("w-inline-block");
+        presetStyles.push(".w-inline-block");
       }
       return presetStyles;
     }
     case "CodeBlock": {
-      presetStyles.push("w-code-block");
+      presetStyles.push(".w-code-block");
       return presetStyles;
     }
     case "HtmlEmbed": {
-      presetStyles.push("w-embed");
+      presetStyles.push(".w-embed");
       return presetStyles;
     }
     case "BlockContainer": {
-      presetStyles.push("w-layout-blockcontainer");
-      presetStyles.push("w-container");
+      presetStyles.push(".w-layout-blockcontainer");
+      presetStyles.push(".w-container");
       return presetStyles;
     }
     case "Row": {
-      presetStyles.push("w-row");
+      presetStyles.push(".w-row");
       return presetStyles;
     }
     case "Cell": {
-      presetStyles.push("w-layout-cell");
+      presetStyles.push(".w-layout-cell");
       return presetStyles;
     }
     case "Column": {
       // @todo wf has w-col-1 etc in grid
-      presetStyles.push("w-col");
+      presetStyles.push(".w-col");
       return presetStyles;
     }
     case "Grid": {
-      presetStyles.push("w-layout-grid");
+      presetStyles.push(".w-layout-grid");
       return presetStyles;
     }
     case "Layout": {
-      presetStyles.push("w-layout-layout");
-      presetStyles.push("wf-layout-layout");
+      presetStyles.push(".w-layout-layout");
+      presetStyles.push(".wf-layout-layout");
       return presetStyles;
     }
     case "HFlex": {
-      presetStyles.push("w-layout-hflex");
+      presetStyles.push(".w-layout-hflex");
       return presetStyles;
     }
     case "VFlex": {
-      presetStyles.push("w-layout-vflex");
+      presetStyles.push(".w-layout-vflex");
       return presetStyles;
     }
     case "FormWrapper": {
-      presetStyles.push("w-form");
+      presetStyles.push(".w-form");
       return presetStyles;
     }
     case "FormTextInput":
     case "FormTextarea": {
-      presetStyles.push("w-input");
+      presetStyles.push(".w-input");
       return presetStyles;
     }
     case "FormButton": {
-      presetStyles.push("w-button");
+      presetStyles.push(".w-button");
       return presetStyles;
     }
     case "FormCheckboxWrapper": {
-      presetStyles.push("w-checkbox");
+      presetStyles.push(".w-checkbox");
       return presetStyles;
     }
     case "FormCheckboxInput": {
-      presetStyles.push("w-checkbox-input");
+      presetStyles.push(".w-checkbox-input");
       return presetStyles;
     }
     case "FormInlineLabel": {
-      presetStyles.push("w-form-label");
+      presetStyles.push(".w-form-label");
       return presetStyles;
     }
     case "FormRadioWrapper": {
-      presetStyles.push("w-radio");
+      presetStyles.push(".w-radio");
       return presetStyles;
     }
     case "FormRadioInput": {
-      presetStyles.push("w-radio-input");
+      presetStyles.push(".w-radio-input");
       return presetStyles;
     }
 
@@ -412,42 +417,42 @@ const mapComponentAndPresetStyles = (
       const data = wfNode.data;
 
       if (data.widget?.icon) {
-        presetStyles.push(`w-icon-${data.widget.icon}`);
+        presetStyles.push(`.w-icon-${data.widget.icon}`);
       }
       return presetStyles;
     }
 
     case "NavbarMenu":
-      presetStyles.push("w-nav-menu");
+      presetStyles.push(".w-nav-menu");
       return presetStyles;
 
     case "NavbarContainer":
-      presetStyles.push("w-container");
+      presetStyles.push(".w-container");
       return presetStyles;
 
     case "NavbarWrapper":
-      presetStyles.push("w-nav");
+      presetStyles.push(".w-nav");
       return presetStyles;
 
     case "NavbarBrand":
-      presetStyles.push("w-nav-brand");
+      presetStyles.push(".w-nav-brand");
       return presetStyles;
 
     case "NavbarLink":
-      presetStyles.push("w-nav-link");
+      presetStyles.push(".w-nav-link");
       return presetStyles;
 
     case "NavbarButton":
-      presetStyles.push("w-nav-button");
+      presetStyles.push(".w-nav-button");
       return presetStyles;
 
     case "RichText":
-      presetStyles.push("w-richtext");
+      presetStyles.push(".w-richtext");
       return presetStyles;
     case "Figure": {
       const { align } = wfNode.data.figure;
-      presetStyles.push("w-richtext-figure-type-image");
-      presetStyles.push(`w-richtext-align-${align}`);
+      presetStyles.push(".w-richtext figure.w-richtext-figure-type-image");
+      presetStyles.push(`.w-richtext figure.w-richtext-align-${align}`);
       return presetStyles;
     }
   }

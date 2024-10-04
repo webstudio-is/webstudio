@@ -403,7 +403,7 @@ const WfAsset = z.object({
   fileHash: z.string(),
   variants: z.array(z.union([WfAssetVariant, WfErrorAssetVariant])).optional(),
   mimeType: z.string(),
-  s3Url: z.string().url(),
+  s3Url: z.string().url().optional(),
   thumbUrl: z.string().optional(),
   _id: z.string(),
   markedAsDeleted: z.boolean().optional(),

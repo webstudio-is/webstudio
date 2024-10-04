@@ -117,7 +117,7 @@ const parse = (clipboardData: string) => {
   if (data.type !== "@webflow/XscpData") {
     return;
   }
-  console.log(data);
+
   const unsupportedNodeTypes: Set<string> = new Set(
     data.payload.nodes
       .filter((node: { type: string }) => {

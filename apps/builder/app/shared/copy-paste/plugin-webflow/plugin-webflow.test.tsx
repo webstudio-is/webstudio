@@ -1543,7 +1543,6 @@ test("RichText with Figure and Figcaption", async () => {
             figure: {
               type: "image",
               align: "center",
-              maxWidth: "",
             },
           },
         },
@@ -1573,16 +1572,7 @@ test("RichText with Figure and Figcaption", async () => {
               loading: "lazy",
               id: "",
             },
-            sizes: [],
-            devlink: {
-              runtimeProps: {},
-              slot: "",
-            },
-            displayName: "",
             xattr: [],
-            search: {
-              exclude: false,
-            },
             visibility: {
               conditions: [],
             },
@@ -1617,25 +1607,9 @@ test("RichText with Figure and Figcaption", async () => {
           variants: [],
           mimeType: "image/png",
           _id: "66d8522c8e9dbb5e2b2de76c",
-          updatedOn: "2024-09-04T12:55:38.572Z",
           fileSize: 20599,
-          localizedSettings: {},
         },
       ],
-      ix1: [],
-      ix2: {
-        interactions: [],
-        events: [],
-        actionLists: [],
-      },
-    },
-    meta: {
-      droppedLinks: 0,
-      dynBindRemovedCount: 0,
-      dynListBindRemovedCount: 0,
-      paginationRemovedCount: 0,
-      universalBindingsRemovedCount: 0,
-      unlinkedSymbolCount: 0,
     },
   });
 
@@ -3364,8 +3338,6 @@ describe("Styles", () => {
             children: ["b69a5869-f046-5a0c-151e-9b134a6852aa"],
             data: {
               tag: "h2",
-              devlink: { runtimeProps: {}, slot: "" },
-              displayName: "",
               attr: { id: "" },
               xattr: [],
               search: { exclude: false },

@@ -3,8 +3,8 @@ import { styles } from "./__generated__/style-presets";
 
 const _stylePresets = {
   ...styles,
-  "w-embed": [
-    ...styles["w-embed"],
+  ".w-embed": [
+    ...styles[".w-embed"],
     {
       selector: "w-embed",
       property: "display",
@@ -18,7 +18,7 @@ const _stylePresets = {
 
 type Key = keyof typeof _stylePresets;
 
-type WfIcons = Record<`w-icon-${string}`, ParsedStyleDecl>;
+type WfIcons = Record<`.w-icon-${string}`, ParsedStyleDecl>;
 
 export type WfStylePresets = Record<Key, Array<ParsedStyleDecl>> & WfIcons;
 export const stylePresets = _stylePresets as WfStylePresets;

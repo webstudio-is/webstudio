@@ -94,7 +94,15 @@ type Selector = {
   state?: string;
 };
 
-export const parseCss = (css: string) => {
+type ParserOptions = {
+  customProperties?: boolean;
+};
+
+export const parseCss = (
+  css: string,
+  options: ParserOptions = {}
+): Array<ParsedStyleDecl> => {
+  const customProperties = options.customProperties ?? false;
   const ast = cssTreeTryParse(css);
   const styles = new Map<string, ParsedStyleDecl>();
 

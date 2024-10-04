@@ -399,207 +399,13 @@ export const styles = {
       },
     },
   ],
-  "": [
+  "[hidden]": [
     {
-      selector: "",
+      selector: "[hidden]",
       property: "display",
       value: {
         type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      selector: "",
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundImage",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "none",
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundPositionX",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "unit",
-            unit: "%",
-            value: 0,
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundPositionY",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "unit",
-            unit: "%",
-            value: 0,
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundSize",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "keyword",
-                value: "auto",
-              },
-              {
-                type: "keyword",
-                value: "auto",
-              },
-            ],
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundRepeat",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "repeat",
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundAttachment",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "scroll",
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundOrigin",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "padding-box",
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundClip",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "border-box",
-          },
-        ],
-      },
-    },
-    {
-      selector: "",
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 200,
-        g: 200,
-        b: 200,
-      },
-    },
-    {
-      selector: "",
-      property: "minWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 200,
-      },
-    },
-    {
-      selector: "",
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      selector: "",
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      selector: "",
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "",
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "",
-      property: "overflowX",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-    {
-      selector: "",
-      property: "overflowY",
-      value: {
-        type: "keyword",
-        value: "visible",
+        value: "none",
       },
     },
   ],
@@ -682,9 +488,9 @@ export const styles = {
       state: ":hover",
     },
   ],
-  abbr: [
+  "abbr[title]": [
     {
-      selector: "abbr",
+      selector: "abbr[title]",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -693,7 +499,7 @@ export const styles = {
       },
     },
     {
-      selector: "abbr",
+      selector: "abbr[title]",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -701,7 +507,7 @@ export const styles = {
       },
     },
     {
-      selector: "abbr",
+      selector: "abbr[title]",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -2315,9 +2121,19 @@ export const styles = {
       },
     },
   ],
-  "html input": [
+  "button[disabled]": [
     {
-      selector: "html input",
+      selector: "button[disabled]",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "default",
+      },
+    },
+  ],
+  "html input[disabled]": [
+    {
+      selector: "html input[disabled]",
       property: "cursor",
       value: {
         type: "keyword",
@@ -2944,9 +2760,9 @@ export const styles = {
       },
     },
   ],
-  "w-icon-slider-right": [
+  ".w-icon-slider-right": [
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "content",
       value: {
         type: "unparsed",
@@ -2955,7 +2771,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "width",
       value: {
         type: "unit",
@@ -2964,7 +2780,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "height",
       value: {
         type: "unit",
@@ -2973,7 +2789,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -2981,7 +2797,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -2989,7 +2805,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -2997,7 +2813,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -3005,7 +2821,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "top",
       value: {
         type: "unit",
@@ -3014,7 +2830,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "bottom",
       value: {
         type: "unit",
@@ -3023,7 +2839,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "left",
       value: {
         type: "unit",
@@ -3032,7 +2848,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-right",
+      selector: ".w-icon-slider-right",
       property: "right",
       value: {
         type: "unit",
@@ -3041,9 +2857,9 @@ export const styles = {
       },
     },
   ],
-  "w-icon-slider-left": [
+  ".w-icon-slider-left": [
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "content",
       value: {
         type: "unparsed",
@@ -3052,7 +2868,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "width",
       value: {
         type: "unit",
@@ -3061,7 +2877,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "height",
       value: {
         type: "unit",
@@ -3070,7 +2886,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -3078,7 +2894,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -3086,7 +2902,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -3094,7 +2910,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -3102,7 +2918,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "top",
       value: {
         type: "unit",
@@ -3111,7 +2927,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "bottom",
       value: {
         type: "unit",
@@ -3120,7 +2936,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "left",
       value: {
         type: "unit",
@@ -3129,7 +2945,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-slider-left",
+      selector: ".w-icon-slider-left",
       property: "right",
       value: {
         type: "unit",
@@ -3138,9 +2954,9 @@ export const styles = {
       },
     },
   ],
-  "w-icon-nav-menu": [
+  ".w-icon-nav-menu": [
     {
-      selector: "w-icon-nav-menu",
+      selector: ".w-icon-nav-menu",
       property: "content",
       value: {
         type: "unparsed",
@@ -3149,9 +2965,9 @@ export const styles = {
       state: ":before",
     },
   ],
-  "w-icon-arrow-down": [
+  ".w-icon-arrow-down": [
     {
-      selector: "w-icon-arrow-down",
+      selector: ".w-icon-arrow-down",
       property: "content",
       value: {
         type: "unparsed",
@@ -3160,9 +2976,9 @@ export const styles = {
       state: ":before",
     },
   ],
-  "w-icon-dropdown-toggle": [
+  ".w-icon-dropdown-toggle": [
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "content",
       value: {
         type: "unparsed",
@@ -3171,7 +2987,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "width",
       value: {
         type: "unit",
@@ -3180,7 +2996,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "height",
       value: {
         type: "unit",
@@ -3189,7 +3005,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -3197,7 +3013,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "marginRight",
       value: {
         type: "unit",
@@ -3206,7 +3022,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -3214,7 +3030,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -3222,7 +3038,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "position",
       value: {
         type: "keyword",
@@ -3230,7 +3046,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "top",
       value: {
         type: "unit",
@@ -3239,7 +3055,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "bottom",
       value: {
         type: "unit",
@@ -3248,7 +3064,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-dropdown-toggle",
+      selector: ".w-icon-dropdown-toggle",
       property: "right",
       value: {
         type: "unit",
@@ -3257,9 +3073,9 @@ export const styles = {
       },
     },
   ],
-  "w-icon-file-upload-remove": [
+  ".w-icon-file-upload-remove": [
     {
-      selector: "w-icon-file-upload-remove",
+      selector: ".w-icon-file-upload-remove",
       property: "content",
       value: {
         type: "unparsed",
@@ -3268,7 +3084,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-icon-file-upload-remove",
+      selector: ".w-icon-file-upload-remove",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -3276,7 +3092,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-remove",
+      selector: ".w-icon-file-upload-remove",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -3284,7 +3100,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-remove",
+      selector: ".w-icon-file-upload-remove",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -3292,7 +3108,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-remove",
+      selector: ".w-icon-file-upload-remove",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -3300,7 +3116,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-remove",
+      selector: ".w-icon-file-upload-remove",
       property: "fontSize",
       value: {
         type: "unit",
@@ -3309,9 +3125,9 @@ export const styles = {
       },
     },
   ],
-  "w-icon-file-upload-icon": [
+  ".w-icon-file-upload-icon": [
     {
-      selector: "w-icon-file-upload-icon",
+      selector: ".w-icon-file-upload-icon",
       property: "content",
       value: {
         type: "unparsed",
@@ -3320,7 +3136,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-icon-file-upload-icon",
+      selector: ".w-icon-file-upload-icon",
       property: "width",
       value: {
         type: "unit",
@@ -3329,7 +3145,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-icon",
+      selector: ".w-icon-file-upload-icon",
       property: "marginRight",
       value: {
         type: "unit",
@@ -3338,7 +3154,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-icon",
+      selector: ".w-icon-file-upload-icon",
       property: "display",
       value: {
         type: "keyword",
@@ -3371,9 +3187,9 @@ export const styles = {
       },
     },
   ],
-  "w-block": [
+  ".w-block": [
     {
-      selector: "w-block",
+      selector: ".w-block",
       property: "display",
       value: {
         type: "keyword",
@@ -3381,9 +3197,9 @@ export const styles = {
       },
     },
   ],
-  "w-inline-block": [
+  ".w-inline-block": [
     {
-      selector: "w-inline-block",
+      selector: ".w-inline-block",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -3392,7 +3208,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-inline-block",
+      selector: ".w-inline-block",
       property: "display",
       value: {
         type: "keyword",
@@ -3400,9 +3216,9 @@ export const styles = {
       },
     },
   ],
-  "w-clearfix": [
+  ".w-clearfix": [
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "content",
       value: {
         type: "unparsed",
@@ -3411,7 +3227,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "content",
       value: {
         type: "unparsed",
@@ -3420,7 +3236,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -3430,7 +3246,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -3440,7 +3256,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -3450,7 +3266,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -3460,7 +3276,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -3470,7 +3286,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -3480,7 +3296,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -3490,7 +3306,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -3500,7 +3316,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "display",
       value: {
         type: "keyword",
@@ -3509,7 +3325,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "display",
       value: {
         type: "keyword",
@@ -3518,7 +3334,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-clearfix",
+      selector: ".w-clearfix",
       property: "clear",
       value: {
         type: "keyword",
@@ -3527,9 +3343,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-hidden": [
+  ".w-hidden": [
     {
-      selector: "w-hidden",
+      selector: ".w-hidden",
       property: "display",
       value: {
         type: "keyword",
@@ -3537,9 +3353,9 @@ export const styles = {
       },
     },
   ],
-  "w-button": [
+  ".w-button": [
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "color",
       value: {
         type: "rgb",
@@ -3550,7 +3366,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -3558,7 +3374,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "cursor",
       value: {
         type: "keyword",
@@ -3566,7 +3382,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -3577,7 +3393,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -3586,7 +3402,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -3595,7 +3411,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -3604,7 +3420,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -3613,7 +3429,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -3621,7 +3437,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -3629,7 +3445,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -3637,7 +3453,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -3645,7 +3461,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -3653,7 +3469,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -3661,7 +3477,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -3669,7 +3485,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -3677,7 +3493,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -3686,7 +3502,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -3695,7 +3511,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -3704,7 +3520,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -3713,7 +3529,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -3722,7 +3538,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -3731,7 +3547,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -3740,7 +3556,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -3748,7 +3564,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -3756,7 +3572,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -3764,7 +3580,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-button",
+      selector: ".w-button",
       property: "display",
       value: {
         type: "keyword",
@@ -3782,9 +3598,9 @@ export const styles = {
       },
     },
   ],
-  "html ": [
+  "html[data-w-dynpage] [data-w-cloak]": [
     {
-      selector: "html ",
+      selector: "html[data-w-dynpage] [data-w-cloak]",
       property: "color",
       value: {
         type: "rgb",
@@ -3795,9 +3611,9 @@ export const styles = {
       },
     },
   ],
-  "w-code-block": [
+  ".w-code-block": [
     {
-      selector: "w-code-block",
+      selector: ".w-code-block",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -3805,7 +3621,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-code-block",
+      selector: ".w-code-block",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -3813,7 +3629,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-code-block",
+      selector: ".w-code-block",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -3821,7 +3637,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-code-block",
+      selector: ".w-code-block",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -3829,9 +3645,9 @@ export const styles = {
       },
     },
   ],
-  "w-webflow-badge": [
+  ".w-webflow-badge": [
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "zIndex",
       value: {
         type: "unit",
@@ -3840,7 +3656,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "visibility",
       value: {
         type: "keyword",
@@ -3848,7 +3664,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -3856,7 +3672,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "float",
       value: {
         type: "keyword",
@@ -3864,7 +3680,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "clear",
       value: {
         type: "keyword",
@@ -3872,7 +3688,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -3940,7 +3756,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "opacity",
       value: {
         type: "unit",
@@ -3949,7 +3765,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "direction",
       value: {
         type: "keyword",
@@ -3957,7 +3773,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -3965,7 +3781,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -3973,7 +3789,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "color",
       value: {
         type: "rgb",
@@ -3984,7 +3800,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontSize",
       value: {
         type: "unit",
@@ -3993,7 +3809,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -4002,7 +3818,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -4010,7 +3826,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontVariantLigatures",
       value: {
         type: "keyword",
@@ -4018,7 +3834,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontVariantCaps",
       value: {
         type: "keyword",
@@ -4026,7 +3842,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontVariantAlternates",
       value: {
         type: "keyword",
@@ -4034,7 +3850,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontVariantNumeric",
       value: {
         type: "keyword",
@@ -4042,7 +3858,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontVariantEastAsian",
       value: {
         type: "keyword",
@@ -4050,7 +3866,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontVariantPosition",
       value: {
         type: "keyword",
@@ -4058,7 +3874,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "fontVariantEmoji",
       value: {
         type: "keyword",
@@ -4066,7 +3882,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -4074,7 +3890,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "letterSpacing",
       value: {
         type: "keyword",
@@ -4082,7 +3898,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -4090,7 +3906,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -4098,7 +3914,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -4106,7 +3922,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textIndent",
       value: {
         type: "unit",
@@ -4115,7 +3931,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textTransform",
       value: {
         type: "keyword",
@@ -4123,7 +3939,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textShadow",
       value: {
         type: "layers",
@@ -4141,7 +3957,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "WebkitFontSmoothing",
       value: {
         type: "keyword",
@@ -4149,7 +3965,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -4157,7 +3973,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "cursor",
       value: {
         type: "keyword",
@@ -4165,7 +3981,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -4173,7 +3989,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -4181,7 +3997,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "wordBreak",
       value: {
         type: "keyword",
@@ -4189,7 +4005,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "wordSpacing",
       value: {
         type: "keyword",
@@ -4197,7 +4013,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "wordWrap",
       value: {
         type: "keyword",
@@ -4205,7 +4021,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -4218,7 +4034,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -4232,7 +4048,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -4246,7 +4062,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -4268,7 +4084,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -4281,7 +4097,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -4294,7 +4110,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -4307,7 +4123,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -4320,7 +4136,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -4331,7 +4147,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -4340,7 +4156,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -4349,7 +4165,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -4358,7 +4174,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -4367,7 +4183,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -4375,7 +4191,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -4383,7 +4199,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -4391,7 +4207,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -4399,7 +4215,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -4410,7 +4226,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -4421,7 +4237,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -4432,7 +4248,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -4443,7 +4259,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -4452,7 +4268,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -4461,7 +4277,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -4470,7 +4286,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "width",
       value: {
         type: "keyword",
@@ -4478,7 +4294,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "minWidth",
       value: {
         type: "unit",
@@ -4487,7 +4303,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "maxWidth",
       value: {
         type: "keyword",
@@ -4495,7 +4311,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "height",
       value: {
         type: "keyword",
@@ -4503,7 +4319,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "minHeight",
       value: {
         type: "unit",
@@ -4512,7 +4328,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "maxHeight",
       value: {
         type: "keyword",
@@ -4520,7 +4336,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "marginTop",
       value: {
         type: "unit",
@@ -4529,7 +4345,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "marginRight",
       value: {
         type: "unit",
@@ -4538,7 +4354,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -4547,7 +4363,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -4556,7 +4372,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -4565,7 +4381,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -4574,7 +4390,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -4583,7 +4399,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -4592,7 +4408,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "listStyleType",
       value: {
         type: "keyword",
@@ -4600,7 +4416,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "transitionProperty",
       value: {
         type: "keyword",
@@ -4608,7 +4424,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "transitionDuration",
       value: {
         type: "layers",
@@ -4622,7 +4438,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "transitionTimingFunction",
       value: {
         type: "layers",
@@ -4635,7 +4451,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "transitionDelay",
       value: {
         type: "layers",
@@ -4649,7 +4465,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "transitionBehavior",
       value: {
         type: "layers",
@@ -4662,7 +4478,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "display",
       value: {
         type: "keyword",
@@ -4670,7 +4486,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "position",
       value: {
         type: "keyword",
@@ -4678,7 +4494,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "top",
       value: {
         type: "keyword",
@@ -4686,7 +4502,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "bottom",
       value: {
         type: "unit",
@@ -4695,7 +4511,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "left",
       value: {
         type: "keyword",
@@ -4703,7 +4519,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "right",
       value: {
         type: "unit",
@@ -4712,7 +4528,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -4720,7 +4536,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -4728,7 +4544,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge",
+      selector: ".w-webflow-badge",
       property: "transform",
       value: {
         type: "tuple",
@@ -4741,9 +4557,9 @@ export const styles = {
       },
     },
   ],
-  "w-webflow-badge *": [
+  ".w-webflow-badge *": [
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "zIndex",
       value: {
         type: "keyword",
@@ -4751,7 +4567,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "visibility",
       value: {
         type: "keyword",
@@ -4759,7 +4575,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -4767,7 +4583,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "float",
       value: {
         type: "keyword",
@@ -4775,7 +4591,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "clear",
       value: {
         type: "keyword",
@@ -4783,7 +4599,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -4801,7 +4617,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "opacity",
       value: {
         type: "unit",
@@ -4810,7 +4626,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "direction",
       value: {
         type: "keyword",
@@ -4818,7 +4634,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontFamily",
       value: {
         type: "keyword",
@@ -4826,7 +4642,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -4834,7 +4650,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "color",
       value: {
         type: "keyword",
@@ -4842,7 +4658,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontSize",
       value: {
         type: "keyword",
@@ -4850,7 +4666,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -4858,7 +4674,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -4866,7 +4682,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontVariantLigatures",
       value: {
         type: "keyword",
@@ -4874,7 +4690,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontVariantCaps",
       value: {
         type: "keyword",
@@ -4882,7 +4698,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontVariantAlternates",
       value: {
         type: "keyword",
@@ -4890,7 +4706,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontVariantNumeric",
       value: {
         type: "keyword",
@@ -4898,7 +4714,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontVariantEastAsian",
       value: {
         type: "keyword",
@@ -4906,7 +4722,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontVariantPosition",
       value: {
         type: "keyword",
@@ -4914,7 +4730,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "fontVariantEmoji",
       value: {
         type: "keyword",
@@ -4922,7 +4738,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -4930,7 +4746,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "letterSpacing",
       value: {
         type: "keyword",
@@ -4938,7 +4754,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -4946,7 +4762,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -4954,7 +4770,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -4962,7 +4778,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textIndent",
       value: {
         type: "unit",
@@ -4971,7 +4787,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textTransform",
       value: {
         type: "keyword",
@@ -4979,7 +4795,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textShadow",
       value: {
         type: "layers",
@@ -4997,7 +4813,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "WebkitFontSmoothing",
       value: {
         type: "keyword",
@@ -5005,7 +4821,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -5013,7 +4829,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "cursor",
       value: {
         type: "keyword",
@@ -5021,7 +4837,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -5029,7 +4845,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -5037,7 +4853,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "wordBreak",
       value: {
         type: "keyword",
@@ -5045,7 +4861,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "wordSpacing",
       value: {
         type: "keyword",
@@ -5053,7 +4869,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "wordWrap",
       value: {
         type: "keyword",
@@ -5061,7 +4877,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -5074,7 +4890,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -5088,7 +4904,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -5102,7 +4918,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -5124,7 +4940,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -5137,7 +4953,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -5150,7 +4966,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -5163,7 +4979,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -5176,7 +4992,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "backgroundColor",
       value: {
         type: "keyword",
@@ -5184,7 +5000,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -5193,7 +5009,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -5202,7 +5018,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -5211,7 +5027,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -5220,7 +5036,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -5228,7 +5044,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -5236,7 +5052,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -5244,7 +5060,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -5252,7 +5068,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -5263,7 +5079,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -5274,7 +5090,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -5285,7 +5101,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -5296,7 +5112,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -5305,7 +5121,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -5314,7 +5130,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -5323,7 +5139,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "width",
       value: {
         type: "keyword",
@@ -5331,7 +5147,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "minWidth",
       value: {
         type: "unit",
@@ -5340,7 +5156,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "maxWidth",
       value: {
         type: "keyword",
@@ -5348,7 +5164,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "height",
       value: {
         type: "keyword",
@@ -5356,7 +5172,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "minHeight",
       value: {
         type: "unit",
@@ -5365,7 +5181,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "maxHeight",
       value: {
         type: "keyword",
@@ -5373,7 +5189,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "marginTop",
       value: {
         type: "unit",
@@ -5382,7 +5198,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "marginRight",
       value: {
         type: "unit",
@@ -5391,7 +5207,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -5400,7 +5216,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -5409,7 +5225,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -5418,7 +5234,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -5427,7 +5243,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -5436,7 +5252,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -5445,7 +5261,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "listStyleType",
       value: {
         type: "keyword",
@@ -5453,7 +5269,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "transitionProperty",
       value: {
         type: "keyword",
@@ -5461,7 +5277,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "transitionDuration",
       value: {
         type: "layers",
@@ -5475,7 +5291,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "transitionTimingFunction",
       value: {
         type: "layers",
@@ -5488,7 +5304,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "transitionDelay",
       value: {
         type: "layers",
@@ -5502,7 +5318,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "transitionBehavior",
       value: {
         type: "layers",
@@ -5515,7 +5331,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "display",
       value: {
         type: "keyword",
@@ -5523,7 +5339,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "position",
       value: {
         type: "keyword",
@@ -5531,7 +5347,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "top",
       value: {
         type: "keyword",
@@ -5539,7 +5355,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "bottom",
       value: {
         type: "keyword",
@@ -5547,7 +5363,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "left",
       value: {
         type: "keyword",
@@ -5555,7 +5371,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "right",
       value: {
         type: "keyword",
@@ -5563,7 +5379,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -5571,7 +5387,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -5579,7 +5395,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge *",
+      selector: ".w-webflow-badge *",
       property: "transform",
       value: {
         type: "tuple",
@@ -5592,9 +5408,9 @@ export const styles = {
       },
     },
   ],
-  "w-webflow-badge > img": [
+  ".w-webflow-badge > img": [
     {
-      selector: "w-webflow-badge > img",
+      selector: ".w-webflow-badge > img",
       property: "visibility",
       value: {
         type: "keyword",
@@ -5602,7 +5418,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge > img",
+      selector: ".w-webflow-badge > img",
       property: "opacity",
       value: {
         type: "unit",
@@ -5611,7 +5427,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge > img",
+      selector: ".w-webflow-badge > img",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -5619,7 +5435,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-webflow-badge > img",
+      selector: ".w-webflow-badge > img",
       property: "display",
       value: {
         type: "keyword",
@@ -6055,9 +5871,9 @@ export const styles = {
       },
     },
   ],
-  "w-list-unstyled": [
+  ".w-list-unstyled": [
     {
-      selector: "w-list-unstyled",
+      selector: ".w-list-unstyled",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -6066,7 +5882,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-list-unstyled",
+      selector: ".w-list-unstyled",
       property: "listStylePosition",
       value: {
         type: "keyword",
@@ -6074,7 +5890,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-list-unstyled",
+      selector: ".w-list-unstyled",
       property: "listStyleImage",
       value: {
         type: "keyword",
@@ -6082,7 +5898,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-list-unstyled",
+      selector: ".w-list-unstyled",
       property: "listStyleType",
       value: {
         type: "keyword",
@@ -6090,9 +5906,9 @@ export const styles = {
       },
     },
   ],
-  "w-embed": [
+  ".w-embed": [
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "content",
       value: {
         type: "unparsed",
@@ -6101,7 +5917,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "content",
       value: {
         type: "unparsed",
@@ -6110,7 +5926,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -6120,7 +5936,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -6130,7 +5946,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -6140,7 +5956,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -6150,7 +5966,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -6160,7 +5976,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -6170,7 +5986,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -6180,7 +5996,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -6190,7 +6006,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "display",
       value: {
         type: "keyword",
@@ -6199,7 +6015,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "display",
       value: {
         type: "keyword",
@@ -6208,7 +6024,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "clear",
       value: {
         type: "keyword",
@@ -6217,9 +6033,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-video": [
+  ".w-video": [
     {
-      selector: "w-video",
+      selector: ".w-video",
       property: "width",
       value: {
         type: "unit",
@@ -6228,7 +6044,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video",
+      selector: ".w-video",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -6237,7 +6053,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video",
+      selector: ".w-video",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -6246,7 +6062,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video",
+      selector: ".w-video",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -6255,7 +6071,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video",
+      selector: ".w-video",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -6264,7 +6080,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video",
+      selector: ".w-video",
       property: "position",
       value: {
         type: "keyword",
@@ -6272,9 +6088,9 @@ export const styles = {
       },
     },
   ],
-  "w-video iframe": [
+  ".w-video iframe": [
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderTopWidth",
       value: {
         type: "keyword",
@@ -6282,7 +6098,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderRightWidth",
       value: {
         type: "keyword",
@@ -6290,7 +6106,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderBottomWidth",
       value: {
         type: "keyword",
@@ -6298,7 +6114,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderLeftWidth",
       value: {
         type: "keyword",
@@ -6306,7 +6122,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -6314,7 +6130,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -6322,7 +6138,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -6330,7 +6146,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -6338,7 +6154,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -6346,7 +6162,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -6354,7 +6170,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -6362,7 +6178,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -6370,7 +6186,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "width",
       value: {
         type: "unit",
@@ -6379,7 +6195,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "height",
       value: {
         type: "unit",
@@ -6388,7 +6204,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "position",
       value: {
         type: "keyword",
@@ -6396,7 +6212,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "top",
       value: {
         type: "unit",
@@ -6405,7 +6221,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video iframe",
+      selector: ".w-video iframe",
       property: "left",
       value: {
         type: "unit",
@@ -6414,9 +6230,9 @@ export const styles = {
       },
     },
   ],
-  "w-video object": [
+  ".w-video object": [
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderTopWidth",
       value: {
         type: "keyword",
@@ -6424,7 +6240,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderRightWidth",
       value: {
         type: "keyword",
@@ -6432,7 +6248,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderBottomWidth",
       value: {
         type: "keyword",
@@ -6440,7 +6256,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderLeftWidth",
       value: {
         type: "keyword",
@@ -6448,7 +6264,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -6456,7 +6272,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -6464,7 +6280,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -6472,7 +6288,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -6480,7 +6296,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -6488,7 +6304,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -6496,7 +6312,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -6504,7 +6320,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -6512,7 +6328,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "width",
       value: {
         type: "unit",
@@ -6521,7 +6337,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "height",
       value: {
         type: "unit",
@@ -6530,7 +6346,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "position",
       value: {
         type: "keyword",
@@ -6538,7 +6354,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "top",
       value: {
         type: "unit",
@@ -6547,7 +6363,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video object",
+      selector: ".w-video object",
       property: "left",
       value: {
         type: "unit",
@@ -6556,9 +6372,9 @@ export const styles = {
       },
     },
   ],
-  "w-video embed": [
+  ".w-video embed": [
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderTopWidth",
       value: {
         type: "keyword",
@@ -6566,7 +6382,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderRightWidth",
       value: {
         type: "keyword",
@@ -6574,7 +6390,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderBottomWidth",
       value: {
         type: "keyword",
@@ -6582,7 +6398,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderLeftWidth",
       value: {
         type: "keyword",
@@ -6590,7 +6406,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -6598,7 +6414,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -6606,7 +6422,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -6614,7 +6430,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -6622,7 +6438,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -6630,7 +6446,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -6638,7 +6454,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -6646,7 +6462,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -6654,7 +6470,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "width",
       value: {
         type: "unit",
@@ -6663,7 +6479,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "height",
       value: {
         type: "unit",
@@ -6672,7 +6488,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "position",
       value: {
         type: "keyword",
@@ -6680,7 +6496,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "top",
       value: {
         type: "unit",
@@ -6689,7 +6505,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-video embed",
+      selector: ".w-video embed",
       property: "left",
       value: {
         type: "unit",
@@ -7108,9 +6924,9 @@ export const styles = {
       },
     },
   ],
-  "w-form": [
+  ".w-form": [
     {
-      selector: "w-form",
+      selector: ".w-form",
       property: "marginTop",
       value: {
         type: "unit",
@@ -7119,7 +6935,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form",
+      selector: ".w-form",
       property: "marginRight",
       value: {
         type: "unit",
@@ -7128,7 +6944,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form",
+      selector: ".w-form",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -7137,7 +6953,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form",
+      selector: ".w-form",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -7146,9 +6962,9 @@ export const styles = {
       },
     },
   ],
-  "w-form-done": [
+  ".w-form-done": [
     {
-      selector: "w-form-done",
+      selector: ".w-form-done",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -7156,7 +6972,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-done",
+      selector: ".w-form-done",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -7167,7 +6983,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-done",
+      selector: ".w-form-done",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -7176,7 +6992,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-done",
+      selector: ".w-form-done",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -7185,7 +7001,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-done",
+      selector: ".w-form-done",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -7194,7 +7010,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-done",
+      selector: ".w-form-done",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -7203,7 +7019,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-done",
+      selector: ".w-form-done",
       property: "display",
       value: {
         type: "keyword",
@@ -7211,9 +7027,9 @@ export const styles = {
       },
     },
   ],
-  "w-form-fail": [
+  ".w-form-fail": [
     {
-      selector: "w-form-fail",
+      selector: ".w-form-fail",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -7224,7 +7040,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-fail",
+      selector: ".w-form-fail",
       property: "marginTop",
       value: {
         type: "unit",
@@ -7233,7 +7049,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-fail",
+      selector: ".w-form-fail",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -7242,7 +7058,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-fail",
+      selector: ".w-form-fail",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -7251,7 +7067,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-fail",
+      selector: ".w-form-fail",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -7260,7 +7076,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-fail",
+      selector: ".w-form-fail",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -7269,7 +7085,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-fail",
+      selector: ".w-form-fail",
       property: "display",
       value: {
         type: "keyword",
@@ -7304,9 +7120,9 @@ export const styles = {
       },
     },
   ],
-  "w-input": [
+  ".w-input": [
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -7317,7 +7133,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -7325,18 +7141,18 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "backgroundColor",
       value: {
         type: "rgb",
         alpha: 1,
-        r: 238,
-        g: 238,
-        b: 238,
+        r: 255,
+        g: 255,
+        b: 255,
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -7345,7 +7161,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -7354,7 +7170,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -7363,7 +7179,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -7372,7 +7188,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -7380,7 +7196,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -7388,7 +7204,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -7396,7 +7212,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -7404,7 +7220,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -7415,7 +7231,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -7426,7 +7242,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -7437,7 +7253,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -7448,7 +7264,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "width",
       value: {
         type: "unit",
@@ -7457,7 +7273,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "height",
       value: {
         type: "unit",
@@ -7466,7 +7282,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -7475,7 +7291,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -7484,7 +7300,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -7493,7 +7309,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -7502,7 +7318,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -7511,7 +7327,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "fontSize",
       value: {
         type: "unit",
@@ -7520,7 +7336,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -7529,7 +7345,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "display",
       value: {
         type: "keyword",
@@ -7537,7 +7353,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -7549,7 +7365,7 @@ export const styles = {
       state: ":-moz-placeholder",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -7561,7 +7377,7 @@ export const styles = {
       state: "::-moz-placeholder",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "opacity",
       value: {
         type: "unit",
@@ -7571,7 +7387,7 @@ export const styles = {
       state: "::-moz-placeholder",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "color",
       value: {
         type: "rgb",
@@ -7583,7 +7399,7 @@ export const styles = {
       state: "::-webkit-input-placeholder",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -7595,7 +7411,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -7607,7 +7423,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -7619,7 +7435,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -7631,7 +7447,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -7641,7 +7457,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -7650,7 +7466,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-input",
+      selector: ".w-input",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -7658,30 +7474,10 @@ export const styles = {
       },
       state: ":focus",
     },
-    {
-      selector: "w-input",
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
-      selector: "w-input",
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 238,
-        g: 238,
-        b: 238,
-      },
-      state: ":not",
-    },
   ],
-  "w-select": [
+  ".w-select": [
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "color",
       value: {
         type: "rgb",
@@ -7692,7 +7488,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -7700,7 +7496,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -7711,7 +7507,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -7720,7 +7516,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -7729,7 +7525,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -7738,7 +7534,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -7747,7 +7543,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -7755,7 +7551,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -7763,7 +7559,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -7771,7 +7567,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -7779,7 +7575,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -7790,7 +7586,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -7801,7 +7597,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -7812,7 +7608,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -7823,7 +7619,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "width",
       value: {
         type: "unit",
@@ -7832,15 +7628,16 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "height",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "unit",
+        unit: "px",
+        value: 38,
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -7849,7 +7646,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -7858,7 +7655,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -7867,7 +7664,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -7876,7 +7673,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -7885,7 +7682,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "fontSize",
       value: {
         type: "unit",
@@ -7894,7 +7691,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -7903,7 +7700,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "display",
       value: {
         type: "keyword",
@@ -7911,7 +7708,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "color",
       value: {
         type: "rgb",
@@ -7923,7 +7720,7 @@ export const styles = {
       state: ":-moz-placeholder",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "color",
       value: {
         type: "rgb",
@@ -7935,7 +7732,7 @@ export const styles = {
       state: "::-moz-placeholder",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "opacity",
       value: {
         type: "unit",
@@ -7945,7 +7742,7 @@ export const styles = {
       state: "::-moz-placeholder",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "color",
       value: {
         type: "rgb",
@@ -7957,7 +7754,7 @@ export const styles = {
       state: "::-webkit-input-placeholder",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -7969,7 +7766,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -7981,7 +7778,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -7993,7 +7790,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -8005,7 +7802,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -8015,7 +7812,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -8024,7 +7821,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-select",
+      selector: ".w-select",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -8032,8 +7829,10 @@ export const styles = {
       },
       state: ":focus",
     },
+  ],
+  ".w-input[disabled]": [
     {
-      selector: "w-select",
+      selector: ".w-input[disabled]",
       property: "cursor",
       value: {
         type: "keyword",
@@ -8041,7 +7840,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-select",
+      selector: ".w-input[disabled]",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8053,9 +7852,9 @@ export const styles = {
       state: ":not",
     },
   ],
-  "fieldset .w-input": [
+  ".w-select[disabled]": [
     {
-      selector: "fieldset .w-input",
+      selector: ".w-select[disabled]",
       property: "cursor",
       value: {
         type: "keyword",
@@ -8063,7 +7862,7 @@ export const styles = {
       },
     },
     {
-      selector: "fieldset .w-input",
+      selector: ".w-select[disabled]",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8075,9 +7874,9 @@ export const styles = {
       state: ":not",
     },
   ],
-  "fieldset .w-select": [
+  ".w-input[readonly]": [
     {
-      selector: "fieldset .w-select",
+      selector: ".w-input[readonly]",
       property: "cursor",
       value: {
         type: "keyword",
@@ -8085,7 +7884,71 @@ export const styles = {
       },
     },
     {
-      selector: "fieldset .w-select",
+      selector: ".w-input[readonly]",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+    },
+  ],
+  ".w-select[readonly]": [
+    {
+      selector: ".w-select[readonly]",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
+    {
+      selector: ".w-select[readonly]",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+    },
+  ],
+  "fieldset[disabled] .w-input": [
+    {
+      selector: "fieldset[disabled] .w-input",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
+    {
+      selector: "fieldset[disabled] .w-input",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+      state: ":not",
+    },
+  ],
+  "fieldset[disabled] .w-select": [
+    {
+      selector: "fieldset[disabled] .w-select",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
+    {
+      selector: "fieldset[disabled] .w-select",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8117,9 +7980,19 @@ export const styles = {
       },
     },
   ],
-  "w-form-label": [
+  ".w-select[multiple]": [
     {
-      selector: "w-form-label",
+      selector: ".w-select[multiple]",
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  ".w-form-label": [
+    {
+      selector: ".w-form-label",
       property: "cursor",
       value: {
         type: "keyword",
@@ -8127,7 +8000,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-label",
+      selector: ".w-form-label",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8136,7 +8009,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-label",
+      selector: ".w-form-label",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -8144,7 +8017,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-label",
+      selector: ".w-form-label",
       property: "display",
       value: {
         type: "keyword",
@@ -8152,9 +8025,9 @@ export const styles = {
       },
     },
   ],
-  "w-radio": [
+  ".w-radio": [
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8163,7 +8036,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -8172,7 +8045,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "display",
       value: {
         type: "keyword",
@@ -8180,7 +8053,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "content",
       value: {
         type: "unparsed",
@@ -8189,7 +8062,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "content",
       value: {
         type: "unparsed",
@@ -8198,7 +8071,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -8208,7 +8081,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -8218,7 +8091,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -8228,7 +8101,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -8238,7 +8111,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -8248,7 +8121,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -8258,7 +8131,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -8268,7 +8141,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -8278,7 +8151,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "display",
       value: {
         type: "keyword",
@@ -8287,7 +8160,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "display",
       value: {
         type: "keyword",
@@ -8296,7 +8169,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-radio",
+      selector: ".w-radio",
       property: "clear",
       value: {
         type: "keyword",
@@ -8305,9 +8178,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-radio-input": [
+  ".w-radio-input": [
     {
-      selector: "w-radio-input",
+      selector: ".w-radio-input",
       property: "float",
       value: {
         type: "keyword",
@@ -8315,7 +8188,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio-input",
+      selector: ".w-radio-input",
       property: "marginTop",
       value: {
         type: "unit",
@@ -8324,7 +8197,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio-input",
+      selector: ".w-radio-input",
       property: "marginRight",
       value: {
         type: "unit",
@@ -8333,7 +8206,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio-input",
+      selector: ".w-radio-input",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8342,7 +8215,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio-input",
+      selector: ".w-radio-input",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -8351,7 +8224,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-radio-input",
+      selector: ".w-radio-input",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -8359,9 +8232,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload": [
+  ".w-file-upload": [
     {
-      selector: "w-file-upload",
+      selector: ".w-file-upload",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8370,7 +8243,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload",
+      selector: ".w-file-upload",
       property: "display",
       value: {
         type: "keyword",
@@ -8378,9 +8251,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-input": [
+  ".w-file-upload-input": [
     {
-      selector: "w-file-upload-input",
+      selector: ".w-file-upload-input",
       property: "opacity",
       value: {
         type: "unit",
@@ -8389,7 +8262,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-input",
+      selector: ".w-file-upload-input",
       property: "zIndex",
       value: {
         type: "unit",
@@ -8398,7 +8271,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-input",
+      selector: ".w-file-upload-input",
       property: "width",
       value: {
         type: "unit",
@@ -8407,7 +8280,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-input",
+      selector: ".w-file-upload-input",
       property: "height",
       value: {
         type: "unit",
@@ -8416,7 +8289,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-input",
+      selector: ".w-file-upload-input",
       property: "position",
       value: {
         type: "keyword",
@@ -8424,7 +8297,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-input",
+      selector: ".w-file-upload-input",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -8432,7 +8305,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-input",
+      selector: ".w-file-upload-input",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -8440,9 +8313,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-default": [
+  ".w-file-upload-default": [
     {
-      selector: "w-file-upload-default",
+      selector: ".w-file-upload-default",
       property: "color",
       value: {
         type: "rgb",
@@ -8453,7 +8326,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-default",
+      selector: ".w-file-upload-default",
       property: "display",
       value: {
         type: "keyword",
@@ -8461,9 +8334,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-uploading": [
+  ".w-file-upload-uploading": [
     {
-      selector: "w-file-upload-uploading",
+      selector: ".w-file-upload-uploading",
       property: "color",
       value: {
         type: "rgb",
@@ -8474,7 +8347,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading",
+      selector: ".w-file-upload-uploading",
       property: "display",
       value: {
         type: "keyword",
@@ -8482,9 +8355,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-success": [
+  ".w-file-upload-success": [
     {
-      selector: "w-file-upload-success",
+      selector: ".w-file-upload-success",
       property: "color",
       value: {
         type: "rgb",
@@ -8495,7 +8368,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-success",
+      selector: ".w-file-upload-success",
       property: "display",
       value: {
         type: "keyword",
@@ -8503,9 +8376,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-error": [
+  ".w-file-upload-error": [
     {
-      selector: "w-file-upload-error",
+      selector: ".w-file-upload-error",
       property: "marginTop",
       value: {
         type: "unit",
@@ -8514,7 +8387,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-error",
+      selector: ".w-file-upload-error",
       property: "display",
       value: {
         type: "keyword",
@@ -8522,9 +8395,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-default.w-hidden": [
+  ".w-file-upload-default.w-hidden": [
     {
-      selector: "w-file-upload-default.w-hidden",
+      selector: ".w-file-upload-default.w-hidden",
       property: "display",
       value: {
         type: "keyword",
@@ -8532,9 +8405,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-uploading.w-hidden": [
+  ".w-file-upload-uploading.w-hidden": [
     {
-      selector: "w-file-upload-uploading.w-hidden",
+      selector: ".w-file-upload-uploading.w-hidden",
       property: "display",
       value: {
         type: "keyword",
@@ -8542,9 +8415,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-error.w-hidden": [
+  ".w-file-upload-error.w-hidden": [
     {
-      selector: "w-file-upload-error.w-hidden",
+      selector: ".w-file-upload-error.w-hidden",
       property: "display",
       value: {
         type: "keyword",
@@ -8552,9 +8425,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-success.w-hidden": [
+  ".w-file-upload-success.w-hidden": [
     {
-      selector: "w-file-upload-success.w-hidden",
+      selector: ".w-file-upload-success.w-hidden",
       property: "display",
       value: {
         type: "keyword",
@@ -8562,9 +8435,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-uploading-btn": [
+  ".w-file-upload-uploading-btn": [
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "cursor",
       value: {
         type: "keyword",
@@ -8572,7 +8445,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8583,7 +8456,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -8592,7 +8465,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -8601,7 +8474,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -8610,7 +8483,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -8619,7 +8492,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -8627,7 +8500,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -8635,7 +8508,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -8643,7 +8516,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -8651,7 +8524,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -8662,7 +8535,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -8673,7 +8546,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -8684,7 +8557,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -8695,7 +8568,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "marginTop",
       value: {
         type: "unit",
@@ -8704,7 +8577,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "marginRight",
       value: {
         type: "unit",
@@ -8713,7 +8586,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8722,7 +8595,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -8731,7 +8604,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -8740,7 +8613,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -8749,7 +8622,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -8758,7 +8631,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -8767,7 +8640,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "fontSize",
       value: {
         type: "unit",
@@ -8776,7 +8649,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -8784,7 +8657,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-uploading-btn",
+      selector: ".w-file-upload-uploading-btn",
       property: "display",
       value: {
         type: "keyword",
@@ -8792,9 +8665,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-file": [
+  ".w-file-upload-file": [
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -8805,7 +8678,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -8814,7 +8687,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -8823,7 +8696,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -8832,7 +8705,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -8841,7 +8714,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -8849,7 +8722,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -8857,7 +8730,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -8865,7 +8738,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -8873,7 +8746,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -8884,7 +8757,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -8895,7 +8768,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -8906,7 +8779,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -8917,7 +8790,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "flexGrow",
       value: {
         type: "unit",
@@ -8926,7 +8799,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -8934,7 +8807,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "marginTop",
       value: {
         type: "unit",
@@ -8943,7 +8816,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "marginRight",
       value: {
         type: "unit",
@@ -8952,7 +8825,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -8961,7 +8834,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -8970,7 +8843,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -8979,7 +8852,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -8988,7 +8861,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -8997,7 +8870,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9006,7 +8879,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file",
+      selector: ".w-file-upload-file",
       property: "display",
       value: {
         type: "keyword",
@@ -9014,9 +8887,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-file-name": [
+  ".w-file-upload-file-name": [
     {
-      selector: "w-file-upload-file-name",
+      selector: ".w-file-upload-file-name",
       property: "fontSize",
       value: {
         type: "unit",
@@ -9025,7 +8898,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file-name",
+      selector: ".w-file-upload-file-name",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -9033,7 +8906,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-file-name",
+      selector: ".w-file-upload-file-name",
       property: "display",
       value: {
         type: "keyword",
@@ -9041,9 +8914,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-remove-link": [
+  ".w-file-remove-link": [
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "cursor",
       value: {
         type: "keyword",
@@ -9051,7 +8924,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "width",
       value: {
         type: "keyword",
@@ -9059,7 +8932,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "height",
       value: {
         type: "keyword",
@@ -9067,7 +8940,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "marginTop",
       value: {
         type: "unit",
@@ -9076,7 +8949,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9085,7 +8958,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -9094,7 +8967,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9103,7 +8976,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -9112,7 +8985,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9121,7 +8994,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-remove-link",
+      selector: ".w-file-remove-link",
       property: "display",
       value: {
         type: "keyword",
@@ -9129,9 +9002,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-error-msg": [
+  ".w-file-upload-error-msg": [
     {
-      selector: "w-file-upload-error-msg",
+      selector: ".w-file-upload-error-msg",
       property: "color",
       value: {
         type: "rgb",
@@ -9142,7 +9015,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-error-msg",
+      selector: ".w-file-upload-error-msg",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -9151,7 +9024,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-error-msg",
+      selector: ".w-file-upload-error-msg",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9160,7 +9033,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-error-msg",
+      selector: ".w-file-upload-error-msg",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -9169,7 +9042,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-error-msg",
+      selector: ".w-file-upload-error-msg",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9178,7 +9051,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-error-msg",
+      selector: ".w-file-upload-error-msg",
       property: "display",
       value: {
         type: "keyword",
@@ -9186,9 +9059,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-info": [
+  ".w-file-upload-info": [
     {
-      selector: "w-file-upload-info",
+      selector: ".w-file-upload-info",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -9197,7 +9070,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-info",
+      selector: ".w-file-upload-info",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9206,7 +9079,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-info",
+      selector: ".w-file-upload-info",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -9215,7 +9088,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-info",
+      selector: ".w-file-upload-info",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9224,7 +9097,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-info",
+      selector: ".w-file-upload-info",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -9233,7 +9106,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-info",
+      selector: ".w-file-upload-info",
       property: "display",
       value: {
         type: "keyword",
@@ -9241,9 +9114,9 @@ export const styles = {
       },
     },
   ],
-  "w-file-upload-label": [
+  ".w-file-upload-label": [
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "cursor",
       value: {
         type: "keyword",
@@ -9251,7 +9124,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -9262,7 +9135,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -9271,7 +9144,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -9280,7 +9153,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -9289,7 +9162,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -9298,7 +9171,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -9306,7 +9179,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -9314,7 +9187,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -9322,7 +9195,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -9330,7 +9203,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -9341,7 +9214,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -9352,7 +9225,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -9363,7 +9236,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -9374,7 +9247,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "marginTop",
       value: {
         type: "unit",
@@ -9383,7 +9256,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "marginRight",
       value: {
         type: "unit",
@@ -9392,7 +9265,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -9401,7 +9274,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9410,7 +9283,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -9419,7 +9292,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9428,7 +9301,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -9437,7 +9310,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9446,7 +9319,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "fontSize",
       value: {
         type: "unit",
@@ -9455,7 +9328,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "fontWeight",
       value: {
         type: "keyword",
@@ -9463,7 +9336,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-file-upload-label",
+      selector: ".w-file-upload-label",
       property: "display",
       value: {
         type: "keyword",
@@ -9471,9 +9344,9 @@ export const styles = {
       },
     },
   ],
-  "w-icon-file-upload-uploading": [
+  ".w-icon-file-upload-uploading": [
     {
-      selector: "w-icon-file-upload-uploading",
+      selector: ".w-icon-file-upload-uploading",
       property: "width",
       value: {
         type: "unit",
@@ -9482,7 +9355,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-uploading",
+      selector: ".w-icon-file-upload-uploading",
       property: "marginRight",
       value: {
         type: "unit",
@@ -9491,7 +9364,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-uploading",
+      selector: ".w-icon-file-upload-uploading",
       property: "display",
       value: {
         type: "keyword",
@@ -9499,7 +9372,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-icon-file-upload-uploading",
+      selector: ".w-icon-file-upload-uploading",
       property: "height",
       value: {
         type: "unit",
@@ -9508,9 +9381,9 @@ export const styles = {
       },
     },
   ],
-  "w-container": [
+  ".w-container": [
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -9519,7 +9392,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -9527,7 +9400,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -9535,7 +9408,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "content",
       value: {
         type: "unparsed",
@@ -9544,7 +9417,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "content",
       value: {
         type: "unparsed",
@@ -9553,7 +9426,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -9563,7 +9436,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -9573,7 +9446,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -9583,7 +9456,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -9593,7 +9466,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -9603,7 +9476,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -9613,7 +9486,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -9623,7 +9496,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -9633,7 +9506,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "display",
       value: {
         type: "keyword",
@@ -9642,7 +9515,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "display",
       value: {
         type: "keyword",
@@ -9651,7 +9524,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "clear",
       value: {
         type: "keyword",
@@ -9660,7 +9533,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -9670,7 +9543,7 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
     {
-      selector: "w-container",
+      selector: ".w-container",
       property: "maxWidth",
       value: {
         type: "keyword",
@@ -9679,9 +9552,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-container .w-row": [
+  ".w-container .w-row": [
     {
-      selector: "w-container .w-row",
+      selector: ".w-container .w-row",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9690,7 +9563,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-container .w-row",
+      selector: ".w-container .w-row",
       property: "marginRight",
       value: {
         type: "unit",
@@ -9699,7 +9572,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-container .w-row",
+      selector: ".w-container .w-row",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9709,7 +9582,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-container .w-row",
+      selector: ".w-container .w-row",
       property: "marginRight",
       value: {
         type: "unit",
@@ -9719,9 +9592,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-row": [
+  ".w-row": [
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "content",
       value: {
         type: "unparsed",
@@ -9730,7 +9603,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "content",
       value: {
         type: "unparsed",
@@ -9739,7 +9612,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -9749,7 +9622,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -9759,7 +9632,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -9769,7 +9642,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -9779,7 +9652,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -9789,7 +9662,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -9799,7 +9672,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -9809,7 +9682,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -9819,7 +9692,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "display",
       value: {
         type: "keyword",
@@ -9828,7 +9701,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "display",
       value: {
         type: "keyword",
@@ -9837,7 +9710,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "clear",
       value: {
         type: "keyword",
@@ -9846,7 +9719,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9856,7 +9729,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-row",
+      selector: ".w-row",
       property: "marginRight",
       value: {
         type: "unit",
@@ -9866,9 +9739,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-row .w-row": [
+  ".w-row .w-row": [
     {
-      selector: "w-row .w-row",
+      selector: ".w-row .w-row",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9877,7 +9750,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-row .w-row",
+      selector: ".w-row .w-row",
       property: "marginRight",
       value: {
         type: "unit",
@@ -9886,9 +9759,9 @@ export const styles = {
       },
     },
   ],
-  "w-col": [
+  ".w-col": [
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "float",
       value: {
         type: "keyword",
@@ -9896,7 +9769,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "width",
       value: {
         type: "unit",
@@ -9905,7 +9778,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "minHeight",
       value: {
         type: "unit",
@@ -9914,7 +9787,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9923,7 +9796,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9932,7 +9805,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "position",
       value: {
         type: "keyword",
@@ -9940,7 +9813,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "width",
       value: {
         type: "unit",
@@ -9950,7 +9823,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "left",
       value: {
         type: "keyword",
@@ -9959,7 +9832,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "right",
       value: {
         type: "keyword",
@@ -9968,7 +9841,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-col",
+      selector: ".w-col",
       property: "width",
       value: {
         type: "unit",
@@ -9978,9 +9851,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col .w-col": [
+  ".w-col .w-col": [
     {
-      selector: "w-col .w-col",
+      selector: ".w-col .w-col",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -9989,7 +9862,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-col .w-col",
+      selector: ".w-col .w-col",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -9998,9 +9871,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-1": [
+  ".w-col-1": [
     {
-      selector: "w-col-1",
+      selector: ".w-col-1",
       property: "width",
       value: {
         type: "unit",
@@ -10009,9 +9882,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-2": [
+  ".w-col-2": [
     {
-      selector: "w-col-2",
+      selector: ".w-col-2",
       property: "width",
       value: {
         type: "unit",
@@ -10020,9 +9893,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-3": [
+  ".w-col-3": [
     {
-      selector: "w-col-3",
+      selector: ".w-col-3",
       property: "width",
       value: {
         type: "unit",
@@ -10031,9 +9904,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-4": [
+  ".w-col-4": [
     {
-      selector: "w-col-4",
+      selector: ".w-col-4",
       property: "width",
       value: {
         type: "unit",
@@ -10042,9 +9915,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-5": [
+  ".w-col-5": [
     {
-      selector: "w-col-5",
+      selector: ".w-col-5",
       property: "width",
       value: {
         type: "unit",
@@ -10053,9 +9926,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-6": [
+  ".w-col-6": [
     {
-      selector: "w-col-6",
+      selector: ".w-col-6",
       property: "width",
       value: {
         type: "unit",
@@ -10064,9 +9937,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-7": [
+  ".w-col-7": [
     {
-      selector: "w-col-7",
+      selector: ".w-col-7",
       property: "width",
       value: {
         type: "unit",
@@ -10075,9 +9948,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-8": [
+  ".w-col-8": [
     {
-      selector: "w-col-8",
+      selector: ".w-col-8",
       property: "width",
       value: {
         type: "unit",
@@ -10086,9 +9959,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-9": [
+  ".w-col-9": [
     {
-      selector: "w-col-9",
+      selector: ".w-col-9",
       property: "width",
       value: {
         type: "unit",
@@ -10097,9 +9970,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-10": [
+  ".w-col-10": [
     {
-      selector: "w-col-10",
+      selector: ".w-col-10",
       property: "width",
       value: {
         type: "unit",
@@ -10108,9 +9981,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-11": [
+  ".w-col-11": [
     {
-      selector: "w-col-11",
+      selector: ".w-col-11",
       property: "width",
       value: {
         type: "unit",
@@ -10119,9 +9992,9 @@ export const styles = {
       },
     },
   ],
-  "w-col-12": [
+  ".w-col-12": [
     {
-      selector: "w-col-12",
+      selector: ".w-col-12",
       property: "width",
       value: {
         type: "unit",
@@ -10130,9 +10003,9 @@ export const styles = {
       },
     },
   ],
-  "w-hidden-main": [
+  ".w-hidden-main": [
     {
-      selector: "w-hidden-main",
+      selector: ".w-hidden-main",
       property: "display",
       value: {
         type: "keyword",
@@ -10140,7 +10013,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-hidden-main",
+      selector: ".w-hidden-main",
       property: "display",
       value: {
         type: "keyword",
@@ -10149,7 +10022,7 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
     {
-      selector: "w-hidden-main",
+      selector: ".w-hidden-main",
       property: "display",
       value: {
         type: "keyword",
@@ -10158,7 +10031,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-hidden-main",
+      selector: ".w-hidden-main",
       property: "display",
       value: {
         type: "keyword",
@@ -10167,9 +10040,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-hidden-medium": [
+  ".w-hidden-medium": [
     {
-      selector: "w-hidden-medium",
+      selector: ".w-hidden-medium",
       property: "display",
       value: {
         type: "keyword",
@@ -10178,7 +10051,7 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
     {
-      selector: "w-hidden-medium",
+      selector: ".w-hidden-medium",
       property: "display",
       value: {
         type: "keyword",
@@ -10187,7 +10060,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-hidden-medium",
+      selector: ".w-hidden-medium",
       property: "display",
       value: {
         type: "keyword",
@@ -10196,9 +10069,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-medium-1": [
+  ".w-col-medium-1": [
     {
-      selector: "w-col-medium-1",
+      selector: ".w-col-medium-1",
       property: "width",
       value: {
         type: "unit",
@@ -10208,9 +10081,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-2": [
+  ".w-col-medium-2": [
     {
-      selector: "w-col-medium-2",
+      selector: ".w-col-medium-2",
       property: "width",
       value: {
         type: "unit",
@@ -10220,9 +10093,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-3": [
+  ".w-col-medium-3": [
     {
-      selector: "w-col-medium-3",
+      selector: ".w-col-medium-3",
       property: "width",
       value: {
         type: "unit",
@@ -10232,9 +10105,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-4": [
+  ".w-col-medium-4": [
     {
-      selector: "w-col-medium-4",
+      selector: ".w-col-medium-4",
       property: "width",
       value: {
         type: "unit",
@@ -10244,9 +10117,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-5": [
+  ".w-col-medium-5": [
     {
-      selector: "w-col-medium-5",
+      selector: ".w-col-medium-5",
       property: "width",
       value: {
         type: "unit",
@@ -10256,9 +10129,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-6": [
+  ".w-col-medium-6": [
     {
-      selector: "w-col-medium-6",
+      selector: ".w-col-medium-6",
       property: "width",
       value: {
         type: "unit",
@@ -10268,9 +10141,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-7": [
+  ".w-col-medium-7": [
     {
-      selector: "w-col-medium-7",
+      selector: ".w-col-medium-7",
       property: "width",
       value: {
         type: "unit",
@@ -10280,9 +10153,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-8": [
+  ".w-col-medium-8": [
     {
-      selector: "w-col-medium-8",
+      selector: ".w-col-medium-8",
       property: "width",
       value: {
         type: "unit",
@@ -10292,9 +10165,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-9": [
+  ".w-col-medium-9": [
     {
-      selector: "w-col-medium-9",
+      selector: ".w-col-medium-9",
       property: "width",
       value: {
         type: "unit",
@@ -10304,9 +10177,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-10": [
+  ".w-col-medium-10": [
     {
-      selector: "w-col-medium-10",
+      selector: ".w-col-medium-10",
       property: "width",
       value: {
         type: "unit",
@@ -10316,9 +10189,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-11": [
+  ".w-col-medium-11": [
     {
-      selector: "w-col-medium-11",
+      selector: ".w-col-medium-11",
       property: "width",
       value: {
         type: "unit",
@@ -10328,9 +10201,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-medium-12": [
+  ".w-col-medium-12": [
     {
-      selector: "w-col-medium-12",
+      selector: ".w-col-medium-12",
       property: "width",
       value: {
         type: "unit",
@@ -10340,9 +10213,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-col-stack": [
+  ".w-col-stack": [
     {
-      selector: "w-col-stack",
+      selector: ".w-col-stack",
       property: "width",
       value: {
         type: "unit",
@@ -10352,7 +10225,7 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
     {
-      selector: "w-col-stack",
+      selector: ".w-col-stack",
       property: "left",
       value: {
         type: "keyword",
@@ -10361,7 +10234,7 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
     {
-      selector: "w-col-stack",
+      selector: ".w-col-stack",
       property: "right",
       value: {
         type: "keyword",
@@ -10370,9 +10243,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  "w-hidden-small": [
+  ".w-hidden-small": [
     {
-      selector: "w-hidden-small",
+      selector: ".w-hidden-small",
       property: "display",
       value: {
         type: "keyword",
@@ -10381,7 +10254,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-hidden-small",
+      selector: ".w-hidden-small",
       property: "display",
       value: {
         type: "keyword",
@@ -10390,9 +10263,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-small-1": [
+  ".w-col-small-1": [
     {
-      selector: "w-col-small-1",
+      selector: ".w-col-small-1",
       property: "width",
       value: {
         type: "unit",
@@ -10402,9 +10275,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-2": [
+  ".w-col-small-2": [
     {
-      selector: "w-col-small-2",
+      selector: ".w-col-small-2",
       property: "width",
       value: {
         type: "unit",
@@ -10414,9 +10287,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-3": [
+  ".w-col-small-3": [
     {
-      selector: "w-col-small-3",
+      selector: ".w-col-small-3",
       property: "width",
       value: {
         type: "unit",
@@ -10426,9 +10299,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-4": [
+  ".w-col-small-4": [
     {
-      selector: "w-col-small-4",
+      selector: ".w-col-small-4",
       property: "width",
       value: {
         type: "unit",
@@ -10438,9 +10311,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-5": [
+  ".w-col-small-5": [
     {
-      selector: "w-col-small-5",
+      selector: ".w-col-small-5",
       property: "width",
       value: {
         type: "unit",
@@ -10450,9 +10323,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-6": [
+  ".w-col-small-6": [
     {
-      selector: "w-col-small-6",
+      selector: ".w-col-small-6",
       property: "width",
       value: {
         type: "unit",
@@ -10462,9 +10335,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-7": [
+  ".w-col-small-7": [
     {
-      selector: "w-col-small-7",
+      selector: ".w-col-small-7",
       property: "width",
       value: {
         type: "unit",
@@ -10474,9 +10347,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-8": [
+  ".w-col-small-8": [
     {
-      selector: "w-col-small-8",
+      selector: ".w-col-small-8",
       property: "width",
       value: {
         type: "unit",
@@ -10486,9 +10359,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-9": [
+  ".w-col-small-9": [
     {
-      selector: "w-col-small-9",
+      selector: ".w-col-small-9",
       property: "width",
       value: {
         type: "unit",
@@ -10498,9 +10371,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-10": [
+  ".w-col-small-10": [
     {
-      selector: "w-col-small-10",
+      selector: ".w-col-small-10",
       property: "width",
       value: {
         type: "unit",
@@ -10510,9 +10383,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-11": [
+  ".w-col-small-11": [
     {
-      selector: "w-col-small-11",
+      selector: ".w-col-small-11",
       property: "width",
       value: {
         type: "unit",
@@ -10522,9 +10395,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-col-small-12": [
+  ".w-col-small-12": [
     {
-      selector: "w-col-small-12",
+      selector: ".w-col-small-12",
       property: "width",
       value: {
         type: "unit",
@@ -10534,9 +10407,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-hidden-tiny": [
+  ".w-hidden-tiny": [
     {
-      selector: "w-hidden-tiny",
+      selector: ".w-hidden-tiny",
       property: "display",
       value: {
         type: "keyword",
@@ -10545,9 +10418,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-1": [
+  ".w-col-tiny-1": [
     {
-      selector: "w-col-tiny-1",
+      selector: ".w-col-tiny-1",
       property: "width",
       value: {
         type: "unit",
@@ -10557,9 +10430,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-2": [
+  ".w-col-tiny-2": [
     {
-      selector: "w-col-tiny-2",
+      selector: ".w-col-tiny-2",
       property: "width",
       value: {
         type: "unit",
@@ -10569,9 +10442,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-3": [
+  ".w-col-tiny-3": [
     {
-      selector: "w-col-tiny-3",
+      selector: ".w-col-tiny-3",
       property: "width",
       value: {
         type: "unit",
@@ -10581,9 +10454,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-4": [
+  ".w-col-tiny-4": [
     {
-      selector: "w-col-tiny-4",
+      selector: ".w-col-tiny-4",
       property: "width",
       value: {
         type: "unit",
@@ -10593,9 +10466,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-5": [
+  ".w-col-tiny-5": [
     {
-      selector: "w-col-tiny-5",
+      selector: ".w-col-tiny-5",
       property: "width",
       value: {
         type: "unit",
@@ -10605,9 +10478,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-6": [
+  ".w-col-tiny-6": [
     {
-      selector: "w-col-tiny-6",
+      selector: ".w-col-tiny-6",
       property: "width",
       value: {
         type: "unit",
@@ -10617,9 +10490,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-7": [
+  ".w-col-tiny-7": [
     {
-      selector: "w-col-tiny-7",
+      selector: ".w-col-tiny-7",
       property: "width",
       value: {
         type: "unit",
@@ -10629,9 +10502,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-8": [
+  ".w-col-tiny-8": [
     {
-      selector: "w-col-tiny-8",
+      selector: ".w-col-tiny-8",
       property: "width",
       value: {
         type: "unit",
@@ -10641,9 +10514,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-9": [
+  ".w-col-tiny-9": [
     {
-      selector: "w-col-tiny-9",
+      selector: ".w-col-tiny-9",
       property: "width",
       value: {
         type: "unit",
@@ -10653,9 +10526,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-10": [
+  ".w-col-tiny-10": [
     {
-      selector: "w-col-tiny-10",
+      selector: ".w-col-tiny-10",
       property: "width",
       value: {
         type: "unit",
@@ -10665,9 +10538,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-11": [
+  ".w-col-tiny-11": [
     {
-      selector: "w-col-tiny-11",
+      selector: ".w-col-tiny-11",
       property: "width",
       value: {
         type: "unit",
@@ -10677,9 +10550,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-col-tiny-12": [
+  ".w-col-tiny-12": [
     {
-      selector: "w-col-tiny-12",
+      selector: ".w-col-tiny-12",
       property: "width",
       value: {
         type: "unit",
@@ -10689,9 +10562,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-widget": [
+  ".w-widget": [
     {
-      selector: "w-widget",
+      selector: ".w-widget",
       property: "position",
       value: {
         type: "keyword",
@@ -10699,9 +10572,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-map": [
+  ".w-widget-map": [
     {
-      selector: "w-widget-map",
+      selector: ".w-widget-map",
       property: "width",
       value: {
         type: "unit",
@@ -10710,7 +10583,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-map",
+      selector: ".w-widget-map",
       property: "height",
       value: {
         type: "unit",
@@ -10719,9 +10592,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-map label": [
+  ".w-widget-map label": [
     {
-      selector: "w-widget-map label",
+      selector: ".w-widget-map label",
       property: "width",
       value: {
         type: "keyword",
@@ -10729,7 +10602,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-map label",
+      selector: ".w-widget-map label",
       property: "display",
       value: {
         type: "keyword",
@@ -10737,9 +10610,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-map img": [
+  ".w-widget-map img": [
     {
-      selector: "w-widget-map img",
+      selector: ".w-widget-map img",
       property: "maxWidth",
       value: {
         type: "keyword",
@@ -10747,9 +10620,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-map .gm-style-iw": [
+  ".w-widget-map .gm-style-iw": [
     {
-      selector: "w-widget-map .gm-style-iw",
+      selector: ".w-widget-map .gm-style-iw",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -10757,9 +10630,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-map .gm-style-iw > button": [
+  ".w-widget-map .gm-style-iw > button": [
     {
-      selector: "w-widget-map .gm-style-iw > button",
+      selector: ".w-widget-map .gm-style-iw > button",
       property: "display",
       value: {
         type: "keyword",
@@ -10767,9 +10640,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-twitter": [
+  ".w-widget-twitter": [
     {
-      selector: "w-widget-twitter",
+      selector: ".w-widget-twitter",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -10777,7 +10650,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter",
+      selector: ".w-widget-twitter",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -10785,9 +10658,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-twitter-count-shim": [
+  ".w-widget-twitter-count-shim": [
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -10795,7 +10668,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -10803,7 +10676,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -10816,7 +10689,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -10830,7 +10703,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -10844,7 +10717,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -10866,7 +10739,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -10879,7 +10752,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -10892,7 +10765,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -10905,7 +10778,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -10918,7 +10791,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -10929,7 +10802,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -10938,7 +10811,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -10947,7 +10820,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -10956,7 +10829,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -10965,7 +10838,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -10973,7 +10846,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -10981,7 +10854,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -10989,7 +10862,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -10997,7 +10870,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -11008,7 +10881,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -11019,7 +10892,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -11030,7 +10903,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -11041,7 +10914,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -11050,7 +10923,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -11059,7 +10932,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -11068,7 +10941,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "width",
       value: {
         type: "unit",
@@ -11077,7 +10950,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "height",
       value: {
         type: "unit",
@@ -11086,7 +10959,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "display",
       value: {
         type: "keyword",
@@ -11094,7 +10967,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "position",
       value: {
         type: "keyword",
@@ -11102,7 +10975,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -11112,7 +10985,7 @@ export const styles = {
       state: ":not",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "marginRight",
       value: {
         type: "unit",
@@ -11122,7 +10995,7 @@ export const styles = {
       state: ":not",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "content",
       value: {
         type: "unparsed",
@@ -11131,7 +11004,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "content",
       value: {
         type: "unparsed",
@@ -11140,7 +11013,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -11149,7 +11022,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -11158,7 +11031,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -11168,7 +11041,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -11178,7 +11051,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -11188,7 +11061,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -11198,7 +11071,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -11207,7 +11080,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -11216,7 +11089,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -11225,7 +11098,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -11234,7 +11107,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -11246,7 +11119,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -11258,7 +11131,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -11270,7 +11143,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -11282,7 +11155,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -11292,7 +11165,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -11302,7 +11175,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -11312,7 +11185,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -11322,7 +11195,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -11331,7 +11204,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -11340,7 +11213,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -11349,7 +11222,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -11358,7 +11231,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -11370,7 +11243,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -11382,7 +11255,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -11394,7 +11267,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -11406,7 +11279,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "width",
       value: {
         type: "unit",
@@ -11416,7 +11289,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "width",
       value: {
         type: "unit",
@@ -11426,7 +11299,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "height",
       value: {
         type: "unit",
@@ -11436,7 +11309,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "height",
       value: {
         type: "unit",
@@ -11446,7 +11319,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "position",
       value: {
         type: "keyword",
@@ -11455,7 +11328,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "position",
       value: {
         type: "keyword",
@@ -11464,7 +11337,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "top",
       value: {
         type: "unit",
@@ -11474,7 +11347,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "top",
       value: {
         type: "unit",
@@ -11484,7 +11357,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "left",
       value: {
         type: "unit",
@@ -11494,7 +11367,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "left",
       value: {
         type: "unit",
@@ -11504,7 +11377,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "marginTop",
       value: {
         type: "unit",
@@ -11514,7 +11387,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -11524,7 +11397,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "marginTop",
       value: {
         type: "unit",
@@ -11534,7 +11407,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim",
+      selector: ".w-widget-twitter-count-shim",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -11544,9 +11417,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-widget-twitter-count-shim *": [
+  ".w-widget-twitter-count-shim *": [
     {
-      selector: "w-widget-twitter-count-shim *",
+      selector: ".w-widget-twitter-count-shim *",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -11554,7 +11427,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim *",
+      selector: ".w-widget-twitter-count-shim *",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -11562,9 +11435,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-twitter-count-shim .w-widget-twitter-count-inner": [
+  ".w-widget-twitter-count-shim .w-widget-twitter-count-inner": [
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-inner",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -11572,7 +11445,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-inner",
       property: "color",
       value: {
         type: "rgb",
@@ -11583,7 +11456,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-inner",
       property: "fontFamily",
       value: {
         type: "fontFamily",
@@ -11591,7 +11464,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-inner",
       property: "fontSize",
       value: {
         type: "unit",
@@ -11600,7 +11473,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-inner",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -11609,7 +11482,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-inner",
       property: "position",
       value: {
         type: "keyword",
@@ -11617,9 +11490,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-twitter-count-shim .w-widget-twitter-count-clear": [
+  ".w-widget-twitter-count-shim .w-widget-twitter-count-clear": [
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-clear",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-clear",
       property: "display",
       value: {
         type: "keyword",
@@ -11627,7 +11500,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-clear",
+      selector: ".w-widget-twitter-count-shim .w-widget-twitter-count-clear",
       property: "position",
       value: {
         type: "keyword",
@@ -11635,9 +11508,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-twitter-count-shim.w--large": [
+  ".w-widget-twitter-count-shim.w--large": [
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "width",
       value: {
         type: "unit",
@@ -11646,7 +11519,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "height",
       value: {
         type: "unit",
@@ -11655,7 +11528,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -11665,7 +11538,7 @@ export const styles = {
       state: ":not",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -11675,7 +11548,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -11685,7 +11558,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -11695,7 +11568,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -11705,7 +11578,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "marginTop",
       value: {
         type: "unit",
@@ -11715,7 +11588,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -11725,7 +11598,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -11735,7 +11608,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -11745,7 +11618,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -11755,7 +11628,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -11765,7 +11638,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "marginTop",
       value: {
         type: "unit",
@@ -11775,7 +11648,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--large",
+      selector: ".w-widget-twitter-count-shim.w--large",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -11785,10 +11658,10 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner": [
+  ".w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner": [
     {
       selector:
-        "w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner",
+        ".w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner",
       property: "fontSize",
       value: {
         type: "unit",
@@ -11798,7 +11671,7 @@ export const styles = {
     },
     {
       selector:
-        "w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner",
+        ".w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -11807,9 +11680,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-twitter-count-shim.w--vertical": [
+  ".w-widget-twitter-count-shim.w--vertical": [
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "width",
       value: {
         type: "unit",
@@ -11818,7 +11691,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "height",
       value: {
         type: "unit",
@@ -11827,7 +11700,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -11836,7 +11709,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "content",
       value: {
         type: "unparsed",
@@ -11845,7 +11718,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "content",
       value: {
         type: "unparsed",
@@ -11854,7 +11727,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -11863,7 +11736,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -11872,7 +11745,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -11882,7 +11755,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -11892,7 +11765,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -11902,7 +11775,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -11912,7 +11785,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -11921,7 +11794,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -11930,7 +11803,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -11939,7 +11812,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -11948,7 +11821,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -11960,7 +11833,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -11972,7 +11845,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -11984,7 +11857,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -11996,7 +11869,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -12006,7 +11879,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -12016,7 +11889,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -12026,7 +11899,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -12036,7 +11909,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -12045,7 +11918,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -12054,7 +11927,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -12063,7 +11936,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -12072,7 +11945,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -12084,7 +11957,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -12096,7 +11969,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -12108,7 +11981,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -12120,7 +11993,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "width",
       value: {
         type: "unit",
@@ -12130,7 +12003,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "width",
       value: {
         type: "unit",
@@ -12140,7 +12013,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "height",
       value: {
         type: "unit",
@@ -12150,7 +12023,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "height",
       value: {
         type: "unit",
@@ -12160,7 +12033,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "position",
       value: {
         type: "keyword",
@@ -12169,7 +12042,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "position",
       value: {
         type: "keyword",
@@ -12178,7 +12051,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "top",
       value: {
         type: "unit",
@@ -12188,7 +12061,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "top",
       value: {
         type: "unit",
@@ -12198,7 +12071,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "left",
       value: {
         type: "unit",
@@ -12208,7 +12081,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "left",
       value: {
         type: "unit",
@@ -12218,7 +12091,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -12228,7 +12101,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-widget-twitter-count-shim.w--vertical",
+      selector: ".w-widget-twitter-count-shim.w--vertical",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -12238,10 +12111,10 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner": [
+  ".w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner": [
     {
       selector:
-        "w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner",
+        ".w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner",
       property: "fontSize",
       value: {
         type: "unit",
@@ -12251,7 +12124,7 @@ export const styles = {
     },
     {
       selector:
-        "w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner",
+        ".w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -12260,9 +12133,9 @@ export const styles = {
       },
     },
   ],
-  "w-widget-twitter-count-shim.w--vertical.w--large": [
+  ".w-widget-twitter-count-shim.w--vertical.w--large": [
     {
-      selector: "w-widget-twitter-count-shim.w--vertical.w--large",
+      selector: ".w-widget-twitter-count-shim.w--vertical.w--large",
       property: "width",
       value: {
         type: "unit",
@@ -12271,9 +12144,9 @@ export const styles = {
       },
     },
   ],
-  "w-background-video": [
+  ".w-background-video": [
     {
-      selector: "w-background-video",
+      selector: ".w-background-video",
       property: "color",
       value: {
         type: "rgb",
@@ -12284,7 +12157,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video",
+      selector: ".w-background-video",
       property: "height",
       value: {
         type: "unit",
@@ -12293,7 +12166,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video",
+      selector: ".w-background-video",
       property: "position",
       value: {
         type: "keyword",
@@ -12301,7 +12174,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video",
+      selector: ".w-background-video",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -12309,7 +12182,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video",
+      selector: ".w-background-video",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -12317,9 +12190,9 @@ export const styles = {
       },
     },
   ],
-  "w-background-video > video": [
+  ".w-background-video > video": [
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "objectFit",
       value: {
         type: "keyword",
@@ -12327,7 +12200,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "zIndex",
       value: {
         type: "unit",
@@ -12336,7 +12209,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -12350,7 +12223,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -12363,7 +12236,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -12376,7 +12249,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "width",
       value: {
         type: "unit",
@@ -12385,7 +12258,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "height",
       value: {
         type: "unit",
@@ -12394,7 +12267,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -12402,7 +12275,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -12410,7 +12283,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -12418,7 +12291,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -12426,7 +12299,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "position",
       value: {
         type: "keyword",
@@ -12434,7 +12307,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "top",
       value: {
         type: "unit",
@@ -12443,7 +12316,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "bottom",
       value: {
         type: "unit",
@@ -12452,7 +12325,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "left",
       value: {
         type: "unit",
@@ -12461,7 +12334,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "right",
       value: {
         type: "unit",
@@ -12470,7 +12343,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "appearance",
       value: {
         type: "keyword",
@@ -12479,7 +12352,7 @@ export const styles = {
       state: "::-webkit-media-controls-start-playback-button",
     },
     {
-      selector: "w-background-video > video",
+      selector: ".w-background-video > video",
       property: "display",
       value: {
         type: "keyword",
@@ -12488,9 +12361,9 @@ export const styles = {
       state: "::-webkit-media-controls-start-playback-button",
     },
   ],
-  "w-background-video--control": [
+  ".w-background-video--control": [
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -12501,7 +12374,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -12510,7 +12383,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -12519,7 +12392,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -12528,7 +12401,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -12537,7 +12410,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "position",
       value: {
         type: "keyword",
@@ -12545,7 +12418,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "bottom",
       value: {
         type: "unit",
@@ -12554,7 +12427,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-background-video--control",
+      selector: ".w-background-video--control",
       property: "right",
       value: {
         type: "unit",
@@ -12563,9 +12436,9 @@ export const styles = {
       },
     },
   ],
-  "w-background-video--control > ": [
+  ".w-background-video--control > [hidden]": [
     {
-      selector: "w-background-video--control > ",
+      selector: ".w-background-video--control > [hidden]",
       property: "display",
       value: {
         type: "keyword",
@@ -12573,9 +12446,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider": [
+  ".w-slider": [
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -12583,7 +12456,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "clear",
       value: {
         type: "keyword",
@@ -12591,7 +12464,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -12602,7 +12475,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -12613,7 +12486,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -12626,7 +12499,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -12640,7 +12513,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -12654,7 +12527,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -12676,7 +12549,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -12689,7 +12562,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -12702,7 +12575,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -12715,7 +12588,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -12728,7 +12601,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -12739,7 +12612,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "height",
       value: {
         type: "unit",
@@ -12748,7 +12621,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider",
+      selector: ".w-slider",
       property: "position",
       value: {
         type: "keyword",
@@ -12756,9 +12629,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-mask": [
+  ".w-slider-mask": [
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "zIndex",
       value: {
         type: "unit",
@@ -12767,7 +12640,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -12775,7 +12648,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -12783,7 +12656,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "height",
       value: {
         type: "unit",
@@ -12792,7 +12665,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "display",
       value: {
         type: "keyword",
@@ -12800,7 +12673,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "position",
       value: {
         type: "keyword",
@@ -12808,7 +12681,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "left",
       value: {
         type: "unit",
@@ -12817,7 +12690,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "right",
       value: {
         type: "unit",
@@ -12826,7 +12699,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -12834,7 +12707,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-mask",
+      selector: ".w-slider-mask",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -12842,9 +12715,9 @@ export const styles = {
       },
     },
   ],
-  "w-slide": [
+  ".w-slide": [
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -12852,7 +12725,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -12860,7 +12733,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -12868,7 +12741,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -12876,7 +12749,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "width",
       value: {
         type: "unit",
@@ -12885,7 +12758,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "height",
       value: {
         type: "unit",
@@ -12894,7 +12767,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "display",
       value: {
         type: "keyword",
@@ -12902,7 +12775,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slide",
+      selector: ".w-slide",
       property: "position",
       value: {
         type: "keyword",
@@ -12910,9 +12783,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-nav": [
+  ".w-slider-nav": [
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "zIndex",
       value: {
         type: "unit",
@@ -12921,7 +12794,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -12929,7 +12802,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -12940,7 +12813,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -12951,7 +12824,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "height",
       value: {
         type: "unit",
@@ -12960,7 +12833,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -12968,7 +12841,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -12976,7 +12849,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -12984,7 +12857,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -12992,7 +12865,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -13001,7 +12874,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "position",
       value: {
         type: "keyword",
@@ -13009,7 +12882,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "top",
       value: {
         type: "keyword",
@@ -13017,7 +12890,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "bottom",
       value: {
         type: "unit",
@@ -13026,7 +12899,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "left",
       value: {
         type: "unit",
@@ -13035,7 +12908,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: ".w-slider-nav",
       property: "right",
       value: {
         type: "unit",
@@ -13044,9 +12917,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-nav.w-round > div": [
+  ".w-slider-nav.w-round > div": [
     {
-      selector: "w-slider-nav.w-round > div",
+      selector: ".w-slider-nav.w-round > div",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -13055,7 +12928,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-round > div",
+      selector: ".w-slider-nav.w-round > div",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -13064,7 +12937,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-round > div",
+      selector: ".w-slider-nav.w-round > div",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -13073,9 +12946,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-nav.w-num > div": [
+  ".w-slider-nav.w-num > div": [
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "fontSize",
       value: {
         type: "keyword",
@@ -13083,7 +12956,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -13091,7 +12964,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "width",
       value: {
         type: "keyword",
@@ -13099,7 +12972,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "height",
       value: {
         type: "keyword",
@@ -13107,7 +12980,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -13116,7 +12989,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -13125,7 +12998,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -13134,7 +13007,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav.w-num > div",
+      selector: ".w-slider-nav.w-num > div",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -13143,9 +13016,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-nav.w-shadow > div": [
+  ".w-slider-nav.w-shadow > div": [
     {
-      selector: "w-slider-nav.w-shadow > div",
+      selector: ".w-slider-nav.w-shadow > div",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -13181,9 +13054,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-nav-invert": [
+  ".w-slider-nav-invert": [
     {
-      selector: "w-slider-nav-invert",
+      selector: ".w-slider-nav-invert",
       property: "color",
       value: {
         type: "rgb",
@@ -13194,9 +13067,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-nav-invert > div": [
+  ".w-slider-nav-invert > div": [
     {
-      selector: "w-slider-nav-invert > div",
+      selector: ".w-slider-nav-invert > div",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -13207,9 +13080,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-nav-invert > div.w-active": [
+  ".w-slider-nav-invert > div.w-active": [
     {
-      selector: "w-slider-nav-invert > div.w-active",
+      selector: ".w-slider-nav-invert > div.w-active",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -13220,9 +13093,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-dot": [
+  ".w-slider-dot": [
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "cursor",
       value: {
         type: "keyword",
@@ -13230,7 +13103,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -13241,7 +13114,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "width",
       value: {
         type: "unit",
@@ -13250,7 +13123,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "height",
       value: {
         type: "unit",
@@ -13259,7 +13132,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "marginTop",
       value: {
         type: "unit",
@@ -13268,7 +13141,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "marginRight",
       value: {
         type: "unit",
@@ -13277,7 +13150,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -13286,7 +13159,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -13295,7 +13168,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "transitionProperty",
       value: {
         type: "layers",
@@ -13312,7 +13185,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "transitionDuration",
       value: {
         type: "layers",
@@ -13331,7 +13204,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "transitionTimingFunction",
       value: {
         type: "layers",
@@ -13348,7 +13221,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "transitionDelay",
       value: {
         type: "layers",
@@ -13367,7 +13240,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "transitionBehavior",
       value: {
         type: "layers",
@@ -13384,7 +13257,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "display",
       value: {
         type: "keyword",
@@ -13392,7 +13265,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "position",
       value: {
         type: "keyword",
@@ -13400,7 +13273,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "outlineWidth",
       value: {
         type: "keyword",
@@ -13409,7 +13282,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -13418,7 +13291,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -13427,7 +13300,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-dot",
+      selector: ".w-slider-dot",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -13469,9 +13342,9 @@ export const styles = {
       state: ":focus",
     },
   ],
-  "w-slider-dot.w-active": [
+  ".w-slider-dot.w-active": [
     {
-      selector: "w-slider-dot.w-active",
+      selector: ".w-slider-dot.w-active",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -13482,7 +13355,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-dot.w-active",
+      selector: ".w-slider-dot.w-active",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -13501,9 +13374,9 @@ export const styles = {
       state: ":focus",
     },
   ],
-  "w-slider-arrow-left": [
+  ".w-slider-arrow-left": [
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "cursor",
       value: {
         type: "keyword",
@@ -13511,7 +13384,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "color",
       value: {
         type: "rgb",
@@ -13522,7 +13395,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -13533,7 +13406,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -13544,7 +13417,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -13552,7 +13425,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "width",
       value: {
         type: "unit",
@@ -13561,7 +13434,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -13569,7 +13442,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -13577,7 +13450,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -13585,7 +13458,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -13593,7 +13466,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "fontSize",
       value: {
         type: "unit",
@@ -13602,7 +13475,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "position",
       value: {
         type: "keyword",
@@ -13610,7 +13483,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "top",
       value: {
         type: "unit",
@@ -13619,7 +13492,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "bottom",
       value: {
         type: "unit",
@@ -13628,7 +13501,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "left",
       value: {
         type: "unit",
@@ -13637,7 +13510,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "right",
       value: {
         type: "keyword",
@@ -13645,7 +13518,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -13653,7 +13526,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -13661,7 +13534,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -13671,7 +13544,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -13680,7 +13553,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -13689,7 +13562,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-arrow-left",
+      selector: ".w-slider-arrow-left",
       property: "zIndex",
       value: {
         type: "unit",
@@ -13698,9 +13571,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-arrow-right": [
+  ".w-slider-arrow-right": [
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "cursor",
       value: {
         type: "keyword",
@@ -13708,7 +13581,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "color",
       value: {
         type: "rgb",
@@ -13719,7 +13592,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -13730,7 +13603,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -13741,7 +13614,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -13749,7 +13622,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "width",
       value: {
         type: "unit",
@@ -13758,7 +13631,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "marginTop",
       value: {
         type: "keyword",
@@ -13766,7 +13639,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -13774,7 +13647,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "marginBottom",
       value: {
         type: "keyword",
@@ -13782,7 +13655,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -13790,7 +13663,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "fontSize",
       value: {
         type: "unit",
@@ -13799,7 +13672,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "position",
       value: {
         type: "keyword",
@@ -13807,7 +13680,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "top",
       value: {
         type: "unit",
@@ -13816,7 +13689,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "bottom",
       value: {
         type: "unit",
@@ -13825,7 +13698,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "left",
       value: {
         type: "keyword",
@@ -13833,7 +13706,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "right",
       value: {
         type: "unit",
@@ -13842,7 +13715,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -13850,7 +13723,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -13858,7 +13731,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -13868,7 +13741,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -13877,7 +13750,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -13886,7 +13759,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-slider-arrow-right",
+      selector: ".w-slider-arrow-right",
       property: "zIndex",
       value: {
         type: "unit",
@@ -13895,9 +13768,9 @@ export const styles = {
       },
     },
   ],
-  'w-slider-arrow-left [class^="w-icon-"]': [
+  '.w-slider-arrow-left [class^="w-icon-"]': [
     {
-      selector: 'w-slider-arrow-left [class^="w-icon-"]',
+      selector: '.w-slider-arrow-left [class^="w-icon-"]',
       property: "position",
       value: {
         type: "keyword",
@@ -13905,9 +13778,9 @@ export const styles = {
       },
     },
   ],
-  'w-slider-arrow-right [class^="w-icon-"]': [
+  '.w-slider-arrow-right [class^="w-icon-"]': [
     {
-      selector: 'w-slider-arrow-right [class^="w-icon-"]',
+      selector: '.w-slider-arrow-right [class^="w-icon-"]',
       property: "position",
       value: {
         type: "keyword",
@@ -13915,9 +13788,9 @@ export const styles = {
       },
     },
   ],
-  'w-slider-arrow-left [class*=" w-icon-"]': [
+  '.w-slider-arrow-left [class*=" w-icon-"]': [
     {
-      selector: 'w-slider-arrow-left [class*=" w-icon-"]',
+      selector: '.w-slider-arrow-left [class*=" w-icon-"]',
       property: "position",
       value: {
         type: "keyword",
@@ -13925,9 +13798,9 @@ export const styles = {
       },
     },
   ],
-  'w-slider-arrow-right [class*=" w-icon-"]': [
+  '.w-slider-arrow-right [class*=" w-icon-"]': [
     {
-      selector: 'w-slider-arrow-right [class*=" w-icon-"]',
+      selector: '.w-slider-arrow-right [class*=" w-icon-"]',
       property: "position",
       value: {
         type: "keyword",
@@ -13935,9 +13808,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-aria-label": [
+  ".w-slider-aria-label": [
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "clip",
       value: {
         type: "unparsed",
@@ -13945,7 +13818,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -13954,7 +13827,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -13963,7 +13836,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -13972,7 +13845,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -13981,7 +13854,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -13989,7 +13862,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -13997,7 +13870,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -14005,7 +13878,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -14013,7 +13886,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderTopColor",
       value: {
         type: "keyword",
@@ -14021,7 +13894,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderRightColor",
       value: {
         type: "keyword",
@@ -14029,7 +13902,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderBottomColor",
       value: {
         type: "keyword",
@@ -14037,7 +13910,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "borderLeftColor",
       value: {
         type: "keyword",
@@ -14045,7 +13918,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "width",
       value: {
         type: "unit",
@@ -14054,7 +13927,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "height",
       value: {
         type: "unit",
@@ -14063,7 +13936,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "marginTop",
       value: {
         type: "unit",
@@ -14072,7 +13945,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "marginRight",
       value: {
         type: "unit",
@@ -14081,7 +13954,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -14090,7 +13963,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -14099,7 +13972,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -14108,7 +13981,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -14117,7 +13990,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -14126,7 +13999,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -14135,7 +14008,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "position",
       value: {
         type: "keyword",
@@ -14143,7 +14016,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -14151,7 +14024,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-aria-label",
+      selector: ".w-slider-aria-label",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -14159,9 +14032,9 @@ export const styles = {
       },
     },
   ],
-  "w-slider-force-show": [
+  ".w-slider-force-show": [
     {
-      selector: "w-slider-force-show",
+      selector: ".w-slider-force-show",
       property: "display",
       value: {
         type: "keyword",
@@ -14169,9 +14042,9 @@ export const styles = {
       },
     },
   ],
-  "w-dropdown": [
+  ".w-dropdown": [
     {
-      selector: "w-dropdown",
+      selector: ".w-dropdown",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -14179,7 +14052,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown",
+      selector: ".w-dropdown",
       property: "zIndex",
       value: {
         type: "unit",
@@ -14188,7 +14061,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown",
+      selector: ".w-dropdown",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -14196,7 +14069,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown",
+      selector: ".w-dropdown",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -14204,7 +14077,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown",
+      selector: ".w-dropdown",
       property: "display",
       value: {
         type: "keyword",
@@ -14212,7 +14085,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown",
+      selector: ".w-dropdown",
       property: "position",
       value: {
         type: "keyword",
@@ -14220,9 +14093,9 @@ export const styles = {
       },
     },
   ],
-  "w-dropdown-btn": [
+  ".w-dropdown-btn": [
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -14230,7 +14103,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "color",
       value: {
         type: "rgb",
@@ -14241,7 +14114,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -14249,7 +14122,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -14257,7 +14130,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -14265,7 +14138,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -14273,7 +14146,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -14281,7 +14154,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -14290,7 +14163,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -14299,7 +14172,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -14308,7 +14181,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -14317,7 +14190,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -14325,7 +14198,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -14333,7 +14206,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -14341,7 +14214,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-btn",
+      selector: ".w-dropdown-btn",
       property: "position",
       value: {
         type: "keyword",
@@ -14349,9 +14222,9 @@ export const styles = {
       },
     },
   ],
-  "w-dropdown-toggle": [
+  ".w-dropdown-toggle": [
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -14359,7 +14232,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "color",
       value: {
         type: "rgb",
@@ -14370,7 +14243,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -14378,7 +14251,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -14386,7 +14259,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -14394,7 +14267,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -14402,7 +14275,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -14410,7 +14283,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -14419,7 +14292,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -14428,7 +14301,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -14437,7 +14310,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -14446,7 +14319,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -14454,7 +14327,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -14462,7 +14335,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -14470,7 +14343,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "position",
       value: {
         type: "keyword",
@@ -14478,7 +14351,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -14486,7 +14359,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "cursor",
       value: {
         type: "keyword",
@@ -14494,7 +14367,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "display",
       value: {
         type: "keyword",
@@ -14502,7 +14375,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -14512,7 +14385,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -14521,7 +14394,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-dropdown-toggle",
+      selector: ".w-dropdown-toggle",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -14530,9 +14403,9 @@ export const styles = {
       state: ":focus",
     },
   ],
-  "w-dropdown-link": [
+  ".w-dropdown-link": [
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -14540,7 +14413,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "color",
       value: {
         type: "rgb",
@@ -14551,7 +14424,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -14559,7 +14432,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -14567,7 +14440,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -14575,7 +14448,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -14583,7 +14456,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -14591,7 +14464,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -14600,7 +14473,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -14609,7 +14482,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -14618,7 +14491,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -14627,7 +14500,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -14635,7 +14508,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -14643,7 +14516,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -14651,7 +14524,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "position",
       value: {
         type: "keyword",
@@ -14659,7 +14532,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "display",
       value: {
         type: "keyword",
@@ -14667,7 +14540,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -14677,7 +14550,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -14686,7 +14559,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-dropdown-link",
+      selector: ".w-dropdown-link",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -14695,9 +14568,9 @@ export const styles = {
       state: ":focus",
     },
   ],
-  "w-dropdown-list": [
+  ".w-dropdown-list": [
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -14710,7 +14583,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -14724,7 +14597,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -14738,7 +14611,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -14760,7 +14633,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -14773,7 +14646,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -14786,7 +14659,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -14799,7 +14672,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -14812,7 +14685,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -14823,7 +14696,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "minWidth",
       value: {
         type: "unit",
@@ -14832,7 +14705,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "display",
       value: {
         type: "keyword",
@@ -14840,7 +14713,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dropdown-list",
+      selector: ".w-dropdown-list",
       property: "position",
       value: {
         type: "keyword",
@@ -14848,9 +14721,9 @@ export const styles = {
       },
     },
   ],
-  "w-dropdown-list.w--open": [
+  ".w-dropdown-list.w--open": [
     {
-      selector: "w-dropdown-list.w--open",
+      selector: ".w-dropdown-list.w--open",
       property: "display",
       value: {
         type: "keyword",
@@ -14858,9 +14731,9 @@ export const styles = {
       },
     },
   ],
-  "w-dropdown-link.w--current": [
+  ".w-dropdown-link.w--current": [
     {
-      selector: "w-dropdown-link.w--current",
+      selector: ".w-dropdown-link.w--current",
       property: "color",
       value: {
         type: "rgb",
@@ -14871,9 +14744,9 @@ export const styles = {
       },
     },
   ],
-  "w-nav-brand": [
+  ".w-nav-brand": [
     {
-      selector: "w-nav-brand",
+      selector: ".w-nav-brand",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -14883,7 +14756,7 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
     {
-      selector: "w-nav-brand",
+      selector: ".w-nav-brand",
       property: "float",
       value: {
         type: "keyword",
@@ -14891,7 +14764,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-brand",
+      selector: ".w-nav-brand",
       property: "color",
       value: {
         type: "rgb",
@@ -14902,7 +14775,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-brand",
+      selector: ".w-nav-brand",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -14910,7 +14783,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-brand",
+      selector: ".w-nav-brand",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -14918,7 +14791,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-brand",
+      selector: ".w-nav-brand",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -14926,7 +14799,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-brand",
+      selector: ".w-nav-brand",
       property: "position",
       value: {
         type: "keyword",
@@ -14934,9 +14807,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-backdrop": [
+  ".w-lightbox-backdrop": [
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "cursor",
       value: {
         type: "keyword",
@@ -14944,7 +14817,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "letterSpacing",
       value: {
         type: "keyword",
@@ -14952,7 +14825,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "textIndent",
       value: {
         type: "unit",
@@ -14961,7 +14834,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "textShadow",
       value: {
         type: "layers",
@@ -14979,7 +14852,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "textTransform",
       value: {
         type: "keyword",
@@ -14987,7 +14860,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "visibility",
       value: {
         type: "keyword",
@@ -14995,7 +14868,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -15003,7 +14876,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -15011,7 +14884,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "wordBreak",
       value: {
         type: "keyword",
@@ -15019,7 +14892,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "wordSpacing",
       value: {
         type: "keyword",
@@ -15027,7 +14900,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "wordWrap",
       value: {
         type: "keyword",
@@ -15035,7 +14908,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "color",
       value: {
         type: "rgb",
@@ -15046,7 +14919,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -15054,7 +14927,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "zIndex",
       value: {
         type: "unit",
@@ -15063,7 +14936,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "opacity",
       value: {
         type: "unit",
@@ -15072,7 +14945,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -15080,7 +14953,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "keyword",
@@ -15088,7 +14961,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -15101,7 +14974,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -15115,7 +14988,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -15129,7 +15002,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -15151,7 +15024,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -15164,7 +15037,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -15177,7 +15050,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -15190,7 +15063,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -15203,7 +15076,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -15214,7 +15087,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -15223,7 +15096,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -15231,7 +15104,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -15239,7 +15112,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "fontFamily",
       value: {
         type: "fontFamily",
@@ -15254,7 +15127,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "fontSize",
       value: {
         type: "unit",
@@ -15263,7 +15136,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "fontStyle",
       value: {
         type: "keyword",
@@ -15271,7 +15144,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "fontWeight",
       value: {
         type: "unit",
@@ -15280,7 +15153,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -15289,7 +15162,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "listStylePosition",
       value: {
         type: "keyword",
@@ -15297,7 +15170,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "listStyleImage",
       value: {
         type: "keyword",
@@ -15305,7 +15178,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "listStyleType",
       value: {
         type: "keyword",
@@ -15313,7 +15186,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "position",
       value: {
         type: "keyword",
@@ -15321,7 +15194,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "top",
       value: {
         type: "unit",
@@ -15330,7 +15203,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "bottom",
       value: {
         type: "unit",
@@ -15339,7 +15212,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "left",
       value: {
         type: "unit",
@@ -15348,7 +15221,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "right",
       value: {
         type: "unit",
@@ -15357,7 +15230,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "transform",
       value: {
         type: "tuple",
@@ -15380,7 +15253,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "-webkit-overflow-scrolling",
       value: {
         type: "keyword",
@@ -15388,7 +15261,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "height",
       value: {
         type: "unit",
@@ -15397,7 +15270,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -15405,7 +15278,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-backdrop",
+      selector: ".w-lightbox-backdrop",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -15413,9 +15286,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-container": [
+  ".w-lightbox-container": [
     {
-      selector: "w-lightbox-container",
+      selector: ".w-lightbox-container",
       property: "-webkit-overflow-scrolling",
       value: {
         type: "keyword",
@@ -15423,7 +15296,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-container",
+      selector: ".w-lightbox-container",
       property: "height",
       value: {
         type: "unit",
@@ -15432,7 +15305,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-container",
+      selector: ".w-lightbox-container",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -15440,7 +15313,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-container",
+      selector: ".w-lightbox-container",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -15448,9 +15321,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-content": [
+  ".w-lightbox-content": [
     {
-      selector: "w-lightbox-content",
+      selector: ".w-lightbox-content",
       property: "height",
       value: {
         type: "unit",
@@ -15459,7 +15332,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-content",
+      selector: ".w-lightbox-content",
       property: "position",
       value: {
         type: "keyword",
@@ -15467,7 +15340,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-content",
+      selector: ".w-lightbox-content",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -15475,7 +15348,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-content",
+      selector: ".w-lightbox-content",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -15483,7 +15356,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-content",
+      selector: ".w-lightbox-content",
       property: "height",
       value: {
         type: "unit",
@@ -15493,7 +15366,7 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
     {
-      selector: "w-lightbox-content",
+      selector: ".w-lightbox-content",
       property: "marginTop",
       value: {
         type: "unit",
@@ -15503,9 +15376,9 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
-  "w-lightbox-view": [
+  ".w-lightbox-view": [
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "opacity",
       value: {
         type: "unit",
@@ -15514,7 +15387,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "width",
       value: {
         type: "unit",
@@ -15523,7 +15396,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15532,7 +15405,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "position",
       value: {
         type: "keyword",
@@ -15540,7 +15413,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "content",
       value: {
         type: "unparsed",
@@ -15549,7 +15422,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15559,7 +15432,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -15568,7 +15441,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "display",
       value: {
         type: "keyword",
@@ -15577,7 +15450,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15587,7 +15460,7 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
     {
-      selector: "w-lightbox-view",
+      selector: ".w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15598,9 +15471,9 @@ export const styles = {
       state: ":before",
     },
   ],
-  "w-lightbox-group": [
+  ".w-lightbox-group": [
     {
-      selector: "w-lightbox-group",
+      selector: ".w-lightbox-group",
       property: "height",
       value: {
         type: "unit",
@@ -15609,7 +15482,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-group",
+      selector: ".w-lightbox-group",
       property: "height",
       value: {
         type: "unit",
@@ -15619,9 +15492,9 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
-  "w-lightbox-group .w-lightbox-view": [
+  ".w-lightbox-group .w-lightbox-view": [
     {
-      selector: "w-lightbox-group .w-lightbox-view",
+      selector: ".w-lightbox-group .w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15630,7 +15503,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-group .w-lightbox-view",
+      selector: ".w-lightbox-group .w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15640,7 +15513,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-lightbox-group .w-lightbox-view",
+      selector: ".w-lightbox-group .w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15650,7 +15523,7 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
     {
-      selector: "w-lightbox-group .w-lightbox-view",
+      selector: ".w-lightbox-group .w-lightbox-view",
       property: "height",
       value: {
         type: "unit",
@@ -15661,9 +15534,9 @@ export const styles = {
       state: ":before",
     },
   ],
-  "w-lightbox-frame": [
+  ".w-lightbox-frame": [
     {
-      selector: "w-lightbox-frame",
+      selector: ".w-lightbox-frame",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -15671,7 +15544,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-frame",
+      selector: ".w-lightbox-frame",
       property: "display",
       value: {
         type: "keyword",
@@ -15679,9 +15552,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-figure": [
+  ".w-lightbox-figure": [
     {
-      selector: "w-lightbox-figure",
+      selector: ".w-lightbox-figure",
       property: "marginTop",
       value: {
         type: "unit",
@@ -15690,7 +15563,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-figure",
+      selector: ".w-lightbox-figure",
       property: "marginRight",
       value: {
         type: "unit",
@@ -15699,7 +15572,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-figure",
+      selector: ".w-lightbox-figure",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -15708,7 +15581,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-figure",
+      selector: ".w-lightbox-figure",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -15717,7 +15590,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-figure",
+      selector: ".w-lightbox-figure",
       property: "position",
       value: {
         type: "keyword",
@@ -15725,9 +15598,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-group .w-lightbox-figure": [
+  ".w-lightbox-group .w-lightbox-figure": [
     {
-      selector: "w-lightbox-group .w-lightbox-figure",
+      selector: ".w-lightbox-group .w-lightbox-figure",
       property: "cursor",
       value: {
         type: "keyword",
@@ -15735,9 +15608,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-img": [
+  ".w-lightbox-img": [
     {
-      selector: "w-lightbox-img",
+      selector: ".w-lightbox-img",
       property: "width",
       value: {
         type: "keyword",
@@ -15745,7 +15618,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-img",
+      selector: ".w-lightbox-img",
       property: "maxWidth",
       value: {
         type: "keyword",
@@ -15753,7 +15626,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-img",
+      selector: ".w-lightbox-img",
       property: "height",
       value: {
         type: "keyword",
@@ -15761,9 +15634,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-image": [
+  ".w-lightbox-image": [
     {
-      selector: "w-lightbox-image",
+      selector: ".w-lightbox-image",
       property: "float",
       value: {
         type: "keyword",
@@ -15771,7 +15644,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-image",
+      selector: ".w-lightbox-image",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -15780,7 +15653,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-image",
+      selector: ".w-lightbox-image",
       property: "maxHeight",
       value: {
         type: "unit",
@@ -15789,7 +15662,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-image",
+      selector: ".w-lightbox-image",
       property: "display",
       value: {
         type: "keyword",
@@ -15797,7 +15670,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-image",
+      selector: ".w-lightbox-image",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -15807,7 +15680,7 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
     {
-      selector: "w-lightbox-image",
+      selector: ".w-lightbox-image",
       property: "maxHeight",
       value: {
         type: "unit",
@@ -15817,9 +15690,9 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
-  "w-lightbox-group .w-lightbox-image": [
+  ".w-lightbox-group .w-lightbox-image": [
     {
-      selector: "w-lightbox-group .w-lightbox-image",
+      selector: ".w-lightbox-group .w-lightbox-image",
       property: "maxHeight",
       value: {
         type: "unit",
@@ -15828,7 +15701,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-group .w-lightbox-image",
+      selector: ".w-lightbox-group .w-lightbox-image",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -15838,7 +15711,7 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
     {
-      selector: "w-lightbox-group .w-lightbox-image",
+      selector: ".w-lightbox-group .w-lightbox-image",
       property: "maxHeight",
       value: {
         type: "unit",
@@ -15848,9 +15721,9 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
-  "w-lightbox-caption": [
+  ".w-lightbox-caption": [
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -15858,7 +15731,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "textOverflow",
       value: {
         type: "keyword",
@@ -15866,7 +15739,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -15874,7 +15747,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -15882,7 +15755,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -15895,7 +15768,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -15909,7 +15782,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -15923,7 +15796,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -15945,7 +15818,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -15958,7 +15831,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -15971,7 +15844,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -15984,7 +15857,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -15997,7 +15870,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -16008,7 +15881,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -16017,7 +15890,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -16026,7 +15899,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -16035,7 +15908,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -16044,7 +15917,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "position",
       value: {
         type: "keyword",
@@ -16052,7 +15925,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "bottom",
       value: {
         type: "unit",
@@ -16061,7 +15934,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "left",
       value: {
         type: "unit",
@@ -16070,7 +15943,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "right",
       value: {
         type: "unit",
@@ -16079,7 +15952,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -16087,7 +15960,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-caption",
+      selector: ".w-lightbox-caption",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -16095,9 +15968,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-embed": [
+  ".w-lightbox-embed": [
     {
-      selector: "w-lightbox-embed",
+      selector: ".w-lightbox-embed",
       property: "width",
       value: {
         type: "unit",
@@ -16106,7 +15979,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-embed",
+      selector: ".w-lightbox-embed",
       property: "height",
       value: {
         type: "unit",
@@ -16115,7 +15988,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-embed",
+      selector: ".w-lightbox-embed",
       property: "position",
       value: {
         type: "keyword",
@@ -16123,7 +15996,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-embed",
+      selector: ".w-lightbox-embed",
       property: "top",
       value: {
         type: "unit",
@@ -16132,7 +16005,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-embed",
+      selector: ".w-lightbox-embed",
       property: "bottom",
       value: {
         type: "unit",
@@ -16141,7 +16014,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-embed",
+      selector: ".w-lightbox-embed",
       property: "left",
       value: {
         type: "unit",
@@ -16150,7 +16023,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-embed",
+      selector: ".w-lightbox-embed",
       property: "right",
       value: {
         type: "unit",
@@ -16159,9 +16032,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-control": [
+  ".w-lightbox-control": [
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "cursor",
       value: {
         type: "keyword",
@@ -16169,7 +16042,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -16182,7 +16055,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -16195,7 +16068,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -16208,7 +16081,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -16222,7 +16095,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "width",
       value: {
         type: "unit",
@@ -16231,7 +16104,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "transitionProperty",
       value: {
         type: "layers",
@@ -16244,7 +16117,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "transitionDuration",
       value: {
         type: "layers",
@@ -16258,7 +16131,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "transitionTimingFunction",
       value: {
         type: "layers",
@@ -16271,7 +16144,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "transitionDelay",
       value: {
         type: "layers",
@@ -16285,7 +16158,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "transitionBehavior",
       value: {
         type: "layers",
@@ -16298,7 +16171,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "position",
       value: {
         type: "keyword",
@@ -16306,7 +16179,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "top",
       value: {
         type: "unit",
@@ -16315,7 +16188,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-control",
+      selector: ".w-lightbox-control",
       property: "opacity",
       value: {
         type: "unit",
@@ -16326,9 +16199,9 @@ export const styles = {
       state: ":hover",
     },
   ],
-  "w-lightbox-left": [
+  ".w-lightbox-left": [
     {
-      selector: "w-lightbox-left",
+      selector: ".w-lightbox-left",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -16344,7 +16217,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-left",
+      selector: ".w-lightbox-left",
       property: "display",
       value: {
         type: "keyword",
@@ -16352,7 +16225,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-left",
+      selector: ".w-lightbox-left",
       property: "bottom",
       value: {
         type: "unit",
@@ -16361,7 +16234,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-left",
+      selector: ".w-lightbox-left",
       property: "left",
       value: {
         type: "unit",
@@ -16370,7 +16243,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-left",
+      selector: ".w-lightbox-left",
       property: "opacity",
       value: {
         type: "unit",
@@ -16380,7 +16253,7 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
     {
-      selector: "w-lightbox-left",
+      selector: ".w-lightbox-left",
       property: "display",
       value: {
         type: "keyword",
@@ -16389,9 +16262,9 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
-  "w-lightbox-right": [
+  ".w-lightbox-right": [
     {
-      selector: "w-lightbox-right",
+      selector: ".w-lightbox-right",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -16407,7 +16280,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-right",
+      selector: ".w-lightbox-right",
       property: "display",
       value: {
         type: "keyword",
@@ -16415,7 +16288,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-right",
+      selector: ".w-lightbox-right",
       property: "bottom",
       value: {
         type: "unit",
@@ -16424,7 +16297,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-right",
+      selector: ".w-lightbox-right",
       property: "right",
       value: {
         type: "unit",
@@ -16433,7 +16306,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-right",
+      selector: ".w-lightbox-right",
       property: "opacity",
       value: {
         type: "unit",
@@ -16443,7 +16316,7 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
     {
-      selector: "w-lightbox-right",
+      selector: ".w-lightbox-right",
       property: "display",
       value: {
         type: "keyword",
@@ -16452,9 +16325,9 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
-  "w-lightbox-close": [
+  ".w-lightbox-close": [
     {
-      selector: "w-lightbox-close",
+      selector: ".w-lightbox-close",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -16470,7 +16343,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-close",
+      selector: ".w-lightbox-close",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -16484,7 +16357,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-close",
+      selector: ".w-lightbox-close",
       property: "height",
       value: {
         type: "unit",
@@ -16493,7 +16366,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-close",
+      selector: ".w-lightbox-close",
       property: "right",
       value: {
         type: "unit",
@@ -16502,7 +16375,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-close",
+      selector: ".w-lightbox-close",
       property: "opacity",
       value: {
         type: "unit",
@@ -16512,9 +16385,9 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
-  "w-lightbox-strip": [
+  ".w-lightbox-strip": [
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -16522,7 +16395,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -16530,7 +16403,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -16539,7 +16412,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -16548,7 +16421,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -16557,7 +16430,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -16566,7 +16439,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "lineHeight",
       value: {
         type: "unit",
@@ -16575,7 +16448,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "position",
       value: {
         type: "keyword",
@@ -16583,7 +16456,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "bottom",
       value: {
         type: "unit",
@@ -16592,7 +16465,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "left",
       value: {
         type: "unit",
@@ -16601,7 +16474,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "right",
       value: {
         type: "unit",
@@ -16610,7 +16483,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -16618,7 +16491,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-strip",
+      selector: ".w-lightbox-strip",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -16626,9 +16499,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-item": [
+  ".w-lightbox-item": [
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -16636,7 +16509,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "cursor",
       value: {
         type: "keyword",
@@ -16644,7 +16517,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "width",
       value: {
         type: "unit",
@@ -16653,7 +16526,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -16662,7 +16535,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -16671,7 +16544,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -16680,7 +16553,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -16689,7 +16562,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "display",
       value: {
         type: "keyword",
@@ -16697,7 +16570,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-item",
+      selector: ".w-lightbox-item",
       property: "transform",
       value: {
         type: "tuple",
@@ -16730,9 +16603,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-active": [
+  ".w-lightbox-active": [
     {
-      selector: "w-lightbox-active",
+      selector: ".w-lightbox-active",
       property: "opacity",
       value: {
         type: "unit",
@@ -16741,9 +16614,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-thumbnail": [
+  ".w-lightbox-thumbnail": [
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -16756,7 +16629,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -16770,7 +16643,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -16784,7 +16657,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -16806,7 +16679,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -16819,7 +16692,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -16832,7 +16705,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -16845,7 +16718,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -16858,7 +16731,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -16869,7 +16742,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "height",
       value: {
         type: "unit",
@@ -16878,7 +16751,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "position",
       value: {
         type: "keyword",
@@ -16886,7 +16759,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -16894,7 +16767,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail",
+      selector: ".w-lightbox-thumbnail",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -16902,9 +16775,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-thumbnail-image": [
+  ".w-lightbox-thumbnail-image": [
     {
-      selector: "w-lightbox-thumbnail-image",
+      selector: ".w-lightbox-thumbnail-image",
       property: "position",
       value: {
         type: "keyword",
@@ -16912,7 +16785,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail-image",
+      selector: ".w-lightbox-thumbnail-image",
       property: "top",
       value: {
         type: "unit",
@@ -16921,7 +16794,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail-image",
+      selector: ".w-lightbox-thumbnail-image",
       property: "left",
       value: {
         type: "unit",
@@ -16930,9 +16803,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-thumbnail .w-lightbox-tall": [
+  ".w-lightbox-thumbnail .w-lightbox-tall": [
     {
-      selector: "w-lightbox-thumbnail .w-lightbox-tall",
+      selector: ".w-lightbox-thumbnail .w-lightbox-tall",
       property: "width",
       value: {
         type: "unit",
@@ -16941,7 +16814,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail .w-lightbox-tall",
+      selector: ".w-lightbox-thumbnail .w-lightbox-tall",
       property: "top",
       value: {
         type: "unit",
@@ -16950,7 +16823,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail .w-lightbox-tall",
+      selector: ".w-lightbox-thumbnail .w-lightbox-tall",
       property: "transform",
       value: {
         type: "tuple",
@@ -16978,9 +16851,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-thumbnail .w-lightbox-wide": [
+  ".w-lightbox-thumbnail .w-lightbox-wide": [
     {
-      selector: "w-lightbox-thumbnail .w-lightbox-wide",
+      selector: ".w-lightbox-thumbnail .w-lightbox-wide",
       property: "height",
       value: {
         type: "unit",
@@ -16989,7 +16862,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail .w-lightbox-wide",
+      selector: ".w-lightbox-thumbnail .w-lightbox-wide",
       property: "left",
       value: {
         type: "unit",
@@ -16998,7 +16871,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-thumbnail .w-lightbox-wide",
+      selector: ".w-lightbox-thumbnail .w-lightbox-wide",
       property: "transform",
       value: {
         type: "tuple",
@@ -17021,9 +16894,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-spinner": [
+  ".w-lightbox-spinner": [
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "boxSizing",
       value: {
         type: "keyword",
@@ -17031,7 +16904,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -17040,7 +16913,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -17049,7 +16922,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -17058,7 +16931,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -17067,7 +16940,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -17075,7 +16948,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -17083,7 +16956,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -17091,7 +16964,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -17099,7 +16972,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -17110,7 +16983,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -17121,7 +16994,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -17132,7 +17005,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -17143,7 +17016,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -17152,7 +17025,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -17161,7 +17034,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -17170,7 +17043,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "width",
       value: {
         type: "unit",
@@ -17179,7 +17052,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "height",
       value: {
         type: "unit",
@@ -17188,7 +17061,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "marginTop",
       value: {
         type: "unit",
@@ -17197,7 +17070,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -17206,7 +17079,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationDuration",
       value: {
         type: "unit",
@@ -17215,7 +17088,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationTimingFunction",
       value: {
         type: "keyword",
@@ -17223,7 +17096,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationDelay",
       value: {
         type: "unit",
@@ -17232,7 +17105,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationIterationCount",
       value: {
         type: "keyword",
@@ -17240,7 +17113,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationDirection",
       value: {
         type: "keyword",
@@ -17248,7 +17121,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationFillMode",
       value: {
         type: "keyword",
@@ -17256,7 +17129,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationPlayState",
       value: {
         type: "keyword",
@@ -17264,7 +17137,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationName",
       value: {
         type: "unparsed",
@@ -17272,7 +17145,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationTimeline",
       value: {
         type: "unparsed",
@@ -17280,7 +17153,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationRangeStart",
       value: {
         type: "unparsed",
@@ -17288,7 +17161,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "animationRangeEnd",
       value: {
         type: "unparsed",
@@ -17296,7 +17169,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "position",
       value: {
         type: "keyword",
@@ -17304,7 +17177,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "top",
       value: {
         type: "unit",
@@ -17313,7 +17186,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "left",
       value: {
         type: "unit",
@@ -17322,7 +17195,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "content",
       value: {
         type: "unparsed",
@@ -17331,7 +17204,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -17341,7 +17214,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -17351,7 +17224,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -17361,7 +17234,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -17371,7 +17244,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -17380,7 +17253,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -17389,7 +17262,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -17398,7 +17271,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -17407,7 +17280,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -17419,7 +17292,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -17431,7 +17304,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -17443,7 +17316,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -17455,7 +17328,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -17465,7 +17338,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -17475,7 +17348,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -17485,7 +17358,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "position",
       value: {
         type: "keyword",
@@ -17494,7 +17367,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "top",
       value: {
         type: "unit",
@@ -17504,7 +17377,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "bottom",
       value: {
         type: "unit",
@@ -17514,7 +17387,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "left",
       value: {
         type: "unit",
@@ -17524,7 +17397,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-lightbox-spinner",
+      selector: ".w-lightbox-spinner",
       property: "right",
       value: {
         type: "unit",
@@ -17534,9 +17407,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-lightbox-hide": [
+  ".w-lightbox-hide": [
     {
-      selector: "w-lightbox-hide",
+      selector: ".w-lightbox-hide",
       property: "display",
       value: {
         type: "keyword",
@@ -17544,9 +17417,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-noscroll": [
+  ".w-lightbox-noscroll": [
     {
-      selector: "w-lightbox-noscroll",
+      selector: ".w-lightbox-noscroll",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -17554,7 +17427,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-noscroll",
+      selector: ".w-lightbox-noscroll",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -17562,9 +17435,9 @@ export const styles = {
       },
     },
   ],
-  "w-lightbox-inactive": [
+  ".w-lightbox-inactive": [
     {
-      selector: "w-lightbox-inactive",
+      selector: ".w-lightbox-inactive",
       property: "opacity",
       value: {
         type: "unit",
@@ -17573,7 +17446,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-lightbox-inactive",
+      selector: ".w-lightbox-inactive",
       property: "opacity",
       value: {
         type: "unit",
@@ -17583,9 +17456,9 @@ export const styles = {
       state: ":hover",
     },
   ],
-  "w-richtext": [
+  ".w-richtext": [
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "content",
       value: {
         type: "unparsed",
@@ -17594,7 +17467,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "content",
       value: {
         type: "unparsed",
@@ -17603,7 +17476,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -17613,7 +17486,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -17623,7 +17496,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -17633,7 +17506,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -17643,7 +17516,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -17653,7 +17526,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -17663,7 +17536,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -17673,7 +17546,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -17683,7 +17556,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "display",
       value: {
         type: "keyword",
@@ -17692,7 +17565,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "display",
       value: {
         type: "keyword",
@@ -17701,7 +17574,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext",
+      selector: ".w-richtext",
       property: "clear",
       value: {
         type: "keyword",
@@ -17710,9 +17583,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  'w-richtext[contenteditable="true"]': [
+  '.w-richtext[contenteditable="true"]': [
     {
-      selector: 'w-richtext[contenteditable="true"]',
+      selector: '.w-richtext[contenteditable="true"]',
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -17721,7 +17594,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: 'w-richtext[contenteditable="true"]',
+      selector: '.w-richtext[contenteditable="true"]',
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -17730,7 +17603,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: 'w-richtext[contenteditable="true"]',
+      selector: '.w-richtext[contenteditable="true"]',
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
@@ -17739,7 +17612,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext[contenteditable="true"]',
+      selector: '.w-richtext[contenteditable="true"]',
       property: "textWrapMode",
       value: {
         type: "keyword",
@@ -17748,9 +17621,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-richtext ol": [
+  ".w-richtext ol": [
     {
-      selector: "w-richtext ol",
+      selector: ".w-richtext ol",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -17758,7 +17631,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext ol",
+      selector: ".w-richtext ol",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -17766,9 +17639,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext ul": [
+  ".w-richtext ul": [
     {
-      selector: "w-richtext ul",
+      selector: ".w-richtext ul",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -17776,7 +17649,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext ul",
+      selector: ".w-richtext ul",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -17784,10 +17657,10 @@ export const styles = {
       },
     },
   ],
-  "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div": [
+  ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div": [
     {
       selector:
-        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
+        ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -17798,7 +17671,7 @@ export const styles = {
     },
     {
       selector:
-        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
+        ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -17808,7 +17681,7 @@ export const styles = {
     },
     {
       selector:
-        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
+        ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
       property: "outlineColor",
       value: {
         type: "rgb",
@@ -17820,10 +17693,10 @@ export const styles = {
       state: ":after",
     },
   ],
-  'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div': [
+  '.w-richtext .w-richtext-figure-selected[data-rt-type="video"] div': [
     {
       selector:
-        'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
+        '.w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -17834,7 +17707,7 @@ export const styles = {
     },
     {
       selector:
-        'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
+        '.w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -17844,7 +17717,7 @@ export const styles = {
     },
     {
       selector:
-        'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
+        '.w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
       property: "outlineColor",
       value: {
         type: "rgb",
@@ -17856,10 +17729,10 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div": [
+  ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div": [
     {
       selector:
-        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
+        ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -17869,7 +17742,7 @@ export const styles = {
     },
     {
       selector:
-        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
+        ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -17878,7 +17751,7 @@ export const styles = {
     },
     {
       selector:
-        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
+        ".w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
       property: "outlineColor",
       value: {
         type: "rgb",
@@ -17889,10 +17762,10 @@ export const styles = {
       },
     },
   ],
-  'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div': [
+  '.w-richtext .w-richtext-figure-selected[data-rt-type="image"] div': [
     {
       selector:
-        'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
+        '.w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -17902,7 +17775,7 @@ export const styles = {
     },
     {
       selector:
-        'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
+        '.w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -17911,7 +17784,7 @@ export const styles = {
     },
     {
       selector:
-        'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
+        '.w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
       property: "outlineColor",
       value: {
         type: "rgb",
@@ -17922,9 +17795,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-figure-type-video > div": [
+  ".w-richtext figure.w-richtext-figure-type-video > div": [
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "content",
       value: {
         type: "unparsed",
@@ -17933,7 +17806,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "display",
       value: {
         type: "keyword",
@@ -17942,7 +17815,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "position",
       value: {
         type: "keyword",
@@ -17951,7 +17824,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "top",
       value: {
         type: "unit",
@@ -17961,7 +17834,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "bottom",
       value: {
         type: "unit",
@@ -17971,7 +17844,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "left",
       value: {
         type: "unit",
@@ -17981,7 +17854,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "right",
       value: {
         type: "unit",
@@ -17991,7 +17864,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-video > div",
       property: "width",
       value: {
         type: "unit",
@@ -18000,9 +17873,9 @@ export const styles = {
       },
     },
   ],
-  'w-richtext figure[data-rt-type="video"] > div': [
+  '.w-richtext figure[data-rt-type="video"] > div': [
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "content",
       value: {
         type: "unparsed",
@@ -18011,7 +17884,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "display",
       value: {
         type: "keyword",
@@ -18020,7 +17893,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "position",
       value: {
         type: "keyword",
@@ -18029,7 +17902,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "top",
       value: {
         type: "unit",
@@ -18039,7 +17912,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "bottom",
       value: {
         type: "unit",
@@ -18049,7 +17922,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "left",
       value: {
         type: "unit",
@@ -18059,7 +17932,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "right",
       value: {
         type: "unit",
@@ -18069,7 +17942,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      selector: '.w-richtext figure[data-rt-type="video"] > div',
       property: "width",
       value: {
         type: "unit",
@@ -18078,9 +17951,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure": [
+  ".w-richtext figure": [
     {
-      selector: "w-richtext figure",
+      selector: ".w-richtext figure",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -18089,7 +17962,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure",
+      selector: ".w-richtext figure",
       property: "position",
       value: {
         type: "keyword",
@@ -18097,9 +17970,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure > div": [
+  ".w-richtext figure > div": [
     {
-      selector: "w-richtext figure > div",
+      selector: ".w-richtext figure > div",
       property: "cursor",
       value: {
         type: "keyword",
@@ -18108,9 +17981,9 @@ export const styles = {
       state: ":before",
     },
   ],
-  "w-richtext figure img": [
+  ".w-richtext figure img": [
     {
-      selector: "w-richtext figure img",
+      selector: ".w-richtext figure img",
       property: "width",
       value: {
         type: "unit",
@@ -18119,10 +17992,10 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure figcaption.w-richtext-figcaption-placeholder": [
+  ".w-richtext figure figcaption.w-richtext-figcaption-placeholder": [
     {
       selector:
-        "w-richtext figure figcaption.w-richtext-figcaption-placeholder",
+        ".w-richtext figure figcaption.w-richtext-figcaption-placeholder",
       property: "opacity",
       value: {
         type: "unit",
@@ -18131,9 +18004,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure div": [
+  ".w-richtext figure div": [
     {
-      selector: "w-richtext figure div",
+      selector: ".w-richtext figure div",
       property: "color",
       value: {
         type: "rgb",
@@ -18144,7 +18017,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure div",
+      selector: ".w-richtext figure div",
       property: "fontSize",
       value: {
         type: "unit",
@@ -18153,9 +18026,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-figure-type-image": [
+  ".w-richtext figure.w-richtext-figure-type-image": [
     {
-      selector: "w-richtext figure.w-richtext-figure-type-image",
+      selector: ".w-richtext figure.w-richtext-figure-type-image",
       property: "display",
       value: {
         type: "keyword",
@@ -18163,9 +18036,9 @@ export const styles = {
       },
     },
   ],
-  'w-richtext figure[data-rt-type="image"]': [
+  '.w-richtext figure[data-rt-type="image"]': [
     {
-      selector: 'w-richtext figure[data-rt-type="image"]',
+      selector: '.w-richtext figure[data-rt-type="image"]',
       property: "display",
       value: {
         type: "keyword",
@@ -18173,9 +18046,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-figure-type-image > div": [
+  ".w-richtext figure.w-richtext-figure-type-image > div": [
     {
-      selector: "w-richtext figure.w-richtext-figure-type-image > div",
+      selector: ".w-richtext figure.w-richtext-figure-type-image > div",
       property: "display",
       value: {
         type: "keyword",
@@ -18183,9 +18056,9 @@ export const styles = {
       },
     },
   ],
-  'w-richtext figure[data-rt-type="image"] > div': [
+  '.w-richtext figure[data-rt-type="image"] > div': [
     {
-      selector: 'w-richtext figure[data-rt-type="image"] > div',
+      selector: '.w-richtext figure[data-rt-type="image"] > div',
       property: "display",
       value: {
         type: "keyword",
@@ -18193,9 +18066,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-figure-type-image > figcaption": [
+  ".w-richtext figure.w-richtext-figure-type-image > figcaption": [
     {
-      selector: "w-richtext figure.w-richtext-figure-type-image > figcaption",
+      selector: ".w-richtext figure.w-richtext-figure-type-image > figcaption",
       property: "captionSide",
       value: {
         type: "keyword",
@@ -18203,7 +18076,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-image > figcaption",
+      selector: ".w-richtext figure.w-richtext-figure-type-image > figcaption",
       property: "display",
       value: {
         type: "keyword",
@@ -18211,9 +18084,9 @@ export const styles = {
       },
     },
   ],
-  'w-richtext figure[data-rt-type="image"] > figcaption': [
+  '.w-richtext figure[data-rt-type="image"] > figcaption': [
     {
-      selector: 'w-richtext figure[data-rt-type="image"] > figcaption',
+      selector: '.w-richtext figure[data-rt-type="image"] > figcaption',
       property: "captionSide",
       value: {
         type: "keyword",
@@ -18221,7 +18094,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-richtext figure[data-rt-type="image"] > figcaption',
+      selector: '.w-richtext figure[data-rt-type="image"] > figcaption',
       property: "display",
       value: {
         type: "keyword",
@@ -18229,9 +18102,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-figure-type-video": [
+  ".w-richtext figure.w-richtext-figure-type-video": [
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video",
+      selector: ".w-richtext figure.w-richtext-figure-type-video",
       property: "width",
       value: {
         type: "unit",
@@ -18240,7 +18113,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video",
+      selector: ".w-richtext figure.w-richtext-figure-type-video",
       property: "height",
       value: {
         type: "unit",
@@ -18249,9 +18122,9 @@ export const styles = {
       },
     },
   ],
-  'w-richtext figure[data-rt-type="video"]': [
+  '.w-richtext figure[data-rt-type="video"]': [
     {
-      selector: 'w-richtext figure[data-rt-type="video"]',
+      selector: '.w-richtext figure[data-rt-type="video"]',
       property: "width",
       value: {
         type: "unit",
@@ -18260,7 +18133,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"]',
+      selector: '.w-richtext figure[data-rt-type="video"]',
       property: "height",
       value: {
         type: "unit",
@@ -18269,9 +18142,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-figure-type-video iframe": [
+  ".w-richtext figure.w-richtext-figure-type-video iframe": [
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      selector: ".w-richtext figure.w-richtext-figure-type-video iframe",
       property: "width",
       value: {
         type: "unit",
@@ -18280,7 +18153,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      selector: ".w-richtext figure.w-richtext-figure-type-video iframe",
       property: "height",
       value: {
         type: "unit",
@@ -18289,7 +18162,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      selector: ".w-richtext figure.w-richtext-figure-type-video iframe",
       property: "position",
       value: {
         type: "keyword",
@@ -18297,7 +18170,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      selector: ".w-richtext figure.w-richtext-figure-type-video iframe",
       property: "top",
       value: {
         type: "unit",
@@ -18306,7 +18179,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      selector: ".w-richtext figure.w-richtext-figure-type-video iframe",
       property: "left",
       value: {
         type: "unit",
@@ -18315,9 +18188,9 @@ export const styles = {
       },
     },
   ],
-  'w-richtext figure[data-rt-type="video"] iframe': [
+  '.w-richtext figure[data-rt-type="video"] iframe': [
     {
-      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      selector: '.w-richtext figure[data-rt-type="video"] iframe',
       property: "width",
       value: {
         type: "unit",
@@ -18326,7 +18199,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      selector: '.w-richtext figure[data-rt-type="video"] iframe',
       property: "height",
       value: {
         type: "unit",
@@ -18335,7 +18208,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      selector: '.w-richtext figure[data-rt-type="video"] iframe',
       property: "position",
       value: {
         type: "keyword",
@@ -18343,7 +18216,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      selector: '.w-richtext figure[data-rt-type="video"] iframe',
       property: "top",
       value: {
         type: "unit",
@@ -18352,7 +18225,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      selector: '.w-richtext figure[data-rt-type="video"] iframe',
       property: "left",
       value: {
         type: "unit",
@@ -18361,9 +18234,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-center": [
+  ".w-richtext figure.w-richtext-align-center": [
     {
-      selector: "w-richtext figure.w-richtext-align-center",
+      selector: ".w-richtext figure.w-richtext-align-center",
       property: "clear",
       value: {
         type: "keyword",
@@ -18371,7 +18244,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-center",
+      selector: ".w-richtext figure.w-richtext-align-center",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -18379,7 +18252,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-center",
+      selector: ".w-richtext figure.w-richtext-align-center",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -18387,11 +18260,11 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-center.w-richtext-figure-type-image > div":
+  ".w-richtext figure.w-richtext-align-center.w-richtext-figure-type-image > div":
     [
       {
         selector:
-          "w-richtext figure.w-richtext-align-center.w-richtext-figure-type-image > div",
+          ".w-richtext figure.w-richtext-align-center.w-richtext-figure-type-image > div",
         property: "maxWidth",
         value: {
           type: "unit",
@@ -18400,10 +18273,10 @@ export const styles = {
         },
       },
     ],
-  'w-richtext figure.w-richtext-align-center[data-rt-type="image"] > div': [
+  '.w-richtext figure.w-richtext-align-center[data-rt-type="image"] > div': [
     {
       selector:
-        'w-richtext figure.w-richtext-align-center[data-rt-type="image"] > div',
+        '.w-richtext figure.w-richtext-align-center[data-rt-type="image"] > div',
       property: "maxWidth",
       value: {
         type: "unit",
@@ -18412,9 +18285,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-normal": [
+  ".w-richtext figure.w-richtext-align-normal": [
     {
-      selector: "w-richtext figure.w-richtext-align-normal",
+      selector: ".w-richtext figure.w-richtext-align-normal",
       property: "clear",
       value: {
         type: "keyword",
@@ -18422,9 +18295,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-fullwidth": [
+  ".w-richtext figure.w-richtext-align-fullwidth": [
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -18432,7 +18305,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth",
       property: "clear",
       value: {
         type: "keyword",
@@ -18440,7 +18313,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth",
       property: "width",
       value: {
         type: "unit",
@@ -18449,7 +18322,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -18458,7 +18331,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -18466,7 +18339,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -18474,7 +18347,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth",
       property: "display",
       value: {
         type: "keyword",
@@ -18482,9 +18355,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-fullwidth > div": [
+  ".w-richtext figure.w-richtext-align-fullwidth > div": [
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth > div",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth > div",
       property: "paddingBottom",
       value: {
         type: "keyword",
@@ -18492,7 +18365,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth > div",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth > div",
       property: "display",
       value: {
         type: "keyword",
@@ -18500,9 +18373,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-fullwidth > figcaption": [
+  ".w-richtext figure.w-richtext-align-fullwidth > figcaption": [
     {
-      selector: "w-richtext figure.w-richtext-align-fullwidth > figcaption",
+      selector: ".w-richtext figure.w-richtext-align-fullwidth > figcaption",
       property: "display",
       value: {
         type: "keyword",
@@ -18510,9 +18383,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-floatleft": [
+  ".w-richtext figure.w-richtext-align-floatleft": [
     {
-      selector: "w-richtext figure.w-richtext-align-floatleft",
+      selector: ".w-richtext figure.w-richtext-align-floatleft",
       property: "float",
       value: {
         type: "keyword",
@@ -18520,7 +18393,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-floatleft",
+      selector: ".w-richtext figure.w-richtext-align-floatleft",
       property: "clear",
       value: {
         type: "keyword",
@@ -18528,7 +18401,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-floatleft",
+      selector: ".w-richtext figure.w-richtext-align-floatleft",
       property: "marginRight",
       value: {
         type: "unit",
@@ -18537,9 +18410,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext figure.w-richtext-align-floatright": [
+  ".w-richtext figure.w-richtext-align-floatright": [
     {
-      selector: "w-richtext figure.w-richtext-align-floatright",
+      selector: ".w-richtext figure.w-richtext-align-floatright",
       property: "float",
       value: {
         type: "keyword",
@@ -18547,7 +18420,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-floatright",
+      selector: ".w-richtext figure.w-richtext-align-floatright",
       property: "clear",
       value: {
         type: "keyword",
@@ -18555,7 +18428,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext figure.w-richtext-align-floatright",
+      selector: ".w-richtext figure.w-richtext-align-floatright",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -18564,9 +18437,9 @@ export const styles = {
       },
     },
   ],
-  "w-nav": [
+  ".w-nav": [
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "zIndex",
       value: {
         type: "unit",
@@ -18575,7 +18448,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -18588,7 +18461,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -18602,7 +18475,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -18616,7 +18489,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -18638,7 +18511,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -18651,7 +18524,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundAttachment",
       value: {
         type: "layers",
@@ -18664,7 +18537,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundOrigin",
       value: {
         type: "layers",
@@ -18677,7 +18550,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundClip",
       value: {
         type: "layers",
@@ -18690,7 +18563,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -18701,7 +18574,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "position",
       value: {
         type: "keyword",
@@ -18709,7 +18582,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "content",
       value: {
         type: "unparsed",
@@ -18718,7 +18591,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "content",
       value: {
         type: "unparsed",
@@ -18727,7 +18600,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -18737,7 +18610,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -18747,7 +18620,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -18757,7 +18630,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -18767,7 +18640,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -18777,7 +18650,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -18787,7 +18660,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -18797,7 +18670,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -18807,7 +18680,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "display",
       value: {
         type: "keyword",
@@ -18816,7 +18689,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "display",
       value: {
         type: "keyword",
@@ -18825,7 +18698,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-nav",
+      selector: ".w-nav",
       property: "clear",
       value: {
         type: "keyword",
@@ -18834,9 +18707,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-nav-link": [
+  ".w-nav-link": [
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -18844,7 +18717,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "color",
       value: {
         type: "rgb",
@@ -18855,7 +18728,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -18863,7 +18736,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -18871,7 +18744,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -18879,7 +18752,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -18888,7 +18761,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -18897,7 +18770,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -18906,7 +18779,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -18915,7 +18788,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -18923,7 +18796,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -18931,7 +18804,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -18939,7 +18812,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "display",
       value: {
         type: "keyword",
@@ -18947,7 +18820,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-link",
+      selector: ".w-nav-link",
       property: "position",
       value: {
         type: "keyword",
@@ -18955,9 +18828,9 @@ export const styles = {
       },
     },
   ],
-  "w-nav-link.w--current": [
+  ".w-nav-link.w--current": [
     {
-      selector: "w-nav-link.w--current",
+      selector: ".w-nav-link.w--current",
       property: "color",
       value: {
         type: "rgb",
@@ -18968,9 +18841,9 @@ export const styles = {
       },
     },
   ],
-  "w-nav-menu": [
+  ".w-nav-menu": [
     {
-      selector: "w-nav-menu",
+      selector: ".w-nav-menu",
       property: "float",
       value: {
         type: "keyword",
@@ -18978,7 +18851,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-menu",
+      selector: ".w-nav-menu",
       property: "position",
       value: {
         type: "keyword",
@@ -18986,44 +18859,152 @@ export const styles = {
       },
     },
   ],
-  "w--nav-link-open": [
+  "[data-nav-menu-open]": [
     {
-      selector: "w--nav-link-open",
-      property: "display",
+      selector: "[data-nav-menu-open]",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "block",
+        value: "center",
       },
     },
     {
-      selector: "w--nav-link-open",
-      property: "position",
+      selector: "[data-nav-menu-open]",
+      property: "backgroundImage",
       value: {
-        type: "keyword",
-        value: "relative",
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "none",
+          },
+        ],
       },
     },
-  ],
-  "w-nav-overlay": [
     {
-      selector: "w-nav-overlay",
-      property: "width",
+      selector: "[data-nav-menu-open]",
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 200,
+        g: 200,
+        b: 200,
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "minWidth",
       value: {
         type: "unit",
-        unit: "%",
-        value: 100,
+        unit: "px",
+        value: 200,
       },
     },
     {
-      selector: "w-nav-overlay",
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      selector: "w-nav-overlay",
+      selector: "[data-nav-menu-open]",
       property: "position",
       value: {
         type: "keyword",
@@ -19031,7 +19012,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-overlay",
+      selector: "[data-nav-menu-open]",
       property: "top",
       value: {
         type: "unit",
@@ -19040,7 +19021,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-overlay",
+      selector: "[data-nav-menu-open]",
       property: "left",
       value: {
         type: "unit",
@@ -19049,7 +19030,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-overlay",
+      selector: "[data-nav-menu-open]",
       property: "right",
       value: {
         type: "unit",
@@ -19058,7 +19039,103 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-overlay",
+      selector: "[data-nav-menu-open]",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "[data-nav-menu-open]",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+  ],
+  ".w--nav-link-open": [
+    {
+      selector: ".w--nav-link-open",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      selector: ".w--nav-link-open",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+  ],
+  ".w-nav-overlay": [
+    {
+      selector: ".w-nav-overlay",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: ".w-nav-overlay",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: ".w-nav-overlay",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: ".w-nav-overlay",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: ".w-nav-overlay",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: ".w-nav-overlay",
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: ".w-nav-overlay",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -19066,7 +19143,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-overlay",
+      selector: ".w-nav-overlay",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -19074,9 +19151,9 @@ export const styles = {
       },
     },
   ],
-  "w-nav-overlay ": [
+  ".w-nav-overlay [data-nav-menu-open]": [
     {
-      selector: "w-nav-overlay ",
+      selector: ".w-nav-overlay [data-nav-menu-open]",
       property: "top",
       value: {
         type: "unit",
@@ -19085,9 +19162,9 @@ export const styles = {
       },
     },
   ],
-  'w-nav[data-animation="over-left"] .w-nav-overlay': [
+  '.w-nav[data-animation="over-left"] .w-nav-overlay': [
     {
-      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-left"] .w-nav-overlay',
       property: "width",
       value: {
         type: "keyword",
@@ -19095,7 +19172,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-left"] .w-nav-overlay',
       property: "zIndex",
       value: {
         type: "unit",
@@ -19104,7 +19181,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-left"] .w-nav-overlay',
       property: "top",
       value: {
         type: "unit",
@@ -19113,7 +19190,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-left"] .w-nav-overlay',
       property: "right",
       value: {
         type: "keyword",
@@ -19121,9 +19198,9 @@ export const styles = {
       },
     },
   ],
-  'w-nav[data-animation="over-left"] ': [
+  '.w-nav[data-animation="over-left"] [data-nav-menu-open]': [
     {
-      selector: 'w-nav[data-animation="over-left"] ',
+      selector: '.w-nav[data-animation="over-left"] [data-nav-menu-open]',
       property: "zIndex",
       value: {
         type: "unit",
@@ -19132,7 +19209,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-left"] ',
+      selector: '.w-nav[data-animation="over-left"] [data-nav-menu-open]',
       property: "top",
       value: {
         type: "unit",
@@ -19141,7 +19218,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-left"] ',
+      selector: '.w-nav[data-animation="over-left"] [data-nav-menu-open]',
       property: "right",
       value: {
         type: "keyword",
@@ -19149,9 +19226,9 @@ export const styles = {
       },
     },
   ],
-  'w-nav[data-animation="over-right"] .w-nav-overlay': [
+  '.w-nav[data-animation="over-right"] .w-nav-overlay': [
     {
-      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-right"] .w-nav-overlay',
       property: "width",
       value: {
         type: "keyword",
@@ -19159,7 +19236,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-right"] .w-nav-overlay',
       property: "zIndex",
       value: {
         type: "unit",
@@ -19168,7 +19245,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-right"] .w-nav-overlay',
       property: "top",
       value: {
         type: "unit",
@@ -19177,7 +19254,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      selector: '.w-nav[data-animation="over-right"] .w-nav-overlay',
       property: "left",
       value: {
         type: "keyword",
@@ -19185,9 +19262,9 @@ export const styles = {
       },
     },
   ],
-  'w-nav[data-animation="over-right"] ': [
+  '.w-nav[data-animation="over-right"] [data-nav-menu-open]': [
     {
-      selector: 'w-nav[data-animation="over-right"] ',
+      selector: '.w-nav[data-animation="over-right"] [data-nav-menu-open]',
       property: "zIndex",
       value: {
         type: "unit",
@@ -19196,7 +19273,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-right"] ',
+      selector: '.w-nav[data-animation="over-right"] [data-nav-menu-open]',
       property: "top",
       value: {
         type: "unit",
@@ -19205,7 +19282,7 @@ export const styles = {
       },
     },
     {
-      selector: 'w-nav[data-animation="over-right"] ',
+      selector: '.w-nav[data-animation="over-right"] [data-nav-menu-open]',
       property: "left",
       value: {
         type: "keyword",
@@ -19213,9 +19290,9 @@ export const styles = {
       },
     },
   ],
-  "w-nav-button": [
+  ".w-nav-button": [
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "float",
       value: {
         type: "keyword",
@@ -19223,7 +19300,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "cursor",
       value: {
         type: "keyword",
@@ -19231,7 +19308,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -19242,7 +19319,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "-webkit-tap-highlight-color",
       value: {
         type: "rgb",
@@ -19253,7 +19330,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "userSelect",
       value: {
         type: "keyword",
@@ -19261,7 +19338,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -19270,7 +19347,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -19279,7 +19356,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -19288,7 +19365,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -19297,7 +19374,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "fontSize",
       value: {
         type: "unit",
@@ -19306,7 +19383,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "display",
       value: {
         type: "keyword",
@@ -19314,7 +19391,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "position",
       value: {
         type: "keyword",
@@ -19322,7 +19399,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -19332,7 +19409,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -19341,7 +19418,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-nav-button",
+      selector: ".w-nav-button",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -19350,9 +19427,9 @@ export const styles = {
       state: ":focus",
     },
   ],
-  "w-nav-button.w--open": [
+  ".w-nav-button.w--open": [
     {
-      selector: "w-nav-button.w--open",
+      selector: ".w-nav-button.w--open",
       property: "color",
       value: {
         type: "rgb",
@@ -19363,7 +19440,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button.w--open",
+      selector: ".w-nav-button.w--open",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -19374,9 +19451,9 @@ export const styles = {
       },
     },
   ],
-  'w-nav[data-collapse="all"] .w-nav-menu': [
+  '.w-nav[data-collapse="all"] .w-nav-menu': [
     {
-      selector: 'w-nav[data-collapse="all"] .w-nav-menu',
+      selector: '.w-nav[data-collapse="all"] .w-nav-menu',
       property: "display",
       value: {
         type: "keyword",
@@ -19384,9 +19461,9 @@ export const styles = {
       },
     },
   ],
-  'w-nav[data-collapse="all"] .w-nav-button': [
+  '.w-nav[data-collapse="all"] .w-nav-button': [
     {
-      selector: 'w-nav[data-collapse="all"] .w-nav-button',
+      selector: '.w-nav[data-collapse="all"] .w-nav-button',
       property: "display",
       value: {
         type: "keyword",
@@ -19394,9 +19471,9 @@ export const styles = {
       },
     },
   ],
-  "w--nav-dropdown-open": [
+  ".w--nav-dropdown-open": [
     {
-      selector: "w--nav-dropdown-open",
+      selector: ".w--nav-dropdown-open",
       property: "display",
       value: {
         type: "keyword",
@@ -19404,9 +19481,9 @@ export const styles = {
       },
     },
   ],
-  "w--nav-dropdown-toggle-open": [
+  ".w--nav-dropdown-toggle-open": [
     {
-      selector: "w--nav-dropdown-toggle-open",
+      selector: ".w--nav-dropdown-toggle-open",
       property: "display",
       value: {
         type: "keyword",
@@ -19414,9 +19491,9 @@ export const styles = {
       },
     },
   ],
-  "w--nav-dropdown-list-open": [
+  ".w--nav-dropdown-list-open": [
     {
-      selector: "w--nav-dropdown-list-open",
+      selector: ".w--nav-dropdown-list-open",
       property: "position",
       value: {
         type: "keyword",
@@ -19424,9 +19501,9 @@ export const styles = {
       },
     },
   ],
-  'w-nav[data-collapse="medium"] .w-nav-menu': [
+  '.w-nav[data-collapse="medium"] .w-nav-menu': [
     {
-      selector: 'w-nav[data-collapse="medium"] .w-nav-menu',
+      selector: '.w-nav[data-collapse="medium"] .w-nav-menu',
       property: "display",
       value: {
         type: "keyword",
@@ -19435,9 +19512,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  'w-nav[data-collapse="medium"] .w-nav-button': [
+  '.w-nav[data-collapse="medium"] .w-nav-button': [
     {
-      selector: 'w-nav[data-collapse="medium"] .w-nav-button',
+      selector: '.w-nav[data-collapse="medium"] .w-nav-button',
       property: "display",
       value: {
         type: "keyword",
@@ -19446,9 +19523,9 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
   ],
-  'w-nav[data-collapse="small"] .w-nav-menu': [
+  '.w-nav[data-collapse="small"] .w-nav-menu': [
     {
-      selector: 'w-nav[data-collapse="small"] .w-nav-menu',
+      selector: '.w-nav[data-collapse="small"] .w-nav-menu',
       property: "display",
       value: {
         type: "keyword",
@@ -19457,9 +19534,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  'w-nav[data-collapse="small"] .w-nav-button': [
+  '.w-nav[data-collapse="small"] .w-nav-button': [
     {
-      selector: 'w-nav[data-collapse="small"] .w-nav-button',
+      selector: '.w-nav[data-collapse="small"] .w-nav-button',
       property: "display",
       value: {
         type: "keyword",
@@ -19468,9 +19545,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  'w-nav[data-collapse="tiny"] .w-nav-menu': [
+  '.w-nav[data-collapse="tiny"] .w-nav-menu': [
     {
-      selector: 'w-nav[data-collapse="tiny"] .w-nav-menu',
+      selector: '.w-nav[data-collapse="tiny"] .w-nav-menu',
       property: "display",
       value: {
         type: "keyword",
@@ -19479,9 +19556,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  'w-nav[data-collapse="tiny"] .w-nav-button': [
+  '.w-nav[data-collapse="tiny"] .w-nav-button': [
     {
-      selector: 'w-nav[data-collapse="tiny"] .w-nav-button',
+      selector: '.w-nav[data-collapse="tiny"] .w-nav-button',
       property: "display",
       value: {
         type: "keyword",
@@ -19490,9 +19567,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-tabs": [
+  ".w-tabs": [
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "position",
       value: {
         type: "keyword",
@@ -19500,7 +19577,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "content",
       value: {
         type: "unparsed",
@@ -19509,7 +19586,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "content",
       value: {
         type: "unparsed",
@@ -19518,7 +19595,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -19528,7 +19605,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -19538,7 +19615,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -19548,7 +19625,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -19558,7 +19635,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -19568,7 +19645,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -19578,7 +19655,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -19588,7 +19665,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -19598,7 +19675,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "display",
       value: {
         type: "keyword",
@@ -19607,7 +19684,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "display",
       value: {
         type: "keyword",
@@ -19616,7 +19693,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-tabs",
+      selector: ".w-tabs",
       property: "clear",
       value: {
         type: "keyword",
@@ -19625,9 +19702,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-tab-menu": [
+  ".w-tab-menu": [
     {
-      selector: "w-tab-menu",
+      selector: ".w-tab-menu",
       property: "position",
       value: {
         type: "keyword",
@@ -19635,9 +19712,9 @@ export const styles = {
       },
     },
   ],
-  "w-tab-link": [
+  ".w-tab-link": [
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "verticalAlign",
       value: {
         type: "keyword",
@@ -19645,7 +19722,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -19653,7 +19730,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "cursor",
       value: {
         type: "keyword",
@@ -19661,7 +19738,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "color",
       value: {
         type: "rgb",
@@ -19672,7 +19749,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -19683,7 +19760,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -19692,7 +19769,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -19701,7 +19778,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -19710,7 +19787,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -19719,7 +19796,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "textDecorationLine",
       value: {
         type: "keyword",
@@ -19727,7 +19804,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "textDecorationStyle",
       value: {
         type: "keyword",
@@ -19735,7 +19812,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "textDecorationColor",
       value: {
         type: "keyword",
@@ -19743,7 +19820,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "display",
       value: {
         type: "keyword",
@@ -19751,7 +19828,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "position",
       value: {
         type: "keyword",
@@ -19759,7 +19836,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -19769,7 +19846,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -19778,7 +19855,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "outlineColor",
       value: {
         type: "keyword",
@@ -19787,7 +19864,7 @@ export const styles = {
       state: ":focus",
     },
     {
-      selector: "w-tab-link",
+      selector: ".w-tab-link",
       property: "display",
       value: {
         type: "keyword",
@@ -19796,9 +19873,9 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
-  "w-tab-link.w--current": [
+  ".w-tab-link.w--current": [
     {
-      selector: "w-tab-link.w--current",
+      selector: ".w-tab-link.w--current",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -19809,9 +19886,9 @@ export const styles = {
       },
     },
   ],
-  "w-tab-content": [
+  ".w-tab-content": [
     {
-      selector: "w-tab-content",
+      selector: ".w-tab-content",
       property: "display",
       value: {
         type: "keyword",
@@ -19819,7 +19896,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-content",
+      selector: ".w-tab-content",
       property: "position",
       value: {
         type: "keyword",
@@ -19827,7 +19904,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-content",
+      selector: ".w-tab-content",
       property: "overflowX",
       value: {
         type: "keyword",
@@ -19835,7 +19912,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-content",
+      selector: ".w-tab-content",
       property: "overflowY",
       value: {
         type: "keyword",
@@ -19843,9 +19920,9 @@ export const styles = {
       },
     },
   ],
-  "w-tab-pane": [
+  ".w-tab-pane": [
     {
-      selector: "w-tab-pane",
+      selector: ".w-tab-pane",
       property: "display",
       value: {
         type: "keyword",
@@ -19853,7 +19930,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-tab-pane",
+      selector: ".w-tab-pane",
       property: "position",
       value: {
         type: "keyword",
@@ -19861,9 +19938,9 @@ export const styles = {
       },
     },
   ],
-  "w--tab-active": [
+  ".w--tab-active": [
     {
-      selector: "w--tab-active",
+      selector: ".w--tab-active",
       property: "display",
       value: {
         type: "keyword",
@@ -19871,9 +19948,9 @@ export const styles = {
       },
     },
   ],
-  "w-ix-emptyfix": [
+  ".w-ix-emptyfix": [
     {
-      selector: "w-ix-emptyfix",
+      selector: ".w-ix-emptyfix",
       property: "content",
       value: {
         type: "unparsed",
@@ -19882,9 +19959,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-dyn-empty": [
+  ".w-dyn-empty": [
     {
-      selector: "w-dyn-empty",
+      selector: ".w-dyn-empty",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -19895,7 +19972,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dyn-empty",
+      selector: ".w-dyn-empty",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -19904,7 +19981,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dyn-empty",
+      selector: ".w-dyn-empty",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -19913,7 +19990,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dyn-empty",
+      selector: ".w-dyn-empty",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -19922,7 +19999,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-dyn-empty",
+      selector: ".w-dyn-empty",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -19931,9 +20008,9 @@ export const styles = {
       },
     },
   ],
-  "w-dyn-hide": [
+  ".w-dyn-hide": [
     {
-      selector: "w-dyn-hide",
+      selector: ".w-dyn-hide",
       property: "display",
       value: {
         type: "keyword",
@@ -19941,9 +20018,9 @@ export const styles = {
       },
     },
   ],
-  "w-dyn-bind-empty": [
+  ".w-dyn-bind-empty": [
     {
-      selector: "w-dyn-bind-empty",
+      selector: ".w-dyn-bind-empty",
       property: "display",
       value: {
         type: "keyword",
@@ -19951,9 +20028,9 @@ export const styles = {
       },
     },
   ],
-  "w-condition-invisible": [
+  ".w-condition-invisible": [
     {
-      selector: "w-condition-invisible",
+      selector: ".w-condition-invisible",
       property: "display",
       value: {
         type: "keyword",
@@ -19961,9 +20038,9 @@ export const styles = {
       },
     },
   ],
-  "wf-layout-layout": [
+  ".wf-layout-layout": [
     {
-      selector: "wf-layout-layout",
+      selector: ".wf-layout-layout",
       property: "display",
       value: {
         type: "keyword",
@@ -19971,9 +20048,9 @@ export const styles = {
       },
     },
   ],
-  "w-code-component > *": [
+  ".w-code-component > *": [
     {
-      selector: "w-code-component > *",
+      selector: ".w-code-component > *",
       property: "width",
       value: {
         type: "unit",
@@ -19982,7 +20059,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-code-component > *",
+      selector: ".w-code-component > *",
       property: "height",
       value: {
         type: "unit",
@@ -19991,7 +20068,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-code-component > *",
+      selector: ".w-code-component > *",
       property: "position",
       value: {
         type: "keyword",
@@ -19999,7 +20076,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-code-component > *",
+      selector: ".w-code-component > *",
       property: "top",
       value: {
         type: "unit",
@@ -20008,7 +20085,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-code-component > *",
+      selector: ".w-code-component > *",
       property: "left",
       value: {
         type: "unit",
@@ -20017,9 +20094,9 @@ export const styles = {
       },
     },
   ],
-  "w-layout-blockcontainer": [
+  ".w-layout-blockcontainer": [
     {
-      selector: "w-layout-blockcontainer",
+      selector: ".w-layout-blockcontainer",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -20028,7 +20105,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-blockcontainer",
+      selector: ".w-layout-blockcontainer",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -20036,7 +20113,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-blockcontainer",
+      selector: ".w-layout-blockcontainer",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -20044,7 +20121,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-blockcontainer",
+      selector: ".w-layout-blockcontainer",
       property: "display",
       value: {
         type: "keyword",
@@ -20052,7 +20129,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-blockcontainer",
+      selector: ".w-layout-blockcontainer",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -20062,7 +20139,7 @@ export const styles = {
       breakpoint: "(max-width:991px)",
     },
     {
-      selector: "w-layout-blockcontainer",
+      selector: ".w-layout-blockcontainer",
       property: "maxWidth",
       value: {
         type: "keyword",
@@ -20071,9 +20148,9 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
-  "w-layout-layout": [
+  ".w-layout-layout": [
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "rowGap",
       value: {
         type: "unit",
@@ -20082,7 +20159,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "columnGap",
       value: {
         type: "unit",
@@ -20091,7 +20168,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "gridAutoColumns",
       value: {
         type: "unit",
@@ -20100,7 +20177,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -20108,7 +20185,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "paddingTop",
       value: {
         type: "unit",
@@ -20117,7 +20194,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -20126,7 +20203,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -20135,7 +20212,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-layout",
+      selector: ".w-layout-layout",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -20144,9 +20221,9 @@ export const styles = {
       },
     },
   ],
-  "w-layout-cell": [
+  ".w-layout-cell": [
     {
-      selector: "w-layout-cell",
+      selector: ".w-layout-cell",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -20154,7 +20231,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-cell",
+      selector: ".w-layout-cell",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -20162,7 +20239,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-cell",
+      selector: ".w-layout-cell",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -20170,7 +20247,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-cell",
+      selector: ".w-layout-cell",
       property: "display",
       value: {
         type: "keyword",
@@ -20178,9 +20255,9 @@ export const styles = {
       },
     },
   ],
-  "w-layout-vflex": [
+  ".w-layout-vflex": [
     {
-      selector: "w-layout-vflex",
+      selector: ".w-layout-vflex",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -20188,7 +20265,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-vflex",
+      selector: ".w-layout-vflex",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -20196,7 +20273,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-vflex",
+      selector: ".w-layout-vflex",
       property: "display",
       value: {
         type: "keyword",
@@ -20204,9 +20281,9 @@ export const styles = {
       },
     },
   ],
-  "w-layout-hflex": [
+  ".w-layout-hflex": [
     {
-      selector: "w-layout-hflex",
+      selector: ".w-layout-hflex",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -20214,7 +20291,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-hflex",
+      selector: ".w-layout-hflex",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -20222,7 +20299,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-hflex",
+      selector: ".w-layout-hflex",
       property: "display",
       value: {
         type: "keyword",
@@ -20230,9 +20307,9 @@ export const styles = {
       },
     },
   ],
-  "w-embed-youtubevideo": [
+  ".w-embed-youtubevideo": [
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -20248,7 +20325,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -20262,7 +20339,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -20275,7 +20352,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -20288,7 +20365,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "width",
       value: {
         type: "unit",
@@ -20297,7 +20374,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -20306,7 +20383,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -20315,7 +20392,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -20324,7 +20401,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "position",
       value: {
         type: "keyword",
@@ -20332,7 +20409,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "minHeight",
       value: {
         type: "unit",
@@ -20342,7 +20419,7 @@ export const styles = {
       state: ":empty",
     },
     {
-      selector: "w-embed-youtubevideo",
+      selector: ".w-embed-youtubevideo",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -20352,9 +20429,9 @@ export const styles = {
       state: ":empty",
     },
   ],
-  "w-checkbox": [
+  ".w-checkbox": [
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -20363,7 +20440,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -20372,7 +20449,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "display",
       value: {
         type: "keyword",
@@ -20380,7 +20457,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "content",
       value: {
         type: "unparsed",
@@ -20389,7 +20466,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -20399,7 +20476,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -20409,7 +20486,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -20419,7 +20496,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -20429,7 +20506,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "display",
       value: {
         type: "keyword",
@@ -20438,7 +20515,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "content",
       value: {
         type: "unparsed",
@@ -20447,7 +20524,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "clear",
       value: {
         type: "keyword",
@@ -20456,7 +20533,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridRowStart",
       value: {
         type: "unit",
@@ -20466,7 +20543,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridColumnStart",
       value: {
         type: "unit",
@@ -20476,7 +20553,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridRowEnd",
       value: {
         type: "unit",
@@ -20486,7 +20563,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "gridColumnEnd",
       value: {
         type: "unit",
@@ -20496,7 +20573,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w-checkbox",
+      selector: ".w-checkbox",
       property: "display",
       value: {
         type: "keyword",
@@ -20505,9 +20582,9 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w-checkbox-input": [
+  ".w-checkbox-input": [
     {
-      selector: "w-checkbox-input",
+      selector: ".w-checkbox-input",
       property: "float",
       value: {
         type: "keyword",
@@ -20515,7 +20592,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input",
+      selector: ".w-checkbox-input",
       property: "marginTop",
       value: {
         type: "unit",
@@ -20524,7 +20601,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input",
+      selector: ".w-checkbox-input",
       property: "marginRight",
       value: {
         type: "unit",
@@ -20533,7 +20610,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input",
+      selector: ".w-checkbox-input",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -20542,7 +20619,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input",
+      selector: ".w-checkbox-input",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -20551,7 +20628,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input",
+      selector: ".w-checkbox-input",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -20559,9 +20636,9 @@ export const styles = {
       },
     },
   ],
-  "w-checkbox-input--inputType-custom": [
+  ".w-checkbox-input--inputType-custom": [
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -20570,7 +20647,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -20579,7 +20656,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -20588,7 +20665,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -20597,7 +20674,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -20605,7 +20682,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -20613,7 +20690,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -20621,7 +20698,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -20629,7 +20706,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -20640,7 +20717,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -20651,7 +20728,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -20662,7 +20739,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -20673,7 +20750,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -20682,7 +20759,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -20691,7 +20768,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -20700,7 +20777,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "width",
       value: {
         type: "unit",
@@ -20709,7 +20786,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom",
+      selector: ".w-checkbox-input--inputType-custom",
       property: "height",
       value: {
         type: "unit",
@@ -20718,9 +20795,9 @@ export const styles = {
       },
     },
   ],
-  "w-checkbox-input--inputType-custom.w--redirected-checked": [
+  ".w-checkbox-input--inputType-custom.w--redirected-checked": [
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -20731,7 +20808,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -20747,7 +20824,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -20761,7 +20838,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -20774,7 +20851,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -20787,7 +20864,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -20800,7 +20877,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -20811,7 +20888,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -20822,7 +20899,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -20833,7 +20910,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -20844,9 +20921,9 @@ export const styles = {
       },
     },
   ],
-  "w-checkbox-input--inputType-custom.w--redirected-focus": [
+  ".w-checkbox-input--inputType-custom.w--redirected-focus": [
     {
-      selector: "w-checkbox-input--inputType-custom.w--redirected-focus",
+      selector: ".w-checkbox-input--inputType-custom.w--redirected-focus",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -20887,9 +20964,9 @@ export const styles = {
       },
     },
   ],
-  "w-form-formradioinput--inputType-custom": [
+  ".w-form-formradioinput--inputType-custom": [
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -20898,7 +20975,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -20907,7 +20984,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -20916,7 +20993,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -20925,7 +21002,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -20933,7 +21010,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -20941,7 +21018,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -20949,7 +21026,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -20957,7 +21034,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -20968,7 +21045,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -20979,7 +21056,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -20990,7 +21067,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -21001,7 +21078,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -21010,7 +21087,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -21019,7 +21096,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -21028,7 +21105,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "width",
       value: {
         type: "unit",
@@ -21037,7 +21114,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: ".w-form-formradioinput--inputType-custom",
       property: "height",
       value: {
         type: "unit",
@@ -21046,9 +21123,9 @@ export const styles = {
       },
     },
   ],
-  "w-form-formradioinput--inputType-custom.w--redirected-focus": [
+  ".w-form-formradioinput--inputType-custom.w--redirected-focus": [
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-focus",
+      selector: ".w-form-formradioinput--inputType-custom.w--redirected-focus",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -21089,9 +21166,10 @@ export const styles = {
       },
     },
   ],
-  "w-form-formradioinput--inputType-custom.w--redirected-checked": [
+  ".w-form-formradioinput--inputType-custom.w--redirected-checked": [
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -21100,7 +21178,8 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -21109,7 +21188,8 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -21118,7 +21198,8 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -21127,7 +21208,8 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -21138,7 +21220,8 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -21149,7 +21232,8 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -21160,7 +21244,8 @@ export const styles = {
       },
     },
     {
-      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      selector:
+        ".w-form-formradioinput--inputType-custom.w--redirected-checked",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -21171,9 +21256,9 @@ export const styles = {
       },
     },
   ],
-  "w-form-formrecaptcha": [
+  ".w-form-formrecaptcha": [
     {
-      selector: "w-form-formrecaptcha",
+      selector: ".w-form-formrecaptcha",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -21182,9 +21267,9 @@ export const styles = {
       },
     },
   ],
-  "w-backgroundvideo-backgroundvideoplaypausebutton": [
+  ".w-backgroundvideo-backgroundvideoplaypausebutton": [
     {
-      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
+      selector: ".w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineOffset",
       value: {
         type: "unit",
@@ -21194,7 +21279,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
-      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
+      selector: ".w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -21204,7 +21289,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
-      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
+      selector: ".w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -21214,7 +21299,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
-      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
+      selector: ".w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -21224,7 +21309,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
-      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
+      selector: ".w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineWidth",
       value: {
         type: "unit",
@@ -21234,7 +21319,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
-      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
+      selector: ".w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineStyle",
       value: {
         type: "keyword",
@@ -21243,7 +21328,7 @@ export const styles = {
       state: ":focus-visible",
     },
     {
-      selector: "w-backgroundvideo-backgroundvideoplaypausebutton",
+      selector: ".w-backgroundvideo-backgroundvideoplaypausebutton",
       property: "outlineColor",
       value: {
         type: "rgb",
@@ -21255,9 +21340,9 @@ export const styles = {
       state: ":focus-visible",
     },
   ],
-  "w-layout-grid": [
+  ".w-layout-grid": [
     {
-      selector: "w-layout-grid",
+      selector: ".w-layout-grid",
       property: "rowGap",
       value: {
         type: "unit",
@@ -21266,7 +21351,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-grid",
+      selector: ".w-layout-grid",
       property: "columnGap",
       value: {
         type: "unit",
@@ -21275,7 +21360,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-grid",
+      selector: ".w-layout-grid",
       property: "gridTemplateRows",
       value: {
         type: "tuple",
@@ -21292,7 +21377,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-grid",
+      selector: ".w-layout-grid",
       property: "gridTemplateColumns",
       value: {
         type: "tuple",
@@ -21311,7 +21396,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-grid",
+      selector: ".w-layout-grid",
       property: "gridAutoColumns",
       value: {
         type: "unit",
@@ -21320,7 +21405,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-layout-grid",
+      selector: ".w-layout-grid",
       property: "display",
       value: {
         type: "keyword",
@@ -21328,9 +21413,9 @@ export const styles = {
       },
     },
   ],
-  "utility-page-wrap": [
+  ".utility-page-wrap": [
     {
-      selector: "utility-page-wrap",
+      selector: ".utility-page-wrap",
       property: "justifyContent",
       value: {
         type: "keyword",
@@ -21338,7 +21423,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-wrap",
+      selector: ".utility-page-wrap",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -21346,7 +21431,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-wrap",
+      selector: ".utility-page-wrap",
       property: "width",
       value: {
         type: "unit",
@@ -21355,7 +21440,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-wrap",
+      selector: ".utility-page-wrap",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -21364,7 +21449,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-wrap",
+      selector: ".utility-page-wrap",
       property: "height",
       value: {
         type: "unit",
@@ -21373,7 +21458,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-wrap",
+      selector: ".utility-page-wrap",
       property: "maxHeight",
       value: {
         type: "unit",
@@ -21382,7 +21467,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-wrap",
+      selector: ".utility-page-wrap",
       property: "display",
       value: {
         type: "keyword",
@@ -21390,9 +21475,9 @@ export const styles = {
       },
     },
   ],
-  "utility-page-content": [
+  ".utility-page-content": [
     {
-      selector: "utility-page-content",
+      selector: ".utility-page-content",
       property: "textAlign",
       value: {
         type: "keyword",
@@ -21400,7 +21485,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-content",
+      selector: ".utility-page-content",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -21408,7 +21493,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-content",
+      selector: ".utility-page-content",
       property: "width",
       value: {
         type: "unit",
@@ -21417,7 +21502,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-content",
+      selector: ".utility-page-content",
       property: "display",
       value: {
         type: "keyword",
@@ -21425,9 +21510,9 @@ export const styles = {
       },
     },
   ],
-  "utility-page-form": [
+  ".utility-page-form": [
     {
-      selector: "utility-page-form",
+      selector: ".utility-page-form",
       property: "flexDirection",
       value: {
         type: "keyword",
@@ -21435,7 +21520,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-form",
+      selector: ".utility-page-form",
       property: "alignItems",
       value: {
         type: "keyword",
@@ -21443,7 +21528,7 @@ export const styles = {
       },
     },
     {
-      selector: "utility-page-form",
+      selector: ".utility-page-form",
       property: "display",
       value: {
         type: "keyword",
