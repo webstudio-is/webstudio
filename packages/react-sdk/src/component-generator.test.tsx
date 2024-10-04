@@ -960,43 +960,33 @@ test("skip unsafe properties", () => {
       dataSources: new Map(),
       indexesWithinAncestors: new Map(),
 
-      instances: new Map([
-        [
-          "body",
-          { type: "instance", id: "body", component: "Body", children: [] },
-        ],
+      instances: toMap([
+        { type: "instance", id: "body", component: "Body", children: [] },
       ]),
-      props: new Map([
-        [
-          "unsafeProp",
-          {
-            id: "unsafeProp",
-            instanceId: "body",
-            name: "",
-            type: "string",
-            value: "unsafe",
-          },
-        ],
-        [
-          "unsafeProp-2",
-          {
-            id: "unsafeProp-2",
-            instanceId: "body",
-            name: "1-numeric-unsafe",
-            type: "string",
-            value: "unsafe",
-          },
-        ],
-        [
-          "unsafeProp-3",
-          {
-            id: "unsafeProp-3",
-            instanceId: "body",
-            name: "click.prevent",
-            type: "string",
-            value: "unsafe",
-          },
-        ],
+      props: toMap([
+        {
+          id: "unsafeProp",
+          instanceId: "body",
+          name: "",
+          type: "string",
+          value: "unsafe",
+        },
+
+        {
+          id: "unsafeProp-2",
+          instanceId: "body",
+          name: "1-numeric-unsafe",
+          type: "string",
+          value: "unsafe",
+        },
+
+        {
+          id: "unsafeProp-3",
+          instanceId: "body",
+          name: "click.prevent",
+          type: "string",
+          value: "unsafe",
+        },
       ]),
     })
   ).toEqual(
