@@ -193,9 +193,7 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
             name = selector ? `.${childNode.name}` : childNode.name;
             break;
           case "AttributeSelector":
-            if (childNode.value) {
-              name = `[${csstree.generate(childNode.name)}${childNode.matcher}${csstree.generate(childNode.value)}]`;
-            }
+            name = csstree.generate(childNode);
             break;
           case "PseudoClassSelector": {
             // First pseudo selector is not a state but an element selector, e.g. :root
