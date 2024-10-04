@@ -221,9 +221,9 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
           if (state) {
             selector.state = state;
           }
-          return;
+        } else {
+          selector = { name, state };
         }
-        selector = { name, state };
       }
       if (selector) {
         selectors.push(selector);
