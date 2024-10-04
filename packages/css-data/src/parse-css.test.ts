@@ -194,7 +194,18 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test("attribute selector", () => {
+    expect(parseCss(`[class^="a"] { color: #ff0000 }`)).toEqual([
+      {
+        selector: '[class^="a"]',
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
+  });
+
   test("parse first pseudo class as selector", () => {
+    // E.g. :root
     expect(parseCss(`:first-pseudo:my-state { color: #ff0000 }`)).toEqual([
       {
         selector: ":first-pseudo",
@@ -471,11 +482,33 @@ describe("Parse CSS", () => {
   });
 
   test("parse child combinator", () => {
-    expect(parseCss(`a > b { color: #ff0000 }`)).toEqual([]);
+    expect(parseCss(`a > b { color: #ff0000 }`)).toEqual([
+      {
+        selector: "a > b",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 
   test("parse space combinator", () => {
-    expect(parseCss(`a b { color: #ff0000 }`)).toEqual([]);
+    expect(parseCss(`.a b { color: #ff0000 }`)).toEqual([
+      {
+        selector: "a b",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
+  });
+
+  test("parse nested selectors as one token", () => {
+    expect(parseCss(`a b c.d { color: #ff0000 }`)).toEqual([
+      {
+        selector: "a b c.d",
+        property: "color",
+        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+      },
+    ]);
   });
 });
 

@@ -161,6 +161,7 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
           if (node.type === "MediaQuery" && node.children.size > 1) {
             invalidBreakpoint = true;
           }
+          ``;
         },
       });
       const generated = csstree.generate(this.atrule.prelude);
@@ -168,43 +169,63 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
         breakpoint = generated;
       }
     }
-    if (invalidBreakpoint) {
+    if (invalidBreakpoint || this.rule.prelude.type !== "SelectorList") {
       return;
     }
 
     const selectors: Selector[] = [];
-    if (this.rule.prelude.type === "SelectorList") {
-      for (const selector of this.rule.prelude.children) {
-        if (selector.type !== "Selector" || selector.children.size > 2) {
-          continue;
+
+    for (const node of this.rule.prelude.children) {
+      if (node.type !== "Selector") {
+        continue;
+      }
+      let selector: Selector | undefined = undefined;
+      node.children.forEach((node) => {
+        let name: string = "";
+        let state: string | undefined;
+        switch (node.type) {
+          case "TypeSelector":
+            name = node.name;
+            break;
+          case "ClassSelector":
+            // .a {} vs a.b {}
+            name = selector ? `.${node.name}` : node.name;
+            break;
+          case "AttributeSelector":
+            if (node.value) {
+              name = `[${csstree.generate(node.name)}${node.matcher}${csstree.generate(node.value)}]`;
+            }
+            break;
+          case "PseudoClassSelector": {
+            // First pseudo selector is not a state but an element selector, e.g. :root
+            if (selector) {
+              state = `:${node.name}`;
+            } else {
+              name = `:${node.name}`;
+            }
+            break;
+          }
+          case "Combinator":
+            // " " vs " > "
+            name = node.name === " " ? node.name : ` ${node.name} `;
+            break;
+          case "PseudoElementSelector":
+            state = `::${node.name}`;
+            break;
         }
-        const [nameNode, stateNode] = selector.children;
-        let name;
-        if (
-          nameNode.type === "ClassSelector" ||
-          nameNode.type === "TypeSelector"
-        ) {
-          name = nameNode.name;
-        } else if (nameNode.type === "PseudoClassSelector") {
-          name = `:${nameNode.name}`;
-        } else {
-          continue;
+
+        if (selector) {
+          selector.name += name;
+          if (state) {
+            selector.state = state;
+          }
+          return;
         }
-        if (stateNode?.type === "PseudoClassSelector") {
-          selectors.push({
-            name,
-            state: `:${stateNode.name}`,
-          });
-        } else if (stateNode?.type === "PseudoElementSelector") {
-          selectors.push({
-            name,
-            state: `::${stateNode.name}`,
-          });
-        } else {
-          selectors.push({
-            name,
-          });
-        }
+        selector = { name, state };
+      });
+      if (selector) {
+        selectors.push(selector);
+        selector = undefined;
       }
     }
 
