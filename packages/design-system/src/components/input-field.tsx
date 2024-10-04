@@ -199,7 +199,7 @@ Container.displayName = "Container";
 
 type InputProps = Omit<
   ComponentProps<"input">,
-  "onFocus" | "onBlur" | "prefix"
+  "onFocus" | "onBlur" | "prefix" | "size"
 > & {
   onFocus?: FocusEventHandler;
   onBlur?: FocusEventHandler;
