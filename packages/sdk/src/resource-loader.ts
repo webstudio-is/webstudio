@@ -24,17 +24,22 @@ export const loadResource = async (
     // cloudflare workers fail when fetching url contains spaces
     // even though new URL suppose to trim them on parsing by spec
     const response = await customFetch(url.trim(), requestInit);
-    let data;
-    if (
-      response.ok &&
-      // accept json by default and when specified explicitly
-      (response.headers.has("content-type") === false ||
-        response.headers.get("content-type")?.includes("application/json"))
-    ) {
-      data = await response.json();
-    } else {
-      data = await response.text();
+
+    let data = await response.text();
+
+    try {
+      // If it looks like JSON and quacks like JSON, then it probably is JSON.
+      data = JSON.parse(data);
+    } catch {
+      // ignore, leave data as text
     }
+
+    if (!response.ok) {
+      console.error(
+        `Failed to load resource: ${url} - ${response.status}: ${JSON.stringify(data).slice(0, 300)}`
+      );
+    }
+
     return {
       ok: response.ok,
       data,
@@ -42,6 +47,7 @@ export const loadResource = async (
       statusText: response.statusText,
     };
   } catch (error) {
+    console.error(error);
     const message = (error as unknown as Error).message;
     return {
       ok: false,
