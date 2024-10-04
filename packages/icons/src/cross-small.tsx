@@ -1,7 +1,7 @@
 import * as React from "react";
-import type { IconProps } from "./types";
+import type { IconComponent } from "./types";
 
-export const CrossSmallIcon = React.forwardRef<SVGSVGElement, IconProps>(
+export const CrossSmallIcon: IconComponent = React.forwardRef(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg

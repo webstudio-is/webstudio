@@ -1,7 +1,7 @@
 import * as React from "react";
-import type { IconProps } from "./types";
+import type { IconComponent } from "./types";
 
-export const TrashIcon = React.forwardRef<SVGSVGElement, IconProps>(
+export const TrashIcon: IconComponent = React.forwardRef(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg
