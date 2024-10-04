@@ -147,7 +147,6 @@ export const TransitionContent = ({ index }: { index: number }) => {
           property={"transitionDuration"}
           styleSource="local"
           value={duration ?? properties.transitionDuration.initial}
-          keywords={[]}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {
@@ -175,7 +174,6 @@ export const TransitionContent = ({ index }: { index: number }) => {
           key={"transitionDelay"}
           styleSource="local"
           value={delay ?? properties.transitionDelay.initial}
-          keywords={[]}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {

@@ -213,7 +213,6 @@ export const FilterSectionContent = ({
                   unit: "px",
                 }
               }
-              keywords={[]}
               setValue={handleFilterFunctionValueChange}
               deleteProperty={() => {}}
             />

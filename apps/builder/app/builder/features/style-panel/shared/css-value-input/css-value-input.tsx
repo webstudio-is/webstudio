@@ -22,6 +22,7 @@ import type {
   StyleProperty,
   StyleValue,
   Unit,
+  VarValue,
 } from "@webstudio-is/css-engine";
 import {
   type KeyboardEventHandler,
@@ -310,7 +311,7 @@ type CssValueInputProps = Pick<
   /**
    * Selected item in the dropdown
    */
-  keywords?: Array<KeywordValue>;
+  options?: Array<KeywordValue | VarValue>;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
@@ -327,7 +328,7 @@ const initialValue: IntermediateStyleValue = {
 const itemToString = (item: CssValueInputValue | null) => {
   return item === null
     ? ""
-    : item.type === "keyword"
+    : item.type === "keyword" || item.type === "var"
       ? // E.g. we want currentcolor to be lower case
         toValue(item).toLocaleLowerCase()
       : item.type === "intermediate" || item.type === "unit"
@@ -356,7 +357,7 @@ const Description = styled(Box, { width: theme.spacing[27] });
  * - Scrub interaction
  * - Click outside, unit selection or escape when list is open should unfocus the unit select trigger
  *
- * Keywords mode:
+ * Options mode:
  * - When any character in the input is not a number we automatically switch to keywords mode on keydown
  * - Filterable keywords list (click on chevron or arrow down to show the list)
  * - Arrow keys are used to navigate keyword items
@@ -375,7 +376,7 @@ export const CssValueInput = ({
   showSuffix = true,
   styleSource,
   property,
-  keywords = [],
+  options = [],
   onHighlight,
   onAbort,
   disabled,
@@ -445,7 +446,7 @@ export const CssValueInput = ({
     highlightedIndex,
   } = useCombobox<CssValueInputValue>({
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
-    items: keywords,
+    items: options,
     value,
     selectedItem: props.value,
     itemToString,
@@ -729,7 +730,9 @@ export const CssValueInput = ({
                     {...getItemProps({ item, index })}
                     key={index}
                   >
-                    {itemToString(item)}
+                    {item.type === "var"
+                      ? `--${item.value}`
+                      : itemToString(item)}
                   </ComboboxListboxItem>
                 ))}
               </ComboboxScrollArea>

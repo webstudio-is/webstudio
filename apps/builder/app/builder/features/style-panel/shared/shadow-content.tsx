@@ -214,7 +214,6 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetX.
             property="outlineOffset"
             styleSource="local"
-            keywords={[]}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value, options) =>
               handlePropertyChange({ offsetX: value }, options)
@@ -238,7 +237,6 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetY.
             property="outlineOffset"
             styleSource="local"
-            keywords={[]}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value, options) =>
               handlePropertyChange({ offsetY: value }, options)
@@ -262,7 +260,6 @@ export const ShadowContent = ({
             // border-top-width is a fake property for validating box-shadow's blur.
             property="borderTopWidth"
             styleSource="local"
-            keywords={[]}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value, options) =>
               handlePropertyChange({ blur: value }, options)
@@ -287,7 +284,6 @@ export const ShadowContent = ({
               // outline-offset is a fake property for validating box-shadow's spread.
               property="outlineOffset"
               styleSource="local"
-              keywords={[]}
               value={spread ?? { type: "unit", value: 0, unit: "px" }}
               setValue={(value, options) =>
                 handlePropertyChange({ spread: value }, options)
@@ -320,7 +316,7 @@ export const ShadowContent = ({
             property="color"
             value={colorControlProp}
             currentColor={colorControlProp}
-            keywords={styleConfigByName("color").items.map((item) => ({
+            options={styleConfigByName("color").items.map((item) => ({
               type: "keyword",
               value: item.name,
             }))}

@@ -97,7 +97,6 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            keywords={[]}
             value={scaleX}
             intermediateValue={intermediateScalingX}
             onChange={(value) => {
@@ -138,7 +137,6 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            keywords={[]}
             value={scaleY}
             intermediateValue={intermediateScalingY}
             onChange={(value) => {
@@ -179,7 +177,6 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            keywords={[]}
             value={scaleZ}
             intermediateValue={intermediateScalingZ}
             onChange={(value) => {

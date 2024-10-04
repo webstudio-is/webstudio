@@ -50,7 +50,6 @@ export const SkewPanelContent = () => {
           styleSource="local"
           property={fakeProperty}
           value={skewX}
-          keywords={[]}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "skewX", value, options)
           }
@@ -70,7 +69,6 @@ export const SkewPanelContent = () => {
           styleSource="local"
           property={fakeProperty}
           value={skewY}
-          keywords={[]}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "skewY", value, options)
           }

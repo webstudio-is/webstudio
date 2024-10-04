@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useStore } from "@nanostores/react";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   CssValueInput,
@@ -6,7 +7,7 @@ import {
 } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
-import { useComputedStyleDecl } from "../../shared/model";
+import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
 
 export const TextControl = ({ property }: { property: StyleProperty }) => {
   const computedStyleDecl = useComputedStyleDecl(property);
@@ -16,13 +17,20 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
     StyleValue | IntermediateStyleValue
   >();
   const items = styleConfigByName(property).items;
+  const availableVariables = useStore($availableVariables);
   return (
     <CssValueInput
       styleSource={computedStyleDecl.source.name}
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      keywords={items.map((item) => ({ type: "keyword", value: item.name }))}
+      options={[
+        ...items.map((item) => ({
+          type: "keyword" as const,
+          value: item.name,
+        })),
+        ...availableVariables,
+      ]}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         if (styleValue === undefined) {
