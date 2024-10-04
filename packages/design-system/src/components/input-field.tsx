@@ -197,9 +197,12 @@ const Container = forwardRef(
 );
 Container.displayName = "Container";
 
-type InputProps = Omit<ComponentProps<"input">, "onFocus" | "onBlur"> & {
-  onFocus: FocusEventHandler;
-  onBlur: FocusEventHandler;
+type InputProps = Omit<
+  ComponentProps<"input">,
+  "onFocus" | "onBlur" | "prefix"
+> & {
+  onFocus?: FocusEventHandler;
+  onBlur?: FocusEventHandler;
 };
 
 type InputFieldProps = {
