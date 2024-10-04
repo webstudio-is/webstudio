@@ -29,30 +29,6 @@ export const styles = {
         value: 100,
       },
     },
-    {
-      selector: "html",
-      property: "backgroundAttachment",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "scroll",
-          },
-        ],
-      },
-    },
-    {
-      selector: "html",
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
   ],
   body: [
     {
@@ -420,6 +396,210 @@ export const styles = {
       value: {
         type: "keyword",
         value: "inline-block",
+      },
+    },
+  ],
+  "": [
+    {
+      selector: "",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      selector: "",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 200,
+        g: 200,
+        b: 200,
+      },
+    },
+    {
+      selector: "",
+      property: "minWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 200,
+      },
+    },
+    {
+      selector: "",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "",
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "",
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "visible",
       },
     },
   ],
@@ -1618,22 +1798,6 @@ export const styles = {
     },
     {
       selector: "input",
-      property: "appearance",
-      value: {
-        type: "keyword",
-        value: "button",
-      },
-    },
-    {
-      selector: "input",
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      selector: "input",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -1783,58 +1947,6 @@ export const styles = {
         value: 0,
       },
       state: "::-moz-focus-inner",
-    },
-    {
-      selector: "input",
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "border-box",
-      },
-    },
-    {
-      selector: "input",
-      property: "paddingTop",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "input",
-      property: "paddingRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "input",
-      property: "paddingBottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "input",
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "input",
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
     },
   ],
   optgroup: [
@@ -2166,13 +2278,191 @@ export const styles = {
         value: "auto",
       },
     },
+  ],
+  'html input[type="button"]': [
     {
-      selector: "textarea",
+      selector: 'html input[type="button"]',
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "button",
+      },
+    },
+    {
+      selector: 'html input[type="button"]',
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+  ],
+  'input[type="reset"]': [
+    {
+      selector: 'input[type="reset"]',
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "button",
+      },
+    },
+    {
+      selector: 'input[type="reset"]',
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+  ],
+  "html input": [
+    {
+      selector: "html input",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "default",
+      },
+    },
+  ],
+  'input[type="checkbox"]': [
+    {
+      selector: 'input[type="checkbox"]',
+      property: "boxSizing",
+      value: {
+        type: "keyword",
+        value: "border-box",
+      },
+    },
+    {
+      selector: 'input[type="checkbox"]',
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'input[type="checkbox"]',
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'input[type="checkbox"]',
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'input[type="checkbox"]',
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  'input[type="radio"]': [
+    {
+      selector: 'input[type="radio"]',
+      property: "boxSizing",
+      value: {
+        type: "keyword",
+        value: "border-box",
+      },
+    },
+    {
+      selector: 'input[type="radio"]',
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'input[type="radio"]',
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'input[type="radio"]',
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'input[type="radio"]',
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  'input[type="number"]': [
+    {
+      selector: 'input[type="number"]',
       property: "height",
       value: {
         type: "keyword",
         value: "auto",
       },
+      state: "::-webkit-inner-spin-button",
+    },
+    {
+      selector: 'input[type="number"]',
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+      state: "::-webkit-outer-spin-button",
+    },
+  ],
+  'input[type="search"]': [
+    {
+      selector: 'input[type="search"]',
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: 'input[type="search"]',
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-webkit-search-cancel-button",
+    },
+    {
+      selector: 'input[type="search"]',
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-webkit-search-decoration",
     },
   ],
   legend: [
@@ -2405,6 +2695,252 @@ export const styles = {
         type: "unit",
         unit: "number",
         value: 0,
+      },
+    },
+  ],
+  '[class^="w-icon-"]': [
+    {
+      selector: '[class^="w-icon-"]',
+      property: "speak",
+      value: {
+        type: "unparsed",
+        value: "none",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontVariantLigatures",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontVariantCaps",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontVariantAlternates",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontVariantNumeric",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontVariantEastAsian",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontVariantPosition",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontVariantEmoji",
+      value: {
+        type: "unparsed",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "textTransform",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "WebkitFontSmoothing",
+      value: {
+        type: "keyword",
+        value: "antialiased",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "MozOsxFontSmoothing",
+      value: {
+        type: "keyword",
+        value: "grayscale",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: '[class^="w-icon-"]',
+      property: "fontFamily",
+      value: {
+        type: "fontFamily",
+        value: ["webflow-icons"],
+      },
+    },
+  ],
+  '[class*=" w-icon-"]': [
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "speak",
+      value: {
+        type: "unparsed",
+        value: "none",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontVariantLigatures",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontVariantCaps",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontVariantAlternates",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontVariantNumeric",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontVariantEastAsian",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontVariantPosition",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontVariantEmoji",
+      value: {
+        type: "unparsed",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "textTransform",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "WebkitFontSmoothing",
+      value: {
+        type: "keyword",
+        value: "antialiased",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "MozOsxFontSmoothing",
+      value: {
+        type: "keyword",
+        value: "grayscale",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: '[class*=" w-icon-"]',
+      property: "fontFamily",
+      value: {
+        type: "fontFamily",
+        value: ["webflow-icons"],
       },
     },
   ],
@@ -2820,6 +3356,21 @@ export const styles = {
       },
     },
   ],
+  "html.w-mod-touch *": [
+    {
+      selector: "html.w-mod-touch *",
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+  ],
   "w-block": [
     {
       selector: "w-block",
@@ -3220,12 +3771,27 @@ export const styles = {
         value: "inline-block",
       },
     },
+  ],
+  "input.w-button": [
     {
-      selector: "w-button",
+      selector: "input.w-button",
       property: "appearance",
       value: {
         type: "keyword",
         value: "button",
+      },
+    },
+  ],
+  "html ": [
+    {
+      selector: "html ",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
       },
     },
   ],
@@ -4175,6 +4741,892 @@ export const styles = {
       },
     },
   ],
+  "w-webflow-badge *": [
+    {
+      selector: "w-webflow-badge *",
+      property: "zIndex",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "visibility",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "boxSizing",
+      value: {
+        type: "keyword",
+        value: "border-box",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "float",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "clear",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "boxShadow",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "none",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "direction",
+      value: {
+        type: "keyword",
+        value: "ltr",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "color",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontVariantLigatures",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontVariantCaps",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontVariantAlternates",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontVariantNumeric",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontVariantEastAsian",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontVariantPosition",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "fontVariantEmoji",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "letterSpacing",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textDecorationLine",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textIndent",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textTransform",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textShadow",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "none",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "WebkitFontSmoothing",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "verticalAlign",
+      value: {
+        type: "keyword",
+        value: "baseline",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "textWrapMode",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "wordBreak",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "wordSpacing",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "wordWrap",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "keyword",
+                value: "auto",
+              },
+              {
+                type: "keyword",
+                value: "auto",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundRepeat",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "repeat",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundAttachment",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "scroll",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundOrigin",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "padding-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundClip",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "border-box",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "backgroundColor",
+      value: {
+        type: "keyword",
+        value: "transparent",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderTopLeftRadius",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderTopRightRadius",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "borderBottomRightRadius",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "minWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "maxWidth",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "minHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "maxHeight",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "paddingBottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "listStyleType",
+      value: {
+        type: "keyword",
+        value: "disc",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "transitionProperty",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "transitionDuration",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "s",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "transitionTimingFunction",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "ease",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "transitionDelay",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "s",
+            value: 0,
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "transitionBehavior",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "normal",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "static",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "top",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "bottom",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "w-webflow-badge *",
+      property: "transform",
+      value: {
+        type: "tuple",
+        value: [
+          {
+            type: "keyword",
+            value: "none",
+          },
+        ],
+      },
+    },
+  ],
+  "w-webflow-badge > img": [
+    {
+      selector: "w-webflow-badge > img",
+      property: "visibility",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      selector: "w-webflow-badge > img",
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: "w-webflow-badge > img",
+      property: "verticalAlign",
+      value: {
+        type: "keyword",
+        value: "middle",
+      },
+    },
+    {
+      selector: "w-webflow-badge > img",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+  ],
   h2: [
     {
       selector: "h2",
@@ -4820,6 +6272,432 @@ export const styles = {
       },
     },
   ],
+  "w-video iframe": [
+    {
+      selector: "w-video iframe",
+      property: "borderTopWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderRightWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderBottomWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderLeftWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderTopColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderRightColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderBottomColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "borderLeftColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-video iframe",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  "w-video object": [
+    {
+      selector: "w-video object",
+      property: "borderTopWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderRightWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderBottomWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderLeftWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderTopColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderRightColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderBottomColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "borderLeftColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-video object",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  "w-video embed": [
+    {
+      selector: "w-video embed",
+      property: "borderTopWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderRightWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderBottomWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderLeftWidth",
+      value: {
+        type: "keyword",
+        value: "medium",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderTopColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderRightColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderBottomColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "borderLeftColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-video embed",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
   fieldset: [
     {
       selector: "fieldset",
@@ -4993,23 +6871,240 @@ export const styles = {
         value: 0,
       },
     },
+  ],
+  '[type="button"]': [
     {
-      selector: "fieldset",
+      selector: '[type="button"]',
       property: "cursor",
       value: {
         type: "keyword",
-        value: "not-allowed",
+        value: "pointer",
       },
     },
     {
-      selector: "fieldset",
-      property: "backgroundColor",
+      selector: '[type="button"]',
+      property: "appearance",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 238,
-        g: 238,
-        b: 238,
+        type: "keyword",
+        value: "button",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderTopColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderRightColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderBottomColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: '[type="button"]',
+      property: "borderLeftColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+  ],
+  '[type="reset"]': [
+    {
+      selector: '[type="reset"]',
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "button",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderTopColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderRightColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderBottomColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
+      },
+    },
+    {
+      selector: '[type="reset"]',
+      property: "borderLeftColor",
+      value: {
+        type: "keyword",
+        value: "currentcolor",
       },
     },
   ],
@@ -5365,8 +7460,9 @@ export const styles = {
       selector: "w-input",
       property: "height",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "unit",
+        unit: "px",
+        value: 38,
       },
     },
     {
@@ -5569,6 +7665,18 @@ export const styles = {
         type: "keyword",
         value: "not-allowed",
       },
+    },
+    {
+      selector: "w-input",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+      state: ":not",
     },
   ],
   "w-select": [
@@ -5932,10 +8040,8 @@ export const styles = {
         value: "not-allowed",
       },
     },
-  ],
-  "w-input-disabled": [
     {
-      selector: "w-input-disabled",
+      selector: "w-select",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -5943,6 +8049,71 @@ export const styles = {
         r: 238,
         g: 238,
         b: 238,
+      },
+      state: ":not",
+    },
+  ],
+  "fieldset .w-input": [
+    {
+      selector: "fieldset .w-input",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
+    {
+      selector: "fieldset .w-input",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+      state: ":not",
+    },
+  ],
+  "fieldset .w-select": [
+    {
+      selector: "fieldset .w-select",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
+    {
+      selector: "fieldset .w-select",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 238,
+        g: 238,
+        b: 238,
+      },
+      state: ":not",
+    },
+  ],
+  "textarea.w-input": [
+    {
+      selector: "textarea.w-input",
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  "textarea.w-select": [
+    {
+      selector: "textarea.w-select",
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
       },
     },
   ],
@@ -6286,7 +8457,7 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
-        value: "none",
+        value: "inline-block",
       },
     },
   ],
@@ -6307,7 +8478,7 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
-        value: "none",
+        value: "inline-block",
       },
     },
   ],
@@ -6328,7 +8499,7 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
-        value: "none",
+        value: "inline-block",
       },
     },
   ],
@@ -6344,6 +8515,46 @@ export const styles = {
     },
     {
       selector: "w-file-upload-error",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+  ],
+  "w-file-upload-default.w-hidden": [
+    {
+      selector: "w-file-upload-default.w-hidden",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
+  "w-file-upload-uploading.w-hidden": [
+    {
+      selector: "w-file-upload-uploading.w-hidden",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
+  "w-file-upload-error.w-hidden": [
+    {
+      selector: "w-file-upload-error.w-hidden",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
+  "w-file-upload-success.w-hidden": [
+    {
+      selector: "w-file-upload-success.w-hidden",
       property: "display",
       value: {
         type: "keyword",
@@ -7468,6 +9679,46 @@ export const styles = {
       breakpoint: "(max-width:479px)",
     },
   ],
+  "w-container .w-row": [
+    {
+      selector: "w-container .w-row",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -10,
+      },
+    },
+    {
+      selector: "w-container .w-row",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -10,
+      },
+    },
+    {
+      selector: "w-container .w-row",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+    {
+      selector: "w-container .w-row",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
   "w-row": [
     {
       selector: "w-row",
@@ -7615,6 +9866,26 @@ export const styles = {
       breakpoint: "(max-width:767px)",
     },
   ],
+  "w-row .w-row": [
+    {
+      selector: "w-row .w-row",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-row .w-row",
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
   "w-col": [
     {
       selector: "w-col",
@@ -7705,6 +9976,26 @@ export const styles = {
         value: 100,
       },
       breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-col .w-col": [
+    {
+      selector: "w-col .w-col",
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-col .w-col",
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
     },
   ],
   "w-col-1": [
@@ -8428,6 +10719,54 @@ export const styles = {
       },
     },
   ],
+  "w-widget-map label": [
+    {
+      selector: "w-widget-map label",
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-widget-map label",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline",
+      },
+    },
+  ],
+  "w-widget-map img": [
+    {
+      selector: "w-widget-map img",
+      property: "maxWidth",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+  ],
+  "w-widget-map .gm-style-iw": [
+    {
+      selector: "w-widget-map .gm-style-iw",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+  ],
+  "w-widget-map .gm-style-iw > button": [
+    {
+      selector: "w-widget-map .gm-style-iw > button",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
   "w-widget-twitter": [
     {
       selector: "w-widget-twitter",
@@ -8595,7 +10934,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -8604,7 +10943,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -8613,7 +10952,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -8622,7 +10961,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -8663,9 +11002,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
+        r: 117,
+        g: 134,
+        b: 150,
       },
     },
     {
@@ -8673,10 +11012,10 @@ export const styles = {
       property: "borderRightColor",
       value: {
         type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
+        alpha: 1,
+        r: 117,
+        g: 134,
+        b: 150,
       },
     },
     {
@@ -8684,10 +11023,10 @@ export const styles = {
       property: "borderBottomColor",
       value: {
         type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
+        alpha: 1,
+        r: 117,
+        g: 134,
+        b: 150,
       },
     },
     {
@@ -8695,10 +11034,10 @@ export const styles = {
       property: "borderLeftColor",
       value: {
         type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
+        alpha: 1,
+        r: 117,
+        g: 134,
+        b: 150,
       },
     },
     {
@@ -8734,7 +11073,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 76,
+        value: 28,
       },
     },
     {
@@ -8742,8 +11081,8 @@ export const styles = {
       property: "height",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 20,
       },
     },
     {
@@ -8759,25 +11098,7 @@ export const styles = {
       property: "position",
       value: {
         type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      selector: "w-widget-twitter-count-shim",
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-    {
-      selector: "w-widget-twitter-count-shim",
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 22,
+        value: "relative",
       },
     },
     {
@@ -8786,7 +11107,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: -9,
+        value: 5,
       },
       state: ":not",
     },
@@ -8807,7 +11128,16 @@ export const styles = {
         type: "unparsed",
         value: '" "',
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8816,7 +11146,16 @@ export const styles = {
         type: "keyword",
         value: "none",
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8824,9 +11163,9 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 5,
+        value: 4,
       },
-      state: ":not",
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8834,9 +11173,9 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 5,
+        value: 4,
       },
-      state: ":not",
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8844,9 +11183,9 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 5,
+        value: 4,
       },
-      state: ":not",
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8854,9 +11193,9 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 5,
+        value: 4,
       },
-      state: ":not",
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8865,7 +11204,7 @@ export const styles = {
         type: "keyword",
         value: "solid",
       },
-      state: ":not",
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8874,7 +11213,7 @@ export const styles = {
         type: "keyword",
         value: "solid",
       },
-      state: ":not",
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8883,7 +11222,7 @@ export const styles = {
         type: "keyword",
         value: "solid",
       },
-      state: ":not",
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8892,7 +11231,131 @@ export const styles = {
         type: "keyword",
         value: "solid",
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 93,
+        g: 108,
+        b: 123,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 117,
+        g: 134,
+        b: 150,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderTopStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderRightStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderBottomStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "borderLeftStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8904,7 +11367,7 @@ export const styles = {
         g: 255,
         b: 255,
       },
-      state: ":not",
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8916,7 +11379,7 @@ export const styles = {
         g: 255,
         b: 255,
       },
-      state: ":not",
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8928,7 +11391,7 @@ export const styles = {
         g: 255,
         b: 255,
       },
-      state: ":not",
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8940,7 +11403,7 @@ export const styles = {
         g: 255,
         b: 255,
       },
-      state: ":not",
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8950,7 +11413,17 @@ export const styles = {
         unit: "number",
         value: 0,
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8960,7 +11433,17 @@ export const styles = {
         unit: "number",
         value: 0,
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8969,7 +11452,16 @@ export const styles = {
         type: "keyword",
         value: "absolute",
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8979,7 +11471,17 @@ export const styles = {
         unit: "%",
         value: 50,
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8989,7 +11491,17 @@ export const styles = {
         unit: "number",
         value: 0,
       },
-      state: ":not",
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -8997,52 +11509,9 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: -5,
+        value: -4,
       },
-      state: ":not",
-    },
-    {
-      selector: "w-widget-twitter-count-shim",
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 8,
-      },
-    },
-    {
-      selector: "w-widget-twitter-count-shim",
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-    },
-    {
-      selector: "w-widget-twitter-count-shim",
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      selector: "w-widget-twitter-count-shim",
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      selector: "w-widget-twitter-count-shim",
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
+      state: ":before",
     },
     {
       selector: "w-widget-twitter-count-shim",
@@ -9050,22 +11519,134 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
+        value: -9,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
         value: -4,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-widget-twitter-count-shim",
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -8,
+      },
+      state: ":after",
+    },
+  ],
+  "w-widget-twitter-count-shim *": [
+    {
+      selector: "w-widget-twitter-count-shim *",
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim *",
+      property: "userSelect",
+      value: {
+        type: "keyword",
+        value: "none",
       },
     },
   ],
-  "w--large": [
+  "w-widget-twitter-count-shim .w-widget-twitter-count-inner": [
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      property: "fontFamily",
+      value: {
+        type: "fontFamily",
+        value: ["serif"],
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 15,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-inner",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+  ],
+  "w-widget-twitter-count-shim .w-widget-twitter-count-clear": [
+    {
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-clear",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      selector: "w-widget-twitter-count-shim .w-widget-twitter-count-clear",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+  ],
+  "w-widget-twitter-count-shim.w--large": [
+    {
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "width",
       value: {
         type: "unit",
         unit: "px",
-        value: 76,
+        value: 36,
       },
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "height",
       value: {
         type: "unit",
@@ -9074,16 +11655,17 @@ export const styles = {
       },
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "marginLeft",
       value: {
         type: "unit",
         unit: "px",
         value: 6,
       },
+      state: ":not",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -9093,7 +11675,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -9103,7 +11685,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -9113,7 +11695,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -9123,7 +11705,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "marginTop",
       value: {
         type: "unit",
@@ -9133,7 +11715,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9143,7 +11725,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -9153,7 +11735,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -9163,7 +11745,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -9173,7 +11755,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -9183,7 +11765,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "marginTop",
       value: {
         type: "unit",
@@ -9193,7 +11775,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--large",
+      selector: "w-widget-twitter-count-shim.w--large",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9203,164 +11785,40 @@ export const styles = {
       state: ":after",
     },
   ],
-  "w--vertical": [
+  "w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner": [
     {
-      selector: "w--vertical",
-      property: "marginLeft",
+      selector:
+        "w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner",
+      property: "fontSize",
       value: {
         type: "unit",
         unit: "px",
-        value: -9,
+        value: 18,
       },
     },
     {
-      selector: "w--vertical",
-      property: "marginRight",
+      selector:
+        "w-widget-twitter-count-shim.w--large .w-widget-twitter-count-inner",
+      property: "lineHeight",
       value: {
         type: "unit",
         unit: "px",
-        value: 8,
+        value: 18,
       },
     },
+  ],
+  "w-widget-twitter-count-shim.w--vertical": [
     {
-      selector: "w--vertical",
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderTopStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderRightStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderBottomStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderLeftStyle",
-      value: {
-        type: "keyword",
-        value: "solid",
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderTopColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderRightColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderBottomColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "borderLeftColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "width",
       value: {
         type: "unit",
         unit: "px",
-        value: 76,
+        value: 61,
       },
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "height",
       value: {
         type: "unit",
@@ -9369,42 +11827,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--vertical",
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "w--vertical",
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "marginBottom",
       value: {
         type: "unit",
@@ -9413,7 +11836,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "content",
       value: {
         type: "unparsed",
@@ -9422,7 +11845,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "content",
       value: {
         type: "unparsed",
@@ -9431,7 +11854,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -9440,7 +11863,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "pointerEvents",
       value: {
         type: "keyword",
@@ -9449,7 +11872,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -9459,7 +11882,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -9469,7 +11892,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -9479,7 +11902,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -9489,7 +11912,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -9498,7 +11921,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -9507,7 +11930,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -9516,7 +11939,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -9525,7 +11948,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -9537,7 +11960,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -9549,7 +11972,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -9561,7 +11984,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -9573,7 +11996,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderTopWidth",
       value: {
         type: "unit",
@@ -9583,7 +12006,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderRightWidth",
       value: {
         type: "unit",
@@ -9593,7 +12016,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomWidth",
       value: {
         type: "unit",
@@ -9603,7 +12026,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftWidth",
       value: {
         type: "unit",
@@ -9613,7 +12036,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderTopStyle",
       value: {
         type: "keyword",
@@ -9622,7 +12045,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderRightStyle",
       value: {
         type: "keyword",
@@ -9631,7 +12054,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomStyle",
       value: {
         type: "keyword",
@@ -9640,7 +12063,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftStyle",
       value: {
         type: "keyword",
@@ -9649,7 +12072,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -9661,7 +12084,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -9673,7 +12096,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -9685,7 +12108,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -9697,7 +12120,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "width",
       value: {
         type: "unit",
@@ -9707,7 +12130,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "width",
       value: {
         type: "unit",
@@ -9717,7 +12140,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "height",
       value: {
         type: "unit",
@@ -9727,7 +12150,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "height",
       value: {
         type: "unit",
@@ -9737,7 +12160,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "position",
       value: {
         type: "keyword",
@@ -9746,7 +12169,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "position",
       value: {
         type: "keyword",
@@ -9755,7 +12178,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "top",
       value: {
         type: "unit",
@@ -9765,7 +12188,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "top",
       value: {
         type: "unit",
@@ -9775,7 +12198,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "left",
       value: {
         type: "unit",
@@ -9785,7 +12208,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "left",
       value: {
         type: "unit",
@@ -9795,7 +12218,7 @@ export const styles = {
       state: ":after",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9805,7 +12228,7 @@ export const styles = {
       state: ":before",
     },
     {
-      selector: "w--vertical",
+      selector: "w-widget-twitter-count-shim.w--vertical",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -9813,6 +12236,39 @@ export const styles = {
         value: -4,
       },
       state: ":after",
+    },
+  ],
+  "w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner": [
+    {
+      selector:
+        "w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner",
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 18,
+      },
+    },
+    {
+      selector:
+        "w-widget-twitter-count-shim.w--vertical .w-widget-twitter-count-inner",
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 22,
+      },
+    },
+  ],
+  "w-widget-twitter-count-shim.w--vertical.w--large": [
+    {
+      selector: "w-widget-twitter-count-shim.w--vertical.w--large",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 76,
+      },
     },
   ],
   "w-background-video": [
@@ -9859,6 +12315,177 @@ export const styles = {
         type: "keyword",
         value: "hidden",
       },
+    },
+  ],
+  "w-background-video > video": [
+    {
+      selector: "w-background-video > video",
+      property: "objectFit",
+      value: {
+        type: "keyword",
+        value: "cover",
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: -100,
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "backgroundPositionX",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            unit: "%",
+            value: 50,
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "backgroundPositionY",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "center",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "backgroundSize",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "cover",
+          },
+        ],
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "marginTop",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "marginBottom",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: -100,
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: -100,
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: -100,
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: -100,
+      },
+    },
+    {
+      selector: "w-background-video > video",
+      property: "appearance",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-webkit-media-controls-start-playback-button",
+    },
+    {
+      selector: "w-background-video > video",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: "::-webkit-media-controls-start-playback-button",
     },
   ],
   "w-background-video--control": [
@@ -9933,6 +12560,16 @@ export const styles = {
         type: "unit",
         unit: "em",
         value: 1,
+      },
+    },
+  ],
+  "w-background-video--control > ": [
+    {
+      selector: "w-background-video--control > ",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
       },
     },
   ],
@@ -10317,8 +12954,9 @@ export const styles = {
       selector: "w-slider-nav",
       property: "height",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "unit",
+        unit: "px",
+        value: 40,
       },
     },
     {
@@ -10358,8 +12996,8 @@ export const styles = {
       property: "paddingTop",
       value: {
         type: "unit",
-        unit: "em",
-        value: 0.2,
+        unit: "px",
+        value: 10,
       },
     },
     {
@@ -10405,8 +13043,10 @@ export const styles = {
         value: 0,
       },
     },
+  ],
+  "w-slider-nav.w-round > div": [
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-round > div",
       property: "borderTopLeftRadius",
       value: {
         type: "unit",
@@ -10415,7 +13055,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-round > div",
       property: "borderTopRightRadius",
       value: {
         type: "unit",
@@ -10424,7 +13064,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-round > div",
       property: "borderBottomRightRadius",
       value: {
         type: "unit",
@@ -10432,8 +13072,10 @@ export const styles = {
         value: 100,
       },
     },
+  ],
+  "w-slider-nav.w-num > div": [
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-num > div",
       property: "fontSize",
       value: {
         type: "keyword",
@@ -10441,7 +13083,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-num > div",
       property: "lineHeight",
       value: {
         type: "keyword",
@@ -10449,7 +13091,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-num > div",
       property: "width",
       value: {
         type: "keyword",
@@ -10457,7 +13099,24 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-num > div",
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-slider-nav.w-num > div",
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: 0.2,
+      },
+    },
+    {
+      selector: "w-slider-nav.w-num > div",
       property: "paddingRight",
       value: {
         type: "unit",
@@ -10466,7 +13125,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-num > div",
       property: "paddingBottom",
       value: {
         type: "unit",
@@ -10475,7 +13134,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-num > div",
       property: "paddingLeft",
       value: {
         type: "unit",
@@ -10483,8 +13142,10 @@ export const styles = {
         value: 0.5,
       },
     },
+  ],
+  "w-slider-nav.w-shadow > div": [
     {
-      selector: "w-slider-nav",
+      selector: "w-slider-nav.w-shadow > div",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -10533,34 +13194,29 @@ export const styles = {
       },
     },
   ],
-  "w-active": [
+  "w-slider-nav-invert > div": [
     {
-      selector: "w-active",
+      selector: "w-slider-nav-invert > div",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 0.4,
+        r: 34,
+        g: 34,
+        b: 34,
+      },
+    },
+  ],
+  "w-slider-nav-invert > div.w-active": [
+    {
+      selector: "w-slider-nav-invert > div.w-active",
       property: "backgroundColor",
       value: {
         type: "rgb",
         alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      selector: "w-active",
-      property: "boxShadow",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "keyword",
-                value: "none",
-              },
-            ],
-          },
-        ],
+        r: 34,
+        g: 34,
+        b: 34,
       },
     },
   ],
@@ -10578,7 +13234,7 @@ export const styles = {
       property: "backgroundColor",
       value: {
         type: "rgb",
-        alpha: 1,
+        alpha: 0.4,
         r: 255,
         g: 255,
         b: 255,
@@ -10772,6 +13428,61 @@ export const styles = {
     },
     {
       selector: "w-slider-dot",
+      property: "boxShadow",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "tuple",
+            value: [
+              {
+                type: "unit",
+                unit: "number",
+                value: 0,
+              },
+              {
+                type: "unit",
+                unit: "number",
+                value: 0,
+              },
+              {
+                type: "unit",
+                unit: "number",
+                value: 0,
+              },
+              {
+                type: "unit",
+                unit: "px",
+                value: 2,
+              },
+              {
+                type: "rgb",
+                alpha: 1,
+                r: 255,
+                g: 255,
+                b: 255,
+              },
+            ],
+          },
+        ],
+      },
+      state: ":focus",
+    },
+  ],
+  "w-slider-dot.w-active": [
+    {
+      selector: "w-slider-dot.w-active",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      selector: "w-slider-dot.w-active",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -11181,6 +13892,46 @@ export const styles = {
         type: "unit",
         unit: "number",
         value: 4,
+      },
+    },
+  ],
+  'w-slider-arrow-left [class^="w-icon-"]': [
+    {
+      selector: 'w-slider-arrow-left [class^="w-icon-"]',
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+  ],
+  'w-slider-arrow-right [class^="w-icon-"]': [
+    {
+      selector: 'w-slider-arrow-right [class^="w-icon-"]',
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+  ],
+  'w-slider-arrow-left [class*=" w-icon-"]': [
+    {
+      selector: 'w-slider-arrow-left [class*=" w-icon-"]',
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+  ],
+  'w-slider-arrow-right [class*=" w-icon-"]': [
+    {
+      selector: 'w-slider-arrow-right [class*=" w-icon-"]',
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
       },
     },
   ],
@@ -11794,9 +14545,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 0,
-        g: 130,
-        b: 243,
+        r: 34,
+        g: 34,
+        b: 34,
       },
     },
     {
@@ -12085,7 +14836,7 @@ export const styles = {
       property: "display",
       value: {
         type: "keyword",
-        value: "block",
+        value: "none",
       },
     },
     {
@@ -12097,41 +14848,19 @@ export const styles = {
       },
     },
   ],
-  "w--open": [
+  "w-dropdown-list.w--open": [
     {
-      selector: "w--open",
+      selector: "w-dropdown-list.w--open",
       property: "display",
       value: {
         type: "keyword",
         value: "block",
       },
     },
-    {
-      selector: "w--open",
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      selector: "w--open",
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 200,
-        g: 200,
-        b: 200,
-      },
-    },
   ],
-  "w--current": [
+  "w-dropdown-link.w--current": [
     {
-      selector: "w--current",
+      selector: "w-dropdown-link.w--current",
       property: "color",
       value: {
         type: "rgb",
@@ -12139,17 +14868,6 @@ export const styles = {
         r: 0,
         g: 130,
         b: 243,
-      },
-    },
-    {
-      selector: "w--current",
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 200,
-        g: 200,
-        b: 200,
       },
     },
   ],
@@ -12901,6 +15619,48 @@ export const styles = {
       breakpoint: "(min-width:768px)",
     },
   ],
+  "w-lightbox-group .w-lightbox-view": [
+    {
+      selector: "w-lightbox-group .w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 86,
+      },
+    },
+    {
+      selector: "w-lightbox-group .w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 86,
+      },
+      state: ":before",
+    },
+    {
+      selector: "w-lightbox-group .w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 84,
+      },
+      breakpoint: "(min-width:768px)",
+    },
+    {
+      selector: "w-lightbox-group .w-lightbox-view",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 84,
+      },
+      breakpoint: "(min-width:768px)",
+      state: ":before",
+    },
+  ],
   "w-lightbox-frame": [
     {
       selector: "w-lightbox-frame",
@@ -12962,6 +15722,16 @@ export const styles = {
       value: {
         type: "keyword",
         value: "relative",
+      },
+    },
+  ],
+  "w-lightbox-group .w-lightbox-figure": [
+    {
+      selector: "w-lightbox-group .w-lightbox-figure",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
       },
     },
   ],
@@ -13043,6 +15813,37 @@ export const styles = {
         type: "unit",
         unit: "vh",
         value: 96,
+      },
+      breakpoint: "(min-width:768px)",
+    },
+  ],
+  "w-lightbox-group .w-lightbox-image": [
+    {
+      selector: "w-lightbox-group .w-lightbox-image",
+      property: "maxHeight",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 86,
+      },
+    },
+    {
+      selector: "w-lightbox-group .w-lightbox-image",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "vw",
+        value: 82.3,
+      },
+      breakpoint: "(min-width:768px)",
+    },
+    {
+      selector: "w-lightbox-group .w-lightbox-image",
+      property: "maxHeight",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 84,
       },
       breakpoint: "(min-width:768px)",
     },
@@ -14129,6 +16930,97 @@ export const styles = {
       },
     },
   ],
+  "w-lightbox-thumbnail .w-lightbox-tall": [
+    {
+      selector: "w-lightbox-thumbnail .w-lightbox-tall",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-lightbox-thumbnail .w-lightbox-tall",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      selector: "w-lightbox-thumbnail .w-lightbox-tall",
+      property: "transform",
+      value: {
+        type: "tuple",
+        value: [
+          {
+            type: "function",
+            args: {
+              type: "layers",
+              value: [
+                {
+                  type: "unit",
+                  unit: "number",
+                  value: 0,
+                },
+                {
+                  type: "unit",
+                  unit: "%",
+                  value: -50,
+                },
+              ],
+            },
+            name: "translate",
+          },
+        ],
+      },
+    },
+  ],
+  "w-lightbox-thumbnail .w-lightbox-wide": [
+    {
+      selector: "w-lightbox-thumbnail .w-lightbox-wide",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-lightbox-thumbnail .w-lightbox-wide",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      selector: "w-lightbox-thumbnail .w-lightbox-wide",
+      property: "transform",
+      value: {
+        type: "tuple",
+        value: [
+          {
+            type: "function",
+            args: {
+              type: "layers",
+              value: [
+                {
+                  type: "unit",
+                  unit: "%",
+                  value: -50,
+                },
+              ],
+            },
+            name: "translate",
+          },
+        ],
+      },
+    },
+  ],
   "w-lightbox-spinner": [
     {
       selector: "w-lightbox-spinner",
@@ -14817,26 +17709,420 @@ export const styles = {
       },
       state: ":after",
     },
+  ],
+  'w-richtext[contenteditable="true"]': [
     {
-      selector: "w-richtext",
+      selector: 'w-richtext[contenteditable="true"]',
       property: "whiteSpaceCollapse",
       value: {
         type: "keyword",
         value: "initial",
       },
+      state: ":before",
     },
     {
-      selector: "w-richtext",
+      selector: 'w-richtext[contenteditable="true"]',
       property: "textWrapMode",
       value: {
         type: "keyword",
         value: "initial",
       },
+      state: ":before",
+    },
+    {
+      selector: 'w-richtext[contenteditable="true"]',
+      property: "whiteSpaceCollapse",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext[contenteditable="true"]',
+      property: "textWrapMode",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+      state: ":after",
     },
   ],
-  "w-richtext-figcaption-placeholder": [
+  "w-richtext ol": [
     {
-      selector: "w-richtext-figcaption-placeholder",
+      selector: "w-richtext ol",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      selector: "w-richtext ol",
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+  ],
+  "w-richtext ul": [
+    {
+      selector: "w-richtext ul",
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      selector: "w-richtext ul",
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+  ],
+  "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div": [
+    {
+      selector:
+        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
+      property: "outlineWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      selector:
+        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector:
+        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-video div",
+      property: "outlineColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 40,
+        g: 149,
+        b: 247,
+      },
+      state: ":after",
+    },
+  ],
+  'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div': [
+    {
+      selector:
+        'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
+      property: "outlineWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+      state: ":after",
+    },
+    {
+      selector:
+        'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+      state: ":after",
+    },
+    {
+      selector:
+        'w-richtext .w-richtext-figure-selected[data-rt-type="video"] div',
+      property: "outlineColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 40,
+        g: 149,
+        b: 247,
+      },
+      state: ":after",
+    },
+  ],
+  "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div": [
+    {
+      selector:
+        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
+      property: "outlineWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+    },
+    {
+      selector:
+        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector:
+        "w-richtext .w-richtext-figure-selected.w-richtext-figure-type-image div",
+      property: "outlineColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 40,
+        g: 149,
+        b: 247,
+      },
+    },
+  ],
+  'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div': [
+    {
+      selector:
+        'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
+      property: "outlineWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 2,
+      },
+    },
+    {
+      selector:
+        'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
+      property: "outlineStyle",
+      value: {
+        type: "keyword",
+        value: "solid",
+      },
+    },
+    {
+      selector:
+        'w-richtext .w-richtext-figure-selected[data-rt-type="image"] div',
+      property: "outlineColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 40,
+        g: 149,
+        b: 247,
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-figure-type-video > div": [
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '""',
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video > div",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+  ],
+  'w-richtext figure[data-rt-type="video"] > div': [
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '""',
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+      state: ":after",
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] > div',
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+  ],
+  "w-richtext figure": [
+    {
+      selector: "w-richtext figure",
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 60,
+      },
+    },
+    {
+      selector: "w-richtext figure",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+  ],
+  "w-richtext figure > div": [
+    {
+      selector: "w-richtext figure > div",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "default",
+      },
+      state: ":before",
+    },
+  ],
+  "w-richtext figure img": [
+    {
+      selector: "w-richtext figure img",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+  ],
+  "w-richtext figure figcaption.w-richtext-figcaption-placeholder": [
+    {
+      selector:
+        "w-richtext figure figcaption.w-richtext-figcaption-placeholder",
       property: "opacity",
       value: {
         type: "unit",
@@ -14845,9 +18131,31 @@ export const styles = {
       },
     },
   ],
-  "w-richtext-figure-type-image": [
+  "w-richtext figure div": [
     {
-      selector: "w-richtext-figure-type-image",
+      selector: "w-richtext figure div",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      selector: "w-richtext figure div",
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-figure-type-image": [
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-image",
       property: "display",
       value: {
         type: "keyword",
@@ -14855,9 +18163,75 @@ export const styles = {
       },
     },
   ],
-  "w-richtext-figure-type-video": [
+  'w-richtext figure[data-rt-type="image"]': [
     {
-      selector: "w-richtext-figure-type-video",
+      selector: 'w-richtext figure[data-rt-type="image"]',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "table",
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-figure-type-image > div": [
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-image > div",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+  ],
+  'w-richtext figure[data-rt-type="image"] > div': [
+    {
+      selector: 'w-richtext figure[data-rt-type="image"] > div',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-figure-type-image > figcaption": [
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-image > figcaption",
+      property: "captionSide",
+      value: {
+        type: "keyword",
+        value: "bottom",
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-image > figcaption",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "table-caption",
+      },
+    },
+  ],
+  'w-richtext figure[data-rt-type="image"] > figcaption': [
+    {
+      selector: 'w-richtext figure[data-rt-type="image"] > figcaption',
+      property: "captionSide",
+      value: {
+        type: "keyword",
+        value: "bottom",
+      },
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="image"] > figcaption',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "table-caption",
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-figure-type-video": [
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video",
       property: "width",
       value: {
         type: "unit",
@@ -14866,7 +18240,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-figure-type-video",
+      selector: "w-richtext figure.w-richtext-figure-type-video",
       property: "height",
       value: {
         type: "unit",
@@ -14875,70 +18249,29 @@ export const styles = {
       },
     },
   ],
-  "w-richtext-align-center": [
+  'w-richtext figure[data-rt-type="video"]': [
     {
-      selector: "w-richtext-align-center",
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "both",
-      },
-    },
-    {
-      selector: "w-richtext-align-center",
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      selector: "w-richtext-align-center",
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      selector: "w-richtext-align-center",
-      property: "maxWidth",
+      selector: 'w-richtext figure[data-rt-type="video"]',
+      property: "width",
       value: {
         type: "unit",
         unit: "%",
-        value: 100,
+        value: 60,
+      },
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"]',
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
   ],
-  "w-richtext-align-normal": [
+  "w-richtext figure.w-richtext-figure-type-video iframe": [
     {
-      selector: "w-richtext-align-normal",
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "both",
-      },
-    },
-  ],
-  "w-richtext-align-fullwidth": [
-    {
-      selector: "w-richtext-align-fullwidth",
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-    {
-      selector: "w-richtext-align-fullwidth",
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "both",
-      },
-    },
-    {
-      selector: "w-richtext-align-fullwidth",
+      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
       property: "width",
       value: {
         type: "unit",
@@ -14947,7 +18280,176 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-fullwidth",
+      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-figure-type-video iframe",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  'w-richtext figure[data-rt-type="video"] iframe': [
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'w-richtext figure[data-rt-type="video"] iframe',
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-align-center": [
+    {
+      selector: "w-richtext figure.w-richtext-align-center",
+      property: "clear",
+      value: {
+        type: "keyword",
+        value: "both",
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-align-center",
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-align-center",
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-align-center.w-richtext-figure-type-image > div":
+    [
+      {
+        selector:
+          "w-richtext figure.w-richtext-align-center.w-richtext-figure-type-image > div",
+        property: "maxWidth",
+        value: {
+          type: "unit",
+          unit: "%",
+          value: 100,
+        },
+      },
+    ],
+  'w-richtext figure.w-richtext-align-center[data-rt-type="image"] > div': [
+    {
+      selector:
+        'w-richtext figure.w-richtext-align-center[data-rt-type="image"] > div',
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-align-normal": [
+    {
+      selector: "w-richtext figure.w-richtext-align-normal",
+      property: "clear",
+      value: {
+        type: "keyword",
+        value: "both",
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-align-fullwidth": [
+    {
+      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      property: "clear",
+      value: {
+        type: "keyword",
+        value: "both",
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-align-fullwidth",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-align-fullwidth",
       property: "maxWidth",
       value: {
         type: "unit",
@@ -14956,7 +18458,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-fullwidth",
+      selector: "w-richtext figure.w-richtext-align-fullwidth",
       property: "marginLeft",
       value: {
         type: "keyword",
@@ -14964,7 +18466,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-fullwidth",
+      selector: "w-richtext figure.w-richtext-align-fullwidth",
       property: "marginRight",
       value: {
         type: "keyword",
@@ -14972,7 +18474,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-fullwidth",
+      selector: "w-richtext figure.w-richtext-align-fullwidth",
       property: "display",
       value: {
         type: "keyword",
@@ -14980,9 +18482,37 @@ export const styles = {
       },
     },
   ],
-  "w-richtext-align-floatleft": [
+  "w-richtext figure.w-richtext-align-fullwidth > div": [
     {
-      selector: "w-richtext-align-floatleft",
+      selector: "w-richtext figure.w-richtext-align-fullwidth > div",
+      property: "paddingBottom",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      selector: "w-richtext figure.w-richtext-align-fullwidth > div",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-align-fullwidth > figcaption": [
+    {
+      selector: "w-richtext figure.w-richtext-align-fullwidth > figcaption",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+  ],
+  "w-richtext figure.w-richtext-align-floatleft": [
+    {
+      selector: "w-richtext figure.w-richtext-align-floatleft",
       property: "float",
       value: {
         type: "keyword",
@@ -14990,7 +18520,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-floatleft",
+      selector: "w-richtext figure.w-richtext-align-floatleft",
       property: "clear",
       value: {
         type: "keyword",
@@ -14998,7 +18528,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-floatleft",
+      selector: "w-richtext figure.w-richtext-align-floatleft",
       property: "marginRight",
       value: {
         type: "unit",
@@ -15007,9 +18537,9 @@ export const styles = {
       },
     },
   ],
-  "w-richtext-align-floatright": [
+  "w-richtext figure.w-richtext-align-floatright": [
     {
-      selector: "w-richtext-align-floatright",
+      selector: "w-richtext figure.w-richtext-align-floatright",
       property: "float",
       value: {
         type: "keyword",
@@ -15017,7 +18547,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-floatright",
+      selector: "w-richtext figure.w-richtext-align-floatright",
       property: "clear",
       value: {
         type: "keyword",
@@ -15025,7 +18555,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-richtext-align-floatright",
+      selector: "w-richtext figure.w-richtext-align-floatright",
       property: "marginLeft",
       value: {
         type: "unit",
@@ -15041,7 +18571,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "number",
-        value: 1,
+        value: 1000,
       },
     },
     {
@@ -15303,74 +18833,6 @@ export const styles = {
       },
       state: ":after",
     },
-    {
-      selector: "w-nav",
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      selector: "w-nav",
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      selector: "w-nav",
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      selector: "w-nav",
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      selector: "w-nav",
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      selector: "w-nav",
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-      breakpoint: "(max-width:991px)",
-    },
-    {
-      selector: "w-nav",
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-      breakpoint: "(max-width:767px)",
-    },
-    {
-      selector: "w-nav",
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-      breakpoint: "(max-width:479px)",
-    },
   ],
   "w-nav-link": [
     {
@@ -15387,9 +18849,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 0,
-        g: 130,
-        b: 243,
+        r: 34,
+        g: 34,
+        b: 34,
       },
     },
     {
@@ -15490,6 +18952,19 @@ export const styles = {
       value: {
         type: "keyword",
         value: "relative",
+      },
+    },
+  ],
+  "w-nav-link.w--current": [
+    {
+      selector: "w-nav-link.w--current",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 0,
+        g: 130,
+        b: 243,
       },
     },
   ],
@@ -15596,6 +19071,145 @@ export const styles = {
       value: {
         type: "keyword",
         value: "hidden",
+      },
+    },
+  ],
+  "w-nav-overlay ": [
+    {
+      selector: "w-nav-overlay ",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  'w-nav[data-animation="over-left"] .w-nav-overlay': [
+    {
+      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-left"] .w-nav-overlay',
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  'w-nav[data-animation="over-left"] ': [
+    {
+      selector: 'w-nav[data-animation="over-left"] ',
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-left"] ',
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-left"] ',
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  'w-nav[data-animation="over-right"] .w-nav-overlay': [
+    {
+      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-right"] .w-nav-overlay',
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  'w-nav[data-animation="over-right"] ': [
+    {
+      selector: 'w-nav[data-animation="over-right"] ',
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-right"] ',
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: 'w-nav[data-animation="over-right"] ',
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
       },
     },
   ],
@@ -15735,8 +19349,10 @@ export const styles = {
       },
       state: ":focus",
     },
+  ],
+  "w-nav-button.w--open": [
     {
-      selector: "w-nav-button",
+      selector: "w-nav-button.w--open",
       property: "color",
       value: {
         type: "rgb",
@@ -15747,7 +19363,7 @@ export const styles = {
       },
     },
     {
-      selector: "w-nav-button",
+      selector: "w-nav-button.w--open",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -15755,6 +19371,26 @@ export const styles = {
         r: 200,
         g: 200,
         b: 200,
+      },
+    },
+  ],
+  'w-nav[data-collapse="all"] .w-nav-menu': [
+    {
+      selector: 'w-nav[data-collapse="all"] .w-nav-menu',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
+  'w-nav[data-collapse="all"] .w-nav-button': [
+    {
+      selector: 'w-nav[data-collapse="all"] .w-nav-button',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
       },
     },
   ],
@@ -15786,6 +19422,72 @@ export const styles = {
         type: "keyword",
         value: "static",
       },
+    },
+  ],
+  'w-nav[data-collapse="medium"] .w-nav-menu': [
+    {
+      selector: 'w-nav[data-collapse="medium"] .w-nav-menu',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+  ],
+  'w-nav[data-collapse="medium"] .w-nav-button': [
+    {
+      selector: 'w-nav[data-collapse="medium"] .w-nav-button',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:991px)",
+    },
+  ],
+  'w-nav[data-collapse="small"] .w-nav-menu': [
+    {
+      selector: 'w-nav[data-collapse="small"] .w-nav-menu',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  'w-nav[data-collapse="small"] .w-nav-button': [
+    {
+      selector: 'w-nav[data-collapse="small"] .w-nav-button',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:767px)",
+    },
+  ],
+  'w-nav[data-collapse="tiny"] .w-nav-menu': [
+    {
+      selector: 'w-nav[data-collapse="tiny"] .w-nav-menu',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+      breakpoint: "(max-width:479px)",
+    },
+  ],
+  'w-nav[data-collapse="tiny"] .w-nav-button': [
+    {
+      selector: 'w-nav[data-collapse="tiny"] .w-nav-button',
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+      breakpoint: "(max-width:479px)",
     },
   ],
   "w-tabs": [
@@ -15975,9 +19677,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 200,
-        g: 200,
-        b: 200,
+        r: 221,
+        g: 221,
+        b: 221,
       },
     },
     {
@@ -16092,6 +19794,19 @@ export const styles = {
         value: "block",
       },
       breakpoint: "(max-width:479px)",
+    },
+  ],
+  "w-tab-link.w--current": [
+    {
+      selector: "w-tab-link.w--current",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 200,
+        g: 200,
+        b: 200,
+      },
     },
   ],
   "w-tab-content": [
@@ -16253,6 +19968,52 @@ export const styles = {
       value: {
         type: "keyword",
         value: "grid",
+      },
+    },
+  ],
+  "w-code-component > *": [
+    {
+      selector: "w-code-component > *",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-code-component > *",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      selector: "w-code-component > *",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      selector: "w-code-component > *",
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      selector: "w-code-component > *",
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
   ],
@@ -16873,9 +20634,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -16884,9 +20645,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -16895,9 +20656,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -16906,9 +20667,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -16956,131 +20717,10 @@ export const styles = {
         value: 12,
       },
     },
-    {
-      selector: "w-checkbox-input--inputType-custom",
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      selector: "w-checkbox-input--inputType-custom",
-      property: "backgroundImage",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "image",
-            value: {
-              type: "url",
-              url: "https://d3e54v103j8qbb.cloudfront.net/static/custom-checkbox-checkmark.589d534424.svg",
-            },
-          },
-        ],
-      },
-    },
-    {
-      selector: "w-checkbox-input--inputType-custom",
-      property: "backgroundPositionX",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "unit",
-            unit: "%",
-            value: 50,
-          },
-        ],
-      },
-    },
-    {
-      selector: "w-checkbox-input--inputType-custom",
-      property: "backgroundPositionY",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "center",
-          },
-        ],
-      },
-    },
-    {
-      selector: "w-checkbox-input--inputType-custom",
-      property: "backgroundRepeat",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "no-repeat",
-          },
-        ],
-      },
-    },
-    {
-      selector: "w-checkbox-input--inputType-custom",
-      property: "backgroundSize",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "keyword",
-            value: "cover",
-          },
-        ],
-      },
-    },
-    {
-      selector: "w-checkbox-input--inputType-custom",
-      property: "boxShadow",
-      value: {
-        type: "layers",
-        value: [
-          {
-            type: "tuple",
-            value: [
-              {
-                type: "unit",
-                unit: "number",
-                value: 0,
-              },
-              {
-                type: "unit",
-                unit: "number",
-                value: 0,
-              },
-              {
-                type: "unit",
-                unit: "px",
-                value: 3,
-              },
-              {
-                type: "unit",
-                unit: "px",
-                value: 1,
-              },
-              {
-                type: "rgb",
-                alpha: 1,
-                r: 56,
-                g: 152,
-                b: 236,
-              },
-            ],
-          },
-        ],
-      },
-    },
   ],
-  "w--redirected-checked": [
+  "w-checkbox-input--inputType-custom.w--redirected-checked": [
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -17091,7 +20731,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundImage",
       value: {
         type: "layers",
@@ -17107,7 +20747,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundPositionX",
       value: {
         type: "layers",
@@ -17121,7 +20761,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundPositionY",
       value: {
         type: "layers",
@@ -17134,7 +20774,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundRepeat",
       value: {
         type: "layers",
@@ -17147,7 +20787,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "backgroundSize",
       value: {
         type: "layers",
@@ -17160,7 +20800,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderTopColor",
       value: {
         type: "rgb",
@@ -17171,7 +20811,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderRightColor",
       value: {
         type: "rgb",
@@ -17182,7 +20822,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderBottomColor",
       value: {
         type: "rgb",
@@ -17193,7 +20833,7 @@ export const styles = {
       },
     },
     {
-      selector: "w--redirected-checked",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-checked",
       property: "borderLeftColor",
       value: {
         type: "rgb",
@@ -17203,46 +20843,10 @@ export const styles = {
         b: 236,
       },
     },
-    {
-      selector: "w--redirected-checked",
-      property: "borderTopWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      selector: "w--redirected-checked",
-      property: "borderRightWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      selector: "w--redirected-checked",
-      property: "borderBottomWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      selector: "w--redirected-checked",
-      property: "borderLeftWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
   ],
-  "w--redirected-focus": [
+  "w-checkbox-input--inputType-custom.w--redirected-focus": [
     {
-      selector: "w--redirected-focus",
+      selector: "w-checkbox-input--inputType-custom.w--redirected-focus",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -17290,7 +20894,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -17299,7 +20903,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -17308,7 +20912,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -17317,7 +20921,7 @@ export const styles = {
       value: {
         type: "unit",
         unit: "px",
-        value: 4,
+        value: 1,
       },
     },
     {
@@ -17358,9 +20962,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -17369,9 +20973,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -17380,9 +20984,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -17391,9 +20995,9 @@ export const styles = {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
+        r: 204,
+        g: 204,
+        b: 204,
       },
     },
     {
@@ -17441,8 +21045,10 @@ export const styles = {
         value: 12,
       },
     },
+  ],
+  "w-form-formradioinput--inputType-custom.w--redirected-focus": [
     {
-      selector: "w-form-formradioinput--inputType-custom",
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-focus",
       property: "boxShadow",
       value: {
         type: "layers",
@@ -17480,6 +21086,88 @@ export const styles = {
             ],
           },
         ],
+      },
+    },
+  ],
+  "w-form-formradioinput--inputType-custom.w--redirected-checked": [
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderTopWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderRightWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderBottomWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderLeftWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderTopColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderRightColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderBottomColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      selector: "w-form-formradioinput--inputType-custom.w--redirected-checked",
+      property: "borderLeftColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
       },
     },
   ],
