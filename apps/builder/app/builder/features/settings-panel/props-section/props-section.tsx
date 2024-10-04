@@ -9,7 +9,10 @@ import {
   Flex,
   Box,
 } from "@webstudio-is/design-system";
-import { descendantComponent } from "@webstudio-is/react-sdk";
+import {
+  descendantComponent,
+  isAttributeNameSafe,
+} from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
@@ -21,7 +24,6 @@ import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
-import { isAttributeNameSafe } from "~/shared/dom-utils";
 
 type Item = {
   name: string;
