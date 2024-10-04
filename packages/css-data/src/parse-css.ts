@@ -188,7 +188,8 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
             name = childNode.name;
             break;
           case "ClassSelector":
-            // .a {} vs a.b {}
+            // .a => a
+            // .a.b => a.b
             name = selector ? `.${childNode.name}` : childNode.name;
             break;
           case "AttributeSelector":
