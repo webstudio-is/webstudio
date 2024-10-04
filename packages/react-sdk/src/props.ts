@@ -139,9 +139,11 @@ export const textContentAttribute = "data-ws-text-content" as const;
  * https://github.com/facebook/react/blob/main/packages/react-dom-bindings/src/shared/isAttributeNameSafe.js
  */
 const attributeNameStartChar =
-  ":A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
+  "A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
+// original: ":A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
 const attributeNameChar =
-  attributeNameStartChar + "\\-.0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
+  attributeNameStartChar + ":\\-0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
+// original: attributeNameStartChar + "\\-.0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
 
 const validAttributeNameRegex = new RegExp(
   // eslint-disable-next-line no-misleading-character-class

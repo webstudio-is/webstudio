@@ -987,6 +987,16 @@ test("skip unsafe properties", () => {
             value: "unsafe",
           },
         ],
+        [
+          "unsafeProp-3",
+          {
+            id: "unsafeProp-3",
+            instanceId: "body",
+            name: "click.prevent",
+            type: "string",
+            value: "unsafe",
+          },
+        ],
       ]),
     })
   ).toEqual(
