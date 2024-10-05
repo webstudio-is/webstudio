@@ -999,3 +999,50 @@ test("skip unsafe properties", () => {
     )
   );
 });
+
+test("variable names can be js identifiers", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: toMap([
+        {
+          type: "variable",
+          id: "variableId",
+          name: "switch",
+          value: { type: "string", value: "initial" },
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <$.Input
+            value={new ExpressionValue("$ws$dataSource$variableId")}
+            onChange={
+              new ActionValue(["value"], `$ws$dataSource$variableId = value`)
+            }
+          />
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      let [switch_, set$switch] = useVariableState<any>("initial")
+      return <Body>
+      <Input
+      value={switch_}
+      onChange={(value: any) => {
+      switch_ = value
+      set$switch(switch_)
+      }} />
+      </Body>
+      }
+    `)
+    )
+  );
+});
