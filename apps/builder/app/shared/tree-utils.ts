@@ -54,7 +54,7 @@ const getCollectionDropTarget = (
   dropTarget: DroppableTarget
 ) => {
   const [parentId, grandparentId] = dropTarget.parentSelector;
-  let parent = instances.get(parentId);
+  const parent = instances.get(parentId);
   const grandparent = instances.get(grandparentId);
   if (parent === undefined && grandparent?.component === collectionComponent) {
     return {
