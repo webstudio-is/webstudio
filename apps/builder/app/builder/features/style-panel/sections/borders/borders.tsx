@@ -1,4 +1,3 @@
-import { Flex } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { StyleSection } from "../../shared/style-section";
 import {
@@ -28,12 +27,10 @@ export const properties = [
 export const Section = () => {
   return (
     <StyleSection label="Borders" properties={properties}>
-      <Flex direction="column" gap={2}>
-        <BorderStyle />
-        <BorderColor />
-        <BorderWidth />
-        <BorderRadius />
-      </Flex>
+      <BorderStyle />
+      <BorderColor />
+      <BorderWidth />
+      <BorderRadius />
     </StyleSection>
   );
 };

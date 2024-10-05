@@ -172,7 +172,7 @@ type ColorPickerProps = {
   onAbort: () => void;
   value: StyleValue;
   currentColor: StyleValue;
-  options?: Array<KeywordValue | VarValue>;
+  getOptions?: () => Array<KeywordValue | VarValue>;
   property: StyleProperty;
   disabled?: boolean;
 };
@@ -240,7 +240,7 @@ export const ColorPopover = ({
 export const ColorPicker = ({
   value,
   currentColor,
-  options,
+  getOptions,
   property,
   disabled,
   onChange,
@@ -276,7 +276,7 @@ export const ColorPicker = ({
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      getOptions={() => options ?? []}
+      getOptions={getOptions}
       onChange={(styleValue) => {
         if (styleValue === undefined) {
           setIntermediateValue(styleValue);
