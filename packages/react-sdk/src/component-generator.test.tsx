@@ -1016,7 +1016,7 @@ test("variable names can be js identifiers", () => {
           value: { type: "string", value: "initial" },
         },
       ]),
-      indexesWithinAncestors: new Map([["input", 0]]),
+      indexesWithinAncestors: new Map(),
       ...renderJsx(
         <$.Body ws:id="body">
           <$.Input
