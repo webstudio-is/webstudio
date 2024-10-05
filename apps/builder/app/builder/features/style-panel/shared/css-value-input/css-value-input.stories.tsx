@@ -26,7 +26,7 @@ export const WithKeywords = () => {
       property="width"
       value={value}
       intermediateValue={intermediateValue}
-      options={[
+      getOptions={() => [
         { type: "keyword", value: "auto" },
         { type: "keyword", value: "min-content" },
         { type: "keyword", value: "max-content" },
@@ -67,7 +67,7 @@ export const WithIcons = () => {
       property="alignItems"
       value={value}
       intermediateValue={intermediateValue}
-      options={[
+      getOptions={() => [
         { type: "keyword", value: "normal" },
         { type: "keyword", value: "start" },
         { type: "keyword", value: "end" },
@@ -113,7 +113,7 @@ export const WithUnits = () => {
         property="rowGap"
         value={value}
         intermediateValue={intermediateValue}
-        options={[
+        getOptions={() => [
           { type: "keyword", value: "auto" },
           { type: "keyword", value: "min-content" },
           { type: "keyword", value: "max-content" },

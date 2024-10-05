@@ -152,10 +152,9 @@ const GapInput = ({
         property={property}
         value={styleDecl.cascadedValue}
         intermediateValue={intermediateValue}
-        options={items.map((item) => ({
-          type: "keyword",
-          value: item.name,
-        }))}
+        getOptions={() =>
+          items.map((item) => ({ type: "keyword", value: item.name }))
+        }
         onChange={(styleValue) => {
           onIntermediateChange(styleValue);
           if (styleValue === undefined) {

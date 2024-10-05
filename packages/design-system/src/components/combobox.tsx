@@ -227,48 +227,10 @@ const defaultMatch = <Item,>(
     keys: [itemToString],
   });
 
-const defaultItemToString = <Item,>(item: Item) =>
-  typeof item === "string" ? item : "";
-
-const useFilter = <Item,>({
-  items,
-  itemToString = defaultItemToString,
-  match = defaultMatch,
-}: {
-  items: Array<Item>;
-  itemToString?: (item: Item | null) => string;
-  match?: Match<Item>;
-}) => {
-  const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
-  const cachedItems = useRef(items);
-
-  const filter = useCallback(
-    (search?: string) => {
-      const foundItems = match(search ?? "", items, itemToString);
-      setFilteredItems(foundItems);
-    },
-    [itemToString, items, match]
-  );
-
-  const resetFilter = useCallback(() => {
-    setFilteredItems(cachedItems.current);
-  }, []);
-
-  useEffect(() => {
-    cachedItems.current = items;
-  }, [items]);
-
-  return {
-    filteredItems,
-    filter,
-    resetFilter,
-  };
-};
-
 type ItemToString<Item> = (item: Item | null) => string;
 
-type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
-  items: Array<Item>;
+type UseComboboxProps<Item> = Omit<UseDownshiftComboboxProps<Item>, "items"> & {
+  getItems: () => Array<Item>;
   itemToString: ItemToString<Item>;
   getDescription?: (item: Item | null) => ReactNode;
   getItemProps?: (
@@ -290,7 +252,7 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
 export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
 
 export const useCombobox = <Item,>({
-  items,
+  getItems,
   value,
   selectedItem,
   getItemProps,
@@ -299,50 +261,49 @@ export const useCombobox = <Item,>({
   onItemSelect,
   onItemHighlight,
   stateReducer = (_state, { changes }) => changes,
-  match,
+  match = defaultMatch,
   defaultHighlightedIndex = -1,
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedItemRef = useRef<Item>();
-
-  const { filteredItems, filter, resetFilter } = useFilter<Item>({
-    items,
-    itemToString,
-    match,
-  });
-
-  if (isOpen && filteredItems.length === 0) {
-    setIsOpen(false);
-  }
+  const itemsCache = useRef<Item[]>([]);
+  const [matchedItems, setMatchedItems] = useState<Item[]>([]);
 
   const downshiftProps = useDownshiftCombobox({
     ...rest,
-    items: filteredItems,
+    items: matchedItems,
     defaultHighlightedIndex,
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     isOpen,
 
     onIsOpenChange({ isOpen, inputValue }) {
-      const foundItems =
-        match !== undefined
-          ? match(inputValue ?? "", items, itemToString)
-          : defaultMatch(inputValue ?? "", items, itemToString);
-
-      // Don't set isOpen to true if there are no items to show
-      // because otherwise first ESC press will try to close it and only next ESC
-      // will reset the value. When list is empty, first ESC should reset the value.
-      const nextIsOpen = isOpen === true && foundItems.length !== 0;
-
-      setIsOpen(nextIsOpen);
+      if (isOpen) {
+        itemsCache.current = getItems();
+        const matchedItems = match(
+          inputValue ?? "",
+          itemsCache.current,
+          itemToString
+        );
+        // Don't set isOpen to true if there are no items to show
+        // because otherwise first ESC press will try to close it and only next ESC
+        // will reset the value. When list is empty, first ESC should reset the value.
+        setMatchedItems(matchedItems);
+        setIsOpen(matchedItems.length > 0);
+      } else {
+        setMatchedItems([]);
+        setIsOpen(false);
+      }
     },
 
     stateReducer,
     itemToString,
-    inputValue: value ? itemToString(value) : undefined,
+    inputValue: value ? itemToString(value) : "",
     onInputValueChange({ inputValue, type }) {
       if (type === comboboxStateChangeTypes.InputChange) {
-        filter(inputValue);
+        setMatchedItems(
+          match(inputValue ?? "", itemsCache.current, itemToString)
+        );
       }
     },
     onSelectedItemChange({ selectedItem, type }) {
@@ -361,16 +322,10 @@ export const useCombobox = <Item,>({
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(filteredItems[highlightedIndex] ?? null);
+        onItemHighlight?.(matchedItems[highlightedIndex] ?? null);
       }
     },
   });
-
-  useEffect(() => {
-    if (isOpen === false) {
-      resetFilter();
-    }
-  }, [isOpen, resetFilter]);
 
   useEffect(() => {
     // Selecting the item when the popover is closed.
@@ -431,19 +386,18 @@ export const useCombobox = <Item,>({
       return {
         ...downshiftGetMenuProps(options, { suppressRefError: true }),
         state: isOpen ? "open" : "closed",
-        empty: filteredItems.length === 0,
+        empty: matchedItems.length === 0,
       };
     },
-    [downshiftGetMenuProps, isOpen, filteredItems.length]
+    [downshiftGetMenuProps, isOpen, matchedItems.length]
   );
 
   return {
     ...downshiftProps,
-    items: filteredItems,
+    items: matchedItems,
     getItemProps: enhancedGetItemProps,
     getMenuProps: enhancedGetMenuProps,
     getInputProps: enhancedGetInputProps,
-    resetFilter,
   };
 };
 

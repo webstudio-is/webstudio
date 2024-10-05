@@ -143,7 +143,7 @@ const AdvancedSearch = ({
     <Combobox
       autoFocus
       placeholder="Find or create a property"
-      items={availableProperties}
+      getItems={() => availableProperties}
       defaultHighlightedIndex={0}
       value={item}
       itemToString={(item) => item?.label ?? ""}
@@ -218,8 +218,6 @@ const AdvancedPropertyValue = ({
   property: StyleProperty;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
-  const availableVariables = useStore($availableVariables);
-  const { items } = styleConfigByName(property);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus) {
@@ -255,12 +253,12 @@ const AdvancedPropertyValue = ({
       }
       property={property}
       styleSource={styleDecl.source.name}
-      options={[
-        ...items.map((item) => ({
+      getOptions={() => [
+        ...styleConfigByName(property).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
-        ...availableVariables,
+        ...$availableVariables.get(),
       ]}
       value={styleDecl.cascadedValue}
       setValue={(styleValue, options) => {

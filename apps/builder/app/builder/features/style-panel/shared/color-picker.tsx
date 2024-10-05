@@ -276,7 +276,7 @@ export const ColorPicker = ({
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      options={options}
+      getOptions={() => options ?? []}
       onChange={(styleValue) => {
         if (styleValue === undefined) {
           setIntermediateValue(styleValue);

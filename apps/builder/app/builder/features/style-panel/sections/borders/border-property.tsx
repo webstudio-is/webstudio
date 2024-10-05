@@ -85,7 +85,7 @@ export const BorderProperty = ({
           <CssValueInputContainer
             property={firstPropertyName}
             styleSource={styleValueSourceColor}
-            options={keywords}
+            getOptions={() => keywords}
             value={value}
             setValue={(newValue, options) => {
               const batch = createBatchUpdate();
@@ -123,7 +123,7 @@ export const BorderProperty = ({
               }
               property={styleDecl.property as StyleProperty}
               styleSource={styleDecl.source.name}
-              options={keywords}
+              getOptions={() => keywords}
               value={styleDecl.cascadedValue}
               setValue={setProperty(styleDecl.property as StyleProperty)}
               deleteProperty={deleteProperty}

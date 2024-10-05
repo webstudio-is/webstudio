@@ -17,7 +17,6 @@ type CssValueInputContainerProps = {
 
 export const CssValueInputContainer = ({
   property,
-  options,
   setValue,
   deleteProperty,
   ...props
@@ -31,7 +30,6 @@ export const CssValueInputContainer = ({
       {...props}
       property={property}
       intermediateValue={intermediateValue}
-      options={options}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
 
