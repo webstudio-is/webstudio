@@ -5,6 +5,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
+  Box,
   rawTheme,
   ScrollArea,
   SmallIconButton,
@@ -113,6 +114,9 @@ const $flatTree = computed(
       if (level > 0 && instance.children.some((child) => child.type === "id")) {
         isExpanded = expandedItems.has(selector.join());
       }
+      if (instance.component === "Fragment") {
+        isExpanded = true;
+      }
 
       const treeItem: TreeItem = {
         level,
@@ -124,29 +128,11 @@ const $flatTree = computed(
         isReusable,
       };
       let lastItem = treeItem;
-      if (instance.component === "Fragment") {
-        // slot fragment component is not rendered in navigator tree
-        // so should be always expanded
-        for (let index = 0; index < instance.children.length; index += 1) {
-          const child = instance.children[index];
-          if (child.type === "id") {
-            const isLastChild = index === instance.children.length - 1;
-            lastItem = traverse(
-              child.value,
-              [child.value, ...selector],
-              isHidden,
-              isReusable,
-              isLastChild,
-              // do not increate level because Fragment is not rendered
-              level,
-              index
-            );
-          }
-        }
-        return lastItem;
+      // slot fragment component is not rendered in navigator tree
+      // so should be always expanded
+      if (instance.component !== "Fragment") {
+        flatTree.push(treeItem);
       }
-
-      flatTree.push(treeItem);
 
       // render same children for each collection item in data
       if (instance.component === collectionComponent && isExpanded) {
@@ -157,9 +143,7 @@ const $flatTree = computed(
             for (let index = 0; index < instance.children.length; index += 1) {
               const child = instance.children[index];
               if (child.type === "id") {
-                const isLastChild =
-                  index * dataIndex ===
-                  instance.children.length * dataIndex - 1;
+                const isLastChild = index === instance.children.length - 1;
                 lastItem = traverse(
                   child.value,
                   [
@@ -170,16 +154,17 @@ const $flatTree = computed(
                   isHidden,
                   isReusable,
                   isLastChild,
-                  level + 1,
-                  index * dataIndex
+                  // virtual item instance is hidden
+                  // but level is still increased to show proper drop indicator
+                  // and address instance selector
+                  level + 2,
+                  index
                 );
               }
             }
           });
         }
-      }
-
-      if (level === 0 || isExpanded) {
+      } else if (level === 0 || isExpanded) {
         for (let index = 0; index < instance.children.length; index += 1) {
           const child = instance.children[index];
           if (child.type === "id") {
@@ -357,7 +342,17 @@ const getBuilderDropTarget = (
   }
   const instances = $instances.get();
   const parentSelector = selector.slice(-treeDropTarget.parentLevel - 1);
-  const parentInstance = instances.get(parentSelector[0]);
+  let parentInstance = instances.get(parentSelector[0]);
+  const grandParentInstance = instances.get(parentSelector[1]);
+  // collection item fake instance
+  if (parentInstance === undefined && grandParentInstance) {
+    parentInstance = {
+      type: "instance",
+      id: parentSelector[0],
+      component: "Fragment",
+      children: grandParentInstance.children,
+    };
+  }
   if (parentInstance === undefined) {
     return;
   }
@@ -595,6 +590,8 @@ export const NavigatorTree = () => {
           );
         })}
       </TreeRoot>
+      {/* space in the end of scroll area */}
+      <Box css={{ height: theme.spacing[9] }}></Box>
     </ScrollArea>
   );
 };
