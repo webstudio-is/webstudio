@@ -143,9 +143,7 @@ const $flatTree = computed(
             for (let index = 0; index < instance.children.length; index += 1) {
               const child = instance.children[index];
               if (child.type === "id") {
-                const isLastChild =
-                  index * dataIndex ===
-                  instance.children.length * dataIndex - 1;
+                const isLastChild = index === instance.children.length - 1;
                 lastItem = traverse(
                   child.value,
                   [
@@ -160,7 +158,7 @@ const $flatTree = computed(
                   // but level is still increased to show proper drop indicator
                   // and address instance selector
                   level + 2,
-                  index * dataIndex
+                  index
                 );
               }
             }
@@ -344,7 +342,17 @@ const getBuilderDropTarget = (
   }
   const instances = $instances.get();
   const parentSelector = selector.slice(-treeDropTarget.parentLevel - 1);
-  const parentInstance = instances.get(parentSelector[0]);
+  let parentInstance = instances.get(parentSelector[0]);
+  const grandParentInstance = instances.get(parentSelector[1]);
+  // collection item fake instance
+  if (parentInstance === undefined && grandParentInstance) {
+    parentInstance = {
+      type: "instance",
+      id: parentSelector[0],
+      component: "Fragment",
+      children: grandParentInstance.children,
+    };
+  }
   if (parentInstance === undefined) {
     return;
   }
