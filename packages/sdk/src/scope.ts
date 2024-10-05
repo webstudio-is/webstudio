@@ -7,6 +7,72 @@ export type Scope = {
   getName(id: string, preferredName: string): string;
 };
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#reserved_words
+const reservedWordsSet = new Set([
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "export",
+  "extends",
+  "false",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "import",
+  "in",
+  "instanceof",
+  "new",
+  "null",
+  "return",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "let",
+  "static",
+  "yield",
+  "await",
+  "enum",
+  "implements",
+  "interface",
+  "package",
+  "private",
+  "protected",
+  "public",
+  "abstract",
+  "boolean",
+  "byte",
+  "char",
+  "double",
+  "final",
+  "float",
+  "goto",
+  "int",
+  "long",
+  "native",
+  "short",
+  "synchronized",
+  "throws",
+  "transient",
+  "volatile",
+]);
+
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers
 const normalizeJsName = (name: string) => {
   // only letters, digits, underscores and dollar signs allowed in names
@@ -20,6 +86,11 @@ const normalizeJsName = (name: string) => {
   if (/[A-Za-z_$]/.test(name[0]) === false) {
     name = `_${name}`;
   }
+
+  if (reservedWordsSet.has(name)) {
+    return `${name}_`;
+  }
+
   return name;
 };
 
