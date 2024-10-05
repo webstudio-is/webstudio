@@ -1,3 +1,8 @@
+import reservedIdentifiers from "reserved-identifiers";
+
+const identifiers = reservedIdentifiers({ includeGlobalProperties: true });
+const isReserved = (identifier: string) => identifiers.has(identifier);
+
 export type Scope = {
   /**
    * Accepts unique id to identify specific variable
@@ -6,72 +11,6 @@ export type Scope = {
    */
   getName(id: string, preferredName: string): string;
 };
-
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#reserved_words
-const reservedWordsSet = new Set([
-  "break",
-  "case",
-  "catch",
-  "class",
-  "const",
-  "continue",
-  "debugger",
-  "default",
-  "delete",
-  "do",
-  "else",
-  "export",
-  "extends",
-  "false",
-  "finally",
-  "for",
-  "function",
-  "if",
-  "import",
-  "in",
-  "instanceof",
-  "new",
-  "null",
-  "return",
-  "super",
-  "switch",
-  "this",
-  "throw",
-  "true",
-  "try",
-  "typeof",
-  "var",
-  "void",
-  "while",
-  "with",
-  "let",
-  "static",
-  "yield",
-  "await",
-  "enum",
-  "implements",
-  "interface",
-  "package",
-  "private",
-  "protected",
-  "public",
-  "abstract",
-  "boolean",
-  "byte",
-  "char",
-  "double",
-  "final",
-  "float",
-  "goto",
-  "int",
-  "long",
-  "native",
-  "short",
-  "synchronized",
-  "throws",
-  "transient",
-  "volatile",
-]);
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers
 const normalizeJsName = (name: string) => {
@@ -87,7 +26,7 @@ const normalizeJsName = (name: string) => {
     name = `_${name}`;
   }
 
-  if (reservedWordsSet.has(name)) {
+  if (isReserved(name)) {
     return `${name}_`;
   }
 
