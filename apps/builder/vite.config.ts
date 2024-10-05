@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     ],
+
     resolve: {
       conditions: ["webstudio", "import", "module", "browser", "default"],
       alias: [
@@ -65,6 +66,21 @@ export default defineConfig(({ mode }) => {
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),
     },
+
+    build: {
+      rollupOptions: {
+        treeshake: {
+          moduleSideEffects(id) {
+            if (id.includes("node_modules")) {
+              return true;
+            }
+
+            return !id.endsWith("index.ts");
+          },
+        },
+      },
+    },
+
     server: {
       // Service-to-service OAuth token call requires a specified host for the wstd.dev domain
       host: "wstd.dev",
