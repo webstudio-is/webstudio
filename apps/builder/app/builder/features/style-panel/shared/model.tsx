@@ -180,7 +180,7 @@ export const $availableVariables = computed($definedStyles, (definedStyles) => {
   return Array.from(availableVariables.values());
 });
 
-const $model = computed(
+export const $model = computed(
   [
     $styles,
     $styleSourceSelections,
@@ -231,10 +231,6 @@ export const createComputedStyleDeclStore = (property: StyleProperty) => {
       });
     }
   );
-};
-
-export const useStyleObjectModel = () => {
-  return useStore($model);
 };
 
 export const useComputedStyleDecl = (property: StyleProperty) => {

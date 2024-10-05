@@ -37,8 +37,8 @@ import { deleteProperty, setProperty } from "../../shared/use-style-data";
 import {
   $availableVariables,
   $matchingBreakpoints,
+  $model,
   getDefinedStyles,
-  useComputedStyleDecl,
   useComputedStyles,
 } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
@@ -47,9 +47,14 @@ import { sections } from "../sections";
 import { ColorPopover } from "../../shared/color-picker";
 import {
   $selectedInstanceSelector,
+  $selectedOrLastStyleSourceSelector,
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
+import {
+  getComputedStyleDecl,
+  type ComputedStyleDecl,
+} from "~/shared/style-object-model";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -167,8 +172,13 @@ const AdvancedSearch = ({
   );
 };
 
-const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
-  const styleDecl = useComputedStyleDecl(property);
+const AdvancedPropertyLabel = ({
+  property,
+  styleDecl,
+}: {
+  property: StyleProperty;
+  styleDecl: ComputedStyleDecl;
+}) => {
   const label = hyphenateProperty(property);
   const description =
     propertyDescriptions[property as keyof typeof propertyDescriptions];
@@ -213,11 +223,12 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
 const AdvancedPropertyValue = ({
   autoFocus,
   property,
+  styleDecl,
 }: {
   autoFocus?: boolean;
   property: StyleProperty;
+  styleDecl: ComputedStyleDecl;
 }) => {
-  const styleDecl = useComputedStyleDecl(property);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus) {
@@ -332,6 +343,15 @@ export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedProperties = useStore($advancedProperties);
   const newlyAddedProperty = useRef<undefined | StyleProperty>(undefined);
+  const model = useStore($model);
+  let instanceSelector = useStore($selectedInstanceSelector);
+  if (instanceSelector) {
+    instanceSelector =
+      instanceSelector[0] === ROOT_INSTANCE_ID
+        ? instanceSelector
+        : [...instanceSelector, ROOT_INSTANCE_ID];
+  }
+  const styleSourceSelector = useStore($selectedOrLastStyleSourceSelector);
 
   return (
     <AdvancedStyleSection
@@ -353,16 +373,29 @@ export const Section = () => {
         />
       )}
       <Box>
-        {advancedProperties.map((property) => (
-          <Flex key={property} wrap="wrap" align="center" justify="start">
-            <AdvancedPropertyLabel property={property} />
-            <Text>:</Text>
-            <AdvancedPropertyValue
-              autoFocus={newlyAddedProperty.current === property}
-              property={property}
-            />
-          </Flex>
-        ))}
+        {advancedProperties.map((property) => {
+          const styleDecl = getComputedStyleDecl({
+            model,
+            instanceSelector,
+            styleSourceId: styleSourceSelector?.styleSourceId,
+            state: styleSourceSelector?.state,
+            property,
+          });
+          return (
+            <Flex key={property} wrap="wrap" align="center" justify="start">
+              <AdvancedPropertyLabel
+                property={property}
+                styleDecl={styleDecl}
+              />
+              <Text>:</Text>
+              <AdvancedPropertyValue
+                autoFocus={newlyAddedProperty.current === property}
+                property={property}
+                styleDecl={styleDecl}
+              />
+            </Flex>
+          );
+        })}
       </Box>
     </AdvancedStyleSection>
   );

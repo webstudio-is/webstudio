@@ -110,5 +110,8 @@ export default defineConfig(({ mode }) => {
       }) as never,
     },
     envPrefix: "GITHUB_",
+    build: {
+      minify: false,
+    },
   };
 });
