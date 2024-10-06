@@ -27,11 +27,7 @@ const positionControlVisibleProperties = [
 
 const zIndexParents = ["flex", "grid", "inline-flex", "inline-grid"] as const;
 
-export const Section = ({
-  deleteProperty,
-  currentStyle,
-  createBatchUpdate,
-}: SectionProps) => {
+export const Section = ({ currentStyle }: SectionProps) => {
   const parentStyle = useParentStyle();
 
   const positionValue = currentStyle.position?.value;
@@ -82,11 +78,7 @@ export const Section = ({
 
         {showInsetControl && (
           <Grid gap={3} columns={2}>
-            <InsetControl
-              currentStyle={currentStyle}
-              deleteProperty={deleteProperty}
-              createBatchUpdate={createBatchUpdate}
-            />
+            <InsetControl />
             <Grid gap={1}>
               <PropertyLabel
                 label="Z Index"

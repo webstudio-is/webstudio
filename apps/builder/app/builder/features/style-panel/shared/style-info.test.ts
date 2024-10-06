@@ -29,7 +29,6 @@ import {
   getNextSourceInfo,
   getPreviousSourceInfo,
   __testing__,
-  getStyleSource,
   useStyleInfo,
 } from "./style-info";
 
@@ -609,7 +608,6 @@ describe("active states", () => {
     $selectedStyleSources.set(new Map([["box", "box.local"]]));
 
     const { result } = renderHook(() => useStyleInfo());
-    expect(getStyleSource(result.current.color)).toEqual("local");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -619,7 +617,6 @@ describe("active states", () => {
       $selectedStyleSources.set(new Map([["box", "box.local"]]));
       $selectedStyleState.set(":hover");
     });
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -652,7 +649,6 @@ describe("active states", () => {
     $selectedInstanceStates.set(new Set([":hover"]));
 
     const { result } = renderHook(() => useStyleInfo());
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -662,7 +658,6 @@ describe("active states", () => {
       $selectedStyleSources.set(new Map([["box", "box.local"]]));
       $selectedStyleState.set(":hover");
     });
-    expect(getStyleSource(result.current.color)).toEqual("local");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -707,7 +702,6 @@ describe("active states", () => {
     $selectedBreakpointId.set("small");
 
     const { result } = renderHook(() => useStyleInfo());
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "red",
@@ -716,7 +710,6 @@ describe("active states", () => {
     act(() => {
       $selectedInstanceStates.set(new Set([":hover"]));
     });
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -764,7 +757,6 @@ describe("active states", () => {
     $selectedInstanceSelector.set(["box", "body"]);
 
     const { result } = renderHook(() => useStyleInfo());
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "red",
@@ -773,7 +765,6 @@ describe("active states", () => {
     act(() => {
       $selectedInstanceStates.set(new Set([":hover"]));
     });
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -819,7 +810,6 @@ describe("active states", () => {
     $selectedStyleSources.set(new Map([["box", "box.local"]]));
 
     const { result } = renderHook(() => useStyleInfo());
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "red",
@@ -828,7 +818,6 @@ describe("active states", () => {
     act(() => {
       $selectedInstanceStates.set(new Set([":hover"]));
     });
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -877,7 +866,6 @@ describe("active states", () => {
     $selectedInstanceStates.set(new Set([":hover"]));
 
     const { result } = renderHook(() => useStyleInfo());
-    expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",
@@ -886,7 +874,6 @@ describe("active states", () => {
     act(() => {
       $selectedStyleSources.set(new Map([["box", "box.second"]]));
     });
-    expect(getStyleSource(result.current.color)).toEqual("overwritten");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "blue",
@@ -936,7 +923,6 @@ describe("active states", () => {
 
     const { result } = renderHook(() => useStyleInfo());
 
-    expect(getStyleSource(result.current.color)).toEqual("preset");
     expect(result.current.color?.value).toEqual({
       type: "keyword",
       value: "green",

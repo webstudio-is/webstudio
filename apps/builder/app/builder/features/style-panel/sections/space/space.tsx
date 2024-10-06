@@ -68,12 +68,9 @@ export const Section = () => {
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
 
   const scrubStatus = useScrub({
-    value:
-      hoverTarget === undefined
-        ? undefined
-        : styles.find(
-            (styleDecl) => styleDecl.property === hoverTarget.property
-          )?.usedValue,
+    value: styles.find(
+      (styleDecl) => styleDecl.property === hoverTarget?.property
+    )?.usedValue,
     target: hoverTarget,
     getModifiersGroup: getSpaceModifiersGroup,
     onChange: (values, options) => {

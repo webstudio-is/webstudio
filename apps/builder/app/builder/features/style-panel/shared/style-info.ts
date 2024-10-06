@@ -76,7 +76,7 @@ const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
 
 type StatefulValue = { state: string; value: StyleValue };
 
-export type StyleValueInfo = {
+type StyleValueInfo = {
   value: StyleValue;
   // either stateful and local exist or stateless and local or just local
   // @todo improve with more clear structure
@@ -113,54 +113,6 @@ export type StyleSource =
   | "remote"
   | "preset"
   | "default";
-
-export const getStyleSource = (
-  ...styleValueInfos: (undefined | StyleValueInfo)[]
-): StyleSource => {
-  // show source to use if at least one of control properties matches
-  // so user could see if something is set or something is inherited
-  for (const info of styleValueInfos) {
-    if (info?.nextSource && (info.local || info.stateful)) {
-      return "overwritten";
-    }
-  }
-  for (const info of styleValueInfos) {
-    if (info?.stateful && info.local) {
-      return "overwritten";
-    }
-  }
-  for (const info of styleValueInfos) {
-    if (info?.local) {
-      return "local";
-    }
-  }
-  for (const info of styleValueInfos) {
-    if (info?.stateless || info?.stateful) {
-      return "remote";
-    }
-  }
-  for (const info of styleValueInfos) {
-    if (info?.previousSource || info?.nextSource || info?.cascaded) {
-      return "remote";
-    }
-  }
-  for (const info of styleValueInfos) {
-    if (info?.preset) {
-      return "preset";
-    }
-  }
-  for (const info of styleValueInfos) {
-    if (info?.htmlValue) {
-      return "default";
-    }
-  }
-  for (const info of styleValueInfos) {
-    if (info?.inherited) {
-      return "remote";
-    }
-  }
-  return "default";
-};
 
 const propertyNames = Object.keys(properties) as StyleProperty[];
 
