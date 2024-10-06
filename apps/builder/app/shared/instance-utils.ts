@@ -1513,7 +1513,8 @@ export const insertWebstudioFragmentCopy = ({
     for (let styleSourceId of values) {
       const newLocalStyleSource = newLocalStyleSources.get(styleSourceId);
       if (newLocalStyleSource) {
-        if (existingLocalStyleSource) {
+        // merge only :root styles and duplicate others
+        if (instanceId === ROOT_INSTANCE_ID && existingLocalStyleSource) {
           // write local styles into existing local style source
           styleSourceId = existingLocalStyleSource.id;
         } else {
