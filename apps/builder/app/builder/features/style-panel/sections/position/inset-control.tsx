@@ -48,7 +48,6 @@ const Cell = ({
         isOpen={isPopoverOpen}
         property={property}
         onClose={onPopoverClose}
-        createBatchUpdate={createBatchUpdate}
       />
       <InsetTooltip
         property={property}
