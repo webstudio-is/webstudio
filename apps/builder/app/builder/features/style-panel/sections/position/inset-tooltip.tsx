@@ -35,7 +35,7 @@ const propertyContents: {
 
   {
     properties: ["top", "right", "bottom", "left"],
-    label: "Padding",
+    label: "Inset position",
     description:
       "Sets the top, right, bottom and left position of an element relative to its nearest positioned ancestor.",
   },
