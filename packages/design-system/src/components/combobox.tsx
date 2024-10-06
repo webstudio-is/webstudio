@@ -225,6 +225,10 @@ const defaultMatch = <Item,>(
 ) =>
   matchSorter(items, search, {
     keys: [itemToString],
+    baseSort: (left, right) =>
+      left.rankedValue.localeCompare(right.rankedValue, undefined, {
+        numeric: true,
+      }),
   });
 
 type ItemToString<Item> = (item: Item | null) => string;
