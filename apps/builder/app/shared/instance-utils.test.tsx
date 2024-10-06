@@ -3175,7 +3175,7 @@ describe("insert webstudio fragment copy", () => {
   });
 });
 
-describe("support copy paste of :root styles", () => {
+describe("copy paste", () => {
   const css = (strings: TemplateStringsArray, ...values: string[]) => {
     let cssString = "";
     strings.forEach((string, index) => {
@@ -3264,6 +3264,41 @@ describe("support copy paste of :root styles", () => {
     }).toEqual(css`
       :root__newprojectlocalid {
         font-size: medium;
+        color: red;
+      }
+    `);
+  });
+
+  test("should copy local styles of duplicated instance", () => {
+    const project = getWebstudioDataStub({
+      ...renderJsx(
+        <$.Body ws:id="bodyId">
+          <$.Box ws:id="boxId"></$.Box>
+        </$.Body>
+      ),
+      ...css`
+        boxId__boxlocalid {
+          color: red;
+        }
+      `,
+    });
+    const fragment = extractWebstudioFragment(project, "boxId");
+    insertWebstudioFragmentCopy({
+      data: project,
+      fragment,
+      availableDataSources: new Set(),
+    });
+    const [_bodyId, _boxId, newBoxId] = project.instances.keys();
+    const [_boxLocalId, newBoxLocalId] = project.styleSources.keys();
+    expect({
+      styleSourceSelections: project.styleSourceSelections,
+      styleSources: project.styleSources,
+      styles: project.styles,
+    }).toEqual(css`
+      boxId__boxlocalid {
+        color: red;
+      }
+      ${newBoxId}__${newBoxLocalId} {
         color: red;
       }
     `);
