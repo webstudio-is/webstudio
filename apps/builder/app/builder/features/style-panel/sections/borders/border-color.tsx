@@ -4,7 +4,7 @@ import { styleConfigByName } from "../../shared/configs";
 import { rowCss } from "./utils";
 import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
 import { ColorPicker } from "../../shared/color-picker";
-import { useComputedStyleDecl } from "../../shared/model";
+import { $availableVariables, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
 
 export const properties = [
@@ -17,12 +17,7 @@ export const properties = [
 const { items } = styleConfigByName("borderTopColor");
 
 export const BorderColor = () => {
-  const styles = [
-    useComputedStyleDecl("borderTopColor"),
-    useComputedStyleDecl("borderRightColor"),
-    useComputedStyleDecl("borderBottomColor"),
-    useComputedStyleDecl("borderLeftColor"),
-  ];
+  const styles = useComputedStyles(properties);
   const serialized = styles.map((styleDecl) =>
     toValue(styleDecl.cascadedValue)
   );
@@ -58,10 +53,13 @@ export const BorderColor = () => {
               currentColor={currentColor}
               property={local.property as StyleProperty}
               value={value}
-              options={items.map((item) => ({
-                type: "keyword",
-                value: item.name,
-              }))}
+              getOptions={() => [
+                ...items.map((item) => ({
+                  type: "keyword" as const,
+                  value: item.name,
+                })),
+                ...$availableVariables.get(),
+              ]}
               onChange={(styleValue) => {
                 const batch = createBatchUpdate();
                 for (const property of properties) {

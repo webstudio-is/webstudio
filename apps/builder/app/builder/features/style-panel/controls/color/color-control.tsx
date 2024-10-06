@@ -14,7 +14,7 @@ export const ColorControl = ({ property }: { property: StyleProperty }) => {
       property={property}
       value={value}
       currentColor={currentColor}
-      options={[
+      getOptions={() => [
         ...styleConfigByName(property).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,

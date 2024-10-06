@@ -15,7 +15,7 @@ import {
   deleteProperty,
   setProperty,
 } from "../../shared/use-style-data";
-import { useComputedStyles } from "../../shared/model";
+import { $availableVariables, useComputedStyles } from "../../shared/model";
 
 export const BorderProperty = ({
   individualModeIcon,
@@ -52,13 +52,6 @@ export const BorderProperty = ({
     allPropertyValuesAreEqual === false && individualModeIcon !== undefined
   );
 
-  const { items: borderPropertyItems } = styleConfigByName(firstPropertyName);
-
-  const keywords = borderPropertyItems.map((item) => ({
-    type: "keyword" as const,
-    value: item.name,
-  }));
-
   /**
    * If the property is displayed in a non-individual mode, we need to provide a value for it.
    * In Webflow, an empty value is shown. In Figma, the "Mixed" keyword is shown.
@@ -85,7 +78,13 @@ export const BorderProperty = ({
           <CssValueInputContainer
             property={firstPropertyName}
             styleSource={styleValueSourceColor}
-            getOptions={() => keywords}
+            getOptions={() => [
+              ...styleConfigByName(firstPropertyName).items.map((item) => ({
+                type: "keyword" as const,
+                value: item.name,
+              })),
+              ...$availableVariables.get(),
+            ]}
             value={value}
             setValue={(newValue, options) => {
               const batch = createBatchUpdate();
@@ -123,7 +122,12 @@ export const BorderProperty = ({
               }
               property={styleDecl.property as StyleProperty}
               styleSource={styleDecl.source.name}
-              getOptions={() => keywords}
+              getOptions={() =>
+                styleConfigByName(firstPropertyName).items.map((item) => ({
+                  type: "keyword" as const,
+                  value: item.name,
+                }))
+              }
               value={styleDecl.cascadedValue}
               setValue={setProperty(styleDecl.property as StyleProperty)}
               deleteProperty={deleteProperty}

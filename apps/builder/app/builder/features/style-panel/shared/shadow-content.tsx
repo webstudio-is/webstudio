@@ -316,10 +316,12 @@ export const ShadowContent = ({
             property="color"
             value={colorControlProp}
             currentColor={colorControlProp}
-            options={styleConfigByName("color").items.map((item) => ({
-              type: "keyword",
-              value: item.name,
-            }))}
+            getOptions={() =>
+              styleConfigByName("color").items.map((item) => ({
+                type: "keyword",
+                value: item.name,
+              }))
+            }
             onChange={(styleValue) =>
               handlePropertyChange({ color: styleValue }, { isEphemeral: true })
             }
