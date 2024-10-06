@@ -95,7 +95,7 @@
     "nanoevents": "^8.0.0",
     "nanoid": "^5.0.1",
     "nanostores": "^0.9.3",
-    "picocolors": "^1.0.1",
+    "picocolors": "^1.1.0",
     "pretty-bytes": "^6.1.1",
     "prismjs": "^1.29.0",
     "react": "18.3.0-canary-14898b6a9-20240318",
@@ -138,7 +138,7 @@
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.24.0",
     "typescript": "5.5.2",
-    "vite": "^5.4.0"
+    "vite": "^5.4.8"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"
