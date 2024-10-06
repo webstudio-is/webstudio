@@ -1,10 +1,11 @@
-import { PropertyTooltip } from "../../shared/property-name";
-import type { StyleInfo } from "../../shared/style-info";
 import { useState, type ReactElement } from "react";
+import { Tooltip } from "@webstudio-is/design-system";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import { getInsetModifiersGroup } from "../shared/scrub";
-import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import { createBatchUpdate } from "../../shared/use-style-data";
 import type { InsetProperty } from "./inset-layout";
+import { PropertyInfo } from "../../property-label";
+import { useComputedStyles } from "../../shared/model";
 
 const sides = {
   top: "top",
@@ -34,7 +35,7 @@ const propertyContents: {
 
   {
     properties: ["top", "right", "bottom", "left"],
-    label: "Padding",
+    label: "Inset position",
     description:
       "Sets the top, right, bottom and left position of an element relative to its nearest positioned ancestor.",
   },
@@ -54,22 +55,27 @@ const isSameUnorderedArrays = (
 
 export const InsetTooltip = ({
   property,
-  style,
   children,
-  createBatchUpdate,
   preventOpen,
 }: {
   property: InsetProperty;
-  style: StyleInfo;
   children: ReactElement;
-  createBatchUpdate: CreateBatchUpdate;
   preventOpen: boolean;
 }) => {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const modifiers = useModifierKeys();
 
   const properties = [...getInsetModifiersGroup(property, modifiers)];
+  const styles = useComputedStyles(properties);
+
+  const resetProperties = () => {
+    const batch = createBatchUpdate();
+    for (const property of properties) {
+      batch.deleteProperty(property);
+    }
+    batch.publish();
+  };
 
   const propertyContent = propertyContents.find((propertyContent) =>
     isSameUnorderedArrays(propertyContent.properties, properties)
@@ -79,27 +85,39 @@ export const InsetTooltip = ({
     if (preventOpen && value === true) {
       return;
     }
-    setOpen(value);
+    setIsOpen(value);
   };
 
   return (
-    <PropertyTooltip
-      open={open}
+    <Tooltip
+      open={isOpen}
       onOpenChange={handleOpenChange}
-      properties={properties}
-      style={style}
-      title={propertyContent?.label}
-      description={propertyContent?.description}
       side={sides[property]}
-      onReset={() => {
-        const batch = createBatchUpdate();
-        for (const property of properties) {
-          batch.deleteProperty(property);
-        }
-        batch.publish();
+      // prevent closing tooltip on content click
+      onPointerDown={(event) => event.preventDefault()}
+      triggerProps={{
+        onClick: (event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            resetProperties();
+            return;
+          }
+        },
       }}
+      content={
+        <PropertyInfo
+          title={propertyContent?.label ?? ""}
+          description={propertyContent?.description}
+          styles={styles}
+          onReset={() => {
+            resetProperties();
+            handleOpenChange(false);
+          }}
+        />
+      }
     >
+      {/* @todo show tooltip on focus */}
       <div>{children}</div>
-    </PropertyTooltip>
+    </Tooltip>
   );
 };

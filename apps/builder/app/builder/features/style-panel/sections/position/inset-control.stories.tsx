@@ -1,112 +1,52 @@
 import type { Meta } from "@storybook/react";
-import { InsetControl } from "./inset-control";
-import type {
-  CreateBatchUpdate,
-  DeleteProperty,
-  SetProperty,
-} from "../../shared/use-style-data";
-import { useState, useRef } from "react";
-import type { StyleInfo } from "../../shared/style-info";
 import { Box } from "@webstudio-is/design-system";
+import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
+import { InsetControl } from "./inset-control";
+import { registerContainers } from "~/shared/sync";
+import {
+  $breakpoints,
+  $selectedBreakpointId,
+  $selectedInstanceSelector,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+} from "~/shared/nano-states";
 
-const useStyleInfo = (styleInfoInitial: StyleInfo) => {
-  const [styleInfo, setStyleInfo] = useState(() => styleInfoInitial);
-
-  const setProperty: SetProperty = (name) => (value, options) => {
-    if (options?.isEphemeral) {
-      return;
-    }
-
-    setStyleInfo((styleInfo) => ({
-      ...styleInfo,
-      [name]: {
-        ...styleInfo[name],
-        value: value,
-        local: value,
-      },
-    }));
-  };
-
-  const deleteProperty: DeleteProperty = (name, options) => {
-    if (options?.isEphemeral) {
-      return;
-    }
-
-    setStyleInfo((styleInfo) => {
-      const styleInfoCopy = { ...styleInfo };
-
-      styleInfoCopy[name] = structuredClone(defaultValue);
-
-      return styleInfoCopy;
-    });
-  };
-
-  const execCommands = useRef<(() => void)[]>([]);
-
-  const createBatchUpdate: CreateBatchUpdate = () => ({
-    deleteProperty: (property) => {
-      execCommands.current.push(() => {
-        deleteProperty(property);
-      });
-    },
-    setProperty: (property) => (style) => {
-      execCommands.current.push(() => {
-        setProperty(property)(style);
-      });
-    },
-    publish: (options) => {
-      if (options?.isEphemeral) {
-        execCommands.current = [];
-        return;
-      }
-
-      for (const command of execCommands.current) {
-        command();
-      }
-
-      execCommands.current = [];
-    },
-  });
-
-  return { styleInfo, setProperty, deleteProperty, createBatchUpdate };
+const right: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "right",
+  value: {
+    type: "unit",
+    value: 123.27,
+    unit: "rem",
+  },
 };
 
-const defaultValue = {
-  value: {
-    type: "keyword",
-    value: "auto",
-  },
-} as const;
-
-const bigValue = {
-  value: {
-    type: "unit",
-    value: 123.27,
-    unit: "rem",
-  },
-
-  local: {
-    type: "unit",
-    value: 123.27,
-    unit: "rem",
-  },
-} as const;
+registerContainers();
+$breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
+$selectedBreakpointId.set("base");
+$styleSources.set(
+  new Map([
+    [
+      "local",
+      {
+        id: "local",
+        type: "local",
+      },
+    ],
+  ])
+);
+$styles.set(new Map([[getStyleDeclKey(right), right]]));
+$styleSourceSelections.set(
+  new Map([["box", { instanceId: "box", values: ["local"] }]])
+);
+$selectedInstanceSelector.set(["box"]);
 
 export const InsetControlComponent = () => {
-  const { styleInfo, deleteProperty, createBatchUpdate } = useStyleInfo({
-    left: defaultValue,
-    right: bigValue,
-    top: defaultValue,
-    bottom: defaultValue,
-  });
-
   return (
     <Box css={{ marginLeft: 100 }}>
-      <InsetControl
-        createBatchUpdate={createBatchUpdate}
-        currentStyle={styleInfo}
-        deleteProperty={deleteProperty}
-      />
+      <InsetControl />
     </Box>
   );
 };

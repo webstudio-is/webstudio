@@ -51,7 +51,11 @@ import {
 } from "../../shared/css-value-input";
 import { ToggleControl } from "../../controls/toggle/toggle-control";
 import { PropertyInfo, PropertyLabel } from "../../property-label";
-import { useComputedStyles, useComputedStyleDecl } from "../../shared/model";
+import {
+  useComputedStyles,
+  useComputedStyleDecl,
+  $availableVariables,
+} from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 const GapLinked = ({
@@ -152,9 +156,13 @@ const GapInput = ({
         property={property}
         value={styleDecl.cascadedValue}
         intermediateValue={intermediateValue}
-        getOptions={() =>
-          items.map((item) => ({ type: "keyword", value: item.name }))
-        }
+        getOptions={() => [
+          ...items.map((item) => ({
+            type: "keyword" as const,
+            value: item.name,
+          })),
+          ...$availableVariables.get(),
+        ]}
         onChange={(styleValue) => {
           onIntermediateChange(styleValue);
           if (styleValue === undefined) {
