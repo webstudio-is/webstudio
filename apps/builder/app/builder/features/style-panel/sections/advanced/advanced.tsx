@@ -1,5 +1,12 @@
 import { colord } from "colord";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
@@ -50,6 +57,7 @@ import {
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
+import { useClientSupports } from "~/shared/client-supports";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -328,6 +336,81 @@ const $advancedProperties = computed(
   }
 );
 
+/**
+ * The Advanced section in the Style Panel on </> Global Root has performance issues.
+ * To fix this, we skip rendering properties not visible in the viewport using the contentvisibilityautostatechange event,
+ * and the contentVisibility and containIntrinsicSize CSS properties.
+ */
+const AdvancedProperty = memo(
+  ({
+    property,
+    autoFocus,
+  }: {
+    property: StyleProperty;
+    autoFocus: boolean;
+  }) => {
+    const visibilityChangeEventSupported = useClientSupports(
+      () => "oncontentvisibilityautostatechange" in document.body
+    );
+    const ref = useRef<HTMLDivElement>(null);
+    const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
+
+    useEffect(() => {
+      if (!visibilityChangeEventSupported) {
+        return;
+      }
+
+      if (ref.current == null) {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      ref.current.addEventListener(
+        "contentvisibilityautostatechange",
+        (event) => {
+          setIsVisible(!event.skipped);
+        },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      return () => {
+        controller.abort();
+      };
+    }, [visibilityChangeEventSupported]);
+
+    return (
+      <Flex
+        ref={ref}
+        css={{
+          contentVisibility: "auto",
+          // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
+          // containIntrinsicSize is used to set the default size of an element before any content is loaded.
+          // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
+          // It also affects the contentvisibilityautostatechange event to be called properly,
+          // with "auto" it will call it with skipped false for all initial elements.
+          // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
+          containIntrinsicSize: "auto 44px",
+        }}
+        key={property}
+        wrap="wrap"
+        align="center"
+        justify="start"
+      >
+        {isVisible && (
+          <>
+            <AdvancedPropertyLabel property={property} />
+            <Text>:</Text>
+            <AdvancedPropertyValue autoFocus={autoFocus} property={property} />
+          </>
+        )}
+      </Flex>
+    );
+  }
+);
+
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedProperties = useStore($advancedProperties);
@@ -354,14 +437,11 @@ export const Section = () => {
       )}
       <Box>
         {advancedProperties.map((property) => (
-          <Flex key={property} wrap="wrap" align="center" justify="start">
-            <AdvancedPropertyLabel property={property} />
-            <Text>:</Text>
-            <AdvancedPropertyValue
-              autoFocus={newlyAddedProperty.current === property}
-              property={property}
-            />
-          </Flex>
+          <AdvancedProperty
+            key={property}
+            property={property}
+            autoFocus={newlyAddedProperty.current === property}
+          />
         ))}
       </Box>
     </AdvancedStyleSection>
