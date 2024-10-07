@@ -57,6 +57,7 @@ import {
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
+import { useClientSupports } from "~/shared/client-supports";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -343,10 +344,17 @@ const AdvancedProperty = memo(
     property: StyleProperty;
     autoFocus: boolean;
   }) => {
+    const visibilityChangeEventSupported = useClientSupports(
+      () => "oncontentvisibilityautostatechange" in document.body
+    );
     const ref = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
 
     useEffect(() => {
+      if (!visibilityChangeEventSupported) {
+        return;
+      }
+
       if (ref.current == null) {
         return;
       }
@@ -356,7 +364,6 @@ const AdvancedProperty = memo(
       ref.current.addEventListener(
         "contentvisibilityautostatechange",
         (event) => {
-          // @ts-expect-error event.skipped is not known
           setIsVisible(!event.skipped);
         },
         {
@@ -367,14 +374,20 @@ const AdvancedProperty = memo(
       return () => {
         controller.abort();
       };
-    }, []);
+    }, [visibilityChangeEventSupported]);
 
     return (
       <Flex
         ref={ref}
         css={{
           contentVisibility: "auto",
-          containIntrinsicSize: "auto 400px",
+          // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
+          // containIntrinsicSize is used to set the default size of an element before any content is loaded.
+          // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
+          // It also affects the contentvisibilityautostatechange event to be called properly,
+          // with "auto" it will call it with skipped false for all initial elements.
+          // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
+          containIntrinsicSize: "auto 44px",
         }}
         key={property}
         wrap="wrap"
