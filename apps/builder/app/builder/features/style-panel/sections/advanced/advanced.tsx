@@ -399,15 +399,12 @@ const AdvancedProperty = memo(
         align="center"
         justify="start"
       >
-        {isVisible ? (
+        {isVisible && (
           <>
             <AdvancedPropertyLabel property={property} />
             <Text>:</Text>
             <AdvancedPropertyValue autoFocus={autoFocus} property={property} />
           </>
-        ) : (
-          // browser search by property name
-          <>{property}</>
         )}
       </Flex>
     );
