@@ -1,4 +1,4 @@
-import { forwardRef, useState, type ComponentProps } from "react";
+import { useState } from "react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuTrigger,
-  EnhancedTooltip,
   Flex,
   Grid,
   IconButton,
@@ -70,18 +69,48 @@ export const properties = [
   ...advancedProperties,
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
-const AdvancedOptionsButton = forwardRef<
-  HTMLButtonElement,
-  ComponentProps<"button">
->(({ onClick, ...rest }, ref) => {
+const TransformAdvancedPopover = () => {
   const styles = useComputedStyles(advancedProperties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
-    <Flex justify="end" css={{ px: theme.spacing[9] }}>
-      <EnhancedTooltip content="More transform options">
+    <Flex justify="between" align="center" css={{ px: theme.spacing[9] }}>
+      <Flex shrink>
+        <Label color={styleValueSourceColor} truncate>
+          Advanced Transform
+        </Label>
+      </Flex>
+      <FloatingPanel
+        title="Advanced Transform"
+        content={
+          <Grid
+            css={{
+              p: theme.spacing[9],
+              gap: theme.spacing[6],
+              width: theme.spacing[30],
+            }}
+          >
+            <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
+              <PropertyLabel
+                label="Backface Visibility"
+                description={propertyDescriptions.backfaceVisibility}
+                properties={["backfaceVisibility"]}
+              />
+              <TextControl property="backfaceVisibility" />
+            </Grid>
+            <TransformAndPerspectiveOrigin property="transformOrigin" />
+            <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
+              <PropertyLabel
+                label="Perspective"
+                description={propertyDescriptions.perspective}
+                properties={["perspective"]}
+              />
+              <TextControl property="perspective" />
+            </Grid>
+            <TransformAndPerspectiveOrigin property="perspectiveOrigin" />
+          </Grid>
+        }
+      >
         <IconButton
-          {...rest}
-          ref={ref}
           variant={styleValueSourceColor}
           onClick={(event) => {
             if (event.altKey) {
@@ -92,52 +121,12 @@ const AdvancedOptionsButton = forwardRef<
               batch.publish();
               return;
             }
-            onClick?.(event);
           }}
         >
           <EllipsesIcon />
         </IconButton>
-      </EnhancedTooltip>
+      </FloatingPanel>
     </Flex>
-  );
-});
-AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
-
-const TransformAdvancedPopover = () => {
-  return (
-    <FloatingPanel
-      title="Advanced Transform"
-      content={
-        <Grid
-          css={{
-            p: theme.spacing[9],
-            gap: theme.spacing[6],
-            width: theme.spacing[30],
-          }}
-        >
-          <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
-            <PropertyLabel
-              label="Backface Visibility"
-              description={propertyDescriptions.backfaceVisibility}
-              properties={["backfaceVisibility"]}
-            />
-            <TextControl property="backfaceVisibility" />
-          </Grid>
-          <TransformAndPerspectiveOrigin property="transformOrigin" />
-          <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
-            <PropertyLabel
-              label="Perspective"
-              description={propertyDescriptions.perspective}
-              properties={["perspective"]}
-            />
-            <TextControl property="perspective" />
-          </Grid>
-          <TransformAndPerspectiveOrigin property="perspectiveOrigin" />
-        </Grid>
-      }
-    >
-      <AdvancedOptionsButton />
-    </FloatingPanel>
   );
 };
 
