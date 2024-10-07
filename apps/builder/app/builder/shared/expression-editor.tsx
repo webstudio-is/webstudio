@@ -7,7 +7,7 @@ import {
 } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
-import { Facet } from "@codemirror/state";
+import { EditorState, Facet } from "@codemirror/state";
 import {
   type DecorationSet,
   type ViewUpdate,
@@ -351,6 +351,67 @@ const wrapperStyle = css({
   "--ws-code-editor-max-height": "320px",
 });
 
+const replaceTextFilter = EditorState.transactionFilter.of((tr) => {
+  if (!tr.docChanged) {
+    return tr;
+  }
+
+  const state = tr.startState;
+  const [{ aliases }] = state.facet(VariablesData);
+
+  const aliasesByName = mapGroupBy(Array.from(aliases), ([_id, name]) => name);
+
+  const cursorPos = tr.selection?.main.head ?? 0;
+  const cursorPosFromEnd = tr.newDoc.length - cursorPos;
+
+  const content = tr.newDoc.toString();
+  const originalContent = tr.startState.doc.toString();
+
+  let updatedContent = content;
+
+  try {
+    // replace unknown webstudio variables with undefined
+    // to prevent invalid compilation
+    updatedContent = transpileExpression({
+      expression: content,
+      replaceVariable: (identifier) => {
+        if (decodeDataSourceVariable(identifier) && aliases.has(identifier)) {
+          return;
+        }
+        // prevent matching variables by unambiguous name
+        const matchedAliases = aliasesByName.get(identifier);
+        if (matchedAliases && matchedAliases.length === 1) {
+          const [id, _name] = matchedAliases[0];
+
+          return id;
+        }
+      },
+    });
+  } catch {
+    // empty block
+  }
+
+  if (updatedContent !== content) {
+    return [
+      {
+        changes: {
+          from: 0,
+          to: originalContent.length,
+          insert: updatedContent,
+        },
+        selection: {
+          anchor:
+            updatedContent.slice(0, cursorPos) === content.slice(0, cursorPos)
+              ? cursorPos
+              : updatedContent.length - cursorPosFromEnd,
+        },
+      },
+    ];
+  }
+
+  return tr;
+});
+
 export const ExpressionEditor = ({
   editorApiRef,
   scope = emptyScope,
@@ -384,10 +445,13 @@ export const ExpressionEditor = ({
       bracketMatching(),
       closeBrackets(),
       javascript({}),
+
       VariablesData.of({ scope, aliases }),
+      replaceTextFilter,
       // render autocomplete in body
       // to prevent popover scroll overflow
       tooltips({ parent: document.body }),
+
       autocompletion({
         override: [scopeCompletionSource],
         icons: false,
@@ -395,6 +459,7 @@ export const ExpressionEditor = ({
       }),
       variables,
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+
       EditorView.domEventHandlers({
         drop() {
           lastChangeIsPasteOrDrop.current = true;
@@ -434,43 +499,7 @@ export const ExpressionEditor = ({
         readOnly={readOnly}
         autoFocus={autoFocus}
         value={value}
-        onChange={(value) => {
-          const aliasesByName = mapGroupBy(
-            Array.from(aliases),
-            ([_id, name]) => name
-          );
-          try {
-            // replace unknown webstudio variables with undefined
-            // to prevent invalid compilation
-            value = transpileExpression({
-              expression: value,
-              replaceVariable: (identifier) => {
-                if (
-                  decodeDataSourceVariable(identifier) &&
-                  aliases.has(identifier)
-                ) {
-                  return;
-                }
-                // prevent matching variables by unambiguous name
-                const matchedAliases = aliasesByName.get(identifier);
-                if (matchedAliases && matchedAliases.length === 1) {
-                  const [id, _name] = matchedAliases[0];
-                  return id;
-                }
-                // replace variable with undefined
-                // only after paste or drop
-                // to avoid replacing with undefined while user is typing
-                if (lastChangeIsPasteOrDrop.current) {
-                  return `undefined`;
-                }
-              },
-            });
-          } catch {
-            // empty block
-          }
-          lastChangeIsPasteOrDrop.current = false;
-          onChange(value);
-        }}
+        onChange={onChange}
         onBlur={onBlur}
       />
     </div>
