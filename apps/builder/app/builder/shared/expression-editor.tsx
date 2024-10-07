@@ -20,6 +20,7 @@ import {
   tooltips,
 } from "@codemirror/view";
 import { bracketMatching, syntaxTree } from "@codemirror/language";
+import { linter, type Diagnostic } from "@codemirror/lint";
 import {
   type Completion,
   type CompletionSource,
@@ -370,8 +371,6 @@ const replaceTextFilter = EditorState.transactionFilter.of((tr) => {
   let updatedContent = content;
 
   try {
-    // replace unknown webstudio variables with undefined
-    // to prevent invalid compilation
     updatedContent = transpileExpression({
       expression: content,
       replaceVariable: (identifier) => {
@@ -410,6 +409,30 @@ const replaceTextFilter = EditorState.transactionFilter.of((tr) => {
   }
 
   return tr;
+});
+
+const variableLinter = linter((view) => {
+  const diagnostics: Diagnostic[] = [];
+  syntaxTree(view.state)
+    .cursor()
+    .iterate((node) => {
+      if (node.name === "VariableName") {
+        const identifier = view.state.doc.sliceString(node.from, node.to);
+        const [{ aliases }] = view.state.facet(VariablesData);
+
+        if (decodeDataSourceVariable(identifier) && aliases.has(identifier)) {
+          return;
+        }
+
+        diagnostics.push({
+          from: node.from,
+          to: node.to,
+          severity: "error",
+          message: `"${identifier}" is not defined`,
+        });
+      }
+    });
+  return diagnostics;
 });
 
 export const ExpressionEditor = ({
@@ -459,6 +482,8 @@ export const ExpressionEditor = ({
       }),
       variables,
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+
+      variableLinter,
 
       EditorView.domEventHandlers({
         drop() {
