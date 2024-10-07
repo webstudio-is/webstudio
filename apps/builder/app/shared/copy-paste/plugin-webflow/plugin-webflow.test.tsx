@@ -1627,12 +1627,37 @@ test("RichText with Figure and Figcaption", async () => {
 
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
+      w-richtext:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-richtext:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
       figure {
         display: block;
         margin-top: 0;
         margin-right: 0;
         margin-bottom: 10px;
         margin-left: 0
+      }
+      w-richtext figure.w-richtext-figure-type-image {
+        display: table
+      }
+      w-richtext figure.w-richtext-align-center {
+        clear: both;
+        margin-left: auto;
+        margin-right: auto
       }
       img {
         vertical-align: middle;
@@ -1769,12 +1794,7 @@ test("Form", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -1783,9 +1803,9 @@ test("Form", async () => {
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgba(255, 255, 255, 1);
         width: 100%;
-        height: auto;
+        height: 38px;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1794,7 +1814,6 @@ test("Form", async () => {
         font-size: 14px;
         line-height: 1.42857;
         display: block;
-        cursor: not-allowed;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -1853,12 +1872,7 @@ test("FormButton", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -1880,7 +1894,6 @@ test("FormButton", async () => {
         text-decoration-style: solid;
         text-decoration-color: currentcolor;
         display: inline-block;
-        appearance: button;
         border: 0 none currentcolor
       }
     }"
@@ -1941,12 +1954,7 @@ test("FormTextInput", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -1955,9 +1963,9 @@ test("FormTextInput", async () => {
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgba(255, 255, 255, 1);
         width: 100%;
-        height: auto;
+        height: 38px;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1966,7 +1974,6 @@ test("FormTextInput", async () => {
         font-size: 14px;
         line-height: 1.42857;
         display: block;
-        cursor: not-allowed;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -2083,15 +2090,14 @@ test("FormTextarea", async () => {
         font-family: inherit;
         overflow-x: auto;
         overflow-y: auto;
-        height: auto;
         margin: 0
       }
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgba(255, 255, 255, 1);
         width: 100%;
-        height: auto;
+        height: 38px;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -2100,7 +2106,6 @@ test("FormTextarea", async () => {
         font-size: 14px;
         line-height: 1.42857;
         display: block;
-        cursor: not-allowed;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -2260,12 +2265,7 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -2385,12 +2385,7 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;

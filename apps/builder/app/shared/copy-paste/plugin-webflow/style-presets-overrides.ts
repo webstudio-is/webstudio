@@ -6,7 +6,7 @@ const _stylePresets = {
   ".w-embed": [
     ...styles[".w-embed"],
     {
-      selector: "w-embed",
+      selector: ".w-embed",
       property: "display",
       value: {
         type: "keyword",

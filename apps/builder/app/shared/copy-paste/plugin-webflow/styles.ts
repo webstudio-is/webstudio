@@ -103,6 +103,7 @@ const replaceAtImages = (
 };
 
 // Making a token name from a selector to look a little more readable
+// e.g. .w-button -> w-button
 const toTokenName = (selector: string) => selector.replace(/(^|\s)\./g, "$1");
 
 const processStyles = (parsedStyles: ParsedStyleDecl[]) => {
@@ -539,14 +540,15 @@ export const addStyles = async ({
       continue;
     }
 
-    for (const name of mapComponentAndPresetStyles(wfNode, stylePresets)) {
+    for (const selector of mapComponentAndPresetStyles(wfNode, stylePresets)) {
+      const name = toTokenName(selector);
       addNodeTokenStyles({
         styleSourceId: await generateStyleSourceId(name),
         name,
         variants: new Map(
           Array.from(
             mapGroupBy(
-              stylePresets[name] as Array<ParsedStyleDecl>,
+              stylePresets[selector] as Array<ParsedStyleDecl>,
               (item) => item.breakpoint
             ),
             ([mediaQuery, value]) => [
