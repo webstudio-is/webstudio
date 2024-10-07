@@ -196,7 +196,6 @@ const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["Figure"]),
     data: WfNodeData.extend({
-      style: z.record(styleProperty, styleValue).optional(),
       figure: z.object({
         type: z.enum(["image"]), // @todo add more types
         align: z.enum([
