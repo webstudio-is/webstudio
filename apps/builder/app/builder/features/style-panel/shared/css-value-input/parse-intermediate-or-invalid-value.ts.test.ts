@@ -606,3 +606,17 @@ test("parse css variables as unparsed", () => {
     value: "url(https://my-image.com)",
   });
 });
+
+test("parse z-index", () => {
+  expect(
+    parseIntermediateOrInvalidValue("zIndex", {
+      type: "intermediate",
+      value: "6.5",
+      unit: "number",
+    })
+  ).toEqual({
+    type: "unit",
+    value: 7,
+    unit: "number",
+  });
+});
