@@ -33,7 +33,7 @@ export const ImageControl = ({
 }) => {
   const assets = useStore($assets);
   const styleDecl = useComputedStyleDecl(property);
-  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const styleValue = getRepeatedStyleItem(styleDecl, index);
   const [remoteImageURL, setRemoteImageURL] = useState<
     IntermediateValue | InvalidValue | undefined
   >(undefined);

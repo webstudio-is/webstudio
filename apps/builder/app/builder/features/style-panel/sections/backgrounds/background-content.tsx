@@ -29,11 +29,13 @@ import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
 import { PropertyInlineLabel } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
-import { useComputedStyleDecl } from "../../shared/model";
+import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import { CssValueInputContainer } from "../../shared/css-value-input";
+import { setProperty } from "../../shared/use-style-data";
 
 const detectImageOrGradientToggle = (styleValue?: StyleValue) => {
   if (styleValue?.type === "image") {
@@ -61,9 +63,39 @@ const Spacer = styled("div", {
   height: theme.spacing[5],
 });
 
+const GradientControl = ({ index }: { index: number }) => {
+  const styleDecl = useComputedStyleDecl("backgroundImage");
+  const value =
+    styleDecl.cascadedValue.type === "var"
+      ? styleDecl.cascadedValue
+      : getRepeatedStyleItem(styleDecl, index);
+  return (
+    <CssValueInputContainer
+      property="backgroundImage"
+      styleSource="default"
+      getOptions={() => $availableVariables.get()}
+      value={value}
+      setValue={(newValue, options) => {
+        if (newValue.type === "var") {
+          setProperty("backgroundImage")(newValue, options);
+        } else {
+          setRepeatedStyleItem(styleDecl, index, newValue, options);
+        }
+      }}
+      deleteProperty={() => {
+        if (styleDecl.cascadedValue.type === "var") {
+          setProperty("backgroundImage")(styleDecl.cascadedValue);
+        } else if (value) {
+          setRepeatedStyleItem(styleDecl, index, value);
+        }
+      }}
+    />
+  );
+};
+
 const BackgroundRepeat = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("backgroundRepeat");
-  const value = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const value = getRepeatedStyleItem(styleDecl, index);
   const items = [
     {
       child: <CrossSmallIcon />,
@@ -136,7 +168,7 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
 
 const BackgroundAttachment = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("backgroundAttachment");
-  const value = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const value = getRepeatedStyleItem(styleDecl, index);
   return (
     <ToggleGroup
       type="single"
@@ -162,9 +194,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const [imageGradientToggle, setImageGradientToggle] = useState<
     "image" | "gradient"
   >(() =>
-    detectImageOrGradientToggle(
-      getRepeatedStyleItem(backgroundImage.cascadedValue, index)
-    )
+    detectImageOrGradientToggle(getRepeatedStyleItem(backgroundImage, index))
   );
 
   return (
@@ -215,6 +245,16 @@ export const BackgroundContent = ({ index }: { index: number }) => {
               <FloatingPanelProvider container={elementRef}>
                 <ImageControl property="backgroundImage" index={index} />
               </FloatingPanelProvider>
+            </>
+          )}
+          {imageGradientToggle === "gradient" && (
+            <>
+              <PropertyInlineLabel
+                label="Gradient"
+                description={propertyDescriptions.backgroundImage}
+                properties={["backgroundImage"]}
+              />
+              <GradientControl index={index} />
             </>
           )}
 

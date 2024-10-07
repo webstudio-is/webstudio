@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import type { RgbaColor } from "colord";
-import type {
-  LayersValue,
-  StyleProperty,
-  StyleValue,
-  TupleValue,
-  UnparsedValue,
+import {
+  toValue,
+  type LayersValue,
+  type StyleProperty,
+  type StyleValue,
+  type TupleValue,
+  type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import {
   EyeconClosedIcon,
@@ -26,9 +27,28 @@ import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
-import { properties } from "@webstudio-is/css-data";
+import { parseCssValue, properties } from "@webstudio-is/css-data";
 
-export const getRepeatedStyleItem = (styleValue: StyleValue, index: number) => {
+/**
+ * shows cascaded value
+ * or resolves css variable and provide reparsed version
+ * so for example gradients in variable are unparsed
+ * but this utility converts them into layers
+ */
+const getComputedValue = (styleDecl: ComputedStyleDecl) => {
+  if (styleDecl.cascadedValue.type === "var") {
+    const property = styleDecl.property as StyleProperty;
+    const serialized = toValue(styleDecl.computedValue);
+    return parseCssValue(property, serialized);
+  }
+  return styleDecl.cascadedValue;
+};
+
+export const getRepeatedStyleItem = (
+  styleDecl: ComputedStyleDecl,
+  index: number
+) => {
+  const styleValue = getComputedValue(styleDecl);
   if (styleValue.type === "layers" || styleValue.type === "tuple") {
     return styleValue.value[index % styleValue.value.length];
   }
@@ -209,7 +229,7 @@ export const RepeatedStyle = (props: {
   const { label, styles, getItemProps, renderThumbnail, renderItemContent } =
     props;
   // first property should describe the amount of layers or tuple items
-  const primaryValue = styles[0].cascadedValue;
+  const primaryValue = getComputedValue(styles[0]);
   const primaryItems =
     primaryValue.type === "layers" || primaryValue.type === "tuple"
       ? primaryValue.value
