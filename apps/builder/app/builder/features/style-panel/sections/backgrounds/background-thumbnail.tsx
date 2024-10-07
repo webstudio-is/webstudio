@@ -113,10 +113,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
   const imageLoader = useStore($imageLoader);
   const styles = useComputedStyles(repeatedProperties);
   const [backgroundImage] = styles;
-  const backgroundImageValue = getRepeatedStyleItem(
-    backgroundImage.cascadedValue,
-    index
-  );
+  const backgroundImageValue = getRepeatedStyleItem(backgroundImage, index);
 
   if (
     backgroundImageValue?.type === "image" &&
@@ -154,9 +151,9 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
 
   if (backgroundImageValue?.type === "unparsed") {
     const cssStyle: { [property in RepeatedProperty]?: string } = {};
-    for (const { property, cascadedValue } of styles) {
-      const value = getRepeatedStyleItem(cascadedValue, index);
-      cssStyle[property as RepeatedProperty] = toValue(value);
+    for (const styleDecl of styles) {
+      const itemValue = getRepeatedStyleItem(styleDecl, index);
+      cssStyle[styleDecl.property as RepeatedProperty] = toValue(itemValue);
     }
     return <Thumbnail css={cssStyle} />;
   }

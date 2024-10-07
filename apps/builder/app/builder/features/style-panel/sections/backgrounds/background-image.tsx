@@ -39,7 +39,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const assets = useStore($assets);
   const styleDecl = useComputedStyleDecl("backgroundImage");
-  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const styleValue = getRepeatedStyleItem(styleDecl, index);
   const [errors, setErrors] = useState<string[]>([]);
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined

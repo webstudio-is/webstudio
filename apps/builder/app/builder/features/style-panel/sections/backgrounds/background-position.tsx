@@ -32,8 +32,8 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
     "backgroundPositionX",
     "backgroundPositionY",
   ]);
-  const xValue = getRepeatedStyleItem(backgroundPositionX.cascadedValue, index);
-  const yValue = getRepeatedStyleItem(backgroundPositionY.cascadedValue, index);
+  const xValue = getRepeatedStyleItem(backgroundPositionX, index);
+  const yValue = getRepeatedStyleItem(backgroundPositionY, index);
   const x = calculateBackgroundPosition(xValue);
   const y = calculateBackgroundPosition(yValue);
 

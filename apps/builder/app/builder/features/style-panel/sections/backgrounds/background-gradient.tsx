@@ -36,7 +36,7 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const property = "backgroundImage";
   const styleDecl = useComputedStyleDecl(property);
-  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const styleValue = getRepeatedStyleItem(styleDecl, index);
 
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined

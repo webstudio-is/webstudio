@@ -19,6 +19,7 @@ import {
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { setProperty } from "./use-style-data";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 registerContainers();
 
@@ -30,7 +31,7 @@ beforeEach(() => {
 });
 
 test("get repeated style item by index", () => {
-  const styleValue: StyleValue = {
+  const cascadedValue: StyleValue = {
     type: "layers",
     value: [
       { type: "keyword", value: "red" },
@@ -38,28 +39,37 @@ test("get repeated style item by index", () => {
       { type: "keyword", value: "blue" },
     ],
   };
-  expect(getRepeatedStyleItem(styleValue, 0)).toEqual({
+  const styleDecl: ComputedStyleDecl = {
+    property: "color",
+    source: {
+      name: "default",
+    },
+    cascadedValue,
+    computedValue: cascadedValue,
+    usedValue: cascadedValue,
+  };
+  expect(getRepeatedStyleItem(styleDecl, 0)).toEqual({
     type: "keyword",
     value: "red",
   });
-  expect(getRepeatedStyleItem(styleValue, 1)).toEqual({
+  expect(getRepeatedStyleItem(styleDecl, 1)).toEqual({
     type: "keyword",
     value: "green",
   });
-  expect(getRepeatedStyleItem(styleValue, 2)).toEqual({
+  expect(getRepeatedStyleItem(styleDecl, 2)).toEqual({
     type: "keyword",
     value: "blue",
   });
   // repeat values
-  expect(getRepeatedStyleItem(styleValue, 3)).toEqual({
+  expect(getRepeatedStyleItem(styleDecl, 3)).toEqual({
     type: "keyword",
     value: "red",
   });
-  expect(getRepeatedStyleItem(styleValue, 4)).toEqual({
+  expect(getRepeatedStyleItem(styleDecl, 4)).toEqual({
     type: "keyword",
     value: "green",
   });
-  expect(getRepeatedStyleItem(styleValue, 5)).toEqual({
+  expect(getRepeatedStyleItem(styleDecl, 5)).toEqual({
     type: "keyword",
     value: "blue",
   });
