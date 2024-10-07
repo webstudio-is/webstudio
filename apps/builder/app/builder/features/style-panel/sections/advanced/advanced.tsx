@@ -1,5 +1,12 @@
 import { colord } from "colord";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
@@ -328,6 +335,64 @@ const $advancedProperties = computed(
   }
 );
 
+const AdvancedProperty = memo(
+  ({
+    property,
+    autoFocus,
+  }: {
+    property: StyleProperty;
+    autoFocus: boolean;
+  }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+      if (ref.current == null) {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      ref.current.addEventListener(
+        "contentvisibilityautostatechange",
+        (event) => {
+          // @ts-expect-error event.skipped is not known
+          setIsVisible(!event.skipped);
+        },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      return () => {
+        controller.abort();
+      };
+    }, []);
+
+    return (
+      <Flex
+        ref={ref}
+        css={{
+          contentVisibility: "auto",
+          containIntrinsicSize: "auto 400px",
+        }}
+        key={property}
+        wrap="wrap"
+        align="center"
+        justify="start"
+      >
+        {isVisible && (
+          <>
+            <AdvancedPropertyLabel property={property} />
+            <Text>:</Text>
+            <AdvancedPropertyValue autoFocus={autoFocus} property={property} />
+          </>
+        )}
+      </Flex>
+    );
+  }
+);
+
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedProperties = useStore($advancedProperties);
@@ -354,14 +419,11 @@ export const Section = () => {
       )}
       <Box>
         {advancedProperties.map((property) => (
-          <Flex key={property} wrap="wrap" align="center" justify="start">
-            <AdvancedPropertyLabel property={property} />
-            <Text>:</Text>
-            <AdvancedPropertyValue
-              autoFocus={newlyAddedProperty.current === property}
-              property={property}
-            />
-          </Flex>
+          <AdvancedProperty
+            key={property}
+            property={property}
+            autoFocus={newlyAddedProperty.current === property}
+          />
         ))}
       </Box>
     </AdvancedStyleSection>
