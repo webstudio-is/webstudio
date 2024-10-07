@@ -59,13 +59,13 @@ export const BackgroundSize = ({ index }: { index: number }) => {
   };
 
   const setValueX: SetValue = (value, options) => {
-    const [x] = value.type === "layers" ? value.value : [];
+    const [x] = value.type === "layers" ? value.value : [value];
     const nextValue = toTuple(x, customSizeValue.value[1]);
     setValue(nextValue, options);
   };
 
   const setValueY: SetValue = (value, options) => {
-    const [y] = value.type === "layers" ? value.value : [];
+    const [y] = value.type === "layers" ? value.value : [value];
     const nextValue = toTuple(customSizeValue.value[0], y);
     setValue(nextValue, options);
   };

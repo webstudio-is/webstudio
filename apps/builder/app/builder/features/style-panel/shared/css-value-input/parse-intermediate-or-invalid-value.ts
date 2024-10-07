@@ -44,6 +44,13 @@ export const parseIntermediateOrInvalidValue = (
   }
 
   if ("unit" in styleValue && styleValue.unit === "number") {
+    // when unit is number some properties supports only integer
+    // for example z-index
+    styleInput = parseCssValue(property, `${Math.round(Number(value))}`);
+    if (styleInput.type !== "invalid") {
+      return styleInput;
+    }
+
     // Most css props supports 0 as unitless value, but not other numbers.
     // Its possible that we had { value: 0, unit: "number" } and value has changed
     // Lets try to parse it as px value
