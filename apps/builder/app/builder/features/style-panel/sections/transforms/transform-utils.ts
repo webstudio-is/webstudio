@@ -6,12 +6,10 @@ import {
   type TupleValue,
 } from "@webstudio-is/css-engine";
 import {
+  deleteProperty,
   setProperty,
-  type DeleteProperty,
-  type SetProperty,
   type StyleUpdateOptions,
 } from "../../shared/use-style-data";
-import type { StyleInfo } from "../../shared/style-info";
 import {
   extractRotatePropertiesFromTransform,
   extractSkewPropertiesFromTransform,
@@ -25,14 +23,6 @@ export const transformPanels = [
   "skew",
 ] as const;
 
-export const transformPanelDropdown = [
-  ...transformPanels,
-  "backfaceVisibility",
-  "transformOrigin",
-  "perspective",
-  "perspectiveOrigin",
-] as const;
-
 export type TransformPanel = (typeof transformPanels)[number];
 
 const defaultTranslate = "0px 0px 0px";
@@ -42,8 +32,8 @@ const defaultSkew = "skewX(0deg) skewY(0deg)";
 
 export const getHumanizedTextFromTransformLayer = (
   panel: TransformPanel,
-  value: TupleValue
-): { label: string; value: TupleValue } | undefined => {
+  value: StyleValue
+): { label: string; value: StyleValue } | undefined => {
   switch (panel) {
     case "translate":
       return {
@@ -99,11 +89,10 @@ export const getHumanizedTextFromTransformLayer = (
 };
 
 export const addDefaultsForTransormSection = (props: {
-  panel: (typeof transformPanelDropdown)[number];
-  currentStyle: StyleInfo;
-  setProperty: SetProperty;
+  panel: (typeof transformPanels)[number];
+  styles: ComputedStyleDecl[];
 }) => {
-  const { setProperty, panel, currentStyle } = props;
+  const { panel, styles } = props;
 
   switch (panel) {
     case "translate": {
@@ -116,50 +105,28 @@ export const addDefaultsForTransormSection = (props: {
       return setProperty("scale")(scale);
     }
 
-    case "transformOrigin": {
-      const transformOrigin = parseCssValue("transformOrigin", "50% 50%");
-      return setProperty("transformOrigin")(transformOrigin);
-    }
-
-    case "perspectiveOrigin": {
-      const perspectiveOrigin = parseCssValue("perspectiveOrigin", "50% 50%");
-      return setProperty("perspectiveOrigin")(perspectiveOrigin);
-    }
-
-    case "backfaceVisibility": {
-      return setProperty("backfaceVisibility")({
-        type: "keyword",
-        value: "visible",
-      });
-    }
-
-    case "perspective": {
-      return setProperty("perspective")({
-        type: "keyword",
-        value: "none",
-      });
-    }
-
     case "skew":
     case "rotate": {
-      const value = currentStyle["transform"]?.value;
       const parsedValue = parseCssValue(
         "transform",
         panel === "rotate" ? defaultRotate : defaultSkew
       );
+      const transform = styles.find(
+        (styleDecl) => styleDecl.property === "transform"
+      )?.cascadedValue;
 
       // rotate and skew are maintained using tuple
       // If the existing value is anything other than tuple.
       // We need to update the property to use tuples
-      if (value?.type !== "tuple") {
+      if (transform === undefined || transform.type !== "tuple") {
         return setProperty("transform")(parsedValue);
       }
 
-      if (parsedValue.type === "tuple" && value.type === "tuple") {
-        const filteredValues = removeRotateOrSkewValues(panel, value);
+      if (parsedValue.type === "tuple" && transform.type === "tuple") {
+        const filteredValues = removeRotateOrSkewValues(panel, transform);
 
         return setProperty("transform")({
-          ...value,
+          ...transform,
           value: [...parsedValue.value, ...filteredValues],
         });
       }
@@ -167,50 +134,41 @@ export const addDefaultsForTransormSection = (props: {
   }
 };
 
-export const isTransformPanelPropertyUsed = (params: {
-  currentStyle: StyleInfo;
-  panel: (typeof transformPanelDropdown)[number];
+export const isTransformPanelPropertyUsed = ({
+  panel,
+  styles,
+}: {
+  panel: (typeof transformPanels)[number];
+  styles: ComputedStyleDecl[];
 }): boolean => {
-  const { currentStyle, panel } = params;
   switch (panel) {
-    case "scale":
     case "translate":
-      return currentStyle[panel]?.value.type === "tuple";
-
-    /*
-      backface-visibility is a keyword property. And it's default value is visible.
-      It's not inherited. So, we need to check with the local value to enable/disable in the dropdown.
-      If we check with the computed value, it will always return true.
-      https://developer.mozilla.org/en-US/docs/Web/CSS/backface-visibility#formal_definition
-    */
-    case "backfaceVisibility":
-      return currentStyle["backfaceVisibility"]?.local?.type === "keyword";
-
-    case "transformOrigin":
-      return currentStyle["transformOrigin"]?.local !== undefined;
-
-    case "perspective":
-      return currentStyle["perspective"]?.local !== undefined;
-
-    case "perspectiveOrigin":
-      return currentStyle["perspectiveOrigin"]?.local !== undefined;
-
+    case "scale": {
+      const styleDecl = styles.find(
+        (styleDecl) => styleDecl.property === panel
+      );
+      return styleDecl?.cascadedValue.type === "tuple";
+    }
     case "rotate": {
-      const rotate = currentStyle["transform"]?.value;
+      const styleDecl = styles.find(
+        (styleDecl) => styleDecl.property === "transform"
+      );
       return (
-        rotate?.type === "tuple" &&
-        extractRotatePropertiesFromTransform(rotate).rotateX !== undefined
+        styleDecl?.cascadedValue.type === "tuple" &&
+        extractRotatePropertiesFromTransform(styleDecl.cascadedValue)
+          .rotateX !== undefined
       );
     }
-
     case "skew": {
-      const skew = currentStyle["transform"]?.value;
+      const styleDecl = styles.find(
+        (styleDecl) => styleDecl.property === "transform"
+      );
       return (
-        skew?.type === "tuple" &&
-        extractSkewPropertiesFromTransform(skew).skewX !== undefined
+        styleDecl?.cascadedValue.type === "tuple" &&
+        extractSkewPropertiesFromTransform(styleDecl.cascadedValue).skewX !==
+          undefined
       );
     }
-
     default:
       return false;
   }
@@ -227,13 +185,13 @@ export const removeRotateOrSkewValues = (
   );
 };
 
-export const handleDeleteTransformProperty = (params: {
-  currentStyle: StyleInfo;
-  setProperty: SetProperty;
-  deleteProperty: DeleteProperty;
+export const handleDeleteTransformProperty = ({
+  panel,
+  value,
+}: {
   panel: TransformPanel;
+  value: StyleValue;
 }) => {
-  const { deleteProperty, panel, currentStyle, setProperty } = params;
   switch (panel) {
     case "scale":
     case "translate":
@@ -241,8 +199,7 @@ export const handleDeleteTransformProperty = (params: {
       break;
 
     case "rotate": {
-      const value = currentStyle["transform"]?.value;
-      if (value?.type !== "tuple") {
+      if (value.type !== "tuple") {
         return;
       }
       const filteredValues = removeRotateOrSkewValues("rotate", value);
@@ -258,8 +215,7 @@ export const handleDeleteTransformProperty = (params: {
     }
 
     case "skew": {
-      const value = currentStyle["transform"]?.value;
-      if (value?.type !== "tuple") {
+      if (value.type !== "tuple") {
         return;
       }
       const filteredValues = removeRotateOrSkewValues("skew", value);
@@ -275,17 +231,17 @@ export const handleDeleteTransformProperty = (params: {
   }
 };
 
-export const handleHideTransformProperty = (params: {
-  setProperty: SetProperty;
-  currentStyle: StyleInfo;
+export const handleHideTransformProperty = ({
+  panel,
+  value,
+}: {
   panel: TransformPanel;
+  value: StyleValue;
 }) => {
-  const { panel, setProperty, currentStyle } = params;
   switch (panel) {
     case "scale":
     case "translate": {
-      const value = currentStyle[panel]?.value;
-      if (value?.type !== "tuple") {
+      if (value.type !== "tuple") {
         return;
       }
       setProperty(panel)({
@@ -296,8 +252,7 @@ export const handleHideTransformProperty = (params: {
     }
 
     case "rotate": {
-      const value = currentStyle["transform"]?.value;
-      if (value?.type !== "tuple") {
+      if (value.type !== "tuple") {
         return;
       }
       const newValue: TupleValue = {
@@ -333,8 +288,7 @@ export const handleHideTransformProperty = (params: {
     }
 
     case "skew": {
-      const value = currentStyle["transform"]?.value;
-      if (value?.type !== "tuple") {
+      if (value.type !== "tuple") {
         return;
       }
       const newValue: TupleValue = {
@@ -362,30 +316,6 @@ export const handleHideTransformProperty = (params: {
       break;
     }
   }
-};
-
-const keywordToValue: Record<string, number> = {
-  left: 0,
-  right: 100,
-  center: 50,
-  top: 0,
-  bottom: 100,
-};
-
-export const calculatePositionFromOrigin = (value: StyleValue | undefined) => {
-  if (value === undefined) {
-    return 50;
-  }
-
-  if (value.type === "unit") {
-    return value.value;
-  }
-
-  if (value.type === "keyword") {
-    return keywordToValue[value.value];
-  }
-
-  return 0;
 };
 
 const transformFunctions = ["rotateX", "rotateY", "rotateZ", "skewX", "skewY"];
