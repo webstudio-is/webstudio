@@ -1,7 +1,11 @@
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
-import type { SectionProps } from "../shared/section";
+import {
+  forwardRef,
+  useState,
+  type ElementRef,
+  type ComponentProps,
+} from "react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { useMemo, useState } from "react";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   CssValueListArrowFocus,
   CssValueListItem,
@@ -11,19 +15,24 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
   Flex,
+  Grid,
+  IconButton,
   Label,
   SectionTitle,
   SectionTitleButton,
   SmallIconButton,
   SmallToggleButton,
   theme,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import {
   EyeconClosedIcon,
   PlusIcon,
   SubtractIcon,
   EyeconOpenIcon,
+  EllipsesIcon,
 } from "@webstudio-is/icons";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import {
   addDefaultsForTransormSection,
   isTransformPanelPropertyUsed,
@@ -31,7 +40,6 @@ import {
   handleHideTransformProperty,
   getHumanizedTextFromTransformLayer,
   transformPanels,
-  transformPanelDropdown,
   type TransformPanel,
 } from "./transform-utils";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
@@ -39,49 +47,113 @@ import { TranslatePanelContent } from "./transform-translate";
 import { ScalePanelContent } from "./transform-scale";
 import { RotatePanelContent } from "./transform-rotate";
 import { SkewPanelContent } from "./transform-skew";
-import { BackfaceVisibility } from "./transform-backface-visibility";
-import { TransformPerspective } from "./transform-perspective";
 import { humanizeString } from "~/shared/string-utils";
 import { getDots } from "../../shared/style-section";
 import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origin";
-import { PropertySectionLabel } from "../../property-label";
-import { propertyDescriptions } from "@webstudio-is/css-data";
-import { useComputedStyles } from "../../shared/model";
+import {
+  getPriorityStyleValueSource,
+  PropertyLabel,
+  PropertySectionLabel,
+} from "../../property-label";
+import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
+import { createBatchUpdate } from "../../shared/use-style-data";
+import { TextControl } from "../../controls";
 
 const label = "Transforms";
 
-export const properties = [
-  "translate",
-  "scale",
-  "transform",
+const advancedProperties = [
   "transformOrigin",
   "backfaceVisibility",
   "perspective",
   "perspectiveOrigin",
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
-export const Section = (props: SectionProps) => {
+export const properties = [
+  "translate",
+  "scale",
+  "transform",
+  ...advancedProperties,
+] satisfies [StyleProperty, ...StyleProperty[]];
+
+const TransformAdvancedButton = forwardRef<
+  ElementRef<"button">,
+  ComponentProps<"button">
+>((props, ref) => {
+  const styles = useComputedStyles(advancedProperties);
+  const styleValueSourceColor = getPriorityStyleValueSource(styles);
+  return (
+    <Tooltip content="Advanced transform options">
+      <IconButton
+        {...props}
+        ref={ref}
+        variant={styleValueSourceColor}
+        onClick={(event) => {
+          if (event.altKey) {
+            const batch = createBatchUpdate();
+            for (const property of advancedProperties) {
+              batch.deleteProperty(property);
+            }
+            batch.publish();
+            return;
+          }
+          props.onClick?.(event);
+        }}
+      >
+        <EllipsesIcon />
+      </IconButton>
+    </Tooltip>
+  );
+});
+
+const TransformAdvancedPopover = () => {
+  return (
+    <FloatingPanel
+      title="Advanced Transform"
+      content={
+        <Grid
+          css={{
+            p: theme.spacing[9],
+            gap: theme.spacing[6],
+            width: theme.spacing[30],
+          }}
+        >
+          <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
+            <PropertyLabel
+              label="Backface Visibility"
+              description={propertyDescriptions.backfaceVisibility}
+              properties={["backfaceVisibility"]}
+            />
+            <TextControl property="backfaceVisibility" />
+          </Grid>
+          <TransformAndPerspectiveOrigin property="transformOrigin" />
+          <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
+            <PropertyLabel
+              label="Perspective"
+              description={propertyDescriptions.perspective}
+              properties={["perspective"]}
+            />
+            <TextControl property="perspective" />
+          </Grid>
+          <TransformAndPerspectiveOrigin property="perspectiveOrigin" />
+        </Grid>
+      }
+    >
+      <TransformAdvancedButton />
+    </FloatingPanel>
+  );
+};
+
+export const Section = () => {
   const [isOpen, setIsOpen] = useState(true);
 
-  const { currentStyle } = props;
-
+  const styles = useComputedStyles(properties);
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
     isTransformPanelPropertyUsed({
-      currentStyle: props.currentStyle,
       panel,
+      styles,
     })
   );
 
-  const isBackfaceVisibilityUsed = isTransformPanelPropertyUsed({
-    currentStyle,
-    panel: "backfaceVisibility",
-  });
-  const isPerspectiveOriginUsed = isTransformPanelPropertyUsed({
-    currentStyle,
-    panel: "perspective",
-  });
-
-  const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
       fullWidth
@@ -92,41 +164,41 @@ export const Section = (props: SectionProps) => {
         <SectionTitle
           dots={getDots(styles)}
           suffix={
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SectionTitleButton prefix={<PlusIcon />}></SectionTitleButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuContent
-                  collisionPadding={16}
-                  css={{ width: theme.spacing[24] }}
-                >
-                  {transformPanelDropdown.map((panel) => {
-                    return (
+            <Flex gap={1}>
+              <TransformAdvancedPopover />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SectionTitleButton
+                    prefix={<PlusIcon />}
+                  ></SectionTitleButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    collisionPadding={16}
+                    css={{ width: theme.spacing[24] }}
+                  >
+                    {transformPanels.map((panel) => (
                       <DropdownMenuItem
-                        disabled={
-                          isTransformPanelPropertyUsed({
-                            currentStyle: props.currentStyle,
-                            panel,
-                          }) === true
-                        }
+                        disabled={isTransformPanelPropertyUsed({
+                          panel,
+                          styles,
+                        })}
                         key={panel}
                         onSelect={() => {
                           addDefaultsForTransormSection({
-                            currentStyle: props.currentStyle,
-                            setProperty: props.setProperty,
                             panel,
+                            styles,
                           });
                           setIsOpen(true);
                         }}
                       >
                         {humanizeString(panel)}
                       </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenuPortal>
-            </DropdownMenu>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+            </Flex>
           }
         >
           <PropertySectionLabel
@@ -137,48 +209,42 @@ export const Section = (props: SectionProps) => {
         </SectionTitle>
       }
     >
-      {isAnyTransformPropertyAdded === true ? (
+      {isAnyTransformPropertyAdded && (
         <CssValueListArrowFocus>
           <Flex direction="column">
-            {transformPanels.map((panel, index) => (
-              <TransformSection
-                {...props}
-                key={panel}
-                index={index}
-                panel={panel}
-              />
-            ))}
+            {transformPanels.map(
+              (panel, index) =>
+                isTransformPanelPropertyUsed({
+                  panel,
+                  styles,
+                }) && (
+                  <TransformSection key={panel} index={index} panel={panel} />
+                )
+            )}
           </Flex>
         </CssValueListArrowFocus>
-      ) : undefined}
-
-      {isBackfaceVisibilityUsed && <BackfaceVisibility />}
-      <TransformAndPerspectiveOrigin property="transformOrigin" {...props} />
-      {isPerspectiveOriginUsed && <TransformPerspective />}
-      <TransformAndPerspectiveOrigin property="perspectiveOrigin" {...props} />
+      )}
     </CollapsibleSectionRoot>
   );
 };
 
-const TransformSection = (
-  props: SectionProps & { index: number; panel: TransformPanel }
-) => {
-  const { currentStyle, setProperty, deleteProperty, panel, index } = props;
-  const properties = useMemo(() => {
-    const property =
-      panel === "rotate" || panel === "skew" ? "transform" : panel;
-    const value = currentStyle[property]?.value;
-
-    if (value === undefined || value.type !== "tuple") {
-      return;
-    }
-
-    return getHumanizedTextFromTransformLayer(panel, value);
-  }, [currentStyle, panel]);
-
-  if (properties === undefined) {
+const TransformSection = ({
+  panel,
+  index,
+}: {
+  index: number;
+  panel: TransformPanel;
+}) => {
+  const property = panel === "rotate" || panel === "skew" ? "transform" : panel;
+  const styleDecl = useComputedStyleDecl(property);
+  const values = getHumanizedTextFromTransformLayer(
+    panel,
+    styleDecl.cascadedValue
+  );
+  if (values === undefined) {
     return;
   }
+  const { value, label } = values;
 
   return (
     <FloatingPanel
@@ -195,28 +261,21 @@ const TransformSection = (
       <CssValueListItem
         id={panel}
         index={index}
-        hidden={properties.value.hidden}
-        label={<Label truncate>{properties.label}</Label>}
+        hidden={value.hidden}
+        label={<Label truncate>{label}</Label>}
         buttons={
           <>
             <SmallToggleButton
               variant="normal"
-              pressed={properties.value.hidden}
+              pressed={value.hidden}
               tabIndex={-1}
               onPressedChange={() =>
                 handleHideTransformProperty({
-                  currentStyle,
-                  setProperty,
                   panel,
+                  value: styleDecl.cascadedValue,
                 })
               }
-              icon={
-                properties.value.hidden ? (
-                  <EyeconClosedIcon />
-                ) : (
-                  <EyeconOpenIcon />
-                )
-              }
+              icon={value.hidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
             />
             <SmallIconButton
               variant="destructive"
@@ -224,10 +283,8 @@ const TransformSection = (
               icon={<SubtractIcon />}
               onClick={() =>
                 handleDeleteTransformProperty({
-                  currentStyle,
-                  setProperty,
-                  deleteProperty,
                   panel,
+                  value: styleDecl.cascadedValue,
                 })
               }
             />

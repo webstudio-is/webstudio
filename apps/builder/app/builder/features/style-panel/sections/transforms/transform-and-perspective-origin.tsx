@@ -1,6 +1,5 @@
 import { propertyDescriptions, propertySyntaxes } from "@webstudio-is/css-data";
-import type { SectionProps } from "../shared/section";
-import { Flex, Grid, theme, PositionGrid } from "@webstudio-is/design-system";
+import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import {
   KeywordValue,
   StyleValue,
@@ -12,9 +11,12 @@ import { styleConfigByName } from "../../shared/configs";
 import { useMemo } from "react";
 import { extractTransformOrPerspectiveOriginValues } from "./transform-extractors";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import { calculatePositionFromOrigin } from "./transform-utils";
+import {
+  setProperty,
+  type StyleUpdateOptions,
+} from "../../shared/use-style-data";
 import { PropertyInlineLabel, PropertyLabel } from "../../property-label";
+import { useComputedStyleDecl } from "../../shared/model";
 
 // Fake properties to use in the CssValueInputContainer
 // x, y axis takes length | percentage | keyword
@@ -23,18 +25,50 @@ const fakePropertyX: StyleProperty = "backgroundPositionX";
 const fakePropertyY: StyleProperty = "backgroundPositionY";
 const fakePropertyZ: StyleProperty = "outlineOffset";
 
-export const TransformAndPerspectiveOrigin = (
-  props: SectionProps & { property: StyleProperty }
-) => {
-  const { currentStyle, setProperty, property } = props;
-  const value = currentStyle[property]?.local;
-  const { label } = styleConfigByName(property);
-  const origin = useMemo(() => {
-    if (value?.type !== "tuple" && value?.type !== "keyword") {
-      return;
-    }
+const keywordToValue: Record<string, number> = {
+  left: 0,
+  right: 100,
+  center: 50,
+  top: 0,
+  bottom: 100,
+};
 
-    return extractTransformOrPerspectiveOriginValues(value);
+export const calculatePositionFromOrigin = (value: StyleValue | undefined) => {
+  if (value === undefined) {
+    return 50;
+  }
+
+  if (value.type === "unit") {
+    return value.value;
+  }
+
+  if (value.type === "keyword") {
+    return keywordToValue[value.value];
+  }
+
+  return 0;
+};
+
+export const TransformAndPerspectiveOrigin = ({
+  property,
+}: {
+  property: StyleProperty;
+}) => {
+  const styleDecl = useComputedStyleDecl(property);
+  const value = styleDecl.cascadedValue;
+  const { label } = styleConfigByName(property);
+  const origin = useMemo((): {
+    x: KeywordValue | UnitValue;
+    y: KeywordValue | UnitValue;
+    z?: UnitValue;
+  } => {
+    if (value.type === "tuple" || value.type === "keyword") {
+      return extractTransformOrPerspectiveOriginValues(value);
+    }
+    return {
+      x: { type: "unit", value: 50, unit: "%" },
+      y: { type: "unit", value: 50, unit: "%" },
+    };
   }, [value]);
 
   const xInfo = useMemo(() => calculatePositionFromOrigin(origin?.x), [origin]);
@@ -51,10 +85,6 @@ export const TransformAndPerspectiveOrigin = (
       value,
     })
   );
-
-  if (origin === undefined) {
-    return;
-  }
 
   const handleValueChange = (
     index: number,
@@ -120,13 +150,7 @@ export const TransformAndPerspectiveOrigin = (
   };
 
   return (
-    <Flex
-      direction="column"
-      gap="2"
-      css={{
-        px: theme.spacing[9],
-      }}
-    >
+    <Grid gap="2">
       <PropertyLabel
         label={label}
         description={
@@ -220,6 +244,6 @@ export const TransformAndPerspectiveOrigin = (
           </Flex>
         </Grid>
       </Flex>
-    </Flex>
+    </Grid>
   );
 };
