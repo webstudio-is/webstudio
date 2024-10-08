@@ -567,6 +567,30 @@ test("generate component with variables and actions", () => {
   );
 });
 
+test("merge classes if no className", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map([["body", ["cls1"]]]),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(<$.Body ws:id="body"></$.Body>),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body
+        className={"cls1"} />
+        }
+    `)
+    )
+  );
+});
+
 test("add classes and merge classes", () => {
   expect(
     generateWebstudioComponent({
