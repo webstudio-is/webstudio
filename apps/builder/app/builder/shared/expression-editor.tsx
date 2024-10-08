@@ -352,7 +352,10 @@ const wrapperStyle = css({
   "--ws-code-editor-max-height": "320px",
 });
 
-const replaceTextFilter = EditorState.transactionFilter.of((tr) => {
+/**
+ * Replaces variables with their IDs, e.g., someVar -> $ws$dataSource$321
+ */
+const replaceWithWsVariables = EditorState.transactionFilter.of((tr) => {
   if (!tr.docChanged) {
     return tr;
   }
@@ -361,6 +364,13 @@ const replaceTextFilter = EditorState.transactionFilter.of((tr) => {
   const [{ aliases }] = state.facet(VariablesData);
 
   const aliasesByName = mapGroupBy(Array.from(aliases), ([_id, name]) => name);
+
+  // The idea of cursor preservation is simple:
+  // There are 2 cases we are handling:
+  // 1. A variable is replaced while typing its name. In this case, we preserve the cursor position from the end of the text.
+  // 2. A variable is replaced when an operation makes the expression valid. For example, ('' b) -> ('' + b).
+  //    In this case, we preserve the cursor position from the start of the text.
+  // This does not cover cases like (a b) -> (a + b). For simplicity, we are not handling it. We can improve it if issues arise.
 
   const cursorPos = tr.selection?.main.head ?? 0;
   const cursorPosFromEnd = tr.newDoc.length - cursorPos;
@@ -420,7 +430,12 @@ const variableLinter = linter((view) => {
         const identifier = view.state.doc.sliceString(node.from, node.to);
         const [{ aliases }] = view.state.facet(VariablesData);
 
-        if (decodeDataSourceVariable(identifier) && aliases.has(identifier)) {
+        const trimmedIdentifier = identifier.trim();
+
+        if (
+          decodeDataSourceVariable(trimmedIdentifier) &&
+          aliases.has(trimmedIdentifier)
+        ) {
           return;
         }
 
@@ -470,7 +485,7 @@ export const ExpressionEditor = ({
       javascript({}),
 
       VariablesData.of({ scope, aliases }),
-      replaceTextFilter,
+      replaceWithWsVariables,
       // render autocomplete in body
       // to prevent popover scroll overflow
       tooltips({ parent: document.body }),
