@@ -108,6 +108,16 @@ const toFragment = (
       addInstance(component);
       return fragment;
     }
+    case "Figure": {
+      addInstance("Box");
+      addProp("tag", "figure");
+      return fragment;
+    }
+    case "Figcaption": {
+      addInstance("Text");
+      addProp("tag", "figcaption");
+      return fragment;
+    }
     case "Block": {
       const component = wfNode.data?.text ? "Text" : "Box";
       if (wfNode.tag !== "div") {
