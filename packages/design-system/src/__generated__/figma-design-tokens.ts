@@ -35,13 +35,13 @@ export const fontWeights = {
   inter_2: 500,
   inter_3: 700,
   inter_4: 600,
-  robotoMono_4: 700,
+  robotoMono_4: 400,
   manrope_5: 700,
   manrope_6: 400,
   manrope_7: 600,
   manrope_8: 200,
   manrope_9: 800,
-  robotoMono_3: 500,
+  robotoMono_3: 400,
   inter_5: 600,
   manrope_10: 800,
 } as const;
@@ -137,7 +137,7 @@ export const typography = {
   },
   mono: {
     fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
-    fontWeight: 500,
+    fontWeight: 400,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0em",
@@ -301,7 +301,7 @@ export const typography = {
   },
   monoBold: {
     fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
-    fontWeight: 700,
+    fontWeight: 400,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0em",
@@ -344,7 +344,7 @@ export const typography = {
   },
   monoBoldLink: {
     fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
-    fontWeight: 700,
+    fontWeight: 400,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0em",
@@ -354,7 +354,7 @@ export const typography = {
   },
   monoLink: {
     fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
-    fontWeight: 500,
+    fontWeight: 400,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0em",
