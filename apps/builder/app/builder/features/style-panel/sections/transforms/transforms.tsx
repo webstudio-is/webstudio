@@ -74,11 +74,11 @@ const TransformAdvancedPopover = () => {
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
     <Flex justify="between" align="center" css={{ px: theme.spacing[9] }}>
-      <Flex shrink>
-        <Label color={styleValueSourceColor} truncate>
-          Advanced Transform
-        </Label>
-      </Flex>
+      <PropertyLabel
+        label="Advanced Transform"
+        description=""
+        properties={advancedProperties}
+      />
       <FloatingPanel
         title="Advanced Transform"
         content={
