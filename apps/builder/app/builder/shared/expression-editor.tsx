@@ -370,7 +370,8 @@ const replaceWithWsVariables = EditorState.transactionFilter.of((tr) => {
   // 1. A variable is replaced while typing its name. In this case, we preserve the cursor position from the end of the text.
   // 2. A variable is replaced when an operation makes the expression valid. For example, ('' b) -> ('' + b).
   //    In this case, we preserve the cursor position from the start of the text.
-  // This does not cover cases like (a b) -> (a + b). For simplicity, we are not handling it. We can improve it if issues arise.
+  // This does not cover cases like (a b) -> (a + b). We are not handling it because I haven't found a way to enter such a case into real input.
+  // We can improve it if issues arise.
 
   const cursorPos = tr.selection?.main.head ?? 0;
   const cursorPosFromEnd = tr.newDoc.length - cursorPos;
