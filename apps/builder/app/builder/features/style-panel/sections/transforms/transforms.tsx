@@ -1,4 +1,9 @@
-import { useState } from "react";
+import {
+  forwardRef,
+  useState,
+  type ElementRef,
+  type ComponentProps,
+} from "react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
@@ -18,6 +23,7 @@ import {
   SmallIconButton,
   SmallToggleButton,
   theme,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import {
   EyeconClosedIcon,
@@ -69,64 +75,71 @@ export const properties = [
   ...advancedProperties,
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
-const TransformAdvancedPopover = () => {
+const TransformAdvancedButton = forwardRef<
+  ElementRef<"button">,
+  ComponentProps<"button">
+>((props, ref) => {
   const styles = useComputedStyles(advancedProperties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
-    <Flex justify="between" align="center" css={{ px: theme.spacing[9] }}>
-      <PropertyLabel
-        label="Advanced Transform"
-        description=""
-        properties={advancedProperties}
-      />
-      <FloatingPanel
-        title="Advanced Transform"
-        content={
-          <Grid
-            css={{
-              p: theme.spacing[9],
-              gap: theme.spacing[6],
-              width: theme.spacing[30],
-            }}
-          >
-            <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
-              <PropertyLabel
-                label="Backface Visibility"
-                description={propertyDescriptions.backfaceVisibility}
-                properties={["backfaceVisibility"]}
-              />
-              <TextControl property="backfaceVisibility" />
-            </Grid>
-            <TransformAndPerspectiveOrigin property="transformOrigin" />
-            <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
-              <PropertyLabel
-                label="Perspective"
-                description={propertyDescriptions.perspective}
-                properties={["perspective"]}
-              />
-              <TextControl property="perspective" />
-            </Grid>
-            <TransformAndPerspectiveOrigin property="perspectiveOrigin" />
-          </Grid>
-        }
-      >
-        <IconButton
-          variant={styleValueSourceColor}
-          onClick={(event) => {
-            if (event.altKey) {
-              const batch = createBatchUpdate();
-              for (const property of advancedProperties) {
-                batch.deleteProperty(property);
-              }
-              batch.publish();
-              return;
+    <Tooltip content="Advanced transform options">
+      <IconButton
+        {...props}
+        ref={ref}
+        variant={styleValueSourceColor}
+        onClick={(event) => {
+          if (event.altKey) {
+            const batch = createBatchUpdate();
+            for (const property of advancedProperties) {
+              batch.deleteProperty(property);
             }
+            batch.publish();
+            return;
+          }
+          props.onClick?.(event);
+        }}
+      >
+        <EllipsesIcon />
+      </IconButton>
+    </Tooltip>
+  );
+});
+
+const TransformAdvancedPopover = () => {
+  return (
+    <FloatingPanel
+      title="Advanced Transform"
+      content={
+        <Grid
+          css={{
+            p: theme.spacing[9],
+            gap: theme.spacing[6],
+            width: theme.spacing[30],
           }}
         >
-          <EllipsesIcon />
-        </IconButton>
-      </FloatingPanel>
-    </Flex>
+          <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
+            <PropertyLabel
+              label="Backface Visibility"
+              description={propertyDescriptions.backfaceVisibility}
+              properties={["backfaceVisibility"]}
+            />
+            <TextControl property="backfaceVisibility" />
+          </Grid>
+          <TransformAndPerspectiveOrigin property="transformOrigin" />
+          <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
+            <PropertyLabel
+              label="Perspective"
+              description={propertyDescriptions.perspective}
+              properties={["perspective"]}
+            />
+            <TextControl property="perspective" />
+          </Grid>
+          <TransformAndPerspectiveOrigin property="perspectiveOrigin" />
+        </Grid>
+      }
+    >
+      <TransformAdvancedButton />
+    </FloatingPanel>
   );
 };
 
@@ -151,36 +164,41 @@ export const Section = () => {
         <SectionTitle
           dots={getDots(styles)}
           suffix={
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SectionTitleButton prefix={<PlusIcon />}></SectionTitleButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuContent
-                  collisionPadding={16}
-                  css={{ width: theme.spacing[24] }}
-                >
-                  {transformPanels.map((panel) => (
-                    <DropdownMenuItem
-                      disabled={isTransformPanelPropertyUsed({
-                        panel,
-                        styles,
-                      })}
-                      key={panel}
-                      onSelect={() => {
-                        addDefaultsForTransormSection({
+            <Flex gap={1}>
+              <TransformAdvancedPopover />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SectionTitleButton
+                    prefix={<PlusIcon />}
+                  ></SectionTitleButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    collisionPadding={16}
+                    css={{ width: theme.spacing[24] }}
+                  >
+                    {transformPanels.map((panel) => (
+                      <DropdownMenuItem
+                        disabled={isTransformPanelPropertyUsed({
                           panel,
                           styles,
-                        });
-                        setIsOpen(true);
-                      }}
-                    >
-                      {humanizeString(panel)}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenuPortal>
-            </DropdownMenu>
+                        })}
+                        key={panel}
+                        onSelect={() => {
+                          addDefaultsForTransormSection({
+                            panel,
+                            styles,
+                          });
+                          setIsOpen(true);
+                        }}
+                      >
+                        {humanizeString(panel)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+            </Flex>
           }
         >
           <PropertySectionLabel
@@ -206,7 +224,6 @@ export const Section = () => {
           </Flex>
         </CssValueListArrowFocus>
       )}
-      <TransformAdvancedPopover />
     </CollapsibleSectionRoot>
   );
 };
