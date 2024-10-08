@@ -36,8 +36,8 @@
   "dependencies": {
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
-    "acorn": "^8.11.3",
-    "acorn-walk": "^8.3.2",
+    "acorn": "^8.12.1",
+    "acorn-walk": "^8.3.4",
     "reserved-identifiers": "^1.0.0",
     "type-fest": "^4.24.0",
     "zod": "^3.22.4"

@@ -119,8 +119,8 @@ describe("lint expression", () => {
     expect(
       lintExpression({ expression: ` a = b + 1`, allowAssignment: true })
     ).toEqual([
-      error(5, 6, `"b" is not available in the scope`),
-      error(1, 2, `"a" is not available in the scope`),
+      error(5, 6, `"b" is not defined in the scope`),
+      error(1, 2, `"a" is not defined in the scope`),
     ]);
     expect(
       lintExpression({

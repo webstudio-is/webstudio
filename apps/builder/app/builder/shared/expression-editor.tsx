@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import { useEffect, useMemo, type ReactNode, type RefObject } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { EditorState, Facet } from "@codemirror/state";
@@ -20,7 +14,7 @@ import {
   tooltips,
 } from "@codemirror/view";
 import { bracketMatching, syntaxTree } from "@codemirror/language";
-import { linter, type Diagnostic } from "@codemirror/lint";
+import { linter } from "@codemirror/lint";
 import {
   type Completion,
   type CompletionSource,
@@ -33,9 +27,15 @@ import {
   pickedCompletion,
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
-import { theme, textVariants, css } from "@webstudio-is/design-system";
+import {
+  theme,
+  textVariants,
+  css,
+  rawTheme,
+} from "@webstudio-is/design-system";
 import {
   decodeDataSourceVariable,
+  lintExpression,
   transpileExpression,
 } from "@webstudio-is/sdk";
 import { mapGroupBy } from "~/shared/shim";
@@ -422,33 +422,34 @@ const replaceWithWsVariables = EditorState.transactionFilter.of((tr) => {
   return tr;
 });
 
-const variableLinter = linter((view) => {
-  const diagnostics: Diagnostic[] = [];
-  syntaxTree(view.state)
-    .cursor()
-    .iterate((node) => {
-      if (node.name === "VariableName") {
-        const identifier = view.state.doc.sliceString(node.from, node.to);
-        const [{ aliases }] = view.state.facet(VariablesData);
+const linterTooltipTheme = EditorView.theme({
+  ".cm-tooltip:has(.cm-tooltip-lint)": {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    paddingTop: rawTheme.spacing[5],
+    paddingBottom: rawTheme.spacing[5],
+    pointerEvents: "none",
+  },
+  ".cm-tooltip-lint": {
+    backgroundColor: rawTheme.colors.hiContrast,
+    color: rawTheme.colors.loContrast,
+    borderRadius: rawTheme.borderRadius[7],
+    padding: rawTheme.spacing[5],
+  },
+  ".cm-tooltip-lint .cm-diagnostic": {
+    borderWidth: 0,
+    padding: 0,
+    margin: 0,
+    ...textVariants.regular,
+  },
+});
 
-        const trimmedIdentifier = identifier.trim();
-
-        if (
-          decodeDataSourceVariable(trimmedIdentifier) &&
-          aliases.has(trimmedIdentifier)
-        ) {
-          return;
-        }
-
-        diagnostics.push({
-          from: node.from,
-          to: node.to,
-          severity: "error",
-          message: `"${identifier}" is not defined`,
-        });
-      }
-    });
-  return diagnostics;
+const expressionLinter = linter((view) => {
+  const [{ aliases }] = view.state.facet(VariablesData);
+  return lintExpression({
+    expression: view.state.doc.toString(),
+    availableVariables: new Set(aliases.keys()),
+  });
 });
 
 export const ExpressionEditor = ({
@@ -478,19 +479,16 @@ export const ExpressionEditor = ({
   onChange: (newValue: string) => void;
   onBlur?: () => void;
 }) => {
-  const lastChangeIsPasteOrDrop = useRef(false);
   const extensions = useMemo(
     () => [
       bracketMatching(),
       closeBrackets(),
       javascript({}),
-
       VariablesData.of({ scope, aliases }),
       replaceWithWsVariables,
       // render autocomplete in body
       // to prevent popover scroll overflow
       tooltips({ parent: document.body }),
-
       autocompletion({
         override: [scopeCompletionSource],
         icons: false,
@@ -498,17 +496,8 @@ export const ExpressionEditor = ({
       }),
       variables,
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
-
-      variableLinter,
-
-      EditorView.domEventHandlers({
-        drop() {
-          lastChangeIsPasteOrDrop.current = true;
-        },
-        paste() {
-          lastChangeIsPasteOrDrop.current = true;
-        },
-      }),
+      expressionLinter,
+      linterTooltipTheme,
     ],
     [scope, aliases]
   );

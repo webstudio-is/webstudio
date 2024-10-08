@@ -27,7 +27,6 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
   FloatingPanelPopoverTrigger,
-  InputErrorsTooltip,
   Label,
   ScrollArea,
   SmallIconButton,
@@ -84,7 +83,7 @@ const BindingPanel = ({
     () => getExpressionIdentifiers(value),
     [value]
   );
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errorsCount, setErrorsCount] = useState<number>(0);
   const [touched, setTouched] = useState(false);
   const scopeEntries = Object.entries(scope);
 
@@ -93,7 +92,7 @@ const BindingPanel = ({
       expression,
       availableVariables: new Set(aliases.keys()),
     });
-    setErrors(diagnostics.map((diagnostic) => diagnostic.message));
+    setErrorsCount(diagnostics.length);
   };
 
   const updateExpression = (newExpression: string) => {
@@ -177,38 +176,26 @@ const BindingPanel = ({
         </Tooltip>
       </Flex>
       <Box css={{ padding: `0 ${theme.spacing[9]} ${theme.spacing[9]}` }}>
-        <InputErrorsTooltip
-          errors={
-            touched && errors.length > 0
-              ? errors
-              : valueError
-                ? [valueError]
-                : undefined
+        <ExpressionEditor
+          editorApiRef={editorApiRef}
+          scope={scope}
+          aliases={aliases}
+          color={
+            (touched && errorsCount > 0) || valueError !== undefined
+              ? "error"
+              : undefined
           }
-        >
-          <div>
-            <ExpressionEditor
-              editorApiRef={editorApiRef}
-              scope={scope}
-              aliases={aliases}
-              color={
-                (touched && errors.length > 0) || valueError !== undefined
-                  ? "error"
-                  : undefined
-              }
-              autoFocus={true}
-              value={expression}
-              onChange={(value) => {
-                updateExpression(value);
-                setTouched(false);
-              }}
-              onBlur={() => {
-                onSave(expression, errors.length > 0);
-                setTouched(true);
-              }}
-            />
-          </div>
-        </InputErrorsTooltip>
+          autoFocus={true}
+          value={expression}
+          onChange={(value) => {
+            updateExpression(value);
+            setTouched(false);
+          }}
+          onBlur={() => {
+            onSave(expression, errorsCount > 0);
+            setTouched(true);
+          }}
+        />
       </Box>
     </ScrollArea>
   );
