@@ -32,7 +32,11 @@ export const truncate = (pageUrl: string, maxLength = 53) => {
 };
 
 export const formatUrl = (urlString: string) => {
-  const url = new URL(urlString);
+  try {
+    const url = new URL(urlString);
 
-  return `${url.origin}${url.pathname.split("/").join(" › ")}`;
+    return `${url.origin}${url.pathname.split("/").join(" › ")}`;
+  } catch {
+    return urlString;
+  }
 };
