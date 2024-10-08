@@ -112,6 +112,10 @@ const editorContentStyle = css({
     minHeight: `var(${minHeightVar}, auto)`,
     maxHeight: `var(${maxHeightVar}, none)`,
   },
+  ".cm-lintRange-error": {
+    textDecoration: "underline wavy red",
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+  },
 });
 
 // https://thememirror.net/clouds

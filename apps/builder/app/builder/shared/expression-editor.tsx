@@ -7,7 +7,7 @@ import {
 } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
-import { Facet } from "@codemirror/state";
+import { EditorState, Facet } from "@codemirror/state";
 import {
   type DecorationSet,
   type ViewUpdate,
@@ -20,6 +20,7 @@ import {
   tooltips,
 } from "@codemirror/view";
 import { bracketMatching, syntaxTree } from "@codemirror/language";
+import { linter, type Diagnostic } from "@codemirror/lint";
 import {
   type Completion,
   type CompletionSource,
@@ -351,6 +352,105 @@ const wrapperStyle = css({
   "--ws-code-editor-max-height": "320px",
 });
 
+/**
+ * Replaces variables with their IDs, e.g., someVar -> $ws$dataSource$321
+ */
+const replaceWithWsVariables = EditorState.transactionFilter.of((tr) => {
+  if (!tr.docChanged) {
+    return tr;
+  }
+
+  const state = tr.startState;
+  const [{ aliases }] = state.facet(VariablesData);
+
+  const aliasesByName = mapGroupBy(Array.from(aliases), ([_id, name]) => name);
+
+  // The idea of cursor preservation is simple:
+  // There are 2 cases we are handling:
+  // 1. A variable is replaced while typing its name. In this case, we preserve the cursor position from the end of the text.
+  // 2. A variable is replaced when an operation makes the expression valid. For example, ('' b) -> ('' + b).
+  //    In this case, we preserve the cursor position from the start of the text.
+  // This does not cover cases like (a b) -> (a + b). We are not handling it because I haven't found a way to enter such a case into real input.
+  // We can improve it if issues arise.
+
+  const cursorPos = tr.selection?.main.head ?? 0;
+  const cursorPosFromEnd = tr.newDoc.length - cursorPos;
+
+  const content = tr.newDoc.toString();
+  const originalContent = tr.startState.doc.toString();
+
+  let updatedContent = content;
+
+  try {
+    updatedContent = transpileExpression({
+      expression: content,
+      replaceVariable: (identifier) => {
+        if (decodeDataSourceVariable(identifier) && aliases.has(identifier)) {
+          return;
+        }
+        // prevent matching variables by unambiguous name
+        const matchedAliases = aliasesByName.get(identifier);
+        if (matchedAliases && matchedAliases.length === 1) {
+          const [id, _name] = matchedAliases[0];
+
+          return id;
+        }
+      },
+    });
+  } catch {
+    // empty block
+  }
+
+  if (updatedContent !== content) {
+    return [
+      {
+        changes: {
+          from: 0,
+          to: originalContent.length,
+          insert: updatedContent,
+        },
+        selection: {
+          anchor:
+            updatedContent.slice(0, cursorPos) === content.slice(0, cursorPos)
+              ? cursorPos
+              : updatedContent.length - cursorPosFromEnd,
+        },
+      },
+    ];
+  }
+
+  return tr;
+});
+
+const variableLinter = linter((view) => {
+  const diagnostics: Diagnostic[] = [];
+  syntaxTree(view.state)
+    .cursor()
+    .iterate((node) => {
+      if (node.name === "VariableName") {
+        const identifier = view.state.doc.sliceString(node.from, node.to);
+        const [{ aliases }] = view.state.facet(VariablesData);
+
+        const trimmedIdentifier = identifier.trim();
+
+        if (
+          decodeDataSourceVariable(trimmedIdentifier) &&
+          aliases.has(trimmedIdentifier)
+        ) {
+          return;
+        }
+
+        diagnostics.push({
+          from: node.from,
+          to: node.to,
+          severity: "error",
+          message: `"${identifier}" is not defined`,
+        });
+      }
+    });
+  return diagnostics;
+});
+
 export const ExpressionEditor = ({
   editorApiRef,
   scope = emptyScope,
@@ -384,10 +484,13 @@ export const ExpressionEditor = ({
       bracketMatching(),
       closeBrackets(),
       javascript({}),
+
       VariablesData.of({ scope, aliases }),
+      replaceWithWsVariables,
       // render autocomplete in body
       // to prevent popover scroll overflow
       tooltips({ parent: document.body }),
+
       autocompletion({
         override: [scopeCompletionSource],
         icons: false,
@@ -395,6 +498,9 @@ export const ExpressionEditor = ({
       }),
       variables,
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+
+      variableLinter,
+
       EditorView.domEventHandlers({
         drop() {
           lastChangeIsPasteOrDrop.current = true;
@@ -434,43 +540,7 @@ export const ExpressionEditor = ({
         readOnly={readOnly}
         autoFocus={autoFocus}
         value={value}
-        onChange={(value) => {
-          const aliasesByName = mapGroupBy(
-            Array.from(aliases),
-            ([_id, name]) => name
-          );
-          try {
-            // replace unknown webstudio variables with undefined
-            // to prevent invalid compilation
-            value = transpileExpression({
-              expression: value,
-              replaceVariable: (identifier) => {
-                if (
-                  decodeDataSourceVariable(identifier) &&
-                  aliases.has(identifier)
-                ) {
-                  return;
-                }
-                // prevent matching variables by unambiguous name
-                const matchedAliases = aliasesByName.get(identifier);
-                if (matchedAliases && matchedAliases.length === 1) {
-                  const [id, _name] = matchedAliases[0];
-                  return id;
-                }
-                // replace variable with undefined
-                // only after paste or drop
-                // to avoid replacing with undefined while user is typing
-                if (lastChangeIsPasteOrDrop.current) {
-                  return `undefined`;
-                }
-              },
-            });
-          } catch {
-            // empty block
-          }
-          lastChangeIsPasteOrDrop.current = false;
-          onChange(value);
-        }}
+        onChange={onChange}
         onBlur={onBlur}
       />
     </div>
