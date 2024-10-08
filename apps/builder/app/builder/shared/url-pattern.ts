@@ -147,6 +147,10 @@ export const validatePathnamePattern = (pathname: string) => {
           `Static parts cannot be mixed with dynamic parameters at '${segment}'.`
         );
       }
+    } else if (segment.includes("?")) {
+      messages.push(
+        `Optional parameter indicator ? must be at the end of the named parameter. Correct usage: /:param?`
+      );
     }
   }
 
