@@ -171,10 +171,12 @@ export const generateJsxElement = ({
   let collectionItemValue: undefined | string;
 
   const classes = Array.from(classesMap?.get(instance.id) ?? []);
+
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
     }
+
     const propValue = generatePropValue({
       scope,
       prop,
@@ -211,9 +213,15 @@ export const generateJsxElement = ({
     }
     // We need to merge atomic classes with user-defined className prop.
     if (prop.name === "className") {
-      if (prop.type === "string") {
-        classes.push(prop.value);
+      const mergedClasses = [];
+
+      if (classes.length > 0) {
+        mergedClasses.push(JSON.stringify(classes.join(" ")));
       }
+      mergedClasses.push(propValue);
+
+      generatedProps += `\n${prop.name}={${mergedClasses.join(` + " " + `)}}`;
+
       continue;
     }
     if (propValue !== undefined) {
@@ -221,9 +229,11 @@ export const generateJsxElement = ({
     }
   }
 
+  /*
   if (classes.length !== 0) {
     generatedProps += `\nclassName={${JSON.stringify(classes.join(" "))}}`;
   }
+  */
 
   let generatedElement = "";
   if (instance.component === collectionComponent) {
