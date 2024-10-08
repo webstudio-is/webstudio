@@ -57,7 +57,7 @@ export const lintExpression = ({
     simple(root, {
       Identifier(node) {
         if (availableVariables.has(node.name) === false) {
-          addError(`"${node.name}" is not available in the scope`)(node);
+          addError(`"${node.name}" is not defined in the scope`)(node);
         }
       },
       Literal() {},
@@ -79,7 +79,7 @@ export const lintExpression = ({
         simple(node.left, {
           Identifier(node) {
             if (availableVariables.has(node.name) === false) {
-              addError(`"${node.name}" is not available in the scope`)(node);
+              addError(`"${node.name}" is not defined in the scope`)(node);
             }
           },
         });

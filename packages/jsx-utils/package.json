@@ -32,7 +32,7 @@
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
-    "acorn": "^8.11.3",
+    "acorn": "^8.12.1",
     "acorn-jsx": "^5.3.2",
     "json5": "^2.2.3",
     "zod": "^3.22.4"
