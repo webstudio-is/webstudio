@@ -8,31 +8,31 @@ import {
 
 const Component = () => {
   return (
-    <Box className="w-box">
-      <Tabs defaultValue={"0"} className="w-tabs">
-        <TabsList className="w-tabs-list w-tabs-list-1">
+    <Box className={"w-box"}>
+      <Tabs defaultValue={"0"} className={"w-tabs"}>
+        <TabsList className={"w-tabs-list w-tabs-list-1"}>
           <TabsTrigger
             data-ws-index="0"
-            className="w-tab-trigger w-tab-trigger-1"
+            className={"w-tab-trigger w-tab-trigger-1"}
           >
             {"Account"}
           </TabsTrigger>
           <TabsTrigger
             data-ws-index="1"
-            className="w-tab-trigger w-tab-trigger-2"
+            className={"w-tab-trigger w-tab-trigger-2"}
           >
             {"Password"}
           </TabsTrigger>
         </TabsList>
         <TabsContent
           data-ws-index="0"
-          className="w-tab-content w-tab-content-1"
+          className={"w-tab-content w-tab-content-1"}
         >
           {"Make changes to your account here."}
         </TabsContent>
         <TabsContent
           data-ws-index="1"
-          className="w-tab-content w-tab-content-2"
+          className={"w-tab-content w-tab-content-2"}
         >
           {"Change your password here."}
         </TabsContent>
@@ -51,12 +51,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

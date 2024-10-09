@@ -3,8 +3,8 @@ import { Label as Label } from "../components";
 
 const Component = () => {
   return (
-    <Box className="w-box">
-      <Label className="w-label w-label-1">{"Form Label"}</Label>
+    <Box className={"w-box"}>
+      <Label className={"w-label w-label-1"}>{"Form Label"}</Label>
     </Box>
   );
 };
@@ -19,12 +19,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

@@ -18,65 +18,65 @@ import {
 
 const Component = () => {
   return (
-    <Box className="w-box">
-      <NavigationMenu className="w-navigation-menu w-navigation-menu-1">
-        <NavigationMenuList className="w-menu-list w-menu-list-1">
-          <NavigationMenuItem data-ws-index="0" className="w-menu-item">
-            <NavigationMenuTrigger className="w-menu-trigger">
-              <Button className="w-button w-button-1">
-                <Text className="w-text">{"About"}</Text>
-                <Box className="w-box w-icon-container">
+    <Box className={"w-box"}>
+      <NavigationMenu className={"w-navigation-menu w-navigation-menu-1"}>
+        <NavigationMenuList className={"w-menu-list w-menu-list-1"}>
+          <NavigationMenuItem data-ws-index="0" className={"w-menu-item"}>
+            <NavigationMenuTrigger className={"w-menu-trigger"}>
+              <Button className={"w-button w-button-1"}>
+                <Text className={"w-text"}>{"About"}</Text>
+                <Box className={"w-box w-icon-container"}>
                   <HtmlEmbed
                     code={
                       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                     }
-                    className="w-html-embed"
+                    className={"w-html-embed"}
                   />
                 </Box>
               </Button>
             </NavigationMenuTrigger>
             <NavigationMenuContent
               data-ws-index="0"
-              className="w-menu-content w-menu-content-1"
+              className={"w-menu-content w-menu-content-1"}
             >
-              <Box className="w-box w-content">
-                <Box className="w-box w-box-1">{""}</Box>
-                <Box className="w-box w-flex-column">
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+              <Box className={"w-box w-content"}>
+                <Box className={"w-box w-box-1"}>{""}</Box>
+                <Box className={"w-box w-flex-column"}>
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/sheet"}
-                      className="w-link w-link-1"
+                      className={"w-link w-link-1"}
                     >
-                      <Text className="w-text w-text-1">{"Sheet"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-1">
+                      <Text className={"w-text w-text-1"}>{"Sheet"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-1"}>
                         {
                           "Extends the Dialog component to display content that complements the main content of the screen."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={
                         "https://ui.shadcn.com/docs/components/navigation-menu"
                       }
-                      className="w-link w-link-2"
+                      className={"w-link w-link-2"}
                     >
-                      <Text className="w-text w-text-2">
+                      <Text className={"w-text w-text-2"}>
                         {"Navigation Menu"}
                       </Text>
-                      <Paragraph className="w-paragraph w-paragraph-2">
+                      <Paragraph className={"w-paragraph w-paragraph-2"}>
                         {"A collection of links for navigating websites."}
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/tabs"}
-                      className="w-link w-link-3"
+                      className={"w-link w-link-3"}
                     >
-                      <Text className="w-text w-text-3">{"Tabs"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-3">
+                      <Text className={"w-text w-text-3"}>{"Tabs"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-3"}>
                         {
                           "A set of layered sections of content—known as tab panels—that are displayed one at a time."
                         }
@@ -87,59 +87,59 @@ const Component = () => {
               </Box>
             </NavigationMenuContent>
           </NavigationMenuItem>
-          <NavigationMenuItem data-ws-index="1" className="w-menu-item">
-            <NavigationMenuTrigger className="w-menu-trigger">
-              <Button className="w-button w-button-2">
-                <Text className="w-text">{"Components"}</Text>
-                <Box className="w-box w-icon-container-1">
+          <NavigationMenuItem data-ws-index="1" className={"w-menu-item"}>
+            <NavigationMenuTrigger className={"w-menu-trigger"}>
+              <Button className={"w-button w-button-2"}>
+                <Text className={"w-text"}>{"Components"}</Text>
+                <Box className={"w-box w-icon-container-1"}>
                   <HtmlEmbed
                     code={
                       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
                     }
-                    className="w-html-embed"
+                    className={"w-html-embed"}
                   />
                 </Box>
               </Button>
             </NavigationMenuTrigger>
             <NavigationMenuContent
               data-ws-index="1"
-              className="w-menu-content w-menu-content-2"
+              className={"w-menu-content w-menu-content-2"}
             >
-              <Box className="w-box w-content-1">
-                <Box className="w-box w-flex-column-1">
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+              <Box className={"w-box w-content-1"}>
+                <Box className={"w-box w-flex-column-1"}>
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/accordion"}
-                      className="w-link w-link-4"
+                      className={"w-link w-link-4"}
                     >
-                      <Text className="w-text w-text-4">{"Accordion"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-4">
+                      <Text className={"w-text w-text-4"}>{"Accordion"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-4"}>
                         {
                           "A vertically stacked set of interactive headings that each reveal a section of content."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/dialog"}
-                      className="w-link w-link-5"
+                      className={"w-link w-link-5"}
                     >
-                      <Text className="w-text w-text-5">{"Dialog"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-5">
+                      <Text className={"w-text w-text-5"}>{"Dialog"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-5"}>
                         {
                           "A window overlaid on either the primary window or another dialog window, rendering the content underneath inert."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/collapsible"}
-                      className="w-link w-link-6"
+                      className={"w-link w-link-6"}
                     >
-                      <Text className="w-text w-text-6">{"Collapsible"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-6">
+                      <Text className={"w-text w-text-6"}>{"Collapsible"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-6"}>
                         {
                           "An interactive component which expands/collapses a panel."
                         }
@@ -147,40 +147,40 @@ const Component = () => {
                     </Link>
                   </NavigationMenuLink>
                 </Box>
-                <Box className="w-box w-flex-column-2">
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+                <Box className={"w-box w-flex-column-2"}>
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/popover"}
-                      className="w-link w-link-7"
+                      className={"w-link w-link-7"}
                     >
-                      <Text className="w-text w-text-7">{"Popover"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-7">
+                      <Text className={"w-text w-text-7"}>{"Popover"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-7"}>
                         {
                           "Displays rich content in a portal, triggered by a button."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/tooltip"}
-                      className="w-link w-link-8"
+                      className={"w-link w-link-8"}
                     >
-                      <Text className="w-text w-text-8">{"Tooltip"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-8">
+                      <Text className={"w-text w-text-8"}>{"Tooltip"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-8"}>
                         {
                           "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it."
                         }
                       </Paragraph>
                     </Link>
                   </NavigationMenuLink>
-                  <NavigationMenuLink className="w-accessible-link-wrapper">
+                  <NavigationMenuLink className={"w-accessible-link-wrapper"}>
                     <Link
                       href={"https://ui.shadcn.com/docs/components/button"}
-                      className="w-link w-link-9"
+                      className={"w-link w-link-9"}
                     >
-                      <Text className="w-text w-text-9">{"Button"}</Text>
-                      <Paragraph className="w-paragraph w-paragraph-9">
+                      <Text className={"w-text w-text-9"}>{"Button"}</Text>
+                      <Paragraph className={"w-paragraph w-paragraph-9"}>
                         {
                           "Displays a button or a component that looks like a button."
                         }
@@ -191,14 +191,16 @@ const Component = () => {
               </Box>
             </NavigationMenuContent>
           </NavigationMenuItem>
-          <NavigationMenuItem data-ws-index="2" className="w-menu-item">
-            <NavigationMenuLink className="w-accessible-link-wrapper">
-              <Link className="w-link w-link-10">{"Standalone"}</Link>
+          <NavigationMenuItem data-ws-index="2" className={"w-menu-item"}>
+            <NavigationMenuLink className={"w-accessible-link-wrapper"}>
+              <Link className={"w-link w-link-10"}>{"Standalone"}</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
-        <Box className="w-box w-viewport-container">
-          <NavigationMenuViewport className="w-menu-viewport w-menu-viewport-1" />
+        <Box className={"w-box w-viewport-container"}>
+          <NavigationMenuViewport
+            className={"w-menu-viewport w-menu-viewport-1"}
+          />
         </Box>
       </NavigationMenu>
     </Box>
@@ -215,12 +217,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

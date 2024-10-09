@@ -11,13 +11,13 @@ import {
 
 const Component = () => {
   return (
-    <Box className="w-box">
+    <Box className={"w-box"}>
       <Tooltip>
         <TooltipTrigger>
-          <Button className="w-button w-button-1">{"Button"}</Button>
+          <Button className={"w-button w-button-1"}>{"Button"}</Button>
         </TooltipTrigger>
-        <TooltipContent className="w-tooltip-content w-tooltip-content-1">
-          <Text className="w-text">{"The text you can edit"}</Text>
+        <TooltipContent className={"w-tooltip-content w-tooltip-content-1"}>
+          <Text className={"w-text"}>{"The text you can edit"}</Text>
         </TooltipContent>
       </Tooltip>
     </Box>
@@ -34,12 +34,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
