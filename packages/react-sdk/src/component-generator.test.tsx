@@ -567,6 +567,30 @@ test("generate component with variables and actions", () => {
   );
 });
 
+test("merge classes if no className", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map([["body", ["cls1"]]]),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(<$.Body ws:id="body"></$.Body>),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body
+        className={"cls1"} />
+        }
+    `)
+    )
+  );
+});
+
 test("add classes and merge classes", () => {
   expect(
     generateWebstudioComponent({
@@ -584,7 +608,70 @@ test("add classes and merge classes", () => {
       clear(`
         const Page = () => {
         return <Body
-        className={"cls1 cls2 \\"cls3\\""} />
+        className={"cls1" + " " + "cls2 \\"cls3\\""} />
+        }
+    `)
+    )
+  );
+});
+
+test("add classes", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body
+        className={"cls2 \\"cls3\\""} />
+        }
+    `)
+    )
+  );
+});
+
+test("add bind classes and merge classes", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map([["body", ["cls1"]]]),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: toMap([
+        {
+          type: "variable",
+          id: "variableId",
+          name: "variableName",
+          value: { type: "string", value: "cls3" },
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body
+          ws:id="body"
+          className={
+            new ExpressionValue(`'cls2' + ' ' + $ws$dataSource$variableId`)
+          }
+        ></$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        let [variableName, set$variableName] = useVariableState<any>("cls3")
+        return <Body
+        className={"cls1" + " " + 'cls2' + ' ' + variableName} />
         }
     `)
     )

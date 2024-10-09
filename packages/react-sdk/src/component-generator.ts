@@ -170,11 +170,17 @@ export const generateJsxElement = ({
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
 
-  const classes = Array.from(classesMap?.get(instance.id) ?? []);
+  const classMapArray = classesMap?.get(instance.id);
+  const classes =
+    classMapArray !== undefined
+      ? [JSON.stringify(classMapArray.join(" "))]
+      : [];
+
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
     }
+
     const propValue = generatePropValue({
       scope,
       prop,
@@ -210,10 +216,9 @@ export const generateJsxElement = ({
       continue;
     }
     // We need to merge atomic classes with user-defined className prop.
-    if (prop.name === "className") {
-      if (prop.type === "string") {
-        classes.push(prop.value);
-      }
+    if (prop.name === "className" && propValue !== undefined) {
+      classes.push(propValue);
+
       continue;
     }
     if (propValue !== undefined) {
@@ -222,7 +227,7 @@ export const generateJsxElement = ({
   }
 
   if (classes.length !== 0) {
-    generatedProps += `\nclassName={${JSON.stringify(classes.join(" "))}}`;
+    generatedProps += `\nclassName={${classes.join(` + " " + `)}}`;
   }
 
   let generatedElement = "";
