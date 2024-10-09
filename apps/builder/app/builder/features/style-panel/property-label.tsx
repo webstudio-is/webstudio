@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   hyphenateProperty,
   toValue,
@@ -36,12 +37,23 @@ import { createBatchUpdate } from "./shared/use-style-data";
 
 const renderCss = (styles: ComputedStyleDecl[]) => {
   let css = "";
+  let usedCss = "";
+  let hasComputedValues = false;
   for (const computedStyleDecl of styles) {
     const property = hyphenateProperty(computedStyleDecl.property);
-    const value = toValue(computedStyleDecl.cascadedValue);
-    css += `${property}: ${value};\n`;
+    const cascaded = toValue(computedStyleDecl.cascadedValue);
+    const used = toValue(computedStyleDecl.usedValue);
+    css += `${property}: ${cascaded};\n`;
+    usedCss += `${property}: ${used};\n`;
+    if (cascaded !== used) {
+      hasComputedValues = true;
+    }
   }
-  return css.trimEnd();
+  if (hasComputedValues && isFeatureEnabled("cssVars")) {
+    css += `\n/* is computed into */\n`;
+    css += usedCss;
+  }
+  return css;
 };
 
 export const PropertyInfo = ({
