@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 

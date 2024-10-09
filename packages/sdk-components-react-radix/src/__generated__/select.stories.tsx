@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
