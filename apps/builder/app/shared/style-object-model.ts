@@ -4,6 +4,8 @@ import type {
   StyleValue,
   StyleProperty,
   VarFallback,
+  VarValue,
+  UnparsedValue,
 } from "@webstudio-is/css-engine";
 import {
   type Instance,
@@ -245,6 +247,31 @@ const invalidPropertyData = {
   initial: invalidValue,
 };
 
+const substituteVars = (
+  styleValue: StyleValue,
+  mapper: (value: VarValue) => StyleValue
+): StyleValue => {
+  if (styleValue.type === "var") {
+    return mapper(styleValue);
+  }
+  if (styleValue.type === "layers" || styleValue.type === "tuple") {
+    const newItems: UnparsedValue[] = [];
+    let hasVars = false;
+    for (const item of styleValue.value) {
+      if (item.type === "var") {
+        hasVars = true;
+        newItems.push(mapper(item) as UnparsedValue);
+      } else {
+        newItems.push(item as UnparsedValue);
+      }
+    }
+    if (hasVars) {
+      return { ...styleValue, value: newItems };
+    }
+  }
+  return styleValue;
+};
+
 export type ComputedStyleDecl = {
   property: string;
   source: StyleValueSource;
@@ -345,16 +372,17 @@ export const getComputedStyleDecl = ({
     // https://drafts.csswg.org/css-cascade-5/#computed
     computedValue = specifiedValue;
 
-    if (computedValue.type === "var") {
-      const customProperty = `--${computedValue.value}`;
+    let invalid = false;
+    computedValue = substituteVars(computedValue, (varValue) => {
+      const customProperty = `--${varValue.value}`;
       // https://www.w3.org/TR/css-variables-1/#cycles
       if (usedCustomProperties.has(customProperty)) {
-        computedValue = invalidValue;
-        break;
+        invalid = true;
+        return varValue;
       }
       usedCustomProperties.add(customProperty);
 
-      const fallback: undefined | VarFallback = computedValue.fallback;
+      const fallback: undefined | VarFallback = varValue.fallback;
       const customPropertyValue = getComputedStyleDecl({
         model,
         // resolve custom properties on instance they are defined
@@ -363,18 +391,23 @@ export const getComputedStyleDecl = ({
         property: customProperty,
         customPropertiesGraph,
       });
-      computedValue = customPropertyValue.computedValue;
+      let replacement = customPropertyValue.computedValue;
       // https://www.w3.org/TR/css-variables-1/#invalid-variables
       if (
-        computedValue.type === "guaranteedInvalid" ||
-        (isCustomProperty === false && computedValue.type === "invalid")
+        replacement.type === "guaranteedInvalid" ||
+        (isCustomProperty === false && replacement.type === "invalid")
       ) {
         if (inherited) {
-          computedValue = fallback ?? inheritedValue;
+          replacement = fallback ?? inheritedValue;
         } else {
-          computedValue = fallback ?? initialValue;
+          replacement = fallback ?? initialValue;
         }
       }
+      return replacement;
+    });
+    if (invalid) {
+      computedValue = invalidValue;
+      break;
     }
   }
 

@@ -535,6 +535,14 @@ test("support custom properties as unparsed values", () => {
     type: "unparsed",
     value: "url(https://my-image.com)",
   });
+  expect(parseCssValue("--my-property", "blue red")).toEqual({
+    type: "unparsed",
+    value: "blue red",
+  });
+  expect(parseCssValue("--my-property", "blue, red")).toEqual({
+    type: "unparsed",
+    value: "blue, red",
+  });
 });
 
 test("support custom properties var reference", () => {
@@ -546,21 +554,6 @@ test("support custom properties var reference", () => {
     type: "var",
     value: "color",
     fallback: { type: "unparsed", value: "red" },
-  });
-});
-
-test("support deeply nested var reference", () => {
-  expect(parseCssValue("color", "rgb(var(--r), var(--g), var(--b))")).toEqual({
-    type: "unparsed",
-    value: "rgb(var(--r), var(--g), var(--b))",
-  });
-  expect(parseCssValue("transitionDuration", "var(--time)")).toEqual({
-    type: "layers",
-    value: [{ type: "unparsed", value: "var(--time)" }],
-  });
-  expect(parseCssValue("filter", "var(--filter)")).toEqual({
-    type: "tuple",
-    value: [{ type: "unparsed", value: "var(--filter)" }],
   });
 });
 
@@ -619,6 +612,52 @@ test("support custom properties var reference in custom property", () => {
     type: "var",
     value: "color",
     fallback: { type: "unparsed", value: "red" },
+  });
+});
+
+test("parse single var in repeated value without layers or tuples", () => {
+  expect(parseCssValue("backgroundImage", "var(--gradient)")).toEqual({
+    type: "var",
+    value: "gradient",
+  });
+  expect(parseCssValue("filter", "var(--noise)")).toEqual({
+    type: "var",
+    value: "noise",
+  });
+});
+
+test("parse multiple var in repeated value as layers and tuples", () => {
+  expect(
+    parseCssValue("backgroundImage", "var(--gradient-1), var(--gradient-2)")
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "var", value: "gradient-1" },
+      { type: "var", value: "gradient-2" },
+    ],
+  });
+  expect(parseCssValue("filter", "var(--noise-1) var(--noise-2)")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "var", value: "noise-1" },
+      { type: "var", value: "noise-2" },
+    ],
+  });
+});
+
+test("parse var in box-shadow", () => {
+  expect(parseCssValue("boxShadow", "var(--shadow)")).toEqual({
+    type: "var",
+    value: "shadow",
+  });
+  expect(
+    parseCssValue("boxShadow", "var(--shadow-1), var(--shadow-2)")
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "var", value: "shadow-1" },
+      { type: "var", value: "shadow-2" },
+    ],
   });
 });
 
