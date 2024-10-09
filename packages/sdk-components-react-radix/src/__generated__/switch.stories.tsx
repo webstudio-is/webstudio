@@ -1,20 +1,20 @@
-import { useState } from "react";
+import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 
 const Component = () => {
-  let [switchChecked, set$switchChecked] = useState<any>(false);
+  let [switchChecked, set$switchChecked] = useVariableState<any>(false);
   return (
-    <Box className="w-box">
+    <Box className={"w-box"}>
       <Switch
         checked={switchChecked}
         onCheckedChange={(checked: any) => {
           switchChecked = checked;
           set$switchChecked(switchChecked);
         }}
-        className="w-switch w-switch-1"
+        className={"w-switch w-switch-1"}
       >
-        <SwitchThumb className="w-switch-thumb w-switch-thumb-1" />
+        <SwitchThumb className={"w-switch-thumb w-switch-thumb-1"} />
       </Switch>
     </Box>
   );
@@ -30,12 +30,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

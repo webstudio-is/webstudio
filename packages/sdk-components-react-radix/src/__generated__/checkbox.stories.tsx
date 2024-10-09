@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -11,28 +11,30 @@ import {
 } from "../components";
 
 const Component = () => {
-  let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
+  let [checkboxChecked, set$checkboxChecked] = useVariableState<any>(false);
   return (
-    <Box className="w-box">
-      <Label className="w-label w-checkbox-field">
+    <Box className={"w-box"}>
+      <Label className={"w-label w-checkbox-field"}>
         <Checkbox
           checked={checkboxChecked}
           onCheckedChange={(checked: any) => {
             checkboxChecked = checked;
             set$checkboxChecked(checkboxChecked);
           }}
-          className="w-checkbox w-checkbox-1"
+          className={"w-checkbox w-checkbox-1"}
         >
-          <CheckboxIndicator className="w-checkbox-indicator w-checkbox-indicator-1">
+          <CheckboxIndicator
+            className={"w-checkbox-indicator w-checkbox-indicator-1"}
+          >
             <HtmlEmbed
               code={
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
               }
-              className="w-html-embed"
+              className={"w-html-embed"}
             />
           </CheckboxIndicator>
         </Checkbox>
-        <Text tag={"span"} className="w-text">
+        <Text tag={"span"} className={"w-text"}>
           {"Checkbox"}
         </Text>
       </Label>
@@ -50,12 +52,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

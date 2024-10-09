@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -12,64 +12,64 @@ import {
 } from "../components";
 
 const Component = () => {
-  let [radioGroupValue, set$radioGroupValue] = useState<any>("");
+  let [radioGroupValue, set$radioGroupValue] = useVariableState<any>("");
   return (
-    <Box className="w-box">
+    <Box className={"w-box"}>
       <RadioGroup
         value={radioGroupValue}
         onValueChange={(value: any) => {
           radioGroupValue = value;
           set$radioGroupValue(radioGroupValue);
         }}
-        className="w-radio-group w-radio-group-1"
+        className={"w-radio-group w-radio-group-1"}
       >
-        <Label className="w-label w-label-1">
+        <Label className={"w-label w-label-1"}>
           <RadioGroupItem
             value={"default"}
-            className="w-radio-group-item w-radio-group-item-1"
+            className={"w-radio-group-item w-radio-group-item-1"}
           >
-            <RadioGroupIndicator className="w-radio-group-indicator">
+            <RadioGroupIndicator className={"w-radio-group-indicator"}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
                 }
-                className="w-html-embed"
+                className={"w-html-embed"}
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text className="w-text">{"Default"}</Text>
+          <Text className={"w-text"}>{"Default"}</Text>
         </Label>
-        <Label className="w-label w-label-2">
+        <Label className={"w-label w-label-2"}>
           <RadioGroupItem
             value={"comfortable"}
-            className="w-radio-group-item w-radio-group-item-2"
+            className={"w-radio-group-item w-radio-group-item-2"}
           >
-            <RadioGroupIndicator className="w-radio-group-indicator">
+            <RadioGroupIndicator className={"w-radio-group-indicator"}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
                 }
-                className="w-html-embed"
+                className={"w-html-embed"}
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text className="w-text">{"Comfortable"}</Text>
+          <Text className={"w-text"}>{"Comfortable"}</Text>
         </Label>
-        <Label className="w-label w-label-3">
+        <Label className={"w-label w-label-3"}>
           <RadioGroupItem
             value={"compact"}
-            className="w-radio-group-item w-radio-group-item-3"
+            className={"w-radio-group-item w-radio-group-item-3"}
           >
-            <RadioGroupIndicator className="w-radio-group-indicator">
+            <RadioGroupIndicator className={"w-radio-group-indicator"}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
                 }
-                className="w-html-embed"
+                className={"w-html-embed"}
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text className="w-text">{"Compact"}</Text>
+          <Text className={"w-text"}>{"Compact"}</Text>
         </Label>
       </RadioGroup>
     </Box>
@@ -86,12 +86,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

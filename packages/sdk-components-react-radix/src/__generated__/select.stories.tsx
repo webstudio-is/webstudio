@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -15,9 +15,9 @@ import {
 } from "../components";
 
 const Component = () => {
-  let [selectValue, set$selectValue] = useState<any>("");
+  let [selectValue, set$selectValue] = useVariableState<any>("");
   return (
-    <Box className="w-box">
+    <Box className={"w-box"}>
       <Select
         value={selectValue}
         onValueChange={(value: any) => {
@@ -25,52 +25,56 @@ const Component = () => {
           set$selectValue(selectValue);
         }}
       >
-        <SelectTrigger className="w-select-trigger w-select-trigger-1">
-          <SelectValue placeholder={"Theme"} className="w-value" />
+        <SelectTrigger className={"w-select-trigger w-select-trigger-1"}>
+          <SelectValue placeholder={"Theme"} className={"w-value"} />
         </SelectTrigger>
-        <SelectContent className="w-select-content w-select-content-1">
-          <SelectViewport className="w-select-viewport w-select-viewport-1">
+        <SelectContent className={"w-select-content w-select-content-1"}>
+          <SelectViewport className={"w-select-viewport w-select-viewport-1"}>
             <SelectItem
               value={"light"}
-              className="w-select-item w-select-item-1"
+              className={"w-select-item w-select-item-1"}
             >
-              <SelectItemIndicator className="w-indicator w-indicator-1">
+              <SelectItemIndicator className={"w-indicator w-indicator-1"}>
                 <HtmlEmbed
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
                   }
-                  className="w-html-embed"
+                  className={"w-html-embed"}
                 />
               </SelectItemIndicator>
-              <SelectItemText className="w-item-text">{"Light"}</SelectItemText>
+              <SelectItemText className={"w-item-text"}>
+                {"Light"}
+              </SelectItemText>
             </SelectItem>
             <SelectItem
               value={"dark"}
-              className="w-select-item w-select-item-2"
+              className={"w-select-item w-select-item-2"}
             >
-              <SelectItemIndicator className="w-indicator w-indicator-2">
+              <SelectItemIndicator className={"w-indicator w-indicator-2"}>
                 <HtmlEmbed
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
                   }
-                  className="w-html-embed"
+                  className={"w-html-embed"}
                 />
               </SelectItemIndicator>
-              <SelectItemText className="w-item-text">{"Dark"}</SelectItemText>
+              <SelectItemText className={"w-item-text"}>
+                {"Dark"}
+              </SelectItemText>
             </SelectItem>
             <SelectItem
               value={"system"}
-              className="w-select-item w-select-item-3"
+              className={"w-select-item w-select-item-3"}
             >
-              <SelectItemIndicator className="w-indicator w-indicator-3">
+              <SelectItemIndicator className={"w-indicator w-indicator-3"}>
                 <HtmlEmbed
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
                   }
-                  className="w-html-embed"
+                  className={"w-html-embed"}
                 />
               </SelectItemIndicator>
-              <SelectItemText className="w-item-text">
+              <SelectItemText className={"w-item-text"}>
                 {"System"}
               </SelectItemText>
             </SelectItem>
@@ -91,12 +95,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
