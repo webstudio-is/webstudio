@@ -328,12 +328,105 @@ test("support custom properties", () => {
   const instanceSelector = ["body"];
   expect(
     getComputedStyleDecl({ model, instanceSelector, property: "--my-property" })
-      .usedValue
+      .cascadedValue
   ).toEqual({ type: "unparsed", value: "blue" });
   expect(
     getComputedStyleDecl({ model, instanceSelector, property: "color" })
       .usedValue
   ).toEqual({ type: "unparsed", value: "blue" });
+});
+
+test("compute single custom property without layers", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --gradient: linear-gradient(#fff, #000), linear-gradient(#000, #fff);
+        background-image: var(--gradient);
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "backgroundImage",
+    }).computedValue
+  ).toEqual({
+    type: "unparsed",
+    value: "linear-gradient(#fff,#000),linear-gradient(#000,#fff)",
+  });
+});
+
+test("support custom properties in layers", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --gradient-1: linear-gradient(#fff, #000);
+        --gradient-2: linear-gradient(#000, #fff);
+        background-image: var(--gradient-1), var(--gradient-2);
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "backgroundImage",
+    }).computedValue
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "linear-gradient(#fff,#000)" },
+      { type: "unparsed", value: "linear-gradient(#000,#fff)" },
+    ],
+  });
+});
+
+test("parse single custom property without tuples", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --noise: contrast(300%) brightness(100%);
+        filter: var(--noise);
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "filter",
+    }).computedValue
+  ).toEqual({ type: "unparsed", value: "contrast(300%) brightness(100%)" });
+});
+
+test("support custom properties in tuples", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --noise-1: contrast(300%);
+        --noise-2: brightness(100%);
+        filter: var(--noise-1) var(--noise-2);
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "filter",
+    }).computedValue
+  ).toEqual({
+    type: "tuple",
+    value: [
+      { type: "unparsed", value: "contrast(300%)" },
+      { type: "unparsed", value: "brightness(100%)" },
+    ],
+  });
 });
 
 test("use fallback value when custom property does not exist", () => {

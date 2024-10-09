@@ -110,6 +110,17 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
+export const VarFallback = z.union([UnparsedValue, KeywordValue]);
+export type VarFallback = z.infer<typeof VarFallback>;
+
+const VarValue = z.object({
+  type: z.literal("var"),
+  value: z.string(),
+  fallback: VarFallback.optional(),
+  hidden: z.boolean().optional(),
+});
+export type VarValue = z.infer<typeof VarValue>;
+
 export const TupleValueItem = z.union([
   UnitValue,
   KeywordValue,
@@ -117,6 +128,7 @@ export const TupleValueItem = z.union([
   ImageValue,
   RgbValue,
   FunctionValue,
+  VarValue,
 ]);
 export type TupleValueItem = z.infer<typeof TupleValueItem>;
 
@@ -137,6 +149,7 @@ const LayerValueItem = z.union([
   RgbValue,
   InvalidValue,
   FunctionValue,
+  VarValue,
 ]);
 
 export type LayerValueItem = z.infer<typeof LayerValueItem>;
@@ -150,17 +163,6 @@ export const LayersValue = z.object({
 });
 
 export type LayersValue = z.infer<typeof LayersValue>;
-
-export const VarFallback = z.union([UnparsedValue, KeywordValue]);
-export type VarFallback = z.infer<typeof VarFallback>;
-
-const VarValue = z.object({
-  type: z.literal("var"),
-  value: z.string(),
-  fallback: VarFallback.optional(),
-  hidden: z.boolean().optional(),
-});
-export type VarValue = z.infer<typeof VarValue>;
 
 export const StyleValue = z.union([
   ImageValue,

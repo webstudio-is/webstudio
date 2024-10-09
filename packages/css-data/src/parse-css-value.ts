@@ -165,8 +165,7 @@ const parseColor = (colorString: string): undefined | RgbValue => {
 
 const parseLiteral = (
   node: undefined | null | CssNode,
-  keywords?: readonly string[],
-  customProperties: boolean = false
+  keywords?: readonly string[]
 ):
   | undefined
   | UnitValue
@@ -234,9 +233,6 @@ const parseLiteral = (
       }
     }
     if (node.name === "var") {
-      if (customProperties === false) {
-        return;
-      }
       const [name, _comma, ...fallback] = node.children;
       const fallbackString = generate({
         type: "Value",
@@ -368,10 +364,35 @@ export const parseCssValue = (
     );
     return invalidValue;
   }
+  const nodes = "children" in ast ? (ast.children?.toArray() ?? []) : [ast];
+
+  // support only following types in custom properties
+  if (property.startsWith("--")) {
+    if (nodes.length === 1) {
+      const parsedValue = parseLiteral(nodes[0]);
+      if (
+        parsedValue?.type === "var" ||
+        parsedValue?.type === "unit" ||
+        parsedValue?.type === "rgb"
+      ) {
+        return parsedValue;
+      }
+    }
+    return { type: "unparsed", value: input };
+  }
+
+  // parse single var() without wrapping with layers or tuples
+  // which can possibly get nested when variables are computed
+  if (
+    nodes.length === 1 &&
+    nodes[0].type === "Function" &&
+    nodes[0].name === "var"
+  ) {
+    return parseLiteral(nodes[0]) ?? invalidValue;
+  }
 
   // prevent infinite splitting into layers for items
   if (repeatedProps.has(property) && topLevel) {
-    const nodes = "children" in ast ? (ast.children?.toArray() ?? []) : [ast];
     let invalid = false;
     const layersValue: StyleValue = {
       type: "layers",
@@ -406,7 +427,6 @@ export const parseCssValue = (
   }
 
   if (property === "fontFamily") {
-    const nodes = "children" in ast ? (ast.children?.toArray() ?? []) : [ast];
     return {
       type: "fontFamily",
       value: splitRepeated(nodes).map((nodes) => {
@@ -449,22 +469,7 @@ export const parseCssValue = (
   if (ast.type === "Value" && ast.children.size === 1) {
     // Try extract units from 1st children
     const first = ast.children.first;
-    const matchedValue = parseLiteral(
-      first,
-      keywordValues[property as never],
-      topLevel
-    );
-    // parse only references in custom properties
-    if (property.startsWith("--")) {
-      if (
-        matchedValue?.type === "var" ||
-        matchedValue?.type === "unit" ||
-        matchedValue?.type === "rgb"
-      ) {
-        return matchedValue;
-      }
-      return { type: "unparsed", value: input };
-    }
+    const matchedValue = parseLiteral(first, keywordValues[property as never]);
     if (matchedValue) {
       return matchedValue;
     }

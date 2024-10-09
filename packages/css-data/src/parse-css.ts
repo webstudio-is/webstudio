@@ -71,7 +71,7 @@ const parseCssValue = (
     }
 
     // @todo https://github.com/webstudio-is/webstudio/issues/3399
-    if (customProperties === false && value.startsWith("var(")) {
+    if (customProperties === false && value.includes("var(")) {
       final.set(property, { type: "keyword", value: "unset" });
       continue;
     }
