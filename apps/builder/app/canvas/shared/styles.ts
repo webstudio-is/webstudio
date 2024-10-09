@@ -229,12 +229,18 @@ export const subscribeStyles = () => {
 
   // add/delete declarations in mixins
   let prevStylesSet = new Set<StyleDecl>();
+  let prevTransformValue: undefined | TransformValue;
   // track value transformer to properly serialize var() fallback as unparsed
   // before it was managed css engine but here toValue is invoked by styles renderer directly
   const unsubscribeStyles = computed(
     [$styles, $transformValue],
     (styles, transformValue) => [styles, transformValue] as const
   ).subscribe(([styles, transformValue]) => {
+    // invalidate styles cache when assets are changed
+    if (prevTransformValue !== transformValue) {
+      prevTransformValue = transformValue;
+      prevStylesSet = new Set();
+    }
     const stylesSet = new Set(styles.values());
     const addedStyles = setDifference(stylesSet, prevStylesSet);
     const deletedStyles = setDifference(prevStylesSet, stylesSet);
