@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { boolean, z } from "zod";
+import { z } from "zod";
 import {
   type FocusEventHandler,
   useState,
@@ -107,7 +107,6 @@ import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { Card } from "../marketplace/card";
-import { language } from "@codemirror/language";
 
 const fieldDefaultValues = {
   name: "Untitled",
