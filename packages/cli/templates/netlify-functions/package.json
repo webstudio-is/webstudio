@@ -4,6 +4,6 @@
   },
   "dependencies": {
     "@netlify/functions": "^2.8.1",
-    "@netlify/remix-adapter": "^2.4.0"
+    "@netlify/remix-adapter": "^2.5.1"
   }
 }
