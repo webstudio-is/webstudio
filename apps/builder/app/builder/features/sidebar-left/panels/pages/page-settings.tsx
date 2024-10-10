@@ -433,7 +433,7 @@ const StatusField = ({
             value={value}
             onChange={onChange}
             onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue))
+              onChange(JSON.stringify(evaluatedValue ?? ""))
             }
           />
         )}
@@ -495,7 +495,7 @@ const RedirectField = ({
             value={value}
             onChange={onChange}
             onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue))
+              onChange(JSON.stringify(evaluatedValue ?? ""))
             }
           />
         )}
@@ -538,7 +538,7 @@ const LanguageField = ({
           value={value}
           onChange={onChange}
           onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(evaluatedValue))
+            onChange(JSON.stringify(evaluatedValue ?? ""))
           }
         />
         <InputErrorsTooltip errors={errors}>
@@ -967,7 +967,7 @@ const FormFields = ({
                     onRemove={(evaluatedValue) => {
                       onChange({
                         field: "title",
-                        value: JSON.stringify(evaluatedValue),
+                        value: JSON.stringify(evaluatedValue ?? ""),
                       });
                     }}
                   />
@@ -1013,7 +1013,7 @@ const FormFields = ({
                     onRemove={(evaluatedValue) => {
                       onChange({
                         field: "description",
-                        value: JSON.stringify(evaluatedValue),
+                        value: JSON.stringify(evaluatedValue ?? ""),
                       });
                     }}
                   />
@@ -1063,7 +1063,7 @@ const FormFields = ({
                       onRemove={(evaluatedValue) => {
                         onChange({
                           field: "excludePageFromSearch",
-                          value: JSON.stringify(evaluatedValue),
+                          value: JSON.stringify(evaluatedValue ?? ""),
                         });
                       }}
                     />
@@ -1137,7 +1137,7 @@ const FormFields = ({
                   onRemove={(evaluatedValue) => {
                     onChange({
                       field: "socialImageUrl",
-                      value: JSON.stringify(evaluatedValue),
+                      value: JSON.stringify(evaluatedValue ?? ""),
                     });
                   }}
                 />
