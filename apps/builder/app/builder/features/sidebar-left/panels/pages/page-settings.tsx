@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { z } from "zod";
+import { boolean, z } from "zod";
 import {
   type FocusEventHandler,
   useState,
@@ -107,6 +107,7 @@ import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { Card } from "../marketplace/card";
+import { language } from "@codemirror/language";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -227,10 +228,16 @@ const validateValues = (
   variableValues: Map<string, unknown>,
   userPlanFeatures: UserPlanFeatures
 ): Errors => {
+  // Null or undefined in the field value is only possible if it’s a dynamic (expression) value.
+  // We do not validate dynamic values but instead provide a default value for validation.
+  const excludeFromValidationDefault = "exclude from validation";
+
   const computedValues = {
     name: values.name,
     path: values.path,
-    title: computeExpression(values.title, variableValues),
+    title:
+      computeExpression(values.title, variableValues) ??
+      excludeFromValidationDefault,
     description: computeExpression(values.description, variableValues),
     excludePageFromSearch: computeExpression(
       values.excludePageFromSearch,
