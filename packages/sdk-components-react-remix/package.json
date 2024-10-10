@@ -47,7 +47,7 @@
     "@webstudio-is/sdk-components-react": "workspace:*"
   },
   "devDependencies": {
-    "@remix-run/react": "^2.11.0",
+    "@remix-run/react": "^2.12.1",
     "@types/node": "^22.6.1",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
