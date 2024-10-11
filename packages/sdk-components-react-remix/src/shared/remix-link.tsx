@@ -33,7 +33,9 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
       // always render simple <a> in canvas and preview
       // since remix links do not affect it
       if (renderer !== "canvas" && renderer !== "preview") {
-        return <RemixLink {...props} to={href} ref={ref} />;
+        // In the future, we will switch to the :local-link pseudo-class (https://developer.mozilla.org/en-US/docs/Web/CSS/:local-link). (aria-current="page" is used now)
+        // Therefore, we decided to use end={true} (exact route matching) for all links to facilitate easier migration.
+        return <RemixLink {...props} to={href} ref={ref} end />;
       }
     }
 
