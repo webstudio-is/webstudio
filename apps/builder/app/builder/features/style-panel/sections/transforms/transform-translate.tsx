@@ -8,7 +8,7 @@ import {
   type StyleUpdateOptions,
 } from "../../shared/use-style-data";
 import { PropertyInlineLabel } from "../../property-label";
-import { useComputedStyleDecl } from "../../shared/model";
+import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
 
 const property: StyleProperty = "translate";
 
@@ -34,7 +34,7 @@ export const TranslatePanelContent = () => {
     if (newValue.type === "tuple") {
       [newValue] = newValue.value;
     }
-    if (newValue.type !== "unit") {
+    if (newValue.type !== "unit" && newValue.type !== "var") {
       newValue = { type: "unit", value: 0, unit: "px" };
     }
 
@@ -58,9 +58,12 @@ export const TranslatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property={property}
+          getOptions={() => $availableVariables.get()}
           value={translateX}
           setValue={(newValue, options) => setAxis(0, newValue, options)}
-          deleteProperty={() => {}}
+          deleteProperty={(property, options) =>
+            setProperty(property)(styleDecl.cascadedValue, options)
+          }
         />
       </Grid>
       <Grid
@@ -75,9 +78,12 @@ export const TranslatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property={property}
+          getOptions={() => $availableVariables.get()}
           value={translateY}
           setValue={(newValue, options) => setAxis(1, newValue, options)}
-          deleteProperty={() => {}}
+          deleteProperty={(property, options) =>
+            setProperty(property)(styleDecl.cascadedValue, options)
+          }
         />
       </Grid>
       <Grid
@@ -92,9 +98,12 @@ export const TranslatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property={property}
+          getOptions={() => $availableVariables.get()}
           value={translateZ}
           setValue={(newValue, options) => setAxis(2, newValue, options)}
-          deleteProperty={() => {}}
+          deleteProperty={(property, options) =>
+            setProperty(property)(styleDecl.cascadedValue, options)
+          }
         />
       </Grid>
     </Flex>
