@@ -30,7 +30,15 @@ export const RemixForm = forwardRef<
     // which makes it hard to handle intercepted submit events
     // render remix form only in published sites
     if (renderer !== "canvas" && renderer !== "preview") {
-      return <Form action={action} {...props} ref={ref} />;
+      return (
+        <Form
+          action={action}
+          {...props}
+          ref={ref}
+          // Preserve scroll position for navigation on the same path, as it's used for filtering and sorting
+          preventScrollReset={action === undefined || action === ""}
+        />
+      );
     }
   }
   return <form {...props} ref={ref} />;
