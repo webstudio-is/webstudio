@@ -273,7 +273,6 @@ const variableMatcher = new MatchDecorator({
   regexp: /(\$ws\$dataSource\$\w+)/g,
 
   decorate: (add, from, _to, match, view) => {
-    // Your logic here
     const startPos = match.index;
 
     const name = match[1];
