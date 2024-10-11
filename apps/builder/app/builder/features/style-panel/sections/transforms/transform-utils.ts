@@ -337,7 +337,7 @@ export const updateTransformFunction = (
   if (newValue.type === "tuple") {
     [newValue] = newValue.value;
   }
-  if (newValue.type !== "unit") {
+  if (newValue.type !== "unit" && newValue.type !== "var") {
     newValue = { type: "unit", value: 0, unit: "deg" };
   }
 

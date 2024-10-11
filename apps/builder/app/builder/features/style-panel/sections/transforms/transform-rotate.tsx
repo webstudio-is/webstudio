@@ -8,7 +8,7 @@ import type { StyleValue } from "@webstudio-is/css-engine";
 import { propertySyntaxes } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
-import { useComputedStyleDecl } from "../../shared/model";
+import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
 import { updateTransformFunction } from "./transform-utils";
 
 export const RotatePanelContent = () => {
@@ -21,11 +21,7 @@ export const RotatePanelContent = () => {
   let rotateY: StyleValue = { type: "unit", value: 0, unit: "deg" };
   let rotateZ: StyleValue = { type: "unit", value: 0, unit: "deg" };
   for (const item of tuple?.value ?? []) {
-    if (
-      item.type === "function" &&
-      item.args.type === "layers" &&
-      item.args.value[0].type === "unit"
-    ) {
+    if (item.type === "function" && item.args.type === "layers") {
       if (item.name === "rotateX") {
         rotateX = item.args.value[0];
       }
@@ -52,6 +48,7 @@ export const RotatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property="rotate"
+          getOptions={() => $availableVariables.get()}
           value={rotateX}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateX", value, options)
@@ -71,6 +68,7 @@ export const RotatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property="rotate"
+          getOptions={() => $availableVariables.get()}
           value={rotateY}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateY", value, options)
@@ -90,6 +88,7 @@ export const RotatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property="rotate"
+          getOptions={() => $availableVariables.get()}
           value={rotateZ}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateZ", value, options)
