@@ -271,12 +271,31 @@ class VariableWidget extends WidgetType {
 
 const variableMatcher = new MatchDecorator({
   regexp: /(\$ws\$dataSource\$\w+)/g,
-  decoration: (match, view) => {
+
+  decorate: (add, from, _to, match, view) => {
+    const startPos = match.index;
+
     const name = match[1];
-    const [data] = view.state.facet(VariablesData);
-    return Decoration.replace({
-      widget: new VariableWidget(data.aliases.get(name) ?? name),
-    });
+    const [{ aliases }] = view.state.facet(VariablesData);
+
+    // The regexp may match variables not in scope, but the key problem we're solving is this:
+    // We have an alias $ws$dataSource$321 -> SomeVar, which we display as '[SomeVar]' ([] means decoration in the editor).
+    // If the user types a symbol (e.g., 'a') immediately after '[SomeVar]',
+    // the raw text becomes $ws$dataSource$321a, but we want to display '[SomeVar]a'.
+    const dataSourceId = [...aliases.keys()].find((key) => name.includes(key));
+
+    if (dataSourceId === undefined) {
+      return;
+    }
+    const endPos = startPos + dataSourceId.length;
+
+    add(
+      from,
+      endPos,
+      Decoration.replace({
+        widget: new VariableWidget(aliases.get(dataSourceId)!),
+      })
+    );
   },
 });
 
