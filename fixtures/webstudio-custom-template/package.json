@@ -12,9 +12,9 @@
   "private": true,
   "sideEffects": false,
   "dependencies": {
-    "@remix-run/node": "2.11.0",
-    "@remix-run/react": "2.11.0",
-    "@remix-run/server-runtime": "2.11.0",
+    "@remix-run/node": "2.12.1",
+    "@remix-run/react": "2.12.1",
+    "@remix-run/server-runtime": "2.12.1",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -27,7 +27,7 @@
     "web-vitals": "^3.5.2"
   },
   "devDependencies": {
-    "@remix-run/dev": "2.11.0",
+    "@remix-run/dev": "2.12.1",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.5.2",
