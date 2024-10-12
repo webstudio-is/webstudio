@@ -579,6 +579,37 @@ test("resolve non-cyclic references in custom properties", () => {
   ).toEqual({ type: "unparsed", value: "red" });
 });
 
+test("allow multiple usages of the same custom property", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --gradient: linear-gradient(#fff, #000);
+      }
+      boxLocal {
+        background-image: var(--gradient), var(--gradient);
+      }
+    `,
+    jsx: (
+      <$.Body ws:id="body" class="bodyLocal">
+        <$.Box ws:id="box" class="boxLocal"></$.Box>
+      </$.Body>
+    ),
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box", "body"],
+      property: "backgroundImage",
+    }).usedValue
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "linear-gradient(#fff,#000)" },
+      { type: "unparsed", value: "linear-gradient(#fff,#000)" },
+    ],
+  });
+});
+
 test("cascade value from matching breakpoints", () => {
   const model = createModel({
     css: `

@@ -399,7 +399,9 @@ const pasteStyles = async (
   state: undefined | string
 ) => {
   const text = await navigator.clipboard.readText();
-  const parsedStyles = parseCss(`selector{${text}}`);
+  const parsedStyles = parseCss(`selector{${text}}`, {
+    customProperties: true,
+  });
   const breakpointId = $selectedBreakpoint.get()?.id;
   const instanceId = $selectedInstanceSelector.get()?.[0];
   if (breakpointId === undefined || instanceId === undefined) {
