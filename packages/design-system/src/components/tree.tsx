@@ -100,9 +100,7 @@ const NodeContainer = styled("div", {
   position: "relative",
   height: ITEM_HEIGHT,
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
-    outline: `var(${treeNodeOutline}, 2px solid ${theme.colors.borderFocus})`,
-    outlineOffset: -3,
-    borderRadius: theme.borderRadius[6],
+    backgroundColor: theme.colors.backgroundHover,
     [treeActionOpacity]: 1,
   },
   "&:has([aria-selected=true])": {
