@@ -24,12 +24,12 @@ const cardStyle = css({
   borderColor: theme.colors.borderMain,
   borderRadius: theme.borderRadius[4],
   background: theme.colors.brandBackgroundProjectCardFront,
+  outline: "none",
   "&:hover, &:focus-within": {
     boxShadow: theme.shadows.brandElevationBig,
   },
   "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: 1,
+    borderColor: theme.colors.borderFocus,
   },
 });
 
