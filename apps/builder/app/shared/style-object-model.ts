@@ -373,10 +373,15 @@ export const getComputedStyleDecl = ({
     computedValue = specifiedValue;
 
     let invalid = false;
+    // check whether the property was used with parent node
+    // to support var(--var1), var(--var1) layers
+    const parentUsedCustomProperties = usedCustomProperties;
+    usedCustomProperties = new Set<string>(usedCustomProperties);
+    customPropertiesGraph.set(instanceId, usedCustomProperties);
     computedValue = substituteVars(computedValue, (varValue) => {
       const customProperty = `--${varValue.value}`;
       // https://www.w3.org/TR/css-variables-1/#cycles
-      if (usedCustomProperties.has(customProperty)) {
+      if (parentUsedCustomProperties.has(customProperty)) {
         invalid = true;
         return varValue;
       }

@@ -1,6 +1,8 @@
+import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   hyphenateProperty,
   toValue,
@@ -34,14 +36,33 @@ import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
 
-const renderCss = (styles: ComputedStyleDecl[]) => {
+const $isAltPressed = atom(false);
+if (typeof window !== "undefined") {
+  addEventListener("keydown", (event) => {
+    if (event.key === "Alt") {
+      $isAltPressed.set(true);
+    }
+  });
+  addEventListener("keyup", (event) => {
+    if (event.key === "Alt") {
+      $isAltPressed.set(false);
+    }
+  });
+}
+
+const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   let css = "";
-  for (const computedStyleDecl of styles) {
-    const property = hyphenateProperty(computedStyleDecl.property);
-    const value = toValue(computedStyleDecl.cascadedValue);
+  for (const styleDecl of styles) {
+    const property = hyphenateProperty(styleDecl.property);
+    let value;
+    if (isComputed && isFeatureEnabled("cssVars")) {
+      value = toValue(styleDecl.usedValue);
+    } else {
+      value = toValue(styleDecl.cascadedValue);
+    }
     css += `${property}: ${value};\n`;
   }
-  return css.trimEnd();
+  return css;
 };
 
 export const PropertyInfo = ({
@@ -62,6 +83,7 @@ export const PropertyInfo = ({
   const virtualInstances = useStore($virtualInstances);
   const styleSources = useStore($styleSources);
   const metas = useStore($registeredComponentMetas);
+  const isAltPressed = useStore($isAltPressed);
 
   let resettable = false;
   const breakpointSet = new Set<string>();
@@ -119,7 +141,7 @@ export const PropertyInfo = ({
         userSelect="text"
         css={{ whiteSpace: "break-spaces", cursor: "text" }}
       >
-        {code ?? renderCss(styles)}
+        {code ?? renderCss(styles, isAltPressed)}
       </Text>
       <Text>{description}</Text>
       {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
