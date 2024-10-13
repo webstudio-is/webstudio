@@ -312,11 +312,17 @@ export const RepeatedStyle = (props: {
   const { label, styles, getItemProps, renderThumbnail, renderItemContent } =
     props;
   // first property should describe the amount of layers or tuple items
-  const primaryValue =
-    styles[0].cascadedValue.type === "var"
-      ? reparseComputedValue(styles[0])
-      : styles[0].cascadedValue;
-  const primaryItems = isRepeatedValue(primaryValue) ? primaryValue.value : [];
+  const primaryValue = styles[0].cascadedValue;
+  let primaryItems: StyleValue[] = [];
+  if (primaryValue.type === "var") {
+    const reparsed = reparseComputedValue(styles[0]);
+    if (isRepeatedValue(reparsed)) {
+      primaryItems = repeatUntil([primaryValue], reparsed.value.length);
+    }
+  }
+  if (isRepeatedValue(primaryValue)) {
+    primaryItems = primaryValue.value;
+  }
 
   const sortableItems = useMemo(
     () =>

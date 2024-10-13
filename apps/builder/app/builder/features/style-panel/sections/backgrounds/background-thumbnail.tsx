@@ -75,9 +75,12 @@ const gradientNames = [
 ];
 
 export const getBackgroundLabel = (
-  backgroundImageStyle: StyleValue,
+  backgroundImageStyle: undefined | StyleValue,
   assets: Assets
 ) => {
+  if (backgroundImageStyle?.type === "var") {
+    return `--${backgroundImageStyle.value}`;
+  }
   if (
     backgroundImageStyle?.type === "image" &&
     backgroundImageStyle.value.type === "asset"
