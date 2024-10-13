@@ -53,6 +53,9 @@ export const toValue = (
     return families.join(", ");
   }
   if (value.type === "var") {
+    if (value.hidden) {
+      return "";
+    }
     let fallbacksString = "";
     if (value.fallback) {
       fallbacksString = `, ${toValue(value.fallback, transformValue)}`;
