@@ -74,17 +74,6 @@ const ItemButton = styled("button", {
     [`~ ${IconButtonsWrapper}`]: {
       display: "flex",
     },
-
-    "&:after": {
-      borderRadius: theme.borderRadius[3],
-      outline: `2px solid ${theme.colors.borderFocus}`,
-      outlineOffset: "-2px",
-      position: "absolute",
-      content: '""',
-      inset: "0 2px",
-      pointerEvents: "none",
-    },
-
     outline: "none",
     backgroundColor: theme.colors.backgroundHover,
   },
