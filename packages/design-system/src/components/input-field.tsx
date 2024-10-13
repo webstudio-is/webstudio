@@ -101,7 +101,7 @@ const containerStyle = css({
   variants: {
     variant: {
       chromeless: {
-        "&:not(:hover)": {
+        "&:not(:hover, :focus-within)": {
           borderColor: "transparent",
           backgroundColor: "transparent",
         },

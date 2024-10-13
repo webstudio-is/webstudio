@@ -8,7 +8,7 @@ export const focusRingStyle = (style?: CSS) => ({
     right: theme.spacing[3],
     top: theme.spacing[2],
     bottom: theme.spacing[2],
-    outlineWidth: 2,
+    outlineWidth: 1,
     outlineStyle: "solid",
     outlineColor: theme.colors.borderFocus,
     borderRadius: theme.borderRadius[3],

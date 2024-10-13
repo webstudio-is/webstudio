@@ -28,7 +28,6 @@ const gridStyle = css({
   width: "100%",
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
-    outline: `1px solid ${theme.colors.borderFocus}`,
   },
   "&:has([data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
