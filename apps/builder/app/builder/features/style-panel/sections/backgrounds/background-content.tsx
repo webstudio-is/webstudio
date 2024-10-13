@@ -11,7 +11,13 @@ import {
   RepeatRowIcon,
   CrossSmallIcon,
 } from "@webstudio-is/icons";
-import { type StyleValue, toValue } from "@webstudio-is/css-engine";
+import {
+  LayersValue,
+  type StyleProperty,
+  type StyleValue,
+  toValue,
+  UnparsedValue,
+} from "@webstudio-is/css-engine";
 import {
   theme,
   Flex,
@@ -35,7 +41,11 @@ import {
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import { setProperty } from "../../shared/use-style-data";
+import {
+  setProperty,
+  type StyleUpdateOptions,
+} from "../../shared/use-style-data";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 const detectImageOrGradientToggle = (styleValue?: StyleValue) => {
   if (styleValue?.type === "image") {
@@ -63,6 +73,30 @@ const Spacer = styled("div", {
   height: theme.spacing[5],
 });
 
+const setGradientProperty = (
+  styleDecl: ComputedStyleDecl,
+  index: number,
+  newItem: StyleValue,
+  options?: StyleUpdateOptions
+) => {
+  const property = styleDecl.property as StyleProperty;
+  let items: StyleValue[] = [];
+  if (styleDecl.cascadedValue.type === "var") {
+    items = [styleDecl.cascadedValue];
+  }
+  if (styleDecl.cascadedValue.type === "layers") {
+    items = styleDecl.cascadedValue.value;
+  }
+  const unpackedItem = newItem.type === "layers" ? newItem.value[0] : newItem;
+  if (items.length === 1 && unpackedItem.type === "var") {
+    setProperty(property)(unpackedItem, options);
+  } else {
+    const newValue = { type: "layers", value: items } as LayersValue;
+    newValue.value[index] = newItem as UnparsedValue;
+    setProperty(property)(newValue, options);
+  }
+};
+
 const GradientControl = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("backgroundImage");
   const value =
@@ -76,17 +110,11 @@ const GradientControl = ({ index }: { index: number }) => {
       getOptions={() => $availableVariables.get()}
       value={value}
       setValue={(newValue, options) => {
-        if (newValue.type === "var") {
-          setProperty("backgroundImage")(newValue, options);
-        } else {
-          setRepeatedStyleItem(styleDecl, index, newValue, options);
-        }
+        setGradientProperty(styleDecl, index, newValue, options);
       }}
       deleteProperty={() => {
-        if (styleDecl.cascadedValue.type === "var") {
-          setProperty("backgroundImage")(styleDecl.cascadedValue);
-        } else if (value) {
-          setRepeatedStyleItem(styleDecl, index, value);
+        if (value) {
+          setGradientProperty(styleDecl, index, value);
         }
       }}
     />

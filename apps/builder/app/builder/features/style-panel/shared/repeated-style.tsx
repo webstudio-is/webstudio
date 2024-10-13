@@ -20,6 +20,7 @@ import {
   Label,
   SmallIconButton,
   SmallToggleButton,
+  toast,
   useSortable,
 } from "@webstudio-is/design-system";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
@@ -28,6 +29,43 @@ import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
 import { parseCssValue, properties } from "@webstudio-is/css-data";
+
+const isRepeatedValue = (
+  styleValue: StyleValue
+): styleValue is LayersValue | TupleValue =>
+  styleValue.type === "layers" || styleValue.type === "tuple";
+
+const reparseComputedValue = (styleDecl: ComputedStyleDecl) => {
+  const property = styleDecl.property as StyleProperty;
+  const serialized = toValue(styleDecl.computedValue);
+  return parseCssValue(property, serialized);
+};
+
+export const getComputedRepeatedItem = (
+  styleDecl: ComputedStyleDecl,
+  index: number
+) => {
+  const value = reparseComputedValue(styleDecl);
+  const items = isRepeatedValue(value) ? value.value : [];
+  if (
+    isRepeatedValue(styleDecl.cascadedValue) &&
+    styleDecl.cascadedValue.value.length !== items.length
+  ) {
+    return;
+  }
+  return items[index % items.length];
+};
+
+const isItemHidden = (styleValue: StyleValue, index: number) => {
+  let hidden = false;
+  if (styleValue.type === "var") {
+    hidden = styleValue.hidden ?? false;
+  }
+  if (isRepeatedValue(styleValue)) {
+    hidden = styleValue.value[index].hidden ?? false;
+  }
+  return hidden;
+};
 
 /**
  * shows cascaded value
@@ -80,31 +118,49 @@ export const addRepeatedStyleItem = (
   styles: ComputedStyleDecl[],
   newItems: Map<StyleProperty, StyleValue>
 ) => {
+  if (styles[0].cascadedValue.type === "var") {
+    const primaryValue = reparseComputedValue(styles[0]);
+    if (isRepeatedValue(primaryValue) && primaryValue.value.length > 1) {
+      toast.error("Cannot add styles to css variable");
+      return;
+    }
+  }
   const batch = createBatchUpdate();
   const currentStyles = new Map(
     styles.map((styleDecl) => [styleDecl.property, styleDecl])
   );
   const primaryValue = styles[0].cascadedValue;
-  for (const [property, value] of newItems) {
-    if (value.type !== "layers" && value.type !== "tuple") {
+  let primaryCount = 0;
+  if (isRepeatedValue(primaryValue)) {
+    primaryCount = primaryValue.value.length;
+  }
+  if (primaryValue.type === "var") {
+    primaryCount = 1;
+  }
+  for (const [property, newValue] of newItems) {
+    if (newValue.type !== "layers" && newValue.type !== "tuple") {
       continue;
     }
     // infer type from new items
     // because current values could be css wide keywords
-    const itemType: ItemType = value.type;
+    const valueType: ItemType = newValue.type;
     const styleDecl = currentStyles.get(property);
     if (styleDecl === undefined) {
       continue;
     }
-    const newValue = normalizeStyleValue(styleDecl, primaryValue, itemType);
-    if (value.type !== itemType) {
-      console.error(
-        `Unexpected item type "${value.type}" for ${property} repeated value`
-      );
-      continue;
+    let oldItems: StyleValue[] = [];
+    if (styleDecl.cascadedValue.type === "var") {
+      oldItems = repeatUntil([styleDecl.cascadedValue], primaryCount);
+    } else if (styleDecl.cascadedValue.type === valueType) {
+      oldItems = repeatUntil(styleDecl.cascadedValue.value, primaryCount);
+    } else if (primaryCount > 0) {
+      const meta = properties[property as keyof typeof properties];
+      oldItems = repeatUntil([meta.initial], primaryCount);
     }
-    newValue.value.push(...(value.value as UnparsedValue[]));
-    batch.setProperty(property)(newValue);
+    batch.setProperty(property)({
+      type: valueType,
+      value: [...oldItems, ...newValue.value] as UnparsedValue[],
+    });
   }
   batch.publish();
 };
@@ -164,14 +220,25 @@ export const deleteRepeatedStyleItem = (
 ) => {
   const batch = createBatchUpdate();
   const primaryValue = styles[0].cascadedValue;
+  const primaryCount = isRepeatedValue(primaryValue)
+    ? primaryValue.value.length
+    : index + 1;
   for (const styleDecl of styles) {
-    const newValue = normalizeStyleValue(styleDecl, primaryValue);
-    newValue.value.splice(index, 1);
-    if (newValue.value.length > 0) {
-      batch.setProperty(styleDecl.property as StyleProperty)(newValue);
+    const property = styleDecl.property as StyleProperty;
+    const newValue = structuredClone(styleDecl.cascadedValue);
+    if (isRepeatedValue(newValue)) {
+      newValue.value = repeatUntil(newValue.value, primaryCount);
+      newValue.value.splice(index, 1);
+      if (newValue.value.length === 1 && newValue.value[0].type === "var") {
+        batch.setProperty(property)(newValue.value[0]);
+      } else if (newValue.value.length > 0) {
+        batch.setProperty(property)(newValue);
+      } else {
+        // delete empty layers or tuple
+        batch.deleteProperty(property);
+      }
     } else {
-      // delete empty layers or tuple
-      batch.deleteProperty(styleDecl.property as StyleProperty);
+      batch.deleteProperty(property);
     }
   }
   batch.publish();
@@ -183,13 +250,25 @@ export const toggleRepeatedStyleItem = (
 ) => {
   const batch = createBatchUpdate();
   const primaryValue = styles[0].cascadedValue;
+  const primaryCount = isRepeatedValue(primaryValue)
+    ? primaryValue.value.length
+    : index + 1;
+  const isHidden = isItemHidden(primaryValue, index);
   for (const styleDecl of styles) {
-    const newValue = normalizeStyleValue(styleDecl, primaryValue);
-    newValue.value[index] = {
-      ...newValue.value[index],
-      hidden: false === (newValue.value[index].hidden ?? false),
-    };
-    batch.setProperty(styleDecl.property as StyleProperty)(newValue);
+    const property = styleDecl.property as StyleProperty;
+    const newValue = structuredClone(styleDecl.cascadedValue);
+    if (newValue.type === "var") {
+      newValue.hidden = !isHidden;
+      batch.setProperty(property)(newValue);
+    }
+    if (isRepeatedValue(newValue)) {
+      newValue.value = repeatUntil(newValue.value, primaryCount);
+      newValue.value[index] = structuredClone(newValue.value[index]);
+      newValue.value[index].hidden = !isHidden;
+      batch.setProperty(property)(newValue);
+    }
+    // other values are repeated automatically
+    // and it is irrelevant to change their visibility
   }
   batch.publish();
 };
@@ -199,6 +278,10 @@ export const swapRepeatedStyleItems = (
   oldIndex: number,
   newIndex: number
 ) => {
+  if (styles[0].cascadedValue.type === "var") {
+    toast.error("Cannot reorder styles from css variable");
+    return;
+  }
   const batch = createBatchUpdate();
   const primaryValue = styles[0].cascadedValue;
   for (const styleDecl of styles) {
@@ -223,17 +306,23 @@ export const RepeatedStyle = (props: {
     index: number,
     primaryValue: StyleValue
   ) => { label: string; color?: RgbaColor };
-  renderThumbnail?: (index: number, primaryValue: StyleValue) => JSX.Element;
-  renderItemContent: (index: number, primaryValue: StyleValue) => JSX.Element;
+  renderThumbnail?: (index: number, primaryItem: StyleValue) => JSX.Element;
+  renderItemContent: (index: number, primaryItem: StyleValue) => JSX.Element;
 }) => {
   const { label, styles, getItemProps, renderThumbnail, renderItemContent } =
     props;
   // first property should describe the amount of layers or tuple items
-  const primaryValue = getComputedValue(styles[0]);
-  const primaryItems =
-    primaryValue.type === "layers" || primaryValue.type === "tuple"
-      ? primaryValue.value
-      : [];
+  const primaryValue = styles[0].cascadedValue;
+  let primaryItems: StyleValue[] = [];
+  if (primaryValue.type === "var") {
+    const reparsed = reparseComputedValue(styles[0]);
+    if (isRepeatedValue(reparsed)) {
+      primaryItems = repeatUntil([primaryValue], reparsed.value.length);
+    }
+  }
+  if (isRepeatedValue(primaryValue)) {
+    primaryItems = primaryValue.value;
+  }
 
   const sortableItems = useMemo(
     () =>
@@ -257,12 +346,15 @@ export const RepeatedStyle = (props: {
   return (
     <CssValueListArrowFocus dragItemId={dragItemId}>
       <Flex direction="column" ref={sortableRefCallback}>
-        {primaryItems.map((primaryValue, index) => {
+        {primaryItems.map((primaryItem, index) => {
           const id = String(index);
           const { label: itemLabel, color: itemColor } = getItemProps(
             index,
-            primaryValue
+            primaryItem
           );
+          const isHidden = isItemHidden(styles[0].cascadedValue, index);
+          const canBeChanged =
+            styles[0].cascadedValue.type === "var" ? index === 0 : true;
           return (
             <FloatingPanel
               key={index}
@@ -275,7 +367,7 @@ export const RepeatedStyle = (props: {
               // too much when the tabs are changed from the popover trigger.
               align="center"
               collisionPadding={{ bottom: 200, top: 200 }}
-              content={renderItemContent(index, primaryValue)}
+              content={renderItemContent(index, primaryItem)}
             >
               <CssValueListItem
                 id={id}
@@ -283,31 +375,28 @@ export const RepeatedStyle = (props: {
                 active={dragItemId === id}
                 index={index}
                 label={<Label truncate>{itemLabel}</Label>}
-                hidden={primaryValue.hidden}
+                hidden={isHidden}
                 thumbnail={
-                  renderThumbnail?.(index, primaryValue) ??
+                  renderThumbnail?.(index, primaryItem) ??
                   (itemColor && <ColorThumb color={itemColor} />)
                 }
                 buttons={
                   <>
                     <SmallToggleButton
                       variant="normal"
-                      pressed={primaryValue.hidden}
-                      disabled={false}
+                      pressed={isHidden}
+                      disabled={false === canBeChanged}
                       tabIndex={-1}
+                      icon={
+                        isHidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />
+                      }
                       onPressedChange={() =>
                         toggleRepeatedStyleItem(styles, index)
-                      }
-                      icon={
-                        primaryValue.hidden ? (
-                          <EyeconClosedIcon />
-                        ) : (
-                          <EyeconOpenIcon />
-                        )
                       }
                     />
                     <SmallIconButton
                       variant="destructive"
+                      disabled={false === canBeChanged}
                       tabIndex={-1}
                       icon={<SubtractIcon />}
                       onClick={() => deleteRepeatedStyleItem(styles, index)}
