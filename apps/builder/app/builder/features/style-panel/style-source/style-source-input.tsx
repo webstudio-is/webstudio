@@ -173,16 +173,12 @@ const TextFieldBase: ForwardRefRenderFunction<
           {...textFieldProps}
           variant="chromeless"
           css={{
-            color: theme.colors.hiContrast,
             fontVariantNumeric: "tabular-nums",
-            fontFamily: theme.fonts.sans,
-            fontSize: theme.deprecatedFontSize[3],
             lineHeight: 1,
             order: 1,
-            border: "none",
             flex: 1,
             "&:focus-within, &:hover": {
-              outline: "none",
+              borderColor: "transparent",
             },
           }}
           size="1"
