@@ -19,8 +19,6 @@ import { useState } from "react";
 import { SectionMarketplace } from "./section-marketplace";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 
-const focusOutline = focusRingStyle();
-
 const sectionNames = ["General", "Redirects", "Marketplace"];
 
 type SectionName = (typeof sectionNames)[number];
@@ -72,8 +70,9 @@ export const ProjectSettingsView = ({
                         height: theme.spacing[13],
                         px: theme.spacing[9],
                         outline: "none",
-                        "&:focus-visible": focusOutline,
-                        "&:hover": focusOutline,
+                        "&:focus-visible, &:hover": {
+                          background: theme.colors.backgroundHover,
+                        },
                         "&[aria-current=true]": {
                           background: theme.colors.backgroundItemCurrent,
                           color: theme.colors.foregroundMain,
