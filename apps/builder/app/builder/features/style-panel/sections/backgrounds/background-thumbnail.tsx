@@ -11,7 +11,7 @@ import { $assets, $imageLoader } from "~/shared/nano-states";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { useComputedStyles } from "../../shared/model";
-import { getRepeatedStyleItem } from "../../shared/repeated-style";
+import { getComputedRepeatedItem } from "../../shared/repeated-style";
 
 export const repeatedProperties = [
   "backgroundImage",
@@ -113,7 +113,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
   const imageLoader = useStore($imageLoader);
   const styles = useComputedStyles(repeatedProperties);
   const [backgroundImage] = styles;
-  const backgroundImageValue = getRepeatedStyleItem(backgroundImage, index);
+  const backgroundImageValue = getComputedRepeatedItem(backgroundImage, index);
 
   if (
     backgroundImageValue?.type === "image" &&
@@ -152,7 +152,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
   if (backgroundImageValue?.type === "unparsed") {
     const cssStyle: { [property in RepeatedProperty]?: string } = {};
     for (const styleDecl of styles) {
-      const itemValue = getRepeatedStyleItem(styleDecl, index);
+      const itemValue = getComputedRepeatedItem(styleDecl, index);
       cssStyle[styleDecl.property as RepeatedProperty] = toValue(itemValue);
     }
     return <Thumbnail css={cssStyle} />;
