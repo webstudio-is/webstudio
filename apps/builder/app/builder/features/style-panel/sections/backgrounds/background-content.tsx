@@ -89,12 +89,10 @@ const setGradientProperty = (
   }
   const unpackedItem = newItem.type === "layers" ? newItem.value[0] : newItem;
   if (items.length === 1 && unpackedItem.type === "var") {
-    console.log(unpackedItem);
     setProperty(property)(unpackedItem, options);
   } else {
     const newValue = { type: "layers", value: items } as LayersValue;
     newValue.value[index] = newItem as UnparsedValue;
-    console.log(newValue, unpackedItem);
     setProperty(property)(newValue, options);
   }
 };
