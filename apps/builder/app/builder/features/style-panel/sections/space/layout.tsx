@@ -150,7 +150,7 @@ const Container = styled("div", {
   // (both in z-order and in top/left)
   [`&:focus-visible > ${Grid}`]: {
     borderRadius: theme.borderRadius[3],
-    outline: `2px solid ${theme.colors.blue10}`,
+    outline: `1px solid ${theme.colors.borderFocus}`,
   },
 });
 
