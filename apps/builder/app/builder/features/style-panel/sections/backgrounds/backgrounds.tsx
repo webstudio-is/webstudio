@@ -11,7 +11,7 @@ import {
   RepeatedStyle,
 } from "../../shared/repeated-style";
 import { useComputedStyles } from "../../shared/model";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 import { BackgroundContent } from "./background-content";
 import {
   getBackgroundLabel,
@@ -34,7 +34,7 @@ export const Section = () => {
       description="Add one or more backgrounds to the instance such as a color, image, or gradient."
       properties={properties}
       onAdd={() => {
-        addRepeatedStyleItem(styles, parseCssFragment("none", "background"));
+        addRepeatedStyleItem(styles, parseCssFragment("none", ["background"]));
       }}
     >
       <Flex gap={1} direction="column">

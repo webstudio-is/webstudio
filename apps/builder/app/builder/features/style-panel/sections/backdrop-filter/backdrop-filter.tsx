@@ -8,7 +8,7 @@ import { InfoCircleIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import { RepeatedStyleSection } from "../../shared/style-section";
 import { FilterSectionContent } from "../../shared/filter-content";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 import {
   addRepeatedStyleItem,
   editRepeatedStyleItem,
@@ -44,7 +44,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialBackdropFilter, "backdropFilter")
+          parseCssFragment(initialBackdropFilter, ["backdropFilter"])
         );
       }}
     >

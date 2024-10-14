@@ -175,21 +175,44 @@ export const editRepeatedStyleItem = (
   const currentStyles = new Map(
     styles.map((styleDecl) => [styleDecl.property, styleDecl])
   );
-  const primaryValue = styles[0].cascadedValue;
   for (const [property, value] of newItems) {
     const styleDecl = currentStyles.get(property);
     if (styleDecl === undefined) {
       continue;
     }
-    const newValue = normalizeStyleValue(styleDecl, primaryValue);
-    if (value.type !== newValue.type) {
-      console.error(
-        `Unexpected item type "${value.type}" for ${property} repeated value`
-      );
-      continue;
+    let items: StyleValue[] = [];
+    if (styleDecl.cascadedValue.type === "var") {
+      items = [styleDecl.cascadedValue];
     }
-    newValue.value.splice(index, 1, ...value.value);
-    batch.setProperty(property)(newValue);
+    if (isRepeatedValue(styleDecl.cascadedValue)) {
+      items = styleDecl.cascadedValue.value;
+    }
+    if (items.length <= 1 && value.type === "var") {
+      batch.setProperty(property)(value);
+    } else {
+      let valueType;
+      if (isRepeatedValue(styleDecl.cascadedValue)) {
+        valueType = styleDecl.cascadedValue.type;
+      }
+      if (isRepeatedValue(value)) {
+        valueType = value.type;
+      }
+      if (valueType === undefined) {
+        continue;
+      }
+      const newItems: StyleValue[] = [...items];
+      if (value.type === "var") {
+        newItems.splice(index, 1, value);
+      }
+      if (isRepeatedValue(value)) {
+        newItems.splice(index, 1, ...value.value);
+      }
+      const newValue = {
+        type: valueType,
+        value: newItems as UnparsedValue[],
+      };
+      batch.setProperty(property)(newValue);
+    }
   }
   batch.publish(options);
 };

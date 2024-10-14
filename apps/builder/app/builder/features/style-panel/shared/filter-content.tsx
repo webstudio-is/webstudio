@@ -23,7 +23,7 @@ import {
 import { parseCssValue } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../shared/use-style-data";
 import { ShadowContent } from "./shadow-content";
-import { parseCssFragment } from "./parse-css-fragment";
+import { parseCssFragment } from "./css-fragment";
 
 // filters can't be validated directly in the css-engine. Because, these are not properties
 // but functions that proeprties accept. So, we need to validate them manually using fake proeprties
@@ -150,7 +150,7 @@ export const FilterSectionContent = ({
     value: string,
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const parsed = parseCssFragment(value, camelCase(property));
+    const parsed = parseCssFragment(value, [camelCase(property)]);
     const parsedValue = parsed.get(property);
     const invalid = parsedValue === undefined || parsedValue.type === "invalid";
     setIntermediateValue({

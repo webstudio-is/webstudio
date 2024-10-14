@@ -21,7 +21,7 @@ import { properties, propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 import { PropertyInlineLabel } from "../../property-label";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
@@ -82,7 +82,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
     editRepeatedStyleItem(
       styles,
       index,
-      parseCssFragment(intermediateValue.value, "transition")
+      parseCssFragment(intermediateValue.value, ["transition"])
     );
   };
 
@@ -111,7 +111,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
     editRepeatedStyleItem(
       styles,
       index,
-      parseCssFragment(shorthand, "transition"),
+      parseCssFragment(shorthand, ["transition"]),
       options
     );
   };

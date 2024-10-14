@@ -12,7 +12,7 @@ import {
   editRepeatedStyleItem,
   RepeatedStyle,
 } from "../../shared/repeated-style";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 
 export const properties = ["boxShadow"] satisfies [
   StyleProperty,
@@ -67,7 +67,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialBoxShadow, "boxShadow")
+          parseCssFragment(initialBoxShadow, ["boxShadow"])
         );
       }}
     >

@@ -36,7 +36,7 @@ import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
 import { toPascalCase } from "../shared/keyword-utils";
 import type { StyleUpdateOptions } from "../shared/use-style-data";
-import { parseCssFragment } from "./parse-css-fragment";
+import { parseCssFragment } from "./css-fragment";
 import { PropertyInlineLabel } from "../property-label";
 import { styleConfigByName } from "./configs";
 import { ColorPicker } from "./color-picker";
@@ -163,10 +163,9 @@ export const ShadowContent = ({
     // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/drop-shadow#formal_syntax
     // https://developer.mozilla.org/en-US/docs/Web/CSS/text-shadow#formal_syntax
     // Both share a similar syntax but the property name is different.
-    const parsed = parseCssFragment(
-      intermediateValue.value,
-      property === "dropShadow" ? "textShadow" : property
-    );
+    const parsed = parseCssFragment(intermediateValue.value, [
+      property === "dropShadow" ? "textShadow" : property,
+    ]);
     const parsedValue = parsed.get(
       property === "dropShadow" ? "textShadow" : property
     );
