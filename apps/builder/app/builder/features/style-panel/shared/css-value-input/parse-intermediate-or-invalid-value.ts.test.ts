@@ -570,6 +570,24 @@ test("parse unit in css variable", () => {
   });
 });
 
+test("prefer unitless css variable", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "1",
+      unit: undefined,
+    })
+  ).toEqual({ type: "unit", value: 1, unit: "number" });
+
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "1",
+      unit: "number",
+    })
+  ).toEqual({ type: "unit", value: 1, unit: "number" });
+});
+
 test("parse color in css variable", () => {
   expect(
     parseIntermediateOrInvalidValue("--size", {
