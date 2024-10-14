@@ -45,7 +45,7 @@ const compareVariables = (left: RankingInfo, right: RankingInfo) => {
 
 const scopeCompletionSource: CompletionSource = (context) => {
   const word = context.matchBefore(/[-\w]+/);
-  if (word === null || (word.from == word.to && false === context.explicit)) {
+  if (word === null || (word.from === word.to && false === context.explicit)) {
     return null;
   }
   const search = word.text;

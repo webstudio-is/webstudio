@@ -200,7 +200,7 @@ export const editRepeatedStyleItem = (
       if (valueType === undefined) {
         continue;
       }
-      let newItems: StyleValue[] = [...items];
+      const newItems: StyleValue[] = [...items];
       if (value.type === "var") {
         newItems.splice(index, 1, value);
       }
