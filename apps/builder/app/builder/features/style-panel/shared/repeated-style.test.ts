@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "@jest/globals";
+import { setEnv } from "@webstudio-is/feature-flags";
 import {
   toValue,
   type StyleProperty,
@@ -15,7 +16,7 @@ import {
   toggleRepeatedStyleItem,
 } from "./repeated-style";
 import { createComputedStyleDeclStore } from "./model";
-import { parseCssFragment } from "./parse-css-fragment";
+import { parseCssFragment } from "./css-fragment";
 import {
   $breakpoints,
   $selectedBreakpointId,
@@ -28,6 +29,7 @@ import { registerContainers } from "~/shared/sync";
 import { setProperty } from "./use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
+setEnv("*");
 registerContainers();
 
 beforeEach(() => {
@@ -96,7 +98,7 @@ describe("add repeated item", () => {
     expect($transitionProperty.get().cascadedValue.type).toEqual("var");
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("opacity", "transitionProperty")
+      parseCssFragment("opacity", ["transitionProperty"])
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "var(--my-property), opacity"
@@ -108,11 +110,11 @@ describe("add repeated item", () => {
       createComputedStyleDeclStore("transitionProperty");
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("opacity", "transitionProperty")
+      parseCssFragment("opacity", ["transitionProperty"])
     );
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("transform", "transitionProperty")
+      parseCssFragment("transform", ["transitionProperty"])
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "opacity, transform"
@@ -123,11 +125,11 @@ describe("add repeated item", () => {
     const $filter = createComputedStyleDeclStore("filter");
     addRepeatedStyleItem(
       [$filter.get()],
-      parseCssFragment("blur(5px)", "filter")
+      parseCssFragment("blur(5px)", ["filter"])
     );
     addRepeatedStyleItem(
       [$filter.get()],
-      parseCssFragment("brightness(0.5)", "filter")
+      parseCssFragment("brightness(0.5)", ["filter"])
     );
     expect(toValue($filter.get().cascadedValue)).toEqual(
       "blur(5px) brightness(0.5)"
@@ -138,7 +140,7 @@ describe("add repeated item", () => {
     const $backgroundColor = createComputedStyleDeclStore("backgroundColor");
     addRepeatedStyleItem(
       [$backgroundColor.get()],
-      parseCssFragment("none", "background")
+      parseCssFragment("none", ["background"])
     );
     expect($backgroundColor.get().source.name).toEqual("default");
     expect(toValue($backgroundColor.get().cascadedValue)).toEqual(
@@ -160,7 +162,7 @@ describe("add repeated item", () => {
         $transitionDuration.get(),
         $transitionDelay.get(),
       ],
-      parseCssFragment("width 2s", "transition")
+      parseCssFragment("width 2s", ["transition"])
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "opacity, transform, width"
@@ -172,31 +174,80 @@ describe("add repeated item", () => {
   });
 });
 
-test("edit layer in repeated style", () => {
-  const $transitionProperty =
-    createComputedStyleDeclStore("transitionProperty");
-  setRawProperty("transitionProperty", "opacity, transform");
-  editRepeatedStyleItem(
-    [$transitionProperty.get()],
-    1,
-    parseCssFragment("width", "transitionProperty")
-  );
-  expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
-    "opacity, width"
-  );
-});
+describe("edit item in repeated style", () => {
+  test("edit single variable", () => {
+    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
+    setRawProperty("backgroundImage", "none");
+    editRepeatedStyleItem(
+      [$backgroundImage.get()],
+      0,
+      parseCssFragment("var(--gradient1)", ["backgroundImage"])
+    );
+    expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
+      "var(--gradient1)"
+    );
+    expect($backgroundImage.get().cascadedValue.type).toEqual("var");
+    editRepeatedStyleItem(
+      [$backgroundImage.get()],
+      // use greater index when access computed items
+      2,
+      parseCssFragment("var(--gradient2)", ["backgroundImage"])
+    );
+    expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
+      "var(--gradient2)"
+    );
+    expect($backgroundImage.get().cascadedValue.type).toEqual("var");
+  });
 
-test("edit tuple in repeated style", () => {
-  const $filter = createComputedStyleDeclStore("filter");
-  setRawProperty("filter", "blur(5px) brightness(0.5)");
-  editRepeatedStyleItem(
-    [$filter.get()],
-    1,
-    parseCssFragment("contrast(200%)", "filter")
-  );
-  expect(toValue($filter.get().cascadedValue)).toEqual(
-    "blur(5px) contrast(200%)"
-  );
+  test("edit variable in multiple layers", () => {
+    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
+    setRawProperty("backgroundImage", "none, none");
+    editRepeatedStyleItem(
+      [$backgroundImage.get()],
+      1,
+      parseCssFragment("var(--gradient1)", ["backgroundImage"])
+    );
+    expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
+      "none, var(--gradient1)"
+    );
+    expect($backgroundImage.get().cascadedValue.type).toEqual("layers");
+    editRepeatedStyleItem(
+      [$backgroundImage.get()],
+      1,
+      parseCssFragment("var(--gradient2)", ["backgroundImage"])
+    );
+    expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
+      "none, var(--gradient2)"
+    );
+    expect($backgroundImage.get().cascadedValue.type).toEqual("layers");
+  });
+
+  test("edit layer", () => {
+    const $transitionProperty =
+      createComputedStyleDeclStore("transitionProperty");
+    setRawProperty("transitionProperty", "opacity, transform");
+    editRepeatedStyleItem(
+      [$transitionProperty.get()],
+      1,
+      parseCssFragment("width", ["transitionProperty"])
+    );
+    expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
+      "opacity, width"
+    );
+  });
+
+  test("edit tuple", () => {
+    const $filter = createComputedStyleDeclStore("filter");
+    setRawProperty("filter", "blur(5px) brightness(0.5)");
+    editRepeatedStyleItem(
+      [$filter.get()],
+      1,
+      parseCssFragment("contrast(200%)", ["filter"])
+    );
+    expect(toValue($filter.get().cascadedValue)).toEqual(
+      "blur(5px) contrast(200%)"
+    );
+  });
 });
 
 test("set layers item into repeated style", () => {

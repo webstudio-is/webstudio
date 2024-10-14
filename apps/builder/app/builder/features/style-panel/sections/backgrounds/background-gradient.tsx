@@ -1,28 +1,19 @@
-import type {
-  InvalidValue,
-  LayersValue,
-  StyleValue,
+import {
+  toValue,
+  type InvalidValue,
+  type StyleValue,
 } from "@webstudio-is/css-engine";
 import { parseCssValue } from "@webstudio-is/css-data";
-import {
-  Flex,
-  Label,
-  Text,
-  TextArea,
-  textVariants,
-  theme,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Flex, Label, Text, theme, Tooltip } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   editRepeatedStyleItem,
-  getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import { parseCssFragment, CssFragmentEditor } from "../../shared/css-fragment";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -33,18 +24,17 @@ const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
 
 export const BackgroundGradient = ({ index }: { index: number }) => {
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const property = "backgroundImage";
-  const styleDecl = useComputedStyleDecl(property);
-  const styleValue = getRepeatedStyleItem(styleDecl, index);
+  const styleDecl = useComputedStyleDecl("backgroundImage");
+  let styleValue = styleDecl.cascadedValue;
+  if (styleValue.type === "layers") {
+    styleValue = styleValue.value[index];
+  }
 
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
   >(undefined);
 
-  const textAreaValue =
-    intermediateValue?.value ??
-    (styleValue?.type === "unparsed" ? styleValue.value : undefined);
+  const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -55,9 +45,9 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
     // This doesn't have the same behavior as CssValueInput.
     // However, it's great to see the immediate results when making gradient changes,
     // especially until we have a better gradient tool.
-    const newValue = parseCssValue(property, value);
+    const newValue = parseCssValue("backgroundImage", value);
 
-    if (newValue.type === "unparsed") {
+    if (newValue.type === "unparsed" || newValue.type === "var") {
       setRepeatedStyleItem(styleDecl, index, newValue, { isEphemeral: true });
       return;
     }
@@ -76,21 +66,15 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
       return;
     }
 
-    const parsed = parseCssFragment(intermediateValue.value, "background");
+    const parsed = parseCssFragment(intermediateValue.value, [
+      "backgroundImage",
+      "background",
+    ]);
     const backgroundImage = parsed.get("backgroundImage");
     const backgroundColor = parsed.get("backgroundColor");
-    const layers: LayersValue =
-      backgroundImage?.type === "layers"
-        ? backgroundImage
-        : { type: "layers", value: [] };
-    const [firstLayer] = layers.value;
 
     // set invalid state
-    if (
-      backgroundColor?.type === "invalid" ||
-      layers.value.length === 0 ||
-      firstLayer.type === "invalid"
-    ) {
+    if (backgroundColor?.type === "invalid" || backgroundImage === undefined) {
       setIntermediateValue({ type: "invalid", value: intermediateValue.value });
       if (styleValue) {
         setRepeatedStyleItem(styleDecl, index, styleValue, {
@@ -107,7 +91,7 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
     editRepeatedStyleItem(
       [styleDecl],
       index,
-      new Map([["backgroundImage", layers]])
+      new Map([["backgroundImage", backgroundImage]])
     );
   };
 
@@ -153,15 +137,9 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
           </Tooltip>
         </Flex>
       </Label>
-      <TextArea
-        ref={textAreaRef}
-        css={{ ...textVariants.mono }}
-        rows={2}
-        autoGrow
-        maxRows={4}
-        name="description"
+      <CssFragmentEditor
+        invalid={intermediateValue?.type === "invalid"}
         value={textAreaValue ?? ""}
-        color={intermediateValue?.type === "invalid" ? "error" : undefined}
         onChange={handleChange}
         onBlur={handleOnComplete}
         onKeyDown={(event) => {
