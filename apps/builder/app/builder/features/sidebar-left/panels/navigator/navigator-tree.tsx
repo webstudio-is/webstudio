@@ -10,6 +10,7 @@ import {
   ScrollArea,
   SmallIconButton,
   styled,
+  Text,
   theme,
   toast,
   Tooltip,
@@ -26,7 +27,11 @@ import {
   WsComponentMeta,
 } from "@webstudio-is/react-sdk";
 import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
-import { EyeconClosedIcon, EyeconOpenIcon } from "@webstudio-is/icons";
+import {
+  EyeconClosedIcon,
+  EyeconOpenIcon,
+  InfoCircleIcon,
+} from "@webstudio-is/icons";
 import {
   $dragAndDropState,
   $editingItemSelector,
@@ -476,6 +481,21 @@ export const NavigatorTree = () => {
               onClick: () => $selectedInstanceSelector.set([ROOT_INSTANCE_ID]),
               onFocus: () => $selectedInstanceSelector.set([ROOT_INSTANCE_ID]),
             }}
+            action={
+              <Tooltip
+                variant="wrapped"
+                side="bottom"
+                disableHoverableContent={true}
+                content={
+                  <Text>
+                    Variables defined on Global Root are available on every
+                    instance on every page.
+                  </Text>
+                }
+              >
+                <InfoCircleIcon />
+              </Tooltip>
+            }
           >
             <TreeNodeLabel prefix={<MetaIcon icon={rootMeta.icon} />}>
               {rootMeta.label}
