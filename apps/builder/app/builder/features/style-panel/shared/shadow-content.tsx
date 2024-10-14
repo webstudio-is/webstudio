@@ -8,6 +8,7 @@ import {
   type StyleValue,
   type TupleValue,
   type UnitValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import {
   extractShadowProperties,
@@ -20,8 +21,6 @@ import {
   Label,
   Separator,
   Text,
-  TextArea,
-  textVariants,
   theme,
   ToggleGroup,
   ToggleGroupButton,
@@ -36,7 +35,7 @@ import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
 import { toPascalCase } from "../shared/keyword-utils";
 import type { StyleUpdateOptions } from "../shared/use-style-data";
-import { parseCssFragment } from "./css-fragment";
+import { CssFragmentEditor, parseCssFragment } from "./css-fragment";
 import { PropertyInlineLabel } from "../property-label";
 import { styleConfigByName } from "./configs";
 import { ColorPicker } from "./color-picker";
@@ -69,10 +68,11 @@ type ShadowContentProps = {
   index: number;
   property: "boxShadow" | "textShadow" | "dropShadow";
   layer: StyleValue;
+  computedLayer?: StyleValue;
   propertyValue: string;
   onEditLayer: (
     index: number,
-    layers: LayersValue,
+    layers: LayersValue | VarValue,
     options: StyleUpdateOptions
   ) => void;
   hideCodeEditor?: boolean;
@@ -120,6 +120,7 @@ const shadowPropertySyntaxes = {
 
 export const ShadowContent = ({
   layer,
+  computedLayer,
   index,
   property,
   propertyValue,
@@ -133,10 +134,15 @@ export const ShadowContent = ({
     setIntermediateValue({ type: "intermediate", value: propertyValue });
   }, [propertyValue]);
   const layerValues = useMemo<ExtractedShadowProperties>(() => {
-    return extractShadowProperties(
-      layer.type === "tuple" ? layer : { type: "tuple", value: [] }
-    );
-  }, [layer]);
+    let value: TupleValue = { type: "tuple", value: [] };
+    if (layer.type === "tuple") {
+      value = layer;
+    }
+    if (layer.type === "var" && computedLayer?.type === "tuple") {
+      value = computedLayer;
+    }
+    return extractShadowProperties(value);
+  }, [layer, computedLayer]);
 
   const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
   const colorControlProp = color ?? {
@@ -169,7 +175,7 @@ export const ShadowContent = ({
     const parsedValue = parsed.get(
       property === "dropShadow" ? "textShadow" : property
     );
-    if (parsedValue?.type === "layers") {
+    if (parsedValue?.type === "layers" || parsedValue?.type === "var") {
       onEditLayer(index, parsedValue, { isEphemeral: false });
       return;
     }
@@ -213,6 +219,7 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetX.
             property="outlineOffset"
             styleSource="local"
+            disabled={layer.type === "var"}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value, options) =>
               handlePropertyChange({ offsetX: value }, options)
@@ -236,6 +243,7 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetY.
             property="outlineOffset"
             styleSource="local"
+            disabled={layer.type === "var"}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value, options) =>
               handlePropertyChange({ offsetY: value }, options)
@@ -259,6 +267,7 @@ export const ShadowContent = ({
             // border-top-width is a fake property for validating box-shadow's blur.
             property="borderTopWidth"
             styleSource="local"
+            disabled={layer.type === "var"}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value, options) =>
               handlePropertyChange({ blur: value }, options)
@@ -283,6 +292,7 @@ export const ShadowContent = ({
               // outline-offset is a fake property for validating box-shadow's spread.
               property="outlineOffset"
               styleSource="local"
+              disabled={layer.type === "var"}
               value={spread ?? { type: "unit", value: 0, unit: "px" }}
               setValue={(value, options) =>
                 handlePropertyChange({ spread: value }, options)
@@ -313,6 +323,7 @@ export const ShadowContent = ({
           />
           <ColorPicker
             property="color"
+            disabled={layer.type === "var"}
             value={colorControlProp}
             currentColor={colorControlProp}
             getOptions={() =>
@@ -339,6 +350,7 @@ export const ShadowContent = ({
             />
             <ToggleGroup
               type="single"
+              disabled={layer.type === "var"}
               value={inset?.value ?? "normal"}
               defaultValue="inset"
               onValueChange={(value) => {
@@ -396,14 +408,10 @@ export const ShadowContent = ({
                 </Tooltip>
               </Flex>
             </Label>
-            <TextArea
-              rows={3}
-              name="description"
+            <CssFragmentEditor
+              invalid={intermediateValue?.type === "invalid"}
+              autoFocus={layer.type === "var"}
               value={intermediateValue?.value ?? propertyValue ?? ""}
-              css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-              color={
-                intermediateValue?.type === "invalid" ? "error" : undefined
-              }
               onChange={handleChange}
               onBlur={handleComplete}
               onKeyDown={(event) => {
