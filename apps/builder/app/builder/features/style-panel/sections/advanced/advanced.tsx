@@ -157,7 +157,7 @@ const AdvancedSearch = ({
       itemToString={(item) => item?.label ?? ""}
       getItemProps={() => ({ text: "sentence" })}
       getDescription={(item) => {
-        let description = `Unknown CSS property.`;
+        let description = `Create CSS variable.`;
         if (item && item.value in propertyDescriptions) {
           description =
             propertyDescriptions[
@@ -201,7 +201,7 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
       }}
       content={
         <PropertyInfo
-          title={label}
+          title={property.startsWith("--") ? "CSS Variable" : label}
           description={description}
           styles={[styleDecl]}
           onReset={() => {
