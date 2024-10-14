@@ -139,6 +139,7 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
       </Label>
       <CssFragmentEditor
         invalid={intermediateValue?.type === "invalid"}
+        autoFocus={styleValue.type === "var"}
         value={textAreaValue ?? ""}
         onChange={handleChange}
         onBlur={handleOnComplete}

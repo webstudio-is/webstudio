@@ -44,7 +44,7 @@ const compareVariables = (left: RankingInfo, right: RankingInfo) => {
 };
 
 const scopeCompletionSource: CompletionSource = (context) => {
-  const word = context.matchBefore(/[-\w]+/);
+  const word = context.matchBefore(/[-\w()]+/);
   if (word === null || (word.from === word.to && false === context.explicit)) {
     return null;
   }
@@ -60,6 +60,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
   });
   return {
     from: word.from,
+    to: word.to,
     filter: false,
     options: matches,
   };
@@ -75,6 +76,7 @@ export const CssFragmentEditor = ({
   ...props
 }: {
   invalid?: boolean;
+  autoFocus?: boolean;
   value: string;
   onChange: (newValue: string) => void;
   onBlur?: (event: FocusEvent) => void;
