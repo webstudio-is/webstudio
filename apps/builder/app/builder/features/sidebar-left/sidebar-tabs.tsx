@@ -20,7 +20,7 @@ export const SidebarTabs = styled(Tabs, {
   boxSizing: "border-box",
 });
 
-const triggerFocusRing = focusRingStyle({ inset: 2 });
+const triggerFocusRing = focusRingStyle();
 
 const buttonStyle = css({
   position: "relative",
