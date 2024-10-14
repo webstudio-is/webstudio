@@ -3,7 +3,7 @@ import { theme } from "../stitches.config";
 export const focusRingStyle = ({
   outlineWidth = 1,
 }: {
-  outlineWidth?: number;
+  outlineWidth?: number | string;
 } = {}) => ({
   "&::after": {
     content: '""',
