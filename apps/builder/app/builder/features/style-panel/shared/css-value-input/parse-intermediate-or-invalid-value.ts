@@ -27,8 +27,15 @@ export const parseIntermediateOrInvalidValue = (
     "children" in ast && ast.children?.size === 1
       ? ast.children.first
       : undefined;
+
   if (node?.type === "Number") {
-    const testUnit = "unit" in styleValue ? (styleValue.unit ?? "px") : "px";
+    const unit = "unit" in styleValue ? styleValue.unit : undefined;
+
+    // Use number as a fallback for custom properties
+    const fallbackUnitAsString = property.startsWith("--") ? "" : "px";
+
+    const testUnit = unit === "number" ? "" : (unit ?? fallbackUnitAsString);
+
     const styleInput = parseCssValue(property, `${value}${testUnit}`);
 
     if (styleInput.type !== "invalid") {
