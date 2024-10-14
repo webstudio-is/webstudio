@@ -9,7 +9,6 @@ import {
   Flex,
   List,
   ListItem,
-  focusRingStyle,
   Text,
 } from "@webstudio-is/design-system";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
