@@ -50,6 +50,7 @@ import {
 } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
+import { composeEventHandlers } from "~/shared/event-utils";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -691,6 +692,11 @@ export const CssValueInput = ({
     .filter(Boolean)
     .map((descr) => <Description>{descr}</Description>);
 
+  const inputPropsHandleKeyDown = composeEventHandlers(
+    inputProps.onKeyDown,
+    handleKeyDown
+  );
+
   return (
     <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
@@ -710,7 +716,7 @@ export const CssValueInput = ({
             }}
             autoFocus={autoFocus}
             onBlur={handleOnBlur}
-            onKeyDown={handleKeyDown}
+            onKeyDown={inputPropsHandleKeyDown}
             containerRef={disabled ? undefined : scrubRef}
             inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
             name={property}
