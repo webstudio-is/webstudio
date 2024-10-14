@@ -237,7 +237,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       apiKey: env.OPENAI_KEY,
       organization: env.OPENAI_ORG,
       temperature: 0,
-      model: "gpt-4",
+      model: "gpt-4o",
     });
 
     const generationChain =
