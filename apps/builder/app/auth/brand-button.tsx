@@ -26,7 +26,7 @@ export const buttonStyle = css({
     boxShadow: theme.shadows.brandElevationBig,
   },
   "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${theme.colors.borderFocus}`,
     outlineOffset: 1,
   },
   "&:disabled": {

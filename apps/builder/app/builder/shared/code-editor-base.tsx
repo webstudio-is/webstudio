@@ -85,7 +85,6 @@ const editorContentStyle = css({
   userSelect: "text",
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
-    outline: `1px solid ${theme.colors.borderFocus}`,
   },
   '&[data-invalid="true"]': {
     borderColor: theme.colors.borderDestructiveMain,

@@ -6,6 +6,7 @@ import {
   TabsTrigger,
   Tooltip,
   css,
+  focusRingStyle,
   styled,
   theme,
 } from "@webstudio-is/design-system";
@@ -19,17 +20,7 @@ export const SidebarTabs = styled(Tabs, {
   boxSizing: "border-box",
 });
 
-const triggerFocusRing = {
-  "&::after": {
-    content: '""',
-    position: "absolute",
-    inset: 4,
-    outlineWidth: 2,
-    outlineStyle: "solid",
-    outlineColor: theme.colors.borderFocus,
-    borderRadius: theme.borderRadius[3],
-  },
-};
+const triggerFocusRing = focusRingStyle();
 
 const buttonStyle = css({
   position: "relative",

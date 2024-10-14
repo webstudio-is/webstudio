@@ -59,6 +59,10 @@ const thumbStyle = css({
   borderRadius: theme.borderRadius[2],
   borderWidth: 0,
   borderStyle: "solid",
+  "&:focus-visible": {
+    outline: `1px solid ${theme.colors.borderFocus}`,
+    outlineOffset: 1,
+  },
 });
 
 type Props = Omit<ComponentProps<"button">, "color"> & {

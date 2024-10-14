@@ -32,8 +32,8 @@ export const PanelTabsTrigger = styled(Primitive.Trigger, {
   },
 
   "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: "-2px",
+    outline: `1px solid ${theme.colors.borderFocus}`,
+    outlineOffset: "-1px",
   },
 
   "&[data-state=active]": { color: theme.colors.foregroundMain },

@@ -85,15 +85,14 @@ const containerStyle = css({
   border: `solid 1px ${theme.colors.borderMain}`,
   backgroundColor: theme.colors.backgroundControls,
   "&:focus-within": {
-    outline: `solid 2px ${theme.colors.borderFocus}`,
-    outlineOffset: "-1px",
+    border: `solid 1px ${theme.colors.borderFocus}`,
   },
 
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
   "&:focus-within:has([data-color=error])": {
-    outlineColor: theme.colors.borderDestructiveMain,
+    borderColor: theme.colors.borderDestructiveMain,
   },
 
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
@@ -102,7 +101,7 @@ const containerStyle = css({
   variants: {
     variant: {
       chromeless: {
-        "&:not(:hover)": {
+        "&:not(:hover, :focus-within)": {
           borderColor: "transparent",
           backgroundColor: "transparent",
         },

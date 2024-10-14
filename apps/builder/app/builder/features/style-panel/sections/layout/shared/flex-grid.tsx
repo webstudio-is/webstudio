@@ -76,20 +76,16 @@ export const FlexGrid = () => {
         height: 72,
         padding: theme.spacing[4],
         borderRadius: theme.borderRadius[4],
+        outline: "none",
+        border: `1px solid ${color}`,
         background: theme.colors.backgroundControls,
         alignItems: "center",
         gap: 0,
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         color,
-        outlineStyle: "solid",
-        outlineWidth: styleValueSourceColor === "default" ? 1 : 2,
-        outlineOffset: styleValueSourceColor === "default" ? -1 : -2,
-        outlineColor: color,
         "&:focus-within": {
-          outlineWidth: 2,
-          outlineOffset: -2,
-          outlineColor: theme.colors.borderLocalFlexUi,
+          borderColor: theme.colors.borderLocalFlexUi,
         },
       }}
     >

@@ -127,7 +127,8 @@ export const InsetControl = () => {
         height: theme.spacing[18],
         "&:focus-visible": {
           borderRadius: theme.borderRadius[3],
-          outline: `2px solid ${theme.colors.blue10}`,
+          outline: `1px solid ${theme.colors.blue10}`,
+          outlineOffset: -1,
         },
       }}
       onFocus={keyboardNavigation.handleFocus}

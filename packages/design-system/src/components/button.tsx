@@ -81,7 +81,7 @@ const perColorStyle = (variant: ButtonColor) => ({
 
   "&[data-state=auto]:focus-visible, &[data-state=focus]": {
     color: foregrounds[variant],
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${theme.colors.borderFocus}`,
     outlineOffset: "1px",
   },
 

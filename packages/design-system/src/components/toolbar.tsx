@@ -24,10 +24,7 @@ export const ToolbarToggleGroup = styled(ToolbarPrimitive.ToggleGroup, {
   alignItems: "center",
 });
 
-const focusRing = focusRingStyle({
-  top: theme.spacing[3],
-  bottom: theme.spacing[3],
-});
+const focusRing = focusRingStyle();
 
 const toggleItemStyle = css(textVariants.labelsTitleCase, {
   // reset styles
