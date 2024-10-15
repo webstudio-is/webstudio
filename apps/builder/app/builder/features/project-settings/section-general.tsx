@@ -9,8 +9,6 @@ import {
   Text,
   Separator,
   Button,
-  CheckboxAndLabel,
-  Checkbox,
   css,
   Flex,
   Tooltip,
@@ -20,9 +18,8 @@ import {
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { ImageControl } from "./image-control";
 import { Image } from "@webstudio-is/image";
-import type { ProjectMeta, CompilerSettings } from "@webstudio-is/sdk";
+import type { ProjectMeta } from "@webstudio-is/sdk";
 import { $assets, $imageLoader, $pages } from "~/shared/nano-states";
-import { useIds } from "~/shared/form-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/builder/shared/code-editor";
@@ -174,52 +171,6 @@ export const SectionGeneral = () => {
           onChange={handleSave("code")}
         />
       </Grid>
-
-      <Separator />
-
-      <CompilerSection />
-    </Grid>
-  );
-};
-
-const defaultCompilerSettings: CompilerSettings = {
-  atomicStyles: true,
-};
-
-const CompilerSection = () => {
-  const ids = useIds(["atomicStyles"]);
-  const [settings, setSettings] = useState(
-    () => $pages.get()?.compiler ?? defaultCompilerSettings
-  );
-
-  const handleSave = (settings: CompilerSettings) => {
-    serverSyncStore.createTransaction([$pages], (pages) => {
-      if (pages === undefined) {
-        return;
-      }
-      pages.compiler = settings;
-    });
-  };
-
-  return (
-    <Grid gap={2} css={sectionSpacing}>
-      <Label htmlFor={ids.atomicStyles}>Compiler</Label>
-      <CheckboxAndLabel>
-        <Checkbox
-          checked={settings.atomicStyles ?? true}
-          id={ids.atomicStyles}
-          onCheckedChange={(atomicStyles) => {
-            if (typeof atomicStyles === "boolean") {
-              const nextSettings = { ...settings, atomicStyles };
-              setSettings(nextSettings);
-              handleSave(nextSettings);
-            }
-          }}
-        />
-        <Label htmlFor={ids.atomicStyles}>
-          Generate atomic CSS when publishing
-        </Label>
-      </CheckboxAndLabel>
     </Grid>
   );
 };

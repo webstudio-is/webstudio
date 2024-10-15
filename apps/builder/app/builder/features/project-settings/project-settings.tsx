@@ -14,6 +14,7 @@ import {
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { SectionGeneral } from "./section-general";
 import { SectionRedirects } from "./section-redirects";
+import { SectionPublish } from "./section-publish";
 import { useState } from "react";
 import { SectionMarketplace } from "./section-marketplace";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
@@ -92,6 +93,7 @@ export const ProjectSettingsView = ({
             <Grid gap={2} css={{ my: theme.spacing[5] }}>
               {currentSection === "General" && <SectionGeneral />}
               {currentSection === "Redirects" && <SectionRedirects />}
+              {currentSection === "Publish" && <SectionPublish />}
               {currentSection === "Marketplace" && <SectionMarketplace />}
               <div />
             </Grid>
