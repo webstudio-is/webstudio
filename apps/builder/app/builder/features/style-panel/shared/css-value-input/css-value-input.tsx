@@ -232,7 +232,13 @@ type Modifiers = {
 };
 
 type ChangeCompleteEvent = {
-  type: "enter" | "blur" | "scrub-end" | "unit-select" | "keyword-select";
+  type:
+    | "enter"
+    | "blur"
+    | "scrub-end"
+    | "unit-select"
+    | "keyword-select"
+    | "delta";
   value: StyleValue;
 } & Modifiers;
 
@@ -298,6 +304,7 @@ const Description = styled(Box, { width: theme.spacing[27] });
  *   - shift key modifier increases/decreases value by 10
  *   - option/alt key modifier increases/decreases value by 0.1
  *   - no modifier increases/decreases value by 1
+ *   - does not open the combobox when the input is a number (CSS root variables can include numbers in their names)
  * - Scrub interaction
  * - Click outside, unit selection or escape when list is open should unfocus the unit select trigger
  *
@@ -630,9 +637,6 @@ export const CssValueInput = ({
       return;
     }
 
-    // @todo: Support for altKey and shiftKey modifiers
-
-    // const meta = { altKey: event.altKey, shiftKey: event.shiftKey };
     if (
       (value.type === "unit" ||
         (value.type === "intermediate" && isNumericString(value.value))) &&
@@ -642,13 +646,27 @@ export const CssValueInput = ({
       const inputValue =
         value.type === "unit" ? value.value : Number(value.value.trim());
 
-      props.onChange({
-        type: "unit",
-        value: handleNumericInputArrowKeys(inputValue, event),
-        unit: value.unit,
+      const meta = { altKey: event.altKey, shiftKey: event.shiftKey };
+      const hasMeta = meta.altKey || meta.shiftKey;
 
-        // ...meta,
-      });
+      if (hasMeta) {
+        // @todo switch to using props.onChange instead of props.onChangeComplete
+        // this will require modifying input-popover.tsx
+        const newValue = {
+          type: "unit" as const,
+          value: handleNumericInputArrowKeys(inputValue, event),
+          unit: value.unit,
+        };
+
+        onChangeComplete({ value: newValue, ...meta, type: "delta" });
+      } else {
+        props.onChange({
+          type: "unit",
+          value: handleNumericInputArrowKeys(inputValue, event),
+          unit: value.unit,
+        });
+      }
+      event.preventDefault();
     }
   };
 

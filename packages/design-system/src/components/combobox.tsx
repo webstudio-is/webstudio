@@ -287,8 +287,8 @@ export const useCombobox = <Item,>({
     onIsOpenChange(state) {
       const { type, isOpen, inputValue } = state;
 
-      // Don't open the combobox if the input is a number and the user is using arrow keys
-      // This is to prevent the combobox from opening when the user is trying to increment/decrement a number
+      // Don't open the combobox if the input is a number and the user is using the arrow keys.
+      // This prevents the combobox from opening when the user is trying to increment or decrement a number.
       if (
         (type === comboboxStateChangeTypes.InputKeyDownArrowDown ||
           type === comboboxStateChangeTypes.InputKeyDownArrowUp) &&
