@@ -687,6 +687,7 @@ export const CssValueInput = ({
 
   const inputPropsHandleKeyDown = composeEventHandlers(
     composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
+      // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
       checkForDefaultPrevented: false,
     }),
     handleMetaEnter
