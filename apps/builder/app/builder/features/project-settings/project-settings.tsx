@@ -19,7 +19,7 @@ import { useState } from "react";
 import { SectionMarketplace } from "./section-marketplace";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 
-const sectionNames = ["General", "Redirects", "Marketplace"];
+const sectionNames = ["General", "Redirects", "Publish", "Marketplace"];
 
 type SectionName = (typeof sectionNames)[number];
 

@@ -4,6 +4,7 @@ import {
   Label,
   CheckboxAndLabel,
   Checkbox,
+  Text,
 } from "@webstudio-is/design-system";
 import type { CompilerSettings } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/nano-states";
@@ -31,24 +32,28 @@ export const SectionPublish = () => {
   };
 
   return (
-    <Grid gap={2} css={sectionSpacing}>
-      <Label htmlFor={ids.atomicStyles}>Compiler</Label>
-      <CheckboxAndLabel>
-        <Checkbox
-          checked={settings.atomicStyles ?? true}
-          id={ids.atomicStyles}
-          onCheckedChange={(atomicStyles) => {
-            if (typeof atomicStyles === "boolean") {
-              const nextSettings = { ...settings, atomicStyles };
-              setSettings(nextSettings);
-              handleSave(nextSettings);
-            }
-          }}
-        />
-        <Label htmlFor={ids.atomicStyles}>
-          Generate atomic CSS when publishing
-        </Label>
-      </CheckboxAndLabel>
+    <Grid gap={2}>
+      <Text variant="titles" css={sectionSpacing}>
+        Publishing
+      </Text>
+      <Grid gap={2} css={sectionSpacing}>
+        <CheckboxAndLabel>
+          <Checkbox
+            checked={settings.atomicStyles ?? true}
+            id={ids.atomicStyles}
+            onCheckedChange={(atomicStyles) => {
+              if (typeof atomicStyles === "boolean") {
+                const nextSettings = { ...settings, atomicStyles };
+                setSettings(nextSettings);
+                handleSave(nextSettings);
+              }
+            }}
+          />
+          <Label htmlFor={ids.atomicStyles}>
+            Generate atomic CSS when publishing
+          </Label>
+        </CheckboxAndLabel>
+      </Grid>
     </Grid>
   );
 };
