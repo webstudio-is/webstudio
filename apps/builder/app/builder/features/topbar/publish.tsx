@@ -48,6 +48,7 @@ import {
   ExternalLinkIcon,
   AlertIcon,
   CopyIcon,
+  GearIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
@@ -57,6 +58,7 @@ import type { Templates } from "@webstudio-is/sdk";
 import { formatDistance } from "date-fns/formatDistance";
 import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
+import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -914,7 +916,19 @@ export const PublishButton = ({ projectId }: PublishProps) => {
 
         {dialogContentType === "publish" && (
           <>
-            <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
+            <FloatingPanelPopoverTitle
+              actions={
+                <IconButton
+                  onClick={() => {
+                    $openProjectSettings.set("publish");
+                  }}
+                >
+                  <GearIcon />
+                </IconButton>
+              }
+            >
+              Publish
+            </FloatingPanelPopoverTitle>
             <Content projectId={projectId} onExportClick={handleExportClick} />
           </>
         )}
