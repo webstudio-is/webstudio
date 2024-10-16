@@ -287,7 +287,8 @@ const requestPointerLock = (
   // other browsers show a warning banner, making the use of it in this scenario subpar: in which case we fallback to using non-pointerLock means:
   // albeit without an infinite cursor ux.
   if (shouldUsePointerLock) {
-    targetNode.requestPointerLock();
+    // @ts-expect-error - unadjustedMovement is a chromium only feature, fixes random movementX|Y jumps on windows
+    targetNode.requestPointerLock({ unadjustedMovement: true });
     const cursorNode = (targetNode.ownerDocument.querySelector(
       "#numeric-guesture-control-cursor"
     ) ||
