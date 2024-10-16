@@ -268,8 +268,6 @@ const variableMatcher = new MatchDecorator({
   regexp: /(\$ws\$dataSource\$\w+)/g,
 
   decorate: (add, from, _to, match, view) => {
-    const startPos = match.index;
-
     const name = match[1];
     const [{ aliases }] = view.state.facet(VariablesData);
 
@@ -282,7 +280,8 @@ const variableMatcher = new MatchDecorator({
     if (dataSourceId === undefined) {
       return;
     }
-    const endPos = startPos + dataSourceId.length;
+
+    const endPos = from + dataSourceId.length;
 
     add(
       from,
