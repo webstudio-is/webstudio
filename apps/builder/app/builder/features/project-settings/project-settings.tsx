@@ -11,30 +11,34 @@ import {
   ListItem,
   Text,
 } from "@webstudio-is/design-system";
-import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
+import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { SectionGeneral } from "./section-general";
 import { SectionRedirects } from "./section-redirects";
-import { useState } from "react";
+import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
+import type { FunctionComponent } from "react";
 
-const sectionNames = ["General", "Redirects", "Marketplace"];
+type SectionName = "general" | "redirects" | "publish" | "marketplace";
 
-type SectionName = (typeof sectionNames)[number];
+const sections = new Map<SectionName, FunctionComponent>([
+  ["general", SectionGeneral],
+  ["redirects", SectionRedirects],
+  ["publish", SectionPublish],
+  ["marketplace", SectionMarketplace],
+] as const);
 
 export const ProjectSettingsView = ({
   currentSection,
   onSectionChange,
-  isOpen,
   onOpenChange,
 }: {
-  currentSection: SectionName;
+  currentSection?: SectionName;
   onSectionChange?: (section: SectionName) => void;
-  isOpen: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={sections.has(currentSection!)} onOpenChange={onOpenChange}>
       <DialogContent
         css={{
           width: `calc(${leftPanelWidth} + ${rightPanelWidth})`,
@@ -52,7 +56,7 @@ export const ProjectSettingsView = ({
                 borderRight: `1px solid  ${theme.colors.borderMain}`,
               }}
             >
-              {sectionNames.map((name, index) => {
+              {Array.from(sections.keys()).map((name, index) => {
                 return (
                   <ListItem
                     current={currentSection === name}
@@ -79,7 +83,7 @@ export const ProjectSettingsView = ({
                       }}
                       align="center"
                     >
-                      <Text variant="labelsSentenceCase" truncate>
+                      <Text variant="labelsTitleCase" truncate>
                         {name}
                       </Text>
                     </Flex>
@@ -90,9 +94,10 @@ export const ProjectSettingsView = ({
           </List>
           <ScrollArea>
             <Grid gap={2} css={{ my: theme.spacing[5] }}>
-              {currentSection === "General" && <SectionGeneral />}
-              {currentSection === "Redirects" && <SectionRedirects />}
-              {currentSection === "Marketplace" && <SectionMarketplace />}
+              {currentSection === "general" && <SectionGeneral />}
+              {currentSection === "redirects" && <SectionRedirects />}
+              {currentSection === "publish" && <SectionPublish />}
+              {currentSection === "marketplace" && <SectionMarketplace />}
               <div />
             </Grid>
           </ScrollArea>
@@ -107,17 +112,15 @@ export const ProjectSettingsView = ({
 };
 
 export const ProjectSettings = () => {
-  const isOpen = useStore($isProjectSettingsOpen);
-  const [currentSection, setCurrentSection] = useState<SectionName>(
-    sectionNames[0]
-  );
+  const currentSection = useStore($openProjectSettings);
 
   return (
     <ProjectSettingsView
-      isOpen={isOpen}
       currentSection={currentSection}
-      onSectionChange={setCurrentSection}
-      onOpenChange={$isProjectSettingsOpen.set}
+      onSectionChange={$openProjectSettings.set}
+      onOpenChange={(open) => {
+        $openProjectSettings.set(open ? "general" : undefined);
+      }}
     />
   );
 };

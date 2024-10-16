@@ -29,7 +29,7 @@ import {
 } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
-import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
+import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
 
@@ -95,7 +95,7 @@ export const Menu = () => {
           <Tooltip side="right" content={undefined}>
             <DropdownMenuItem
               onSelect={() => {
-                $isProjectSettingsOpen.set(true);
+                $openProjectSettings.set("general");
               }}
             >
               Project Settings
