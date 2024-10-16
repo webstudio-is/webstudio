@@ -255,6 +255,9 @@ type UseComboboxProps<Item> = Omit<UseDownshiftComboboxProps<Item>, "items"> & {
 
 export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
 
+const isNumericString = (input: string) =>
+  String(input).trim().length !== 0 && Number.isNaN(Number(input)) === false;
+
 export const useCombobox = <Item,>({
   getItems,
   value,
@@ -281,7 +284,20 @@ export const useCombobox = <Item,>({
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     isOpen,
 
-    onIsOpenChange({ isOpen, inputValue }) {
+    onIsOpenChange(state) {
+      const { type, isOpen, inputValue } = state;
+
+      // Don't open the combobox if the input is a number and the user is using the arrow keys.
+      // This prevents the combobox from opening when the user is trying to increment or decrement a number.
+      if (
+        (type === comboboxStateChangeTypes.InputKeyDownArrowDown ||
+          type === comboboxStateChangeTypes.InputKeyDownArrowUp) &&
+        inputValue !== undefined &&
+        isNumericString(inputValue)
+      ) {
+        return;
+      }
+
       if (isOpen) {
         itemsCache.current = getItems();
         const matchedItems = match(
@@ -303,11 +319,16 @@ export const useCombobox = <Item,>({
     stateReducer,
     itemToString,
     inputValue: value ? itemToString(value) : "",
-    onInputValueChange({ inputValue, type }) {
+    onInputValueChange(state) {
+      const { inputValue, type } = state;
       if (type === comboboxStateChangeTypes.InputChange) {
-        setMatchedItems(
-          match(inputValue ?? "", itemsCache.current, itemToString)
+        const matchedItems = match(
+          inputValue ?? "",
+          itemsCache.current,
+          itemToString
         );
+        setIsOpen(matchedItems.length > 0);
+        setMatchedItems(matchedItems);
       }
     },
     onSelectedItemChange({ selectedItem, type }) {

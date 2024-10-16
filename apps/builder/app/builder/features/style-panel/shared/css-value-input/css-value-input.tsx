@@ -218,63 +218,6 @@ const useScrub = ({
 export const isNumericString = (input: string) =>
   String(input).trim().length !== 0 && Number.isNaN(Number(input)) === false;
 
-const useHandleKeyDown =
-  ({
-    ignoreEnter,
-    ignoreUpDownNumeric,
-    value,
-    onChange,
-    onKeyDown,
-  }: {
-    ignoreEnter: boolean;
-    ignoreUpDownNumeric: boolean;
-    value: CssValueInputValue;
-    onChange: (event: {
-      value: CssValueInputValue;
-      altKey: boolean;
-      shiftKey: boolean;
-    }) => void;
-    onKeyDown: KeyboardEventHandler<HTMLInputElement>;
-  }) =>
-  (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.defaultPrevented) {
-      // Underlying select like `unitSelect` can already prevent an event like up/down buttons
-      return;
-    }
-    const meta = { altKey: event.altKey, shiftKey: event.shiftKey };
-
-    // Do not prevent downshift behaviour on item select
-    if (ignoreEnter === false) {
-      if (event.key === "Enter") {
-        onChange({ value, ...meta });
-      }
-    }
-
-    if (
-      ignoreUpDownNumeric === false &&
-      (value.type === "unit" ||
-        (value.type === "intermediate" && isNumericString(value.value))) &&
-      value.unit !== undefined &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown")
-    ) {
-      const inputValue =
-        value.type === "unit" ? value.value : Number(value.value.trim());
-
-      onChange({
-        value: {
-          type: "unit",
-          value: handleNumericInputArrowKeys(inputValue, event),
-          unit: value.unit,
-        },
-        ...meta,
-      });
-      // Prevent Downshift from opening menu on arrow up/down
-      return;
-    }
-
-    onKeyDown(event);
-  };
-
 export type IntermediateStyleValue = {
   type: "intermediate";
   value: string;
@@ -289,7 +232,13 @@ type Modifiers = {
 };
 
 type ChangeCompleteEvent = {
-  type: "enter" | "blur" | "scrub-end" | "unit-select" | "keyword-select";
+  type:
+    | "enter"
+    | "blur"
+    | "scrub-end"
+    | "unit-select"
+    | "keyword-select"
+    | "delta";
   value: StyleValue;
 } & Modifiers;
 
@@ -355,6 +304,7 @@ const Description = styled(Box, { width: theme.spacing[27] });
  *   - shift key modifier increases/decreases value by 10
  *   - option/alt key modifier increases/decreases value by 0.1
  *   - no modifier increases/decreases value by 1
+ *   - does not open the combobox when the input is a number (CSS root variables can include numbers in their names)
  * - Scrub interaction
  * - Click outside, unit selection or escape when list is open should unfocus the unit select trigger
  *
@@ -612,18 +562,6 @@ export const CssValueInput = ({
     onChangeComplete({ value, type: "blur" });
   };
 
-  const handleKeyDown = useHandleKeyDown({
-    // In case of the menu is really open and the selection is inside it
-    // we do not prevent the default downshift Enter key behavior
-    ignoreEnter:
-      isUnitsOpen || (isOpen && !menuProps.empty && highlightedIndex !== -1),
-    // Do not change the number value on the arrow up/down if any menu is opened
-    ignoreUpDownNumeric: isUnitsOpen || isOpen,
-    onChange: (event) => onChangeComplete({ ...event, type: "enter" }),
-    value,
-    onKeyDown: inputProps.onKeyDown,
-  });
-
   const finalPrefix =
     prefix ||
     (icon && (
@@ -692,9 +630,67 @@ export const CssValueInput = ({
     .filter(Boolean)
     .map((descr) => <Description>{descr}</Description>);
 
+  const handleUpDownNumeric = (event: KeyboardEvent<HTMLInputElement>) => {
+    const isComboOpen = isOpen && !menuProps.empty;
+
+    if (isUnitsOpen || isComboOpen) {
+      return;
+    }
+
+    if (
+      (value.type === "unit" ||
+        (value.type === "intermediate" && isNumericString(value.value))) &&
+      value.unit !== undefined &&
+      (event.key === "ArrowUp" || event.key === "ArrowDown")
+    ) {
+      const inputValue =
+        value.type === "unit" ? value.value : Number(value.value.trim());
+
+      const meta = { altKey: event.altKey, shiftKey: event.shiftKey };
+      const hasMeta = meta.altKey || meta.shiftKey;
+
+      if (hasMeta) {
+        // @todo switch to using props.onChange instead of props.onChangeComplete
+        // this will require modifying input-popover.tsx
+        const newValue = {
+          type: "unit" as const,
+          value: handleNumericInputArrowKeys(inputValue, event),
+          unit: value.unit,
+        };
+
+        onChangeComplete({ value: newValue, ...meta, type: "delta" });
+      } else {
+        props.onChange({
+          type: "unit",
+          value: handleNumericInputArrowKeys(inputValue, event),
+          unit: value.unit,
+        });
+      }
+      event.preventDefault();
+    }
+  };
+
+  const handleMetaEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (
+      isUnitsOpen ||
+      (isOpen && !menuProps.empty && highlightedIndex !== -1)
+    ) {
+      return;
+    }
+
+    const meta = { altKey: event.altKey, shiftKey: event.shiftKey };
+
+    if (event.key === "Enter") {
+      onChangeComplete({ type: "enter", value, ...meta });
+    }
+  };
+
   const inputPropsHandleKeyDown = composeEventHandlers(
-    inputProps.onKeyDown,
-    handleKeyDown
+    composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
+      // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
+      checkForDefaultPrevented: false,
+    }),
+    handleMetaEnter
   );
 
   return (
