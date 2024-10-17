@@ -9,7 +9,7 @@ import {
   Tooltip,
   Text,
 } from "@webstudio-is/design-system";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import type {} from "../../controls";
 import { $assets } from "~/shared/nano-states";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
