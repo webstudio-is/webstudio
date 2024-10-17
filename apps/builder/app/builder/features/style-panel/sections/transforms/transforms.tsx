@@ -110,7 +110,7 @@ const TransformAdvancedPopover = () => {
     <FloatingPanel
       title="Advanced Transform"
       content={
-        <Grid gap="2" css={{ p: theme.spacing[9] }}>
+        <Grid gap="2" css={{ p: theme.spacing[7] }}>
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Backface Visibility"
