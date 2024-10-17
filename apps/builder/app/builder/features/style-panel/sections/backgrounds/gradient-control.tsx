@@ -1,5 +1,5 @@
 import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
-import { Root, Range, Thumb, Track } from "@radix-ui/react-slider";
+import { Root as Slider, Range, Thumb, Track } from "@radix-ui/react-slider";
 import { useState, useCallback, useMemo } from "react";
 import {
   reconstructLinearGradient,
@@ -335,7 +335,7 @@ const SliderThumbComponent = (props: {
   );
 };
 
-const SliderRoot = styled(Root, {
+const SliderRoot = styled(Slider, {
   position: "relative",
   width: "100%",
   height: theme.spacing[9],
