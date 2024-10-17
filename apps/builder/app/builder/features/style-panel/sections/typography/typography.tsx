@@ -137,7 +137,7 @@ const TypographySectionSizing = () => {
 
 const TypographySectionAdvanced = () => {
   return (
-    <Grid gap="2" columns="2" align="end">
+    <Grid gap="2" columns="2">
       <ToggleGroupControl
         properties={["textAlign"]}
         items={[
