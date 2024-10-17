@@ -237,7 +237,6 @@ const AdvancedPropertyValue = ({
     <CssValueInputContainer
       inputRef={inputRef}
       variant="chromeless"
-      size="2"
       text="mono"
       fieldSizing="content"
       prefix={
