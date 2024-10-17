@@ -42,6 +42,7 @@
     "@nanostores/react": "^0.7.1",
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-tooltip": "^1.1.2",
+    "@radix-ui/react-slider": "^1.2.0",
     "@react-aria/interactions": "^3.22.2",
     "@react-aria/utils": "^3.25.2",
     "@remix-run/node": "^2.12.1",
