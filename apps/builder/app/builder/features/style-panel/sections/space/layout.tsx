@@ -5,7 +5,7 @@ import type { HoverTarget, SpaceStyleProperty } from "./types";
 import { spaceProperties } from "./properties";
 import { theme } from "@webstudio-is/design-system";
 
-const VALUE_WIDTH = 34;
+const VALUE_WIDTH = 36;
 const VALUE_HEIGHT = 24;
 
 const BORDER = 1;

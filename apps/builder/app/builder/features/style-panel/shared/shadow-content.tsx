@@ -202,7 +202,7 @@ export const ShadowContent = ({
       <Grid
         gap="2"
         css={{
-          px: theme.spacing[9],
+          px: theme.spacing[7],
           marginTop: theme.spacing[5],
           gridTemplateColumns:
             property === "boxShadow" ? "1fr 1fr" : "1fr 1fr 1fr",
@@ -310,7 +310,7 @@ export const ShadowContent = ({
       <Grid
         gap="2"
         css={{
-          px: theme.spacing[9],
+          px: theme.spacing[7],
           marginTop: theme.spacing[5],
           paddingBottom: theme.spacing[5],
           ...(property === "boxShadow" && { gridTemplateColumns: "3fr 1fr" }),
@@ -381,9 +381,8 @@ export const ShadowContent = ({
           <Flex
             direction="column"
             css={{
-              px: theme.spacing[9],
-              paddingTop: theme.spacing[5],
-              paddingBottom: theme.spacing[9],
+              px: theme.spacing[7],
+              py: theme.spacing[5],
               gap: theme.spacing[3],
               minWidth: theme.spacing[30],
             }}
