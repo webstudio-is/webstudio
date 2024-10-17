@@ -17,6 +17,7 @@ const listItemAttribute = "data-list-item";
 const listItemAttributes = { [listItemAttribute]: true };
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
+  width: theme.spacing[7],
   visibility: "hidden",
   cursor: "grab",
   color: theme.colors.foregroundSubtle,
@@ -183,7 +184,7 @@ export const CssValueListItem = forwardRef(
             >
               <DragHandleIconStyled />
 
-              <Flex gap={1} shrink align="center">
+              <Flex shrink align="center">
                 {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}
                 {label}
               </Flex>
