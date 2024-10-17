@@ -66,6 +66,7 @@ const IconButtonStyled = styled(IconButton, {
     // To not overlap focus-ring by the next button
     zIndex: 0,
   },
+  borderWidth: 0,
 });
 
 const BaseToggleGroupButton = forwardRef<
@@ -87,9 +88,8 @@ const BaseToggleGroupButton = forwardRef<
           : "default"
       }
       css={{
-        width: "auto",
-        height: theme.spacing[11],
-        minWidth: theme.spacing[11],
+        height: theme.spacing[10],
+        minWidth: theme.spacing[10],
         borderRadius: theme.borderRadius[2],
         ...textVariants.labelsTitleCase,
       }}
