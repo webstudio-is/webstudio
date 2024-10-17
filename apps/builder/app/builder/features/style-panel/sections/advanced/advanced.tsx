@@ -243,7 +243,6 @@ const AdvancedPropertyValue = ({
       prefix={
         isColor && (
           <ColorPopover
-            size={1}
             value={styleDecl.usedValue}
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
