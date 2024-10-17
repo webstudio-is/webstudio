@@ -48,7 +48,7 @@ const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
   },
   "&[data-focused=true], &:focus-visible": {
     borderRadius: theme.borderRadius[3],
-    outline: `2px solid ${focusColors[variant]}`,
+    outline: `1px solid ${focusColors[variant]}`,
     "&:disabled, &[data-disabled]": {
       outline: "none",
     },

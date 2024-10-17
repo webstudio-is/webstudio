@@ -1,12 +1,7 @@
 import { type ReactNode } from "react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import {
-  Box,
-  Grid,
-  NestedIconLabel,
-  ToggleButton,
-} from "@webstudio-is/design-system";
+import { Box, Grid, ToggleButton } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { rowCss } from "./utils";
@@ -20,7 +15,7 @@ import {
   deleteProperty,
   setProperty,
 } from "../../shared/use-style-data";
-import { useComputedStyles } from "../../shared/model";
+import { $availableVariables, useComputedStyles } from "../../shared/model";
 
 export const BorderProperty = ({
   individualModeIcon,
@@ -57,13 +52,6 @@ export const BorderProperty = ({
     allPropertyValuesAreEqual === false && individualModeIcon !== undefined
   );
 
-  const { items: borderPropertyItems } = styleConfigByName(firstPropertyName);
-
-  const keywords = borderPropertyItems.map((item) => ({
-    type: "keyword" as const,
-    value: item.name,
-  }));
-
   /**
    * If the property is displayed in a non-individual mode, we need to provide a value for it.
    * In Webflow, an empty value is shown. In Figma, the "Mixed" keyword is shown.
@@ -90,7 +78,13 @@ export const BorderProperty = ({
           <CssValueInputContainer
             property={firstPropertyName}
             styleSource={styleValueSourceColor}
-            keywords={keywords}
+            getOptions={() => [
+              ...styleConfigByName(firstPropertyName).items.map((item) => ({
+                type: "keyword" as const,
+                value: item.name,
+              })),
+              ...$availableVariables.get(),
+            ]}
             value={value}
             setValue={(newValue, options) => {
               const batch = createBatchUpdate();
@@ -124,16 +118,16 @@ export const BorderProperty = ({
             <CssValueInputContainer
               key={styleDecl.property}
               icon={
-                <NestedIconLabel>
-                  {
-                    borderPropertyOptions[styleDecl.property as StyleProperty]
-                      ?.icon
-                  }
-                </NestedIconLabel>
+                borderPropertyOptions[styleDecl.property as StyleProperty]?.icon
               }
               property={styleDecl.property as StyleProperty}
               styleSource={styleDecl.source.name}
-              keywords={keywords}
+              getOptions={() =>
+                styleConfigByName(firstPropertyName).items.map((item) => ({
+                  type: "keyword" as const,
+                  value: item.name,
+                }))
+              }
               value={styleDecl.cascadedValue}
               setValue={setProperty(styleDecl.property as StyleProperty)}
               deleteProperty={deleteProperty}

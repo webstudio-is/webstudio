@@ -1,4 +1,4 @@
-import { type ComponentProps, useState } from "react";
+import { useState } from "react";
 import {
   keyframes,
   styled,
@@ -12,15 +12,12 @@ import {
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
 import type { StyleSource } from "../../shared/style-info";
-import type {
-  CreateBatchUpdate,
-  StyleUpdate,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
+import { createBatchUpdate } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
 import { getInsetModifiersGroup, getSpaceModifiersGroup } from "./scrub";
 import type { SpaceStyleProperty } from "../space/types";
 import type { InsetProperty } from "../position/inset-layout";
+import { $availableVariables } from "../../shared/model";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -37,33 +34,15 @@ const Input = ({
   value,
   property,
   onClosePopover,
-  createBatchUpdate,
 }: {
   styleSource: StyleSource;
   property: SpaceStyleProperty | InsetProperty;
   value: StyleValue;
   onClosePopover: () => void;
-  createBatchUpdate: CreateBatchUpdate;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
-
-  const onChange = (
-    updates: Array<StyleUpdate>,
-    options: StyleUpdateOptions
-  ) => {
-    const batch = createBatchUpdate();
-    for (const update of updates) {
-      if (update.operation === "set") {
-        batch.setProperty(update.property)(update.value);
-      }
-      if (update.operation === "delete") {
-        batch.deleteProperty(update.property);
-      }
-    }
-    batch.publish(options);
-  };
 
   return (
     <CssValueInput
@@ -71,51 +50,51 @@ const Input = ({
       property={property}
       value={value}
       intermediateValue={intermediateValue}
+      getOptions={() => $availableVariables.get()}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
-
         if (styleValue === undefined) {
-          onChange([{ operation: "delete", property }], { isEphemeral: true });
+          const batch = createBatchUpdate();
+          batch.deleteProperty(property);
+          batch.publish({ isEphemeral: true });
           return;
         }
-
         if (styleValue.type !== "intermediate") {
-          onChange([{ operation: "set", property, value: styleValue }], {
-            isEphemeral: true,
-          });
+          const batch = createBatchUpdate();
+          batch.setProperty(property)(styleValue);
+          batch.publish({ isEphemeral: true });
         }
       }}
       onHighlight={(styleValue) => {
         if (styleValue === undefined) {
-          onChange([{ operation: "delete", property }], { isEphemeral: true });
+          const batch = createBatchUpdate();
+          batch.deleteProperty(property);
+          batch.publish({ isEphemeral: true });
           return;
         }
-
-        onChange([{ operation: "set", property, value: styleValue }], {
-          isEphemeral: true,
-        });
+        const batch = createBatchUpdate();
+        batch.setProperty(property)(styleValue);
+        batch.publish({ isEphemeral: true });
       }}
       onChangeComplete={({ value, type, altKey, shiftKey }) => {
-        const updates: Array<StyleUpdate> = [];
-        const options = { isEphemeral: false };
+        const batch = createBatchUpdate();
         const modifiers = { shiftKey, altKey };
         const properties = isSpace(property)
           ? getSpaceModifiersGroup(property as SpaceStyleProperty, modifiers)
           : getInsetModifiersGroup(property as InsetProperty, modifiers);
-
         setIntermediateValue(undefined);
-
-        properties.forEach((property) => {
-          updates.push({ operation: "set", property, value });
-        });
-        onChange(updates, options);
-
+        for (const property of properties) {
+          batch.setProperty(property)(value);
+        }
+        batch.publish({ isEphemeral: false });
         if (type === "blur" || type === "enter") {
           onClosePopover();
         }
       }}
       onAbort={() => {
-        onChange([{ operation: "delete", property }], { isEphemeral: true });
+        const batch = createBatchUpdate();
+        batch.deleteProperty(property);
+        batch.publish({ isEphemeral: true });
       }}
     />
   );
@@ -144,11 +123,10 @@ export const InputPopover = ({
   value,
   isOpen,
   onClose,
-  createBatchUpdate,
-}: Pick<
-  ComponentProps<typeof Input>,
-  "styleSource" | "property" | "value" | "createBatchUpdate"
-> & {
+}: {
+  styleSource: StyleSource;
+  property: SpaceStyleProperty | InsetProperty;
+  value: StyleValue;
   isOpen: boolean;
   onClose: () => void;
 }) => {
@@ -169,7 +147,6 @@ export const InputPopover = ({
           styleSource={styleSource}
           value={value}
           property={property}
-          createBatchUpdate={createBatchUpdate}
           onClosePopover={onClose}
         />
       </PopoverContentStyled>

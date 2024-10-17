@@ -16,37 +16,39 @@ import {
 
 const Component = () => {
   return (
-    <Box className="w-box">
+    <Box className={"w-box"}>
       <Dialog>
         <DialogTrigger>
-          <Button className="w-button w-button-1">
+          <Button className={"w-button w-button-1"}>
             <HtmlEmbed
               code={
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M2 5.998a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 5.5a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 5.5a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>'
               }
-              className="w-html-embed"
+              className={"w-html-embed"}
             />
           </Button>
         </DialogTrigger>
-        <DialogOverlay className="w-dialog-overlay w-sheet-overlay">
-          <DialogContent className="w-dialog-content w-sheet-content">
-            <Box tag={"nav"} role={"navigation"} className="w-box">
-              <Box className="w-box w-sheet-header">
-                <DialogTitle className="w-dialog-title w-sheet-title">
+        <DialogOverlay className={"w-dialog-overlay w-sheet-overlay"}>
+          <DialogContent className={"w-dialog-content w-sheet-content"}>
+            <Box tag={"nav"} role={"navigation"} className={"w-box"}>
+              <Box className={"w-box w-sheet-header"}>
+                <DialogTitle className={"w-dialog-title w-sheet-title"}>
                   {"Sheet Title"}
                 </DialogTitle>
-                <DialogDescription className="w-dialog-description w-sheet-description">
+                <DialogDescription
+                  className={"w-dialog-description w-sheet-description"}
+                >
                   {"Sheet description text you can edit"}
                 </DialogDescription>
               </Box>
-              <Text className="w-text">{"The text you can edit"}</Text>
+              <Text className={"w-text"}>{"The text you can edit"}</Text>
             </Box>
-            <DialogClose className="w-close-button w-close-button-1">
+            <DialogClose className={"w-close-button w-close-button-1"}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M13.566 2.434a.8.8 0 0 1 0 1.132L9.13 8l4.435 4.434a.8.8 0 0 1-1.132 1.132L8 9.13l-4.434 4.435a.8.8 0 0 1-1.132-1.132L6.87 8 2.434 3.566a.8.8 0 0 1 1.132-1.132L8 6.87l4.434-4.435a.8.8 0 0 1 1.132 0Z" clip-rule="evenodd"/></svg>'
                 }
-                className="w-html-embed"
+                className={"w-html-embed"}
               />
             </DialogClose>
           </DialogContent>
@@ -66,12 +68,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

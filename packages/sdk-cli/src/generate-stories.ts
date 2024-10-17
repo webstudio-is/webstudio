@@ -70,7 +70,9 @@ const generateComponentImports = ({
 };
 
 const getStoriesImports = ({ hasState }: { hasState: boolean }) =>
-  hasState ? `import { useState } from "react";\n` : "";
+  hasState
+    ? `import { useVariableState } from "@webstudio-is/react-sdk/runtime";\n`
+    : "";
 
 const getStoriesExports = (name: string, css: string) => `
 export default {

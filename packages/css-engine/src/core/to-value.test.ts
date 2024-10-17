@@ -23,7 +23,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
   });
 
   test("var", () => {
-    const value = toValue({ type: "var", value: "namespace", fallbacks: [] });
+    const value = toValue({ type: "var", value: "namespace" });
     expect(value).toBe("var(--namespace)");
   });
 
@@ -31,17 +31,10 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     const value = toValue({
       type: "var",
       value: "namespace",
-      fallbacks: [
-        {
-          type: "keyword",
-          value: "normal",
-        },
-        {
-          type: "unit",
-          value: 10,
-          unit: "px",
-        },
-      ],
+      fallback: {
+        type: "unparsed",
+        value: "normal, 10px",
+      },
     });
     expect(value).toBe("var(--namespace, normal, 10px)");
   });

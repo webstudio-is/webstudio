@@ -53,12 +53,13 @@ export const toValue = (
     return families.join(", ");
   }
   if (value.type === "var") {
-    const fallbacks = [];
-    for (const fallback of value.fallbacks) {
-      fallbacks.push(toValue(fallback, transformValue));
+    if (value.hidden) {
+      return "";
     }
-    const fallbacksString =
-      fallbacks.length > 0 ? `, ${fallbacks.join(", ")}` : "";
+    let fallbacksString = "";
+    if (value.fallback) {
+      fallbacksString = `, ${toValue(value.fallback, transformValue)}`;
+    }
     return `var(--${value.value}${fallbacksString})`;
   }
 

@@ -28,7 +28,7 @@ import {
   type TransitionProperty,
 } from "./transition-utils";
 import { TransitionContent } from "./transition-content";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 
 export { transitionLongHandProperties as properties };
 
@@ -116,10 +116,9 @@ export const Section = () => {
                   setIsOpen(true);
                   addRepeatedStyleItem(
                     styles,
-                    parseCssFragment(
-                      "opacity 200ms ease 0ms normal",
-                      "transition"
-                    )
+                    parseCssFragment("opacity 200ms ease 0ms normal", [
+                      "transition",
+                    ])
                   );
                 }}
               />

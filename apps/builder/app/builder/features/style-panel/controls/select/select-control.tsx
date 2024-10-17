@@ -31,7 +31,7 @@ export const SelectControl = ({
   const value =
     index === undefined
       ? styleDecl.cascadedValue
-      : getRepeatedStyleItem(styleDecl.cascadedValue, index);
+      : getRepeatedStyleItem(styleDecl, index);
   const setValue = (value: StyleValue, options?: StyleUpdateOptions) => {
     if (index === undefined) {
       setProperty(property)(value, options);

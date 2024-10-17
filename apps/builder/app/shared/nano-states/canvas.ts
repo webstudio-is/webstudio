@@ -1,5 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { FontWeight } from "@webstudio-is/fonts";
 import { $instances } from "./instances";
 import type { InstanceSelector } from "../tree-utils";
 
@@ -71,3 +72,7 @@ export const synchronizedCanvasStores = [
 ] as const;
 
 export const $canvasIframeState = atom<"idle" | "ready">("idle");
+
+export const $detectedFontsWeights = atom<Map<string, Array<FontWeight>>>(
+  new Map()
+);

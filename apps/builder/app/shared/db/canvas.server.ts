@@ -3,7 +3,6 @@ import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { findPageByIdOrPath, getStyleDeclKey } from "@webstudio-is/sdk";
-import type { Build } from "@webstudio-is/prisma-client";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
@@ -12,7 +11,7 @@ const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
 ];
 
 export const loadProductionCanvasData = async (
-  buildId: Build["id"],
+  buildId: string,
   context: AppContext
 ): Promise<Data> => {
   const build = await loadBuildById(context, buildId);

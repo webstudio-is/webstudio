@@ -9,7 +9,10 @@ import {
   Flex,
   Box,
 } from "@webstudio-is/design-system";
-import { descendantComponent } from "@webstudio-is/react-sdk";
+import {
+  descendantComponent,
+  isAttributeNameSafe,
+} from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
@@ -21,7 +24,6 @@ import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
-import { isAttributeNameSafe } from "~/shared/dom-utils";
 
 type Item = {
   name: string;
@@ -112,7 +114,7 @@ const AddPropertyOrAttribute = ({
         autoFocus
         color={isValid ? undefined : "error"}
         placeholder="Select or create"
-        items={availableProps}
+        getItems={() => availableProps}
         itemToString={itemToString}
         onItemSelect={(item) => {
           if (
@@ -181,11 +183,8 @@ export const PropsSection = (props: PropsSectionProps) => {
               }}
             />
           )}
-          {logic.addedProps.map((item, index) =>
-            renderProperty(props, item, {
-              deletable: true,
-              autoFocus: index === 0,
-            })
+          {logic.addedProps.map((item) =>
+            renderProperty(props, item, { deletable: true })
           )}
           {logic.initialProps.map((item) => renderProperty(props, item))}
         </Flex>

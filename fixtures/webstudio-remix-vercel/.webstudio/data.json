@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "5df1744d-0383-4775-819c-1648300d55cd",
+    "id": "6876de3a-942a-466b-9761-ad7cb2fa2c21",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 300,
-    "createdAt": "2024-09-19T19:27:53.953+00:00",
-    "updatedAt": "2024-09-19T19:27:53.953+00:00",
+    "version": 321,
+    "createdAt": "2024-10-08T17:47:04.557+00:00",
+    "updatedAt": "2024-10-08T17:47:04.557+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -134,6 +134,27 @@
             "include": false
           },
           "path": "/expressions"
+        },
+        {
+          "id": "lTS5DKrDEC_mXSAc5ZDDA",
+          "name": "class-names",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "mdyCS8QnKx3fL1MLXifmy",
+          "systemDataSourceId": "5o_tom3ekCqphQfInC6NH",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "200",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": []
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/class-names"
         }
       ],
       "folders": [
@@ -149,7 +170,8 @@
             "-J9I4Oo6mONfQlf_3-OqG",
             "TS39WeBd0Qr3QgbSlzdf2",
             "42cWhASQ3tTtKDnsvzhUF",
-            "9xlwLSHxuk8HmS3-EEGcf"
+            "9xlwLSHxuk8HmS3-EEGcf",
+            "lTS5DKrDEC_mXSAc5ZDDA"
           ]
         },
         {
@@ -1505,6 +1527,32 @@
             "value": "hidden"
           }
         }
+      ],
+      [
+        "o9VRyqmvIarF6HrGMccU8:UoTkWyaFuTYJihS3MFYK5:width:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "o9VRyqmvIarF6HrGMccU8",
+          "property": "width",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 300
+          }
+        }
+      ],
+      [
+        "g6Z7dAxi6LYB-XtI6SaRR:UoTkWyaFuTYJihS3MFYK5:marginTop:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "g6Z7dAxi6LYB-XtI6SaRR",
+          "property": "marginTop",
+          "value": {
+            "type": "unit",
+            "value": 12,
+            "unit": "px"
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -1675,6 +1723,20 @@
           "type": "local",
           "id": "y8DFYnVCeQ_smp3u6CSTn"
         }
+      ],
+      [
+        "o9VRyqmvIarF6HrGMccU8",
+        {
+          "type": "local",
+          "id": "o9VRyqmvIarF6HrGMccU8"
+        }
+      ],
+      [
+        "g6Z7dAxi6LYB-XtI6SaRR",
+        {
+          "type": "local",
+          "id": "g6Z7dAxi6LYB-XtI6SaRR"
+        }
       ]
     ],
     "styleSourceSelections": [
@@ -1844,6 +1906,20 @@
         {
           "instanceId": "81ejLVXyFEV1SxiJrWhyw",
           "values": ["y8DFYnVCeQ_smp3u6CSTn"]
+        }
+      ],
+      [
+        "drCx7m8q_gnNQLrhPDA-g",
+        {
+          "instanceId": "drCx7m8q_gnNQLrhPDA-g",
+          "values": ["o9VRyqmvIarF6HrGMccU8"]
+        }
+      ],
+      [
+        "T-rqx2b12pRrWcafRRoIG",
+        {
+          "instanceId": "T-rqx2b12pRrWcafRRoIG",
+          "values": ["g6Z7dAxi6LYB-XtI6SaRR"]
         }
       ]
     ],
@@ -2228,6 +2304,36 @@
           "type": "expression",
           "value": "`<script>\nconst a = ${$ws$dataSource$LYqm_7uq8W4T7BKky9zcj.data.args}\n\nconst b = ${$ws$dataSource$KqMdUAQ4YmObkN1ofVzeO}\n\nconsole.log(a, b);\n</script>`"
         }
+      ],
+      [
+        "8GVa_kUsGQz9Ppne_hLj-",
+        {
+          "id": "8GVa_kUsGQz9Ppne_hLj-",
+          "instanceId": "drCx7m8q_gnNQLrhPDA-g",
+          "name": "className",
+          "type": "string",
+          "value": "custom-class \"broken 'with `symbols"
+        }
+      ],
+      [
+        "UVdfQwl7RfYB2wI__NFXr",
+        {
+          "id": "UVdfQwl7RfYB2wI__NFXr",
+          "instanceId": "drCx7m8q_gnNQLrhPDA-g",
+          "name": "id",
+          "type": "string",
+          "value": "\"broken'with`symbols"
+        }
+      ],
+      [
+        "I4cM2PzBX49KWxsKdGMd1",
+        {
+          "id": "I4cM2PzBX49KWxsKdGMd1",
+          "instanceId": "T-rqx2b12pRrWcafRRoIG",
+          "name": "className",
+          "type": "expression",
+          "value": "`${$ws$dataSource$FG6camSaR89vSBREAV9PT} class_3`"
+        }
       ]
     ],
     "dataSources": [
@@ -2383,6 +2489,28 @@
             "value": {
               "hello": "world"
             }
+          }
+        }
+      ],
+      [
+        "5o_tom3ekCqphQfInC6NH",
+        {
+          "type": "parameter",
+          "id": "5o_tom3ekCqphQfInC6NH",
+          "scopeInstanceId": "mdyCS8QnKx3fL1MLXifmy",
+          "name": "system"
+        }
+      ],
+      [
+        "FG6camSaR89vSBREAV9PT",
+        {
+          "type": "variable",
+          "id": "FG6camSaR89vSBREAV9PT",
+          "scopeInstanceId": "mdyCS8QnKx3fL1MLXifmy",
+          "name": "classVar",
+          "value": {
+            "type": "string",
+            "value": "varClass"
           }
         }
       ]
@@ -3492,12 +3620,49 @@
           "component": "HtmlEmbed",
           "children": []
         }
+      ],
+      [
+        "mdyCS8QnKx3fL1MLXifmy",
+        {
+          "type": "instance",
+          "id": "mdyCS8QnKx3fL1MLXifmy",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "drCx7m8q_gnNQLrhPDA-g"
+            },
+            {
+              "type": "id",
+              "value": "T-rqx2b12pRrWcafRRoIG"
+            }
+          ]
+        }
+      ],
+      [
+        "drCx7m8q_gnNQLrhPDA-g",
+        {
+          "type": "instance",
+          "id": "drCx7m8q_gnNQLrhPDA-g",
+          "component": "Box",
+          "children": []
+        }
+      ],
+      [
+        "T-rqx2b12pRrWcafRRoIG",
+        {
+          "type": "instance",
+          "id": "T-rqx2b12pRrWcafRRoIG",
+          "component": "Box",
+          "children": []
+        }
       ]
     ],
     "deployment": {
       "destination": "saas",
-      "domains": [],
-      "projectDomain": "webstudio-fixture-project-a-0su3o"
+      "domains": ["webstudio-fixture-project-a-0su3o"],
+      "assetsDomain": "webstudio-fixture-project-a-0su3o",
+      "excludeWstdDomainFromSearch": false
     }
   },
   "page": {
@@ -3641,6 +3806,27 @@
         "include": false
       },
       "path": "/expressions"
+    },
+    {
+      "id": "lTS5DKrDEC_mXSAc5ZDDA",
+      "name": "class-names",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "mdyCS8QnKx3fL1MLXifmy",
+      "systemDataSourceId": "5o_tom3ekCqphQfInC6NH",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": []
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/class-names"
     }
   ],
   "assets": [

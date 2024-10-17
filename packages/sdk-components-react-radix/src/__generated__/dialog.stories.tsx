@@ -16,28 +16,30 @@ import {
 
 const Component = () => {
   return (
-    <Box className="w-box">
+    <Box className={"w-box"}>
       <Dialog>
         <DialogTrigger>
-          <Button className="w-button w-button-1">{"Button"}</Button>
+          <Button className={"w-button w-button-1"}>{"Button"}</Button>
         </DialogTrigger>
-        <DialogOverlay className="w-dialog-overlay w-dialog-overlay-1">
-          <DialogContent className="w-dialog-content w-dialog-content-1">
-            <Box className="w-box w-dialog-header">
-              <DialogTitle className="w-dialog-title w-dialog-title-1">
+        <DialogOverlay className={"w-dialog-overlay w-dialog-overlay-1"}>
+          <DialogContent className={"w-dialog-content w-dialog-content-1"}>
+            <Box className={"w-box w-dialog-header"}>
+              <DialogTitle className={"w-dialog-title w-dialog-title-1"}>
                 {"Dialog Title you can edit"}
               </DialogTitle>
-              <DialogDescription className="w-dialog-description w-dialog-description-1">
+              <DialogDescription
+                className={"w-dialog-description w-dialog-description-1"}
+              >
                 {"Dialog description text you can edit"}
               </DialogDescription>
             </Box>
-            <Text className="w-text">{"The text you can edit"}</Text>
-            <DialogClose className="w-close-button w-close-button-1">
+            <Text className={"w-text"}>{"The text you can edit"}</Text>
+            <DialogClose className={"w-close-button w-close-button-1"}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M13.566 2.434a.8.8 0 0 1 0 1.132L9.13 8l4.435 4.434a.8.8 0 0 1-1.132 1.132L8 9.13l-4.434 4.435a.8.8 0 0 1-1.132-1.132L6.87 8 2.434 3.566a.8.8 0 0 1 1.132-1.132L8 6.87l4.434-4.435a.8.8 0 0 1 1.132 0Z" clip-rule="evenodd"/></svg>'
                 }
-                className="w-html-embed"
+                className={"w-html-embed"}
               />
             </DialogClose>
           </DialogContent>
@@ -57,12 +59,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

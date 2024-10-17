@@ -14,6 +14,7 @@ import type {
   Unit,
   UnitValue,
   UnparsedValue,
+  FontFamilyValue,
 } from "@webstudio-is/css-engine";
 import * as customData from "../src/custom-data";
 
@@ -39,11 +40,6 @@ const units: Record<customData.UnitGroup, Array<string>> = {
 type Property = keyof typeof properties;
 type Value = (typeof properties)[Property];
 
-const inheritValue = {
-  type: "keyword",
-  value: "inherit",
-} as const;
-
 const autoValue = {
   type: "keyword",
   value: "auto",
@@ -51,9 +47,11 @@ const autoValue = {
 
 // Normalize browser dependant properties.
 const normalizedValues = {
-  "font-family": inheritValue,
-  "font-size": inheritValue,
-  "line-height": inheritValue,
+  // dependsOnUserAgent
+  "font-family": {
+    type: "fontFamily",
+    value: ["serif"],
+  } satisfies FontFamilyValue,
   // startOrNamelessValueIfLTRRightIfRTL
   "text-align": { type: "keyword", value: "start" },
   // canvastext

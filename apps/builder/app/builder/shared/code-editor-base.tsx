@@ -41,6 +41,7 @@ import {
   Button,
   DialogClose,
   Flex,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
@@ -84,7 +85,6 @@ const editorContentStyle = css({
   userSelect: "text",
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
-    outline: `1px solid ${theme.colors.borderFocus}`,
   },
   '&[data-invalid="true"]': {
     borderColor: theme.colors.borderDestructiveMain,
@@ -111,6 +111,10 @@ const editorContentStyle = css({
     // because it breaks scroll events and makes scrolling laggy
     minHeight: `var(${minHeightVar}, auto)`,
     maxHeight: `var(${maxHeightVar}, none)`,
+  },
+  ".cm-lintRange-error": {
+    textDecoration: "underline wavy red",
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
   },
 });
 
@@ -146,6 +150,51 @@ const highlightStyle = HighlightStyle.define([
     color: "#000",
   },
 ]);
+
+const autocompletionTooltipTheme = EditorView.theme({
+  ".cm-tooltip.cm-tooltip-autocomplete": {
+    ...textVariants.mono,
+    border: "none",
+    backgroundColor: "transparent",
+    // override none set on body by radix popover
+    pointerEvents: "auto",
+  },
+  ".cm-tooltip.cm-tooltip-autocomplete ul": {
+    minWidth: "160px",
+    maxWidth: "260px",
+    width: "max-content",
+    boxSizing: "border-box",
+    borderRadius: rawTheme.borderRadius[6],
+    backgroundColor: rawTheme.colors.backgroundMenu,
+    border: `1px solid ${rawTheme.colors.borderMain}`,
+    boxShadow: `${rawTheme.shadows.menuDropShadow}, inset 0 0 0 1px ${rawTheme.colors.borderMenuInner}`,
+    padding: rawTheme.spacing[3],
+  },
+  ".cm-tooltip.cm-tooltip-autocomplete ul li": {
+    ...textVariants.labelsTitleCase,
+    textTransform: "none",
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    color: rawTheme.colors.foregroundMain,
+    padding: rawTheme.spacing[3],
+    borderRadius: rawTheme.borderRadius[3],
+  },
+  ".cm-tooltip.cm-tooltip-autocomplete li[aria-selected], .cm-tooltip.cm-tooltip-autocomplete li:hover":
+    {
+      color: rawTheme.colors.foregroundMain,
+      backgroundColor: rawTheme.colors.backgroundItemMenuItemHover,
+    },
+  ".cm-tooltip.cm-tooltip-autocomplete .cm-completionLabel": {
+    flexGrow: 1,
+  },
+  ".cm-tooltip.cm-tooltip-autocomplete .cm-completionDetail": {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    fontStyle: "normal",
+    color: rawTheme.colors.hint,
+  },
+});
 
 export type EditorApi = {
   replaceSelection: (string: string) => void;
@@ -209,6 +258,7 @@ export const EditorContent = ({
     view.dispatch({
       effects: StateEffect.reconfigure.of([
         ...extensions,
+        autocompletionTooltipTheme,
         history(),
         drawSelection(),
         dropCursor(),

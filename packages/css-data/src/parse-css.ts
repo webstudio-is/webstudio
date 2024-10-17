@@ -71,7 +71,7 @@ const parseCssValue = (
     }
 
     // @todo https://github.com/webstudio-is/webstudio/issues/3399
-    if (customProperties === false && value.startsWith("var(")) {
+    if (customProperties === false && value.includes("var(")) {
       final.set(property, { type: "keyword", value: "unset" });
       continue;
     }
@@ -161,6 +161,7 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
           if (node.type === "MediaQuery" && node.children.size > 1) {
             invalidBreakpoint = true;
           }
+          ``;
         },
       });
       const generated = csstree.generate(this.atrule.prelude);
@@ -168,39 +169,63 @@ export const parseCss = (css: string, options: ParserOptions = {}) => {
         breakpoint = generated;
       }
     }
-    if (invalidBreakpoint) {
+    if (invalidBreakpoint || this.rule.prelude.type !== "SelectorList") {
       return;
     }
 
     const selectors: Selector[] = [];
-    csstree.walk(this.rule.prelude, (node, item) => {
-      if (node.type !== "ClassSelector" && node.type !== "TypeSelector") {
-        return;
-      }
-      // We don't support nesting yet.
-      if (
-        (item?.prev && item.prev.data.type === "Combinator") ||
-        (item?.next && item.next.data.type === "Combinator")
-      ) {
-        return;
-      }
 
-      if (item?.next && item.next.data.type === "PseudoElementSelector") {
-        selectors.push({
-          name: node.name,
-          state: `::${item.next.data.name}`,
-        });
-      } else if (item?.next && item.next.data.type === "PseudoClassSelector") {
-        selectors.push({
-          name: node.name,
-          state: `:${item.next.data.name}`,
-        });
-      } else {
-        selectors.push({
-          name: node.name,
-        });
+    for (const node of this.rule.prelude.children) {
+      if (node.type !== "Selector") {
+        continue;
       }
-    });
+      let selector: Selector | undefined = undefined;
+      for (const childNode of node.children) {
+        let name: string = "";
+        let state: string | undefined;
+        switch (childNode.type) {
+          case "TypeSelector":
+            name = childNode.name;
+            break;
+          case "ClassSelector":
+            name = `.${childNode.name}`;
+            break;
+          case "AttributeSelector":
+            name = csstree.generate(childNode);
+            break;
+          case "PseudoClassSelector": {
+            // First pseudo selector is not a state but an element selector, e.g. :root
+            if (selector) {
+              state = `:${childNode.name}`;
+            } else {
+              name = `:${childNode.name}`;
+            }
+            break;
+          }
+          case "PseudoElementSelector":
+            state = `::${childNode.name}`;
+            break;
+          case "Combinator":
+            // " " vs " > "
+            name =
+              childNode.name === " " ? childNode.name : ` ${childNode.name} `;
+            break;
+        }
+
+        if (selector) {
+          selector.name += name;
+          if (state) {
+            selector.state = state;
+          }
+        } else {
+          selector = { name, state };
+        }
+      }
+      if (selector) {
+        selectors.push(selector);
+        selector = undefined;
+      }
+    }
 
     const stringValue = csstree.generate(node.value);
 

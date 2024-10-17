@@ -1,29 +1,38 @@
-import { prisma } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 
 export type UserPlanFeatures = NonNullable<AppContext["userPlanFeatures"]>;
 
 export const getUserPlanFeatures = async (
-  userId: string
+  userId: string,
+  postgrest: AppContext["postgrest"]
 ): Promise<UserPlanFeatures> => {
-  const userProducts = await prisma.userProduct.findMany({
-    where: { userId },
-    select: {
-      customerId: true,
-      subscriptionId: true,
-      product: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          features: true,
-          meta: true,
-          images: true,
-        },
-      },
-    },
-  });
+  const userProductsResult = await postgrest.client
+    .from("UserProduct")
+    .select("customerId, subscriptionId, productId")
+    .eq("userId", userId);
+
+  if (userProductsResult.error) {
+    console.error(userProductsResult.error);
+    throw new Error("Failed to fetch user products");
+  }
+
+  const userProducts = userProductsResult.data;
+
+  const productsResult = await postgrest.client
+    .from("Product")
+    .select("name")
+    .in(
+      "id",
+      userProducts.map(({ productId }) => productId)
+    );
+
+  if (productsResult.error) {
+    console.error(productsResult.error);
+    throw new Error("Failed to fetch products");
+  }
+
+  const products = productsResult.data;
 
   // This is fast and dirty implementation
   // @todo: implement this using products meta, custom table with aggregated transaction info
@@ -39,7 +48,7 @@ export const getUserPlanFeatures = async (
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription,
       hasProPlan: true,
-      planName: userProducts[0].product.name,
+      planName: products[0].name,
     };
   }
 

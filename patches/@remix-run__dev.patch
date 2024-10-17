@@ -1,11 +1,11 @@
 diff --git a/dist/vite/node-adapter.js b/dist/vite/node-adapter.js
-index 27cafca56bde2e5c086723b20bcfa50169bb38ea..b851e038e0fe8f73d193a2ca3ff2c0c13c82191e 100644
+index e5ef9363d5eedf94d5a13ef53fc8ca9893547130..d2d9f4882df4e08877c709b886a1208b0c5d75d5 100644
 --- a/dist/vite/node-adapter.js
 +++ b/dist/vite/node-adapter.js
 @@ -36,7 +36,7 @@ function fromNodeHeaders(nodeHeaders) {
  
  // Based on `createRemixRequest` in packages/remix-express/server.ts
- function fromNodeRequest(nodeReq) {
+ function fromNodeRequest(nodeReq, nodeRes) {
 -  let origin = nodeReq.headers.origin && "null" !== nodeReq.headers.origin ? nodeReq.headers.origin : `http://${nodeReq.headers.host}`;
 +  let origin = `https://${nodeReq.headers.host}`;
    // Use `req.originalUrl` so Remix is aware of the full path

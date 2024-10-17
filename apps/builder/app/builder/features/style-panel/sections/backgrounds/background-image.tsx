@@ -15,7 +15,7 @@ import { useStore } from "@nanostores/react";
 import { $assets } from "~/shared/nano-states";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
@@ -39,7 +39,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const assets = useStore($assets);
   const styleDecl = useComputedStyleDecl("backgroundImage");
-  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const styleValue = getRepeatedStyleItem(styleDecl, index);
   const [errors, setErrors] = useState<string[]>([]);
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
@@ -90,7 +90,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       value: value,
     });
 
-    const parsed = parseCssFragment(value, "background");
+    const parsed = parseCssFragment(value, ["backgroundImage", "background"]);
     const newValue = parsed.get("backgroundImage");
 
     if (newValue === undefined || newValue?.type === "invalid") {

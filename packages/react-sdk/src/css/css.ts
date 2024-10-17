@@ -5,6 +5,7 @@ import {
   type TransformValue,
 } from "@webstudio-is/css-engine";
 import {
+  ROOT_INSTANCE_ID,
   createScope,
   parseComponentName,
   type Assets,
@@ -16,7 +17,7 @@ import {
   type Styles,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
-import { descendantComponent } from "../core-components";
+import { descendantComponent, rootComponent } from "../core-components";
 import { addGlobalRules } from "./global-rules";
 import { kebabCase } from "change-case";
 
@@ -90,7 +91,10 @@ export const generateCss = ({
       // use :where() to reset specificity of preset selector
       // and let user styles completely override it
       // ideally switch to @layer when better supported
-      const rule = globalSheet.addNestingRule(`:where(${tag}.${className})`);
+      // render root preset styles without changes
+      const selector =
+        component === rootComponent ? ":root" : `:where(${tag}.${className})`;
+      const rule = globalSheet.addNestingRule(selector);
       for (const declaration of styles) {
         rule.setDeclaration({
           breakpoint: "presets",
@@ -146,6 +150,13 @@ export const generateCss = ({
   for (const selection of styleSourceSelections.values()) {
     let { instanceId } = selection;
     const { values } = selection;
+    // special case for :root styles
+    if (instanceId === ROOT_INSTANCE_ID) {
+      const rule = sheet.addNestingRule(`:root`);
+      rule.applyMixins(values);
+      // avoid storing in instanceByRule to prevent conversion into atomic styles
+      continue;
+    }
     let descendantSuffix = "";
     // render selector component as descendant selector
     const instance = instances.get(instanceId);
@@ -176,7 +187,7 @@ export const generateCss = ({
 
   if (atomic) {
     const { cssText } = generateAtomic(sheet, {
-      getKey: (rule) => instanceByRule.get(rule) ?? "",
+      getKey: (rule) => instanceByRule.get(rule),
       transformValue: imageValueTransformer,
       classes,
     });

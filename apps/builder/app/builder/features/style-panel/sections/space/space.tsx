@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import type { SectionProps } from "../shared/section";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { getSpaceModifiersGroup, useScrub } from "../shared/scrub";
@@ -7,10 +6,10 @@ import { spaceProperties } from "./properties";
 import type { SpaceStyleProperty, HoverTarget } from "./types";
 import { InputPopover } from "../shared/input-popover";
 import { SpaceTooltip } from "./tooltip";
-import { getStyleSource } from "../../shared/style-info";
 import { StyleSection } from "../../shared/style-section";
 import { movementMapSpace, useKeyboardNavigation } from "../shared/keyboard";
-import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
+import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 
 const Cell = ({
   isPopoverOpen,
@@ -18,43 +17,28 @@ const Cell = ({
   onHover,
   property,
   scrubStatus,
-  currentStyle,
-  createBatchUpdate,
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
   scrubStatus: ReturnType<typeof useScrub>;
-  currentStyle: SectionProps["currentStyle"];
-  createBatchUpdate: CreateBatchUpdate;
 }) => {
-  const styleInfo = currentStyle[property];
+  const styleDecl = useComputedStyleDecl(property);
   const finalValue =
-    (scrubStatus.isActive && scrubStatus.values[property]) || styleInfo?.value;
-  const styleSource = getStyleSource(styleInfo);
-
-  // for TypeScript
-  if (finalValue === undefined) {
-    return;
-  }
+    (scrubStatus.isActive && scrubStatus.values[property]) ||
+    styleDecl.cascadedValue;
 
   return (
     <>
       <InputPopover
-        styleSource={styleSource}
+        styleSource={styleDecl.source.name}
         value={finalValue}
         isOpen={isPopoverOpen}
         property={property}
         onClose={onPopoverClose}
-        createBatchUpdate={createBatchUpdate}
       />
-      <SpaceTooltip
-        property={property}
-        style={currentStyle}
-        createBatchUpdate={createBatchUpdate}
-        preventOpen={scrubStatus.isActive}
-      >
+      <SpaceTooltip property={property} preventOpen={scrubStatus.isActive}>
         <ValueText
           css={{
             // We want value to have `default` cursor to indicate that it's clickable,
@@ -66,7 +50,7 @@ const Cell = ({
             pointerEvents: "all",
           }}
           value={finalValue}
-          source={styleSource}
+          source={styleDecl.source.name}
           onMouseEnter={(event) =>
             onHover({ property, element: event.currentTarget })
           }
@@ -79,18 +63,14 @@ const Cell = ({
 
 export { spaceProperties as properties };
 
-export const Section = ({
-  deleteProperty,
-  createBatchUpdate,
-  currentStyle,
-}: SectionProps) => {
+export const Section = () => {
+  const styles = useComputedStyles(spaceProperties);
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
 
   const scrubStatus = useScrub({
-    value:
-      hoverTarget === undefined
-        ? undefined
-        : currentStyle[hoverTarget.property]?.value,
+    value: styles.find(
+      (styleDecl) => styleDecl.property === hoverTarget?.property
+    )?.usedValue,
     target: hoverTarget,
     getModifiersGroup: getSpaceModifiersGroup,
     onChange: (values, options) => {
@@ -163,8 +143,6 @@ export const Section = ({
             onHover={handleHover}
             property={property}
             scrubStatus={scrubStatus}
-            currentStyle={currentStyle}
-            createBatchUpdate={createBatchUpdate}
           />
         )}
       />

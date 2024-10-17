@@ -54,7 +54,7 @@ export const loader = async ({
     const user =
       project === null || project.userId === null
         ? undefined
-        : await getUserById(project.userId);
+        : await getUserById(context, project.userId);
 
     return {
       ...pagesCanvasData,

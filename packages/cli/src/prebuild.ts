@@ -25,6 +25,7 @@ import {
   generateRemixRoute,
   generateRemixParams,
   isCoreComponent,
+  coreMetas,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -294,7 +295,9 @@ export const prebuild = async (options: {
     }
   }
 
-  const projectMetas = new Map<Instance["component"], WsComponentMeta>();
+  const projectMetas = new Map<Instance["component"], WsComponentMeta>(
+    Object.entries(coreMetas)
+  );
   const componentsByPage: ComponentsByPage = {};
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], FontAsset[]> = {};

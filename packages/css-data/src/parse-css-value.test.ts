@@ -531,9 +531,17 @@ test("support custom properties as unparsed values", () => {
     type: "unparsed",
     value: "blue",
   });
-  expect(parseCssValue("--my-property", "1px")).toEqual({
+  expect(parseCssValue("--my-property", "url(https://my-image.com)")).toEqual({
     type: "unparsed",
-    value: "1px",
+    value: "url(https://my-image.com)",
+  });
+  expect(parseCssValue("--my-property", "blue red")).toEqual({
+    type: "unparsed",
+    value: "blue red",
+  });
+  expect(parseCssValue("--my-property", "blue, red")).toEqual({
+    type: "unparsed",
+    value: "blue, red",
   });
 });
 
@@ -541,27 +549,57 @@ test("support custom properties var reference", () => {
   expect(parseCssValue("color", "var(--color)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [],
   });
   expect(parseCssValue("color", "var(--color, red)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [{ type: "unparsed", value: "red" }],
+    fallback: { type: "unparsed", value: "red" },
   });
 });
 
-test("support deeply nested var reference", () => {
-  expect(parseCssValue("color", "rgb(var(--r), var(--g), var(--b))")).toEqual({
+test("support unit in custom property", () => {
+  expect(parseCssValue("--size", "10")).toEqual({
+    type: "unit",
+    value: 10,
+    unit: "number",
+  });
+  expect(parseCssValue("--size", "10px")).toEqual({
+    type: "unit",
+    value: 10,
+    unit: "px",
+  });
+  expect(parseCssValue("--size", "10%")).toEqual({
+    type: "unit",
+    value: 10,
+    unit: "%",
+  });
+});
+
+test("support color in custom property", () => {
+  expect(parseCssValue("--color", "rgb(61 77 4)")).toEqual({
+    type: "rgb",
+    r: 61,
+    g: 77,
+    b: 4,
+    alpha: 1,
+  });
+  expect(parseCssValue("--color", "rgba(61, 77, 4, 0.5)")).toEqual({
+    type: "rgb",
+    r: 61,
+    g: 77,
+    b: 4,
+    alpha: 0.5,
+  });
+  expect(parseCssValue("--color", "#3d4d04")).toEqual({
+    type: "rgb",
+    r: 61,
+    g: 77,
+    b: 4,
+    alpha: 1,
+  });
+  expect(parseCssValue("--color", "red")).toEqual({
     type: "unparsed",
-    value: "rgb(var(--r), var(--g), var(--b))",
-  });
-  expect(parseCssValue("transitionDuration", "var(--time)")).toEqual({
-    type: "layers",
-    value: [{ type: "unparsed", value: "var(--time)" }],
-  });
-  expect(parseCssValue("filter", "var(--filter)")).toEqual({
-    type: "tuple",
-    value: [{ type: "unparsed", value: "var(--filter)" }],
+    value: "red",
   });
 });
 
@@ -569,12 +607,57 @@ test("support custom properties var reference in custom property", () => {
   expect(parseCssValue("--bg", "var(--color)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [],
   });
   expect(parseCssValue("--bg", "var(--color, red)")).toEqual({
     type: "var",
     value: "color",
-    fallbacks: [{ type: "unparsed", value: "red" }],
+    fallback: { type: "unparsed", value: "red" },
+  });
+});
+
+test("parse single var in repeated value without layers or tuples", () => {
+  expect(parseCssValue("backgroundImage", "var(--gradient)")).toEqual({
+    type: "var",
+    value: "gradient",
+  });
+  expect(parseCssValue("filter", "var(--noise)")).toEqual({
+    type: "var",
+    value: "noise",
+  });
+});
+
+test("parse multiple var in repeated value as layers and tuples", () => {
+  expect(
+    parseCssValue("backgroundImage", "var(--gradient-1), var(--gradient-2)")
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "var", value: "gradient-1" },
+      { type: "var", value: "gradient-2" },
+    ],
+  });
+  expect(parseCssValue("filter", "var(--noise-1) var(--noise-2)")).toEqual({
+    type: "tuple",
+    value: [
+      { type: "var", value: "noise-1" },
+      { type: "var", value: "noise-2" },
+    ],
+  });
+});
+
+test("parse var in box-shadow", () => {
+  expect(parseCssValue("boxShadow", "var(--shadow)")).toEqual({
+    type: "var",
+    value: "shadow",
+  });
+  expect(
+    parseCssValue("boxShadow", "var(--shadow-1), var(--shadow-2)")
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "var", value: "shadow-1" },
+      { type: "var", value: "shadow-2" },
+    ],
   });
 });
 

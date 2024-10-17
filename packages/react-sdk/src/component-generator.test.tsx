@@ -1,3 +1,4 @@
+import ts from "typescript";
 import { expect, test } from "@jest/globals";
 import stripIndent from "strip-indent";
 import { createScope, type DataSource } from "@webstudio-is/sdk";
@@ -18,6 +19,52 @@ import {
   generateWebstudioComponent,
 } from "./component-generator";
 
+const isValidJSX = (code: string): boolean => {
+  // Create a "virtual" TypeScript program
+  const compilerHost = ts.createCompilerHost({});
+  const fileName = "virtual.tsx";
+
+  compilerHost.getSourceFile = (filename) => {
+    if (filename === fileName) {
+      return ts.createSourceFile(
+        filename,
+        code,
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TSX
+      );
+    }
+    return undefined;
+  };
+
+  const program = ts.createProgram(
+    [fileName],
+    {
+      jsx: ts.JsxEmit.React,
+      strict: true,
+    },
+    compilerHost
+  );
+
+  const sourceFile = program.getSourceFile(fileName);
+
+  if (!sourceFile) {
+    return false;
+  }
+
+  const diagnostics = [
+    ...program.getSyntacticDiagnostics(sourceFile),
+    // ...program.getSemanticDiagnostics(sourceFile),
+  ];
+
+  return diagnostics.length === 0;
+};
+
+const validateJSX = (code: string) => {
+  expect(isValidJSX(code)).toBeTruthy();
+  return code;
+};
+
 const clear = (input: string) =>
   stripIndent(input).trimStart().replace(/ +$/, "");
 
@@ -35,11 +82,13 @@ test("generate jsx element with children and without them", () => {
       ...renderJsx(<$.Body ws:id="body">Children</$.Body>),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Body>
       {"Children"}
       </Body>
     `)
+    )
   );
   expect(
     generateJsxChildren({
@@ -51,9 +100,11 @@ test("generate jsx element with children and without them", () => {
       ...renderJsx(<$.Image ws:id="image"></$.Image>),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Image />
     `)
+    )
   );
 });
 
@@ -69,9 +120,11 @@ test("generate jsx element with namespaces components", () => {
       ...renderJsx(<library.Body ws:id="body"></library.Body>),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Body />
     `)
+    )
   );
   expect(
     generateJsxChildren({
@@ -83,9 +136,11 @@ test("generate jsx element with namespaces components", () => {
       ...renderJsx(<library.Image ws:id="image"></library.Image>),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Image />
     `)
+    )
   );
 });
 
@@ -100,11 +155,13 @@ test("generate jsx element with literal props", () => {
       ...renderJsx(<$.Body ws:id="body" string="string" number={0}></$.Body>),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Body
       string={"string"}
       number={0} />
     `)
+    )
   );
   expect(
     generateJsxChildren({
@@ -122,11 +179,13 @@ test("generate jsx element with literal props", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Image
       boolean={true}
       stringArray={["value1","value2"]} />
     `)
+    )
   );
 });
 
@@ -147,9 +206,11 @@ test("ignore asset and page props", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Box />
     `)
+    )
   );
 });
 
@@ -180,7 +241,8 @@ test("generate jsx element with data sources and action", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Box
       variable={variableName}
       expression={variableName + 1}
@@ -189,6 +251,7 @@ test("generate jsx element with data sources and action", () => {
       set$variableName(variableName)
       }} />
     `)
+    )
   );
 });
 
@@ -203,9 +266,11 @@ test("generate jsx element with condition based on show prop", () => {
       ...renderJsx(<$.Box ws:id="box" data-ws-show={true}></$.Box>),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Box />
     `)
+    )
   );
   expect(
     generateJsxChildren({
@@ -239,11 +304,13 @@ test("generate jsx element with condition based on show prop", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       {(conditionName) &&
       <Box />
       }
     `)
+    )
   );
 });
 
@@ -258,10 +325,12 @@ test("generate jsx element with index prop", () => {
       ...renderJsx(<$.Box ws:id="box"></$.Box>),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       <Box
       data-ws-index="5" />
     `)
+    )
   );
 });
 
@@ -280,12 +349,14 @@ test("generate jsx children with text", () => {
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       {"Some"}
       <br />
       {"text"}
       {"Escaped \\"text\\""}
     `)
+    )
   );
 });
 
@@ -305,9 +376,11 @@ test("exclude text placeholders", () => {
       excludePlaceholders: true,
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       {"Text"}
     `)
+    )
   );
 });
 
@@ -333,9 +406,11 @@ test("generate jsx children with expression", () => {
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       {'Hello ' + myvar}
     `)
+    )
   );
 });
 
@@ -355,13 +430,15 @@ test("generate jsx children with nested instances", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
     <Form
     prop={"value"}>
     <Input />
     <Button />
     </Form>
     `)
+    )
   );
 });
 
@@ -429,7 +506,8 @@ test("generate collection component as map", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
     {data?.map((element: any, index: number) =>
     <Fragment key={index}>
     <Label />
@@ -438,6 +516,7 @@ test("generate collection component as map", () => {
     </Fragment>
     )}
     `)
+    )
   );
 });
 
@@ -470,7 +549,8 @@ test("generate component with variables and actions", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
       const Page = () => {
       let [variableName, set$variableName] = useVariableState<any>("initial")
       return <Body>
@@ -483,6 +563,31 @@ test("generate component with variables and actions", () => {
       </Body>
       }
     `)
+    )
+  );
+});
+
+test("merge classes if no className", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map([["body", ["cls1"]]]),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(<$.Body ws:id="body"></$.Body>),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body
+        className={"cls1"} />
+        }
+    `)
+    )
   );
 });
 
@@ -499,12 +604,77 @@ test("add classes and merge classes", () => {
       ...renderJsx(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
     })
   ).toEqual(
-    clear(`
-    const Page = () => {
-    return <Body
-    className="cls1 cls2 \\"cls3\\"" />
-    }
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body
+        className={"cls1" + " " + "cls2 \\"cls3\\""} />
+        }
     `)
+    )
+  );
+});
+
+test("add classes", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body
+        className={"cls2 \\"cls3\\""} />
+        }
+    `)
+    )
+  );
+});
+
+test("add bind classes and merge classes", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map([["body", ["cls1"]]]),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: toMap([
+        {
+          type: "variable",
+          id: "variableId",
+          name: "variableName",
+          value: { type: "string", value: "cls3" },
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body
+          ws:id="body"
+          className={
+            new ExpressionValue(`'cls2' + ' ' + $ws$dataSource$variableId`)
+          }
+        ></$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        let [variableName, set$variableName] = useVariableState<any>("cls3")
+        return <Body
+        className={"cls1" + " " + 'cls2' + ' ' + variableName} />
+        }
+    `)
+    )
   );
 });
 
@@ -543,7 +713,8 @@ test("avoid generating collection parameter variable as state", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
     const Page = () => {
     let [data, set$data] = useVariableState<any>(["apple","orange","mango"])
     return <Body>
@@ -554,6 +725,7 @@ test("avoid generating collection parameter variable as state", () => {
     </Body>
     }
     `)
+    )
   );
 });
 
@@ -590,12 +762,14 @@ test("generate system variable when present", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
     const Page = ({ system: system_1, }: { system: any; }) => {
     return <Body
     data-slug={system_1?.params?.slug} />
     }
     `)
+    )
   );
 });
 
@@ -635,7 +809,8 @@ test("generate resources loading", () => {
       ),
     })
   ).toEqual(
-    clear(`
+    validateJSX(
+      clear(`
     const Page = () => {
     let [data, set$data] = useVariableState<any>("data")
     let data_1 = useResource("data_2")
@@ -644,6 +819,7 @@ test("generate resources loading", () => {
     data-resource={data_1} />
     }
     `)
+    )
   );
 });
 
@@ -788,6 +964,42 @@ return <Body>
 `);
 });
 
+test("generate conditional body", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: toMap<DataSource>([
+        {
+          id: "conditionId",
+          scopeInstanceId: "list",
+          name: "conditionName",
+          type: "variable",
+          value: { type: "boolean", value: false },
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body
+          ws:id="body"
+          data-ws-show={new ExpressionValue("$ws$dataSource$conditionId")}
+        ></$.Body>
+      ),
+    })
+  ).toMatchInlineSnapshot(`
+"const Page = () => {
+let [conditionName, set$conditionName] = useVariableState<any>(false)
+return (conditionName) &&
+<Body />
+
+}
+"
+`);
+});
+
 test("generate resource prop", () => {
   expect(
     generateWebstudioComponent({
@@ -822,4 +1034,102 @@ test("generate resource prop", () => {
     }
     "
   `);
+});
+
+test("skip unsafe properties", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+
+      instances: toMap([
+        { type: "instance", id: "body", component: "Body", children: [] },
+      ]),
+      props: toMap([
+        {
+          id: "unsafeProp",
+          instanceId: "body",
+          name: "",
+          type: "string",
+          value: "unsafe",
+        },
+
+        {
+          id: "unsafeProp-2",
+          instanceId: "body",
+          name: "1-numeric-unsafe",
+          type: "string",
+          value: "unsafe",
+        },
+
+        {
+          id: "unsafeProp-3",
+          instanceId: "body",
+          name: "click.prevent",
+          type: "string",
+          value: "unsafe",
+        },
+      ]),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body />
+        }
+    `)
+    )
+  );
+});
+
+test("variable names can be js identifiers", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: toMap([
+        {
+          type: "variable",
+          id: "variableId",
+          name: "switch",
+          value: { type: "string", value: "initial" },
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <$.Input
+            value={new ExpressionValue("$ws$dataSource$variableId")}
+            onChange={
+              new ActionValue(["value"], `$ws$dataSource$variableId = value`)
+            }
+          />
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      let [switch_, set$switch] = useVariableState<any>("initial")
+      return <Body>
+      <Input
+      value={switch_}
+      onChange={(value: any) => {
+      switch_ = value
+      set$switch(switch_)
+      }} />
+      </Body>
+      }
+    `)
+    )
+  );
 });

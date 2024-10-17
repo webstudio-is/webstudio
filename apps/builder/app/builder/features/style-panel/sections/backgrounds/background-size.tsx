@@ -39,7 +39,7 @@ const toTuple = (
 export const BackgroundSize = ({ index }: { index: number }) => {
   const property = "backgroundSize";
   const styleDecl = useComputedStyleDecl(property);
-  const styleValue = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const styleValue = getRepeatedStyleItem(styleDecl, index);
 
   const { items: defaultItems } = styleConfigByName(property);
 
@@ -59,13 +59,13 @@ export const BackgroundSize = ({ index }: { index: number }) => {
   };
 
   const setValueX: SetValue = (value, options) => {
-    const [x] = value.type === "layers" ? value.value : [];
+    const [x] = value.type === "layers" ? value.value : [value];
     const nextValue = toTuple(x, customSizeValue.value[1]);
     setValue(nextValue, options);
   };
 
   const setValueY: SetValue = (value, options) => {
-    const [y] = value.type === "layers" ? value.value : [];
+    const [y] = value.type === "layers" ? value.value : [value];
     const nextValue = toTuple(customSizeValue.value[0], y);
     setValue(nextValue, options);
   };
@@ -146,7 +146,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           disabled={customSizeDisabled}
           property={property}
           styleSource="default"
-          keywords={customSizeOptions}
+          getOptions={() => customSizeOptions}
           value={customSizeValue.value[0]}
           setValue={setValueX}
           deleteProperty={() => {}}
@@ -156,7 +156,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           disabled={customSizeDisabled}
           property={property}
           styleSource="default"
-          keywords={customSizeOptions}
+          getOptions={() => customSizeOptions}
           value={customSizeValue.value[1]}
           setValue={setValueY}
           deleteProperty={() => {}}

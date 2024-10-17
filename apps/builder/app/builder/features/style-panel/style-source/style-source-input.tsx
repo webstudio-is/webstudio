@@ -12,6 +12,8 @@
  */
 
 import { nanoid } from "nanoid";
+import { useFocusWithin } from "@react-aria/interactions";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Box,
   ComboboxListbox,
@@ -57,7 +59,6 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
-import { useFocusWithin } from "@react-aria/interactions";
 
 type IntermediateItem = {
   id: string;
@@ -85,8 +86,7 @@ const TextFieldContainer = styled("div", {
   minWidth: 0,
   border: `1px solid ${theme.colors.borderMain}`,
   "&:focus-within": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: -1,
+    borderColor: theme.colors.borderFocus,
   },
 });
 
@@ -172,16 +172,12 @@ const TextFieldBase: ForwardRefRenderFunction<
           {...textFieldProps}
           variant="chromeless"
           css={{
-            color: theme.colors.hiContrast,
             fontVariantNumeric: "tabular-nums",
-            fontFamily: theme.fonts.sans,
-            fontSize: theme.deprecatedFontSize[3],
             lineHeight: 1,
             order: 1,
-            border: "none",
             flex: 1,
             "&:focus-within, &:hover": {
-              outline: "none",
+              borderColor: "transparent",
             },
           }}
           size="1"
@@ -252,6 +248,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
+  onPasteStyles?: (item: ItemSelector) => void;
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
   onConvertToToken?: (id: Item["id"]) => void;
@@ -325,6 +322,7 @@ const renderMenuItems = (props: {
   onEnable?: (itemId: IntermediateItem["id"]) => void;
   onRemove?: (itemId: IntermediateItem["id"]) => void;
   onDelete?: (itemId: IntermediateItem["id"]) => void;
+  onPasteStyles?: (item: ItemSelector) => void;
   onClearStyles?: (itemId: IntermediateItem["id"]) => void;
 }) => {
   return (
@@ -345,6 +343,20 @@ const renderMenuItems = (props: {
           onSelect={() => props.onConvertToToken?.(props.item.id)}
         >
           Convert to token
+        </DropdownMenuItem>
+      )}
+      {isFeatureEnabled("pasteStyles") && (
+        <DropdownMenuItem
+          onSelect={() => {
+            if (props.selectedItemSelector?.styleSourceId === props.item.id) {
+              // allow paste into state when selected
+              props.onPasteStyles?.(props.selectedItemSelector);
+            } else {
+              props.onPasteStyles?.({ styleSourceId: props.item.id });
+            }
+          }}
+        >
+          Paste styles
         </DropdownMenuItem>
       )}
       {props.item.source === "local" && (
@@ -459,7 +471,7 @@ export const StyleSourceInput = (
     getItemProps,
     isOpen,
   } = useCombobox<IntermediateItem>({
-    items: markAddedValues(props.items ?? [], value),
+    getItems: () => markAddedValues(props.items ?? [], value),
     value: {
       label,
       disabled: false,
@@ -528,6 +540,7 @@ export const StyleSourceInput = (
                 onEdit: props.onEditItem,
                 onRemove: props.onRemoveItem,
                 onDelete: props.onDeleteItem,
+                onPasteStyles: props.onPasteStyles,
                 onClearStyles: props.onClearStyles,
               })
             }

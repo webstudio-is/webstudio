@@ -63,7 +63,7 @@ const Spacer = styled("div", {
 
 const BackgroundRepeat = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("backgroundRepeat");
-  const value = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const value = getRepeatedStyleItem(styleDecl, index);
   const items = [
     {
       child: <CrossSmallIcon />,
@@ -136,7 +136,7 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
 
 const BackgroundAttachment = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("backgroundAttachment");
-  const value = getRepeatedStyleItem(styleDecl.cascadedValue, index);
+  const value = getRepeatedStyleItem(styleDecl, index);
   return (
     <ToggleGroup
       type="single"
@@ -162,9 +162,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const [imageGradientToggle, setImageGradientToggle] = useState<
     "image" | "gradient"
   >(() =>
-    detectImageOrGradientToggle(
-      getRepeatedStyleItem(backgroundImage.cascadedValue, index)
-    )
+    detectImageOrGradientToggle(getRepeatedStyleItem(backgroundImage, index))
   );
 
   return (

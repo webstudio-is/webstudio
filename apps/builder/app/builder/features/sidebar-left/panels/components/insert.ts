@@ -1,4 +1,5 @@
-import { type WsComponentMeta } from "@webstudio-is/react-sdk";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import { toast } from "@webstudio-is/design-system";
 import {
   $instances,
@@ -52,6 +53,10 @@ export const insert = (component: string) => {
   const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
+  if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+    toast.error(`${component} cannot be added into Global Root`);
+    return;
+  }
   const metas = $registeredComponentMetas.get();
   const dropTarget = findClosestDroppableTarget(
     metas,

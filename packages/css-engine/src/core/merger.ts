@@ -14,7 +14,7 @@ const isLonghandValue = (value?: StyleValue): value is StyleValue => {
     return false;
   }
   if (value.type === "var") {
-    const fallback = value.fallbacks.at(0);
+    const fallback = value.fallback;
     if (fallback?.type === "keyword" && cssWideKeywords.has(fallback.value)) {
       return false;
     }

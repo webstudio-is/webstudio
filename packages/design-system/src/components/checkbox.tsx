@@ -23,7 +23,7 @@ const checkboxStyle = css({
   color: theme.colors.foregroundMain,
 
   "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    outline: `1px solid ${theme.colors.borderFocus}`,
   },
 
   "&[data-state=checked], &[data-state=indeterminate]": {

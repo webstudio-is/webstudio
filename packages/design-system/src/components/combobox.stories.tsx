@@ -7,7 +7,6 @@ import type {
 import {
   ComboboxListboxItem,
   useCombobox,
-  comboboxStateChangeTypes,
   ComboboxContent,
   ComboboxRoot,
   ComboboxListbox,
@@ -24,7 +23,7 @@ export const Basic = () => {
     <Combobox<string>
       value={value}
       itemToString={(item) => item ?? ""}
-      items={["Apple", "Banana", "Orange"]}
+      getItems={() => ["Apple", "Banana", "Orange"]}
       onItemSelect={setValue}
       onChange={(value) => {
         setValue(value ?? "");
@@ -38,32 +37,12 @@ export const Complex = () => {
 
   const stateReducer = useCallback(
     (
-      state: UseComboboxState<string>,
+      _state: UseComboboxState<string>,
       actionAndChanges: UseComboboxStateChangeOptions<string>
     ) => {
       const { type, changes } = actionAndChanges;
+
       switch (type) {
-        // on item selection.
-        case comboboxStateChangeTypes.ItemClick:
-        case comboboxStateChangeTypes.InputKeyDownEnter:
-        case comboboxStateChangeTypes.InputBlur:
-        case comboboxStateChangeTypes.ControlledPropUpdatedSelectedItem:
-          return {
-            ...changes,
-            // if we have a selected item.
-            ...(changes.selectedItem && {
-              // we will set the input value to "" (empty string).
-              inputValue: "",
-            }),
-          };
-
-        // Remove "reset" action
-        case comboboxStateChangeTypes.InputKeyDownEscape: {
-          return {
-            ...state,
-          };
-        }
-
         default:
           return changes; // otherwise business as usual.
       }
@@ -79,23 +58,21 @@ export const Complex = () => {
     getInputProps,
     isOpen,
   } = useCombobox<string>({
-    items: ["Apple", "Banana", "Orange"],
+    getItems: () => ["Apple", "Banana", "Orange"],
     value,
     selectedItem: value,
     itemToString: (item) => item ?? "",
     stateReducer,
     onItemSelect: setValue,
     onChange: (value) => {
-      if (value) {
-        setValue(value);
-      }
+      setValue(value ?? "");
     },
   });
 
   return (
     <ComboboxRoot open={isOpen}>
       <Flex {...getComboboxProps()} direction="column" gap="3">
-        <ComboboxAnchor>
+        <ComboboxAnchor asChild>
           <InputField
             prefix={
               <Flex align="center">
@@ -110,8 +87,8 @@ export const Complex = () => {
             {items.map((item, index) => {
               return (
                 <ComboboxListboxItem
-                  key={index}
                   {...getItemProps({ item, index })}
+                  key={index}
                 >
                   {item}
                 </ComboboxListboxItem>

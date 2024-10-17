@@ -165,13 +165,13 @@ const EmptyVariables = () => {
     <Flex direction="column" css={{ gap: theme.spacing[5] }}>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
         <Text variant="labelsSentenceCase" align="center">
-          No variables created
+          No data variables created
           <br /> on this instance
         </Text>
       </Flex>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
         <VariablePopoverTrigger>
-          <Button prefix={<PlusIcon />}>Create variable</Button>
+          <Button prefix={<PlusIcon />}>Create data variable</Button>
         </VariablePopoverTrigger>
       </Flex>
     </Flex>
@@ -286,7 +286,7 @@ export const VariablesSection = () => {
   return (
     <VariablePopoverProvider value={{ containerRef }}>
       <CollapsibleSectionRoot
-        label="Variables"
+        label="Data Variables"
         fullWidth={true}
         isOpen={isOpen}
         onOpenChange={setIsOpen}
@@ -306,7 +306,7 @@ export const VariablesSection = () => {
               </VariablePopoverTrigger>
             }
           >
-            <SectionTitleLabel>Variables</SectionTitleLabel>
+            <SectionTitleLabel>Data Variables</SectionTitleLabel>
           </SectionTitle>
         }
       >

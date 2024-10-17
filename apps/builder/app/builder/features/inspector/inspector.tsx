@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
+import { rootComponent } from "@webstudio-is/react-sdk";
 import {
   theme,
   PanelTabs,
@@ -101,10 +102,17 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const meta = metas.get(selectedInstance.component);
   const documentType = selectedPage?.meta.documentType ?? "html";
 
-  const availablePanels = {
-    style: documentType === "html" && (meta?.stylable ?? true),
-    settings: true,
-  };
+  type PanelName = "style" | "settings";
+
+  const availablePanels = new Set<PanelName>();
+  if (documentType === "html" && (meta?.stylable ?? true)) {
+    availablePanels.add("style");
+  }
+  // @todo hide root component settings until
+  // global data sources are implemented
+  if (selectedInstance.component !== rootComponent) {
+    availablePanels.add("settings");
+  }
 
   return (
     <EnhancedTooltipProvider
@@ -117,18 +125,18 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
           <PanelTabs
             ref={tabsRef}
             value={
-              availablePanels[activeInspectorPanel]
+              availablePanels.has(activeInspectorPanel)
                 ? activeInspectorPanel
-                : "settings"
+                : Array.from(availablePanels)[0]
             }
             onValueChange={(panel) => {
-              $activeInspectorPanel.set(panel as keyof typeof availablePanels);
+              $activeInspectorPanel.set(panel as PanelName);
             }}
             asChild
           >
             <Flex direction="column">
               <PanelTabsList>
-                {availablePanels.style && (
+                {availablePanels.has("style") && (
                   <Tooltip
                     variant="wrapped"
                     content={
@@ -143,22 +151,24 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                     </div>
                   </Tooltip>
                 )}
-                <Tooltip
-                  variant="wrapped"
-                  content={
-                    <Text>
-                      Settings, properties and attributes of the selected
-                      instance&nbsp;&nbsp;
-                      <Kbd value={["D"]} color="moreSubtle" />
-                    </Text>
-                  }
-                >
-                  <div>
-                    <PanelTabsTrigger value="settings">
-                      Settings
-                    </PanelTabsTrigger>
-                  </div>
-                </Tooltip>
+                {availablePanels.has("settings") && (
+                  <Tooltip
+                    variant="wrapped"
+                    content={
+                      <Text>
+                        Settings, properties and attributes of the selected
+                        instance&nbsp;&nbsp;
+                        <Kbd value={["D"]} color="moreSubtle" />
+                      </Text>
+                    }
+                  >
+                    <div>
+                      <PanelTabsTrigger value="settings">
+                        Settings
+                      </PanelTabsTrigger>
+                    </div>
+                  </Tooltip>
+                )}
               </PanelTabsList>
               <Separator />
               <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>

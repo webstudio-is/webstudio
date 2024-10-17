@@ -17,10 +17,6 @@ import { css, theme, type CSS } from "../stitches.config";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { mergeRefs } from "@react-aria/utils";
 import { useFocusWithin } from "@react-aria/interactions";
-import {
-  type InputProps as InputWithFieldSizingProps,
-  Input as InputWithFieldSizing,
-} from "react-field-sizing-content";
 
 // we only support types that behave more or less like a regular text input
 export const inputFieldTypes = [
@@ -66,6 +62,14 @@ const inputStyle = css({
       regular: textVariants.regular,
       mono: textVariants.mono,
     },
+    fieldSizing: {
+      content: {
+        fieldSizing: "content",
+      },
+      fixed: {
+        fieldSizing: "fixed",
+      },
+    },
   },
   defaultVariants: {
     text: "regular",
@@ -81,15 +85,14 @@ const containerStyle = css({
   border: `solid 1px ${theme.colors.borderMain}`,
   backgroundColor: theme.colors.backgroundControls,
   "&:focus-within": {
-    outline: `solid 2px ${theme.colors.borderFocus}`,
-    outlineOffset: "-1px",
+    border: `solid 1px ${theme.colors.borderFocus}`,
   },
 
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
   "&:focus-within:has([data-color=error])": {
-    outlineColor: theme.colors.borderDestructiveMain,
+    borderColor: theme.colors.borderDestructiveMain,
   },
 
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
@@ -98,7 +101,7 @@ const containerStyle = css({
   variants: {
     variant: {
       chromeless: {
-        "&:not(:hover)": {
+        "&:not(:hover, :focus-within)": {
           borderColor: "transparent",
           backgroundColor: "transparent",
         },
@@ -193,42 +196,26 @@ const Container = forwardRef(
 );
 Container.displayName = "Container";
 
-type InputProps = {
-  type?: (typeof inputFieldTypes)[number];
-  color?: (typeof inputFieldColors)[number];
-  css?: CSS;
-  text?: "regular" | "mono";
-} & Omit<InputWithFieldSizingProps, "prefix" | "onFocus" | "onBlur" | "size">;
-
-const Input = forwardRef(
-  (
-    { css, className, color, disabled = false, text, ...props }: InputProps,
-    ref: Ref<HTMLInputElement>
-  ) => {
-    return (
-      <InputWithFieldSizing
-        {...props}
-        spellCheck={false}
-        data-input-field-input // to distinguish from potential other inputs in prefix/suffix
-        data-color={color}
-        disabled={disabled}
-        className={inputStyle({ className, css, text })}
-        ref={ref}
-      />
-    );
-  }
-);
-Input.displayName = "Input";
+type InputProps = Omit<
+  ComponentProps<"input">,
+  "onFocus" | "onBlur" | "prefix" | "size"
+> & {
+  onFocus?: FocusEventHandler;
+  onBlur?: FocusEventHandler;
+};
 
 type InputFieldProps = {
   prefix?: ReactNode;
   suffix?: ReactNode;
   containerRef?: Ref<HTMLDivElement>;
   inputRef?: Ref<HTMLInputElement>;
-  onFocus?: FocusEventHandler;
-  onBlur?: FocusEventHandler;
   variant?: "chromeless";
   size?: "1" | "2" | "3";
+  type?: (typeof inputFieldTypes)[number];
+  color?: (typeof inputFieldColors)[number];
+  css?: CSS;
+  text?: "regular" | "mono";
+  fieldSizing?: "content" | "fixed";
 };
 
 export const InputField = forwardRef(
@@ -244,6 +231,9 @@ export const InputField = forwardRef(
       onBlur,
       variant,
       size,
+      color,
+      text,
+      fieldSizing,
       onKeyDown,
       ...inputProps
     }: InputProps & InputFieldProps,
@@ -283,7 +273,15 @@ export const InputField = forwardRef(
           // When managing focus with ArrowFocus, we don't want to focus this element.
           data-no-arrow-focus
         />
-        <Input {...inputProps} onKeyDown={handleKeyDown} ref={inputRef} />
+        <input
+          {...inputProps}
+          ref={inputRef}
+          spellCheck={false}
+          data-input-field-input // to distinguish from potential other inputs in prefix/suffix
+          data-color={color}
+          className={inputStyle({ className, css, text, fieldSizing })}
+          onKeyDown={handleKeyDown}
+        />
       </Container>
     );
   }

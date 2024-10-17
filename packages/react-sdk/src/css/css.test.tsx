@@ -1,7 +1,7 @@
 import { expect, test } from "@jest/globals";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import { generateCss, type CssConfig } from "./css";
-import { descendantComponent } from "../core-components";
+import { descendantComponent, rootComponent } from "../core-components";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
@@ -53,7 +53,7 @@ test("generate css for one instance with two tokens", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
+"
 @media all {
   .w-box {
     color: red
@@ -61,7 +61,7 @@ test("generate css for one instance with two tokens", () => {
 }"
 `);
   expect(atomicCssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
+"
 @media all {
   .cawkhls {
     color: red
@@ -133,7 +133,7 @@ test("generate descendant selector", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
+"
 @media all {
   .w-body {
     color: blue
@@ -150,7 +150,7 @@ test("generate descendant selector", () => {
 }"
 `);
   expect(atomicCssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
+"
 @media all {
   .c17hlgoh {
     color: blue
@@ -212,8 +212,7 @@ test("generate component presets with multiple tags", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
-@media all {
+"@media all {
   :where(div.w-list-item) {
     display: block
   }
@@ -287,8 +286,7 @@ test("deduplicate component presets for similarly named components", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
-@media all {
+"@media all {
   :where(div.w-list-item) {
     display: block
   }
@@ -374,8 +372,7 @@ test("expose preset classes to instances", () => {
     assetBaseUrl: "",
   });
   expect(atomicCssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
-@media all {
+"@media all {
   :where(div.w-body) {
     display: block
   }
@@ -488,8 +485,7 @@ test("generate classes with instance and meta label", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}
-@media all {
+"@media all {
   :where(div.w-body-meta-label) {
     display: block
   }
@@ -518,4 +514,86 @@ Map {
   ],
 }
 `);
+});
+
+test("generate :root preset and user styles", () => {
+  const { cssText, atomicCssText, classes, atomicClasses } = generateAllCss({
+    assets: new Map(),
+    ...renderJsx(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
+    ),
+    breakpoints: toMap([{ id: "base", label: "" }]),
+    styleSourceSelections: new Map([
+      [":root", { instanceId: ":root", values: ["local"] }],
+    ]),
+    styles: new Map([
+      [
+        "local:base:color",
+        {
+          styleSourceId: "local",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "blue" },
+        },
+      ],
+      [
+        "local:base:fontSize",
+        {
+          styleSourceId: "local",
+          breakpointId: "base",
+          property: "fontSize",
+          value: { type: "keyword", value: "medium" },
+        },
+      ],
+    ]),
+    componentMetas: new Map([
+      [
+        rootComponent,
+        {
+          type: "container",
+          icon: "",
+          label: "Global Root",
+          presetStyle: {
+            html: [
+              {
+                property: "display",
+                value: { type: "keyword", value: "grid" },
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+    assetBaseUrl: "",
+  });
+  expect(cssText).toMatchInlineSnapshot(`
+"@media all {
+  :root {
+    display: grid
+  }
+}
+@media all {
+  :root {
+    color: blue;
+    font-size: medium
+  }
+}"
+`);
+  expect(classes).toEqual(new Map());
+  expect(atomicCssText).toMatchInlineSnapshot(`
+"@media all {
+  :root {
+    display: grid
+  }
+}
+@media all {
+  :root {
+    color: blue;
+    font-size: medium
+  }
+}"
+`);
+  expect(atomicClasses).toEqual(new Map());
 });

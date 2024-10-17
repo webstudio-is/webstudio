@@ -6,7 +6,7 @@ import {
 } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
-import { useComputedStyleDecl } from "../../shared/model";
+import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
 
 export const TextControl = ({ property }: { property: StyleProperty }) => {
   const computedStyleDecl = useComputedStyleDecl(property);
@@ -15,14 +15,19 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
-  const items = styleConfigByName(property).items;
   return (
     <CssValueInput
       styleSource={computedStyleDecl.source.name}
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      keywords={items.map((item) => ({ type: "keyword", value: item.name }))}
+      getOptions={() => [
+        ...styleConfigByName(property).items.map((item) => ({
+          type: "keyword" as const,
+          value: item.name,
+        })),
+        ...$availableVariables.get(),
+      ]}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         if (styleValue === undefined) {

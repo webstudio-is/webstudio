@@ -1,9 +1,9 @@
 import { json } from "@remix-run/server-runtime";
-import { prisma } from "@webstudio-is/prisma-client";
 import { parsePages } from "@webstudio-is/project-build/index.server";
 import { getStaticSiteMapXml } from "@webstudio-is/sdk";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { isBuilder } from "../router-utils";
+import { createContext } from "../context.server";
 
 /**
  * This should be a route in SvelteKit, as it can be fetched server-side without an actual HTTP request.
@@ -22,25 +22,24 @@ export const loader = async ({ request }: { request: Request }) => {
     throw new Error("projectId is required");
   }
 
-  // get pages from the database
-  const build = await prisma.build.findFirst({
-    where: {
-      projectId,
-      deployment: null,
-    },
-    select: {
-      pages: true,
-      updatedAt: true,
-    },
-  });
+  const context = await createContext(request);
 
-  if (build === null) {
-    throw json({ message: "Build not found" }, { status: 404 });
+  const buildResult = await context.postgrest.client
+    .from("Build")
+    .select("pages, updatedAt")
+    .eq("projectId", projectId)
+    .is("deployment", null)
+    .single();
+
+  if (buildResult.error) {
+    throw json({ message: buildResult.error.message }, { status: 404 });
   }
+
+  const build = buildResult.data;
 
   const pages = parsePages(build.pages);
 
-  const siteMap = getStaticSiteMapXml(pages, build.updatedAt.toISOString());
+  const siteMap = getStaticSiteMapXml(pages, build.updatedAt);
 
   return json(siteMap);
 };

@@ -24,6 +24,7 @@ import {
   encodeDataSourceVariable,
   transpileExpression,
   getExpressionIdentifiers,
+  ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
@@ -376,6 +377,9 @@ export const findClosestDroppableTarget = (
   instanceSelector: InstanceSelector,
   insertConstraints: InsertConstraints
 ): undefined | DroppableTarget => {
+  if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+    return;
+  }
   // We want to always allow dropping into the root.
   // For example when body has text content and the only viable option is to insert at the end.
   if (instanceSelector.length === 1) {
@@ -748,8 +752,8 @@ const traverseStyleValue = (
     return;
   }
   if (value.type === "var") {
-    for (const item of value.fallbacks) {
-      traverseStyleValue(item, callback);
+    if (value.fallback) {
+      traverseStyleValue(value.fallback, callback);
     }
     return;
   }
@@ -1322,6 +1326,8 @@ export const insertWebstudioFragmentCopy = ({
   for (const instanceId of fragmentInstanceIds) {
     newInstanceIds.set(instanceId, nanoid());
   }
+  fragmentInstanceIds.add(ROOT_INSTANCE_ID);
+  newInstanceIds.set(ROOT_INSTANCE_ID, ROOT_INSTANCE_ID);
 
   const availableFragmentDataSources = new Set(availableDataSources);
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
@@ -1478,46 +1484,56 @@ export const insertWebstudioFragmentCopy = ({
 
   // insert local styles with new ids
 
-  const instanceStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const styleSourceSelection of fragment.styleSourceSelections) {
-    if (fragmentInstanceIds.has(styleSourceSelection.instanceId) === false) {
-      continue;
-    }
-    for (const styleSourceId of styleSourceSelection.values) {
-      instanceStyleSourceIds.add(styleSourceId);
+  const newLocalStyleSources = new Map();
+  for (const styleSource of fragment.styleSources) {
+    if (styleSource.type === "local") {
+      newLocalStyleSources.set(styleSource.id, styleSource);
     }
   }
+
   const newLocalStyleSourceIds = new Map<
     StyleSource["id"],
     StyleSource["id"]
   >();
-  for (const styleSource of fragment.styleSources) {
-    if (
-      styleSource.type === "local" &&
-      instanceStyleSourceIds.has(styleSource.id)
-    ) {
-      const newId = nanoid();
-      newLocalStyleSourceIds.set(styleSource.id, newId);
-      styleSources.set(newId, { ...styleSource, id: newId });
-    }
-  }
-  for (const styleSourceSelection of fragment.styleSourceSelections) {
-    const { instanceId, values } = styleSourceSelection;
+  for (const { instanceId, values } of fragment.styleSourceSelections) {
     if (fragmentInstanceIds.has(instanceId) === false) {
       continue;
+    }
+
+    const existingStyleSourceIds =
+      styleSourceSelections.get(instanceId)?.values ?? [];
+    let existingLocalStyleSource;
+    for (const styleSourceId of existingStyleSourceIds) {
+      const styleSource = styleSources.get(styleSourceId);
+      if (styleSource?.type === "local") {
+        existingLocalStyleSource = styleSource;
+      }
+    }
+    const newStyleSourceIds = [];
+    for (let styleSourceId of values) {
+      const newLocalStyleSource = newLocalStyleSources.get(styleSourceId);
+      if (newLocalStyleSource) {
+        // merge only :root styles and duplicate others
+        if (instanceId === ROOT_INSTANCE_ID && existingLocalStyleSource) {
+          // write local styles into existing local style source
+          styleSourceId = existingLocalStyleSource.id;
+        } else {
+          // create new local styles
+          const newId = nanoid();
+          styleSources.set(newId, { ...newLocalStyleSource, id: newId });
+          styleSourceId = newId;
+        }
+        newLocalStyleSourceIds.set(newLocalStyleSource.id, styleSourceId);
+      }
+      newStyleSourceIds.push(styleSourceId);
     }
     const newInstanceId = newInstanceIds.get(instanceId) ?? instanceId;
     styleSourceSelections.set(newInstanceId, {
       instanceId: newInstanceId,
-      values: values.map(
-        (styleSourceId) =>
-          newLocalStyleSourceIds.get(styleSourceId) ?? styleSourceId
-      ),
+      values: newStyleSourceIds,
     });
-    for (const styleSourceId of styleSourceSelection.values) {
-      instanceStyleSourceIds.add(styleSourceId);
-    }
   }
+
   for (const styleDecl of fragment.styles) {
     const { breakpointId, styleSourceId } = styleDecl;
     if (newLocalStyleSourceIds.has(styleDecl.styleSourceId)) {

@@ -37,10 +37,10 @@ export const IconButton = styled("button", {
   height: theme.spacing[12],
   borderRadius: theme.borderRadius[3],
   minWidth: 0,
+  outline: "none",
 
   "&[data-focused=true], &:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: -2,
+    borderColor: theme.colors.borderFocus,
   },
 
   "&:disabled, &[aria-disabled=true]": {
@@ -64,6 +64,9 @@ export const IconButton = styled("button", {
           borderColor: theme.colors.borderMain,
 
           "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
+        },
+        "&[data-focused=true], &:focus-visible": {
+          borderColor: theme.colors.borderFocus,
         },
         ...disabledVariantStyles,
       },

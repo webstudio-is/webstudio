@@ -1,72 +1,69 @@
+import type { Database } from "@webstudio-is/postrest/index.server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { GitHubProfile } from "remix-auth-github";
 import type { GoogleProfile } from "remix-auth-google";
-import { prisma } from "@webstudio-is/prisma-client";
-import { z } from "zod";
 
-const User = z.object({
-  id: z.string(),
-  email: z.string().nullable(),
-  image: z.string().nullable(),
-  username: z.string().nullable(),
-  createdAt: z.date().transform((date) => date.toISOString()),
-  teamId: z.string().nullable(),
-});
+export type User = Database["public"]["Tables"]["User"]["Row"];
 
-export type User = z.infer<typeof User>;
+export const getUserById = async (context: AppContext, id: User["id"]) => {
+  const dbUser = await context.postgrest.client
+    .from("User")
+    .select()
+    .eq("id", id)
+    .single();
 
-export const getUserById = async (id: User["id"]) => {
-  const dbUser = await prisma.user.findUnique({
-    where: { id },
-  });
-  return User.parse(dbUser);
-};
-
-const genericCreateAccount = async (userData: {
-  email: string;
-  username: string;
-  image: string;
-  provider: string;
-}): Promise<User> => {
-  const dbUser = await prisma.user.findUnique({
-    where: {
-      email: userData.email,
-    },
-  });
-
-  if (dbUser) {
-    const user = User.parse(dbUser);
-
-    if (user.teamId) {
-      return user;
-    }
-    await prisma.team.create({
-      data: {
-        users: {
-          connect: {
-            id: user.id,
-          },
-        },
-      },
-    });
-
-    return user;
+  if (dbUser.error) {
+    console.error(dbUser.error);
+    throw new Error("User not found");
   }
 
-  const newTeam = await prisma.team.create({
-    data: {
-      users: {
-        create: userData,
-      },
-    },
-    include: {
-      users: true,
-    },
-  });
+  return dbUser.data;
+};
 
-  return User.parse(newTeam.users[0]);
+const genericCreateAccount = async (
+  context: AppContext,
+  userData: {
+    email: string;
+    username: string;
+    image: string;
+    provider: string;
+  }
+): Promise<User> => {
+  const dbUser = await context.postgrest.client
+    .from("User")
+    .select()
+    .eq("email", userData.email)
+    .single();
+
+  if (dbUser.error == null) {
+    return dbUser.data;
+  }
+
+  // https://github.com/PostgREST/postgrest/blob/bfbd033c6e9f38cfbc8b1cfe19ee009a9379e3dd/docs/references/errors.rst#L234
+  if (dbUser.error.code !== "PGRST116") {
+    console.error(dbUser.error);
+    throw new Error("User not found");
+  }
+
+  const newUser = await context.postgrest.client
+    .from("User")
+    .insert({
+      id: crypto.randomUUID(),
+      ...userData,
+    })
+    .select()
+    .single();
+
+  if (newUser.error) {
+    console.error(newUser.error);
+    throw new Error("Failed to create user");
+  }
+
+  return newUser.data;
 };
 
 export const createOrLoginWithOAuth = async (
+  context: AppContext,
   profile: GoogleProfile | GitHubProfile
 ): Promise<User> => {
   const userData = {
@@ -75,11 +72,14 @@ export const createOrLoginWithOAuth = async (
     image: (profile.photos ?? [])[0]?.value,
     provider: profile.provider,
   };
-  const newUser = await genericCreateAccount(userData);
+  const newUser = await genericCreateAccount(context, userData);
   return newUser;
 };
 
-export const createOrLoginWithDev = async (email: string): Promise<User> => {
+export const createOrLoginWithDev = async (
+  context: AppContext,
+  email: string
+): Promise<User> => {
   const userData = {
     email,
     username: "admin",
@@ -87,6 +87,6 @@ export const createOrLoginWithDev = async (email: string): Promise<User> => {
     provider: "dev",
   };
 
-  const newUser = await genericCreateAccount(userData);
+  const newUser = await genericCreateAccount(context, userData);
   return newUser;
 };

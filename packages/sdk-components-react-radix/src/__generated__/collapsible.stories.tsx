@@ -11,15 +11,15 @@ import {
 
 const Component = () => {
   return (
-    <Box className="w-box">
-      <Collapsible className="w-collapsible">
+    <Box className={"w-box"}>
+      <Collapsible className={"w-collapsible"}>
         <CollapsibleTrigger>
-          <Button className="w-button w-button-1">
+          <Button className={"w-button w-button-1"}>
             {"Click to toggle content"}
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="w-collapsible-content">
-          <Text className="w-text">{"Collapsible Content"}</Text>
+        <CollapsibleContent className={"w-collapsible-content"}>
+          <Text className={"w-text"}>{"Collapsible Content"}</Text>
         </CollapsibleContent>
       </Collapsible>
     </Box>
@@ -36,12 +36,8 @@ const Story = {
       <>
         <style>
           {`
-html {margin: 0; display: grid; min-height: 100%}
 @media all {
   :where(body.w-body) {
-    font-family: Arial, Roboto, sans-serif;
-    font-size: 16px;
-    line-height: 1.2;
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

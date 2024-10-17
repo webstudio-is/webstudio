@@ -1,3 +1,8 @@
+import reservedIdentifiers from "reserved-identifiers";
+
+const identifiers = reservedIdentifiers({ includeGlobalProperties: true });
+const isReserved = (identifier: string) => identifiers.has(identifier);
+
 export type Scope = {
   /**
    * Accepts unique id to identify specific variable
@@ -20,6 +25,11 @@ const normalizeJsName = (name: string) => {
   if (/[A-Za-z_$]/.test(name[0]) === false) {
     name = `_${name}`;
   }
+
+  if (isReserved(name)) {
+    return `${name}_`;
+  }
+
   return name;
 };
 

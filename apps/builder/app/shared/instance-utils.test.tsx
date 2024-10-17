@@ -5,6 +5,10 @@ import {
   collectionComponent,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
+import type { Project } from "@webstudio-is/project";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { parseCss } from "@webstudio-is/css-data";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Asset,
@@ -16,10 +20,13 @@ import type {
   Resource,
   StyleDecl,
   StyleDeclKey,
+  Styles,
   StyleSource,
+  StyleSources,
+  StyleSourceSelections,
   WebstudioData,
 } from "@webstudio-is/sdk";
-import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   computeInstancesConstraints,
@@ -50,8 +57,7 @@ import {
   $resources,
 } from "./nano-states";
 import { registerContainers } from "./sync";
-import type { Project } from "@webstudio-is/project";
-import { createDefaultPages } from "@webstudio-is/project-build";
+import { mapGroupBy } from "./shim";
 
 enableMapSet();
 registerContainers();
@@ -544,6 +550,44 @@ describe("find closest droppable target", () => {
       parentSelector: ["body"],
       position: 2,
     });
+  });
+
+  test("finds closest container that doesn't have an expression as a child", () => {
+    const instances = new Map([
+      createInstancePair("body", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "paragraph" },
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("paragraph", "Paragraph", [
+        { type: "expression", value: '"bla"' },
+      ]),
+      createInstancePair("box1", "Box1", []),
+      createInstancePair("box2", "Box2", []),
+    ]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["paragraph", "body"],
+        emptyInsertConstraints
+      )
+    ).toEqual({
+      parentSelector: ["body"],
+      position: 2,
+    });
+  });
+
+  test("forbids inserting into :root", () => {
+    const instances = new Map([createInstancePair("body", "Body", [])]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        [":root"],
+        emptyInsertConstraints
+      )
+    ).toEqual(undefined);
   });
 });
 
@@ -3127,6 +3171,136 @@ describe("insert webstudio fragment copy", () => {
       availableDataSources: new Set(),
     });
     expect(data.instances.size).toEqual(4);
-    expect(newInstanceIds.size).toEqual(4);
+    expect(newInstanceIds.size).toEqual(5);
+  });
+});
+
+describe("copy paste", () => {
+  const css = (strings: TemplateStringsArray, ...values: string[]) => {
+    let cssString = "";
+    strings.forEach((string, index) => {
+      cssString += string + (values[index] ?? "");
+    });
+    const styleSourceSelections: StyleSourceSelections = new Map();
+    const styleSources: StyleSources = new Map();
+    const styles: Styles = new Map();
+    const parsed = mapGroupBy(
+      parseCss(cssString),
+      (parsedStyleDecl) => parsedStyleDecl.selector
+    );
+    for (const [selector, parsedStyles] of parsed) {
+      const [instanceId, styleSourceId] = selector.split("__");
+      styleSourceSelections.set(instanceId, {
+        instanceId: instanceId,
+        values: [styleSourceId],
+      });
+      styleSources.set(styleSourceId, { id: styleSourceId, type: "local" });
+      for (const { property, value } of parsedStyles) {
+        const styleDecl: StyleDecl = {
+          breakpointId: "baseId",
+          styleSourceId,
+          property,
+          value,
+        };
+        styles.set(getStyleDeclKey(styleDecl), styleDecl);
+      }
+    }
+    return { styleSourceSelections, styleSources, styles };
+  };
+
+  test("should add :root local styles", () => {
+    const oldProject = getWebstudioDataStub({
+      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
+      ...css`
+        :root__oldprojectlocalid {
+          color: red;
+        }
+      `,
+    });
+    const newProject = getWebstudioDataStub();
+    const fragment = extractWebstudioFragment(oldProject, ":root");
+    insertWebstudioFragmentCopy({
+      data: newProject,
+      fragment,
+      availableDataSources: new Set(),
+    });
+    const [newStyleSourceId] = newProject.styleSources.keys();
+    expect(newProject).toEqual(
+      expect.objectContaining(css`
+        :root__${newStyleSourceId} {
+          color: red;
+        }
+      `)
+    );
+  });
+
+  test("should merge :root local styles", () => {
+    const oldProject = getWebstudioDataStub({
+      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
+      ...css`
+        :root__oldprojectlocalid {
+          color: red;
+        }
+      `,
+    });
+    const newProject = getWebstudioDataStub({
+      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
+      ...css`
+        :root__newprojectlocalid {
+          font-size: medium;
+        }
+      `,
+    });
+    const fragment = extractWebstudioFragment(oldProject, ":root");
+    insertWebstudioFragmentCopy({
+      data: newProject,
+      fragment,
+      availableDataSources: new Set(),
+    });
+    expect({
+      styleSourceSelections: newProject.styleSourceSelections,
+      styleSources: newProject.styleSources,
+      styles: newProject.styles,
+    }).toEqual(css`
+      :root__newprojectlocalid {
+        font-size: medium;
+        color: red;
+      }
+    `);
+  });
+
+  test("should copy local styles of duplicated instance", () => {
+    const project = getWebstudioDataStub({
+      ...renderJsx(
+        <$.Body ws:id="bodyId">
+          <$.Box ws:id="boxId"></$.Box>
+        </$.Body>
+      ),
+      ...css`
+        boxId__boxlocalid {
+          color: red;
+        }
+      `,
+    });
+    const fragment = extractWebstudioFragment(project, "boxId");
+    insertWebstudioFragmentCopy({
+      data: project,
+      fragment,
+      availableDataSources: new Set(),
+    });
+    const [_bodyId, _boxId, newBoxId] = project.instances.keys();
+    const [_boxLocalId, newBoxLocalId] = project.styleSources.keys();
+    expect({
+      styleSourceSelections: project.styleSourceSelections,
+      styleSources: project.styleSources,
+      styles: project.styles,
+    }).toEqual(css`
+      boxId__boxlocalid {
+        color: red;
+      }
+      ${newBoxId}__${newBoxLocalId} {
+        color: red;
+      }
+    `);
   });
 });

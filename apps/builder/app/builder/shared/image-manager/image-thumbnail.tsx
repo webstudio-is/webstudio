@@ -56,7 +56,7 @@ const ThumbnailContainer = styled(Box, {
     },
     state: {
       selected: {
-        boxShadow: `0px 0px 0px 2px ${theme.colors.blue10}, 0px 0px 0px 2px ${theme.colors.blue10}`,
+        outline: `1px solid ${theme.colors.borderFocus}`,
       },
     },
   },

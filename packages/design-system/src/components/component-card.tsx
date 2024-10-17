@@ -20,6 +20,7 @@ const cardStyle = css({
   border: `1px solid`,
   borderColor: theme.colors.borderMain,
   borderRadius: theme.borderRadius[2],
+  outline: "none",
   userSelect: "none",
   color: theme.colors.foregroundIconMain,
   cursor: "grab",
@@ -32,8 +33,7 @@ const cardStyle = css({
     color: theme.colors.foregroundDisabled,
   },
   "&:focus-visible, &[data-state=selected]": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: "-2px",
+    borderColor: theme.colors.borderFocus,
   },
   "& svg": {
     flexGrow: 0,

@@ -1,4 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { colord } from "colord";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -19,9 +28,10 @@ import {
   properties as propertiesData,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import { useStore } from "@nanostores/react";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
   hyphenateProperty,
+  toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import {
@@ -32,13 +42,22 @@ import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 import {
-  $definedStyles,
+  $availableVariables,
+  $matchingBreakpoints,
+  getDefinedStyles,
   useComputedStyleDecl,
   useComputedStyles,
 } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
 import { sections } from "../sections";
+import { ColorPopover } from "../../shared/color-picker";
+import {
+  $selectedInstanceSelector,
+  $styles,
+  $styleSourceSelections,
+} from "~/shared/nano-states";
+import { useClientSupports } from "~/shared/client-supports";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -132,13 +151,13 @@ const AdvancedSearch = ({
     <Combobox
       autoFocus
       placeholder="Find or create a property"
-      items={availableProperties}
+      getItems={() => availableProperties}
       defaultHighlightedIndex={0}
       value={item}
       itemToString={(item) => item?.label ?? ""}
       getItemProps={() => ({ text: "sentence" })}
       getDescription={(item) => {
-        let description = `Unknown CSS property.`;
+        let description = `Create CSS variable.`;
         if (item && item.value in propertyDescriptions) {
           description =
             propertyDescriptions[
@@ -165,53 +184,39 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
     styleDecl.source.name === "default" ? "code" : styleDecl.source.name;
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
-        triggerProps={{
-          onClick: (event) => {
-            if (event.altKey) {
-              event.preventDefault();
-              deleteProperty(property);
-              return;
-            }
-            setIsOpen(true);
-          },
-        }}
-        content={
-          <PropertyInfo
-            title={label}
-            description={description}
-            styles={[styleDecl]}
-            onReset={() => {
-              deleteProperty(property);
-              setIsOpen(false);
-            }}
-          />
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <Label color={color} text="mono" truncate>
-            {label}
-          </Label>
-        </Flex>
-      </Tooltip>
-    </Flex>
+    <Tooltip
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      // prevent closing tooltip on content click
+      onPointerDown={(event) => event.preventDefault()}
+      triggerProps={{
+        onClick: (event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            deleteProperty(property);
+            return;
+          }
+          setIsOpen(true);
+        },
+      }}
+      content={
+        <PropertyInfo
+          title={property.startsWith("--") ? "CSS Variable" : label}
+          description={description}
+          styles={[styleDecl]}
+          onReset={() => {
+            deleteProperty(property);
+            setIsOpen(false);
+          }}
+        />
+      }
+    >
+      <Label color={color} text="mono">
+        {label}
+      </Label>
+    </Tooltip>
   );
 };
-
-const $customProperties = computed($definedStyles, (definedStyles) => {
-  const customProperties = new Set<StyleProperty>();
-  for (const { property } of definedStyles) {
-    if (property.startsWith("--")) {
-      customProperties.add(property);
-    }
-  }
-  return customProperties;
-});
 
 const AdvancedPropertyValue = ({
   autoFocus,
@@ -221,14 +226,13 @@ const AdvancedPropertyValue = ({
   property: StyleProperty;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
-  const customProperties = useStore($customProperties);
-  const { items } = styleConfigByName(property);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus) {
       inputRef.current?.focus();
     }
   }, [autoFocus]);
+  const isColor = colord(toValue(styleDecl.usedValue)).isValid();
   return (
     <CssValueInputContainer
       inputRef={inputRef}
@@ -236,18 +240,33 @@ const AdvancedPropertyValue = ({
       size="2"
       text="mono"
       fieldSizing="content"
+      prefix={
+        isColor && (
+          <ColorPopover
+            size={1}
+            value={styleDecl.usedValue}
+            onChange={(styleValue) => {
+              const options = { isEphemeral: true, listed: true };
+              if (styleValue) {
+                setProperty(property)(styleValue, options);
+              } else {
+                deleteProperty(property, options);
+              }
+            }}
+            onChangeComplete={(styleValue) => {
+              setProperty(property)(styleValue);
+            }}
+          />
+        )
+      }
       property={property}
       styleSource={styleDecl.source.name}
-      keywords={[
-        ...items.map((item) => ({
+      getOptions={() => [
+        ...styleConfigByName(property).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
-        // very basic custom properties autocomplete
-        ...Array.from(customProperties).map((name) => ({
-          type: "keyword" as const,
-          value: name,
-        })),
+        ...$availableVariables.get(),
       ]}
       value={styleDecl.cascadedValue}
       setValue={(styleValue, options) => {
@@ -256,7 +275,7 @@ const AdvancedPropertyValue = ({
           styleValue.value.startsWith("--")
         ) {
           setProperty(property)(
-            { type: "var", value: styleValue.value.slice(2), fallbacks: [] },
+            { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {
@@ -276,23 +295,121 @@ const initialProperties = new Set<StyleProperty>([
   "opacity",
 ]);
 
-const $advancedProperties = computed($definedStyles, (definedStyles) => {
-  // All properties used by the panels except the advanced panel
-  const baseProperties = new Set<StyleProperty>([]);
-  for (const { properties } of sections.values()) {
-    for (const property of properties) {
-      baseProperties.add(property);
+const $advancedProperties = computed(
+  [
+    $selectedInstanceSelector,
+    $styleSourceSelections,
+    $matchingBreakpoints,
+    $styles,
+  ],
+  (instanceSelector, styleSourceSelections, matchingBreakpoints, styles) => {
+    if (instanceSelector === undefined) {
+      return [];
     }
-  }
-  const advancedProperties = new Set<StyleProperty>(initialProperties);
-  for (const { property, listed } of definedStyles) {
-    // exclude properties from style panel UI unless edited in advanced section
-    if (baseProperties.has(property) === false || listed) {
-      advancedProperties.add(property);
+    const instanceAndRootSelector =
+      instanceSelector[0] === ROOT_INSTANCE_ID
+        ? instanceSelector
+        : // prevent showing properties inherited from root
+          // to not bloat advanced panel
+          instanceSelector;
+    const definedStyles = getDefinedStyles({
+      instanceSelector: instanceAndRootSelector,
+      matchingBreakpoints,
+      styleSourceSelections,
+      styles,
+    });
+    // All properties used by the panels except the advanced panel
+    const baseProperties = new Set<StyleProperty>([]);
+    for (const { properties } of sections.values()) {
+      for (const property of properties) {
+        baseProperties.add(property);
+      }
     }
+    const advancedProperties = new Set<StyleProperty>(initialProperties);
+    for (const { property, listed } of definedStyles) {
+      // exclude properties from style panel UI unless edited in advanced section
+      if (baseProperties.has(property) === false || listed) {
+        advancedProperties.add(property);
+      }
+    }
+    return Array.from(advancedProperties).reverse();
   }
-  return Array.from(advancedProperties).reverse();
-});
+);
+
+/**
+ * The Advanced section in the Style Panel on </> Global Root has performance issues.
+ * To fix this, we skip rendering properties not visible in the viewport using the contentvisibilityautostatechange event,
+ * and the contentVisibility and containIntrinsicSize CSS properties.
+ */
+const AdvancedProperty = memo(
+  ({
+    property,
+    autoFocus,
+  }: {
+    property: StyleProperty;
+    autoFocus: boolean;
+  }) => {
+    const visibilityChangeEventSupported = useClientSupports(
+      () => "oncontentvisibilityautostatechange" in document.body
+    );
+    const ref = useRef<HTMLDivElement>(null);
+    const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
+
+    useEffect(() => {
+      if (!visibilityChangeEventSupported) {
+        return;
+      }
+
+      if (ref.current == null) {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      ref.current.addEventListener(
+        "contentvisibilityautostatechange",
+        (event) => {
+          setIsVisible(!event.skipped);
+        },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      return () => {
+        controller.abort();
+      };
+    }, [visibilityChangeEventSupported]);
+
+    return (
+      <Flex
+        ref={ref}
+        css={{
+          contentVisibility: "auto",
+          // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
+          // containIntrinsicSize is used to set the default size of an element before any content is loaded.
+          // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
+          // It also affects the contentvisibilityautostatechange event to be called properly,
+          // with "auto" it will call it with skipped false for all initial elements.
+          // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
+          containIntrinsicSize: "auto 44px",
+        }}
+        key={property}
+        wrap="wrap"
+        align="center"
+        justify="start"
+      >
+        {isVisible && (
+          <>
+            <AdvancedPropertyLabel property={property} />
+            <Text>:</Text>
+            <AdvancedPropertyValue autoFocus={autoFocus} property={property} />
+          </>
+        )}
+      </Flex>
+    );
+  }
+);
 
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
@@ -320,14 +437,11 @@ export const Section = () => {
       )}
       <Box>
         {advancedProperties.map((property) => (
-          <Flex key={property} wrap="wrap" align="center">
-            <AdvancedPropertyLabel property={property} />
-            <Text>:</Text>
-            <AdvancedPropertyValue
-              autoFocus={newlyAddedProperty.current === property}
-              property={property}
-            />
-          </Flex>
+          <AdvancedProperty
+            key={property}
+            property={property}
+            autoFocus={newlyAddedProperty.current === property}
+          />
         ))}
       </Box>
     </AdvancedStyleSection>

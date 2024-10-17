@@ -20,13 +20,6 @@ export const parseIntermediateOrInvalidValue = (
     value = value.slice(0, -1);
   }
 
-  if (property.startsWith("--")) {
-    return {
-      type: "unparsed",
-      value,
-    };
-  }
-
   // When user enters a number, we don't know if its a valid unit value,
   // so we are going to parse it with a unit and if its not invalid - we take it.
   const ast = parse(value, { context: "value" });
@@ -34,8 +27,15 @@ export const parseIntermediateOrInvalidValue = (
     "children" in ast && ast.children?.size === 1
       ? ast.children.first
       : undefined;
+
   if (node?.type === "Number") {
-    const testUnit = "unit" in styleValue ? (styleValue.unit ?? "px") : "px";
+    const unit = "unit" in styleValue ? styleValue.unit : undefined;
+
+    // Use number as a fallback for custom properties
+    const fallbackUnitAsString = property.startsWith("--") ? "" : "px";
+
+    const testUnit = unit === "number" ? "" : (unit ?? fallbackUnitAsString);
+
     const styleInput = parseCssValue(property, `${value}${testUnit}`);
 
     if (styleInput.type !== "invalid") {
@@ -51,6 +51,13 @@ export const parseIntermediateOrInvalidValue = (
   }
 
   if ("unit" in styleValue && styleValue.unit === "number") {
+    // when unit is number some properties supports only integer
+    // for example z-index
+    styleInput = parseCssValue(property, `${Math.round(Number(value))}`);
+    if (styleInput.type !== "invalid") {
+      return styleInput;
+    }
+
     // Most css props supports 0 as unitless value, but not other numbers.
     // Its possible that we had { value: 0, unit: "number" } and value has changed
     // Lets try to parse it as px value

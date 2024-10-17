@@ -36,8 +36,8 @@ const containerStyle = css({
   padding: theme.spacing[4],
   width: "fit-content",
   borderRadius: theme.borderRadius[4],
-  outline: `1px solid ${theme.colors.borderMain}`,
-  outlineOffset: "-1px",
+  border: `1px solid ${theme.colors.borderMain}`,
+  outline: "none",
   gridTemplateColumns: "repeat(3, 1fr)",
   gridTemplateAreas: `
     "x x x"
@@ -45,14 +45,16 @@ const containerStyle = css({
     "x x x"
   `,
   "&[data-focused=true], &:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    borderColor: theme.colors.borderFocus,
   },
 });
 
 const dotStyle = css({
   padding: theme.spacing[5],
   background: theme.colors.backgroundControls,
+  border: `1px solid transparent`,
   borderRadius: theme.borderRadius[4],
+  outline: "none",
   minWidth: "auto",
   "&::before": {
     content: '""',
@@ -69,8 +71,7 @@ const dotStyle = css({
     },
   },
   "&[data-focused=true]": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: -2,
+    borderColor: theme.colors.borderFocus,
   },
 });
 

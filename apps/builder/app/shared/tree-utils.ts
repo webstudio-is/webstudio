@@ -49,6 +49,21 @@ export type DroppableTarget = {
   position: number | "end";
 };
 
+const getCollectionDropTarget = (
+  instances: Instances,
+  dropTarget: DroppableTarget
+) => {
+  const [parentId, grandparentId] = dropTarget.parentSelector;
+  const parent = instances.get(parentId);
+  const grandparent = instances.get(grandparentId);
+  if (parent === undefined && grandparent?.component === collectionComponent) {
+    return {
+      parentSelector: dropTarget.parentSelector.slice(1),
+      position: dropTarget.position,
+    };
+  }
+};
+
 export const getInstanceOrCreateFragmentIfNecessary = (
   instances: Instances,
   dropTarget: DroppableTarget
@@ -219,6 +234,7 @@ export const getReparentDropTargetMutable = (
     prevParent = grandparentInstance;
   }
 
+  dropTarget = getCollectionDropTarget(instances, dropTarget) ?? dropTarget;
   dropTarget =
     getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
   dropTarget =

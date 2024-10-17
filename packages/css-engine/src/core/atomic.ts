@@ -4,7 +4,8 @@ import { NestingRule } from "./rules";
 import { toValue, type TransformValue } from "./to-value";
 
 type Options = {
-  getKey: (rule: NestingRule) => string;
+  /** in case of undefined the rule will not be split into atomics */
+  getKey: (rule: NestingRule) => string | undefined;
   transformValue?: TransformValue;
   classes?: Map<string, string[]>;
 };
@@ -16,6 +17,10 @@ export const generateAtomic = (sheet: StyleSheet, options: Options) => {
   for (const rule of sheet.nestingRules.values()) {
     const descendantSuffix = rule.getDescendantSuffix();
     const groupKey = getKey(rule);
+    if (groupKey === undefined) {
+      atomicRules.set(rule.getSelector(), rule);
+      continue;
+    }
     // a few rules can be in the same group
     // when rule have descendant suffix
     let classList = classes.get(groupKey);

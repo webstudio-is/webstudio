@@ -12,7 +12,7 @@ import {
   editRepeatedStyleItem,
   RepeatedStyle,
 } from "../../shared/repeated-style";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 import { useComputedStyleDecl } from "../../shared/model";
 import { humanizeString } from "~/shared/string-utils";
 
@@ -44,7 +44,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialFilter, "filter")
+          parseCssFragment(initialFilter, ["filter"])
         );
       }}
     >

@@ -225,50 +225,16 @@ const defaultMatch = <Item,>(
 ) =>
   matchSorter(items, search, {
     keys: [itemToString],
+    baseSort: (left, right) =>
+      left.rankedValue.localeCompare(right.rankedValue, undefined, {
+        numeric: true,
+      }),
   });
-
-const defaultItemToString = <Item,>(item: Item) =>
-  typeof item === "string" ? item : "";
-
-const useFilter = <Item,>({
-  items,
-  itemToString = defaultItemToString,
-  match = defaultMatch,
-}: {
-  items: Array<Item>;
-  itemToString?: (item: Item | null) => string;
-  match?: Match<Item>;
-}) => {
-  const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
-  const cachedItems = useRef(items);
-
-  const filter = useCallback(
-    (search?: string) => {
-      const foundItems = match(search ?? "", items, itemToString);
-      setFilteredItems(foundItems);
-    },
-    [itemToString, items, match]
-  );
-
-  const resetFilter = useCallback(() => {
-    setFilteredItems(cachedItems.current);
-  }, []);
-
-  useEffect(() => {
-    cachedItems.current = items;
-  }, [items]);
-
-  return {
-    filteredItems,
-    filter,
-    resetFilter,
-  };
-};
 
 type ItemToString<Item> = (item: Item | null) => string;
 
-type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
-  items: Array<Item>;
+type UseComboboxProps<Item> = Omit<UseDownshiftComboboxProps<Item>, "items"> & {
+  getItems: () => Array<Item>;
   itemToString: ItemToString<Item>;
   getDescription?: (item: Item | null) => ReactNode;
   getItemProps?: (
@@ -289,8 +255,11 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
 
 export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
 
+const isNumericString = (input: string) =>
+  String(input).trim().length !== 0 && Number.isNaN(Number(input)) === false;
+
 export const useCombobox = <Item,>({
-  items,
+  getItems,
   value,
   selectedItem,
   getItemProps,
@@ -299,50 +268,67 @@ export const useCombobox = <Item,>({
   onItemSelect,
   onItemHighlight,
   stateReducer = (_state, { changes }) => changes,
-  match,
+  match = defaultMatch,
   defaultHighlightedIndex = -1,
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedItemRef = useRef<Item>();
-
-  const { filteredItems, filter, resetFilter } = useFilter<Item>({
-    items,
-    itemToString,
-    match,
-  });
-
-  if (isOpen && filteredItems.length === 0) {
-    setIsOpen(false);
-  }
+  const itemsCache = useRef<Item[]>([]);
+  const [matchedItems, setMatchedItems] = useState<Item[]>([]);
 
   const downshiftProps = useDownshiftCombobox({
     ...rest,
-    items: filteredItems,
+    items: matchedItems,
     defaultHighlightedIndex,
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     isOpen,
 
-    onIsOpenChange({ isOpen, inputValue }) {
-      const foundItems =
-        match !== undefined
-          ? match(inputValue ?? "", items, itemToString)
-          : defaultMatch(inputValue ?? "", items, itemToString);
+    onIsOpenChange(state) {
+      const { type, isOpen, inputValue } = state;
 
-      // Don't set isOpen to true if there are no items to show
-      // because otherwise first ESC press will try to close it and only next ESC
-      // will reset the value. When list is empty, first ESC should reset the value.
-      const nextIsOpen = isOpen === true && foundItems.length !== 0;
+      // Don't open the combobox if the input is a number and the user is using the arrow keys.
+      // This prevents the combobox from opening when the user is trying to increment or decrement a number.
+      if (
+        (type === comboboxStateChangeTypes.InputKeyDownArrowDown ||
+          type === comboboxStateChangeTypes.InputKeyDownArrowUp) &&
+        inputValue !== undefined &&
+        isNumericString(inputValue)
+      ) {
+        return;
+      }
 
-      setIsOpen(nextIsOpen);
+      if (isOpen) {
+        itemsCache.current = getItems();
+        const matchedItems = match(
+          inputValue ?? "",
+          itemsCache.current,
+          itemToString
+        );
+        // Don't set isOpen to true if there are no items to show
+        // because otherwise first ESC press will try to close it and only next ESC
+        // will reset the value. When list is empty, first ESC should reset the value.
+        setMatchedItems(matchedItems);
+        setIsOpen(matchedItems.length > 0);
+      } else {
+        setMatchedItems([]);
+        setIsOpen(false);
+      }
     },
 
     stateReducer,
     itemToString,
-    inputValue: value ? itemToString(value) : undefined,
-    onInputValueChange({ inputValue, type }) {
+    inputValue: value ? itemToString(value) : "",
+    onInputValueChange(state) {
+      const { inputValue, type } = state;
       if (type === comboboxStateChangeTypes.InputChange) {
-        filter(inputValue);
+        const matchedItems = match(
+          inputValue ?? "",
+          itemsCache.current,
+          itemToString
+        );
+        setIsOpen(matchedItems.length > 0);
+        setMatchedItems(matchedItems);
       }
     },
     onSelectedItemChange({ selectedItem, type }) {
@@ -361,16 +347,10 @@ export const useCombobox = <Item,>({
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(filteredItems[highlightedIndex] ?? null);
+        onItemHighlight?.(matchedItems[highlightedIndex] ?? null);
       }
     },
   });
-
-  useEffect(() => {
-    if (isOpen === false) {
-      resetFilter();
-    }
-  }, [isOpen, resetFilter]);
 
   useEffect(() => {
     // Selecting the item when the popover is closed.
@@ -431,19 +411,18 @@ export const useCombobox = <Item,>({
       return {
         ...downshiftGetMenuProps(options, { suppressRefError: true }),
         state: isOpen ? "open" : "closed",
-        empty: filteredItems.length === 0,
+        empty: matchedItems.length === 0,
       };
     },
-    [downshiftGetMenuProps, isOpen, filteredItems.length]
+    [downshiftGetMenuProps, isOpen, matchedItems.length]
   );
 
   return {
     ...downshiftProps,
-    items: filteredItems,
+    items: matchedItems,
     getItemProps: enhancedGetItemProps,
     getMenuProps: enhancedGetMenuProps,
     getInputProps: enhancedGetInputProps,
-    resetFilter,
   };
 };
 

@@ -13,7 +13,7 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
-import { indexAttribute, showAttribute } from "./props";
+import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
 import { collectionComponent, descendantComponent } from "./core-components";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
@@ -133,6 +133,7 @@ const generatePropValue = ({
 };
 
 export const generateJsxElement = ({
+  context = "jsx",
   scope,
   instance,
   props,
@@ -142,6 +143,7 @@ export const generateJsxElement = ({
   children,
   classesMap,
 }: {
+  context?: "expression" | "jsx";
   scope: Scope;
   instance: Instance;
   props: Props;
@@ -168,17 +170,28 @@ export const generateJsxElement = ({
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
 
-  const classes = Array.from(classesMap?.get(instance.id) ?? []);
+  const classMapArray = classesMap?.get(instance.id);
+  const classes =
+    classMapArray !== undefined
+      ? [JSON.stringify(classMapArray.join(" "))]
+      : [];
+
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
     }
+
     const propValue = generatePropValue({
       scope,
       prop,
       dataSources,
       usedDataSources,
     });
+
+    if (isAttributeNameSafe(prop.name) === false) {
+      continue;
+    }
+
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
       // prevent generating unnecessary condition
@@ -203,10 +216,9 @@ export const generateJsxElement = ({
       continue;
     }
     // We need to merge atomic classes with user-defined className prop.
-    if (prop.name === "className") {
-      if (prop.type === "string") {
-        classes.push(prop.value);
-      }
+    if (prop.name === "className" && propValue !== undefined) {
+      classes.push(propValue);
+
       continue;
     }
     if (propValue !== undefined) {
@@ -215,7 +227,7 @@ export const generateJsxElement = ({
   }
 
   if (classes.length !== 0) {
-    generatedProps += `\nclassName=${JSON.stringify(classes.join(" "))}`;
+    generatedProps += `\nclassName={${classes.join(` + " " + `)}}`;
   }
 
   let generatedElement = "";
@@ -250,7 +262,13 @@ export const generateJsxElement = ({
   // {dataSourceVariable && <Instance>}
   if (conditionValue) {
     let conditionalElement = "";
-    conditionalElement += `{(${conditionValue}) &&\n`;
+    let before = "";
+    let after = "";
+    if (context === "jsx") {
+      before = "{";
+      after = "}";
+    }
+    conditionalElement += `${before}(${conditionValue}) &&\n`;
     // wrap collection with fragment when rendered inside condition
     // {dataSourceVariable &&
     //  <>
@@ -264,7 +282,7 @@ export const generateJsxElement = ({
     } else {
       conditionalElement += generatedElement;
     }
-    conditionalElement += `}\n`;
+    conditionalElement += `${after}\n`;
     return conditionalElement;
   }
 
@@ -323,6 +341,7 @@ export const generateJsxChildren = ({
         continue;
       }
       generatedChildren += generateJsxElement({
+        context: "jsx",
         scope,
         instance,
         props,
@@ -377,6 +396,7 @@ export const generateWebstudioComponent = ({
 
   const usedDataSources: DataSources = new Map();
   const generatedJsx = generateJsxElement({
+    context: "expression",
     scope,
     instance,
     props,

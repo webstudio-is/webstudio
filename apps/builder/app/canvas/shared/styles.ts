@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Instance,
+  ROOT_INSTANCE_ID,
   getStyleDeclKey,
   type StyleDecl,
   type StyleSourceSelection,
@@ -14,11 +15,12 @@ import {
   createImageValueTransformer,
   descendantComponent,
   type Params,
+  rootComponent,
 } from "@webstudio-is/react-sdk";
 import {
+  type TransformValue,
   type VarValue,
   createRegularStyleSheet,
-  isValidStaticStyleValue,
   toValue,
 } from "@webstudio-is/css-engine";
 import {
@@ -144,22 +146,21 @@ const getEphemeralProperty = (styleDecl: StyleDecl) => {
 
 // wrap normal style value with var(--namespace, value) to support ephemeral styles updates
 // between all token usages
-const toVarValue = (styleDecl: StyleDecl): undefined | VarValue => {
-  const { value } = styleDecl;
-  if (value.type === "var") {
-    return value;
-  }
-  // Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
-  if (isValidStaticStyleValue(value)) {
-    return {
-      type: "var",
-      // var style value is relying on name without leading "--"
-      // escape complex selectors in state like ":hover"
-      // setProperty and removeProperty escape automatically
-      value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
-      fallbacks: [value],
-    };
-  }
+const toVarValue = (
+  styleDecl: StyleDecl,
+  transformValue: TransformValue
+): undefined | VarValue => {
+  return {
+    type: "var",
+    // var style value is relying on name without leading "--"
+    // escape complex selectors in state like ":hover"
+    // setProperty and removeProperty escape automatically
+    value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
+    fallback: {
+      type: "unparsed",
+      value: toValue(styleDecl.value, transformValue),
+    },
+  };
 };
 
 const $descendantSelectors = computed(
@@ -228,7 +229,18 @@ export const subscribeStyles = () => {
 
   // add/delete declarations in mixins
   let prevStylesSet = new Set<StyleDecl>();
-  const unsubscribeStyles = $styles.subscribe((styles) => {
+  let prevTransformValue: undefined | TransformValue;
+  // track value transformer to properly serialize var() fallback as unparsed
+  // before it was managed css engine but here toValue is invoked by styles renderer directly
+  const unsubscribeStyles = computed(
+    [$styles, $transformValue],
+    (styles, transformValue) => [styles, transformValue] as const
+  ).subscribe(([styles, transformValue]) => {
+    // invalidate styles cache when assets are changed
+    if (prevTransformValue !== transformValue) {
+      prevTransformValue = transformValue;
+      prevStylesSet = new Set();
+    }
     const stylesSet = new Set(styles.values());
     const addedStyles = setDifference(stylesSet, prevStylesSet);
     const deletedStyles = setDifference(prevStylesSet, stylesSet);
@@ -248,7 +260,7 @@ export const subscribeStyles = () => {
         breakpoint: styleDecl.breakpointId,
         selector: styleDecl.state ?? "",
         property: styleDecl.property,
-        value: toVarValue(styleDecl) ?? styleDecl.value,
+        value: toVarValue(styleDecl, transformValue) ?? styleDecl.value,
       });
     }
     renderUserSheetInTheNextFrame();
@@ -262,7 +274,10 @@ export const subscribeStyles = () => {
       const addedSelections = setDifference(selectionsSet, prevSelectionsSet);
       prevSelectionsSet = selectionsSet;
       for (const { instanceId, values } of addedSelections) {
-        const selector = `[${idAttribute}="${instanceId}"]`;
+        const selector =
+          instanceId === ROOT_INSTANCE_ID
+            ? ":root"
+            : `[${idAttribute}="${instanceId}"]`;
         const rule = userSheet.addNestingRule(selector);
         rule.applyMixins(values);
       }
@@ -302,10 +317,15 @@ export const subscribeStyles = () => {
   };
 };
 
-export const useManageDesignModeStyles = () => {
-  useEffect(subscribeStateStyles, []);
-  useEffect(subscribeEphemeralStyle, []);
-  useEffect(subscribePreviewMode, []);
+export const manageDesignModeStyles = ({ signal }: { signal: AbortSignal }) => {
+  const unsubscribeStateStyles = subscribeStateStyles();
+  const unsubscribeEphemeralStyle = subscribeEphemeralStyle();
+  const unsubscribePreviewMode = subscribePreviewMode();
+  signal.addEventListener("abort", () => {
+    unsubscribeStateStyles();
+    unsubscribeEphemeralStyle();
+    unsubscribePreviewMode();
+  });
 };
 
 export const GlobalStyles = ({ params }: { params: Params }) => {
@@ -326,9 +346,11 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
     presetSheet.addMediaRule("presets");
     for (const [component, meta] of metas) {
       for (const [tag, styles] of Object.entries(meta.presetStyle ?? {})) {
-        const rule = presetSheet.addNestingRule(
-          `${tag}:where([data-ws-component="${component}"])`
-        );
+        const selector =
+          component === rootComponent
+            ? ":root"
+            : `${tag}:where([data-ws-component="${component}"])`;
+        const rule = presetSheet.addNestingRule(selector);
         for (const declaration of styles) {
           rule.setDeclaration({
             breakpoint: "presets",
@@ -410,7 +432,7 @@ const subscribeStateStyles = () => {
         // render without state
         selector: "",
         property: styleDecl.property,
-        value: toVarValue(styleDecl) ?? styleDecl.value,
+        value: toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
       });
     }
     stateSheet.setTransformer($transformValue.get());
@@ -441,9 +463,12 @@ const subscribeEphemeralStyle = () => {
           breakpoint: styleDecl.breakpointId,
           selector: styleDecl.state ?? "",
           property: styleDecl.property,
-          value: toVarValue(styleDecl) ?? styleDecl.value,
+          value:
+            toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
         });
-        document.body.style.removeProperty(getEphemeralProperty(styleDecl));
+        document.documentElement.style.removeProperty(
+          getEphemeralProperty(styleDecl)
+        );
       }
       userSheet.setTransformer($transformValue.get());
       userSheet.render();
@@ -458,7 +483,7 @@ const subscribeEphemeralStyle = () => {
       let ephemetalSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
         // update custom property
-        document.body.style.setProperty(
+        document.documentElement.style.setProperty(
           getEphemeralProperty(styleDecl),
           toValue(styleDecl.value, $transformValue.get())
         );
@@ -473,7 +498,8 @@ const subscribeEphemeralStyle = () => {
             breakpoint: styleDecl.breakpointId,
             selector: styleDecl.state ?? "",
             property: styleDecl.property,
-            value: toVarValue(styleDecl) ?? styleDecl.value,
+            value:
+              toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
           });
           // add local style source when missing to support
           // ephemeral styles on newly created instances
@@ -487,7 +513,8 @@ const subscribeEphemeralStyle = () => {
               // render without state
               selector: "",
               property: styleDecl.property,
-              value: toVarValue(styleDecl) ?? styleDecl.value,
+              value:
+                toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
             });
           }
         }

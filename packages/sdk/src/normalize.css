@@ -60,35 +60,26 @@ span {
   outline-width: 1px;
 }
 
-/* @todo for now not applied to html, as we don't have html element */
 /**
- * 1. Correct the line height in all browsers.
- * 2. Prevent adjustments of font size after orientation changes in iOS.
- * 3. Use a more readable tab size (opinionated).
+ * 1. Layout source https://twitter.com/ChallengesCss/status/1471128244720181258
+ * 2. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
  */
 html {
   /* 1 */
-  line-height: 1.15;
-  /* 2 */
-  -webkit-text-size-adjust: 100%;
-  /* 3 */
-  tab-size: 4;
-  /* webstudio custom opinionated presets */
-  box-sizing: border-box;
-  border-width: 1px;
-}
-
-/**
- * 1. Remove the margin in all browsers.
- * 2. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
- */
-body {
-  /* 1 */
-  margin: 0;
+  display: grid;
+  min-height: 100%;
   /* 2 */
   font-family: Arial, Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.2;
+}
+
+/**
+ * 1. Remove the margin in all browsers.
+ */
+body {
+  /* 1 */
+  margin: 0;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
   border-width: 1px;

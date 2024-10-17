@@ -37,4 +37,13 @@ export const fontWeights = {
   },
 } as const;
 
+export const fontWeightNames = new Map<string, FontWeight>(
+  Object.keys(fontWeights)
+    .map((weight) => {
+      const weightData = fontWeights[weight as FontWeight];
+      return weightData.names.map((name) => [name, weight]);
+    })
+    .flat() as Array<[string, FontWeight]>
+);
+
 export type FontWeight = keyof typeof fontWeights;

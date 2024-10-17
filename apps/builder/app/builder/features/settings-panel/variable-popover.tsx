@@ -412,7 +412,7 @@ BooleanForm.displayName = "BooleanForm";
 
 const validateJsonValue = (expression: string) => {
   const diagnostics = lintExpression({ expression });
-  return diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  return diagnostics.length > 0 ? "error" : "";
 };
 
 const parseJsonValue = (expression: string) => {
@@ -466,17 +466,12 @@ const JsonForm = forwardRef<
       />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label>Value</Label>
-        <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
-          {/* use div to position tooltip */}
-          <div>
-            <ExpressionEditor
-              color={valueError ? "error" : undefined}
-              value={value}
-              onChange={setValue}
-              onBlur={() => valueRef.current?.checkValidity()}
-            />
-          </div>
-        </InputErrorsTooltip>
+        <ExpressionEditor
+          color={valueError ? "error" : undefined}
+          value={value}
+          onChange={setValue}
+          onBlur={() => valueRef.current?.checkValidity()}
+        />
       </Flex>
     </>
   );

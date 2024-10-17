@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.182.0",
+  "version": "0.185.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -38,7 +38,7 @@
     "change-case": "^5.4.4",
     "html-tags": "^4.0.0",
     "nanoid": "^5.0.1",
-    "title-case": "^4.3.1"
+    "title-case": "^4.3.2"
   },
   "exports": {
     ".": {

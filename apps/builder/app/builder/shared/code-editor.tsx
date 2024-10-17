@@ -15,52 +15,8 @@ import {
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
 import { markdown } from "@codemirror/lang-markdown";
-import { theme, textVariants, css } from "@webstudio-is/design-system";
+import { css } from "@webstudio-is/design-system";
 import { CodeEditorBase, getMinMaxHeightVars } from "./code-editor-base";
-
-const autocompletionStyle = css({
-  "&.cm-tooltip.cm-tooltip-autocomplete": {
-    ...textVariants.mono,
-    border: "none",
-    backgroundColor: "transparent",
-    // override none set on body by radix popover
-    pointerEvents: "auto",
-    "& ul": {
-      minWidth: 160,
-      maxWidth: 260,
-      width: "max-content",
-      boxSizing: "border-box",
-      borderRadius: theme.borderRadius[6],
-      backgroundColor: theme.colors.backgroundMenu,
-      border: `1px solid ${theme.colors.borderMain}`,
-      boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
-      padding: theme.spacing[3],
-      "& li": {
-        ...textVariants.labelsTitleCase,
-        textTransform: "none",
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        color: theme.colors.foregroundMain,
-        padding: theme.spacing[3],
-        borderRadius: theme.borderRadius[3],
-        "&[aria-selected], &:hover": {
-          color: theme.colors.foregroundMain,
-          backgroundColor: theme.colors.backgroundItemMenuItemHover,
-        },
-        "& .cm-completionLabel": {
-          flexGrow: 1,
-        },
-        "& .cm-completionDetail": {
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          fontStyle: "normal",
-          color: theme.colors.hint,
-        },
-      },
-    },
-  },
-});
 
 const wrapperStyle = css({
   position: "relative",
@@ -79,11 +35,7 @@ const getHtmlExtensions = () => [
   // render autocomplete in body
   // to prevent popover scroll overflow
   tooltips({ parent: document.body }),
-  autocompletion({
-    icons: false,
-    tooltipClass: () => autocompletionStyle.toString(),
-    closeOnBlur: false,
-  }),
+  autocompletion({ icons: false }),
   keymap.of([...closeBracketsKeymap, ...completionKeymap]),
 ];
 

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-engine",
-  "version": "0.182.0",
+  "version": "0.185.0",
   "description": "CSS Renderer for Webstudio",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -12,7 +12,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "@emotion/hash": "^0.9.1",
+    "@emotion/hash": "^0.9.2",
     "@webstudio-is/error-utils": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "zod": "^3.22.4"

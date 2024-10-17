@@ -32,8 +32,8 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
     "backgroundPositionX",
     "backgroundPositionY",
   ]);
-  const xValue = getRepeatedStyleItem(backgroundPositionX.cascadedValue, index);
-  const yValue = getRepeatedStyleItem(backgroundPositionY.cascadedValue, index);
+  const xValue = getRepeatedStyleItem(backgroundPositionX, index);
+  const yValue = getRepeatedStyleItem(backgroundPositionY, index);
   const x = calculateBackgroundPosition(xValue);
   const y = calculateBackgroundPosition(yValue);
 
@@ -73,7 +73,7 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
           <CssValueInputContainer
             property="backgroundPositionX"
             styleSource="default"
-            keywords={[
+            getOptions={() => [
               { type: "keyword", value: "center" },
               { type: "keyword", value: "left" },
               { type: "keyword", value: "right" },
@@ -96,7 +96,7 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
           <CssValueInputContainer
             property="backgroundPositionY"
             styleSource="default"
-            keywords={[
+            getOptions={() => [
               { type: "keyword", value: "center" },
               { type: "keyword", value: "top" },
               { type: "keyword", value: "bottom" },

@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { ProjectSettingsView } from "./project-settings";
 import { $pages } from "~/shared/nano-states";
 
@@ -7,7 +6,6 @@ export default {
   component: ProjectSettingsView,
 };
 
-$isProjectSettingsOpen.set(true);
 const createRouter = (element: JSX.Element) =>
   createBrowserRouter([
     {
@@ -18,9 +16,7 @@ const createRouter = (element: JSX.Element) =>
   ]);
 
 export const General = () => {
-  const router = createRouter(
-    <ProjectSettingsView currentSection="General" isOpen />
-  );
+  const router = createRouter(<ProjectSettingsView currentSection="general" />);
   return <RouterProvider router={router} />;
 };
 
@@ -49,7 +45,7 @@ export const Redirects = () => {
   });
 
   const router = createRouter(
-    <ProjectSettingsView currentSection="Redirects" isOpen />
+    <ProjectSettingsView currentSection="redirects" />
   );
   return <RouterProvider router={router} />;
 };

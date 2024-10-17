@@ -46,7 +46,6 @@ const style = css({
   },
   "&:focus-visible": {
     borderColor: theme.colors.borderFocus,
-    outline: `1px solid ${theme.colors.borderFocus}`,
   },
   variants: {
     fullWidth: { true: { width: "100%" } },

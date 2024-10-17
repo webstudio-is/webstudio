@@ -9,9 +9,10 @@ import { ShadowContent } from "../../shared/shadow-content";
 import {
   addRepeatedStyleItem,
   editRepeatedStyleItem,
+  getComputedRepeatedItem,
   RepeatedStyle,
 } from "../../shared/repeated-style";
-import { parseCssFragment } from "../../shared/parse-css-fragment";
+import { parseCssFragment } from "../../shared/css-fragment";
 import { useComputedStyleDecl } from "../../shared/model";
 
 export const properties = ["textShadow"] satisfies [
@@ -23,11 +24,20 @@ const property: StyleProperty = properties[0];
 const label = "Text Shadows";
 const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
-const getItemProps = (_index: number, layer: StyleValue) => {
-  const values = layer.type === "tuple" ? layer.value : [];
+const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
+  let values: StyleValue[] = [];
+  if (layer.type === "tuple") {
+    values = layer.value;
+  }
+  if (layer.type === "var" && computedLayer?.type === "tuple") {
+    values = computedLayer.value;
+  }
   const labels = ["Text Shadow:"];
   let color: RgbaColor | undefined;
 
+  if (layer.type === "var") {
+    labels.push(`--${layer.value}`);
+  }
   for (const item of values) {
     if (item.type === "rgb") {
       color = colord(toValue(item)).toRgb();
@@ -37,7 +47,9 @@ const getItemProps = (_index: number, layer: StyleValue) => {
       color = colord(item.value).toRgb();
       continue;
     }
-    labels.push(toValue(item));
+    if (layer.type !== "var") {
+      labels.push(toValue(item));
+    }
   }
 
   return { label: labels.join(" "), color };
@@ -54,18 +66,21 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialTextShadow, "textShadow")
+          parseCssFragment(initialTextShadow, ["textShadow"])
         );
       }}
     >
       <RepeatedStyle
         label={label}
         styles={[styleDecl]}
-        getItemProps={getItemProps}
+        getItemProps={(index, layer) =>
+          getItemProps(layer, getComputedRepeatedItem(styleDecl, index))
+        }
         renderItemContent={(index, value) => (
           <ShadowContent
             index={index}
             layer={value}
+            computedLayer={getComputedRepeatedItem(styleDecl, index)}
             property={property}
             propertyValue={toValue(value)}
             onEditLayer={(index, value, options) => {
