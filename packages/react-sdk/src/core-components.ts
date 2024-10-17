@@ -1,7 +1,7 @@
 import {
   ListViewIcon,
   PaintBrushIcon,
-  EmbedIcon,
+  SettingsIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "@webstudio-is/sdk/normalize.css";
 import type {
@@ -15,7 +15,7 @@ const rootMeta: WsComponentMeta = {
   category: "hidden",
   type: "container",
   label: "Global Root",
-  icon: EmbedIcon,
+  icon: SettingsIcon,
   presetStyle: {
     html,
   },
