@@ -24,15 +24,13 @@ const DragHandleIconStyled = styled(DragHandleIcon, {
 });
 
 const ThumbHolder = styled("div", {
-  width: theme.spacing[10],
-  height: theme.spacing[10],
   flexShrink: 0,
 });
 
 /**
  * We draw button above rela button positions, therefore we need to have same padding
  */
-const sharedPaddingRight = theme.spacing[9];
+const sharedPaddingRight = theme.spacing[7];
 
 const IconButtonsWrapper = styled(Flex, {
   position: "absolute",
@@ -64,7 +62,7 @@ const ItemButton = styled("button", {
 
   paddingRight: sharedPaddingRight,
 
-  height: theme.spacing[13],
+  height: theme.spacing[11],
   position: "relative",
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
@@ -185,7 +183,7 @@ export const CssValueListItem = forwardRef(
             >
               <DragHandleIconStyled />
 
-              <Flex gap={2} shrink>
+              <Flex gap={1} shrink align="center">
                 {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}
                 {label}
               </Flex>

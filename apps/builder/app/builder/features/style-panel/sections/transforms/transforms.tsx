@@ -110,13 +110,7 @@ const TransformAdvancedPopover = () => {
     <FloatingPanel
       title="Advanced Transform"
       content={
-        <Grid
-          css={{
-            p: theme.spacing[9],
-            gap: theme.spacing[6],
-            width: theme.spacing[30],
-          }}
-        >
+        <Grid gap="2" css={{ p: theme.spacing[9] }}>
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Backface Visibility"
@@ -164,7 +158,7 @@ export const Section = () => {
         <SectionTitle
           dots={getDots(styles)}
           suffix={
-            <Flex gap={1}>
+            <Flex gap="1" align="center">
               <TransformAdvancedPopover />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

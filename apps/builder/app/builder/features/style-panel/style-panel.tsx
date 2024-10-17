@@ -87,7 +87,7 @@ export const StylePanel = () => {
 
   return (
     <>
-      <Box css={{ px: theme.spacing[9], pb: theme.spacing[9] }}>
+      <Box css={{ px: theme.spacing[7], pb: theme.spacing[5] }}>
         <Text css={{ py: theme.spacing[7] }} variant="titles">
           Style Sources
         </Text>

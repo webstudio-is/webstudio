@@ -11,7 +11,6 @@ import {
   PanelTabsContent,
   Card,
   Text,
-  Box,
   EnhancedTooltipProvider,
   Flex,
   ScrollArea,
@@ -48,9 +47,8 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
       gap="1"
       align="center"
       css={{
-        px: theme.spacing[9],
-        my: theme.spacing[3],
-        height: theme.spacing[13],
+        p: theme.spacing[7],
+        pb: 0,
         color: theme.colors.foregroundSubtle,
       }}
     >
@@ -88,14 +86,12 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
 
   if (selectedInstance === undefined) {
     return (
-      <Box css={{ p: theme.spacing[5], flexBasis: "100%" }}>
+      <Flex css={{ p: theme.spacing[9] }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
-        <Card
-          css={{ p: theme.spacing[9], mt: theme.spacing[9], width: "100%" }}
-        >
+        <Card css={{ p: theme.spacing[9], width: "100%" }}>
           <Text>Select an instance on the canvas</Text>
         </Card>
-      </Box>
+      </Flex>
     );
   }
 

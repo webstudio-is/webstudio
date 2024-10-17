@@ -117,7 +117,7 @@ export const buttonStyle = css({
   justifyContent: "center",
   gap: theme.spacing[2],
   padding: `0 ${theme.spacing[4]}`,
-  height: theme.spacing[12],
+  height: theme.spacing[11],
   borderRadius: theme.borderRadius[4],
   whiteSpace: "nowrap",
 
