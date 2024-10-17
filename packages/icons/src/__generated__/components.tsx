@@ -3959,6 +3959,31 @@ export const SelectIcon: IconComponent = forwardRef(
 );
 SelectIcon.displayName = "SelectIcon";
 
+export const SettingsIcon: IconComponent = forwardRef(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.3"
+          d="M2 5.333h8m0 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm-4 5.334h8m-8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"
+        />
+      </svg>
+    );
+  }
+);
+SettingsIcon.displayName = "SettingsIcon";
+
 export const ShadowInsetIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
