@@ -106,7 +106,9 @@ const $flatTree = computed(
     ) => {
       const instance = instances.get(instanceId);
       if (instance === undefined) {
-        throw Error("Unknown instance");
+        // log instead of failing navigator tree
+        console.error(`Unknown instance ${instanceId}`);
+        return;
       }
       const propValues = propValuesByInstanceSelector.get(
         JSON.stringify(selector)
@@ -149,7 +151,7 @@ const $flatTree = computed(
               const child = instance.children[index];
               if (child.type === "id") {
                 const isLastChild = index === instance.children.length - 1;
-                lastItem = traverse(
+                const lastDescendentItem = traverse(
                   child.value,
                   [
                     child.value,
@@ -165,6 +167,9 @@ const $flatTree = computed(
                   level + 2,
                   index
                 );
+                if (lastDescendentItem) {
+                  lastItem = lastDescendentItem;
+                }
               }
             }
           });
@@ -174,7 +179,7 @@ const $flatTree = computed(
           const child = instance.children[index];
           if (child.type === "id") {
             const isLastChild = index === instance.children.length - 1;
-            lastItem = traverse(
+            const lastDescendentItem = traverse(
               child.value,
               [child.value, ...selector],
               isHidden,
@@ -183,6 +188,9 @@ const $flatTree = computed(
               level + 1,
               index
             );
+            if (lastDescendentItem) {
+              lastItem = lastDescendentItem;
+            }
           }
         }
       }
