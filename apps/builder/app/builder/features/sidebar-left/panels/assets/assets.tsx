@@ -1,20 +1,31 @@
-import { ImageIcon } from "@webstudio-is/icons";
+import {
+  Button,
+  PanelTitle,
+  Separator,
+  Tooltip,
+} from "@webstudio-is/design-system";
+import { CrossIcon } from "@webstudio-is/icons";
 import { ImageManager } from "~/builder/shared/image-manager";
-import type { TabContentProps } from "../../types";
-import { Header, CloseButton, Root } from "../../shared/panel";
 
-export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
+export const AssetsPanel = ({ onClose }: { onClose: () => void }) => {
   return (
-    <Root>
-      <Header
-        title="Assets"
-        suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
-      />
+    <>
+      <PanelTitle
+        suffix={
+          <Tooltip content="Close panel" side="bottom">
+            <Button
+              color="ghost"
+              prefix={<CrossIcon />}
+              aria-label="Close panel"
+              onClick={onClose}
+            />
+          </Tooltip>
+        }
+      >
+        Assets
+      </PanelTitle>
+      <Separator />
       <ImageManager />
-    </Root>
+    </>
   );
 };
-
-export const Icon = ImageIcon;
-
-export const label = "Assets";

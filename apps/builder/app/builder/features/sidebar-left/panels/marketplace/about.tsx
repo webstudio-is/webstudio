@@ -2,6 +2,7 @@ import {
   Button,
   Flex,
   Link,
+  PanelTitle,
   Separator,
   Text,
   Tooltip,
@@ -10,7 +11,6 @@ import {
   truncate,
 } from "@webstudio-is/design-system";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import { Header } from "../../shared/panel";
 import { ChevronDoubleLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import { builderUrl } from "~/shared/router-utils";
 
@@ -29,8 +29,7 @@ export const About = ({
 
   return (
     <>
-      <Header
-        title={item.name}
+      <PanelTitle
         suffix={
           <Tooltip content="Close" side="bottom">
             <Button
@@ -44,7 +43,11 @@ export const About = ({
             />
           </Tooltip>
         }
-      />
+      >
+        {item.name}
+      </PanelTitle>
+      <Separator />
+
       <Flex
         direction="column"
         css={{ my: theme.spacing[5], mx: theme.spacing[8] }}
