@@ -118,7 +118,7 @@ export const FlexGrid = () => {
                 color: theme.colors.foregroundFlexUiMain,
                 "&:hover": {
                   // @todo not clear which token to use here
-                  background: theme.colors.slate4,
+                  background: theme.colors.backgroundHover,
                 },
                 "&:focus": {
                   background: "none",
