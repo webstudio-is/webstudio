@@ -67,6 +67,7 @@ const IconButtonStyled = styled(IconButton, {
     zIndex: 0,
   },
   borderWidth: 0,
+  flexGrow: 1,
 });
 
 const BaseToggleGroupButton = forwardRef<
