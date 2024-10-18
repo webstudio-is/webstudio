@@ -3206,7 +3206,12 @@ describe("copy paste", () => {
     const styleSources: StyleSources = new Map();
     const styles: Styles = new Map();
     const parsed = mapGroupBy(
-      parseCss(cssString),
+      parseCss(cssString).map((styleDecl) => ({
+        ...styleDecl,
+        selector: styleDecl.selector.startsWith("__")
+          ? styleDecl.selector.slice(2)
+          : styleDecl.selector,
+      })),
       (parsedStyleDecl) => parsedStyleDecl.selector
     );
     for (const [selector, parsedStyles] of parsed) {
@@ -3319,7 +3324,8 @@ describe("copy paste", () => {
       boxId__boxlocalid {
         color: red;
       }
-      ${newBoxId}__${newBoxLocalId} {
+      /* escape potential leading digit */
+      __${newBoxId}__${newBoxLocalId} {
         color: red;
       }
     `);
