@@ -39,7 +39,7 @@ export const ExtendedPanel = ({
             height: "100%",
             width: theme.spacing[35],
             background: theme.colors.backgroundPanel,
-            borderRight: `1px solid ${theme.colors.slate7}`,
+            borderRight: `1px solid ${theme.colors.borderMain}`,
           }}
         >
           <BindingPopoverProvider
