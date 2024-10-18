@@ -17,9 +17,6 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
   createStitches({
     theme: {
       colors: {
-        slate2: slate.slate2,
-        slate3: slate.slate3,
-        slate5: slate.slate5,
         slate8: slate.slate8,
         slate11: slate.slate11,
         slate12: slate.slate12,

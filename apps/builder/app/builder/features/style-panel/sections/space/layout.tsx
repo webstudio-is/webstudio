@@ -41,15 +41,21 @@ const emulateInnerStroke = ({
 });
 
 const ValueArea = styled("path", {
-  fill: theme.colors.slate2,
+  fill: theme.colors.backgroundPanel,
   variants: {
     side: {
       top: { cursor: "n-resize" },
       bottom: { cursor: "s-resize" },
-      right: { cursor: "e-resize", fill: theme.colors.slate3 },
-      left: { cursor: "w-resize", fill: theme.colors.slate3 },
+      right: {
+        cursor: "e-resize",
+        fill: theme.colors.backgroundSpacingLeftRight,
+      },
+      left: {
+        cursor: "w-resize",
+        fill: theme.colors.backgroundSpacingLeftRight,
+      },
     },
-    isActive: { true: { fill: theme.colors.slate5 } },
+    isActive: { true: { fill: theme.colors.backgroundSpacingHover } },
   },
 });
 
