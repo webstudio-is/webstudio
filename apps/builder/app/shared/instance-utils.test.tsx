@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { $, ws, renderJsx } from "@webstudio-is/sdk/testing";
 import { parseCss } from "@webstudio-is/css-data";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
@@ -588,6 +588,27 @@ describe("find closest droppable target", () => {
         emptyInsertConstraints
       )
     ).toEqual(undefined);
+  });
+
+  test("allow inserting into collection item", () => {
+    const { instances } = renderJsx(
+      <$.Body ws:id="bodyId">
+        <ws.collection ws:id="collectionId">
+          <$.Box ws:id="boxId"></$.Box>
+        </ws.collection>
+      </$.Body>
+    );
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["collectionId[1]", "collectionId", "bodyId"],
+        emptyInsertConstraints
+      )
+    ).toEqual({
+      parentSelector: ["collectionId", "bodyId"],
+      position: "end",
+    });
   });
 });
 
@@ -3185,7 +3206,12 @@ describe("copy paste", () => {
     const styleSources: StyleSources = new Map();
     const styles: Styles = new Map();
     const parsed = mapGroupBy(
-      parseCss(cssString),
+      parseCss(cssString).map((styleDecl) => ({
+        ...styleDecl,
+        selector: styleDecl.selector.startsWith("__")
+          ? styleDecl.selector.slice(2)
+          : styleDecl.selector,
+      })),
       (parsedStyleDecl) => parsedStyleDecl.selector
     );
     for (const [selector, parsedStyles] of parsed) {
@@ -3298,7 +3324,8 @@ describe("copy paste", () => {
       boxId__boxlocalid {
         color: red;
       }
-      ${newBoxId}__${newBoxLocalId} {
+      /* escape potential leading digit */
+      __${newBoxId}__${newBoxLocalId} {
         color: red;
       }
     `);
