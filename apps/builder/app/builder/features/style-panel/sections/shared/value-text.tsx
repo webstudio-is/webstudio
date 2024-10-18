@@ -45,7 +45,7 @@ const Container = styled("button", {
     },
   },
   compoundVariants: [
-    { source: "default", css: { color: theme.colors.slate12 } },
+    { source: "default", css: { color: theme.colors.foregroundTextSubtle } },
   ],
 });
 

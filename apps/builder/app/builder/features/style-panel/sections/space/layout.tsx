@@ -72,7 +72,7 @@ const OuterRect = styled(
       {...props}
     />
   ),
-  { stroke: theme.colors.slate8 }
+  { stroke: theme.colors.borderMain }
 );
 
 const InnerOuterRect = styled(
@@ -92,7 +92,7 @@ const InnerOuterRect = styled(
       />
     );
   },
-  { stroke: theme.colors.slate8, fill: theme.colors.loContrast }
+  { stroke: theme.colors.borderMain, fill: theme.colors.loContrast }
 );
 
 const InnerRect = styled(
@@ -108,7 +108,7 @@ const InnerRect = styled(
       {...props}
     />
   ),
-  { stroke: theme.colors.slate8 }
+  { stroke: theme.colors.borderMain }
 );
 
 const MostInnerRect = styled(
@@ -126,7 +126,7 @@ const MostInnerRect = styled(
       />
     );
   },
-  { stroke: theme.colors.slate8, fill: theme.colors.loContrast }
+  { stroke: theme.colors.borderMain, fill: theme.colors.loContrast }
 );
 
 const gap = `${INNER_MARGIN + BORDER}px`;
@@ -182,7 +182,7 @@ const Cell = styled("div", {
 });
 
 const Label = styled("div", {
-  color: theme.colors.slate11,
+  color: theme.colors.foregroundTextSubtle,
   textTransform: "uppercase",
   fontSize: theme.deprecatedFontSize[1],
   lineHeight: 1,

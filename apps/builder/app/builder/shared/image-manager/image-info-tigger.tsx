@@ -35,7 +35,7 @@ export const ImageInfoTrigger = ({
           css={{
             visibility: `var(${triggerVisibilityVar}, hidden)`,
             position: "absolute",
-            color: theme.colors.slate11,
+            color: theme.colors.foregroundMain,
             top: theme.spacing[3],
             right: theme.spacing[3],
             cursor: "pointer",
