@@ -404,7 +404,7 @@ export const findClosestDroppableTarget = (
     instanceSelector[droppableIndex + 1]
   );
   let dropTargetInstance = instances.get(instanceSelector[droppableIndex]);
-  // skip collection item when inserting template and go straight into collection instance
+  // skip collection item when inserting something and go straight into collection instance
   if (
     dropTargetInstance === undefined &&
     dropTargetParentInstance?.component === collectionComponent
