@@ -46,8 +46,10 @@ const ThumbnailContainer = styled(Box, {
   outline: 0,
   gap: theme.spacing[3],
   overflow: "hidden",
-  backgroundColor: theme.colors.slate4,
-  "&:hover": imageInfoTriggerCssVars({ show: true }),
+  "&:hover": {
+    ...imageInfoTriggerCssVars({ show: true }),
+    backgroundColor: theme.colors.backgroundAssetcardHover,
+  },
   variants: {
     status: {
       uploading: {},
@@ -57,6 +59,8 @@ const ThumbnailContainer = styled(Box, {
     state: {
       selected: {
         outline: `1px solid ${theme.colors.borderFocus}`,
+        backgroundColor: theme.colors.backgroundAssetcardHover,
+        ...imageInfoTriggerCssVars({ show: true }),
       },
     },
   },

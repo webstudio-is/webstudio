@@ -31,6 +31,7 @@ export const ImageInfoTrigger = ({
         <SmallIconButton
           title="Options"
           onClick={() => setInfoOpen(true)}
+          tabIndex={-1}
           css={{
             visibility: `var(${triggerVisibilityVar}, hidden)`,
             position: "absolute",

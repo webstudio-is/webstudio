@@ -33,8 +33,8 @@ export const IconButton = styled("button", {
   alignItems: "center",
   // prevent shrinking inside flex box
   flexShrink: 0,
-  width: theme.spacing[12],
-  height: theme.spacing[12],
+  width: theme.spacing[11],
+  height: theme.spacing[11],
   borderRadius: theme.borderRadius[3],
   minWidth: 0,
   outline: "none",

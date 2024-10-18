@@ -253,7 +253,6 @@ type CssValueInputProps = Pick<
   | "prefix"
   | "inputRef"
 > & {
-  size?: "1" | "2";
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -334,7 +333,6 @@ export const CssValueInput = ({
   ["aria-disabled"]: ariaDisabled,
   fieldSizing,
   variant,
-  size,
   text,
   ...props
 }: CssValueInputProps) => {
@@ -424,7 +422,6 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
-    size: size === "2" ? "1" : "2",
     property,
     value,
     onChange: (unitOrKeyword) => {
@@ -578,7 +575,6 @@ export const CssValueInput = ({
       {...getToggleButtonProps()}
       data-state={isOpen ? "open" : "closed"}
       tabIndex={-1}
-      size={size === "2" ? "1" : "2"}
     />
   );
 
@@ -698,7 +694,6 @@ export const CssValueInput = ({
       <Box {...getComboboxProps()}>
         <ComboboxAnchor asChild>
           <InputField
-            size={size}
             variant={variant}
             disabled={disabled}
             aria-disabled={ariaDisabled}

@@ -25,11 +25,13 @@ export const repeatedProperties = [
   "backgroundBlendMode",
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
+const thumbSize = theme.spacing[9];
+
 const Thumbnail = styled("div", {
   borderRadius: 2,
   borderWidth: 0,
-  width: theme.spacing[10],
-  height: theme.spacing[10],
+  width: thumbSize,
+  height: thumbSize,
 });
 
 const NoneThumbnail = styled(Thumbnail, {
@@ -39,8 +41,8 @@ const NoneThumbnail = styled(Thumbnail, {
 
 const StyledWebstudioImage = styled(WebstudioImage, {
   position: "relative",
-  width: theme.spacing[10],
-  height: theme.spacing[10],
+  width: thumbSize,
+  height: thumbSize,
   objectFit: "contain",
 
   // This is shown only if an image was not loaded and broken
@@ -131,7 +133,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
         key={asset.id}
         loader={imageLoader}
         src={asset.name}
-        width={theme.spacing[10]}
+        width={thumbSize}
         optimize={true}
       />
     );
@@ -146,7 +148,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
         key={backgroundImageValue.value.url}
         loader={imageLoader}
         src={backgroundImageValue.value.url}
-        width={theme.spacing[10]}
+        width={thumbSize}
         optimize={true}
       />
     );

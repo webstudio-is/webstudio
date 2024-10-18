@@ -10,18 +10,17 @@ import { Grid } from "./grid";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { ScrollArea } from "./scroll-area";
 
-const LINE_HEIGHT = 16;
-const PADDING_TOP = 6;
-const PADDING_BOTTOM = 4;
-const BORDER = 1;
+const lineHeight = 16;
+const paddingY = 3;
+const borderWidth = 1;
 
 const gridStyle = css({
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
-  border: `${BORDER}px solid ${theme.colors.borderMain}`,
+  border: `${borderWidth}px solid ${theme.colors.borderMain}`,
   background: theme.colors.backgroundControls,
-  paddingTop: PADDING_TOP,
-  paddingBottom: PADDING_BOTTOM,
+  paddingTop: paddingY,
+  paddingBottom: paddingY,
   boxSizing: "border-box",
   resize: "vertical",
   overflow: "auto",
@@ -131,13 +130,12 @@ export const TextArea = forwardRef(
 
     // We could use `box-sizing:content-box` to avoid dealing with paddings and border here
     // But then, the user of the component will not be able to set `width` reliably
-    const minHeight =
-      rows * LINE_HEIGHT + PADDING_TOP + PADDING_BOTTOM + BORDER * 2;
+    const minHeight = rows * lineHeight + paddingY + paddingY + borderWidth * 2;
 
     const height = autoGrow || grow ? undefined : minHeight;
 
     const maxHeight = maxRows
-      ? maxRows * LINE_HEIGHT + PADDING_TOP + PADDING_BOTTOM + BORDER * 2
+      ? maxRows * lineHeight + paddingY + paddingY + borderWidth * 2
       : undefined;
 
     return (
@@ -160,7 +158,7 @@ export const TextArea = forwardRef(
         <ScrollArea
           css={{
             height: "100%",
-            maxHeight: maxRows ? maxRows * LINE_HEIGHT : undefined,
+            maxHeight: maxRows ? maxRows * lineHeight : undefined,
             // Overwrite hack from scroll-area.tsx
             "& [data-radix-scroll-area-viewport] > div": {
               display: "grid!important",
