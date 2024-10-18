@@ -1,11 +1,19 @@
-import { useRef, useState } from "react";
-import { Box, rawTheme } from "@webstudio-is/design-system";
+import { useRef, useState, type ReactNode } from "react";
+import { Box, Kbd, rawTheme, Text } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
-import { panels } from "./panels";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { AiIcon, HelpIcon } from "@webstudio-is/icons";
+import {
+  AiIcon,
+  ExtensionIcon,
+  HelpIcon,
+  ImageIcon,
+  NavigatorIcon,
+  PageIcon,
+  PlusIcon,
+  type IconComponent,
+} from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
 import {
@@ -29,8 +37,13 @@ import {
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
+import { ComponentsPanel } from "./panels/components";
+import { PagesPanel } from "./panels/pages";
+import { NavigatorPanel } from "./panels/navigator";
+import { AssetsPanel } from "./panels/assets";
+import { MarketplacePanel } from "./panels/marketplace";
 
-const none = { TabContent: () => null };
+const none = { Panel: () => null };
 
 const AiTabTrigger = () => {
   return (
@@ -65,6 +78,56 @@ const HelpTabTrigger = () => {
   );
 };
 
+type PanelConfig = {
+  name: SidebarPanelName;
+  label: ReactNode;
+  Icon: IconComponent;
+  Panel: (props: { publish: Publish; onClose: () => void }) => ReactNode;
+};
+
+const panels: PanelConfig[] = [
+  {
+    name: "components",
+    label: (
+      <Text>
+        Components&nbsp;&nbsp;
+        <Kbd value={["A"]} color="moreSubtle" />
+      </Text>
+    ),
+    Icon: PlusIcon,
+    Panel: ComponentsPanel,
+  },
+  {
+    name: "pages",
+    label: "Pages",
+    Icon: PageIcon,
+    Panel: PagesPanel,
+  },
+  {
+    name: "navigator",
+    label: (
+      <Text>
+        Navigator&nbsp;&nbsp;
+        <Kbd value={["z"]} color="moreSubtle" />
+      </Text>
+    ),
+    Icon: NavigatorIcon,
+    Panel: NavigatorPanel,
+  },
+  {
+    name: "assets",
+    label: "Assets",
+    Icon: ImageIcon,
+    Panel: AssetsPanel,
+  },
+  {
+    name: "marketplace",
+    label: "Marketplace",
+    Icon: ExtensionIcon,
+    Panel: MarketplacePanel,
+  },
+];
+
 type SidebarLeftProps = {
   publish: Publish;
 };
@@ -72,7 +135,7 @@ type SidebarLeftProps = {
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const activePanel = useStore($activeSidebarPanel);
   const dragAndDropState = useStore($dragAndDropState);
-  const { TabContent } = panels.get(activePanel) ?? none;
+  const { Panel } = panels.find((item) => item.name === activePanel) ?? none;
   const isPreviewMode = useStore($isPreviewMode);
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
   const returnTabRef = useRef<SidebarPanelName | undefined>(undefined);
@@ -135,22 +198,20 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             <ExternalDragDropMonitor />
             <div ref={tabsWrapperRef} style={{ display: "contents" }}>
               <SidebarTabsList>
-                {Array.from(panels.entries()).map(
-                  ([panel, { Icon, label }]) => {
-                    return (
-                      <SidebarTabsTrigger
-                        key={panel}
-                        label={label}
-                        value={panel}
-                        onClick={() => {
-                          toggleActiveSidebarPanel(panel);
-                        }}
-                      >
-                        <Icon size={rawTheme.spacing[10]} />
-                      </SidebarTabsTrigger>
-                    );
-                  }
-                )}
+                {panels.map(({ name, Icon, label }) => {
+                  return (
+                    <SidebarTabsTrigger
+                      key={name}
+                      label={label}
+                      value={name}
+                      onClick={() => {
+                        toggleActiveSidebarPanel(name);
+                      }}
+                    >
+                      <Icon size={rawTheme.spacing[10]} />
+                    </SidebarTabsTrigger>
+                  );
+                })}
               </SidebarTabsList>
             </div>
 
@@ -180,10 +241,20 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 : "visible",
           }}
         >
-          <TabContent
-            publish={publish}
-            onSetActiveTab={setActiveSidebarPanel}
-          />
+          <Flex
+            css={{
+              position: "relative",
+              height: "100%",
+              flexGrow: 1,
+              background: theme.colors.backgroundPanel,
+            }}
+            direction="column"
+          >
+            <Panel
+              publish={publish}
+              onClose={() => setActiveSidebarPanel("none")}
+            />
+          </Flex>
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>
