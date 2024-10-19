@@ -99,7 +99,15 @@ export const Tooltip = forwardRef(
         delayDuration={delayDuration}
         disableHoverableContent={disableHoverableContent}
       >
-        <TooltipPrimitive.Trigger asChild {...triggerProps}>
+        <TooltipPrimitive.Trigger
+          asChild
+          {...triggerProps}
+          onFocus={(event) => {
+            // Prevent tooltip from opening on focus
+            event.preventDefault();
+            triggerProps?.onFocus?.(event);
+          }}
+        >
           {children}
         </TooltipPrimitive.Trigger>
         {content != null && (
