@@ -90,7 +90,7 @@ const BaseToggleGroupButton = forwardRef<
       }
       css={{
         height: theme.spacing[10],
-        minWidth: theme.spacing[10],
+        minWidth: "fit-content",
         borderRadius: theme.borderRadius[2],
         ...textVariants.labelsTitleCase,
       }}
