@@ -104,7 +104,7 @@ export const CssPreview = () => {
 
   return (
     <CollapsibleSection label="CSS Preview" fullWidth>
-      <ScrollArea css={{ px: theme.spacing[9] }}>
+      <ScrollArea css={{ px: theme.spacing[7], py: theme.spacing[5] }}>
         <pre tabIndex={0} className={preStyle()}>
           <div
             className="language-css"

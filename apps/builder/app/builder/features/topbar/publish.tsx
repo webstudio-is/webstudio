@@ -672,8 +672,8 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
       columns={1}
       gap={3}
       css={{
-        margin: theme.spacing[9],
-        marginTop: theme.spacing[5],
+        px: theme.spacing[7],
+        py: theme.spacing[5],
       }}
     >
       <Grid columns={1} gap={2}>

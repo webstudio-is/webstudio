@@ -40,7 +40,7 @@ const Content = styled(TooltipPrimitive.Content, {
       },
       large: {
         maxWidth: theme.spacing["32"],
-        padding: theme.spacing[9],
+        padding: theme.spacing[7],
       },
     },
   },

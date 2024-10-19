@@ -77,7 +77,8 @@ CommandBarTrigger.displayName = "CommandBarTrigger";
 export const CommandBarContentSection = (props: { children: ReactNode }) => (
   <Grid
     css={{
-      margin: theme.spacing[9],
+      px: theme.spacing[7],
+      py: theme.spacing[5],
     }}
     gap={2}
     {...props}

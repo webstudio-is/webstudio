@@ -45,7 +45,7 @@ const PagesButton = () => {
     >
       <ToolbarButton
         css={{
-          px: theme.spacing[9],
+          px: theme.spacing[7],
           maxWidth: theme.spacing[24],
         }}
         aria-label="Toggle Pages"
@@ -66,7 +66,7 @@ const topbarContainerStyle = css({
   display: "flex",
   background: theme.colors.backgroundTopbar,
   height: theme.spacing[15],
-  paddingRight: theme.spacing[9],
+  paddingRight: theme.spacing[7],
   color: theme.colors.foregroundContrastMain,
 });
 

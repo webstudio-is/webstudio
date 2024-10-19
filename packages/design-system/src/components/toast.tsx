@@ -142,7 +142,7 @@ const InternalToast = ({
           align={"center"}
           css={{
             backgroundColor: cssVar(backgroundColor),
-            padding: theme.spacing[9],
+            padding: theme.spacing[7],
             gridTemplateColumns: icon ? "auto 1fr auto" : "1fr auto",
             borderBottomRightRadius: theme.borderRadius[5],
             borderTopRightRadius: theme.borderRadius[5],

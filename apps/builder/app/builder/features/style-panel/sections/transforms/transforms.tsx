@@ -244,7 +244,10 @@ const TransformSection = ({
     <FloatingPanel
       title={humanizeString(panel)}
       content={
-        <Flex direction="column" css={{ p: theme.spacing[9] }}>
+        <Flex
+          direction="column"
+          css={{ px: theme.spacing[7], py: theme.spacing[5] }}
+        >
           {panel === "translate" && <TranslatePanelContent />}
           {panel === "scale" && <ScalePanelContent />}
           {panel === "rotate" && <RotatePanelContent />}
