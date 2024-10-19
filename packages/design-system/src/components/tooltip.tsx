@@ -27,8 +27,8 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: theme.colors.hiContrast,
-  color: theme.colors.loContrast,
+  backgroundColor: theme.colors.backgroundTooltipMain,
+  color: theme.colors.foregroundContrastMain,
   borderRadius: theme.borderRadius[7],
   padding: theme.spacing[5],
   position: "relative",

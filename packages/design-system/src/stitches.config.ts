@@ -10,7 +10,6 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
       colors: {
         // Semantic colors
         hiContrast: slate.slate12,
-        loContrast: slate.slate1,
         ...figma.color,
       },
       fonts: {

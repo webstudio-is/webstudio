@@ -92,7 +92,7 @@ const InnerOuterRect = styled(
       />
     );
   },
-  { stroke: theme.colors.borderMain, fill: theme.colors.loContrast }
+  { stroke: theme.colors.borderMain, fill: theme.colors.backgroundControls }
 );
 
 const InnerRect = styled(
@@ -126,7 +126,7 @@ const MostInnerRect = styled(
       />
     );
   },
-  { stroke: theme.colors.borderMain, fill: theme.colors.loContrast }
+  { stroke: theme.colors.borderMain, fill: theme.colors.backgroundControls }
 );
 
 const gap = `${INNER_MARGIN + BORDER}px`;

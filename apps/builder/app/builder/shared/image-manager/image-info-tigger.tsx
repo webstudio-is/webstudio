@@ -43,7 +43,7 @@ export const ImageInfoTrigger = ({
             "&:hover": {
               color: theme.colors.hiContrast,
             },
-            ...gearIconCssVars({ fill: theme.colors.loContrast }),
+            ...gearIconCssVars({ fill: "transparent" }),
           }}
           icon={<GearIcon />}
         />
