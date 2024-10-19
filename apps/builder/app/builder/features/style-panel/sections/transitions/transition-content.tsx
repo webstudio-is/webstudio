@@ -18,15 +18,16 @@ import {
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { properties, propertyDescriptions } from "@webstudio-is/css-data";
-import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { parseCssFragment } from "../../shared/css-fragment";
 import { PropertyInlineLabel } from "../../property-label";
 import { TransitionProperty } from "./transition-property";
-import { TransitionTiming } from "./transition-timing";
-import { useComputedStyles } from "../../shared/model";
-import { editRepeatedStyleItem } from "../../shared/repeated-style";
+import { $availableVariables, useComputedStyles } from "../../shared/model";
+import {
+  editRepeatedStyleItem,
+  setRepeatedStyleItem,
+} from "../../shared/repeated-style";
 
 const getLayer = (value: undefined | StyleValue, index: number) =>
   value?.type === "layers" ? value.value[index] : undefined;
@@ -86,15 +87,12 @@ export const TransitionContent = ({ index }: { index: number }) => {
     );
   };
 
-  const handlePropertyUpdate = (
-    params: {
-      property?: StyleValue;
-      timing?: StyleValue;
-      delay?: StyleValue;
-      duration?: StyleValue;
-    },
-    options: StyleUpdateOptions = { isEphemeral: false }
-  ) => {
+  const updateIntermediateValue = (params: {
+    property?: StyleValue;
+    timing?: StyleValue;
+    delay?: StyleValue;
+    duration?: StyleValue;
+  }) => {
     const shorthand = toValue({
       type: "tuple",
       value: [
@@ -108,12 +106,6 @@ export const TransitionContent = ({ index }: { index: number }) => {
       type: "intermediate",
       value: shorthand,
     });
-    editRepeatedStyleItem(
-      styles,
-      index,
-      parseCssFragment(shorthand, ["transition"]),
-      options
-    );
   };
 
   return (
@@ -134,7 +126,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
         />
         <TransitionProperty
           value={property ?? properties.transitionProperty.initial}
-          onChange={(property) => handlePropertyUpdate({ property })}
+          onChange={(value) => {
+            updateIntermediateValue({ duration: value });
+            setRepeatedStyleItem(transitionProperty, index, value);
+          }}
         />
 
         <PropertyInlineLabel
@@ -143,23 +138,21 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transitionDuration"]}
         />
         <CssValueInputContainer
-          key={"transitionDuration"}
-          property={"transitionDuration"}
+          property="transitionDuration"
           styleSource="local"
+          getOptions={() => $availableVariables.get()}
           value={duration ?? properties.transitionDuration.initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {
               return;
             }
-
-            if (value.type === "unit") {
-              handlePropertyUpdate({ duration: value }, options);
-              return;
+            if (value.type === "layers") {
+              [value] = value.value;
             }
-
-            if (value.type === "layers" && value.value[0].type === "unit") {
-              handlePropertyUpdate({ duration: value.value[0] }, options);
+            if (value.type === "unit" || value.type === "var") {
+              updateIntermediateValue({ duration: value });
+              setRepeatedStyleItem(transitionDuration, index, value, options);
             }
           }}
         />
@@ -170,32 +163,65 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transitionDelay"]}
         />
         <CssValueInputContainer
-          property={"transitionDelay"}
-          key={"transitionDelay"}
+          property="transitionDelay"
           styleSource="local"
+          getOptions={() => $availableVariables.get()}
           value={delay ?? properties.transitionDelay.initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {
               return;
             }
-
-            if (value.type === "unit") {
-              handlePropertyUpdate({ delay: value }, options);
-              return;
+            if (value.type === "layers") {
+              [value] = value.value;
             }
-
-            if (value.type === "layers" && value.value[0].type === "unit") {
-              handlePropertyUpdate({ delay: value.value[0] }, options);
+            if (value.type === "unit" || value.type === "var") {
+              updateIntermediateValue({ delay: value });
+              setRepeatedStyleItem(transitionDelay, index, value, options);
             }
           }}
         />
 
-        <TransitionTiming
-          timing={timingFunction ?? properties.transitionTimingFunction.initial}
-          onTimingSelection={handlePropertyUpdate}
+        <PropertyInlineLabel
+          label="Easing"
+          description={propertyDescriptions.transitionTimingFunction}
+          properties={["transitionTimingFunction"]}
+        />
+        <CssValueInputContainer
+          property="transitionTimingFunction"
+          styleSource="local"
+          getOptions={() => [
+            { type: "keyword", value: "linear" },
+            { type: "keyword", value: "ease" },
+            { type: "keyword", value: "ease-in" },
+            { type: "keyword", value: "ease-out" },
+            { type: "keyword", value: "ease-in-out" },
+            { type: "keyword", value: "step-start" },
+            { type: "keyword", value: "step-end" },
+            ...$availableVariables.get(),
+          ]}
+          value={timingFunction ?? properties.transitionTimingFunction.initial}
+          deleteProperty={() => {}}
+          setValue={(value, options) => {
+            if (value === undefined) {
+              return;
+            }
+            if (value.type === "layers") {
+              [value] = value.value;
+            }
+            if (value.type === "keyword" || value.type === "var") {
+              updateIntermediateValue({ timing: value });
+              setRepeatedStyleItem(
+                transitionTimingFunction,
+                index,
+                value,
+                options
+              );
+            }
+          }}
         />
       </Grid>
+
       <Separator css={{ gridColumn: "span 2" }} />
       <Flex
         direction="column"
