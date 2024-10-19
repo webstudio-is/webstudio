@@ -186,7 +186,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   return (
     <Flex direction="column">
       <PanelTitle
-        css={{ px: theme.spacing[9] }}
+        css={{ px: theme.spacing[7] }}
         suffix={
           <IconButton
             onClick={() => {
