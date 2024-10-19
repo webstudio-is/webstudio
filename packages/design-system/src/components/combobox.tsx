@@ -298,6 +298,18 @@ export const useCombobox = <Item,>({
         return;
       }
 
+      if (
+        isOpen &&
+        (type === comboboxStateChangeTypes.InputKeyDownArrowDown ||
+          type === comboboxStateChangeTypes.InputKeyDownArrowUp)
+      ) {
+        const matchedItems = getItems();
+        setMatchedItems(matchedItems);
+        setIsOpen(matchedItems.length > 0);
+
+        return;
+      }
+
       if (isOpen) {
         itemsCache.current = getItems();
         const matchedItems = match(
