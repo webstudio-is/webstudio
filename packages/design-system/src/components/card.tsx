@@ -11,7 +11,7 @@ export const Card = styled("div", {
   textAlign: "inherit",
   verticalAlign: "middle",
   WebkitTapHighlightColor: "rgba(0, 0, 0, 0)",
-  backgroundColor: theme.colors.panel,
+  backgroundColor: "white",
   display: "block",
   textDecoration: "none",
   color: "inherit",

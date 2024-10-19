@@ -16,7 +16,6 @@ import { theme } from "@webstudio-is/design-system";
 import { $authPermit } from "~/shared/nano-states";
 
 const MenuButton = styled(SmallIconButton, {
-  color: theme.colors.hint,
   "&:hover, &:focus-visible": {
     color: theme.colors.hiContrast,
   },

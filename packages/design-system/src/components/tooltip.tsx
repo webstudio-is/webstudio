@@ -114,7 +114,7 @@ export const Tooltip = forwardRef(
               {...props}
             >
               {typeof content === "string" ? <Text>{content}</Text> : content}
-              <Box css={{ color: theme.colors.transparentExtreme }}>
+              <Box css={{ color: "transparent" }}>
                 <Arrow offset={5} width={11} height={5} />
               </Box>
             </Content>

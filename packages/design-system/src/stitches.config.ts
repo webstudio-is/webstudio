@@ -1,5 +1,5 @@
 import { createStitches } from "@stitches/react";
-import { blue, slate } from "@radix-ui/colors";
+import { slate } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 import * as figma from "./__generated__/figma-design-tokens";
@@ -11,19 +11,6 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         // Semantic colors
         hiContrast: slate.slate12,
         loContrast: slate.slate1,
-        hint: slate.slate9,
-        muted: slate.slate6,
-        primary: blue.blue10,
-        canvas: "hsl(0 0% 93%)",
-        panel: "white",
-        panelOutline: "hsl(0deg 0% 0% / 10%)",
-        transparentPanel: "hsl(0 0% 0% / 97%)",
-        shadowLight: "hsl(206 22% 7% / 35%)",
-        shadowDark: "hsl(206 22% 7% / 20%)",
-        background: slate.slate1,
-        text: slate.slate12,
-        transparentExtreme: "transparent",
-
         ...figma.color,
       },
       fonts: {

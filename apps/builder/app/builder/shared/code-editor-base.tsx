@@ -192,7 +192,7 @@ const autocompletionTooltipTheme = EditorView.theme({
     overflow: "hidden",
     textOverflow: "ellipsis",
     fontStyle: "normal",
-    color: rawTheme.colors.hint,
+    color: rawTheme.colors.foregroundSubtle,
   },
 });
 

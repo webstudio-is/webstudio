@@ -66,7 +66,6 @@ const topbarContainerStyle = css({
   display: "flex",
   background: theme.colors.backgroundTopbar,
   height: theme.spacing[15],
-  boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
   paddingRight: theme.spacing[9],
   color: theme.colors.foregroundContrastMain,
 });

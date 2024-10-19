@@ -177,7 +177,7 @@ export const AssetsShell = ({
           position: "absolute",
           inset: 0,
           display: dragState !== IDLE ? "flex" : "none",
-          backgroundColor: theme.colors.background,
+          backgroundColor: theme.colors.backgroundPanel,
           opacity: 0.85,
           color:
             dragState === OVER
