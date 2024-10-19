@@ -346,6 +346,16 @@ export const Builder = ({
   }, []);
 
   /**
+   * Prevent Radix from stealing focus during editing in the style sources
+   * For example, when the user select or create new style source item inside a dialog.
+   */
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    if (event.target instanceof HTMLInputElement) {
+      canvasApi.setInert();
+    }
+  }, []);
+
+  /**
    * Prevent Radix from stealing focus during editing in the settings panel.
    * For example, when the user modifies the text content of an H1 element inside a dialog.
    */
@@ -359,6 +369,7 @@ export const Builder = ({
         style={{ display: "contents" }}
         onPointerDown={handlePointerDown}
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
       >
         <ChromeWrapper
           isPreviewMode={isPreviewMode}
