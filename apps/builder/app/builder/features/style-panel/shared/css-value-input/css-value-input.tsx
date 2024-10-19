@@ -368,6 +368,7 @@ export const CssValueInput = ({
     const defaultProps = { altKey: false, shiftKey: false };
 
     if (value.type !== "intermediate" && value.type !== "invalid") {
+      // The value might be valid but not selected from the combo menu. Close the menu.
       closeMenu();
       props.onChangeComplete({ ...defaultProps, ...event, value });
       return;
@@ -380,6 +381,7 @@ export const CssValueInput = ({
       return;
     }
 
+    // The value might be valid but not selected from the combo menu. Close the menu.
     closeMenu();
     props.onChangeComplete({
       ...defaultProps,
