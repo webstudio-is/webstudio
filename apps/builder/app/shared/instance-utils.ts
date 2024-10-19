@@ -400,6 +400,22 @@ export const findClosestDroppableTarget = (
     return;
   }
 
+  const dropTargetParentInstance = instances.get(
+    instanceSelector[droppableIndex + 1]
+  );
+  let dropTargetInstance = instances.get(instanceSelector[droppableIndex]);
+  // skip collection item when inserting something and go straight into collection instance
+  if (
+    dropTargetInstance === undefined &&
+    dropTargetParentInstance?.component === collectionComponent
+  ) {
+    instanceSelector = instanceSelector.slice(1);
+    dropTargetInstance = dropTargetParentInstance;
+  }
+  if (dropTargetInstance === undefined) {
+    return;
+  }
+
   if (droppableIndex === 0) {
     return {
       parentSelector: instanceSelector,
@@ -408,8 +424,6 @@ export const findClosestDroppableTarget = (
   }
 
   const dropTargetSelector = instanceSelector.slice(droppableIndex);
-  const dropTargetInstanceId = instanceSelector[droppableIndex];
-  const dropTargetInstance = instances.get(dropTargetInstanceId);
   if (dropTargetInstance === undefined) {
     return;
   }
