@@ -94,10 +94,12 @@ export const BackgroundImage = ({ index }: { index: number }) => {
 
   const styleDecl = useComputedStyleDecl("backgroundImage");
   const styleValue = getRepeatedStyleItem(styleDecl, index);
-  const [errors, setErrors] = useState<string[]>(getInitialErrors(styleValue));
+  const [errors, setErrors] = useState<string[]>(() =>
+    getInitialErrors(styleValue)
+  );
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
-  >(getInitialValue(styleValue));
+  >(() => getInitialValue(styleValue));
 
   const handleChange = (value: string, options: StyleUpdateOptions) => {
     setIntermediateValue({
