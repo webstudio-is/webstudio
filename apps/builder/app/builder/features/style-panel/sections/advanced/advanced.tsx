@@ -1,3 +1,4 @@
+import { lexer } from "css-tree";
 import { colord } from "colord";
 import {
   memo,
@@ -111,10 +112,14 @@ const matchOrSuggestToCreate = (
   if (isFeatureEnabled("cssVars") === false) {
     return matched;
   }
-  if (search.trim().startsWith("--")) {
+  const propertyName = search.trim();
+  if (
+    propertyName.startsWith("--") &&
+    lexer.match("<custom-ident>", propertyName).matched
+  ) {
     matched.unshift({
-      value: search.trim(),
-      label: `Create "${search.trim()}"`,
+      value: propertyName,
+      label: `Create "${propertyName}"`,
     });
   }
   return matched;
