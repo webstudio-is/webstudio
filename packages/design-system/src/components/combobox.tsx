@@ -298,6 +298,7 @@ export const useCombobox = <Item,>({
         return;
       }
 
+      // If the menu is opened using the up or down arrows, we want to display all items without applying any filters.
       if (
         isOpen &&
         (type === comboboxStateChangeTypes.InputKeyDownArrowDown ||
