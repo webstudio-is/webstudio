@@ -1,4 +1,4 @@
-import { InvalidValue } from "@webstudio-is/css-engine";
+import type { InvalidValue, StyleValue } from "@webstudio-is/css-engine";
 import {
   TextArea,
   textVariants,
@@ -9,9 +9,8 @@ import {
   Tooltip,
   Text,
 } from "@webstudio-is/design-system";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import type {} from "../../controls";
-import { useStore } from "@nanostores/react";
 import { $assets } from "~/shared/nano-states";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -35,54 +34,72 @@ const isAbsoluteURL = (value: string) => {
   }
 };
 
+const getInitialErrors = (styleValue: StyleValue | undefined): string[] => {
+  const assets = $assets.get();
+  if (styleValue === undefined) {
+    return [];
+  }
+  if (styleValue.type === "image") {
+    if (styleValue.value.type === "asset") {
+      const asset = assets.get(styleValue.value.value);
+      if (asset === undefined || asset.type !== "image") {
+        return [`Asset ${styleValue.value.value} is not found in project`];
+      }
+    }
+  }
+  return [];
+};
+
+const getInitialValue = (
+  styleValue: StyleValue | undefined
+): IntermediateValue | InvalidValue | undefined => {
+  const assets = $assets.get();
+
+  if (styleValue === undefined) {
+    return;
+  }
+
+  if (styleValue.type === "keyword") {
+    return {
+      type: "intermediate",
+      value: styleValue.value,
+    };
+  }
+
+  let backgroundUrl;
+  if (styleValue.type === "image") {
+    if (styleValue.value.type === "asset") {
+      const asset = assets.get(styleValue.value.value);
+      if (asset === undefined || asset.type !== "image") {
+        return {
+          type: "invalid",
+          value: styleValue.value.value,
+        };
+      }
+      backgroundUrl = `url(${asset.name})`;
+    }
+
+    if (styleValue.value.type === "url") {
+      backgroundUrl = `url(${styleValue.value.url})`;
+    }
+
+    return backgroundUrl !== undefined
+      ? { type: "intermediate", value: backgroundUrl }
+      : undefined;
+  }
+};
+
 export const BackgroundImage = ({ index }: { index: number }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const assets = useStore($assets);
+
   const styleDecl = useComputedStyleDecl("backgroundImage");
   const styleValue = getRepeatedStyleItem(styleDecl, index);
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState<string[]>(() =>
+    getInitialErrors(styleValue)
+  );
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
-  >(undefined);
-
-  useEffect(() => {
-    if (styleValue === undefined) {
-      return;
-    }
-
-    if (styleValue.type === "keyword") {
-      setIntermediateValue({
-        type: "intermediate",
-        value: styleValue.value,
-      });
-    }
-
-    let backgroundUrl;
-    if (styleValue.type === "image") {
-      if (styleValue.value.type === "asset") {
-        const asset = assets.get(styleValue.value.value);
-        if (asset === undefined || asset.type !== "image") {
-          setErrors(["Asset not found"]);
-          setIntermediateValue({
-            type: "invalid",
-            value: styleValue.value.value,
-          });
-          return;
-        }
-        backgroundUrl = `url(${asset.name})`;
-      }
-
-      if (styleValue.value.type === "url") {
-        backgroundUrl = `url(${styleValue.value.url})`;
-      }
-
-      setIntermediateValue(
-        backgroundUrl !== undefined
-          ? { type: "intermediate", value: backgroundUrl }
-          : undefined
-      );
-    }
-  }, [styleValue, assets]);
+  >(() => getInitialValue(styleValue));
 
   const handleChange = (value: string, options: StyleUpdateOptions) => {
     setIntermediateValue({
