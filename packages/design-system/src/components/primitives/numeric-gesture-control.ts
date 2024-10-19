@@ -169,9 +169,9 @@ export const numericScrubControl = (
 
         onStart?.();
         state.value = getInitialValue();
-        state.timerId = setTimeout(() => {
+        state.timerId = setTimeout(async () => {
           exitPointerLock?.();
-          exitPointerLock = requestPointerLock(state, event, targetNode);
+          exitPointerLock = await requestPointerLock(state, event, targetNode);
         }, 150);
 
         targetNode.addEventListener("pointermove", handleEvent);
@@ -272,7 +272,7 @@ const setRootStyle = (
   };
 };
 
-const requestPointerLock = (
+const requestPointerLock = async (
   state: NumericScrubState,
   event: PointerEvent,
   targetNode: HTMLElement | SVGElement
@@ -287,8 +287,15 @@ const requestPointerLock = (
   // other browsers show a warning banner, making the use of it in this scenario subpar: in which case we fallback to using non-pointerLock means:
   // albeit without an infinite cursor ux.
   if (shouldUsePointerLock) {
-    // @ts-expect-error - unadjustedMovement is a chromium only feature, fixes random movementX|Y jumps on windows
-    targetNode.requestPointerLock({ unadjustedMovement: true });
+    // based on https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock is async
+    try {
+      // @ts-expect-error - unadjustedMovement is a chromium only feature, fixes random movementX|Y jumps on windows
+      await targetNode.requestPointerLock({ unadjustedMovement: true });
+    } catch {
+      // Some platforms may not support unadjusted movement.
+      await targetNode.requestPointerLock();
+    }
+
     const cursorNode = (targetNode.ownerDocument.querySelector(
       "#numeric-guesture-control-cursor"
     ) ||
