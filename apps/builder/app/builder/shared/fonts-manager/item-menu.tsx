@@ -17,7 +17,7 @@ import { $authPermit } from "~/shared/nano-states";
 
 const MenuButton = styled(SmallIconButton, {
   "&:hover, &:focus-visible": {
-    color: theme.colors.hiContrast,
+    color: theme.colors.foregroundMain,
   },
 });
 

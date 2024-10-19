@@ -1,5 +1,4 @@
 import { createStitches } from "@stitches/react";
-import { slate } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 import * as figma from "./__generated__/figma-design-tokens";
@@ -7,11 +6,7 @@ import * as figma from "./__generated__/figma-design-tokens";
 const { styled, css, getCssText, globalCss, keyframes, config, reset } =
   createStitches({
     theme: {
-      colors: {
-        // Semantic colors
-        hiContrast: slate.slate12,
-        ...figma.color,
-      },
+      colors: figma.color,
       fonts: {
         ...figma.fontFamilies,
         sans: figma.fontFamilies.inter,

@@ -47,7 +47,7 @@ const Content = styled(TooltipPrimitive.Content, {
 });
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: theme.colors.hiContrast,
+  fill: theme.colors.backgroundTooltipMain,
   marginTop: -0.5,
 });
 

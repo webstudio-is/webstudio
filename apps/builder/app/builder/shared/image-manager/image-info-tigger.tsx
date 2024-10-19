@@ -35,13 +35,13 @@ export const ImageInfoTrigger = ({
           css={{
             visibility: `var(${triggerVisibilityVar}, hidden)`,
             position: "absolute",
-            color: theme.colors.foregroundMain,
+            color: theme.colors.foregroundSubtle,
             top: theme.spacing[3],
             right: theme.spacing[3],
             cursor: "pointer",
             transition: "opacity 100ms ease",
             "&:hover": {
-              color: theme.colors.hiContrast,
+              color: theme.colors.foregroundMain,
             },
             ...gearIconCssVars({ fill: "transparent" }),
           }}
