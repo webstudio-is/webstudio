@@ -368,8 +368,8 @@ export const CssValueInput = ({
     const defaultProps = { altKey: false, shiftKey: false };
 
     if (value.type !== "intermediate" && value.type !== "invalid") {
-      props.onChangeComplete({ ...defaultProps, ...event, value });
       closeMenu();
+      props.onChangeComplete({ ...defaultProps, ...event, value });
       return;
     }
 
