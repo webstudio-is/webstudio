@@ -159,7 +159,7 @@ export const AssetsShell = ({
       }}
     >
       <Flex
-        css={{ py: theme.spacing[5], px: theme.spacing[9] }}
+        css={{ py: theme.spacing[5], px: theme.spacing[7] }}
         gap="2"
         direction="column"
         shrink={false}
