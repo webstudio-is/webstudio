@@ -369,6 +369,7 @@ export const CssValueInput = ({
 
     if (value.type !== "intermediate" && value.type !== "invalid") {
       props.onChangeComplete({ ...defaultProps, ...event, value });
+      closeMenu();
       return;
     }
 
@@ -379,6 +380,7 @@ export const CssValueInput = ({
       return;
     }
 
+    closeMenu();
     props.onChangeComplete({
       ...defaultProps,
       ...event,
@@ -395,6 +397,7 @@ export const CssValueInput = ({
     getItemProps,
     isOpen,
     highlightedIndex,
+    closeMenu,
   } = useCombobox<CssValueInputValue>({
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
     getItems: getOptions,
