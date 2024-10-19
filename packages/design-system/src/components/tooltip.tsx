@@ -103,7 +103,11 @@ export const Tooltip = forwardRef(
           asChild
           {...triggerProps}
           onFocus={(event) => {
-            // Prevent tooltip from opening on focus
+            // Prevent the tooltip from being shown on focus, even though this goes against accessibility guidelines.
+            // The only valid use case for showing tooltips on focus is for users who cannot use a mouse.
+            // However, since the editor cannot be used without a mouse, it is better to have a working button
+            // than to attempt to support this scenario, which introduces issues like breaking canvas scrolling or displaying
+            // the tooltip when closing a dialog/popover.
             event.preventDefault();
             triggerProps?.onFocus?.(event);
           }}
