@@ -112,7 +112,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         direction="column"
         data-state={state}
         css={{
-          px: theme.spacing[9],
+          px: theme.spacing[7],
           py: theme.spacing[5],
           position: "relative",
           overflow: "hidden",
