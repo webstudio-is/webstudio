@@ -330,9 +330,9 @@ const Publish = ({
   return (
     <Flex
       css={{
-        paddingLeft: theme.spacing[9],
-        paddingRight: theme.spacing[9],
-        paddingBottom: theme.spacing[9],
+        paddingLeft: theme.spacing[7],
+        paddingRight: theme.spacing[7],
+        paddingBottom: theme.spacing[7],
         paddingTop: theme.spacing[5],
       }}
       gap={2}

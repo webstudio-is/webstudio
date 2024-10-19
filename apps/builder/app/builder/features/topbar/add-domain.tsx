@@ -68,9 +68,9 @@ export const AddDomain = ({
     <>
       <Flex
         css={{
-          padding: theme.spacing[9],
-          paddingTop: isOpen ? theme.spacing[5] : theme.spacing[9],
-          paddingBottom: isOpen ? theme.spacing[9] : 0,
+          padding: theme.spacing[7],
+          paddingTop: isOpen ? theme.spacing[5] : theme.spacing[7],
+          paddingBottom: isOpen ? theme.spacing[7] : 0,
         }}
         gap={2}
         shrink={false}

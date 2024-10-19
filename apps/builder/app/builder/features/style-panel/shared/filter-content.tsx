@@ -164,12 +164,14 @@ export const FilterSectionContent = ({
 
   return (
     <Flex direction="column">
-      <Flex direction="column" css={{ px: theme.spacing[9] }}>
+      <Flex
+        direction="column"
+        gap="2"
+        css={{ px: theme.spacing[7], py: theme.spacing[5] }}
+      >
         <Grid
           gap="2"
           css={{
-            marginTop: theme.spacing[5],
-            paddingBottom: theme.spacing[5],
             gridTemplateColumns: "1fr 3fr",
             alignItems: "center",
           }}
@@ -189,8 +191,6 @@ export const FilterSectionContent = ({
           <Grid
             gap="2"
             css={{
-              marginTop: theme.spacing[5],
-              paddingBottom: theme.spacing[5],
               gridTemplateColumns: "1fr 3fr",
               alignItems: "center",
             }}
@@ -242,9 +242,8 @@ export const FilterSectionContent = ({
       <Flex
         direction="column"
         css={{
-          px: theme.spacing[9],
-          paddingTop: theme.spacing[5],
-          paddingBottom: theme.spacing[9],
+          px: theme.spacing[7],
+          py: theme.spacing[5],
           gap: theme.spacing[3],
           minWidth: theme.spacing[30],
         }}

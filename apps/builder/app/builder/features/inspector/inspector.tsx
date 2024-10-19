@@ -179,9 +179,8 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                 <ScrollArea>
                   <InstanceInfo instance={selectedInstance} />
                   <SettingsPanelContainer
-                    key={
-                      selectedInstance.id /* Re-render when instance changes */
-                    }
+                    // Re-render when instance changes
+                    key={selectedInstance.id}
                     selectedInstance={selectedInstance}
                   />
                 </ScrollArea>
