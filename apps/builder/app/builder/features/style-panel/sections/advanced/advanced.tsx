@@ -234,7 +234,7 @@ const AdvancedSearch = ({
           <InputField
             {...combobox.getInputProps()}
             autoFocus={true}
-            placeholder="Find or create a property"
+            placeholder="Add styles"
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
             onPaste={(event) => {
               const data = event.clipboardData.getData("text");
