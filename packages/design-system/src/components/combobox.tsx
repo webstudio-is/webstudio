@@ -313,16 +313,11 @@ export const useCombobox = <Item,>({
 
       if (isOpen) {
         itemsCache.current = getItems();
-        const matchedItems = match(
-          inputValue ?? "",
-          itemsCache.current,
-          itemToString
-        );
         // Don't set isOpen to true if there are no items to show
         // because otherwise first ESC press will try to close it and only next ESC
         // will reset the value. When list is empty, first ESC should reset the value.
-        setMatchedItems(matchedItems);
-        setIsOpen(matchedItems.length > 0);
+        setMatchedItems(itemsCache.current);
+        setIsOpen(itemsCache.current.length > 0);
       } else {
         setMatchedItems([]);
         setIsOpen(false);
