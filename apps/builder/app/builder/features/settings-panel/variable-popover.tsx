@@ -675,7 +675,7 @@ export const VariablePopoverTrigger = forwardRef<
             css={{
               overflow: "hidden",
               gap: theme.spacing[7],
-              p: theme.spacing[7],
+              p: theme.panel.padding,
             }}
           >
             {requiresUpgrade && (

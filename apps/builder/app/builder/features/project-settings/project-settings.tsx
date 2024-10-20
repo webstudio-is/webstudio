@@ -71,7 +71,7 @@ export const ProjectSettingsView = ({
                       css={{
                         position: "relative",
                         height: theme.spacing[13],
-                        px: theme.spacing[7],
+                        paddingBlock: theme.panel.paddingBlock,
                         outline: "none",
                         "&:focus-visible, &:hover": {
                           background: theme.colors.backgroundHover,

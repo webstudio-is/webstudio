@@ -3,6 +3,45 @@ import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 import * as figma from "./__generated__/figma-design-tokens";
 
+const spacing = {
+  0: "0px",
+  1: "1px",
+  2: "2px",
+  3: "4px",
+  4: "6px",
+  5: "8px",
+  6: "10px",
+  7: "12px",
+  8: "14px",
+  9: "16px",
+  10: "20px",
+  11: "24px",
+  12: "28px",
+  13: "32px",
+  14: "36px",
+  15: "40px",
+  16: "44px",
+  17: "48px",
+  18: "56px",
+  19: "64px",
+  20: "80px",
+  21: "96px",
+  22: "112px",
+  23: "128px",
+  24: "144px",
+  25: "160px",
+  26: "176px",
+  27: "192px",
+  28: "208px",
+  29: "224px",
+  30: "240px",
+  31: "256px",
+  32: "288px",
+  33: "320px",
+  34: "384px",
+  35: "448px",
+};
+
 const { styled, css, getCssText, globalCss, keyframes, config, reset } =
   createStitches({
     theme: {
@@ -16,44 +55,7 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
       opacity: {
         1: "0.4",
       },
-      spacing: {
-        0: "0px",
-        1: "1px",
-        2: "2px",
-        3: "4px",
-        4: "6px",
-        5: "8px",
-        6: "10px",
-        7: "12px",
-        8: "14px",
-        9: "16px",
-        10: "20px",
-        11: "24px",
-        12: "28px",
-        13: "32px",
-        14: "36px",
-        15: "40px",
-        16: "44px",
-        17: "48px",
-        18: "56px",
-        19: "64px",
-        20: "80px",
-        21: "96px",
-        22: "112px",
-        23: "128px",
-        24: "144px",
-        25: "160px",
-        26: "176px",
-        27: "192px",
-        28: "208px",
-        29: "224px",
-        30: "240px",
-        31: "256px",
-        32: "288px",
-        33: "320px",
-        34: "384px",
-        35: "448px",
-      },
+      spacing,
 
       /**
        * Use instead: textVariants / textStyles / <Text />
@@ -83,10 +85,6 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         pill: "9999px",
       },
       zIndices: {
-        1: "100",
-        2: "200",
-        3: "300",
-        4: "400",
         max: "999",
       },
       easing: {
@@ -94,15 +92,17 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
       },
       shadows: figma.boxShadow,
+
+      // Semantic values
+      panel: {
+        padding: `${spacing[5]} ${spacing[7]}`,
+        paddingInline: spacing[7],
+        paddingBlock: spacing[5],
+      },
     },
     media: {
       tablet: "(min-width: 768px)",
-      laptop: "(min-width: 1024px)",
-      desktop: "(min-width: 1280px)",
-      motion: "(prefers-reduced-motion)",
       hover: "(any-hover: hover)",
-      dark: "(prefers-color-scheme: dark)",
-      light: "(prefers-color-scheme: light)",
     },
     utils: {
       p: (value: Stitches.PropertyValue<"padding">) => ({
@@ -121,12 +121,10 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         paddingLeft: value,
       }),
       px: (value: Stitches.PropertyValue<"paddingLeft">) => ({
-        paddingLeft: value,
-        paddingRight: value,
+        paddingInline: value,
       }),
       py: (value: Stitches.PropertyValue<"paddingTop">) => ({
-        paddingTop: value,
-        paddingBottom: value,
+        paddingBlock: value,
       }),
 
       m: (value: Stitches.PropertyValue<"margin">) => ({

@@ -47,7 +47,7 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
       gap="1"
       align="center"
       css={{
-        p: theme.spacing[7],
+        p: theme.panel.padding,
         pb: 0,
         color: theme.colors.foregroundSubtle,
       }}
