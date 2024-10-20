@@ -1,4 +1,4 @@
-import { theme, Grid, Box, Flex } from "@webstudio-is/design-system";
+import { Grid } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
