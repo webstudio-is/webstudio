@@ -393,7 +393,7 @@ export const EditorDialog = ({
         <Grid
           align="stretch"
           css={{
-            padding: theme.spacing[7],
+            padding: theme.panel.padding,
             height: "100%",
             overflow: "hidden",
             boxSizing: "content-box",

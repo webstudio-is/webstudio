@@ -52,10 +52,7 @@ const isImageOrGradient = (value: string): value is "image" | "gradient" => {
   return value === "image" || value === "gradient";
 };
 
-const BackgroundSection = styled("div", {
-  px: theme.spacing[7],
-  py: theme.spacing[5],
-});
+const BackgroundSection = styled("div", { padding: theme.panel.padding });
 
 const Spacer = styled("div", {
   height: theme.spacing[5],

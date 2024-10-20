@@ -45,7 +45,7 @@ const titleButtonLayoutStyle = css({
   width: "100%",
   height: "100%",
   boxSizing: "border-box",
-  px: theme.spacing[7],
+  paddingInline: theme.panel.paddingInline,
 });
 
 const labelContainerStyle = css({

@@ -153,13 +153,13 @@ export const AssetsShell = ({
       direction="column"
       css={{
         overflow: "hidden",
-        py: theme.spacing[5],
+        paddingBlock: theme.panel.paddingBlock,
         flex: 1,
         position: "relative",
       }}
     >
       <Flex
-        css={{ py: theme.spacing[5], px: theme.spacing[7] }}
+        css={{ padding: theme.panel.padding }}
         gap="2"
         direction="column"
         shrink={false}

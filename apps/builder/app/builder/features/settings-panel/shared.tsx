@@ -304,7 +304,7 @@ export const Row = ({
   css,
 }: Pick<ComponentProps<typeof Flex>, "css" | "children">) => (
   <Flex
-    css={{ paddingBlock: theme.panel.paddingBlock, ...css }}
+    css={{ paddingInline: theme.panel.paddingInline, ...css }}
     direction="column"
   >
     {children}

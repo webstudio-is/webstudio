@@ -164,11 +164,7 @@ export const FilterSectionContent = ({
 
   return (
     <Flex direction="column">
-      <Flex
-        direction="column"
-        gap="2"
-        css={{ px: theme.spacing[7], py: theme.spacing[5] }}
-      >
+      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
         <Grid
           gap="2"
           css={{
@@ -242,8 +238,7 @@ export const FilterSectionContent = ({
       <Flex
         direction="column"
         css={{
-          px: theme.spacing[7],
-          py: theme.spacing[5],
+          padding: theme.panel.padding,
           gap: theme.spacing[3],
           minWidth: theme.spacing[30],
         }}

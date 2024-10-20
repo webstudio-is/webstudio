@@ -115,7 +115,7 @@ export const Button = ({
         <PopoverTrigger asChild>
           <ButtonComponent prefix={<TrashIcon />}>Open</ButtonComponent>
         </PopoverTrigger>
-        <PopoverContent css={{ padding: theme.spacing[7] }}>
+        <PopoverContent css={{ padding: theme.panel.padding }}>
           <Text>Some content</Text>
         </PopoverContent>
       </Popover>

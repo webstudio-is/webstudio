@@ -232,7 +232,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         title="Components"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      <Box css={{ padding: theme.spacing[7] }}>
+      <Box css={{ padding: theme.panel.padding }}>
         <SearchField
           {...searchFieldProps}
           autoFocus
@@ -253,7 +253,10 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               <Grid
                 gap="1"
                 columns="3"
-                css={{ px: theme.spacing[7], overflow: "auto" }}
+                css={{
+                  paddingInline: theme.panel.paddingInline,
+                  overflow: "auto",
+                }}
               >
                 {group.metas.map((meta: WsComponentMeta, index) => {
                   const component = componentNamesByMeta.get(meta);

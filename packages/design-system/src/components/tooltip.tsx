@@ -30,7 +30,7 @@ const Content = styled(TooltipPrimitive.Content, {
   backgroundColor: theme.colors.backgroundTooltipMain,
   color: theme.colors.foregroundContrastMain,
   borderRadius: theme.borderRadius[7],
-  padding: theme.spacing[5],
+  padding: theme.panel.padding,
   position: "relative",
 
   variants: {
@@ -40,7 +40,6 @@ const Content = styled(TooltipPrimitive.Content, {
       },
       large: {
         maxWidth: theme.spacing["32"],
-        padding: theme.spacing[7],
       },
     },
   },

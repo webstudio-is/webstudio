@@ -36,7 +36,7 @@ import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
     direction="column"
-    css={{ px: theme.spacing[7], py: theme.spacing[5] }}
+    css={{ padding: theme.panel.padding }}
     gap="1"
     {...props}
   />
@@ -283,8 +283,7 @@ const itemStyle = css({
   display: "flex",
   alignItems: "center",
   gap: theme.spacing[3],
-  py: theme.spacing[5],
-  px: theme.spacing[7],
+  padding: theme.panel.padding,
   backgroundColor: theme.colors.backgroundPanel,
 });
 

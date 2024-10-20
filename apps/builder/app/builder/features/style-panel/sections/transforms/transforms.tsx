@@ -110,7 +110,7 @@ const TransformAdvancedPopover = () => {
     <FloatingPanel
       title="Advanced Transform"
       content={
-        <Grid gap="2" css={{ p: theme.spacing[7] }}>
+        <Grid gap="2" css={{ padding: theme.panel.padding }}>
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Backface Visibility"
@@ -244,10 +244,7 @@ const TransformSection = ({
     <FloatingPanel
       title={humanizeString(panel)}
       content={
-        <Flex
-          direction="column"
-          css={{ px: theme.spacing[7], py: theme.spacing[5] }}
-        >
+        <Flex direction="column" css={{ padding: theme.panel.padding }}>
           {panel === "translate" && <TranslatePanelContent />}
           {panel === "scale" && <ScalePanelContent />}
           {panel === "rotate" && <RotatePanelContent />}

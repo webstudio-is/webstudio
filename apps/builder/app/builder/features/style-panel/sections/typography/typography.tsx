@@ -281,8 +281,7 @@ const TypographySectionAdvancedPopover = () => {
       content={
         <Grid
           css={{
-            py: theme.spacing[5],
-            px: theme.spacing[7],
+            padding: theme.panel.padding,
             gap: theme.spacing[9],
             width: theme.spacing[30],
           }}

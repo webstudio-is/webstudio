@@ -166,8 +166,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       direction="column"
       css={{
         gridColumn: "span 2",
-        px: theme.spacing[7],
-        py: theme.spacing[5],
+        padding: theme.panel.padding,
         gap: theme.spacing[3],
       }}
     >

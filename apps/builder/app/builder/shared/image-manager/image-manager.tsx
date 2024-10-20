@@ -106,7 +106,7 @@ export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
       type="image"
       accept={accept}
     >
-      <Grid columns={3} css={{ px: theme.spacing[7] }}>
+      <Grid columns={3} css={{ paddingInline: theme.panel.paddingInline }}>
         {filteredItems.map((assetContainer, index) => (
           <ImageThumbnail
             key={assetContainer.asset.id}
