@@ -272,6 +272,18 @@ test("merge text-wrap-mode and text-wrap-style into text-wrap", () => {
     ["white-space", "normal"],
     ["text-wrap", "pretty"],
   ]);
+  expect(
+    mergeKeywords([
+      ["text-wrap-mode", "wrap"],
+      ["text-wrap-style", "auto"],
+    ])
+  ).toEqual([
+    ["white-space", "normal"],
+    ["text-wrap", "wrap"],
+  ]);
+  expect(mergeKeywords([["text-wrap-style", "auto"]])).toEqual([
+    ["text-wrap", "wrap"],
+  ]);
 });
 
 test("merge text-wrap with vars", () => {

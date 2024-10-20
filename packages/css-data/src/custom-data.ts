@@ -82,7 +82,15 @@ keywordValues.listStyleType = [
   "georgian",
   "trad-chinese-informal",
   "kannada",
+  "none",
+  "initial",
+  "inherit",
+  "unset",
 ];
+
+// removed auto from keywords
+// fixed in webref btw
+keywordValues.textWrapMode = ["wrap", "nowrap", "initial", "inherit", "unset"];
 
 export const customLonghandPropertyNames = [
   "boxShadowOffsetX",

@@ -94,6 +94,9 @@ const mergeWhiteSpaceAndTextWrap = (styleMap: StyleMap) => {
   if (collapse === "break-spaces") {
     styleMap.set("white-space", { type: "keyword", value: "break-spaces" });
   }
+  if (style === "auto") {
+    styleMap.set("text-wrap", modeValue ?? { type: "keyword", value: "wrap" });
+  }
   if (style === "balance" || style === "stable" || style === "pretty") {
     styleMap.set("text-wrap", { type: "keyword", value: style });
   }
