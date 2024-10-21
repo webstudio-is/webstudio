@@ -169,15 +169,6 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         WebkitBackgroundClip: value,
         backgroundClip: value,
       }),
-
-      // LEGACY, please don't use them
-      as: (value: Stitches.PropertyValue<"alignSelf">) => ({
-        alignSelf: value,
-      }),
-      fg: (value: Stitches.PropertyValue<"flexGrow">) => ({ flexGrow: value }),
-      bc: (value: Stitches.PropertyValue<"backgroundColor">) => ({
-        backgroundColor: value,
-      }),
     },
   });
 
