@@ -8,4 +8,3 @@ export const cssVars = false;
 export const filters = false;
 export const xmlElement = false;
 export const staticExport = false;
-export const pasteStyles = false;
