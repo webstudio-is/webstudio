@@ -366,6 +366,11 @@ const keywordValues = (() => {
   const result = { ...customData.keywordValues };
 
   for (const property in filteredProperties) {
+    const key = normalizePropertyName(property);
+    // prevent merging with custom keywords
+    if (result[key]) {
+      continue;
+    }
     const keywords = new Set<string>();
     walkSyntax(
       filteredProperties[property as keyof typeof filteredProperties].syntax,
@@ -390,7 +395,6 @@ const keywordValues = (() => {
     }
 
     if (keywords.size !== 0) {
-      const key = normalizePropertyName(property);
       result[key] = [...(result[key] ?? []), ...keywords];
     }
   }

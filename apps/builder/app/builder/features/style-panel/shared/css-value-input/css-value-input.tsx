@@ -605,11 +605,13 @@ export const CssValueInput = ({
   const valueForDescription =
     highlightedValue?.type === "keyword"
       ? highlightedValue
-      : props.value?.type === "keyword"
-        ? props.value
-        : items[0]?.type === "keyword"
-          ? items[0]
-          : undefined;
+      : highlightedValue?.type === "var"
+        ? undefined
+        : props.value?.type === "keyword"
+          ? props.value
+          : items[0]?.type === "keyword"
+            ? items[0]
+            : undefined;
 
   if (valueForDescription) {
     const key = `${property}:${toValue(

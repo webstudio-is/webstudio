@@ -23,10 +23,6 @@ import {
 } from "../../shared/repeated-style";
 import { PropertySectionLabel } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
-import {
-  findTimingFunctionFromValue,
-  type TransitionProperty,
-} from "./transition-utils";
 import { TransitionContent } from "./transition-content";
 import { parseCssFragment } from "../../shared/css-fragment";
 
@@ -36,7 +32,7 @@ const label = "Transitions";
 
 const getTransitionLayers = (
   styles: ComputedStyleDecl[],
-  property: TransitionProperty
+  property: (typeof transitionLongHandProperties)[number]
 ) => {
   const transitionPropertyValue = styles[0].cascadedValue;
   const currentPropertyValue = styles.find(
@@ -73,11 +69,8 @@ const getLayerLabel = ({
     "transitionTimingFunction"
   )[index];
   const timingFunction = toValue({ ...timingFunctionLayer, hidden: false });
-  const humanizedTimingFunction =
-    findTimingFunctionFromValue(timingFunction) ?? timingFunction;
   const delay = toValue(getTransitionLayers(styles, "transitionDelay")[index]);
-
-  return `${property}: ${duration} ${humanizedTimingFunction} ${delay}`;
+  return `${property}: ${duration} ${timingFunction} ${delay}`;
 };
 
 export const Section = () => {

@@ -167,25 +167,25 @@ test("expand border-radius", () => {
     ["border-top-left-radius", "5px"],
     ["border-top-right-radius", "5px"],
     ["border-bottom-right-radius", "5px"],
-    ["border-top-left-radius", "5px"],
+    ["border-bottom-left-radius", "5px"],
   ]);
   expect(expandShorthands([["border-radius", "1px 2px 3px 4px"]])).toEqual([
     ["border-top-left-radius", "1px"],
     ["border-top-right-radius", "2px"],
     ["border-bottom-right-radius", "3px"],
-    ["border-top-left-radius", "4px"],
+    ["border-bottom-left-radius", "4px"],
   ]);
   expect(expandShorthands([["border-radius", "5px / 3px"]])).toEqual([
     ["border-top-left-radius", "5px 3px"],
     ["border-top-right-radius", "5px 3px"],
     ["border-bottom-right-radius", "5px 3px"],
-    ["border-top-left-radius", "5px 3px"],
+    ["border-bottom-left-radius", "5px 3px"],
   ]);
   expect(expandShorthands([["border-radius", "5px 2px / 3px 4px"]])).toEqual([
     ["border-top-left-radius", "5px 3px"],
     ["border-top-right-radius", "2px 4px"],
     ["border-bottom-right-radius", "5px 3px"],
-    ["border-top-left-radius", "2px 4px"],
+    ["border-bottom-left-radius", "2px 4px"],
   ]);
 });
 
@@ -194,7 +194,7 @@ test("expand border-radius with css-wide keywords", () => {
     ["border-top-left-radius", "inherit"],
     ["border-top-right-radius", "inherit"],
     ["border-bottom-right-radius", "inherit"],
-    ["border-top-left-radius", "inherit"],
+    ["border-bottom-left-radius", "inherit"],
   ]);
 });
 

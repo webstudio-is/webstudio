@@ -16,6 +16,7 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
+  textWrapMode: ["wrap", "nowrap", "initial", "inherit", "unset"],
   "-webkit-line-clamp": ["none", "initial", "inherit", "unset"],
   "-webkit-overflow-scrolling": [
     "auto",
@@ -5041,7 +5042,6 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
-  textWrapMode: ["auto", "wrap", "nowrap", "initial", "inherit", "unset"],
   textWrapStyle: [
     "auto",
     "balance",

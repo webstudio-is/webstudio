@@ -237,7 +237,7 @@ const expandBorderRadius = function* (value: CssNode) {
   yield ["border-top-left-radius", topLeft] as const;
   yield ["border-top-right-radius", topRight] as const;
   yield ["border-bottom-right-radius", bottomRight] as const;
-  yield ["border-top-left-radius", bottomLeft] as const;
+  yield ["border-bottom-left-radius", bottomLeft] as const;
 };
 
 /**
