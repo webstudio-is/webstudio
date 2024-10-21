@@ -236,14 +236,6 @@ const AdvancedSearch = ({
             autoFocus={true}
             placeholder="Add styles"
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
-            onPaste={(event) => {
-              const data = event.clipboardData.getData("text");
-              const isInserted = insertStyles(data);
-              if (isInserted) {
-                event.preventDefault();
-                onClose();
-              }
-            }}
           />
         </ComboboxAnchor>
         <ComboboxContent>
