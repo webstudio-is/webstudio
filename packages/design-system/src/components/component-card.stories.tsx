@@ -1,5 +1,5 @@
 import { BoxIcon } from "@webstudio-is/icons";
-import { StoryGrid, StorySection } from "./storybook";
+import { StorySection } from "./storybook";
 import { ComponentCard } from "./component-card";
 import { TooltipProvider } from "./tooltip";
 import { Grid } from "./grid";
