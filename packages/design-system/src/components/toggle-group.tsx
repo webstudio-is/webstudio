@@ -65,6 +65,7 @@ const IconButtonStyled = styled(IconButton, {
   "&[data-focused=true], &:focus-visible": {
     // To not overlap focus-ring by the next button
     zIndex: 0,
+    outline: `1px solid ${theme.colors.borderFocus}`,
   },
   borderWidth: 0,
   flexGrow: 1,
