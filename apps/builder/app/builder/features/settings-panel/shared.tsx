@@ -266,7 +266,7 @@ export const HorizontalLayout = ({
       gridTemplateColumns: deletable
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
-      minHeight: theme.spacing[13],
+      minHeight: theme.spacing[12],
     }}
     align="center"
     gap="2"
