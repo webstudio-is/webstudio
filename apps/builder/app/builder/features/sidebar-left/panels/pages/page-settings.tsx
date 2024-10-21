@@ -53,6 +53,8 @@ import {
   PanelBanner,
   css,
   Switch,
+  PanelTitle,
+  TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -63,7 +65,6 @@ import {
   UploadIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
-import { Header, HeaderSuffixSpacer } from "../../shared/panel";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   $assets,
@@ -1343,8 +1344,7 @@ const NewPageSettingsView = ({
 }) => {
   return (
     <>
-      <Header
-        title="New Page Settings"
+      <PanelTitle
         suffix={
           <>
             <Tooltip content="Cancel" side="bottom">
@@ -1358,7 +1358,7 @@ const NewPageSettingsView = ({
                 tabIndex={3}
               />
             </Tooltip>
-            <HeaderSuffixSpacer />
+            <TitleSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
               onClick={onSubmit}
@@ -1368,7 +1368,10 @@ const NewPageSettingsView = ({
             </Button>
           </>
         }
-      />
+      >
+        New Page Settings
+      </PanelTitle>
+      <Separator />
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
@@ -1680,8 +1683,7 @@ const PageSettingsView = ({
 }) => {
   return (
     <>
-      <Header
-        title="Page Settings"
+      <PanelTitle
         suffix={
           <>
             {onDelete && (
@@ -1715,7 +1717,10 @@ const PageSettingsView = ({
             </Tooltip>
           </>
         }
-      />
+      >
+        Page Settings
+      </PanelTitle>
+      <Separator />
       <Form onSubmit={onClose}>{children}</Form>
     </>
   );

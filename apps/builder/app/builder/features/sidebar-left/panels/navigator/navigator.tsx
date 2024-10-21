@@ -1,31 +1,37 @@
-import { NavigatorIcon } from "@webstudio-is/icons";
-import { Kbd, Text, Flex, Separator } from "@webstudio-is/design-system";
-import type { TabContentProps } from "../../types";
-import { Header, CloseButton, Root } from "../../shared/panel";
+import {
+  Button,
+  Flex,
+  PanelTitle,
+  Separator,
+  Tooltip,
+} from "@webstudio-is/design-system";
+import { CrossIcon } from "@webstudio-is/icons";
 import { CssPreview } from "./css-preview";
 import { NavigatorTree } from "./navigator-tree";
 
-export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
+export const NavigatorPanel = ({ onClose }: { onClose: () => void }) => {
   return (
-    <Root>
-      <Header
-        title="Navigator"
-        suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
-      />
+    <>
+      <PanelTitle
+        suffix={
+          <Tooltip content="Close panel" side="bottom">
+            <Button
+              onClick={onClose}
+              color="ghost"
+              prefix={<CrossIcon />}
+              aria-label="Close panel"
+            />
+          </Tooltip>
+        }
+      >
+        Navigator
+      </PanelTitle>
+      <Separator />
       <Flex grow direction="column" justify="end">
         <NavigatorTree />
         <Separator />
         <CssPreview />
       </Flex>
-    </Root>
+    </>
   );
 };
-
-export const Icon = NavigatorIcon;
-
-export const label = (
-  <Text>
-    Navigator&nbsp;&nbsp;
-    <Kbd value={["z"]} color="moreSubtle" />
-  </Text>
-);

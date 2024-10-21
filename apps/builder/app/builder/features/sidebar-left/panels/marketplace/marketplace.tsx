@@ -1,7 +1,12 @@
-import { ExtensionIcon, SpinnerIcon } from "@webstudio-is/icons";
-import { Flex, rawTheme } from "@webstudio-is/design-system";
-import type { TabContentProps } from "../../types";
-import { Header, CloseButton, Root } from "../../shared/panel";
+import { CrossIcon, SpinnerIcon } from "@webstudio-is/icons";
+import {
+  Button,
+  Flex,
+  PanelTitle,
+  rawTheme,
+  Separator,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import { Overview } from "./overview";
 import { Templates } from "./templates";
 import { useEffect, useState } from "react";
@@ -12,7 +17,7 @@ import { ExtendedPanel } from "../../shared/extended-panel";
 import { About } from "./about";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 
-export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
+export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
   const [activeOverviewItem, setAciveOverviewItem] =
     useState<MarketplaceOverviewItem>();
   const [openAbout, setOpenAbout] = useState<Project["id"]>();
@@ -36,43 +41,52 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
   return (
     <>
-      <Root>
-        <Header
-          title="Marketplace"
-          suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
-        />
-        <Overview
-          items={items}
-          activeProjectId={activeOverviewItem?.projectId}
-          onSelect={(activeOverviewItem) => {
-            setAciveOverviewItem(activeOverviewItem);
-            getBuildData({ projectId: activeOverviewItem.projectId });
-          }}
-          openAbout={openAbout}
-          onOpenAbout={setOpenAbout}
-          hidden={showTemplates}
-        />
+      <PanelTitle
+        suffix={
+          <Tooltip content="Close panel" side="bottom">
+            <Button
+              color="ghost"
+              prefix={<CrossIcon />}
+              aria-label="Close panel"
+              onClick={onClose}
+            />
+          </Tooltip>
+        }
+      >
+        Marketplace
+      </PanelTitle>
+      <Separator />
+      <Overview
+        items={items}
+        activeProjectId={activeOverviewItem?.projectId}
+        onSelect={(activeOverviewItem) => {
+          setAciveOverviewItem(activeOverviewItem);
+          getBuildData({ projectId: activeOverviewItem.projectId });
+        }}
+        openAbout={openAbout}
+        onOpenAbout={setOpenAbout}
+        hidden={showTemplates}
+      />
 
-        {showTemplates && (
-          <Templates
-            projectId={activeOverviewItem.projectId}
-            name={activeOverviewItem.name}
-            authorizationToken={activeOverviewItem.authorizationToken}
-            productCategory={activeOverviewItem.category}
-            data={toWebstudioData(buildData)}
-            onOpenChange={(isOpen: boolean) => {
-              if (isOpen === false) {
-                setAciveOverviewItem(undefined);
-              }
-            }}
-          />
-        )}
-        {itemsLoadingState !== "idle" && (
-          <Flex justify="center" css={{ mt: "20%" }}>
-            <SpinnerIcon size={rawTheme.spacing[15]} />
-          </Flex>
-        )}
-      </Root>
+      {showTemplates && (
+        <Templates
+          projectId={activeOverviewItem.projectId}
+          name={activeOverviewItem.name}
+          authorizationToken={activeOverviewItem.authorizationToken}
+          productCategory={activeOverviewItem.category}
+          data={toWebstudioData(buildData)}
+          onOpenChange={(isOpen: boolean) => {
+            if (isOpen === false) {
+              setAciveOverviewItem(undefined);
+            }
+          }}
+        />
+      )}
+      {itemsLoadingState !== "idle" && (
+        <Flex justify="center" css={{ mt: "20%" }}>
+          <SpinnerIcon size={rawTheme.spacing[15]} />
+        </Flex>
+      )}
       <ExtendedPanel isOpen={openAboutItem !== undefined}>
         <About
           item={openAboutItem}
@@ -84,7 +98,3 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
     </>
   );
 };
-
-export const Icon = ExtensionIcon;
-
-export const label = "Marketplace";
