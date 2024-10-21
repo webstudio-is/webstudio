@@ -13,7 +13,6 @@ import { Box } from "./box";
 import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
-import { disableCanvasPointerEvents } from "../utilities";
 
 export const TooltipProvider = TooltipPrimitive.TooltipProvider;
 
@@ -78,18 +77,24 @@ export const Tooltip = forwardRef(
     });
 
     /**
-     * When the mouse leaves Tooltip.Content and moves over an iframe, the Radix Tooltip stays open.
-     * This happens because Radix's internal grace area relies on the pointermove event, which isn't triggered over iframes.
-     * The current workaround is to set pointer-events: none on the canvas when the tooltip is open.
-     **/
-    useEffect(() => {
-      if (open) {
-        const enableCanvasPointerEvents = disableCanvasPointerEvents();
-        return () => {
-          enableCanvasPointerEvents?.();
-        };
-      }
-    }, [open]);
+     * When the mouse leaves Tooltip.Content and hovers over an iframe, the Radix Tooltip stays open.
+     * This occurs because Radix's grace area depends on the pointermove event, which iframes don't trigger.
+     *
+     * Two possible workarounds:
+     * 1. Set pointer-events: none on the canvas when the tooltip is open and content is hovered.
+     *    (This doesn't work well in Chrome, as scrolling stops working on elements hovered with pointer-events: none,
+     *    even after removing pointer-events.)
+     * 2. Close the tooltip on onMouseLeave.
+     *    (This breaks some grace area behavior, such as closing the tooltip when moving the mouse from the content to the trigger.)
+     *
+     * The simpler solution with fewer side effects is to close the tooltip on mouse leave.
+     */
+    const handleMouseEnterComposed: React.MouseEventHandler<HTMLDivElement> = (
+      event
+    ) => {
+      setOpen(false);
+      props.onMouseLeave?.(event);
+    };
 
     return (
       <TooltipPrimitive.Root
@@ -112,6 +117,7 @@ export const Tooltip = forwardRef(
               collisionPadding={8}
               arrowPadding={8}
               {...props}
+              onMouseLeave={handleMouseEnterComposed}
             >
               {typeof content === "string" ? <Text>{content}</Text> : content}
               <Box css={{ color: theme.colors.transparentExtreme }}>
