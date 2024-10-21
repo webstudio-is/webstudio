@@ -32,7 +32,6 @@
     "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.0.3",
     "@floating-ui/dom": "^1.6.5",
     "@radix-ui/colors": "^3.0.0",
-    "@radix-ui/primitive": "^1.1.0",
     "@radix-ui/react-accessible-icon": "^1.1.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.1.1",

@@ -13,7 +13,6 @@ import { Box } from "./box";
 import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
-import { composeEventHandlers } from "@radix-ui/primitive";
 
 export const TooltipProvider = TooltipPrimitive.TooltipProvider;
 
@@ -90,9 +89,12 @@ export const Tooltip = forwardRef(
      *
      * The simpler solution with fewer side effects is to close the tooltip on mouse leave.
      */
-    const handleMouseEnterComposed = composeEventHandlers(() => {
+    const handleMouseEnterComposed: React.MouseEventHandler<HTMLDivElement> = (
+      event
+    ) => {
       setOpen(false);
-    }, props.onMouseLeave);
+      props.onMouseLeave?.(event);
+    };
 
     return (
       <TooltipPrimitive.Root
