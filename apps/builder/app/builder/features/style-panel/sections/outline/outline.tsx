@@ -1,4 +1,4 @@
-import { Grid } from "@webstudio-is/design-system";
+import { Grid, theme } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
@@ -28,8 +28,7 @@ export const Section = () => {
     <StyleSection label="Outline" properties={properties}>
       <Grid
         css={{
-          // label gap (input gap expand)
-          gridTemplateColumns: `1fr 1fr`,
+          gridTemplateColumns: `1fr ${theme.spacing[22]}`,
         }}
         gap={2}
       >
