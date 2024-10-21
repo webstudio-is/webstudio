@@ -183,10 +183,12 @@ export const PropertyInfo = ({
             </Flex>
           }
           suffix={<Kbd value={["option", "click"]} color="moreSubtle" />}
-          css={{ gridTemplateColumns: "2fr 3fr 1fr" }}
+          css={{ gridTemplateColumns: "1fr max-content 1fr" }}
           onClick={onReset}
         >
-          Reset value
+          {styles[0].property.startsWith("--")
+            ? "Delete variable"
+            : "Reset value"}
         </Button>
       )}
     </Flex>
