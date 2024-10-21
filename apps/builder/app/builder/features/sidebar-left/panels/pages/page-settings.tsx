@@ -613,7 +613,7 @@ const MarketplaceSection = ({
   const thumbnailAsset = assets.get(values.marketplaceThumbnailAssetId);
   const thumnailFallbackAsset = assets.get(values.socialImageAssetId);
   return (
-    <Grid gap={2} css={{ py: theme.spacing[5], px: theme.spacing[8] }}>
+    <Grid gap={2} css={{ padding: theme.panel.padding }}>
       <Label text="title">Marketplace</Label>
       <Grid
         flow="column"
@@ -735,7 +735,7 @@ const FormFields = ({
         {/**
          * ----------------------========<<<Page props>>>>========----------------------
          */}
-        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Grid gap={2} css={{ padding: theme.panel.padding }}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Page Name</Label>
             <InputErrorsTooltip errors={errors.name}>

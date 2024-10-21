@@ -36,7 +36,7 @@ import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
     direction="column"
-    css={{ px: theme.spacing[7], py: theme.spacing[5] }}
+    css={{ padding: theme.panel.padding }}
     gap="1"
     {...props}
   />
@@ -283,8 +283,7 @@ const itemStyle = css({
   display: "flex",
   alignItems: "center",
   gap: theme.spacing[3],
-  py: theme.spacing[5],
-  px: theme.spacing[9],
+  padding: theme.panel.padding,
   backgroundColor: theme.colors.backgroundPanel,
 });
 
@@ -400,12 +399,12 @@ export const ShareProject = ({
   ));
 
   const create = (
-    <Box className={itemStyle({ css: { py: theme.spacing["9"] } })}>
+    <Box className={itemStyle({ css: { py: theme.spacing["7"] } })}>
       <Button
         color="neutral"
         state={isPending ? "pending" : undefined}
         prefix={
-          isPending ? <Flex css={{ width: theme.spacing[9] }} /> : <PlusIcon />
+          isPending ? <Flex css={{ width: theme.spacing[7] }} /> : <PlusIcon />
         }
         onClick={() => {
           onCreate();

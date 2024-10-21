@@ -18,7 +18,7 @@ export const ViewMode = () => {
         css={{ height: theme.spacing["15"] }}
       >
         <CloudIcon
-          color={rawTheme.colors.yellow10}
+          color={rawTheme.colors.backgroundAlertMain}
           aria-label="View mode. Your changes will not be saved"
         />
       </Flex>

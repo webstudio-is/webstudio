@@ -46,7 +46,7 @@ const ObjectPosition = () => {
       <FloatingPanel
         title="Object Position"
         content={
-          <Flex css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+          <Flex css={{ padding: theme.panel.padding }}>
             <PositionControl property="objectPosition" styleDecl={styleDecl} />
           </Flex>
         }
@@ -84,7 +84,7 @@ export const properties = [
 const SectionLayout = styled(Grid, {
   columnGap: theme.spacing[5],
   rowGap: theme.spacing[5],
-  px: theme.spacing[9],
+  paddingInline: theme.panel.paddingInline,
 });
 
 export const Section = () => {

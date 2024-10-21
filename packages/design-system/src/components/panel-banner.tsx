@@ -6,5 +6,5 @@ export const PanelBanner = styled(Box, {
   gap: theme.spacing[7],
   flexDirection: "column",
   backgroundColor: theme.colors.backgroundInfoNotification,
-  padding: theme.spacing[9],
+  padding: theme.panel.padding,
 });

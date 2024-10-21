@@ -114,13 +114,10 @@ const containerStyle = css({
       2: {
         height: theme.spacing[11],
       },
-      3: {
-        height: theme.spacing[12],
-      },
     },
   },
   defaultVariants: {
-    size: 3,
+    size: 2,
   },
 });
 
@@ -210,7 +207,7 @@ type InputFieldProps = {
   containerRef?: Ref<HTMLDivElement>;
   inputRef?: Ref<HTMLInputElement>;
   variant?: "chromeless";
-  size?: "1" | "2" | "3";
+  size?: "1" | "2";
   type?: (typeof inputFieldTypes)[number];
   color?: (typeof inputFieldColors)[number];
   css?: CSS;

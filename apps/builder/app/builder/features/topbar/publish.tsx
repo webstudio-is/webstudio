@@ -328,17 +328,7 @@ const Publish = ({
   const isPublishInProgress = isPublishing || hasPendingState;
 
   return (
-    <Flex
-      css={{
-        paddingLeft: theme.spacing[9],
-        paddingRight: theme.spacing[9],
-        paddingBottom: theme.spacing[9],
-        paddingTop: theme.spacing[5],
-      }}
-      gap={2}
-      shrink={false}
-      direction={"column"}
-    >
+    <Flex gap={2} shrink={false} direction={"column"}>
       {publishError && <Text color="destructive">{publishError}</Text>}
 
       <Tooltip
@@ -616,19 +606,19 @@ const Content = (props: {
       <Flex direction="column" justify="end" css={{ height: 0 }}>
         <Separator />
       </Flex>
-
-      <AddDomain
-        projectId={props.projectId}
-        refresh={refreshProject}
-        onCreate={(domain) => {
-          setNewDomains((prev) => {
-            return new Set([...prev, domain]);
-          });
-        }}
-        onExportClick={props.onExportClick}
-      />
-
-      <Publish project={project} refresh={refreshProject} />
+      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+        <AddDomain
+          projectId={props.projectId}
+          refresh={refreshProject}
+          onCreate={(domain) => {
+            setNewDomains((prev) => {
+              return new Set([...prev, domain]);
+            });
+          }}
+          onExportClick={props.onExportClick}
+        />
+        <Publish project={project} refresh={refreshProject} />
+      </Flex>
     </form>
   );
 };
@@ -668,14 +658,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("vanilla");
 
   return (
-    <Grid
-      columns={1}
-      gap={3}
-      css={{
-        margin: theme.spacing[9],
-        marginTop: theme.spacing[5],
-      }}
-    >
+    <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
       <Grid columns={1} gap={2}>
         <div />
         <Grid columns={2} gap={2} align={"center"}>

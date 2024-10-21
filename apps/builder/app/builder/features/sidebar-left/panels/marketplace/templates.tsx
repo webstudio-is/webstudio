@@ -133,7 +133,7 @@ export const Templates = ({
         align="center"
         shrink="false"
         justify="between"
-        css={{ px: theme.spacing[9], py: theme.spacing[5] }}
+        css={{ padding: theme.panel.padding }}
         gap="3"
       >
         <Button

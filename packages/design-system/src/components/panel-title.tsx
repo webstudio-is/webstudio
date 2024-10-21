@@ -25,7 +25,7 @@ const Container = styled("div", textVariants.titles, {
   flexShrink: 0,
   justifyContent: "space-between",
   height: theme.spacing[15],
-  paddingLeft: theme.spacing[9],
+  paddingInline: theme.panel.paddingInline,
   paddingRight: theme.spacing[5],
   color: theme.colors.foregroundMain,
 });

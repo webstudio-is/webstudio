@@ -200,8 +200,7 @@ export const DialogActions = ({ children }: { children: ReactNode }) => {
     <Flex
       gap="1"
       css={{
-        padding: theme.spacing["9"],
-        paddingTop: theme.spacing["5"],
+        padding: theme.panel.padding,
         // Making sure the tab order is the last item first.
         flexFlow: "row-reverse",
       }}

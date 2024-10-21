@@ -400,8 +400,8 @@ const linterTooltipTheme = EditorView.theme({
     pointerEvents: "none",
   },
   ".cm-tooltip-lint": {
-    backgroundColor: rawTheme.colors.hiContrast,
-    color: rawTheme.colors.loContrast,
+    backgroundColor: rawTheme.colors.backgroundTooltipMain,
+    color: rawTheme.colors.foregroundContrastMain,
     borderRadius: rawTheme.borderRadius[7],
     padding: rawTheme.spacing[5],
   },

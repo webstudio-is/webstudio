@@ -162,14 +162,14 @@ const deleteVariable = (variableId: DataSource["id"]) => {
 
 const EmptyVariables = () => {
   return (
-    <Flex direction="column" css={{ gap: theme.spacing[5] }}>
-      <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
+    <Flex direction="column" gap="2">
+      <Flex justify="center" align="center">
         <Text variant="labelsSentenceCase" align="center">
           No data variables created
           <br /> on this instance
         </Text>
       </Flex>
-      <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
+      <Flex justify="center" align="center">
         <VariablePopoverTrigger>
           <Button prefix={<PlusIcon />}>Create data variable</Button>
         </VariablePopoverTrigger>

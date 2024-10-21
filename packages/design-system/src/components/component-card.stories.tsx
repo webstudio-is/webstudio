@@ -1,7 +1,8 @@
 import { BoxIcon } from "@webstudio-is/icons";
-import { StoryGrid, StorySection } from "./storybook";
+import { StorySection } from "./storybook";
 import { ComponentCard } from "./component-card";
 import { TooltipProvider } from "./tooltip";
+import { Grid } from "./grid";
 
 export default {
   title: "Library/Component Card",
@@ -11,7 +12,7 @@ export const Demo = () => {
   return (
     <TooltipProvider>
       <StorySection title="States">
-        <StoryGrid horizontal>
+        <Grid css={{ gridTemplateColumns: "repeat(3, 70px)" }} gap="2">
           <ComponentCard icon={<BoxIcon />} label="Box" tabIndex={1} />
           <ComponentCard
             icon={<BoxIcon />}
@@ -31,10 +32,10 @@ export const Demo = () => {
             state="disabled"
             tabIndex={1}
           />
-        </StoryGrid>
+        </Grid>
       </StorySection>
       <StorySection title="Labels">
-        <StoryGrid horizontal>
+        <Grid gap="2" css={{ gridTemplateColumns: "repeat(3, 70px)" }}>
           <ComponentCard icon={<BoxIcon />} label="Single" tabIndex={1} />
           <ComponentCard
             icon={<BoxIcon />}
@@ -51,7 +52,7 @@ export const Demo = () => {
             label="Truncatedlongword"
             tabIndex={1}
           />
-        </StoryGrid>
+        </Grid>
       </StorySection>
     </TooltipProvider>
   );

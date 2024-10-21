@@ -178,12 +178,10 @@ type ColorPickerProps = {
 };
 
 export const ColorPopover = ({
-  size,
   value,
   onChange,
   onChangeComplete,
 }: {
-  size?: 1 | 2;
   value: StyleValue;
   onChange: (value: undefined | StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
@@ -215,7 +213,6 @@ export const ColorPopover = ({
       >
         <ColorThumb
           color={styleValueToRgbaColor(value)}
-          size={size}
           css={{ margin: theme.spacing[2] }}
           tabIndex={-1}
         />

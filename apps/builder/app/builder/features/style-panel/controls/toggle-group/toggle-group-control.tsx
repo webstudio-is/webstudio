@@ -135,7 +135,6 @@ export const ToggleGroupControl = ({
         }
         batch.publish();
       }}
-      css={{ width: "fit-content" }}
     >
       {items.map((item) => (
         <ToggleGroupTooltip

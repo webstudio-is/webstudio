@@ -324,13 +324,11 @@ const AdvancedPropertyValue = ({
     <CssValueInputContainer
       inputRef={inputRef}
       variant="chromeless"
-      size="2"
       text="mono"
       fieldSizing="content"
       prefix={
         isColor && (
           <ColorPopover
-            size={1}
             value={styleDecl.usedValue}
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };

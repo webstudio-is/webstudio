@@ -137,7 +137,7 @@ const TypographySectionSizing = () => {
 
 const TypographySectionAdvanced = () => {
   return (
-    <Grid gap="2" columns="2" align="end">
+    <Grid gap="2" columns="2">
       <ToggleGroupControl
         properties={["textAlign"]}
         items={[
@@ -281,7 +281,7 @@ const TypographySectionAdvancedPopover = () => {
       content={
         <Grid
           css={{
-            padding: theme.spacing[9],
+            padding: theme.panel.padding,
             gap: theme.spacing[9],
             width: theme.spacing[30],
           }}

@@ -17,7 +17,7 @@ type ItemData = { id: string; text: string };
 const ListItem = styled("li", {
   display: "block",
   margin: 10,
-  background: theme.colors.mint5,
+  background: theme.colors.foregroundMoreSubtle,
   padding: 10,
   userSelect: "none",
 });

@@ -91,7 +91,7 @@ export const Demo = ({
     </StorySection>
 
     <StorySection title="With text">
-      <StoryGrid css={{ alignItems: "flex-start" }}>
+      <StoryGrid css={{ alignItems: "flex-start", flexGrow: 1 }}>
         <EnhancedTooltipProvider>
           <ToggleGroup color={color} type="single" defaultValue="one">
             <EnhancedTooltip content="One">

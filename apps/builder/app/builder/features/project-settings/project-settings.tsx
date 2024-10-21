@@ -71,7 +71,7 @@ export const ProjectSettingsView = ({
                       css={{
                         position: "relative",
                         height: theme.spacing[13],
-                        px: theme.spacing[9],
+                        paddingInline: theme.panel.paddingInline,
                         outline: "none",
                         "&:focus-visible, &:hover": {
                           background: theme.colors.backgroundHover,
@@ -93,7 +93,7 @@ export const ProjectSettingsView = ({
             </Flex>
           </List>
           <ScrollArea>
-            <Grid gap={2} css={{ my: theme.spacing[5] }}>
+            <Grid gap={2} css={{ py: theme.spacing[5] }}>
               {currentSection === "general" && <SectionGeneral />}
               {currentSection === "redirects" && <SectionRedirects />}
               {currentSection === "publish" && <SectionPublish />}

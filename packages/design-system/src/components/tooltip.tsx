@@ -26,10 +26,10 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: theme.colors.hiContrast,
-  color: theme.colors.loContrast,
+  backgroundColor: theme.colors.backgroundTooltipMain,
+  color: theme.colors.foregroundContrastMain,
   borderRadius: theme.borderRadius[7],
-  padding: theme.spacing[5],
+  padding: theme.panel.padding,
   position: "relative",
 
   variants: {
@@ -39,14 +39,13 @@ const Content = styled(TooltipPrimitive.Content, {
       },
       large: {
         maxWidth: theme.spacing["32"],
-        padding: theme.spacing[9],
       },
     },
   },
 });
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: theme.colors.hiContrast,
+  fill: theme.colors.backgroundTooltipMain,
   marginTop: -0.5,
 });
 
@@ -120,7 +119,7 @@ export const Tooltip = forwardRef(
               onMouseLeave={handleMouseEnterComposed}
             >
               {typeof content === "string" ? <Text>{content}</Text> : content}
-              <Box css={{ color: theme.colors.transparentExtreme }}>
+              <Box css={{ color: "transparent" }}>
                 <Arrow offset={5} width={11} height={5} />
               </Box>
             </Content>

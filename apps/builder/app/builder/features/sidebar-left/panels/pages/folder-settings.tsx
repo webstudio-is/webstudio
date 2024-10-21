@@ -143,7 +143,7 @@ const FormFields = ({
   return (
     <Grid css={{ height: "100%" }}>
       <ScrollArea>
-        <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Grid gap={3} css={{ padding: theme.panel.padding }}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Folder Name</Label>
             <InputErrorsTooltip errors={errors.name}>
@@ -542,7 +542,7 @@ const DeleteConfirmationDialog = ({
       }}
     >
       <DialogContent>
-        <Flex gap="3" direction="column" css={{ padding: theme.spacing[9] }}>
+        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
           <Flex direction="rowReverse" gap="2">
             <DialogClose asChild>
