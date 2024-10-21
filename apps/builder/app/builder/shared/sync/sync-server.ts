@@ -272,7 +272,7 @@ export const startProjectSync = ({
   });
 };
 
-const useSyncProject = async ({
+const useSyncProject = ({
   projectId,
   authPermit,
 }: {
