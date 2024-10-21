@@ -368,10 +368,10 @@ const LayoutSectionFlex = () => {
 
   return (
     <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
-      <Flex css={{ gap: theme.spacing[7] }} align="stretch">
+      <Flex css={{ gap: theme.spacing[5] }} align="stretch">
         <FlexGrid />
         <Flex direction="column" justify="between">
-          <Flex css={{ gap: theme.spacing[7] }}>
+          <Flex css={{ gap: theme.spacing[5] }}>
             <MenuControl
               property="flexDirection"
               items={[
@@ -397,7 +397,7 @@ const LayoutSectionFlex = () => {
               ]}
             />
           </Flex>
-          <Flex css={{ gap: theme.spacing[7] }}>
+          <Flex css={{ gap: theme.spacing[5] }}>
             <MenuControl
               property="alignItems"
               items={[
