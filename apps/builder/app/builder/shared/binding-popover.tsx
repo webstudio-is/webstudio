@@ -110,7 +110,7 @@ const BindingPanel = ({
       }}
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>
-        <Flex gap="1" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+        <Flex gap="1" css={{ padding: theme.panel.padding }}>
           <Text variant="labelsSentenceCase">Variables</Text>
           <Tooltip
             variant="wrapped"
@@ -158,7 +158,7 @@ const BindingPanel = ({
           })}
         </CssValueListArrowFocus>
       </Box>
-      <Flex gap="1" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+      <Flex gap="1" css={{ padding: theme.panel.padding }}>
         <Text variant="labelsSentenceCase">Expression Editor</Text>
         <Tooltip
           variant="wrapped"
@@ -175,7 +175,7 @@ const BindingPanel = ({
           <InfoCircleIcon tabIndex={0} />
         </Tooltip>
       </Flex>
-      <Box css={{ padding: `0 ${theme.spacing[9]} ${theme.spacing[9]}` }}>
+      <Box css={{ padding: theme.panel.padding, pt: 0 }}>
         <ExpressionEditor
           editorApiRef={editorApiRef}
           scope={scope}

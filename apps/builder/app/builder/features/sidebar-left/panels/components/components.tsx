@@ -18,6 +18,7 @@ import {
   Text,
   Box,
   Kbd,
+  Grid,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
@@ -231,7 +232,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         title="Components"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      <Box css={{ padding: theme.spacing[9] }}>
+      <Box css={{ padding: theme.panel.padding }}>
         <SearchField
           {...searchFieldProps}
           autoFocus
@@ -249,10 +250,13 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             fullWidth
           >
             <List asChild>
-              <Flex
-                gap="2"
-                wrap="wrap"
-                css={{ px: theme.spacing[9], overflow: "auto" }}
+              <Grid
+                gap="1"
+                columns="3"
+                css={{
+                  paddingInline: theme.panel.paddingInline,
+                  overflow: "auto",
+                }}
               >
                 {group.metas.map((meta: WsComponentMeta, index) => {
                   const component = componentNamesByMeta.get(meta);
@@ -293,7 +297,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                     <Text>No matching component</Text>
                   </Flex>
                 )}
-              </Flex>
+              </Grid>
             </List>
           </CollapsibleSection>
         ))}

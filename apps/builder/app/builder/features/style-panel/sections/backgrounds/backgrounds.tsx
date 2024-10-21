@@ -49,7 +49,7 @@ export const Section = () => {
         />
         <Grid
           css={{
-            px: theme.spacing[9],
+            paddingInline: theme.panel.paddingInline,
             gridTemplateColumns: `1fr ${theme.spacing[23]}`,
           }}
         >

@@ -294,7 +294,7 @@ const EditableTreeNodeLabel = styled("div", {
         background: theme.colors.backgroundControls,
         padding: theme.spacing[3],
         borderRadius: theme.spacing[3],
-        color: theme.colors.hiContrast,
+        color: theme.colors.foregroundMain,
         outline: "none",
         cursor: "auto",
         textOverflow: "clip",

@@ -186,7 +186,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   return (
     <Flex direction="column">
       <PanelTitle
-        css={{ px: theme.spacing[9] }}
+        css={{ paddingInline: theme.panel.paddingInline }}
         suffix={
           <IconButton
             onClick={() => {
@@ -209,7 +209,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
         {allBreakpoints.map((breakpoint, index, all) => {
           return (
             <Fragment key={breakpoint.id}>
-              <Box css={{ px: theme.spacing[7], py: theme.spacing[5] }}>
+              <Box css={{ p: theme.panel.padding }}>
                 <BreakpointEditorItem
                   breakpoint={breakpoint}
                   onChangeComplete={handleChangeComplete}

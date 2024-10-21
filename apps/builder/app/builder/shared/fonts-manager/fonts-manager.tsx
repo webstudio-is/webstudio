@@ -196,9 +196,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         {uploadedItems.map(renderItem)}
         {systemItems.length !== 0 && (
           <>
-            {uploadedItems.length !== 0 && (
-              <Separator css={{ mx: theme.spacing[9] }} />
-            )}
+            {uploadedItems.length !== 0 && <Separator />}
             <DeprecatedListItem
               state="disabled"
               suffix={

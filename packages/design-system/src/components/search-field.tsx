@@ -21,7 +21,7 @@ import { Flex } from "./flex";
 const SearchIcon = styled(MagnifyingGlassIcon, {
   // need to center icon vertically
   display: "block",
-  color: theme.colors.hint,
+  color: theme.colors.foregroundSubtle,
   padding: theme.spacing[3],
 });
 

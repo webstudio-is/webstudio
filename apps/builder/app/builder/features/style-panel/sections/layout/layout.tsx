@@ -214,7 +214,6 @@ const FlexGap = () => {
           "columnGap linked rowGap"
         `,
         alignItems: "center",
-        height: theme.spacing[13],
       }}
     >
       <Box css={{ gridArea: "columnGap" }}>
@@ -490,7 +489,6 @@ export const Section = () => {
         <Grid
           css={{
             gridTemplateColumns: `1fr ${theme.spacing[24]}`,
-            height: theme.spacing[13],
             alignItems: "center",
           }}
         >

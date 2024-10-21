@@ -48,7 +48,7 @@ const scrollButtonStyles = {
   alignItems: "center",
   justifyContent: "center",
   height: 25,
-  color: theme.colors.hiContrast,
+  color: theme.colors.foregroundMain,
   cursor: "default",
 };
 

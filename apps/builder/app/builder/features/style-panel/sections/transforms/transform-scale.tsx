@@ -207,7 +207,7 @@ export const ScalePanelContent = () => {
       </Flex>
       <Flex
         direction="column"
-        css={{ paddingLeft: theme.spacing[5], marginTop: theme.spacing[3] }}
+        css={{ paddingLeft: theme.spacing[3], width: theme.spacing[11] }}
       >
         <Box css={{ rotate: "90deg" }}>
           <BorderRadiusIcon size="12" />

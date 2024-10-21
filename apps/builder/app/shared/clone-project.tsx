@@ -97,7 +97,7 @@ const CloneProjectView = ({
           <Flex
             direction="column"
             css={{
-              px: theme.spacing["9"],
+              px: theme.spacing["7"],
               paddingTop: theme.spacing["5"],
             }}
             gap="1"

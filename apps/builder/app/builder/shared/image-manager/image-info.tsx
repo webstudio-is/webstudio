@@ -36,7 +36,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
 
   return (
     <>
-      <Box css={{ p: `${theme.spacing[5]} ${theme.spacing[9]}` }}>
+      <Box css={{ padding: theme.panel.padding }}>
         <Grid columns={2} align="center" gap={2}>
           <Box css={{ width: 100 }}>
             <Filename variant="labelsSentenceCase">{name}</Filename>
@@ -48,7 +48,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
         </Grid>
       </Box>
       {"width" in meta && "height" in meta ? (
-        <Box css={{ p: `${theme.spacing[5]} ${theme.spacing[9]}` }}>
+        <Box css={{ padding: theme.panel.padding }}>
           <Grid columns={2} gap={2} align="center">
             <Flex align="center" css={{ gap: theme.spacing[3] }}>
               <SizeIcon />
@@ -65,7 +65,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
           </Grid>
         </Box>
       ) : null}
-      <Box css={{ p: `${theme.spacing[5]} ${theme.spacing[9]}` }}>
+      <Box css={{ padding: theme.panel.padding }}>
         <Tooltip side="bottom" content={tooltipContent}>
           <Button
             color="destructive"

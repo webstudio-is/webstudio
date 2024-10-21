@@ -113,7 +113,7 @@ export const BreakpointsPopover = () => {
         )}
         {view === "initial" && (
           <>
-            <Flex css={{ px: theme.spacing[7], py: theme.spacing[5] }} gap="3">
+            <Flex css={{ p: theme.panel.padding }} gap="3">
               <WidthInput min={minCanvasWidth} />
               <Flex align="center" gap="2">
                 <Label>Scale</Label>

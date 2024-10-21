@@ -13,7 +13,7 @@ import { defaultGetValidChildren, type DropTarget } from "./use-drop";
 const placementStyle = css({
   boxSizing: "content-box",
   position: "absolute",
-  background: theme.colors.blue10,
+  background: theme.colors.backgroundPrimary,
   pointerEvents: "none",
 });
 

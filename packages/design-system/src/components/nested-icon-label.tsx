@@ -62,8 +62,8 @@ const perColorStyle = (color: (typeof labelColors)[number]) => ({
 
 const style = css({
   display: "flex",
-  width: theme.spacing[11],
-  height: theme.spacing[11],
+  width: theme.spacing[10],
+  height: theme.spacing[10],
   boxSizing: "border-box",
   alignItems: "center",
   justifyContent: "center",

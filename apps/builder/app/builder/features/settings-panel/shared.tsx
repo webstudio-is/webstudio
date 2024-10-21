@@ -303,7 +303,10 @@ export const Row = ({
   children,
   css,
 }: Pick<ComponentProps<typeof Flex>, "css" | "children">) => (
-  <Flex css={{ px: theme.spacing[9], ...css }} direction="column">
+  <Flex
+    css={{ paddingInline: theme.panel.paddingInline, ...css }}
+    direction="column"
+  >
     {children}
   </Flex>
 );

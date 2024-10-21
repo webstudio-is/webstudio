@@ -67,8 +67,8 @@ export const CollapsibleSectionRoot = ({
           gap="2"
           direction="column"
           css={{
-            pb: theme.spacing[9],
-            px: fullWidth ? 0 : theme.spacing[9],
+            pb: theme.panel.paddingBlock,
+            px: fullWidth ? 0 : theme.panel.paddingInline,
             paddingTop: 0,
             "&:empty": { display: "none" },
           }}

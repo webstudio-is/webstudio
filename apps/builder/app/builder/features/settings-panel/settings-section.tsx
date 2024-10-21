@@ -30,12 +30,12 @@ export const SettingsSection = () => {
   });
 
   if (selectedInstance === undefined) {
-    return null;
+    return;
   }
 
   const meta = metas.get(selectedInstance.component);
   if (meta === undefined) {
-    return null;
+    return;
   }
   const placeholder = getInstanceLabel(selectedInstance, meta);
 

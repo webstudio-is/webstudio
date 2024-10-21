@@ -3,11 +3,13 @@ import { SettingsSection } from "./settings-section";
 import { PropsSectionContainer } from "./props-section/props-section";
 import { VariablesSection } from "./variables-section";
 import {
+  Box,
   Flex,
   Link,
   PanelBanner,
   Text,
   rawTheme,
+  theme,
 } from "@webstudio-is/design-system";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
@@ -21,7 +23,7 @@ export const SettingsPanelContainer = ({
 }) => {
   const { allowDynamicData } = useStore($userPlanFeatures);
   return (
-    <>
+    <Box css={{ pt: theme.spacing[5] }}>
       <SettingsSection />
       <PropsSectionContainer selectedInstance={selectedInstance} />
       <VariablesSection />
@@ -50,6 +52,6 @@ export const SettingsPanelContainer = ({
           </Flex>
         </PanelBanner>
       )}
-    </>
+    </Box>
   );
 };

@@ -9,6 +9,7 @@ import {
   useDrag,
   ComponentCard,
   useDisableCanvasPointerEvents,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
@@ -44,6 +45,8 @@ const DragLayer = ({
         icon={<MetaIcon size="auto" icon={meta.icon} />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
+          width: rawTheme.spacing[20],
+          height: rawTheme.spacing[20],
         }}
       />
     </Flex>,

@@ -127,7 +127,7 @@ export const InsetControl = () => {
         height: theme.spacing[18],
         "&:focus-visible": {
           borderRadius: theme.borderRadius[3],
-          outline: `1px solid ${theme.colors.blue10}`,
+          outline: `1px solid ${theme.colors.backgroundPrimary}`,
           outlineOffset: -1,
         },
       }}

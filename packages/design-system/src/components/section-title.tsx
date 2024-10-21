@@ -29,7 +29,7 @@ const StyledButton = styled(Button, {});
 
 const containerStyle = css({
   position: "relative",
-  height: theme.spacing[15],
+  height: theme.spacing[14],
   [buttonContentColor]: theme.colors.foregroundIconMain,
   [labelTextColor]: theme.colors.foregroundMain,
   "&:hover": {
@@ -45,8 +45,7 @@ const titleButtonLayoutStyle = css({
   width: "100%",
   height: "100%",
   boxSizing: "border-box",
-  paddingLeft: theme.spacing[9],
-  paddingRight: theme.spacing[6],
+  paddingInline: theme.panel.paddingInline,
 });
 
 const labelContainerStyle = css({
@@ -61,7 +60,7 @@ const titleButtonStyle = css(titleButtonLayoutStyle, {
 
 const suffixSlotStyle = css({
   position: "absolute",
-  right: theme.spacing[6],
+  right: theme.spacing[4],
   top: theme.spacing[4],
 });
 
@@ -70,8 +69,9 @@ const invisibleSuffixStyle = css({
 });
 
 const chevronStyle = css({
+  width: theme.spacing[7],
   opacity: `var(${chevronOpacity}, 0)`,
-  marginLeft: `-${theme.spacing[8]}`,
+  marginLeft: `-${theme.spacing[6]}`,
   transition: "transform 150ms, opacity 200ms",
   color: theme.colors.backgroundIconSubtle,
   variants: {

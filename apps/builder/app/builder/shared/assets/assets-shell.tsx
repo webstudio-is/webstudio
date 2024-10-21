@@ -153,13 +153,13 @@ export const AssetsShell = ({
       direction="column"
       css={{
         overflow: "hidden",
-        py: theme.spacing[5],
+        paddingBlock: theme.panel.paddingBlock,
         flex: 1,
         position: "relative",
       }}
     >
       <Flex
-        css={{ py: theme.spacing[5], px: theme.spacing[9] }}
+        css={{ padding: theme.panel.padding }}
         gap="2"
         direction="column"
         shrink={false}
@@ -177,7 +177,7 @@ export const AssetsShell = ({
           position: "absolute",
           inset: 0,
           display: dragState !== IDLE ? "flex" : "none",
-          backgroundColor: theme.colors.background,
+          backgroundColor: theme.colors.backgroundPanel,
           opacity: 0.85,
           color:
             dragState === OVER

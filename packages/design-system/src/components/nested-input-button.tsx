@@ -21,6 +21,7 @@ const style = css({
   alignItems: "center",
   justifyContent: "center",
   whiteSpace: "pre", // to make nestedSelectButtonUnitless work as expected
+  height: theme.spacing[10],
   "&:not(:has(svg))": {
     paddingLeft: theme.spacing[2],
     paddingRight: theme.spacing[2],
@@ -48,16 +49,7 @@ const style = css({
         },
       },
     },
-    size: {
-      1: {
-        height: theme.spacing[10],
-      },
-      2: {
-        height: theme.spacing[11],
-      },
-    },
   },
-  defaultVariants: { size: 2 },
 });
 
 export const NestedInputButton = forwardRef(
@@ -66,9 +58,8 @@ export const NestedInputButton = forwardRef(
       css,
       className,
       children,
-      size,
       ...props
-    }: ComponentProps<"button"> & { css?: CSS; size?: "1" | "2" },
+    }: ComponentProps<"button"> & { css?: CSS },
     ref: Ref<HTMLButtonElement>
   ) => {
     return (
@@ -77,7 +68,6 @@ export const NestedInputButton = forwardRef(
           css,
           className,
           hasChildren: children !== undefined,
-          size,
         })}
         {...props}
         ref={ref}
