@@ -50,7 +50,7 @@ export const Section = () => {
         <Grid
           css={{
             paddingInline: theme.panel.paddingInline,
-            gridTemplateColumns: `1fr ${theme.spacing[23]}`,
+            gridTemplateColumns: `1fr ${theme.spacing[22]}`,
           }}
         >
           <PropertyLabel

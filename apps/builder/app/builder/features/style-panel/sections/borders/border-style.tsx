@@ -29,7 +29,7 @@ export const BorderStyle = () => {
         description={propertyDescriptions.borderBlockStyle}
         properties={properties}
       />
-      <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
+      <Box css={{ gridColumn: `span 2` }}>
         <ToggleGroupControl
           label="Style"
           properties={properties}
