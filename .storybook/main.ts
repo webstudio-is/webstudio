@@ -55,6 +55,7 @@ export default {
         // storybook use "util" package internally which is bundled with stories
         // and gives and error that process is undefined
         "process.env.NODE_DEBUG": "undefined",
+        "process.env.IS_STROYBOOK": "true",
       },
       resolve: {
         ...config.resolve,

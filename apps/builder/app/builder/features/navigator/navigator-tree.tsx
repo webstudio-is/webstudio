@@ -42,6 +42,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedPage,
+  $textEditingInstanceSelector,
   getIndexedInstanceId,
   type ItemDropTarget,
 } from "~/shared/nano-states";
@@ -582,6 +583,11 @@ export const NavigatorTree = () => {
                     color: item.isReusable
                       ? rawTheme.colors.foregroundReusable
                       : undefined,
+                  },
+                  onKeyDown: (event) => {
+                    if ($textEditingInstanceSelector.get() !== undefined) {
+                      event.preventDefault();
+                    }
                   },
                 }}
                 buttonProps={{

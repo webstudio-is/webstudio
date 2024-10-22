@@ -441,7 +441,9 @@ export const TreeNode = ({
     }
   }, [isSelected]);
 
-  const handleKeydown = (event: KeyboardEvent) => {
+  const handleKeydown = (event: KeyboardEvent<HTMLDivElement>) => {
+    nodeProps?.onKeyDown?.(event);
+
     if (event.defaultPrevented) {
       return;
     }

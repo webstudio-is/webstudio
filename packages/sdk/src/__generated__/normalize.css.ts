@@ -88,6 +88,10 @@ export const html: StyleDecl[] = [
     property: "lineHeight",
     value: { type: "unit", unit: "number", value: 1.2 },
   },
+  {
+    property: "whiteSpaceCollapse",
+    value: { type: "keyword", value: "break-spaces" },
+  },
 ];
 
 export const body: StyleDecl[] = [
