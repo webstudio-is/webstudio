@@ -312,6 +312,9 @@ export const prebuild = async (options: {
     const instances: [Instance["id"], Instance][] =
       siteData.build.instances.filter(([id]) => pageInstanceSet.has(id));
     const dataSources: [DataSource["id"], DataSource][] = [];
+    const props: [Prop["id"], Prop][] = [];
+    const resourceIds = new Set<Resource["id"]>();
+    const resources: [Resource["id"], Resource][] = [];
 
     // use whole project props to access id props from other pages
     const normalizedProps = normalizeProps({
@@ -323,14 +326,15 @@ export const prebuild = async (options: {
       source: "prebuild",
     });
 
-    const props: [Prop["id"], Prop][] = [];
     for (const prop of normalizedProps) {
       if (pageInstanceSet.has(prop.instanceId)) {
         props.push([prop.id, prop]);
+        if (prop.type === "resource") {
+          resourceIds.add(prop.value);
+        }
       }
     }
 
-    const resourceIds = new Set<Resource["id"]>();
     for (const [dataSourceId, dataSource] of siteData.build.dataSources) {
       if (
         dataSource.scopeInstanceId === undefined ||
@@ -343,7 +347,6 @@ export const prebuild = async (options: {
       }
     }
 
-    const resources: [Resource["id"], Resource][] = [];
     for (const [resourceId, resource] of siteData.build.resources ?? []) {
       if (resourceIds.has(resourceId)) {
         resources.push([resourceId, resource]);
