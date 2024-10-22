@@ -217,11 +217,9 @@ export const ResourceControl = ({
               }
               // attempt to save form on close
               if (areAllFormErrorsVisible(form.current)) {
-                console.log("submit");
                 form.current?.requestSubmit();
                 setIsResourceOpen(false);
               } else {
-                console.log("validate");
                 form.current?.checkValidity();
                 // prevent closing when not all errors are shown to user
               }
