@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import {
   KEY_ENTER_COMMAND,
   INSERT_LINE_BREAK_COMMAND,
@@ -9,6 +9,13 @@ import {
   $getSelection,
   $isRangeSelection,
   type EditorState,
+  KEY_ARROW_DOWN_COMMAND,
+  COMMAND_PRIORITY_CRITICAL,
+  type LexicalNode,
+  TextNode,
+  $isLineBreakNode,
+  KEY_ARROW_UP_COMMAND,
+  $isParagraphNode,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -26,6 +33,13 @@ import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
+import {
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedPage,
+  $textEditingInstanceSelector,
+} from "~/shared/nano-states";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
@@ -191,6 +205,116 @@ const RemoveParagaphsPlugin = () => {
   return null;
 };
 
+const countLinesBefore = (anchorNode: LexicalNode) => {
+  let node: LexicalNode | ElementNode | TextNode | null = anchorNode;
+
+  let totalLines = 0;
+  while (true) {
+    node = node.getPreviousSibling() ?? null;
+
+    if (node === null) {
+      break;
+    }
+
+    if ($isLineBreakNode(node)) {
+      totalLines++;
+    }
+  }
+  return totalLines;
+};
+
+const countLinesAfter = (anchorNode: LexicalNode) => {
+  let node: LexicalNode | ElementNode | TextNode | null = anchorNode;
+
+  let totalLines = $isLineBreakNode(node) ? 1 : 0;
+  while (true) {
+    node = node.getNextSibling() ?? null;
+
+    if (node === null) {
+      break;
+    }
+
+    if ($isLineBreakNode(node)) {
+      totalLines++;
+    }
+  }
+  return totalLines;
+};
+
+type SwitchBlockPluginProps = {
+  onNext: () => void;
+  onPrevious: () => void;
+};
+
+const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_DOWN_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+        const anchor = selection.anchor;
+        let anchorNode: LexicalNode | TextNode | ElementNode = anchor.getNode();
+        const anchorOffset = anchor.offset;
+
+        if ($isParagraphNode(anchorNode)) {
+          const children = anchorNode.getChildren();
+          anchorNode = children[anchorOffset];
+        }
+
+        const linesAfter = anchorNode == null ? 0 : countLinesAfter(anchorNode);
+
+        if (linesAfter > 0) {
+          return false;
+        }
+
+        onNext();
+        event?.preventDefault();
+        return true;
+      },
+      COMMAND_PRIORITY_CRITICAL
+    );
+  }, [editor, onNext]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_UP_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+        const anchor = selection.anchor;
+
+        let anchorNode: LexicalNode | TextNode | ElementNode = anchor.getNode();
+        const anchorOffset = anchor.offset;
+
+        if ($isParagraphNode(anchorNode)) {
+          const children = anchorNode.getChildren();
+          anchorNode = children[anchorOffset];
+        }
+
+        const linesBefore = anchorNode ? countLinesBefore(anchorNode) : 1;
+
+        if (linesBefore > 0) {
+          return false;
+        }
+
+        onPrevious();
+        event?.preventDefault();
+        return true;
+      },
+      COMMAND_PRIORITY_CRITICAL
+    );
+  }, [editor, onPrevious]);
+
+  return null;
+};
+
 const onError = (error: Error) => {
   throw error;
 };
@@ -201,6 +325,10 @@ type TextEditorProps = {
   contentEditable: JSX.Element;
   onChange: (instancesList: Instance[]) => void;
   onSelectInstance: (instanceId: Instance["id"]) => void;
+};
+
+const mod = (n: number, m: number) => {
+  return ((n % m) + m) % m;
 };
 
 export const TextEditor = ({
@@ -254,6 +382,72 @@ export const TextEditor = ({
     onError,
   };
 
+  const handleNext = useCallback(() => {
+    const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+
+    if (rootInstanceId === undefined) {
+      return;
+    }
+
+    const results: InstanceSelector[] = [];
+    findAllEditableInstanceSelector(
+      rootInstanceId,
+      [],
+      instances,
+      $registeredComponentMetas.get(),
+      results
+    );
+
+    const currentIndex = results.findIndex((instanceSelector) => {
+      return (
+        instanceSelector[0] === rootInstanceSelector[0] &&
+        instanceSelector.join(",") === rootInstanceSelector.join(",")
+      );
+    });
+
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const nextIndex = mod(currentIndex + 1, results.length);
+
+    $textEditingInstanceSelector.set(results[nextIndex]);
+    $selectedInstanceSelector.set(results[nextIndex]);
+  }, [instances, rootInstanceSelector]);
+
+  const handlePrevious = useCallback(() => {
+    const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+
+    if (rootInstanceId === undefined) {
+      return;
+    }
+
+    const results: InstanceSelector[] = [];
+    findAllEditableInstanceSelector(
+      rootInstanceId,
+      [],
+      instances,
+      $registeredComponentMetas.get(),
+      results
+    );
+
+    const currentIndex = results.findIndex((instanceSelector) => {
+      return (
+        instanceSelector[0] === rootInstanceSelector[0] &&
+        instanceSelector.join(",") === rootInstanceSelector.join(",")
+      );
+    });
+
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const nextIndex = mod(currentIndex - 1, results.length);
+
+    $textEditingInstanceSelector.set(results[nextIndex]);
+    $selectedInstanceSelector.set(results[nextIndex]);
+  }, [instances, rootInstanceSelector]);
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <AutofocusPlugin />
@@ -275,6 +469,7 @@ export const TextEditor = ({
       />
       <LinkPlugin />
       <HistoryPlugin />
+      <SwitchBlockPlugin onNext={handleNext} onPrevious={handlePrevious} />
 
       <OnChangeOnBlurPlugin
         onChange={(editorState) => {
