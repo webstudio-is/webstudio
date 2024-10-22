@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
+import { CrossIcon } from "@webstudio-is/icons";
 import {
   type WsComponentMeta,
   componentCategories,
@@ -17,13 +18,12 @@ import {
   findNextListItemIndex,
   Text,
   Box,
-  Kbd,
   Grid,
+  PanelTitle,
+  Tooltip,
+  Button,
 } from "@webstudio-is/design-system";
-import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import type { TabContentProps } from "../../types";
-import { Header, CloseButton, Root } from "../../shared/panel";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { $registeredComponentMetas, $selectedPage } from "~/shared/nano-states";
@@ -37,6 +37,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { insert } from "./insert";
 import { matchSorter } from "match-sorter";
 import { parseComponentName } from "@webstudio-is/sdk";
+import type { Publish } from "~/shared/pubsub";
 
 const matchComponents = (
   metas: Array<WsComponentMeta>,
@@ -159,13 +160,19 @@ const findComponentIndex = (
   return { index: -1, metas: [] };
 };
 
-export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
+export const ComponentsPanel = ({
+  publish,
+  onClose,
+}: {
+  publish: Publish;
+  onClose: () => void;
+}) => {
   const metaByComponentName = useStore($registeredComponentMetas);
   const selectedPage = useStore($selectedPage);
   const [selectedComponent, setSelectedComponent] = useState<string>();
 
   const handleInsert = (component: string) => {
-    onSetActiveTab("none");
+    onClose();
     insert(component);
   };
 
@@ -227,11 +234,23 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <Root ref={draggableContainerRef}>
-      <Header
-        title="Components"
-        suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
-      />
+    <>
+      <PanelTitle
+        suffix={
+          <Tooltip content="Close panel" side="bottom">
+            <Button
+              color="ghost"
+              prefix={<CrossIcon />}
+              aria-label="Close panel"
+              onClick={onClose}
+            />
+          </Tooltip>
+        }
+      >
+        Components
+      </PanelTitle>
+      <Separator />
+
       <Box css={{ padding: theme.panel.padding }}>
         <SearchField
           {...searchFieldProps}
@@ -239,10 +258,9 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           placeholder="Find components"
         />
       </Box>
-
       <Separator />
 
-      <ScrollArea>
+      <ScrollArea ref={draggableContainerRef}>
         {groups.map((group) => (
           <CollapsibleSection
             label={group.category}
@@ -302,15 +320,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           </CollapsibleSection>
         ))}
       </ScrollArea>
-    </Root>
+    </>
   );
 };
-
-export const Icon = PlusIcon;
-
-export const label = (
-  <Text>
-    Components&nbsp;&nbsp;
-    <Kbd value={["A"]} color="moreSubtle" />
-  </Text>
-);

@@ -8,6 +8,8 @@ import {
   TreeNode,
   TreeRoot,
   TreeNodeLabel,
+  PanelTitle,
+  Separator,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
@@ -18,9 +20,8 @@ import {
   NewPageIcon,
   PageIcon,
   DynamicPageIcon,
+  CrossIcon,
 } from "@webstudio-is/icons";
-import type { TabContentProps } from "../../types";
-import { CloseButton, Header, Root } from "../../shared/panel";
 import { ExtendedPanel } from "../../shared/extended-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $editingPageId, $pages, $selectedPageId } from "~/shared/nano-states";
@@ -176,7 +177,7 @@ const $flatPagesTree = computed(
   }
 );
 
-const PagesPanel = ({
+const PagesTree = ({
   onClose,
   onCreateNewFolder,
   onCreateNewPage,
@@ -202,9 +203,8 @@ const PagesPanel = ({
   }
 
   return (
-    <Root>
-      <Header
-        title="Pages"
+    <>
+      <PanelTitle
         suffix={
           <>
             <Tooltip content="New folder" side="bottom">
@@ -223,10 +223,21 @@ const PagesPanel = ({
                 color="ghost"
               />
             </Tooltip>
-            <CloseButton onClick={onClose} />
+            <Tooltip content="Close panel" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<CrossIcon />}
+                aria-label="Close panel"
+                onClick={onClose}
+              />
+            </Tooltip>
           </>
         }
-      />
+      >
+        Pages
+      </PanelTitle>
+      <Separator />
+
       <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
         <TreeRoot>
           {flatPagesTree.map((item, index) => {
@@ -298,7 +309,7 @@ const PagesPanel = ({
           })}
         </TreeRoot>
       </Box>
-    </Root>
+    </>
   );
 };
 
@@ -379,7 +390,7 @@ const FolderEditor = ({
   );
 };
 
-export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
+export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const currentPageId = useStore($selectedPageId);
   const editingItemId = useStore($editingPageId);
   const pages = useStore($pages);
@@ -390,8 +401,8 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
   return (
     <>
-      <PagesPanel
-        onClose={() => onSetActiveTab("none")}
+      <PagesTree
+        onClose={onClose}
         onCreateNewFolder={() => {
           $editingPageId.set(
             editingItemId === newFolderId ? undefined : newFolderId
@@ -407,7 +418,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
             return;
           }
           switchPage(itemId);
-          onSetActiveTab("none");
+          onClose();
         }}
         selectedPageId={currentPageId}
         onEdit={$editingPageId.set}
@@ -434,7 +445,3 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
     </>
   );
 };
-
-export const Icon = PageIcon;
-
-export const label = "Pages";

@@ -26,6 +26,9 @@ import {
   Text,
   DialogClose,
   DialogTitle,
+  PanelTitle,
+  Separator,
+  TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -33,7 +36,6 @@ import {
   HelpIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
-import { Header, HeaderSuffixSpacer } from "../../shared/panel";
 import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
@@ -295,8 +297,7 @@ const NewFolderSettingsView = ({
 }) => {
   return (
     <>
-      <Header
-        title="New Folder Settings"
+      <PanelTitle
         suffix={
           <>
             <Tooltip content="Cancel" side="bottom">
@@ -310,7 +311,7 @@ const NewFolderSettingsView = ({
                 tabIndex={3}
               />
             </Tooltip>
-            <HeaderSuffixSpacer />
+            <TitleSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
               onClick={onSubmit}
@@ -320,7 +321,10 @@ const NewFolderSettingsView = ({
             </Button>
           </>
         }
-      />
+      >
+        New Folder Settings
+      </PanelTitle>
+      <Separator />
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
@@ -482,8 +486,7 @@ const FolderSettingsView = ({
 
   return (
     <>
-      <Header
-        title="Folder Settings"
+      <PanelTitle
         suffix={
           <>
             <Tooltip content="Delete folder" side="bottom">
@@ -515,7 +518,10 @@ const FolderSettingsView = ({
             )}
           </>
         }
-      />
+      >
+        Folder Settings
+      </PanelTitle>
+      <Separator />
       <Form onSubmit={onClose}>{children}</Form>
     </>
   );
