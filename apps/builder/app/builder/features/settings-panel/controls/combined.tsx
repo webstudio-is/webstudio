@@ -10,6 +10,7 @@ import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
 import { JsonControl } from "./json";
 import { TextContent } from "./text-content";
+import { ResourceControl } from "./resource-control";
 
 export const renderControl = ({
   meta,
@@ -94,6 +95,10 @@ export const renderControl = ({
 
   if (meta.control === "url") {
     return <UrlControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (meta.control === "resource") {
+    return <ResourceControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   // Type in meta can be changed at some point without updating props in DB that are still using the old type

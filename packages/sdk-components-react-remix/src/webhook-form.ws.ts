@@ -127,6 +127,13 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
+  props: {
+    ...props,
+    action: {
+      control: "resource",
+      type: "resource",
+      required: true,
+    },
+  },
   initialProps: ["id", "className", "state", "action"],
 };

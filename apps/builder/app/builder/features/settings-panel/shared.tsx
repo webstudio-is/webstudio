@@ -16,7 +16,7 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
 } from "@webstudio-is/sdk";
-import type { Prop, Asset } from "@webstudio-is/sdk";
+import type { Prop, Asset, WebstudioData } from "@webstudio-is/sdk";
 import { HelpIcon, SubtractIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,
@@ -49,6 +49,27 @@ export type PropValue =
   | { type: "asset"; value: Asset["id"] }
   | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
   | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] };
+
+export const setPropMutable = ({
+  data,
+  update,
+}: {
+  data: WebstudioData;
+  update: Prop;
+}) => {
+  // fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
+  // see for details https://github.com/webstudio-is/webstudio/pull/2170
+  for (const prop of data.props.values()) {
+    if (
+      prop.instanceId === update.instanceId &&
+      prop.name === update.name &&
+      prop.id !== update.id
+    ) {
+      data.props.delete(prop.id);
+    }
+  }
+  data.props.set(update.id, update);
+};
 
 // Weird code is to make type distributive
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types

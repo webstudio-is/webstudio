@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { useStore } from "@nanostores/react";
-import type { DataSource, Resource } from "@webstudio-is/sdk";
+import { Resource, type DataSource } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   generateObjectExpression,
@@ -22,6 +22,7 @@ import {
 import {
   Box,
   Button,
+  EnhancedTooltip,
   Flex,
   Grid,
   InputErrorsTooltip,
@@ -30,7 +31,6 @@ import {
   Select,
   SmallIconButton,
   TextArea,
-  Tooltip,
   theme,
 } from "@webstudio-is/design-system";
 import { DeleteIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
@@ -57,6 +57,30 @@ import {
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
 
+export const parseResource = ({
+  id,
+  name,
+  formData,
+}: {
+  id: string;
+  name: string;
+  formData: FormData;
+}) => {
+  const headerNames = formData.getAll("header-name");
+  const headerValues = formData.getAll("header-value");
+  return Resource.parse({
+    id,
+    name,
+    url: formData.get("url"),
+    method: formData.get("method"),
+    headers: headerNames.map((name, index) => {
+      const value = headerValues[index];
+      return { name, value };
+    }),
+    body: formData.get("body") ?? undefined,
+  });
+};
+
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
   if (typeof evaluatedValue !== "string") {
@@ -73,7 +97,7 @@ const validateUrl = (value: string, scope: Record<string, unknown>) => {
   return "";
 };
 
-const UrlField = ({
+export const UrlField = ({
   scope,
   aliases,
   value,
@@ -102,19 +126,19 @@ const UrlField = ({
         css={{ display: "flex", alignItems: "center", gap: theme.spacing[3] }}
       >
         URL
-        <Tooltip
+        <EnhancedTooltip
           content="You can paste a URL or cURL. cURL is a format that can be executed directly in your terminal because it contains the entire Resource configuration."
           variant="wrapped"
           disableHoverableContent={true}
         >
           <InfoCircleIcon tabIndex={0} />
-        </Tooltip>
+        </EnhancedTooltip>
       </Label>
       <BindingControl>
         <InputErrorsTooltip errors={error ? [error] : undefined}>
           <TextArea
             ref={ref}
-            name="url"
+            name="url-validator"
             id={urlId}
             rows={1}
             grow={true}
@@ -137,6 +161,7 @@ const UrlField = ({
             }
           />
         </InputErrorsTooltip>
+        <input hidden={true} readOnly={true} name="url" value={value} />
         <BindingPopover
           scope={scope}
           aliases={aliases}
@@ -148,6 +173,27 @@ const UrlField = ({
           }
         />
       </BindingControl>
+    </Grid>
+  );
+};
+
+export const MethodField = ({
+  value,
+  onChange,
+}: {
+  value: Resource["method"];
+  onChange: (value: Resource["method"]) => void;
+}) => {
+  return (
+    <Grid gap={1}>
+      <Label>Method</Label>
+      <Select<Resource["method"]>
+        options={["get", "post", "put", "delete"]}
+        getLabel={humanizeString}
+        name="method"
+        value={value}
+        onChange={onChange}
+      />
     </Grid>
   );
 };
@@ -239,7 +285,7 @@ const HeaderPair = ({
           <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
             <InputField
               inputRef={valueRef}
-              name="header-value"
+              name="header-value-validator"
               id={valueId}
               // expressions with variables cannot be edited
               disabled={isLiteralExpression(value) === false}
@@ -255,6 +301,12 @@ const HeaderPair = ({
               }
             />
           </InputErrorsTooltip>
+          <input
+            hidden={true}
+            readOnly={true}
+            name="header-value"
+            value={value}
+          />
           <BindingPopover
             scope={scope}
             aliases={aliases}
@@ -304,7 +356,7 @@ const HeaderPair = ({
   );
 };
 
-const Headers = ({
+export const Headers = ({
   scope,
   aliases,
   headers,
@@ -378,7 +430,7 @@ const $hiddenDataSourceIds = computed(
   }
 );
 
-const $selectedInstanceScope = computed(
+export const $selectedInstanceResourceScope = computed(
   [
     $selectedInstanceSelector,
     $variableValuesByInstanceSelector,
@@ -419,7 +471,7 @@ const $selectedInstanceScope = computed(
 
 const useScope = ({ variable }: { variable?: DataSource }) => {
   const { scope: scopeWithCurrentVariable, aliases } = useStore(
-    $selectedInstanceScope
+    $selectedInstanceResourceScope
   );
   const currentVariableId = variable?.id;
   // prevent showing currently edited variable in suggestions
@@ -581,20 +633,18 @@ export const ResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
+      console.log(Object.fromEntries(formData));
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
       const [instanceId] = instanceSelector;
-      const newResource: Resource = {
+      const newResource = parseResource({
         id: resource?.id ?? nanoid(),
         name,
-        url,
-        method,
-        headers,
-        body,
-      };
+        formData,
+      });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
@@ -633,15 +683,7 @@ export const ResourceForm = forwardRef<
           setBody(JSON.stringify(curl.body));
         }}
       />
-      <Grid gap={1}>
-        <Label>Method</Label>
-        <Select<Resource["method"]>
-          options={["get", "post", "put", "delete"]}
-          getLabel={humanizeString}
-          value={method}
-          onChange={(newValue) => setMethod(newValue)}
-        />
-      </Grid>
+      <MethodField value={method} onChange={setMethod} />
       <Headers
         scope={scope}
         aliases={aliases}
