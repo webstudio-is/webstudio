@@ -74,24 +74,13 @@ export const FloatingPanelProvider = ({
   </FloatingPanelContext.Provider>
 );
 
-const useLogic = (open?: boolean, onOpenChange?: (isOpen: boolean) => void) => {
-  const { container: containerRef } = useContext(FloatingPanelContext);
-  const [isOpen, setIsOpen] = useState(Boolean(open));
-  const [triggerRef, sideOffset] = useSideOffset({ isOpen, containerRef });
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    onOpenChange?.(open);
-  };
-  return { isOpen, handleOpenChange, triggerRef, sideOffset };
-};
-
 // @todo add support for positioning next to the left panel
 type FloatingPanelProps = {
   title: string;
   content: JSX.Element;
   children: JSX.Element;
-  open?: boolean;
-  onOpenChange?: (isOpen: boolean) => void;
+  isOpen?: boolean;
+  onIsOpenChange?: (isOpen: boolean) => void;
   // collisionPadding is the distance in pixels from the boundary edges where collision detection should occur.
   collisionPadding?:
     | number
@@ -107,18 +96,19 @@ export const FloatingPanel = ({
   title,
   content,
   children,
-  open,
+  isOpen: externalIsOpen,
   align,
-  onOpenChange,
+  onIsOpenChange: setExternalIsOpen,
   collisionPadding,
 }: FloatingPanelProps) => {
-  const { isOpen, handleOpenChange, triggerRef, sideOffset } = useLogic(
-    open,
-    onOpenChange
-  );
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen ?? internalIsOpen;
+  const setIsOpen = setExternalIsOpen ?? setInternalIsOpen;
+  const { container: containerRef } = useContext(FloatingPanelContext);
+  const [triggerRef, sideOffset] = useSideOffset({ isOpen, containerRef });
 
   return (
-    <FloatingPanelPopover open={isOpen} onOpenChange={handleOpenChange} modal>
+    <FloatingPanelPopover open={isOpen} onOpenChange={setIsOpen} modal>
       <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
         {children}
       </FloatingPanelPopoverTrigger>
