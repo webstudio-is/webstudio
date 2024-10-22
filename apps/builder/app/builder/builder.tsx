@@ -9,7 +9,7 @@ import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { startProjectSync, useSyncServer } from "./shared/sync/sync-server";
-import { SidebarLeft } from "./features/sidebar-left";
+import { SidebarLeft } from "./sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";

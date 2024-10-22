@@ -37,11 +37,11 @@ import {
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
-import { ComponentsPanel } from "./panels/components";
-import { PagesPanel } from "./panels/pages";
-import { NavigatorPanel } from "./panels/navigator";
-import { AssetsPanel } from "./panels/assets";
-import { MarketplacePanel } from "./panels/marketplace";
+import { ComponentsPanel } from "~/builder/features/components";
+import { PagesPanel } from "~/builder/features/pages";
+import { NavigatorPanel } from "~/builder/features/navigator";
+import { AssetsPanel } from "~/builder/features/assets";
+import { MarketplacePanel } from "~/builder/features/marketplace";
 
 const none = { Panel: () => null };
 

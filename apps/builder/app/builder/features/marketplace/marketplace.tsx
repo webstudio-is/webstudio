@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { toWebstudioData } from "./utils";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { Project } from "@webstudio-is/project";
-import { ExtendedPanel } from "../../shared/extended-panel";
+import { ExtendedPanel } from "~/builder/shared/extended-sidebar-panel";
 import { About } from "./about";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 

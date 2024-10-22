@@ -236,22 +236,6 @@ export const filterSelfAndChildren = (
   });
 };
 
-export const getExistingRoutePaths = (pages?: Pages): Set<string> => {
-  const paths: Set<string> = new Set();
-  if (pages === undefined) {
-    return paths;
-  }
-
-  for (const page of pages.pages) {
-    const pagePath = getPagePath(page.id, pages);
-    if (pagePath === undefined) {
-      continue;
-    }
-    paths.add(pagePath);
-  }
-  return paths;
-};
-
 const $editingPage = computed(
   [$editingPageId, $pages],
   (editingPageId, pages) => {

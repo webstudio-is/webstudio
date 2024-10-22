@@ -22,7 +22,7 @@ import {
   DynamicPageIcon,
   CrossIcon,
 } from "@webstudio-is/icons";
-import { ExtendedPanel } from "../../shared/extended-panel";
+import { ExtendedPanel } from "../../shared/extended-sidebar-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $editingPageId, $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
