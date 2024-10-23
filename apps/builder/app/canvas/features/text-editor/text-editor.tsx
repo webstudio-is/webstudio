@@ -467,7 +467,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
       },
       COMMAND_PRIORITY_EDITOR
     );
-  }, [editor, onNext]);
+  }, [editor, onNext, onPrevious]);
 
   return null;
 };
