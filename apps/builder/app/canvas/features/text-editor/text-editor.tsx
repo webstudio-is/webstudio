@@ -27,6 +27,8 @@ import {
   type RangeSelection,
   KEY_ARROW_RIGHT_COMMAND,
   KEY_ARROW_LEFT_COMMAND,
+  $createRangeSelection,
+  COMMAND_PRIORITY_CRITICAL,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -217,8 +219,8 @@ const RemoveParagaphsPlugin = () => {
 };
 
 type SwitchBlockPluginProps = {
-  onNext: () => void;
-  onPrevious: () => void;
+  onNext: (reason: "up" | "down" | "left" | "right") => void;
+  onPrevious: (reason: "up" | "down" | "left" | "right") => void;
 };
 
 const isSelectionLastNode = () => {
@@ -286,9 +288,17 @@ const getDomSelectionRect = () => {
   if (!domSelection || !domSelection.focusNode) {
     return undefined;
   }
+
   // Get current line position
   const range = domSelection.getRangeAt(0);
-  const currentRect = range.getBoundingClientRect();
+
+  // The cursor position at the beginning of a line is technically associated with both:
+  // The end of the previous line
+  // The beginning of the current line
+  // Select the rectangle for the current line. It typically appears as the last rect in the list.
+  const rects = range.getClientRects();
+  const currentRect = rects[rects.length - 1] ?? undefined;
+
   return currentRect;
 };
 
@@ -299,6 +309,104 @@ const getVerticalIntersectionRatio = (rectA: DOMRect, rectB: DOMRect) => {
   const minHeight = Math.min(rectA.height, rectB.height);
   return minHeight === 0 ? 0 : intersectionHeight / minHeight;
 };
+
+/*
+const caretFromPoint = (
+  x: number,
+  y: number
+): null | {
+  offset: number;
+  node: Node;
+} => {
+  if (typeof document.caretRangeFromPoint !== "undefined") {
+    const range = document.caretRangeFromPoint(x, y);
+    if (range === null) {
+      return null;
+    }
+    return {
+      node: range.startContainer,
+      offset: range.startOffset,
+    };
+    // @ts-expect-error no types
+  } else if (document.caretPositionFromPoint !== "undefined") {
+    // @ts-expect-error no types
+    const range = document.caretPositionFromPoint(x, y);
+    if (range === null) {
+      return null;
+    }
+    return {
+      node: range.offsetNode,
+      offset: range.offset,
+    };
+  } else {
+    // Gracefully handle IE
+    return null;
+  }
+};
+*/
+
+/*
+const CursorChange = () => {
+  const [editor] = useLexicalComposerContext();
+  const refPos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    document.addEventListener(
+      "pointermove",
+      (event) => {
+        refPos.current.x = event.clientX;
+        refPos.current.y = event.clientY;
+        console.log("positionmove", event.clientX, event.clientY);
+      },
+      { signal: abortController.signal }
+    );
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      COPY_COMMAND,
+      (event) => {
+        console.log("COPY_COMMAND");
+        const eventRange = caretFromPoint(refPos.current.x, refPos.current.y);
+
+        if (eventRange !== null) {
+          console.log(eventRange.node.nodeType);
+          const { offset: domOffset, node: domNode } = eventRange;
+          const node = $getNearestNodeFromDOMNode(domNode);
+          console.log(node);
+          if (node !== null) {
+            const selection = $createRangeSelection();
+            if ($isTextNode(node)) {
+              selection.anchor.set(node.getKey(), domOffset, "text");
+              selection.focus.set(node.getKey(), domOffset, "text");
+            } else {
+              const parentKey = node.getParentOrThrow().getKey();
+              const offset = node.getIndexWithinParent() + 1;
+              selection.anchor.set(parentKey, offset, "element");
+              selection.focus.set(parentKey, offset, "element");
+            }
+            const normalizedSelection =
+              $normalizeSelection__EXPERIMENTAL(selection);
+            $setSelection(normalizedSelection);
+          }
+        }
+        event?.preventDefault();
+
+        return true;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+  }, [editor]);
+
+  return null;
+};
+*/
 
 const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
   const [editor] = useLexicalComposerContext();
@@ -326,7 +434,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         const isLast = isSelectionLastNode();
 
         if (isLast) {
-          onNext();
+          onNext("right");
           event?.preventDefault();
           return true;
         }
@@ -351,7 +459,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         const isFirst = isSelectionFirstNode();
 
         if (isFirst) {
-          onPrevious();
+          onPrevious("left");
           event?.preventDefault();
           return true;
         }
@@ -380,7 +488,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         const isLast = isSelectionLastNode();
 
         if (isLast) {
-          onNext();
+          onNext("down");
           event?.preventDefault();
           return true;
         }
@@ -394,7 +502,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
 
         return false;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_CRITICAL
     );
   }, [editor, onNext]);
 
@@ -412,7 +520,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         const isFirst = isSelectionFirstNode();
 
         if (isFirst) {
-          onPrevious();
+          onPrevious("up");
           event?.preventDefault();
           return true;
         }
@@ -426,7 +534,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
 
         return false;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_CRITICAL
     );
   }, [editor, onPrevious]);
 
@@ -449,6 +557,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         const isFirstOrLast =
           type === "up" ? isSelectionFirstNode() : isSelectionLastNode();
         const rect = getDomSelectionRect();
+
         if (
           isFirstOrLast &&
           rect !== undefined &&
@@ -457,9 +566,9 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
           $setSelection(savedSelection);
 
           if (type === "up") {
-            onPrevious();
+            onPrevious(type);
           } else {
-            onNext();
+            onNext(type);
           }
         }
 
@@ -534,80 +643,134 @@ export const TextEditor = ({
       // so assume new nodes don't need to preserve instance id
       // and store only initial references
       $convertToLexical(instances, rootInstanceId, refs);
+
+      const reason = $textEditingInstanceSelector.get()?.reason;
+
+      if (reason === undefined) {
+        return;
+      }
+
+      if (
+        reason === "down" ||
+        reason === "right" ||
+        reason === "enter" ||
+        reason === "click"
+      ) {
+        const selection = $createRangeSelection();
+        const firstNode = $getRoot().getFirstDescendant();
+
+        if (firstNode && $isTextNode(firstNode)) {
+          selection.anchor.set(firstNode.getKey(), 0, "text");
+          selection.focus.set(firstNode.getKey(), 0, "text");
+          $setSelection(selection);
+        }
+      } else if (reason === "up" || reason === "left") {
+        const selection = $createRangeSelection();
+        const lastNode = $getRoot().getLastDescendant();
+
+        if (lastNode && $isTextNode(lastNode)) {
+          selection.anchor.set(
+            lastNode.getKey(),
+            lastNode.getTextContentSize(),
+            "text"
+          );
+          selection.focus.set(
+            lastNode.getKey(),
+            lastNode.getTextContentSize(),
+            "text"
+          );
+          $setSelection(selection);
+        }
+      } else {
+        reason satisfies never;
+      }
     },
     nodes: [LinkNode],
     onError,
   };
 
-  const handleNext = useCallback(() => {
-    const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+  const handleNext = useCallback(
+    (reason: "up" | "down" | "right" | "left") => {
+      const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
-    if (rootInstanceId === undefined) {
-      return;
-    }
+      if (rootInstanceId === undefined) {
+        return;
+      }
 
-    const results: InstanceSelector[] = [];
-    findAllEditableInstanceSelector(
-      rootInstanceId,
-      [],
-      instances,
-      $registeredComponentMetas.get(),
-      results
-    );
-
-    const currentIndex = results.findIndex((instanceSelector) => {
-      return (
-        instanceSelector[0] === rootInstanceSelector[0] &&
-        instanceSelector.join(",") === rootInstanceSelector.join(",")
+      const results: InstanceSelector[] = [];
+      findAllEditableInstanceSelector(
+        rootInstanceId,
+        [],
+        instances,
+        $registeredComponentMetas.get(),
+        results
       );
-    });
 
-    if (currentIndex === -1) {
-      return;
-    }
+      const currentIndex = results.findIndex((instanceSelector) => {
+        return (
+          instanceSelector[0] === rootInstanceSelector[0] &&
+          instanceSelector.join(",") === rootInstanceSelector.join(",")
+        );
+      });
 
-    const nextIndex = mod(currentIndex + 1, results.length);
+      if (currentIndex === -1) {
+        return;
+      }
 
-    $textEditingInstanceSelector.set(results[nextIndex]);
-    $selectedInstanceSelector.set(results[nextIndex]);
-  }, [instances, rootInstanceSelector]);
+      const nextIndex = mod(currentIndex + 1, results.length);
 
-  const handlePrevious = useCallback(() => {
-    const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+      $textEditingInstanceSelector.set({
+        selector: results[nextIndex],
+        reason,
+      });
+      $selectedInstanceSelector.set(results[nextIndex]);
+    },
+    [instances, rootInstanceSelector]
+  );
 
-    if (rootInstanceId === undefined) {
-      return;
-    }
+  const handlePrevious = useCallback(
+    (reason: "up" | "down" | "right" | "left") => {
+      const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
-    const results: InstanceSelector[] = [];
-    findAllEditableInstanceSelector(
-      rootInstanceId,
-      [],
-      instances,
-      $registeredComponentMetas.get(),
-      results
-    );
+      if (rootInstanceId === undefined) {
+        return;
+      }
 
-    const currentIndex = results.findIndex((instanceSelector) => {
-      return (
-        instanceSelector[0] === rootInstanceSelector[0] &&
-        instanceSelector.join(",") === rootInstanceSelector.join(",")
+      const results: InstanceSelector[] = [];
+      findAllEditableInstanceSelector(
+        rootInstanceId,
+        [],
+        instances,
+        $registeredComponentMetas.get(),
+        results
       );
-    });
 
-    if (currentIndex === -1) {
-      return;
-    }
+      const currentIndex = results.findIndex((instanceSelector) => {
+        return (
+          instanceSelector[0] === rootInstanceSelector[0] &&
+          instanceSelector.join(",") === rootInstanceSelector.join(",")
+        );
+      });
 
-    const nextIndex = mod(currentIndex - 1, results.length);
+      if (currentIndex === -1) {
+        return;
+      }
 
-    $textEditingInstanceSelector.set(results[nextIndex]);
-    $selectedInstanceSelector.set(results[nextIndex]);
-  }, [instances, rootInstanceSelector]);
+      const nextIndex = mod(currentIndex - 1, results.length);
+
+      $textEditingInstanceSelector.set({
+        selector: results[nextIndex],
+        reason,
+      });
+      $selectedInstanceSelector.set(results[nextIndex]);
+    },
+    [instances, rootInstanceSelector]
+  );
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <AutofocusPlugin />
+
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
       <ToolbarConnectorPlugin
@@ -626,6 +789,7 @@ export const TextEditor = ({
       />
       <LinkPlugin />
       <HistoryPlugin />
+
       <SwitchBlockPlugin onNext={handleNext} onPrevious={handlePrevious} />
       <OnChangeOnBlurPlugin
         onChange={(editorState) => {

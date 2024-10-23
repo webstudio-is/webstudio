@@ -6,7 +6,10 @@ import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { $textToolbar } from "~/shared/nano-states";
+import {
+  $textEditingInstanceSelector,
+  $textToolbar,
+} from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
 
@@ -33,17 +36,21 @@ const createInstancePair = (
 
 const instances: Instances = new Map([
   createInstancePair("1", "Text", [
-    { type: "text", value: "Paragraph you can edit " },
+    { type: "text", value: "Paragraph you can edit Blabla " },
     { type: "id", value: "2" },
     { type: "id", value: "3" },
     { type: "id", value: "5" },
   ]),
-  createInstancePair("2", "Bold", [{ type: "text", value: "very bold text " }]),
+  createInstancePair("2", "Bold", [
+    { type: "text", value: "Very Very very bold text " },
+  ]),
   createInstancePair("3", "Bold", [{ type: "id", value: "4" }]),
   createInstancePair("4", "Italic", [
-    { type: "text", value: "with small italic" },
+    { type: "text", value: "And Bold Small with small italic" },
   ]),
-  createInstancePair("5", "Bold", [{ type: "text", value: " subtext" }]),
+  createInstancePair("5", "Bold", [
+    { type: "text", value: " la la la subtext" },
+  ]),
 ]);
 
 export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
@@ -128,6 +135,65 @@ export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
   );
 };
 
+export const CursorPositioning: StoryFn<typeof TextEditor> = ({ onChange }) => {
+  const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
+
+  return (
+    <>
+      <Box
+        css={{
+          width: 300,
+
+          padding: `0 ${theme.spacing[5]}`,
+          border: "1px solid #999",
+          color: "black",
+          " *": {
+            outline: "none",
+          },
+        }}
+      >
+        {textEditingInstanceSelector && (
+          <TextEditor
+            rootInstanceSelector={["1"]}
+            instances={instances}
+            contentEditable={<ContentEditable />}
+            onChange={onChange}
+            onSelectInstance={(instanceId) =>
+              console.info("select instance", instanceId)
+            }
+          />
+        )}
+
+        {!textEditingInstanceSelector && (
+          <div
+            onClick={(event) => {
+              $textEditingInstanceSelector.set({
+                selector: ["1"],
+                reason: "click",
+                mouseX: event.clientX,
+                mouseY: event.clientY,
+              });
+            }}
+          >
+            <span>Paragraph you can edit Blabla </span>
+            <strong>Very Very very bold text </strong>
+            <strong>
+              <i>And Bold Small with small italic</i>
+            </strong>
+            <strong> la la la subtext</strong>
+          </div>
+        )}
+      </Box>
+      <br />
+      <i>Click on text above, see cursor position and start editing text</i>
+    </>
+  );
+};
+
 Basic.args = {
+  onChange: action("onChange"),
+};
+
+CursorPositioning.args = {
   onChange: action("onChange"),
 };

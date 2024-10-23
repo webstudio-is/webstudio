@@ -421,8 +421,10 @@ export const WebstudioComponentCanvas = forwardRef<
   );
 
   if (
-    areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
-    false
+    areInstanceSelectorsEqual(
+      textEditingInstanceSelector?.selector,
+      instanceSelector
+    ) === false
   ) {
     initialContentEditableContent.current = children;
     return instanceElement;
