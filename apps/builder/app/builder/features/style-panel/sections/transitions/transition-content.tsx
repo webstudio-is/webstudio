@@ -23,7 +23,11 @@ import { CssValueInputContainer } from "../../shared/css-value-input";
 import { parseCssFragment } from "../../shared/css-fragment";
 import { PropertyInlineLabel } from "../../property-label";
 import { TransitionProperty } from "./transition-property";
-import { $availableVariables, useComputedStyles } from "../../shared/model";
+import {
+  $availableVariables,
+  $availableUnitVariables,
+  useComputedStyles,
+} from "../../shared/model";
 import {
   editRepeatedStyleItem,
   setRepeatedStyleItem,
@@ -139,7 +143,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <CssValueInputContainer
           property="transitionDuration"
           styleSource="local"
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={duration ?? properties.transitionDuration.initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {
@@ -164,7 +168,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <CssValueInputContainer
           property="transitionDelay"
           styleSource="local"
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={delay ?? properties.transitionDelay.initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {

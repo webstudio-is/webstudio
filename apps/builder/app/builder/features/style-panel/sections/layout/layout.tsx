@@ -54,7 +54,7 @@ import { PropertyInfo, PropertyLabel } from "../../property-label";
 import {
   useComputedStyles,
   useComputedStyleDecl,
-  $availableVariables,
+  $availableUnitVariables,
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
@@ -161,7 +161,7 @@ const GapInput = ({
             type: "keyword" as const,
             value: item.name,
           })),
-          ...$availableVariables.get(),
+          ...$availableUnitVariables.get(),
         ]}
         onChange={(styleValue) => {
           onIntermediateChange(styleValue);

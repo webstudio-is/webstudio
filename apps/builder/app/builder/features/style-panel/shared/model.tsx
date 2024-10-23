@@ -4,6 +4,7 @@ import { useStore } from "@nanostores/react";
 import { properties } from "@webstudio-is/css-data";
 import {
   compareMedia,
+  toVarFallback,
   type StyleProperty,
   type StyleValue,
   type VarValue,
@@ -166,20 +167,6 @@ export const $definedStyles = computed(
   }
 );
 
-export const $availableVariables = computed($definedStyles, (definedStyles) => {
-  const availableVariables = new Map<string, VarValue>();
-  for (const { property } of definedStyles) {
-    if (property.startsWith("--")) {
-      // deduplicate by property name
-      availableVariables.set(property, {
-        type: "var",
-        value: property.slice(2),
-      });
-    }
-  }
-  return Array.from(availableVariables.values());
-});
-
 const $model = computed(
   [
     $styles,
@@ -211,20 +198,68 @@ const $model = computed(
   }
 );
 
+const $instanceAndRootSelector = computed(
+  $selectedInstanceSelector,
+  (instanceSelector) => {
+    if (instanceSelector === undefined) {
+      return;
+    }
+    if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+      return instanceSelector;
+    }
+    return [...instanceSelector, ROOT_INSTANCE_ID];
+  }
+);
+
+export const $availableVariables = computed(
+  [
+    $definedStyles,
+    $model,
+    $instanceAndRootSelector,
+    $selectedOrLastStyleSourceSelector,
+  ],
+  (definedStyles, model, instanceSelector, styleSourceSelector) => {
+    const availableVariables = new Map<string, VarValue>();
+    for (const { property } of definedStyles) {
+      if (property.startsWith("--")) {
+        const { computedValue } = getComputedStyleDecl({
+          model,
+          instanceSelector,
+          styleSourceId: styleSourceSelector?.styleSourceId,
+          state: styleSourceSelector?.state,
+          property,
+        });
+        // deduplicate by property name
+        availableVariables.set(property, {
+          type: "var",
+          value: property.slice(2),
+          fallback: toVarFallback(computedValue),
+        });
+      }
+    }
+    return Array.from(availableVariables.values());
+  }
+);
+
+export const $availableUnitVariables = computed(
+  $availableVariables,
+  (availableVariables) =>
+    availableVariables.filter((value) => value.fallback?.type !== "rgb")
+);
+
+export const $availableColorVariables = computed(
+  $availableVariables,
+  (availableVariables) =>
+    availableVariables.filter((value) => value.fallback?.type !== "unit")
+);
+
 export const createComputedStyleDeclStore = (property: StyleProperty) => {
   return computed(
-    [$model, $selectedInstanceSelector, $selectedOrLastStyleSourceSelector],
+    [$model, $instanceAndRootSelector, $selectedOrLastStyleSourceSelector],
     (model, instanceSelector, styleSourceSelector) => {
-      let instanceAndRootSelector: undefined | InstanceSelector;
-      if (instanceSelector) {
-        instanceAndRootSelector =
-          instanceSelector[0] === ROOT_INSTANCE_ID
-            ? instanceSelector
-            : [...instanceSelector, ROOT_INSTANCE_ID];
-      }
       return getComputedStyleDecl({
         model,
-        instanceSelector: instanceAndRootSelector,
+        instanceSelector,
         styleSourceId: styleSourceSelector?.styleSourceId,
         state: styleSourceSelector?.state,
         property,

@@ -22,6 +22,7 @@ import {
   type VarValue,
   createRegularStyleSheet,
   toValue,
+  toVarFallback,
 } from "@webstudio-is/css-engine";
 import {
   $assets,
@@ -156,10 +157,7 @@ const toVarValue = (
     // escape complex selectors in state like ":hover"
     // setProperty and removeProperty escape automatically
     value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
-    fallback: {
-      type: "unparsed",
-      value: toValue(styleDecl.value, transformValue),
-    },
+    fallback: toVarFallback(styleDecl.value, transformValue),
   };
 };
 
