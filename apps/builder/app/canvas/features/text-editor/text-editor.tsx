@@ -29,6 +29,9 @@ import {
   KEY_ARROW_LEFT_COMMAND,
   $createRangeSelection,
   COMMAND_PRIORITY_CRITICAL,
+  $getNearestNodeFromDOMNode,
+  // eslint-disable-next-line camelcase
+  $normalizeSelection__EXPERIMENTAL,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -310,7 +313,6 @@ const getVerticalIntersectionRatio = (rectA: DOMRect, rectB: DOMRect) => {
   return minHeight === 0 ? 0 : intersectionHeight / minHeight;
 };
 
-/*
 const caretFromPoint = (
   x: number,
   y: number
@@ -343,7 +345,86 @@ const caretFromPoint = (
     return null;
   }
 };
-*/
+
+const InitCursorPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    editor.update(() => {
+      const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+      if (textEditingInstanceSelector === undefined) {
+        return;
+      }
+
+      const { reason } = textEditingInstanceSelector;
+
+      if (reason === undefined) {
+        return;
+      }
+
+      if (reason === "click") {
+        const { mouseX, mouseY } = textEditingInstanceSelector;
+
+        const eventRange = caretFromPoint(mouseX, mouseY);
+
+        if (eventRange !== null) {
+          const { offset: domOffset, node: domNode } = eventRange;
+          const node = $getNearestNodeFromDOMNode(domNode);
+
+          if (node !== null) {
+            const selection = $createRangeSelection();
+            if ($isTextNode(node)) {
+              selection.anchor.set(node.getKey(), domOffset, "text");
+              selection.focus.set(node.getKey(), domOffset, "text");
+            } else {
+              const parentKey = node.getParentOrThrow().getKey();
+              const offset = node.getIndexWithinParent() + 1;
+              selection.anchor.set(parentKey, offset, "element");
+              selection.focus.set(parentKey, offset, "element");
+            }
+            const normalizedSelection =
+              $normalizeSelection__EXPERIMENTAL(selection);
+            $setSelection(normalizedSelection);
+          }
+        }
+      } else if (
+        reason === "down" ||
+        reason === "right" ||
+        reason === "enter"
+      ) {
+        const selection = $createRangeSelection();
+        const firstNode = $getRoot().getFirstDescendant();
+
+        if (firstNode && $isTextNode(firstNode)) {
+          selection.anchor.set(firstNode.getKey(), 0, "text");
+          selection.focus.set(firstNode.getKey(), 0, "text");
+          $setSelection(selection);
+        }
+      } else if (reason === "up" || reason === "left") {
+        const selection = $createRangeSelection();
+        const lastNode = $getRoot().getLastDescendant();
+
+        if (lastNode && $isTextNode(lastNode)) {
+          selection.anchor.set(
+            lastNode.getKey(),
+            lastNode.getTextContentSize(),
+            "text"
+          );
+          selection.focus.set(
+            lastNode.getKey(),
+            lastNode.getTextContentSize(),
+            "text"
+          );
+          $setSelection(selection);
+        }
+      } else {
+        reason satisfies never;
+      }
+    });
+  }, [editor]);
+
+  return null;
+};
 
 /*
 const CursorChange = () => {
@@ -643,47 +724,6 @@ export const TextEditor = ({
       // so assume new nodes don't need to preserve instance id
       // and store only initial references
       $convertToLexical(instances, rootInstanceId, refs);
-
-      const reason = $textEditingInstanceSelector.get()?.reason;
-
-      if (reason === undefined) {
-        return;
-      }
-
-      if (
-        reason === "down" ||
-        reason === "right" ||
-        reason === "enter" ||
-        reason === "click"
-      ) {
-        const selection = $createRangeSelection();
-        const firstNode = $getRoot().getFirstDescendant();
-
-        if (firstNode && $isTextNode(firstNode)) {
-          selection.anchor.set(firstNode.getKey(), 0, "text");
-          selection.focus.set(firstNode.getKey(), 0, "text");
-          $setSelection(selection);
-        }
-      } else if (reason === "up" || reason === "left") {
-        const selection = $createRangeSelection();
-        const lastNode = $getRoot().getLastDescendant();
-
-        if (lastNode && $isTextNode(lastNode)) {
-          selection.anchor.set(
-            lastNode.getKey(),
-            lastNode.getTextContentSize(),
-            "text"
-          );
-          selection.focus.set(
-            lastNode.getKey(),
-            lastNode.getTextContentSize(),
-            "text"
-          );
-          $setSelection(selection);
-        }
-      } else {
-        reason satisfies never;
-      }
     },
     nodes: [LinkNode],
     onError,
@@ -801,6 +841,7 @@ export const TextEditor = ({
           });
         }}
       />
+      <InitCursorPlugin />
     </LexicalComposer>
   );
 };
