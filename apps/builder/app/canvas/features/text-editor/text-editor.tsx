@@ -1,4 +1,10 @@
-import { useState, useEffect, useLayoutEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+} from "react";
 import {
   KEY_ENTER_COMMAND,
   INSERT_LINE_BREAK_COMMAND,
@@ -10,12 +16,17 @@ import {
   $isRangeSelection,
   type EditorState,
   KEY_ARROW_DOWN_COMMAND,
-  COMMAND_PRIORITY_CRITICAL,
-  type LexicalNode,
-  TextNode,
   $isLineBreakNode,
   KEY_ARROW_UP_COMMAND,
-  $isParagraphNode,
+  SELECTION_CHANGE_COMMAND,
+  COMMAND_PRIORITY_LOW,
+  $setSelection,
+  $getRoot,
+  $isTextNode,
+  $isElementNode,
+  type RangeSelection,
+  KEY_ARROW_RIGHT_COMMAND,
+  KEY_ARROW_LEFT_COMMAND,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -205,78 +216,185 @@ const RemoveParagaphsPlugin = () => {
   return null;
 };
 
-const countLinesBefore = (anchorNode: LexicalNode) => {
-  let node: LexicalNode | ElementNode | TextNode | null = anchorNode;
-
-  let totalLines = 0;
-  while (true) {
-    node = node.getPreviousSibling() ?? null;
-
-    if (node === null) {
-      break;
-    }
-
-    if ($isLineBreakNode(node)) {
-      totalLines++;
-    }
-  }
-  return totalLines;
-};
-
-const countLinesAfter = (anchorNode: LexicalNode) => {
-  let node: LexicalNode | ElementNode | TextNode | null = anchorNode;
-
-  let totalLines = $isLineBreakNode(node) ? 1 : 0;
-  while (true) {
-    node = node.getNextSibling() ?? null;
-
-    if (node === null) {
-      break;
-    }
-
-    if ($isLineBreakNode(node)) {
-      totalLines++;
-    }
-  }
-  return totalLines;
-};
-
 type SwitchBlockPluginProps = {
   onNext: () => void;
   onPrevious: () => void;
 };
 
+const isSelectionLastNode = () => {
+  const selection = $getSelection();
+
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+
+  const rootNode = $getRoot();
+  const lastNode = rootNode.getLastDescendant();
+  const anchor = selection.anchor;
+
+  if ($isLineBreakNode(lastNode)) {
+    const anchorNode = anchor.getNode();
+    return (
+      $isElementNode(anchorNode) &&
+      anchorNode.getLastDescendant() === lastNode &&
+      anchor.offset === anchorNode.getChildrenSize()
+    );
+  } else if ($isTextNode(lastNode)) {
+    return (
+      anchor.offset === lastNode.getTextContentSize() &&
+      anchor.getNode() === lastNode
+    );
+  } else if ($isElementNode(lastNode)) {
+    return (
+      anchor.offset === lastNode.getChildrenSize() &&
+      anchor.getNode() === lastNode
+    );
+  }
+
+  return false;
+};
+
+const isSelectionFirstNode = () => {
+  const selection = $getSelection();
+
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+
+  const rootNode = $getRoot();
+  const firstNode = rootNode.getFirstDescendant();
+  const anchor = selection.anchor;
+
+  if ($isLineBreakNode(firstNode)) {
+    const anchorNode = anchor.getNode();
+    return (
+      $isElementNode(anchorNode) &&
+      anchorNode.getFirstDescendant() === firstNode &&
+      anchor.offset === 0
+    );
+  } else if ($isTextNode(firstNode)) {
+    return anchor.offset === 0 && anchor.getNode() === firstNode;
+  } else if ($isElementNode(firstNode)) {
+    return anchor.offset === 0 && anchor.getNode() === firstNode;
+  }
+
+  return false;
+};
+
+const getDomSelectionRect = () => {
+  const domSelection = window.getSelection();
+  if (!domSelection || !domSelection.focusNode) {
+    return undefined;
+  }
+  // Get current line position
+  const range = domSelection.getRangeAt(0);
+  const currentRect = range.getBoundingClientRect();
+  return currentRect;
+};
+
+const getVerticalIntersectionRatio = (rectA: DOMRect, rectB: DOMRect) => {
+  const topIntersection = Math.max(rectA.top, rectB.top);
+  const bottomIntersection = Math.min(rectA.bottom, rectB.bottom);
+  const intersectionHeight = Math.max(0, bottomIntersection - topIntersection);
+  const minHeight = Math.min(rectA.height, rectB.height);
+  return minHeight === 0 ? 0 : intersectionHeight / minHeight;
+};
+
 const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
   const [editor] = useLexicalComposerContext();
+  const selectionPoint =
+    useRef<
+      [
+        type: "up" | "down",
+        time: number,
+        selection: RangeSelection,
+        rect: DOMRect,
+      ]
+    >();
 
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_RIGHT_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        selectionPoint.current = undefined;
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const isLast = isSelectionLastNode();
+
+        if (isLast) {
+          onNext();
+          event?.preventDefault();
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+  }, [editor, onNext]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_LEFT_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        selectionPoint.current = undefined;
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const isFirst = isSelectionFirstNode();
+
+        if (isFirst) {
+          onPrevious();
+          event?.preventDefault();
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+  }, [editor, onPrevious]);
+
+  // To detect UP/Down key events on the first/last edited line, we use the following trick:
+  // When pressing UP/Down on the first/last line, the native cursor moves to the start/end of the text.
+  // We detect this movement when the cursor rect moves horizontally to the start/end and restore the cursor position,
+  // then trigger onPrevious/onNext accordingly.
   useEffect(() => {
     return editor.registerCommand(
       KEY_ARROW_DOWN_COMMAND,
       (event) => {
         const selection = $getSelection();
+        selectionPoint.current = undefined;
+
         if (!$isRangeSelection(selection)) {
           return false;
         }
-        const anchor = selection.anchor;
-        let anchorNode: LexicalNode | TextNode | ElementNode = anchor.getNode();
-        const anchorOffset = anchor.offset;
 
-        if ($isParagraphNode(anchorNode)) {
-          const children = anchorNode.getChildren();
-          anchorNode = children[anchorOffset];
+        const isLast = isSelectionLastNode();
+
+        if (isLast) {
+          onNext();
+          event?.preventDefault();
+          return true;
         }
 
-        const linesAfter = anchorNode == null ? 0 : countLinesAfter(anchorNode);
-
-        if (linesAfter > 0) {
+        const rect = getDomSelectionRect();
+        if (rect === undefined) {
           return false;
         }
 
-        onNext();
-        event?.preventDefault();
-        return true;
+        selectionPoint.current = ["down", Date.now(), selection.clone(), rect];
+
+        return false;
       },
-      COMMAND_PRIORITY_CRITICAL
+      COMMAND_PRIORITY_LOW
     );
   }, [editor, onNext]);
 
@@ -285,32 +403,71 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
       KEY_ARROW_UP_COMMAND,
       (event) => {
         const selection = $getSelection();
+        selectionPoint.current = undefined;
+
         if (!$isRangeSelection(selection)) {
           return false;
         }
-        const anchor = selection.anchor;
 
-        let anchorNode: LexicalNode | TextNode | ElementNode = anchor.getNode();
-        const anchorOffset = anchor.offset;
+        const isFirst = isSelectionFirstNode();
 
-        if ($isParagraphNode(anchorNode)) {
-          const children = anchorNode.getChildren();
-          anchorNode = children[anchorOffset];
+        if (isFirst) {
+          onPrevious();
+          event?.preventDefault();
+          return true;
         }
 
-        const linesBefore = anchorNode ? countLinesBefore(anchorNode) : 1;
-
-        if (linesBefore > 0) {
+        const rect = getDomSelectionRect();
+        if (rect === undefined) {
           return false;
         }
 
-        onPrevious();
-        event?.preventDefault();
-        return true;
+        selectionPoint.current = ["up", Date.now(), selection.clone(), rect];
+
+        return false;
       },
-      COMMAND_PRIORITY_CRITICAL
+      COMMAND_PRIORITY_LOW
     );
   }, [editor, onPrevious]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        if (selectionPoint.current === undefined) {
+          return false;
+        }
+
+        const [type, time, savedSelection, savedRect] = selectionPoint.current;
+
+        if (Date.now() - time > 100) {
+          return false;
+        }
+
+        selectionPoint.current = undefined;
+
+        const isFirstOrLast =
+          type === "up" ? isSelectionFirstNode() : isSelectionLastNode();
+        const rect = getDomSelectionRect();
+        if (
+          isFirstOrLast &&
+          rect !== undefined &&
+          getVerticalIntersectionRatio(rect, savedRect) > 0.5
+        ) {
+          $setSelection(savedSelection);
+
+          if (type === "up") {
+            onPrevious();
+          } else {
+            onNext();
+          }
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor, onNext]);
 
   return null;
 };
@@ -470,7 +627,6 @@ export const TextEditor = ({
       <LinkPlugin />
       <HistoryPlugin />
       <SwitchBlockPlugin onNext={handleNext} onPrevious={handlePrevious} />
-
       <OnChangeOnBlurPlugin
         onChange={(editorState) => {
           editorState.read(() => {
