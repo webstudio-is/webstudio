@@ -8,7 +8,7 @@ import {
   Fragment,
   type ReactNode,
 } from "react";
-import { Suspense, lazy } from "react";
+
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -47,11 +47,7 @@ import {
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
-
-const TextEditor = lazy(async () => {
-  const { TextEditor } = await import("../text-editor");
-  return { default: TextEditor };
-});
+import { TextEditor } from "../text-editor";
 
 const ContentEditable = ({
   renderComponentWithRef,
@@ -431,44 +427,42 @@ export const WebstudioComponentCanvas = forwardRef<
   }
 
   return (
-    <Suspense fallback={instanceElement}>
-      <TextEditor
-        rootInstanceSelector={instanceSelector}
-        instances={instances}
-        contentEditable={
-          <ContentEditable
-            renderComponentWithRef={(elementRef) => (
-              <Component {...props} ref={mergeRefs(ref, elementRef)}>
-                {initialContentEditableContent.current}
-              </Component>
-            )}
-          />
-        }
-        onChange={(instancesList) => {
-          serverSyncStore.createTransaction([$instances], (instances) => {
-            const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
-            for (const updatedInstance of instancesList) {
-              instances.set(updatedInstance.id, updatedInstance);
-              // exclude reused instances
-              deletedTreeIds.delete(updatedInstance.id);
-            }
-            for (const instanceId of deletedTreeIds) {
-              instances.delete(instanceId);
-            }
-          });
-        }}
-        onSelectInstance={(instanceId) => {
-          const instances = $instances.get();
-          const newSelectedSelector = getInstanceSelector(
-            instances,
-            instanceSelector,
-            instanceId
-          );
-          $textEditingInstanceSelector.set(undefined);
-          $selectedInstanceSelector.set(newSelectedSelector);
-        }}
-      />
-    </Suspense>
+    <TextEditor
+      rootInstanceSelector={instanceSelector}
+      instances={instances}
+      contentEditable={
+        <ContentEditable
+          renderComponentWithRef={(elementRef) => (
+            <Component {...props} ref={mergeRefs(ref, elementRef)}>
+              {initialContentEditableContent.current}
+            </Component>
+          )}
+        />
+      }
+      onChange={(instancesList) => {
+        serverSyncStore.createTransaction([$instances], (instances) => {
+          const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
+          for (const updatedInstance of instancesList) {
+            instances.set(updatedInstance.id, updatedInstance);
+            // exclude reused instances
+            deletedTreeIds.delete(updatedInstance.id);
+          }
+          for (const instanceId of deletedTreeIds) {
+            instances.delete(instanceId);
+          }
+        });
+      }}
+      onSelectInstance={(instanceId) => {
+        const instances = $instances.get();
+        const newSelectedSelector = getInstanceSelector(
+          instances,
+          instanceSelector,
+          instanceId
+        );
+        $textEditingInstanceSelector.set(undefined);
+        $selectedInstanceSelector.set(newSelectedSelector);
+      }}
+    />
   );
 });
 
