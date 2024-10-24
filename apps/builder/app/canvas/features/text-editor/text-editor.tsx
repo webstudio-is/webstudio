@@ -1,4 +1,10 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+} from "react";
 import {
   KEY_ENTER_COMMAND,
   INSERT_LINE_BREAK_COMMAND,
@@ -9,6 +15,23 @@ import {
   $getSelection,
   $isRangeSelection,
   type EditorState,
+  KEY_ARROW_DOWN_COMMAND,
+  $isLineBreakNode,
+  KEY_ARROW_UP_COMMAND,
+  SELECTION_CHANGE_COMMAND,
+  COMMAND_PRIORITY_LOW,
+  $setSelection,
+  $getRoot,
+  $isTextNode,
+  $isElementNode,
+  type RangeSelection,
+  KEY_ARROW_RIGHT_COMMAND,
+  KEY_ARROW_LEFT_COMMAND,
+  $createRangeSelection,
+  COMMAND_PRIORITY_CRITICAL,
+  $getNearestNodeFromDOMNode,
+  // eslint-disable-next-line camelcase
+  $normalizeSelection__EXPERIMENTAL,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -26,6 +49,13 @@ import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
+import {
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedPage,
+  $textEditingInstanceSelector,
+} from "~/shared/nano-states";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
@@ -191,6 +221,508 @@ const RemoveParagaphsPlugin = () => {
   return null;
 };
 
+const isSelectionLastNode = () => {
+  const selection = $getSelection();
+
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+
+  const rootNode = $getRoot();
+  const lastNode = rootNode.getLastDescendant();
+  const anchor = selection.anchor;
+
+  if ($isLineBreakNode(lastNode)) {
+    const anchorNode = anchor.getNode();
+    return (
+      $isElementNode(anchorNode) &&
+      anchorNode.getLastDescendant() === lastNode &&
+      anchor.offset === anchorNode.getChildrenSize()
+    );
+  } else if ($isTextNode(lastNode)) {
+    return (
+      anchor.offset === lastNode.getTextContentSize() &&
+      anchor.getNode() === lastNode
+    );
+  } else if ($isElementNode(lastNode)) {
+    return (
+      anchor.offset === lastNode.getChildrenSize() &&
+      anchor.getNode() === lastNode
+    );
+  }
+
+  return false;
+};
+
+const isSelectionFirstNode = () => {
+  const selection = $getSelection();
+
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+
+  const rootNode = $getRoot();
+  const firstNode = rootNode.getFirstDescendant();
+  const anchor = selection.anchor;
+
+  if ($isLineBreakNode(firstNode)) {
+    const anchorNode = anchor.getNode();
+    return (
+      $isElementNode(anchorNode) &&
+      anchorNode.getFirstDescendant() === firstNode &&
+      anchor.offset === 0
+    );
+  } else if ($isTextNode(firstNode)) {
+    return anchor.offset === 0 && anchor.getNode() === firstNode;
+  } else if ($isElementNode(firstNode)) {
+    return anchor.offset === 0 && anchor.getNode() === firstNode;
+  }
+
+  return false;
+};
+
+const getDomSelectionRect = () => {
+  const domSelection = window.getSelection();
+  if (!domSelection || !domSelection.focusNode) {
+    return undefined;
+  }
+
+  // Get current line position
+  const range = domSelection.getRangeAt(0);
+
+  // The cursor position at the beginning of a line is technically associated with both:
+  // The end of the previous line
+  // The beginning of the current line
+  // Select the rectangle for the current line. It typically appears as the last rect in the list.
+  const rects = range.getClientRects();
+  const currentRect = rects[rects.length - 1] ?? undefined;
+
+  return currentRect;
+};
+
+const getVerticalIntersectionRatio = (rectA: DOMRect, rectB: DOMRect) => {
+  const topIntersection = Math.max(rectA.top, rectB.top);
+  const bottomIntersection = Math.min(rectA.bottom, rectB.bottom);
+  const intersectionHeight = Math.max(0, bottomIntersection - topIntersection);
+  const minHeight = Math.min(rectA.height, rectB.height);
+  return minHeight === 0 ? 0 : intersectionHeight / minHeight;
+};
+
+const caretFromPoint = (
+  x: number,
+  y: number
+): null | {
+  offset: number;
+  node: Node;
+} => {
+  if (typeof document.caretRangeFromPoint !== "undefined") {
+    const range = document.caretRangeFromPoint(x, y);
+    if (range === null) {
+      return null;
+    }
+    return {
+      node: range.startContainer,
+      offset: range.startOffset,
+    };
+    // @ts-expect-error no types
+  } else if (document.caretPositionFromPoint !== "undefined") {
+    // @ts-expect-error no types
+    const range = document.caretPositionFromPoint(x, y);
+    if (range === null) {
+      return null;
+    }
+    return {
+      node: range.offsetNode,
+      offset: range.offset,
+    };
+  } else {
+    // Gracefully handle IE
+    return null;
+  }
+};
+
+const InitCursorPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    if (!editor.isEditable()) {
+      return;
+    }
+
+    editor.update(() => {
+      const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+      if (textEditingInstanceSelector === undefined) {
+        return;
+      }
+
+      const { reason } = textEditingInstanceSelector;
+
+      if (reason === undefined) {
+        return;
+      }
+
+      if (reason === "click") {
+        const { mouseX, mouseY } = textEditingInstanceSelector;
+
+        const eventRange = caretFromPoint(mouseX, mouseY);
+
+        if (eventRange !== null) {
+          const { offset: domOffset, node: domNode } = eventRange;
+          const node = $getNearestNodeFromDOMNode(domNode);
+
+          if (node !== null) {
+            const selection = $createRangeSelection();
+            if ($isTextNode(node)) {
+              selection.anchor.set(node.getKey(), domOffset, "text");
+              selection.focus.set(node.getKey(), domOffset, "text");
+            }
+            const normalizedSelection =
+              $normalizeSelection__EXPERIMENTAL(selection);
+            $setSelection(normalizedSelection);
+          }
+        }
+        return;
+      }
+
+      while (reason === "down" || reason === "up") {
+        const { cursorX } = textEditingInstanceSelector;
+        const rootElement = editor.getElementByKey($getRoot().getKey());
+        if (rootElement == null) {
+          break;
+        }
+
+        const walker = document.createTreeWalker(
+          rootElement,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+
+        const allRects: DOMRect[] = [];
+
+        while (walker.nextNode()) {
+          const range = document.createRange();
+          range.selectNodeContents(walker.currentNode);
+          const rects = range.getClientRects();
+          allRects.push(...Array.from(rects));
+        }
+
+        if (allRects.length === 0) {
+          break;
+        }
+
+        const topRect = Array.from(allRects).sort((a, b) => a.top - b.top)[0];
+
+        const bottomRect = Array.from(allRects).sort(
+          (a, b) => b.bottom - a.bottom
+        )[0];
+
+        const topRects = allRects.filter(
+          (rect) => getVerticalIntersectionRatio(rect, topRect) > 0.5
+        );
+        const bottomRects = allRects.filter(
+          (rect) => getVerticalIntersectionRatio(rect, bottomRect) > 0.5
+        );
+
+        // Smoodge the cursor a little to the left and right to find the nearest text node
+        const smoodgeOffsets = [1, 2, 4];
+        const maxOffset = Math.max(...smoodgeOffsets);
+
+        const rects = reason === "down" ? topRects : bottomRects;
+
+        rects.sort((a, b) => a.left - b.left);
+
+        const rectWithText = rects.find(
+          (rect, index) =>
+            rect.left - (index === 0 ? maxOffset : 0) <= cursorX &&
+            cursorX <= rect.right + (index === rects.length - 1 ? maxOffset : 0)
+        );
+
+        if (rectWithText === undefined) {
+          break;
+        }
+
+        const newCursorY = rectWithText.top + rectWithText.height / 2;
+
+        const eventRanges = [caretFromPoint(cursorX, newCursorY)];
+        for (const offset of smoodgeOffsets) {
+          eventRanges.push(caretFromPoint(cursorX - offset, newCursorY));
+          eventRanges.push(caretFromPoint(cursorX + offset, newCursorY));
+        }
+
+        for (const eventRange of eventRanges) {
+          if (eventRange === null) {
+            continue;
+          }
+
+          const { offset: domOffset, node: domNode } = eventRange;
+          const node = $getNearestNodeFromDOMNode(domNode);
+
+          if (node !== null && $isTextNode(node)) {
+            const selection = $createRangeSelection();
+            selection.anchor.set(node.getKey(), domOffset, "text");
+            selection.focus.set(node.getKey(), domOffset, "text");
+            const normalizedSelection =
+              $normalizeSelection__EXPERIMENTAL(selection);
+            $setSelection(normalizedSelection);
+
+            return;
+          }
+        }
+
+        /*
+        const container = document.createElement("div");
+        container.style.position = "fixed";
+        container.style.top = "0";
+        container.style.left = "0";
+        container.style.pointerEvents = "none";
+        container.style.zIndex = "9999";
+        document.body.appendChild(container);
+
+        Array.from(rects).forEach((rect, index) => {
+          const debugRect = document.createElement("div");
+
+          debugRect.className = `debug-rect-${index}`;
+
+          Object.assign(debugRect.style, {
+            position: "fixed",
+            border: "1px solid red",
+            backgroundColor: "rgba(255, 0, 0, 0.1)",
+            top: `${rect.top}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
+            zIndex: "9999",
+            pointerEvents: "none",
+          });
+          container.appendChild(debugRect);
+        });
+        */
+
+        break;
+      }
+
+      if (reason === "down" || reason === "right" || reason === "enter") {
+        const selection = $createRangeSelection();
+        const firstNode = $getRoot().getFirstDescendant();
+
+        if (firstNode && $isTextNode(firstNode)) {
+          selection.anchor.set(firstNode.getKey(), 0, "text");
+          selection.focus.set(firstNode.getKey(), 0, "text");
+          $setSelection(selection);
+        }
+        return;
+      }
+
+      if (reason === "up" || reason === "left") {
+        const selection = $createRangeSelection();
+        const lastNode = $getRoot().getLastDescendant();
+
+        if (lastNode && $isTextNode(lastNode)) {
+          selection.anchor.set(
+            lastNode.getKey(),
+            lastNode.getTextContentSize(),
+            "text"
+          );
+          selection.focus.set(
+            lastNode.getKey(),
+            lastNode.getTextContentSize(),
+            "text"
+          );
+          $setSelection(selection);
+        }
+
+        return;
+      }
+
+      reason satisfies never;
+    });
+  }, [editor]);
+
+  return null;
+};
+
+type HandleNextArgs =
+  | {
+      reason: "up" | "down";
+      cursorX: number;
+    }
+  | {
+      reason: "right" | "left";
+    };
+
+type SwitchBlockPluginProps = {
+  onNext: (args: HandleNextArgs) => void;
+};
+
+const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
+  const [editor] = useLexicalComposerContext();
+  const selectionPoint =
+    useRef<
+      [
+        type: "up" | "down",
+        time: number,
+        selection: RangeSelection,
+        rect: DOMRect,
+      ]
+    >();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_RIGHT_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        selectionPoint.current = undefined;
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const isLast = isSelectionLastNode();
+
+        if (isLast) {
+          onNext({ reason: "right" });
+          event?.preventDefault();
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+  }, [editor, onNext]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_LEFT_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        selectionPoint.current = undefined;
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const isFirst = isSelectionFirstNode();
+
+        if (isFirst) {
+          onNext({ reason: "left" });
+          event?.preventDefault();
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+  }, [editor, onNext]);
+
+  // To detect UP/Down key events on the first/last edited line, we use the following trick:
+  // When pressing UP/Down on the first/last line, the native cursor moves to the start/end of the text.
+  // We detect this movement when the cursor rect moves horizontally to the start/end and restore the cursor position,
+  // then trigger onPrevious/onNext accordingly.
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_DOWN_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        selectionPoint.current = undefined;
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const isLast = isSelectionLastNode();
+
+        const rect = getDomSelectionRect();
+        if (isLast) {
+          onNext({ reason: "down", cursorX: rect?.x ?? 0 });
+          event?.preventDefault();
+          return true;
+        }
+
+        if (rect === undefined) {
+          return false;
+        }
+
+        selectionPoint.current = ["down", Date.now(), selection.clone(), rect];
+
+        return false;
+      },
+      COMMAND_PRIORITY_CRITICAL
+    );
+  }, [editor, onNext]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ARROW_UP_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        selectionPoint.current = undefined;
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const isFirst = isSelectionFirstNode();
+        const rect = getDomSelectionRect();
+
+        if (isFirst) {
+          onNext({ reason: "up", cursorX: rect?.x ?? 0 });
+          event?.preventDefault();
+          return true;
+        }
+
+        if (rect === undefined) {
+          return false;
+        }
+
+        selectionPoint.current = ["up", Date.now(), selection.clone(), rect];
+
+        return false;
+      },
+      COMMAND_PRIORITY_CRITICAL
+    );
+  }, [editor, onNext]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        if (selectionPoint.current === undefined) {
+          return false;
+        }
+
+        const [type, time, savedSelection, savedRect] = selectionPoint.current;
+
+        if (Date.now() - time > 100) {
+          return false;
+        }
+
+        selectionPoint.current = undefined;
+
+        const isFirstOrLast =
+          type === "up" ? isSelectionFirstNode() : isSelectionLastNode();
+        const rect = getDomSelectionRect();
+
+        if (
+          isFirstOrLast &&
+          rect !== undefined &&
+          getVerticalIntersectionRatio(rect, savedRect) > 0.5
+        ) {
+          $setSelection(savedSelection);
+
+          onNext({ reason: type, cursorX: savedRect.x });
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor, onNext]);
+
+  return null;
+};
+
 const onError = (error: Error) => {
   throw error;
 };
@@ -199,14 +731,20 @@ type TextEditorProps = {
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
   contentEditable: JSX.Element;
+  editable?: boolean;
   onChange: (instancesList: Instance[]) => void;
   onSelectInstance: (instanceId: Instance["id"]) => void;
+};
+
+const mod = (n: number, m: number) => {
+  return ((n % m) + m) % m;
 };
 
 export const TextEditor = ({
   rootInstanceSelector,
   instances,
   contentEditable,
+  editable,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
@@ -243,6 +781,7 @@ export const TextEditor = ({
         italic: italicClassName,
       },
     },
+    editable,
     editorState: () => {
       const [rootInstanceId] = rootInstanceSelector;
       // text editor is unmounted when change properties in side panel
@@ -254,9 +793,52 @@ export const TextEditor = ({
     onError,
   };
 
+  const handleNext = useCallback(
+    (args: HandleNextArgs) => {
+      const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+
+      if (rootInstanceId === undefined) {
+        return;
+      }
+
+      const results: InstanceSelector[] = [];
+      findAllEditableInstanceSelector(
+        rootInstanceId,
+        [],
+        instances,
+        $registeredComponentMetas.get(),
+        results
+      );
+
+      const currentIndex = results.findIndex((instanceSelector) => {
+        return (
+          instanceSelector[0] === rootInstanceSelector[0] &&
+          instanceSelector.join(",") === rootInstanceSelector.join(",")
+        );
+      });
+
+      if (currentIndex === -1) {
+        return;
+      }
+
+      const nextIndex =
+        args.reason === "down" || args.reason === "right"
+          ? mod(currentIndex + 1, results.length)
+          : mod(currentIndex - 1, results.length);
+
+      $textEditingInstanceSelector.set({
+        selector: results[nextIndex],
+        ...args,
+      });
+      $selectedInstanceSelector.set(results[nextIndex]);
+    },
+    [instances, rootInstanceSelector]
+  );
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <AutofocusPlugin />
+
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
       <ToolbarConnectorPlugin
@@ -276,6 +858,7 @@ export const TextEditor = ({
       <LinkPlugin />
       <HistoryPlugin />
 
+      <SwitchBlockPlugin onNext={handleNext} />
       <OnChangeOnBlurPlugin
         onChange={(editorState) => {
           editorState.read(() => {
@@ -286,6 +869,7 @@ export const TextEditor = ({
           });
         }}
       />
+      <InitCursorPlugin />
     </LexicalComposer>
   );
 };

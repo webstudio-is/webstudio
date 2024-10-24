@@ -15,7 +15,22 @@ export const $editingItemSelector = atom<undefined | InstanceSelector>(
 );
 
 export const $textEditingInstanceSelector = atom<
-  undefined | InstanceSelector
+  | undefined
+  | {
+      selector: InstanceSelector;
+      reason: "right" | "left" | "enter";
+    }
+  | {
+      selector: InstanceSelector;
+      reason: "click";
+      mouseX: number;
+      mouseY: number;
+    }
+  | {
+      selector: InstanceSelector;
+      reason: "up" | "down";
+      cursorX: number;
+    }
 >();
 
 export const $instances = atom<Instances>(new Map());

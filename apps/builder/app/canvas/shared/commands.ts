@@ -46,7 +46,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // the canvas element may be unfocused, so it's important to focus the element on the canvas.
         element.focus();
         $selectedInstanceSelector.set(editableInstanceSelector);
-        $textEditingInstanceSelector.set(editableInstanceSelector);
+        $textEditingInstanceSelector.set({
+          selector: editableInstanceSelector,
+          reason: "enter",
+        });
       },
     },
 

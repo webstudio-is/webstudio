@@ -72,6 +72,11 @@ export const createPubsub = <PublishMap>() => {
 
   const unwrapAction = (payload: unknown) => {
     if (typeof payload !== "object" || payload === null) {
+      if (process.env.IS_STROYBOOK) {
+        return { type: "storybook", payload: payload } as Action<
+          keyof PublishMap
+        >;
+      }
       console.error("Invalid payload", payload);
       throw new Error("Invalid payload");
     }
