@@ -3,7 +3,6 @@ import { nanoid } from "nanoid";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Box,
   rawTheme,
@@ -481,7 +480,7 @@ export const NavigatorTree = () => {
       }}
     >
       <TreeRoot>
-        {isFeatureEnabled("cssVars") && rootMeta && (
+        {rootMeta && (
           <TreeNode
             level={0}
             isSelected={selectedKey === ROOT_INSTANCE_ID}

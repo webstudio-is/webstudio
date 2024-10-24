@@ -4,7 +4,6 @@ export const internalComponents = false;
 export const unsupportedBrowsers = false;
 export const aiRadixComponents = false;
 export const cms = false;
-export const cssVars = false;
 export const filters = false;
 export const xmlElement = false;
 export const staticExport = false;
