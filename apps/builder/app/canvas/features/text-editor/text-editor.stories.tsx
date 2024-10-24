@@ -248,18 +248,25 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
             icon: "icon",
           },
         ],
+        [
+          "Bold",
+          {
+            type: "rich-text-child",
+            icon: "icon",
+          },
+        ],
       ])
     );
 
     return renderJsx(
       <$.Body ws:id="bodyId">
         <$.Box ws:id="boxAId">
-          Hello world Hello world Hello world Hello world Hello world Hello
-          world
+          Hello world <$.Bold ws:id="boldA">Hello world</$.Bold> Hello world
+          Hello world Hello world Hello world
         </$.Box>
         <$.Box ws:id="boxBId">
-          Let it be Let it be Let it be Let it be Let it be Let it be Let it be
-          Let it be
+          Let it be Let it be <$.Bold ws:id="boldB">Let it be Let</$.Bold> Let
+          it be Let it be Let it be Let it be Let it be Let it be
         </$.Box>
       </$.Body>
     );
@@ -273,13 +280,16 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
         gap={2}
         direction={"column"}
         css={{
-          width: 300,
+          width: 500,
           "& > div > div": {
-            padding: 40,
+            padding: 5,
             border: "1px solid #999",
           },
           "& *[aria-readonly]": {
             backgroundColor: "rgba(0,0,0,0.02)",
+          },
+          "& strong": {
+            fontSize: "1.5em",
           },
 
           color: "black",

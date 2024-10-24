@@ -345,6 +345,10 @@ const InitCursorPlugin = () => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
+    if (!editor.isEditable()) {
+      return;
+    }
+
     editor.update(() => {
       const textEditingInstanceSelector = $textEditingInstanceSelector.get();
       if (textEditingInstanceSelector === undefined) {
@@ -371,19 +375,130 @@ const InitCursorPlugin = () => {
             if ($isTextNode(node)) {
               selection.anchor.set(node.getKey(), domOffset, "text");
               selection.focus.set(node.getKey(), domOffset, "text");
-            } else {
-              const parentKey = node.getParentOrThrow().getKey();
-              const offset = node.getIndexWithinParent() + 1;
-              selection.anchor.set(parentKey, offset, "element");
-              selection.focus.set(parentKey, offset, "element");
             }
-
             const normalizedSelection =
               $normalizeSelection__EXPERIMENTAL(selection);
             $setSelection(normalizedSelection);
           }
         }
         return;
+      }
+
+      while (reason === "down" || reason === "up") {
+        const { cursorX } = textEditingInstanceSelector;
+        const rootElement = editor.getElementByKey($getRoot().getKey());
+        if (rootElement == null) {
+          break;
+        }
+
+        const walker = document.createTreeWalker(
+          rootElement,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+
+        const allRects: DOMRect[] = [];
+
+        while (walker.nextNode()) {
+          const range = document.createRange();
+          range.selectNodeContents(walker.currentNode);
+          const rects = range.getClientRects();
+          allRects.push(...Array.from(rects));
+        }
+
+        if (allRects.length === 0) {
+          break;
+        }
+
+        const topRect = Array.from(allRects).sort((a, b) => a.top - b.top)[0];
+
+        const bottomRect = Array.from(allRects).sort(
+          (a, b) => b.bottom - a.bottom
+        )[0];
+
+        const topRects = allRects.filter(
+          (rect) => getVerticalIntersectionRatio(rect, topRect) > 0.5
+        );
+        const bottomRects = allRects.filter(
+          (rect) => getVerticalIntersectionRatio(rect, bottomRect) > 0.5
+        );
+
+        // Smoodge the cursor a little to the left and right to find the nearest text node
+        const smoodgeOffsets = [1, 2, 4];
+        const maxOffset = Math.max(...smoodgeOffsets);
+
+        const rects = reason === "down" ? topRects : bottomRects;
+
+        rects.sort((a, b) => a.left - b.left);
+
+        const rectWithText = rects.find(
+          (rect, index) =>
+            rect.left - (index === 0 ? maxOffset : 0) <= cursorX &&
+            cursorX <= rect.right + (index === rects.length - 1 ? maxOffset : 0)
+        );
+
+        if (rectWithText === undefined) {
+          break;
+        }
+
+        const newCursorY = rectWithText.top + rectWithText.height / 2;
+
+        const eventRanges = [caretFromPoint(cursorX, newCursorY)];
+        for (const offset of smoodgeOffsets) {
+          eventRanges.push(caretFromPoint(cursorX - offset, newCursorY));
+          eventRanges.push(caretFromPoint(cursorX + offset, newCursorY));
+        }
+
+        for (const eventRange of eventRanges) {
+          if (eventRange === null) {
+            continue;
+          }
+
+          const { offset: domOffset, node: domNode } = eventRange;
+          const node = $getNearestNodeFromDOMNode(domNode);
+
+          if (node !== null && $isTextNode(node)) {
+            const selection = $createRangeSelection();
+            selection.anchor.set(node.getKey(), domOffset, "text");
+            selection.focus.set(node.getKey(), domOffset, "text");
+            const normalizedSelection =
+              $normalizeSelection__EXPERIMENTAL(selection);
+            $setSelection(normalizedSelection);
+
+            return;
+          }
+        }
+
+        /*
+        const container = document.createElement("div");
+        container.style.position = "fixed";
+        container.style.top = "0";
+        container.style.left = "0";
+        container.style.pointerEvents = "none";
+        container.style.zIndex = "9999";
+        document.body.appendChild(container);
+
+        Array.from(rects).forEach((rect, index) => {
+          const debugRect = document.createElement("div");
+
+          debugRect.className = `debug-rect-${index}`;
+
+          Object.assign(debugRect.style, {
+            position: "fixed",
+            border: "1px solid red",
+            backgroundColor: "rgba(255, 0, 0, 0.1)",
+            top: `${rect.top}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
+            zIndex: "9999",
+            pointerEvents: "none",
+          });
+          container.appendChild(debugRect);
+        });
+        */
+
+        break;
       }
 
       if (reason === "down" || reason === "right" || reason === "enter") {
