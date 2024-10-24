@@ -122,13 +122,11 @@ const FontsManagerButton = forwardRef<
   ComponentProps<typeof NestedInputButton>
 >((props, ref) => {
   return (
-    <Flex>
-      <EnhancedTooltip content="Open Font Manager">
-        <NestedInputButton {...props} ref={ref} tabIndex={-1}>
-          <UploadIcon />
-        </NestedInputButton>
-      </EnhancedTooltip>
-    </Flex>
+    <EnhancedTooltip content="Open Font Manager">
+      <NestedInputButton {...props} ref={ref} tabIndex={-1}>
+        <UploadIcon />
+      </NestedInputButton>
+    </EnhancedTooltip>
   );
 });
 FontsManagerButton.displayName = "FontsManagerButton";
