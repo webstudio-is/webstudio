@@ -22,11 +22,10 @@ import {
   ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
-import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
 import { $pages, $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { flushSync } from "react-dom";
-import { sectionSpacing } from "./utils";
+import { getExistingRoutePaths, sectionSpacing } from "./utils";
 
 export const SectionRedirects = () => {
   const publishedOrigin = useStore($publishedOrigin);

@@ -27,7 +27,7 @@ import {
   $dragAndDropState,
   $selectedPage,
 } from "~/shared/nano-states";
-import { NavigatorTree } from "~/builder/features/sidebar-left/panels/navigator";
+import { NavigatorTree } from "~/builder/features/navigator";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";

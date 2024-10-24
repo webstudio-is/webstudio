@@ -4,10 +4,11 @@ import {
   textVariants,
   theme,
 } from "@webstudio-is/design-system";
+// @todo feature should not import another feature
 import {
   type StyleInfo,
   useStyleInfo,
-} from "../../../style-panel/shared/style-info";
+} from "~/builder/features/style-panel/shared/style-info";
 import {
   generateStyleMap,
   hyphenateProperty,
