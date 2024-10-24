@@ -17,13 +17,12 @@ import * as textShadows from "./text-shadows/text-shadows";
 import * as backdropFilter from "./backdrop-filter/backdrop-filter";
 import * as transforms from "./transforms/transforms";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "./shared/section";
 
 export const sections = new Map<
   string,
   {
     properties: StyleProperty[];
-    Section: (props: SectionProps) => ReactNode;
+    Section: () => ReactNode;
   }
 >([
   ["layout", layout],

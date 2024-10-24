@@ -1,13 +1,15 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section";
-import { StyleSection } from "../../shared/style-section";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
+import { propertyDescriptions } from "@webstudio-is/css-data";
+import { StyleSection } from "../../shared/style-section";
 import { SelectControl, TextControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
-import { InsetControl } from "./inset-control";
-import { useParentStyle } from "../../parent-style";
 import { PropertyLabel } from "../../property-label";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  useComputedStyleDecl,
+  useParentComputedStyleDecl,
+} from "../../shared/model";
+import { InsetControl } from "./inset-control";
 
 export const properties = [
   "position",
@@ -18,52 +20,37 @@ export const properties = [
   "left",
 ] satisfies Array<StyleProperty>;
 
-const positionControlVisibleProperties = [
-  "relative",
-  "absolute",
-  "fixed",
-  "sticky",
-] as const;
-
-const zIndexParents = ["flex", "grid", "inline-flex", "inline-grid"] as const;
-
-export const Section = ({ currentStyle }: SectionProps) => {
-  const parentStyle = useParentStyle();
-
-  const positionValue = currentStyle.position?.value;
-
+export const Section = () => {
+  const position = useComputedStyleDecl("position");
+  const positionValue = toValue(position.computedValue);
   const showInsetControl =
-    positionValue?.type === "keyword" &&
-    positionControlVisibleProperties.includes(positionValue.value as never);
+    positionValue === "relative" ||
+    positionValue === "absolute" ||
+    positionValue === "fixed" ||
+    positionValue === "sticky";
 
+  const parentDisplay = useParentComputedStyleDecl("display");
+  const parentDisplayValue = toValue(parentDisplay.computedValue);
   const showZindexControl =
     showInsetControl ||
-    (parentStyle?.display?.value.type === "keyword" &&
-      zIndexParents.includes(parentStyle?.display?.value.value as never));
-
-  const { items: unfilteredPositionItems } = styleConfigByName("position");
-
-  // Filter out "inherit" as we have no a good way to handle it
-  // @todo remove after https://github.com/webstudio-is/webstudio/issues/1536
-  const positionItems = unfilteredPositionItems.filter(
-    (item) => item.name !== "inherit"
-  );
+    parentDisplayValue === "flex" ||
+    parentDisplayValue === "grid" ||
+    parentDisplayValue === "inline-flex" ||
+    parentDisplayValue === "inline-grid";
 
   return (
     <StyleSection label="Position" properties={properties}>
       <Grid gap={2}>
-        <Grid
-          gap={2}
-          css={{
-            gridTemplateColumns: `1fr ${theme.spacing[23]}`,
-          }}
-        >
+        <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}>
           <PropertyLabel
             label="Position"
             description={propertyDescriptions.position}
             properties={["position"]}
           />
-          <SelectControl property="position" items={positionItems} />
+          <SelectControl
+            property="position"
+            items={styleConfigByName("position").items}
+          />
           {showZindexControl && showInsetControl === false && (
             <>
               <PropertyLabel
@@ -75,7 +62,6 @@ export const Section = ({ currentStyle }: SectionProps) => {
             </>
           )}
         </Grid>
-
         {showInsetControl && (
           <Grid gap={3} columns={2}>
             <InsetControl />

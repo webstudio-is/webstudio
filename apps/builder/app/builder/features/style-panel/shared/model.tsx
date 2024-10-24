@@ -280,6 +280,24 @@ export const useComputedStyleDecl = (property: StyleProperty) => {
   return useStore($store);
 };
 
+export const useParentComputedStyleDecl = (property: StyleProperty) => {
+  const $store = useMemo(
+    () =>
+      computed(
+        [$model, $instanceAndRootSelector],
+        (model, instanceSelector) => {
+          return getComputedStyleDecl({
+            model,
+            instanceSelector: instanceSelector?.slice(1),
+            property,
+          });
+        }
+      ),
+    [property]
+  );
+  return useStore($store);
+};
+
 export const useComputedStyles = (properties: StyleProperty[]) => {
   // cache each computed style store
   const cachedStores = useRef(
