@@ -113,7 +113,7 @@ export const InsetControl = () => {
   // by deafult highlight hovered or scrubbed properties
   // if keyboard navigation is active, highlight its active property
   // if popover is open, highlight its property and hovered properties
-  let activeProperties = [
+  const activeProperties = [
     ...(activePopoverProperties ?? scrubStatus.properties),
   ];
 
