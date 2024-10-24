@@ -345,6 +345,9 @@ export const CssValueInput = ({
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
   // Used to show description
   const [highlightedValue, setHighlighedValue] = useState<
     StyleValue | undefined
@@ -524,7 +527,15 @@ export const CssValueInput = ({
   });
 
   const shouldHandleEvent = useCallback((node: Node) => {
-    return suffixRef.current?.contains?.(node) === false;
+    // prevent scrubbing when css variable is selected
+    if (valueRef.current.type === "var") {
+      return false;
+    }
+    // prevent scrubbing when unit select is in use
+    if (suffixRef.current?.contains?.(node)) {
+      return false;
+    }
+    return true;
   }, []);
 
   const [scrubRef, inputRef] = useScrub({
