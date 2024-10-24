@@ -1,17 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import type { StoryFn, Meta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
-import { Box } from "@webstudio-is/design-system";
+import { Box, Button, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import {
+  $pages,
+  $registeredComponentMetas,
+  $selectedPageId,
   $textEditingInstanceSelector,
   $textToolbar,
 } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
+import { $, renderJsx } from "@webstudio-is/sdk/testing";
 
 export default {
   component: TextEditor,
@@ -143,13 +147,28 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = ({ onChange }) => {
       <Box
         css={{
           width: 300,
-
-          padding: `0 ${theme.spacing[5]}`,
+          "& > div": {
+            padding: 40,
+            backgroundColor: textEditingInstanceSelector
+              ? "unset"
+              : "rgba(0,0,0,0.1)",
+          },
           border: "1px solid #999",
           color: "black",
           " *": {
             outline: "none",
           },
+        }}
+        onClick={(event) => {
+          if (textEditingInstanceSelector !== undefined) {
+            return;
+          }
+          $textEditingInstanceSelector.set({
+            selector: ["1"],
+            reason: "click",
+            mouseX: event.clientX,
+            mouseY: event.clientY,
+          });
         }}
       >
         {textEditingInstanceSelector && (
@@ -165,16 +184,7 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = ({ onChange }) => {
         )}
 
         {!textEditingInstanceSelector && (
-          <div
-            onClick={(event) => {
-              $textEditingInstanceSelector.set({
-                selector: ["1"],
-                reason: "click",
-                mouseX: event.clientX,
-                mouseY: event.clientY,
-              });
-            }}
-          >
+          <div>
             <span>Paragraph you can edit Blabla </span>
             <strong>Very Very very bold text </strong>
             <strong>
@@ -185,7 +195,146 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = ({ onChange }) => {
         )}
       </Box>
       <br />
-      <i>Click on text above, see cursor position and start editing text</i>
+      <div>
+        <i>Click on text above, see cursor position and start editing text</i>
+      </div>
+      {textEditingInstanceSelector && (
+        <Button
+          onClick={() => {
+            $textEditingInstanceSelector.set(undefined);
+          }}
+        >
+          Reset
+        </Button>
+      )}
+    </>
+  );
+};
+
+export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
+  const [{ instances }, setState] = useState(() => {
+    $pages.set({
+      folders: [],
+      homePage: {
+        id: "homePageId",
+        rootInstanceId: "bodyId",
+        meta: {},
+        path: "",
+        title: "",
+        name: "",
+        systemDataSourceId: "",
+      },
+      pages: [
+        {
+          id: "pageId",
+          rootInstanceId: "bodyId",
+          path: "",
+          title: "",
+          name: "",
+          systemDataSourceId: "",
+          meta: {},
+        },
+      ],
+    });
+
+    $selectedPageId.set("pageId");
+
+    $registeredComponentMetas.set(
+      new Map([
+        [
+          "Box",
+          {
+            type: "container",
+            icon: "icon",
+          },
+        ],
+      ])
+    );
+
+    return renderJsx(
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxAId">
+          Hello world Hello world Hello world Hello world Hello world Hello
+          world
+        </$.Box>
+        <$.Box ws:id="boxBId">
+          Let it be Let it be Let it be Let it be Let it be Let it be Let it be
+          Let it be
+        </$.Box>
+      </$.Body>
+    );
+  });
+
+  const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
+
+  return (
+    <>
+      <Flex
+        gap={2}
+        direction={"column"}
+        css={{
+          width: 300,
+          "& > div > div": {
+            padding: 40,
+            border: "1px solid #999",
+          },
+          "& *[aria-readonly]": {
+            backgroundColor: "rgba(0,0,0,0.02)",
+          },
+
+          color: "black",
+          " *": {
+            outline: "none",
+          },
+        }}
+      >
+        <div style={{ display: "contents" }}>
+          <TextEditor
+            key={textEditingInstanceSelector?.selector[0] ?? ""}
+            editable={
+              textEditingInstanceSelector === undefined ||
+              textEditingInstanceSelector?.selector[0] === "boxAId"
+            }
+            rootInstanceSelector={["boxAId", "bodyId"]}
+            instances={instances}
+            contentEditable={<ContentEditable />}
+            onChange={(data) => {
+              setState((prev) => {
+                for (const instance of data) {
+                  prev.instances.set(instance.id, instance);
+                }
+                return prev;
+              });
+            }}
+            onSelectInstance={(instanceId) =>
+              console.info("select instance", instanceId)
+            }
+          />
+        </div>
+
+        <div style={{ display: "contents" }}>
+          <TextEditor
+            key={textEditingInstanceSelector?.selector[0] ?? ""}
+            editable={textEditingInstanceSelector?.selector[0] === "boxBId"}
+            rootInstanceSelector={["boxBId", "bodyId"]}
+            instances={instances}
+            contentEditable={<ContentEditable />}
+            onChange={(data) => {
+              setState((prev) => {
+                for (const instance of data) {
+                  prev.instances.set(instance.id, instance);
+                }
+                return prev;
+              });
+            }}
+            onSelectInstance={(instanceId) =>
+              console.info("select instance", instanceId)
+            }
+          />
+        </div>
+      </Flex>
+      <br />
+      <i>Use arrows to move between editors, clicks are not working</i>
     </>
   );
 };

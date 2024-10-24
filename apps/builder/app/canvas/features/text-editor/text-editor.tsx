@@ -377,16 +377,16 @@ const InitCursorPlugin = () => {
               selection.anchor.set(parentKey, offset, "element");
               selection.focus.set(parentKey, offset, "element");
             }
+
             const normalizedSelection =
               $normalizeSelection__EXPERIMENTAL(selection);
             $setSelection(normalizedSelection);
           }
         }
-      } else if (
-        reason === "down" ||
-        reason === "right" ||
-        reason === "enter"
-      ) {
+        return;
+      }
+
+      if (reason === "down" || reason === "right" || reason === "enter") {
         const selection = $createRangeSelection();
         const firstNode = $getRoot().getFirstDescendant();
 
@@ -395,7 +395,10 @@ const InitCursorPlugin = () => {
           selection.focus.set(firstNode.getKey(), 0, "text");
           $setSelection(selection);
         }
-      } else if (reason === "up" || reason === "left") {
+        return;
+      }
+
+      if (reason === "up" || reason === "left") {
         const selection = $createRangeSelection();
         const lastNode = $getRoot().getLastDescendant();
 
@@ -412,9 +415,11 @@ const InitCursorPlugin = () => {
           );
           $setSelection(selection);
         }
-      } else {
-        reason satisfies never;
+
+        return;
       }
+
+      reason satisfies never;
     });
   }, [editor]);
 
@@ -611,6 +616,7 @@ type TextEditorProps = {
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
   contentEditable: JSX.Element;
+  editable?: boolean;
   onChange: (instancesList: Instance[]) => void;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
@@ -623,6 +629,7 @@ export const TextEditor = ({
   rootInstanceSelector,
   instances,
   contentEditable,
+  editable,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
@@ -659,6 +666,7 @@ export const TextEditor = ({
         italic: italicClassName,
       },
     },
+    editable,
     editorState: () => {
       const [rootInstanceId] = rootInstanceSelector;
       // text editor is unmounted when change properties in side panel

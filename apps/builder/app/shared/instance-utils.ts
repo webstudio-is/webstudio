@@ -173,7 +173,9 @@ const isTextEditingInstance = (
   if (instance.component === "Body") {
     return false;
   }
+
   const meta = metas.get(instance.component);
+
   if (meta === undefined) {
     return false;
   }
@@ -194,6 +196,7 @@ const isTextEditingInstance = (
       }
     }
   }
+
   return true;
 };
 
