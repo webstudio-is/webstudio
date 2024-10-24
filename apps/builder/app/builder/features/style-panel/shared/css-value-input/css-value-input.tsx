@@ -39,7 +39,6 @@ import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
-import type { StyleSource } from "../style-info";
 import {
   declarationDescriptions,
   isValidDeclaration,
@@ -52,6 +51,7 @@ import {
 import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
+import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { ColorThumb } from "../color-thumb";
 
 // We need to enable scrub on properties that can have numeric value.
@@ -255,7 +255,7 @@ type CssValueInputProps = Pick<
   | "prefix"
   | "inputRef"
 > & {
-  styleSource: StyleSource;
+  styleSource: StyleValueSourceColor;
   property: StyleProperty;
   value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;

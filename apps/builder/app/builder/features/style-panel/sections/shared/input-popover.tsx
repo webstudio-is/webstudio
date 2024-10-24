@@ -11,9 +11,9 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import type { StyleSource } from "../../shared/style-info";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
+import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { getInsetModifiersGroup, getSpaceModifiersGroup } from "./scrub";
 import type { SpaceStyleProperty } from "../space/types";
 import type { InsetProperty } from "../position/inset-layout";
@@ -35,7 +35,7 @@ const Input = ({
   property,
   onClosePopover,
 }: {
-  styleSource: StyleSource;
+  styleSource: StyleValueSourceColor;
   property: SpaceStyleProperty | InsetProperty;
   value: StyleValue;
   onClosePopover: () => void;
@@ -124,7 +124,7 @@ export const InputPopover = ({
   isOpen,
   onClose,
 }: {
-  styleSource: StyleSource;
+  styleSource: StyleValueSourceColor;
   property: SpaceStyleProperty | InsetProperty;
   value: StyleValue;
   isOpen: boolean;
