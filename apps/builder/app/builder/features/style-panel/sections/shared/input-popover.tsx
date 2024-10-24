@@ -6,7 +6,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@webstudio-is/design-system";
-import type { StyleValue } from "@webstudio-is/css-engine";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   CssValueInput,
   type IntermediateStyleValue,
@@ -14,9 +14,6 @@ import {
 import type { StyleSource } from "../../shared/style-info";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
-import { getInsetModifiersGroup, getSpaceModifiersGroup } from "./scrub";
-import type { SpaceStyleProperty } from "../space/types";
-import type { InsetProperty } from "../position/inset-layout";
 import { $availableUnitVariables } from "../../shared/model";
 
 const slideUpAndFade = keyframes({
@@ -24,19 +21,16 @@ const slideUpAndFade = keyframes({
   "100%": { opacity: 1, transform: "scale(1)" },
 });
 
-// We need to differentiate between marginTop and top for example.
-const isSpace = (property: string) => {
-  return property.startsWith("margin") || property.startsWith("padding");
-};
-
 const Input = ({
   styleSource,
   value,
   property,
+  activeProperties,
   onClosePopover,
 }: {
   styleSource: StyleSource;
-  property: SpaceStyleProperty | InsetProperty;
+  property: StyleProperty;
+  activeProperties: StyleProperty[];
   value: StyleValue;
   onClosePopover: () => void;
 }) => {
@@ -55,20 +49,26 @@ const Input = ({
         setIntermediateValue(styleValue);
         if (styleValue === undefined) {
           const batch = createBatchUpdate();
-          batch.deleteProperty(property);
+          for (const property of activeProperties) {
+            batch.deleteProperty(property);
+          }
           batch.publish({ isEphemeral: true });
           return;
         }
         if (styleValue.type !== "intermediate") {
           const batch = createBatchUpdate();
-          batch.setProperty(property)(styleValue);
+          for (const property of activeProperties) {
+            batch.setProperty(property)(styleValue);
+          }
           batch.publish({ isEphemeral: true });
         }
       }}
       onHighlight={(styleValue) => {
         if (styleValue === undefined) {
           const batch = createBatchUpdate();
-          batch.deleteProperty(property);
+          for (const property of activeProperties) {
+            batch.deleteProperty(property);
+          }
           batch.publish({ isEphemeral: true });
           return;
         }
@@ -76,14 +76,10 @@ const Input = ({
         batch.setProperty(property)(styleValue);
         batch.publish({ isEphemeral: true });
       }}
-      onChangeComplete={({ value, altKey, shiftKey }) => {
+      onChangeComplete={({ value }) => {
         const batch = createBatchUpdate();
-        const modifiers = { shiftKey, altKey };
-        const properties = isSpace(property)
-          ? getSpaceModifiersGroup(property as SpaceStyleProperty, modifiers)
-          : getInsetModifiersGroup(property as InsetProperty, modifiers);
         setIntermediateValue(undefined);
-        for (const property of properties) {
+        for (const property of activeProperties) {
           batch.setProperty(property)(value);
         }
         batch.publish();
@@ -118,12 +114,14 @@ const PopoverContentStyled = styled(PopoverContent, {
 export const InputPopover = ({
   styleSource,
   property,
+  activeProperties,
   value,
   isOpen,
   onClose,
 }: {
   styleSource: StyleSource;
-  property: SpaceStyleProperty | InsetProperty;
+  property: StyleProperty;
+  activeProperties: StyleProperty[];
   value: StyleValue;
   isOpen: boolean;
   onClose: () => void;
@@ -151,6 +149,7 @@ export const InputPopover = ({
           styleSource={styleSource}
           value={value}
           property={property}
+          activeProperties={activeProperties}
           onClosePopover={onClose}
         />
       </PopoverContentStyled>
