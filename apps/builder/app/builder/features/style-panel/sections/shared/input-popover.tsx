@@ -17,7 +17,7 @@ import { theme } from "@webstudio-is/design-system";
 import { getInsetModifiersGroup, getSpaceModifiersGroup } from "./scrub";
 import type { SpaceStyleProperty } from "../space/types";
 import type { InsetProperty } from "../position/inset-layout";
-import { $availableVariables } from "../../shared/model";
+import { $availableUnitVariables } from "../../shared/model";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -50,7 +50,7 @@ const Input = ({
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      getOptions={() => $availableVariables.get()}
+      getOptions={() => $availableUnitVariables.get()}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         if (styleValue === undefined) {

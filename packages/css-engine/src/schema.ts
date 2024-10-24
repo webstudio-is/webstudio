@@ -3,6 +3,7 @@ import type {
   Property as GeneratedProperty,
   Unit as GeneratedUnit,
 } from "./__generated__/types";
+import { toValue, type TransformValue } from "./core";
 
 export type CustomProperty = `--${string}`;
 
@@ -110,8 +111,29 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
-export const VarFallback = z.union([UnparsedValue, KeywordValue]);
+export const VarFallback = z.union([
+  UnparsedValue,
+  KeywordValue,
+  UnitValue,
+  RgbValue,
+]);
 export type VarFallback = z.infer<typeof VarFallback>;
+
+export const toVarFallback = (
+  styleValue: StyleValue,
+  transformValue?: TransformValue
+): VarFallback => {
+  if (
+    styleValue.type === "unparsed" ||
+    styleValue.type === "keyword" ||
+    styleValue.type === "unit" ||
+    styleValue.type === "rgb"
+  ) {
+    return styleValue;
+  }
+  styleValue satisfies Exclude<StyleValue, VarFallback>;
+  return { type: "unparsed", value: toValue(styleValue, transformValue) };
+};
 
 const VarValue = z.object({
   type: z.literal("var"),

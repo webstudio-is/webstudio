@@ -25,7 +25,10 @@ import {
 } from "../../shared/use-style-data";
 import type { IntermediateStyleValue } from "../../shared/css-value-input/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
-import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
+import {
+  $availableUnitVariables,
+  useComputedStyleDecl,
+} from "../../shared/model";
 
 const property: StyleProperty = "scale";
 
@@ -97,7 +100,7 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            getOptions={() => $availableVariables.get()}
+            getOptions={() => $availableUnitVariables.get()}
             value={scaleX}
             intermediateValue={intermediateScalingX}
             onChange={(value) => {
@@ -138,7 +141,7 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            getOptions={() => $availableVariables.get()}
+            getOptions={() => $availableUnitVariables.get()}
             value={scaleY}
             intermediateValue={intermediateScalingY}
             onChange={(value) => {
@@ -179,7 +182,7 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            getOptions={() => $availableVariables.get()}
+            getOptions={() => $availableUnitVariables.get()}
             value={scaleZ}
             intermediateValue={intermediateScalingZ}
             onChange={(value) => {

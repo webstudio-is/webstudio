@@ -4,7 +4,10 @@ import { styleConfigByName } from "../../shared/configs";
 import { rowCss } from "./utils";
 import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
 import { ColorPicker } from "../../shared/color-picker";
-import { $availableVariables, useComputedStyles } from "../../shared/model";
+import {
+  $availableColorVariables,
+  useComputedStyles,
+} from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
 
 export const properties = [
@@ -58,7 +61,7 @@ export const BorderColor = () => {
                   type: "keyword" as const,
                   value: item.name,
                 })),
-                ...$availableVariables.get(),
+                ...$availableColorVariables.get(),
               ]}
               onChange={(styleValue) => {
                 const batch = createBatchUpdate();

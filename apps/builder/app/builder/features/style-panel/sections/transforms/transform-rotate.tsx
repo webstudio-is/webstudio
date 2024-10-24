@@ -8,7 +8,10 @@ import type { StyleValue } from "@webstudio-is/css-engine";
 import { propertySyntaxes } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
-import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
+import {
+  $availableUnitVariables,
+  useComputedStyleDecl,
+} from "../../shared/model";
 import { updateTransformFunction } from "./transform-utils";
 
 export const RotatePanelContent = () => {
@@ -48,7 +51,7 @@ export const RotatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property="rotate"
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={rotateX}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateX", value, options)
@@ -68,7 +71,7 @@ export const RotatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property="rotate"
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={rotateY}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateY", value, options)
@@ -88,7 +91,7 @@ export const RotatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property="rotate"
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={rotateZ}
           setValue={(value, options) =>
             updateTransformFunction(styleDecl, "rotateZ", value, options)

@@ -7,7 +7,6 @@ import {
   completionKeymap,
   type CompletionSource,
 } from "@codemirror/autocomplete";
-import { toValue } from "@webstudio-is/css-engine";
 import { parseCss } from "@webstudio-is/css-data";
 import { css as style } from "@webstudio-is/design-system";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -51,7 +50,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
   const search = word.text;
   const availableVariables = $availableVariables.get();
   const options = availableVariables.map((varValue) => ({
-    label: toValue(varValue),
+    label: `--var(${varValue.value})`,
     displayLabel: `--${varValue.value}`,
   }));
   const matches = matchSorter(options, search, {

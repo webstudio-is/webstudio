@@ -6,7 +6,10 @@ import {
 } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
-import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
+import {
+  $availableUnitVariables,
+  useComputedStyleDecl,
+} from "../../shared/model";
 
 export const TextControl = ({ property }: { property: StyleProperty }) => {
   const computedStyleDecl = useComputedStyleDecl(property);
@@ -26,7 +29,7 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
           type: "keyword" as const,
           value: item.name,
         })),
-        ...$availableVariables.get(),
+        ...$availableUnitVariables.get(),
       ]}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
