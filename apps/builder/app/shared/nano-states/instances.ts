@@ -18,13 +18,18 @@ export const $textEditingInstanceSelector = atom<
   | undefined
   | {
       selector: InstanceSelector;
-      reason: "up" | "down" | "right" | "left" | "enter";
+      reason: "right" | "left" | "enter";
     }
   | {
       selector: InstanceSelector;
       reason: "click";
       mouseX: number;
       mouseY: number;
+    }
+  | {
+      selector: InstanceSelector;
+      reason: "up" | "down";
+      cursorX: number;
     }
 >();
 

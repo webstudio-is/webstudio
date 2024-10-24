@@ -221,11 +221,6 @@ const RemoveParagaphsPlugin = () => {
   return null;
 };
 
-type SwitchBlockPluginProps = {
-  onNext: (reason: "up" | "down" | "left" | "right") => void;
-  onPrevious: (reason: "up" | "down" | "left" | "right") => void;
-};
-
 const isSelectionLastNode = () => {
   const selection = $getSelection();
 
@@ -426,70 +421,20 @@ const InitCursorPlugin = () => {
   return null;
 };
 
-/*
-const CursorChange = () => {
-  const [editor] = useLexicalComposerContext();
-  const refPos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    document.addEventListener(
-      "pointermove",
-      (event) => {
-        refPos.current.x = event.clientX;
-        refPos.current.y = event.clientY;
-        console.log("positionmove", event.clientX, event.clientY);
-      },
-      { signal: abortController.signal }
-    );
-
-    return () => {
-      abortController.abort();
+type HandleNextArgs =
+  | {
+      reason: "up" | "down";
+      cursorX: number;
+    }
+  | {
+      reason: "right" | "left";
     };
-  }, []);
 
-  useEffect(() => {
-    return editor.registerCommand(
-      COPY_COMMAND,
-      (event) => {
-        console.log("COPY_COMMAND");
-        const eventRange = caretFromPoint(refPos.current.x, refPos.current.y);
-
-        if (eventRange !== null) {
-          console.log(eventRange.node.nodeType);
-          const { offset: domOffset, node: domNode } = eventRange;
-          const node = $getNearestNodeFromDOMNode(domNode);
-          console.log(node);
-          if (node !== null) {
-            const selection = $createRangeSelection();
-            if ($isTextNode(node)) {
-              selection.anchor.set(node.getKey(), domOffset, "text");
-              selection.focus.set(node.getKey(), domOffset, "text");
-            } else {
-              const parentKey = node.getParentOrThrow().getKey();
-              const offset = node.getIndexWithinParent() + 1;
-              selection.anchor.set(parentKey, offset, "element");
-              selection.focus.set(parentKey, offset, "element");
-            }
-            const normalizedSelection =
-              $normalizeSelection__EXPERIMENTAL(selection);
-            $setSelection(normalizedSelection);
-          }
-        }
-        event?.preventDefault();
-
-        return true;
-      },
-      COMMAND_PRIORITY_LOW
-    );
-  }, [editor]);
-
-  return null;
+type SwitchBlockPluginProps = {
+  onNext: (args: HandleNextArgs) => void;
 };
-*/
 
-const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
+const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
   const [editor] = useLexicalComposerContext();
   const selectionPoint =
     useRef<
@@ -515,7 +460,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         const isLast = isSelectionLastNode();
 
         if (isLast) {
-          onNext("right");
+          onNext({ reason: "right" });
           event?.preventDefault();
           return true;
         }
@@ -540,7 +485,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         const isFirst = isSelectionFirstNode();
 
         if (isFirst) {
-          onPrevious("left");
+          onNext({ reason: "left" });
           event?.preventDefault();
           return true;
         }
@@ -549,7 +494,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
       },
       COMMAND_PRIORITY_LOW
     );
-  }, [editor, onPrevious]);
+  }, [editor, onNext]);
 
   // To detect UP/Down key events on the first/last edited line, we use the following trick:
   // When pressing UP/Down on the first/last line, the native cursor moves to the start/end of the text.
@@ -568,13 +513,13 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
 
         const isLast = isSelectionLastNode();
 
+        const rect = getDomSelectionRect();
         if (isLast) {
-          onNext("down");
+          onNext({ reason: "down", cursorX: rect?.x ?? 0 });
           event?.preventDefault();
           return true;
         }
 
-        const rect = getDomSelectionRect();
         if (rect === undefined) {
           return false;
         }
@@ -599,14 +544,14 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         }
 
         const isFirst = isSelectionFirstNode();
+        const rect = getDomSelectionRect();
 
         if (isFirst) {
-          onPrevious("up");
+          onNext({ reason: "up", cursorX: rect?.x ?? 0 });
           event?.preventDefault();
           return true;
         }
 
-        const rect = getDomSelectionRect();
         if (rect === undefined) {
           return false;
         }
@@ -617,7 +562,7 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
       },
       COMMAND_PRIORITY_CRITICAL
     );
-  }, [editor, onPrevious]);
+  }, [editor, onNext]);
 
   useEffect(() => {
     return editor.registerCommand(
@@ -646,18 +591,14 @@ const SwitchBlockPlugin = ({ onNext, onPrevious }: SwitchBlockPluginProps) => {
         ) {
           $setSelection(savedSelection);
 
-          if (type === "up") {
-            onPrevious(type);
-          } else {
-            onNext(type);
-          }
+          onNext({ reason: type, cursorX: savedRect.x });
         }
 
         return false;
       },
       COMMAND_PRIORITY_EDITOR
     );
-  }, [editor, onNext, onPrevious]);
+  }, [editor, onNext]);
 
   return null;
 };
@@ -730,7 +671,7 @@ export const TextEditor = ({
   };
 
   const handleNext = useCallback(
-    (reason: "up" | "down" | "right" | "left") => {
+    (args: HandleNextArgs) => {
       const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
       if (rootInstanceId === undefined) {
@@ -757,50 +698,14 @@ export const TextEditor = ({
         return;
       }
 
-      const nextIndex = mod(currentIndex + 1, results.length);
+      const nextIndex =
+        args.reason === "down" || args.reason === "right"
+          ? mod(currentIndex + 1, results.length)
+          : mod(currentIndex - 1, results.length);
 
       $textEditingInstanceSelector.set({
         selector: results[nextIndex],
-        reason,
-      });
-      $selectedInstanceSelector.set(results[nextIndex]);
-    },
-    [instances, rootInstanceSelector]
-  );
-
-  const handlePrevious = useCallback(
-    (reason: "up" | "down" | "right" | "left") => {
-      const rootInstanceId = $selectedPage.get()?.rootInstanceId;
-
-      if (rootInstanceId === undefined) {
-        return;
-      }
-
-      const results: InstanceSelector[] = [];
-      findAllEditableInstanceSelector(
-        rootInstanceId,
-        [],
-        instances,
-        $registeredComponentMetas.get(),
-        results
-      );
-
-      const currentIndex = results.findIndex((instanceSelector) => {
-        return (
-          instanceSelector[0] === rootInstanceSelector[0] &&
-          instanceSelector.join(",") === rootInstanceSelector.join(",")
-        );
-      });
-
-      if (currentIndex === -1) {
-        return;
-      }
-
-      const nextIndex = mod(currentIndex - 1, results.length);
-
-      $textEditingInstanceSelector.set({
-        selector: results[nextIndex],
-        reason,
+        ...args,
       });
       $selectedInstanceSelector.set(results[nextIndex]);
     },
@@ -830,7 +735,7 @@ export const TextEditor = ({
       <LinkPlugin />
       <HistoryPlugin />
 
-      <SwitchBlockPlugin onNext={handleNext} onPrevious={handlePrevious} />
+      <SwitchBlockPlugin onNext={handleNext} />
       <OnChangeOnBlurPlugin
         onChange={(editorState) => {
           editorState.read(() => {
