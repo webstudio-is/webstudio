@@ -1,6 +1,7 @@
 import { camelCase } from "change-case";
 import {
   getStyleDeclKey,
+  replaceFormActionsWithResources,
   type StyleDecl,
   type WebstudioData,
 } from "@webstudio-is/sdk";
@@ -51,4 +52,5 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
       }
     }
   }
+  replaceFormActionsWithResources(data);
 };

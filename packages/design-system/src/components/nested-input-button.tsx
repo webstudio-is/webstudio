@@ -17,7 +17,7 @@ const style = css({
   ...textVariants.unit,
   color: theme.colors.foregroundSubtle,
   borderRadius: theme.borderRadius[2],
-  display: "inline-flex",
+  display: "flex",
   alignItems: "center",
   justifyContent: "center",
   whiteSpace: "pre", // to make nestedSelectButtonUnitless work as expected
