@@ -11,7 +11,6 @@ import {
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   Box,
@@ -123,9 +122,6 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-  if (isFeatureEnabled("cssVars") === false) {
-    return matched;
-  }
   const propertyName = search.trim();
   if (
     propertyName.startsWith("--") &&
@@ -149,9 +145,7 @@ const getNewPropertyDescription = (item: null | SearchItem) => {
 };
 
 const insertStyles = (text: string) => {
-  const parsedStyles = parseCss(`selector{${text}}`, {
-    customProperties: true,
-  });
+  const parsedStyles = parseCss(`selector{${text}}`);
   if (parsedStyles.length === 0) {
     return false;
   }

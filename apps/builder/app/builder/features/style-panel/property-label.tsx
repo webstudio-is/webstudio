@@ -2,7 +2,6 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   hyphenateProperty,
   toValue,
@@ -55,7 +54,7 @@ const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   for (const styleDecl of styles) {
     const property = hyphenateProperty(styleDecl.property);
     let value;
-    if (isComputed && isFeatureEnabled("cssVars")) {
+    if (isComputed) {
       value = toValue(styleDecl.usedValue);
     } else {
       value = toValue(styleDecl.cascadedValue);
