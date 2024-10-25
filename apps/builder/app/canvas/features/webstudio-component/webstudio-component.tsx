@@ -108,6 +108,9 @@ const ContentEditable = ({
 
     if (rootElement) {
       rootElement.contentEditable = "true";
+      // white-space affects "text-wrap", remove it and use "white-space-collapse" instead
+      rootElement.style.removeProperty("white-space");
+      rootElement.style.setProperty("white-space-collapse", "pre-wrap");
     }
 
     editor.setRootElement(rootElement);
