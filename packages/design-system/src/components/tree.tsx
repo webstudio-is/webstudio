@@ -432,7 +432,6 @@ export const TreeNode = ({
   // scroll the selected button into view when selected from canvas.
   useEffect(() => {
     if (isSelected) {
-      buttonRef.current?.focus();
       buttonRef.current?.scrollIntoView({
         // smooth behavior in both canvas and navigator confuses chrome
         behavior: "auto",
