@@ -106,18 +106,13 @@ const ContentEditable = ({
       );
     }
 
-    if (rootElement) {
-      console.info(
-        "REMOVED REPLACED",
-        rootElement.style.getPropertyValue("white-space")
-      );
-      rootElement.contentEditable = "true";
-      // white-space affects "text-wrap", remove it and use "white-space-collapse" instead
-      rootElement.style.removeProperty("white-space");
-      rootElement.style.setProperty("white-space-collapse", "pre-wrap");
-    }
+    rootElement.contentEditable = "true";
 
     editor.setRootElement(rootElement);
+
+    // white-space affects "text-wrap", remove it and use "white-space-collapse" instead
+    rootElement.style.removeProperty("white-space");
+    rootElement.style.setProperty("white-space-collapse", "pre-wrap");
 
     return () => {
       abortController.abort();
