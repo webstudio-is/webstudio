@@ -9,10 +9,12 @@ import { InputPopover } from "../shared/input-popover";
 import { InsetLayout, type InsetProperty } from "./inset-layout";
 import { InsetTooltip } from "./inset-tooltip";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
+import { useModifierKeys } from "../../shared/modifier-keys";
 
 const Cell = ({
   scrubStatus,
   property,
+  activeProperties,
   onHover,
   isPopoverOpen,
   onPopoverClose,
@@ -21,6 +23,7 @@ const Cell = ({
   onPopoverClose: () => void;
   scrubStatus: ReturnType<typeof useScrub>;
   property: InsetProperty;
+  activeProperties: InsetProperty[];
   onHover: (target: HoverTarget | undefined) => void;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -35,6 +38,7 @@ const Cell = ({
         value={finalValue}
         isOpen={isPopoverOpen}
         property={property}
+        activeProperties={activeProperties}
         onClose={onPopoverClose}
       />
       <InsetTooltip property={property} preventOpen={scrubStatus.isActive}>
@@ -88,26 +92,30 @@ export const InsetControl = () => {
   });
 
   const [openProperty, setOpenProperty] = useState<InsetProperty>();
+  const [activePopoverProperties, setActivePopoverProperties] = useState<
+    undefined | readonly InsetProperty[]
+  >();
+  const modifiers = useModifierKeys();
+  const handleOpenProperty = (property: undefined | InsetProperty) => {
+    setOpenProperty(property);
+    setActivePopoverProperties(
+      property ? getInsetModifiersGroup(property, modifiers) : undefined
+    );
+  };
 
   const layoutRef = useRef<HTMLDivElement>(null);
 
   const keyboardNavigation = useKeyboardNavigation({
-    onOpen: setOpenProperty,
+    onOpen: handleOpenProperty,
     movementMap: movementMapInset,
   });
 
   // by deafult highlight hovered or scrubbed properties
-  let activeProperties = scrubStatus.properties;
-
   // if keyboard navigation is active, highlight its active property
-  if (keyboardNavigation.isActive) {
-    activeProperties = [keyboardNavigation.activeProperty];
-  }
-
   // if popover is open, highlight its property and hovered properties
-  if (openProperty !== undefined) {
-    activeProperties = [openProperty, ...scrubStatus.properties];
-  }
+  const activeProperties = [
+    ...(activePopoverProperties ?? scrubStatus.properties),
+  ];
 
   const handleHover = (target: HoverTarget | undefined) => {
     setHoverTarget(target);
@@ -138,11 +146,19 @@ export const InsetControl = () => {
       onMouseLeave={keyboardNavigation.handleMouseLeave}
       onClick={(event) => {
         const property = hoverTarget?.property;
-        if (event.altKey && property) {
+        const styleValueSource = styles.find(
+          (styleDecl) => styleDecl.property === property
+        )?.source.name;
+        if (
+          event.altKey &&
+          property &&
+          // reset when the value is set and after try to edit two sides
+          (styleValueSource === "local" || styleValueSource === "overwritten")
+        ) {
           deleteProperty(property);
           return;
         }
-        setOpenProperty(property);
+        handleOpenProperty(property);
       }}
     >
       <InsetLayout
@@ -151,11 +167,12 @@ export const InsetControl = () => {
           <Cell
             scrubStatus={scrubStatus}
             property={property}
+            activeProperties={activeProperties}
             onHover={handleHover}
             isPopoverOpen={openProperty === property}
             onPopoverClose={() => {
               if (openProperty === property) {
-                setOpenProperty(undefined);
+                handleOpenProperty(undefined);
                 layoutRef.current?.focus();
               }
             }}
