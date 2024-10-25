@@ -62,6 +62,7 @@ import {
   getVisibleElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
@@ -75,23 +76,6 @@ const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
       }
     }
   }, [editor, refs]);
-  return null;
-};
-
-const AutofocusPlugin = () => {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    const rootElement = editor.getRootElement();
-
-    if (rootElement === null) {
-      return;
-    }
-
-    editor.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return null;
 };
 
@@ -926,7 +910,7 @@ export const TextEditor = ({
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <AutofocusPlugin />
+      <AutoFocusPlugin />
 
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
