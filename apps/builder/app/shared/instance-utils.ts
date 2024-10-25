@@ -211,6 +211,7 @@ export const findAllEditableInstanceSelector = (
   if (instance === undefined) {
     return;
   }
+
   // Check if current instance is text editing instance
   if (isTextEditingInstance(instance, instances, metas)) {
     results.push([instanceId, ...currentPath]);

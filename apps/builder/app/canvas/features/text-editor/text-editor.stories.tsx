@@ -7,6 +7,7 @@ import { Box, Button, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import {
+  $instances,
   $pages,
   $registeredComponentMetas,
   $selectedPageId,
@@ -262,7 +263,8 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
       <$.Body ws:id="bodyId">
         <$.Box ws:id="boxAId">
           Hello world <$.Bold ws:id="boldA">Hello world</$.Bold> Hello world
-          Hello world Hello world Hello world
+          world Hello worldsdsdj skdk ls dk jslkdjklsjdkl sdk jskdj ksjd lksdj
+          dsj
         </$.Box>
         <$.Box ws:id="boxBId">
           Let it be Let it be <$.Bold ws:id="boldB">Let it be Let</$.Bold> Let
@@ -271,6 +273,10 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
       </$.Body>
     );
   });
+
+  useEffect(() => {
+    $instances.set(instances);
+  }, [instances]);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
 

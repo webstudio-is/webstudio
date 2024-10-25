@@ -62,7 +62,7 @@ import {
   getVisibleElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
-import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+// import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
@@ -578,6 +578,13 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
         if (!$isRangeSelection(selection)) {
           return false;
         }
+        const isCaret =
+          selection.anchor.offset === selection.focus.offset &&
+          selection.anchor.key === selection.focus.key;
+
+        if (!isCaret) {
+          return false;
+        }
 
         const isLast = isSelectionLastNode();
 
@@ -603,6 +610,13 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
         if (!$isRangeSelection(selection)) {
           return false;
         }
+        const isCaret =
+          selection.anchor.offset === selection.focus.offset &&
+          selection.anchor.key === selection.focus.key;
+
+        if (!isCaret) {
+          return false;
+        }
 
         const isFirst = isSelectionFirstNode();
 
@@ -626,6 +640,14 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
         const selection = $getSelection();
 
         if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const isCaret =
+          selection.anchor.offset === selection.focus.offset &&
+          selection.anchor.key === selection.focus.key;
+
+        if (!isCaret) {
           return false;
         }
 
@@ -685,6 +707,14 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
           return false;
         }
 
+        const isCaret =
+          selection.anchor.offset === selection.focus.offset &&
+          selection.anchor.key === selection.focus.key;
+
+        if (!isCaret) {
+          return false;
+        }
+
         const isFirst = isSelectionFirstNode();
         const rect = getDomSelectionRect();
 
@@ -701,6 +731,7 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
 
         const rootNode = $getRoot();
         const lastNode = rootNode.getFirstDescendant();
+
         if ($isLineBreakNode(lastNode)) {
           return false;
         }
@@ -723,6 +754,11 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
           event?.preventDefault();
           return true;
         }
+
+        // Lexical has a bug where the cursor sometimes stops moving up.
+        // Slight adjustments fix this issue.
+        selection.modify("move", false, "character");
+        selection.modify("move", true, "character");
 
         return false;
       },
@@ -764,6 +800,47 @@ const InitialJSONStatePlugin = ({
 
   return null;
 };
+
+/*
+const ShowFocusPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const rootElement = editor.getRootElement();
+
+    const abortController = new AbortController();
+
+    rootElement?.addEventListener(
+      "focus",
+      () => {
+        console.log("focused", editor.getRootElement()?.innerText);
+      },
+      {
+        signal: abortController.signal,
+      }
+    );
+    rootElement?.addEventListener(
+      "blur",
+      () => {
+        // console.log("blurred", editor.getRootElement()?.innerText);
+        // console.log($textEditingInstanceSelector.get()?.selector, selector);
+
+        const text = editor.getRootElement()?.innerText;
+        console.log("blured", text);
+      },
+      {
+        signal: abortController.signal,
+      }
+    );
+
+    return () => {
+      abortController.abort();
+    };
+  }, [editor]);
+
+  return null;
+};
+*/
 
 export const TextEditor = ({
   rootInstanceSelector,
@@ -910,8 +987,7 @@ export const TextEditor = ({
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <AutoFocusPlugin />
-
+      {/* <ShowFocusPlugin /> */}
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
       <ToolbarConnectorPlugin
