@@ -110,6 +110,7 @@ const ContentEditable = ({
 
     editor.setRootElement(rootElement);
 
+    // Must be done after 'setRootElement' to avoid Lexical's default behavior
     // white-space affects "text-wrap", remove it and use "white-space-collapse" instead
     rootElement.style.removeProperty("white-space");
     rootElement.style.setProperty("white-space-collapse", "pre-wrap");
