@@ -90,7 +90,7 @@ export const html: StyleDecl[] = [
   },
   {
     property: "whiteSpaceCollapse",
-    value: { type: "keyword", value: "break-spaces" },
+    value: { type: "keyword", value: "preserve" },
   },
 ];
 

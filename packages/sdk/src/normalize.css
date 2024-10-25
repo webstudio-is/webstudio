@@ -74,13 +74,13 @@ html {
   font-size: 16px;
   line-height: 1.2;
   /* webstudio custom opinionated preset */
-  /* 3. We decided to use break-spaces in visual builders:
+  /* 3. We decided to use preserve in visual builders:
     Preserves multiple spaces & trailing spaces,
     Matches what users see while editing to final output (Provides more predictable WYSIWYG experience)
 
   vs text editors' collapse (default): Normalizes multiple spaces into one, Removes trailing whitespace, Better for clean text content
   */
-  white-space-collapse: break-spaces;
+  white-space-collapse: preserve;
 }
 
 /**
