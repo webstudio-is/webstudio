@@ -13,8 +13,7 @@
     "dev": "remix vite:dev",
     "dev:auth": "DEBUG=OAuth2Strategy,ws:* remix vite:dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "ci:migrate": "migrations migrate"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.3.1",
