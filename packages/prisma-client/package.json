@@ -6,8 +6,6 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc",
-    "dev": "pnpm build",
     "generate": "PRISMA_BINARY_TARGET=${PRISMA_BINARY_TARGET:-'[\"native\"]'} prisma generate",
     "migrations": "./migrations-cli/cli.ts"
   },
