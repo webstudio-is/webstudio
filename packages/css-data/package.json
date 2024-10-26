@@ -18,14 +18,14 @@
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@types/css-tree": "^2.3.1",
-    "@types/node": "^22.6.1",
+    "@types/node": "^22.8.1",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "mdn-data": "2.8.0",
-    "type-fest": "^4.24.0",
-    "typescript": "5.5.2",
+    "type-fest": "^4.26.1",
+    "typescript": "5.6.3",
     "zod": "^3.22.4"
   },
   "peerDependencies": {

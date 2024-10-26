@@ -11,12 +11,12 @@
   "dependencies": {
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "type-fest": "^4.24.0",
+    "type-fest": "^4.26.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "typescript": "5.5.2"
+    "typescript": "5.6.3"
   },
   "exports": {
     ".": {

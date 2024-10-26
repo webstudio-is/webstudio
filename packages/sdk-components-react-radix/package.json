@@ -65,7 +65,7 @@
     "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.6.1",
+    "@types/node": "^22.8.1",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/css-data": "workspace:*",
@@ -76,6 +76,6 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.5.2"
+    "typescript": "^5.6.3"
   }
 }

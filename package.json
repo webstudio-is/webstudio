@@ -36,7 +36,7 @@
     "@storybook/react-vite": "^8.3.5",
     "@types/css-tree": "^2.3.1",
     "@types/eslint__js": "^8.42.3",
-    "@types/node": "^22.6.1",
+    "@types/node": "^22.8.1",
     "@types/react": "^18.2.70",
     "esbuild": "^0.24.0",
     "eslint": "^9.13.0",
@@ -50,7 +50,7 @@
     "simple-git-hooks": "^2.11.1",
     "storybook": "^8.3.5",
     "tsx": "^4.19.1",
-    "typescript": "5.5.2",
+    "typescript": "5.6.3",
     "typescript-eslint": "^8.11.0",
     "vite": "^5.4.8"
   },

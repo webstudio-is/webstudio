@@ -289,7 +289,7 @@ const requestPointerLock = async (
   if (shouldUsePointerLock) {
     // based on https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock is async
     try {
-      // @ts-expect-error - unadjustedMovement is a chromium only feature, fixes random movementX|Y jumps on windows
+      // unadjustedMovement is a chromium only feature, fixes random movementX|Y jumps on windows
       await targetNode.requestPointerLock({ unadjustedMovement: true });
     } catch {
       // Some platforms may not support unadjusted movement.
