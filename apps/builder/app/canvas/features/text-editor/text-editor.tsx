@@ -51,7 +51,6 @@ import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
-  $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedPage,
@@ -960,68 +959,86 @@ export const TextEditor = ({
     (state: EditorState, args: HandleNextParams) => {
       const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
-      const instances = $instances.get();
-
       if (rootInstanceId === undefined) {
         return;
       }
 
-      const results: InstanceSelector[] = [];
+      const editableInstanceSelectors: InstanceSelector[] = [];
       findAllEditableInstanceSelector(
         rootInstanceId,
         [],
         instances,
         $registeredComponentMetas.get(),
-        results
+        editableInstanceSelectors
       );
 
-      const currentIndex = results.findIndex((instanceSelector) => {
-        return (
-          instanceSelector[0] === rootInstanceSelector[0] &&
-          instanceSelector.join(",") === rootInstanceSelector.join(",")
-        );
-      });
+      const currentIndex = editableInstanceSelectors.findIndex(
+        (instanceSelector) => {
+          return (
+            instanceSelector[0] === rootInstanceSelector[0] &&
+            instanceSelector.join(",") === rootInstanceSelector.join(",")
+          );
+        }
+      );
 
       if (currentIndex === -1) {
         return;
       }
 
-      for (let i = 1; i < results.length; i++) {
+      for (let i = 1; i < editableInstanceSelectors.length; i++) {
         const nextIndex =
           args.reason === "down" || args.reason === "right"
-            ? mod(currentIndex + i, results.length)
-            : mod(currentIndex - i, results.length);
+            ? mod(currentIndex + i, editableInstanceSelectors.length)
+            : mod(currentIndex - i, editableInstanceSelectors.length);
 
-        const nextSelector = results[nextIndex];
+        const nextSelector = editableInstanceSelectors[nextIndex];
 
-        if (getVisibleElementsByInstanceSelector(nextSelector).length > 0) {
-          const instance = instances.get(nextSelector[0]);
+        const nextInstance = instances.get(nextSelector[0]);
+        if (nextInstance === undefined) {
+          continue;
+        }
 
-          // opnionated: Elements without children can be spacers, so skip them if not collapsed.
-          if (instance?.children.length === 0) {
-            const elt = getElementByInstanceSelector(nextSelector);
-            if (elt === undefined) {
-              continue;
-            }
+        const hasExpressionChildren = nextInstance.children.some(
+          (child) => child.type === "expression"
+        );
 
-            if (!elt.hasAttribute(collapsedAttribute)) {
-              continue;
-            }
+        // opinionated: Skip if binded (double click is working)
+        if (hasExpressionChildren) {
+          continue;
+        }
+
+        // Skip invisible elements
+        if (getVisibleElementsByInstanceSelector(nextSelector).length === 0) {
+          continue;
+        }
+
+        const instance = instances.get(nextSelector[0]);
+
+        // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
+        if (instance?.children.length === 0) {
+          const elt = getElementByInstanceSelector(nextSelector);
+          if (elt === undefined) {
+            continue;
           }
 
-          handleChange(state);
-
-          $textEditingInstanceSelector.set({
-            selector: results[nextIndex],
-            ...args,
-          });
-
-          $selectedInstanceSelector.set(results[nextIndex]);
-          break;
+          if (!elt.hasAttribute(collapsedAttribute)) {
+            continue;
+          }
         }
+
+        handleChange(state);
+
+        $textEditingInstanceSelector.set({
+          selector: editableInstanceSelectors[nextIndex],
+          ...args,
+        });
+
+        $selectedInstanceSelector.set(editableInstanceSelectors[nextIndex]);
+
+        break;
       }
     },
-    [handleChange, rootInstanceSelector]
+    [handleChange, instances, rootInstanceSelector]
   );
 
   return (
