@@ -601,23 +601,32 @@ type SwitchBlockPluginProps = {
   onNext: (editorState: EditorState, params: HandleNextParams) => void;
 };
 
+const isSingleCursorSelection = () => {
+  const selection = $getSelection();
+
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+  const isCaret =
+    selection.anchor.offset === selection.focus.offset &&
+    selection.anchor.key === selection.focus.key;
+
+  if (!isCaret) {
+    return false;
+  }
+
+  return true;
+};
+
 const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
+    // The right arrow key should move the cursor to the next block only if it is at the end of the current block.
     return editor.registerCommand(
       KEY_ARROW_RIGHT_COMMAND,
       (event) => {
-        const selection = $getSelection();
-
-        if (!$isRangeSelection(selection)) {
-          return false;
-        }
-        const isCaret =
-          selection.anchor.offset === selection.focus.offset &&
-          selection.anchor.key === selection.focus.key;
-
-        if (!isCaret) {
+        if (!isSingleCursorSelection()) {
           return false;
         }
 
@@ -637,19 +646,11 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
   }, [editor, onNext]);
 
   useEffect(() => {
+    // The left arrow key should move the cursor to the previous block only if it is at the start of the current block.
     return editor.registerCommand(
       KEY_ARROW_LEFT_COMMAND,
       (event) => {
-        const selection = $getSelection();
-
-        if (!$isRangeSelection(selection)) {
-          return false;
-        }
-        const isCaret =
-          selection.anchor.offset === selection.focus.offset &&
-          selection.anchor.key === selection.focus.key;
-
-        if (!isCaret) {
+        if (!isSingleCursorSelection()) {
           return false;
         }
 
@@ -669,20 +670,13 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
   }, [editor, onNext]);
 
   useEffect(() => {
+    // The down arrow key should move the cursor to the next block if:
+    // - it is at the end of the current block
+    // - the cursor is at the last line of the current block
     return editor.registerCommand(
       KEY_ARROW_DOWN_COMMAND,
       (event) => {
-        const selection = $getSelection();
-
-        if (!$isRangeSelection(selection)) {
-          return false;
-        }
-
-        const isCaret =
-          selection.anchor.offset === selection.focus.offset &&
-          selection.anchor.key === selection.focus.key;
-
-        if (!isCaret) {
+        if (!isSingleCursorSelection()) {
           return false;
         }
 
@@ -697,6 +691,7 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
           return true;
         }
 
+        // Check if the cursor is inside a rectangle on the last line
         if (rect === undefined) {
           return false;
         }
@@ -733,20 +728,13 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
   }, [editor, onNext]);
 
   useEffect(() => {
+    // The up arrow key should move the cursor to the previous block if:
+    // - it is at the start of the current block
+    // - the cursor is at the first line of the current block
     return editor.registerCommand(
       KEY_ARROW_UP_COMMAND,
       (event) => {
-        const selection = $getSelection();
-
-        if (!$isRangeSelection(selection)) {
-          return false;
-        }
-
-        const isCaret =
-          selection.anchor.offset === selection.focus.offset &&
-          selection.anchor.key === selection.focus.key;
-
-        if (!isCaret) {
+        if (!isSingleCursorSelection()) {
           return false;
         }
 
@@ -792,6 +780,10 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
 
         // Lexical has a bug where the cursor sometimes stops moving up.
         // Slight adjustments fix this issue.
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
         selection.modify("move", false, "character");
         selection.modify("move", true, "character");
 
@@ -835,47 +827,6 @@ const InitialJSONStatePlugin = ({
 
   return null;
 };
-
-/*
-const ShowFocusPlugin = () => {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    const rootElement = editor.getRootElement();
-
-    const abortController = new AbortController();
-
-    rootElement?.addEventListener(
-      "focus",
-      () => {
-        console.log("focused", editor.getRootElement()?.innerText);
-      },
-      {
-        signal: abortController.signal,
-      }
-    );
-    rootElement?.addEventListener(
-      "blur",
-      () => {
-        // console.log("blurred", editor.getRootElement()?.innerText);
-        // console.log($textEditingInstanceSelector.get()?.selector, selector);
-
-        const text = editor.getRootElement()?.innerText;
-        console.log("blured", text);
-      },
-      {
-        signal: abortController.signal,
-      }
-    );
-
-    return () => {
-      abortController.abort();
-    };
-  }, [editor]);
-
-  return null;
-};
-*/
 
 export const TextEditor = ({
   rootInstanceSelector,
@@ -1043,7 +994,6 @@ export const TextEditor = ({
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      {/* <ShowFocusPlugin /> */}
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
       <ToolbarConnectorPlugin
