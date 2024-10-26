@@ -12,7 +12,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build",
-    "migrations": "cd apps/builder && pnpm migrations --dev",
+    "migrations": "pnpm --filter=./packages/prisma-client migrations --dev --cwd ../../apps/builder",
     "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
     "prepare": "which git && git config core.hooksPath .git/hooks/ && simple-git-hooks || echo git not installed",
     "local:version-snapshot": "pnpm -r exec pnpm version prepatch --preid $(cat /dev/urandom | LC_ALL=C tr -dc 'a-z' | fold -w 8 | head -n 1)",

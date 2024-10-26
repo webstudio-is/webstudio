@@ -61,7 +61,7 @@ runs:
             "framework": "remix",
             "devCommand": "pnpm dev",
             "installCommand": "pnpm install",
-            "buildCommand": "pnpm --filter=@webstudio-is/prisma-client build:prod && pnpm --filter=@webstudio-is/http-client build && pnpm --filter=@webstudio-is/builder build",
+            "buildCommand": "pnpm --filter=@webstudio-is/http-client build && pnpm --filter=@webstudio-is/builder build",
             "outputDirectory": null,
             "rootDirectory": "apps/builder",
             "directoryListing": false,

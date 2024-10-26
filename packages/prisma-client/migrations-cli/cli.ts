@@ -1,10 +1,12 @@
 #!/usr/bin/env tsx
 
-import { loadEnvFile } from "node:process";
+import { chdir, loadEnvFile } from "node:process";
 import * as commands from "./commands";
 import * as logger from "./logger";
 import * as args from "./args";
 import { UserError } from "./errors";
+
+chdir(args.values.cwd);
 
 const USAGE = `Usage: migrations <command> [--dev]
 

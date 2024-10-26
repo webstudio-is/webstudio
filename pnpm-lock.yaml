@@ -467,9 +467,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../../packages/jest-config
-      '@webstudio-is/prisma-client':
-        specifier: workspace:*
-        version: link:../../packages/prisma-client
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
