@@ -328,7 +328,11 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
           />
         </div>
 
-        <div style={{ display: "contents" }} data-ws-selector="boxBId,bodyId">
+        <div
+          style={{ display: "contents" }}
+          data-ws-selector="boxBId,bodyId"
+          data-ws-collapsed="true"
+        >
           <TextEditor
             key={textEditingInstanceSelector?.selector[0] ?? ""}
             editable={textEditingInstanceSelector?.selector[0] === "boxBId"}

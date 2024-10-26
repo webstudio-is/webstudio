@@ -519,8 +519,16 @@ const InitCursorPlugin = () => {
           $setSelection(selection);
         }
 
+        if ($isElementNode(firstNode)) {
+          // e.g. Box is empty
+          const selection = $createRangeSelection();
+          selection.anchor.set(firstNode.getKey(), 0, "element");
+          selection.focus.set(firstNode.getKey(), 0, "element");
+          $setSelection(selection);
+        }
+
         if ($isLineBreakNode(firstNode)) {
-          // Set selection on start
+          // e.g. Box contains 2+ empty lines
           const selection = $createRangeSelection();
           $setSelection(selection);
         }
@@ -541,6 +549,33 @@ const InitCursorPlugin = () => {
           selection.anchor.set(lastNode.getKey(), contentSize, "text");
           selection.focus.set(lastNode.getKey(), contentSize, "text");
           $setSelection(selection);
+        }
+
+        if ($isElementNode(lastNode)) {
+          // e.g. Box is empty
+          const selection = $createRangeSelection();
+          selection.anchor.set(lastNode.getKey(), 0, "element");
+          selection.focus.set(lastNode.getKey(), 0, "element");
+          $setSelection(selection);
+        }
+
+        if ($isLineBreakNode(lastNode)) {
+          // e.g. Box contains 2+ empty lines
+          const parent = lastNode.getParent();
+          if ($isElementNode(parent)) {
+            const selection = $createRangeSelection();
+            selection.anchor.set(
+              parent.getKey(),
+              parent.getChildrenSize(),
+              "element"
+            );
+            selection.focus.set(
+              parent.getKey(),
+              parent.getChildrenSize(),
+              "element"
+            );
+            $setSelection(selection);
+          }
         }
 
         return;
