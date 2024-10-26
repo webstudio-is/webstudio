@@ -134,7 +134,6 @@
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/jest-config": "workspace:*",
-    "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "react-router-dom": "^6.26.2",
