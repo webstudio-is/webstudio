@@ -62,6 +62,7 @@ import {
   getVisibleElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
+import { setDataCollapsed } from "~/canvas/collapsed";
 // import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
@@ -896,12 +897,15 @@ export const TextEditor = ({
       if (treeRootInstance) {
         const jsonState = editorState.toJSON();
         if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
+          setDataCollapsed(rootInstanceSelector[0], false);
           return;
         }
 
         onChange($convertToUpdates(treeRootInstance, refs));
         lastSavedStateJsonRef.current = jsonState;
       }
+
+      setDataCollapsed(rootInstanceSelector[0], false);
     });
   });
 
