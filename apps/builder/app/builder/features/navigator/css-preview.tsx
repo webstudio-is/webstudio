@@ -17,8 +17,8 @@ import {
 import type { StyleMap, StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
-import Prism from "prismjs";
 import { captureError } from "@webstudio-is/error-utils";
+import { highlightCss } from "~/builder/shared/code-highlight";
 
 const preStyle = css(textVariants.mono, {
   margin: 0,
@@ -92,7 +92,7 @@ const useHighlightedCss = () => {
       return;
     }
     const cssText = getCssText(currentStyle);
-    return Prism.highlight(cssText, Prism.languages.css, "css");
+    return highlightCss(cssText);
   }, [currentStyle]);
 };
 
@@ -108,7 +108,6 @@ export const CssPreview = () => {
       <ScrollArea css={{ padding: theme.panel.padding }}>
         <pre tabIndex={0} className={preStyle()}>
           <div
-            className="language-css"
             style={{ whiteSpace: "break-spaces" }}
             dangerouslySetInnerHTML={{ __html: code }}
           ></div>

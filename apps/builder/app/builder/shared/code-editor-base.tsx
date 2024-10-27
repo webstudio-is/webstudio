@@ -26,8 +26,7 @@ import {
   historyKeymap,
   indentWithTab,
 } from "@codemirror/commands";
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
-import { tags } from "@lezer/highlight";
+import { syntaxHighlighting } from "@codemirror/language";
 import {
   theme,
   textVariants,
@@ -44,6 +43,7 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
+import { solarizedLight } from "./code-highlight";
 
 // This undocumented flag is required to keep contenteditable fields editable after the first activation of EditorView.
 // To reproduce the issue, open any Binding dialog and then try to edit a Navigation Item in the Navigation menu.
@@ -117,39 +117,6 @@ const editorContentStyle = css({
     backgroundColor: "rgba(255, 0, 0, 0.1)",
   },
 });
-
-// https://thememirror.net/clouds
-const highlightStyle = HighlightStyle.define([
-  // darker comment variant from https://github.com/vadimdemedes/thememirror/blob/main/source/themes/ayu-light.ts#L17-L20
-  {
-    tag: [tags.comment, tags.annotation],
-    color: "#787b8099",
-  },
-  {
-    tag: [tags.string, tags.special(tags.brace), tags.regexp, tags.url],
-    color: "#5D90CD",
-  },
-  {
-    tag: [tags.number, tags.bool, tags.null],
-    color: "#46A609",
-  },
-  {
-    tag: tags.keyword,
-    color: "#AF956F",
-  },
-  {
-    tag: [tags.definitionKeyword, tags.modifier],
-    color: "#C52727",
-  },
-  {
-    tag: [tags.angleBracket, tags.tagName, tags.attributeName, tags.separator],
-    color: "#606060",
-  },
-  {
-    tag: tags.self,
-    color: "#000",
-  },
-]);
 
 const autocompletionTooltipTheme = EditorView.theme({
   ".cm-tooltip.cm-tooltip-autocomplete": {
@@ -262,7 +229,7 @@ export const EditorContent = ({
         history(),
         drawSelection(),
         dropCursor(),
-        syntaxHighlighting(highlightStyle, { fallback: true }),
+        syntaxHighlighting(solarizedLight, { fallback: true }),
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         EditorView.lineWrapping,
         EditorView.editable.of(readOnly === false),

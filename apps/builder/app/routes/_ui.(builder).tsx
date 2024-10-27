@@ -26,7 +26,6 @@ import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
 import env from "~/env/env.server";
 
 import builderStyles from "~/builder/builder.css?url";
-import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { ClientOnly } from "~/shared/client-only";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -40,10 +39,7 @@ import { loader as authWsLoader } from "./auth.ws";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const links = () => {
-  return [
-    { rel: "stylesheet", href: builderStyles },
-    { rel: "stylesheet", href: prismStyles },
-  ];
+  return [{ rel: "stylesheet", href: builderStyles }];
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
