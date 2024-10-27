@@ -63,7 +63,9 @@ export const solarizedLight = HighlightStyle.define([
 ]);
 
 export const highlightCss = (code: string) => {
-  let highlightedCode = "";
+  const styles = solarizedLight.module?.getRules();
+  // generated classes are scoped to parent
+  let highlightedCode = `<style>@scope {${styles}}</style>`;
   highlightCode(
     code,
     parser.parse(code),
@@ -79,7 +81,5 @@ export const highlightCss = (code: string) => {
       highlightedCode += "\n";
     }
   );
-  const styles = solarizedLight.module?.getRules();
-  // generated classes are scoped to parent
-  return `<style>@scope {${styles}}</style>${highlightedCode}`;
+  return highlightedCode;
 };
