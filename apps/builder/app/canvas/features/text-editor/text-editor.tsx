@@ -471,37 +471,6 @@ const InitCursorPlugin = () => {
           }
         }
 
-        /*
-        // Debug rects do not delete.
-
-        const container = document.createElement("div");
-        container.style.position = "fixed";
-        container.style.top = "0";
-        container.style.left = "0";
-        container.style.pointerEvents = "none";
-        container.style.zIndex = "9999";
-        document.body.appendChild(container);
-
-        Array.from(rects).forEach((rect, index) => {
-          const debugRect = document.createElement("div");
-
-          debugRect.className = `debug-rect-${index}`;
-
-          Object.assign(debugRect.style, {
-            position: "fixed",
-            border: "1px solid red",
-            backgroundColor: "rgba(255, 0, 0, 0.1)",
-            top: `${rect.top}px`,
-            left: `${rect.left}px`,
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-            zIndex: "9999",
-            pointerEvents: "none",
-          });
-          container.appendChild(debugRect);
-        });
-        */
-
         break;
       }
 
