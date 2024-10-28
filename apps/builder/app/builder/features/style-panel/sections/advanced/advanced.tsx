@@ -67,6 +67,8 @@ import { PropertyInfo } from "../../property-label";
 import { sections } from "../sections";
 import { ColorPopover } from "../../shared/color-picker";
 import {
+  $instances,
+  $registeredComponentMetas,
   $selectedInstanceSelector,
   $styles,
   $styleSourceSelections,
@@ -377,11 +379,20 @@ const initialProperties = new Set<StyleProperty>([
 const $advancedProperties = computed(
   [
     $selectedInstanceSelector,
+    $instances,
+    $registeredComponentMetas,
     $styleSourceSelections,
     $matchingBreakpoints,
     $styles,
   ],
-  (instanceSelector, styleSourceSelections, matchingBreakpoints, styles) => {
+  (
+    instanceSelector,
+    instances,
+    metas,
+    styleSourceSelections,
+    matchingBreakpoints,
+    styles
+  ) => {
     if (instanceSelector === undefined) {
       return [];
     }
@@ -393,6 +404,8 @@ const $advancedProperties = computed(
           instanceSelector;
     const definedStyles = getDefinedStyles({
       instanceSelector: instanceAndRootSelector,
+      instances,
+      metas,
       matchingBreakpoints,
       styleSourceSelections,
       styles,
