@@ -584,11 +584,6 @@ export const NavigatorTree = () => {
                       ? rawTheme.colors.foregroundReusable
                       : undefined,
                   },
-                  onKeyDown: (event) => {
-                    if ($textEditingInstanceSelector.get() !== undefined) {
-                      event.preventDefault();
-                    }
-                  },
                 }}
                 buttonProps={{
                   onMouseEnter: () =>
