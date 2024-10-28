@@ -54,18 +54,21 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
     );
 
     return (
-      <div style={{ display: isTextChild ? "block" : "block" }} {...props}>
+      <div {...props}>
         <span style={{ color: "rgb(16, 23, 233)" }}>
           &lt;{[elementName, ...attributes].join(" ")}&gt;
         </span>
-        {childrenArray.length > 0 &&
-          (isTextChild ? (
-            <span ref={ref}>{children}</span>
-          ) : (
-            <div ref={ref} style={{ marginLeft: isTextChild ? 0 : "1rem" }}>
-              {children}
-            </div>
-          ))}
+        {childrenArray.length > 0 && (
+          <div
+            ref={ref}
+            style={{
+              display: isTextChild ? "inline" : "block",
+              marginLeft: isTextChild ? 0 : "1rem",
+            }}
+          >
+            {children}
+          </div>
+        )}
         <span style={{ color: "rgb(16, 23, 233)" }}>
           &lt;/{elementName}&gt;
         </span>
