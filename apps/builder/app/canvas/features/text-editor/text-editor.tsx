@@ -415,9 +415,9 @@ const InitCursorPlugin = () => {
             const normalizedSelection =
               $normalizeSelection__EXPERIMENTAL(selection);
             $setSelection(normalizedSelection);
+            return;
           }
         }
-        return;
       }
 
       while (reason === "down" || reason === "up") {
@@ -474,7 +474,12 @@ const InitCursorPlugin = () => {
         break;
       }
 
-      if (reason === "down" || reason === "right" || reason === "enter") {
+      if (
+        reason === "down" ||
+        reason === "right" ||
+        reason === "enter" ||
+        reason === "click"
+      ) {
         const firstNode = $getRoot().getFirstDescendant();
 
         if (firstNode === null) {
