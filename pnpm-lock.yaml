@@ -184,6 +184,9 @@ importers:
       '@lezer/common':
         specifier: ^1.2.2
         version: 1.2.2
+      '@lezer/css':
+        specifier: ^1.1.9
+        version: 1.1.9
       '@lezer/highlight':
         specifier: ^1.2.1
         version: 1.2.1
@@ -367,9 +370,6 @@ importers:
       pretty-bytes:
         specifier: ^6.1.1
         version: 6.1.1
-      prismjs:
-        specifier: ^1.29.0
-        version: 1.29.0
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -455,9 +455,6 @@ importers:
       '@types/dom-navigation':
         specifier: ^1.0.3
         version: 1.0.3
-      '@types/prismjs':
-        specifier: ^1.26.0
-        version: 1.26.0
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -5222,9 +5219,6 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
-
-  '@types/prismjs@1.26.0':
-    resolution: {integrity: sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==}
 
   '@types/prop-types@15.7.5':
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
@@ -12882,8 +12876,6 @@ snapshots:
       undici-types: 6.19.8
 
   '@types/normalize-package-data@2.4.4': {}
-
-  '@types/prismjs@1.26.0': {}
 
   '@types/prop-types@15.7.5': {}
 
