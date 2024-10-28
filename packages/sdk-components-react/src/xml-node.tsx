@@ -14,7 +14,11 @@ export const defaultTag = "div";
 type Props = {
   tag: string;
   xmlns?: string;
-  children: ReactNode;
+  children?: ReactNode;
+  rel?: string;
+  hreflang?: string;
+  href?: string;
+  "xmlns:xhtml"?: string;
 };
 
 export const XmlNode = forwardRef<ElementRef<"div">, Props>(
@@ -42,7 +46,7 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       // Must start from letter or underscore
       .replace(/^[^\p{L}_]+/u, "")
       // Clear all non letter, number, underscore, dot, and dash
-      .replaceAll(/[^\p{L}\p{N}\-._]+/gu, "");
+      .replaceAll(/[^\p{L}\p{N}\-._:]+/gu, "");
 
     const attributes = attributeEntries.map(
       ([key, value]) => `${key}=${JSON.stringify(value)}`

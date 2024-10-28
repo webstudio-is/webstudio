@@ -559,7 +559,7 @@ export const prebuild = async (options: {
               .map((scopedName) =>
                 scopedName === "Body"
                   ? `const ${scopedName} = (props: any) => props.children;`
-                  : `const ${scopedName} = () => null;`
+                  : `const ${scopedName} = (props: any) => null;`
               )
               .join("\n");
           }
