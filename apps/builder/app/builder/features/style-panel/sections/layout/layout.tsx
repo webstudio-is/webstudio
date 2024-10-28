@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
   Box,
@@ -464,10 +463,6 @@ const orderedDisplayValues = [
   "inline",
   "none",
 ];
-
-if (isFeatureEnabled("displayContents")) {
-  orderedDisplayValues.push("contents");
-}
 
 export const properties = [
   "display",
