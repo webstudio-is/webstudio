@@ -38,9 +38,10 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       return createElement(tag, attrProps, children);
     }
 
-    const isTextChild = Children.toArray(children).every(
-      (child) => typeof child === "string"
-    );
+    const childrenArray = Children.toArray(children);
+    const isTextChild =
+      childrenArray.length > 0 &&
+      childrenArray.every((child) => typeof child === "string");
 
     const elementName = tag
       // Must start from letter or underscore
@@ -53,14 +54,21 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
     );
 
     return (
-      <div style={{ display: isTextChild ? "flex" : "contents" }} {...props}>
-        <div style={{ color: "rgb(16, 23, 233)" }}>
+      <div style={{ display: isTextChild ? "block" : "block" }} {...props}>
+        <span style={{ color: "rgb(16, 23, 233)" }}>
           &lt;{[elementName, ...attributes].join(" ")}&gt;
-        </div>
-        <div ref={ref} style={{ marginLeft: isTextChild ? 0 : "1rem" }}>
-          {children}
-        </div>
-        <div style={{ color: "rgb(16, 23, 233)" }}>&lt;/{elementName}&gt;</div>
+        </span>
+        {childrenArray.length > 0 &&
+          (isTextChild ? (
+            <span ref={ref}>{children}</span>
+          ) : (
+            <div ref={ref} style={{ marginLeft: isTextChild ? 0 : "1rem" }}>
+              {children}
+            </div>
+          ))}
+        <span style={{ color: "rgb(16, 23, 233)" }}>
+          &lt;/{elementName}&gt;
+        </span>
       </div>
     );
   }
