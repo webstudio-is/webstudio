@@ -104,6 +104,18 @@ const ContentEditable = ({
         },
         { signal: abortController.signal }
       );
+
+      // Some controls like Tab and TabTrigger intercept arrow keys for navigation.
+      // Prevent propagation to avoid conflicts with Lexical's default behavior.
+      rootElement.addEventListener(
+        "keydown",
+        (event) => {
+          if (["ArrowLeft", "ArrowRight"].includes(event.code)) {
+            event.stopPropagation();
+          }
+        },
+        { signal: abortController.signal }
+      );
     }
 
     rootElement.contentEditable = "true";
