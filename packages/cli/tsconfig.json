@@ -6,6 +6,7 @@
     "types": ["vite/client", "@webstudio-is/react-sdk/placeholder"],
     "module": "esnext",
     "allowJs": true,
-    "checkJs": true
+    "checkJs": true,
+    "noUncheckedSideEffectImports": false
   }
 }

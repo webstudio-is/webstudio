@@ -31,7 +31,7 @@
     "@jest/globals": "^29.7.0",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "type-fest": "^4.24.0",
-    "typescript": "5.5.2"
+    "type-fest": "^4.26.1",
+    "typescript": "5.6.3"
   }
 }

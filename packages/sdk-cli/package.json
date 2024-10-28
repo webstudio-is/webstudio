@@ -23,7 +23,7 @@
     "change-case": "^5.4.4"
   },
   "devDependencies": {
-    "@types/node": "^22.6.1",
+    "@types/node": "^22.8.1",
     "@webstudio-is/tsconfig": "workspace:^"
   }
 }

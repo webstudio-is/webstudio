@@ -20,8 +20,8 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "strip-indent": "^4.0.0",
-    "type-fest": "^4.24.0",
-    "typescript": "5.5.2",
+    "type-fest": "^4.26.1",
+    "typescript": "5.6.3",
     "zod": "^3.22.4"
   },
   "peerDependencies": {
