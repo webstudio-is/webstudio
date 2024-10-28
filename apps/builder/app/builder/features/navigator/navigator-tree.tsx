@@ -42,7 +42,6 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedPage,
-  $textEditingInstanceSelector,
   getIndexedInstanceId,
   type ItemDropTarget,
 } from "~/shared/nano-states";
