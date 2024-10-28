@@ -77,7 +77,12 @@ export const subscribeInstanceSelection = ({
       // enable text editor when double click on its instance or one of its descendants
       if (editableInstanceSelector) {
         $selectedInstanceSelector.set(editableInstanceSelector);
-        $textEditingInstanceSelector.set(editableInstanceSelector);
+        $textEditingInstanceSelector.set({
+          selector: editableInstanceSelector,
+          reason: "click",
+          mouseX: event.clientX,
+          mouseY: event.clientY,
+        });
       }
     }
   };

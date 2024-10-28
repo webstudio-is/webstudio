@@ -12,6 +12,10 @@ const presetStyle = {
       property: "display",
       value: { type: "keyword", value: "contents" },
     },
+    {
+      property: "whiteSpaceCollapse",
+      value: { type: "keyword", value: "collapse" },
+    },
   ],
 } satisfies PresetStyle<"div">;
 

@@ -8,7 +8,7 @@ import {
   Fragment,
   type ReactNode,
 } from "react";
-import { Suspense, lazy } from "react";
+
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -47,11 +47,8 @@ import {
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
-
-const TextEditor = lazy(async () => {
-  const { TextEditor } = await import("../text-editor");
-  return { default: TextEditor };
-});
+import { TextEditor } from "../text-editor";
+import { $getSelection, $isRangeSelection } from "lexical";
 
 const ContentEditable = ({
   renderComponentWithRef,
@@ -68,7 +65,7 @@ const ContentEditable = ({
    * useLayoutEffect to be sure that editor plugins on useEffect would have access to rootElement
    */
   useLayoutEffect(() => {
-    let rootElement = ref.current;
+    const rootElement = ref.current;
 
     if (rootElement == null) {
       return;
@@ -78,24 +75,61 @@ const ContentEditable = ({
       return;
     }
 
-    if (rootElement?.tagName === "BUTTON" || rootElement.tagName === "A") {
-      // <button> with contentEditable does not let to press space
-      // <a> stops working with inline-flex when only 1 character left
-      // so add span inside and use it as editor element in lexical
-      const span = document.createElement("span");
-      for (const child of rootElement.childNodes) {
-        rootElement.removeChild(child);
-        span.appendChild(child);
+    if (rootElement.tagName === "A") {
+      if (window.getComputedStyle(rootElement).display === "inline-flex") {
+        // Issue: <a> tag doesn't work with inline-flex when the cursor is at the start or end of the text.
+        // Solution: Inline-flex is not supported by Lexical. Use "inline" during editing.
+        rootElement.style.display = "inline";
       }
-      rootElement.appendChild(span);
+    }
 
-      rootElement = span;
+    // Issue: <button> with contentEditable does not allow pressing space.
+    // Solution: Add space on space keydown.
+    const abortController = new AbortController();
+    if (rootElement.tagName === "BUTTON") {
+      rootElement.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.code === "Space") {
+            editor.update(() => {
+              const selection = $getSelection();
+
+              if ($isRangeSelection(selection)) {
+                selection.insertText(" ");
+              }
+            });
+
+            event.preventDefault();
+          }
+        },
+        { signal: abortController.signal }
+      );
+
+      // Some controls like Tab and TabTrigger intercept arrow keys for navigation.
+      // Prevent propagation to avoid conflicts with Lexical's default behavior.
+      rootElement.addEventListener(
+        "keydown",
+        (event) => {
+          if (["ArrowLeft", "ArrowRight"].includes(event.code)) {
+            event.stopPropagation();
+          }
+        },
+        { signal: abortController.signal }
+      );
     }
-    if (rootElement) {
-      rootElement.contentEditable = "true";
-    }
+
+    rootElement.contentEditable = "true";
 
     editor.setRootElement(rootElement);
+
+    // Must be done after 'setRootElement' to avoid Lexical's default behavior
+    // white-space affects "text-wrap", remove it and use "white-space-collapse" instead
+    rootElement.style.removeProperty("white-space");
+    rootElement.style.setProperty("white-space-collapse", "pre-wrap");
+
+    return () => {
+      abortController.abort();
+    };
   }, [editor]);
 
   return renderComponentWithRef(ref);
@@ -421,52 +455,52 @@ export const WebstudioComponentCanvas = forwardRef<
   );
 
   if (
-    areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
-    false
+    areInstanceSelectorsEqual(
+      textEditingInstanceSelector?.selector,
+      instanceSelector
+    ) === false
   ) {
     initialContentEditableContent.current = children;
     return instanceElement;
   }
 
   return (
-    <Suspense fallback={instanceElement}>
-      <TextEditor
-        rootInstanceSelector={instanceSelector}
-        instances={instances}
-        contentEditable={
-          <ContentEditable
-            renderComponentWithRef={(elementRef) => (
-              <Component {...props} ref={mergeRefs(ref, elementRef)}>
-                {initialContentEditableContent.current}
-              </Component>
-            )}
-          />
-        }
-        onChange={(instancesList) => {
-          serverSyncStore.createTransaction([$instances], (instances) => {
-            const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
-            for (const updatedInstance of instancesList) {
-              instances.set(updatedInstance.id, updatedInstance);
-              // exclude reused instances
-              deletedTreeIds.delete(updatedInstance.id);
-            }
-            for (const instanceId of deletedTreeIds) {
-              instances.delete(instanceId);
-            }
-          });
-        }}
-        onSelectInstance={(instanceId) => {
-          const instances = $instances.get();
-          const newSelectedSelector = getInstanceSelector(
-            instances,
-            instanceSelector,
-            instanceId
-          );
-          $textEditingInstanceSelector.set(undefined);
-          $selectedInstanceSelector.set(newSelectedSelector);
-        }}
-      />
-    </Suspense>
+    <TextEditor
+      rootInstanceSelector={instanceSelector}
+      instances={instances}
+      contentEditable={
+        <ContentEditable
+          renderComponentWithRef={(elementRef) => (
+            <Component {...props} ref={mergeRefs(ref, elementRef)}>
+              {initialContentEditableContent.current}
+            </Component>
+          )}
+        />
+      }
+      onChange={(instancesList) => {
+        serverSyncStore.createTransaction([$instances], (instances) => {
+          const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
+          for (const updatedInstance of instancesList) {
+            instances.set(updatedInstance.id, updatedInstance);
+            // exclude reused instances
+            deletedTreeIds.delete(updatedInstance.id);
+          }
+          for (const instanceId of deletedTreeIds) {
+            instances.delete(instanceId);
+          }
+        });
+      }}
+      onSelectInstance={(instanceId) => {
+        const instances = $instances.get();
+        const newSelectedSelector = getInstanceSelector(
+          instances,
+          instanceSelector,
+          instanceId
+        );
+        $textEditingInstanceSelector.set(undefined);
+        $selectedInstanceSelector.set(newSelectedSelector);
+      }}
+    />
   );
 });
 

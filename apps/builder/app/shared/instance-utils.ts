@@ -2,11 +2,11 @@ import { nanoid } from "nanoid";
 import { toast } from "@webstudio-is/design-system";
 import { equalMedia, type StyleValue } from "@webstudio-is/css-engine";
 import {
-  type Instance,
   type Instances,
   type StyleSource,
   getStyleDeclKey,
   findTreeInstanceIds,
+  Instance,
   StyleSourceSelection,
   StyleDecl,
   Asset,
@@ -162,6 +162,78 @@ export const getInstanceLabel = (
   );
 };
 
+const isTextEditingInstance = (
+  instance: Instance,
+  instances: Instances,
+  metas: Map<string, WsComponentMeta>
+) => {
+  // when start editing empty body all text content
+  // including style and scripts appear in editor
+  // assume body is root and stop checking further
+  if (instance.component === "Body") {
+    return false;
+  }
+
+  const meta = metas.get(instance.component);
+
+  if (meta === undefined) {
+    return false;
+  }
+
+  if (meta.type !== "container") {
+    return false;
+  }
+  // only container with rich-text-child children and text can be edited
+  for (const child of instance.children) {
+    if (child.type === "id") {
+      const childInstance = instances.get(child.value);
+      if (childInstance === undefined) {
+        return;
+      }
+      const childMeta = metas.get(childInstance.component);
+      if (childMeta?.type !== "rich-text-child") {
+        return;
+      }
+    }
+  }
+
+  return true;
+};
+
+export const findAllEditableInstanceSelector = (
+  instanceId: string,
+  currentPath: InstanceSelector,
+  instances: Map<string, Instance>,
+  metas: Map<string, WsComponentMeta>,
+  results: InstanceSelector[]
+) => {
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+
+  // Check if current instance is text editing instance
+  if (isTextEditingInstance(instance, instances, metas)) {
+    results.push([instanceId, ...currentPath]);
+    return;
+  }
+
+  // If not, traverse its children
+  for (const child of instance.children) {
+    if (child.type === "id") {
+      findAllEditableInstanceSelector(
+        child.value,
+        [instanceId, ...currentPath],
+        instances,
+        metas,
+        results
+      );
+    }
+  }
+
+  return null;
+};
+
 export const findClosestEditableInstanceSelector = (
   instanceSelector: InstanceSelector,
   instances: Instances,
@@ -172,33 +244,10 @@ export const findClosestEditableInstanceSelector = (
     if (instance === undefined) {
       return;
     }
-    // when start editing empty body all text content
-    // including style and scripts appear in editor
-    // assume body is root and stop checking further
-    if (instance.component === "Body") {
-      return;
+
+    if (isTextEditingInstance(instance, instances, metas)) {
+      return getAncestorInstanceSelector(instanceSelector, instanceId);
     }
-    const meta = metas.get(instance.component);
-    if (meta === undefined) {
-      return;
-    }
-    if (meta.type !== "container") {
-      continue;
-    }
-    // only container with rich-text-child children and text can be edited
-    for (const child of instance.children) {
-      if (child.type === "id") {
-        const childInstance = instances.get(child.value);
-        if (childInstance === undefined) {
-          return;
-        }
-        const childMeta = metas.get(childInstance.component);
-        if (childMeta?.type !== "rich-text-child") {
-          return;
-        }
-      }
-    }
-    return getAncestorInstanceSelector(instanceSelector, instanceId);
   }
 };
 

@@ -5,6 +5,8 @@
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
+    white-space: pre-wrap;
+    white-space-collapse: preserve;
   }
   :where(body.w-body) {
     box-sizing: border-box;

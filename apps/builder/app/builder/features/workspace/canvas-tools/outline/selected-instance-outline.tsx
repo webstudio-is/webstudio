@@ -23,7 +23,7 @@ export const SelectedInstanceOutline = () => {
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
     areInstanceSelectorsEqual(
-      textEditingInstanceSelector,
+      textEditingInstanceSelector.selector,
       selectedInstanceSelector
     );
 
