@@ -20,7 +20,6 @@ import {
   ScrollArea,
   rawTheme,
   Flex,
-  Select,
   Dialog,
   DialogContent,
   Text,
@@ -45,7 +44,6 @@ import {
   registerFolderChildMutable,
   deleteFolderWithChildrenMutable,
   deletePageMutable,
-  filterSelfAndChildren,
 } from "./page-utils";
 import { Form } from "./form";
 import { updateWebstudioData } from "~/shared/instance-utils";
@@ -118,7 +116,6 @@ const FormFields = ({
   autoSelect,
   errors,
   values,
-  folderId,
   onChange,
 }: {
   disabled?: boolean;
@@ -164,25 +161,6 @@ const FormFields = ({
                 }}
               />
             </InputErrorsTooltip>
-          </Grid>
-
-          <Grid gap={1}>
-            <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
-            <Select
-              tabIndex={1}
-              options={filterSelfAndChildren(folderId, pages.folders)}
-              getValue={(folder) => folder.id}
-              getLabel={(folder) => folder.name}
-              value={pages.folders.find(
-                ({ id }) => id === values.parentFolderId
-              )}
-              onChange={(folder) => {
-                onChange({
-                  field: "parentFolderId",
-                  value: folder.id,
-                });
-              }}
-            />
           </Grid>
 
           <Grid gap={1}>

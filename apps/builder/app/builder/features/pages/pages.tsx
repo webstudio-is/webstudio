@@ -10,6 +10,9 @@ import {
   TreeNodeLabel,
   PanelTitle,
   Separator,
+  TreeSortableItem,
+  type TreeDropTarget,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
@@ -26,7 +29,11 @@ import { ExtendedPanel } from "../../shared/extended-sidebar-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $editingPageId, $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
-import { getAllChildrenAndSelf, reparentOrphansMutable } from "./page-utils";
+import {
+  getAllChildrenAndSelf,
+  reparentOrphansMutable,
+  reparentPageOrFolderMutable,
+} from "./page-utils";
 import {
   FolderSettings,
   NewFolderSettings,
@@ -34,9 +41,15 @@ import {
 } from "./folder-settings";
 import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
-import { ROOT_FOLDER_ID, type Folder, type Page } from "@webstudio-is/sdk";
+import {
+  isRootFolder,
+  ROOT_FOLDER_ID,
+  type Folder,
+  type Page,
+} from "@webstudio-is/sdk";
 import { atom, computed } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
+import { updateWebstudioData } from "~/shared/instance-utils";
 
 const ItemSuffix = ({
   isParentSelected,
@@ -119,22 +132,67 @@ const $expandedItems = atom(new Set<string>());
 type PagesTreeItem =
   | {
       id: string;
+      selector: string[];
       level: number;
       isExpanded?: boolean;
       type: "page";
       page: Page;
+      isLastChild: boolean;
+      dropTarget?: TreeDropTarget;
     }
   | {
       id: string;
+      selector: string[];
       level: number;
       isExpanded?: boolean;
       type: "folder";
       folder: Folder;
+      isLastChild: boolean;
+      dropTarget?: TreeDropTarget;
     };
 
+type DropTarget = {
+  parentId: string;
+  beforeId?: string;
+  afterId?: string;
+  indexWithinChildren: number;
+};
+
+const $dropTarget = atom<undefined | DropTarget>();
+
+const getStoredDropTarget = (
+  selector: string[],
+  dropTarget: TreeDropTarget
+): undefined | DropTarget => {
+  const parentId = selector.at(-dropTarget.parentLevel - 1);
+  const beforeId =
+    dropTarget.beforeLevel === undefined
+      ? undefined
+      : selector.at(-dropTarget.beforeLevel - 1);
+  const afterId =
+    dropTarget.afterLevel === undefined
+      ? undefined
+      : selector.at(-dropTarget.afterLevel - 1);
+  const pages = $pages.get();
+  const parentFolder = pages?.folders.find((item) => item.id === parentId);
+  let indexWithinChildren = 0;
+  if (parentFolder) {
+    const beforeIndex = parentFolder.children.indexOf(beforeId ?? "");
+    const afterIndex = parentFolder.children.indexOf(afterId ?? "");
+    if (beforeIndex > -1) {
+      indexWithinChildren = beforeIndex;
+    } else if (afterIndex > -1) {
+      indexWithinChildren = afterIndex + 1;
+    }
+  }
+  if (parentId) {
+    return { parentId, beforeId, afterId, indexWithinChildren };
+  }
+};
+
 const $flatPagesTree = computed(
-  [$pages, $expandedItems],
-  (pagesData, expandedItems) => {
+  [$pages, $expandedItems, $dropTarget],
+  (pagesData, expandedItems, dropTarget) => {
     const flatPagesTree: PagesTreeItem[] = [];
     if (pagesData === undefined) {
       return flatPagesTree;
@@ -144,9 +202,24 @@ const $flatPagesTree = computed(
     );
     const pages = new Map(pagesData.pages.map((page) => [page.id, page]));
     pages.set(pagesData.homePage.id, pagesData.homePage);
-    const traverse = (itemId: string, level = 0) => {
+    const traverse = (selector: string[], level = 0, isLastChild = false) => {
+      const [itemId] = selector;
+      let treeItem: undefined | PagesTreeItem;
+      let lastTreeItem: undefined | PagesTreeItem;
       const folder = folders.get(itemId);
       const page = pages.get(itemId);
+      if (page) {
+        treeItem = {
+          id: itemId,
+          selector,
+          level,
+          type: "page",
+          page,
+          isLastChild,
+        };
+        lastTreeItem = treeItem;
+        flatPagesTree.push(treeItem);
+      }
       if (folder) {
         let isExpanded: undefined | boolean;
         if (level > 0 && folder.children.length > 0) {
@@ -154,41 +227,72 @@ const $flatPagesTree = computed(
         }
         // hide root folder
         if (itemId !== ROOT_FOLDER_ID) {
-          flatPagesTree.push({
+          treeItem = {
             id: itemId,
+            selector,
             level,
             isExpanded,
             type: "folder",
             folder,
-          });
+            isLastChild,
+          };
+          lastTreeItem = treeItem;
+          flatPagesTree.push(treeItem);
         }
         if (level === 0 || isExpanded) {
-          for (const childId of folder.children) {
-            traverse(childId, level + 1);
+          for (let index = 0; index < folder.children.length; index += 1) {
+            const childId = folder.children[index];
+            const isLastChild = index === folder.children.length - 1;
+            lastTreeItem = traverse(
+              [childId, ...selector],
+              level + 1,
+              isLastChild
+            );
           }
         }
       }
-      if (page) {
-        flatPagesTree.push({ id: itemId, level, type: "page", page });
+
+      if (treeItem && dropTarget?.beforeId === itemId) {
+        treeItem.dropTarget = {
+          parentLevel: level - 1,
+          beforeLevel: level,
+        };
       }
+      if (lastTreeItem && dropTarget?.afterId === itemId) {
+        lastTreeItem.dropTarget = {
+          parentLevel: level - 1,
+          afterLevel: level,
+        };
+      }
+      return lastTreeItem;
     };
-    traverse(ROOT_FOLDER_ID);
+    traverse([ROOT_FOLDER_ID]);
     return flatPagesTree;
   }
 );
 
+const canDrop = (dropTarget: DropTarget, folders: Folder[]) => {
+  // allow dropping only inside folders
+  if (isFolder(dropTarget.parentId, folders) === false) {
+    return false;
+  }
+  // forbid dropping in the beginning of root folder
+  // which is always used by home page
+  if (
+    isRootFolder({ id: dropTarget.parentId }) &&
+    dropTarget.indexWithinChildren === 0
+  ) {
+    return false;
+  }
+  return true;
+};
+
 const PagesTree = ({
-  onClose,
-  onCreateNewFolder,
-  onCreateNewPage,
   onSelect,
   selectedPageId,
   onEdit,
   editingItemId,
 }: {
-  onClose: () => void;
-  onCreateNewFolder: () => void;
-  onCreateNewPage: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
   onEdit: (pageId: string | undefined) => void;
@@ -196,6 +300,7 @@ const PagesTree = ({
 }) => {
   const pages = useStore($pages);
   const flatPagesTree = useStore($flatPagesTree);
+  const dropTarget = useStore($dropTarget);
   useReparentOrphans();
 
   if (pages === undefined) {
@@ -203,65 +308,77 @@ const PagesTree = ({
   }
 
   return (
-    <>
-      <PanelTitle
-        suffix={
-          <>
-            <Tooltip content="New folder" side="bottom">
-              <Button
-                onClick={() => onCreateNewFolder()}
-                aria-label="New folder"
-                prefix={<NewFolderIcon />}
-                color="ghost"
-              />
-            </Tooltip>
-            <Tooltip content="New page" side="bottom">
-              <Button
-                onClick={() => onCreateNewPage()}
-                aria-label="New page"
-                prefix={<NewPageIcon />}
-                color="ghost"
-              />
-            </Tooltip>
-            <Tooltip content="Close panel" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<CrossIcon />}
-                aria-label="Close panel"
-                onClick={onClose}
-              />
-            </Tooltip>
-          </>
-        }
-      >
-        Pages
-      </PanelTitle>
-      <Separator />
-
-      <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
-        <TreeRoot>
-          {flatPagesTree.map((item, index) => {
-            const handleExpand = (isExpanded: boolean, all: boolean) => {
-              const expandedItems = new Set($expandedItems.get());
-              const items = all
-                ? getAllChildrenAndSelf(item.id, pages.folders, "folder")
-                : [item.id];
-              for (const itemId of items) {
-                if (isExpanded) {
-                  expandedItems.add(itemId);
-                } else {
-                  expandedItems.delete(itemId);
-                }
+    <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
+      <TreeRoot>
+        {flatPagesTree.map((item, index) => {
+          const handleExpand = (isExpanded: boolean, all: boolean) => {
+            const expandedItems = new Set($expandedItems.get());
+            const items = all
+              ? getAllChildrenAndSelf(item.id, pages.folders, "folder")
+              : [item.id];
+            for (const itemId of items) {
+              if (isExpanded) {
+                expandedItems.add(itemId);
+              } else {
+                expandedItems.delete(itemId);
               }
-              $expandedItems.set(expandedItems);
-            };
+            }
+            $expandedItems.set(expandedItems);
+          };
 
-            return (
+          return (
+            <TreeSortableItem
+              key={item.id}
+              level={item.level}
+              isExpanded={item.isExpanded}
+              isLastChild={item.isLastChild}
+              data={item}
+              canDrag={() => {
+                // forbid dragging home page
+                if (item.id === pages.homePage.id) {
+                  toast.error("Home page cannot be moved");
+                  return false;
+                }
+                return true;
+              }}
+              onExpand={(isExpanded) => handleExpand(isExpanded, false)}
+              dropTarget={item.dropTarget}
+              onDropTargetChange={(dropTarget) => {
+                if (dropTarget) {
+                  const storedDropTarget = getStoredDropTarget(
+                    item.selector,
+                    dropTarget
+                  );
+                  if (
+                    storedDropTarget &&
+                    canDrop(storedDropTarget, pages.folders)
+                  ) {
+                    $dropTarget.set(storedDropTarget);
+                  }
+                } else {
+                  $dropTarget.set(undefined);
+                }
+              }}
+              onDrop={(item) => {
+                if (dropTarget === undefined) {
+                  return;
+                }
+                updateWebstudioData((data) => {
+                  reparentPageOrFolderMutable(
+                    data.pages.folders,
+                    item.id,
+                    dropTarget.parentId,
+                    dropTarget.indexWithinChildren
+                  );
+                });
+                $dropTarget.set(undefined);
+              }}
+            >
               <TreeNode
-                key={item.id}
                 level={item.level}
                 tabbable={index === 0}
                 isSelected={item.id === selectedPageId}
+                isHighlighted={dropTarget?.parentId === item.id}
                 isExpanded={item.isExpanded}
                 onExpand={handleExpand}
                 buttonProps={{
@@ -305,11 +422,11 @@ const PagesTree = ({
                   </TreeNodeLabel>
                 )}
               </TreeNode>
-            );
-          })}
-        </TreeRoot>
-      </Box>
-    </>
+            </TreeSortableItem>
+          );
+        })}
+      </TreeRoot>
+    </Box>
   );
 };
 
@@ -401,28 +518,56 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <PagesTree
-        onClose={onClose}
-        onCreateNewFolder={() => {
-          $editingPageId.set(
-            editingItemId === newFolderId ? undefined : newFolderId
-          );
-        }}
-        onCreateNewPage={() =>
-          $editingPageId.set(
-            editingItemId === newPageId ? undefined : newPageId
-          )
+      <PanelTitle
+        suffix={
+          <>
+            <Tooltip content="New folder" side="bottom">
+              <Button
+                onClick={() => {
+                  $editingPageId.set(
+                    editingItemId === newFolderId ? undefined : newFolderId
+                  );
+                }}
+                aria-label="New folder"
+                prefix={<NewFolderIcon />}
+                color="ghost"
+              />
+            </Tooltip>
+            <Tooltip content="New page" side="bottom">
+              <Button
+                onClick={() => {
+                  $editingPageId.set(
+                    editingItemId === newPageId ? undefined : newPageId
+                  );
+                }}
+                aria-label="New page"
+                prefix={<NewPageIcon />}
+                color="ghost"
+              />
+            </Tooltip>
+            <Tooltip content="Close panel" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<CrossIcon />}
+                aria-label="Close panel"
+                onClick={onClose}
+              />
+            </Tooltip>
+          </>
         }
+      >
+        Pages
+      </PanelTitle>
+      <Separator />
+
+      <PagesTree
+        selectedPageId={currentPageId}
         onSelect={(itemId) => {
-          if (isFolder(itemId, pages.folders)) {
-            return;
-          }
           switchPage(itemId);
           onClose();
         }}
-        selectedPageId={currentPageId}
-        onEdit={$editingPageId.set}
         editingItemId={editingItemId}
+        onEdit={$editingPageId.set}
       />
 
       <ExtendedPanel isOpen={editingItemId !== undefined}>

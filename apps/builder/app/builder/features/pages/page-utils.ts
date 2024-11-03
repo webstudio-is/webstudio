@@ -160,6 +160,27 @@ export const registerFolderChildMutable = (
   parentFolder?.children.push(id);
 };
 
+export const reparentPageOrFolderMutable = (
+  folders: Folder[],
+  pageOrFolderId: string,
+  newFolderId: string,
+  newPosition: number
+) => {
+  const prevParent = findParentFolderByChildId(pageOrFolderId, folders);
+  const nextParent = folders.find((folder) => folder.id === newFolderId);
+  if (prevParent === undefined || nextParent === undefined) {
+    return;
+  }
+  // if parent is the same, we need to adjust the position
+  // to account for the removal of the instance.
+  const prevPosition = prevParent.children.indexOf(pageOrFolderId);
+  if (prevParent.id === nextParent.id && prevPosition < newPosition) {
+    newPosition -= 1;
+  }
+  prevParent.children.splice(prevPosition, 1);
+  nextParent.children.splice(newPosition, 0, pageOrFolderId);
+};
+
 /**
  * Get all child folder ids of the current folder including itself.
  */
@@ -221,19 +242,6 @@ export const deleteFolderWithChildrenMutable = (
     folderIds,
     pageIds,
   };
-};
-
-/**
- * Filter out folders that are children of the current folder or the current folder itself.
- */
-export const filterSelfAndChildren = (
-  folderId: Folder["id"],
-  folders: Array<Folder>
-) => {
-  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
-  return folders.filter((folder) => {
-    return folderIds.includes(folder.id) === false;
-  });
 };
 
 const $editingPage = computed(

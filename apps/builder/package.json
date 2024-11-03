@@ -10,8 +10,8 @@
     "css-to-ws": "NODE_OPTIONS=--conditions=webstudio css-to-ws",
     "build:webflow-presets": "pnpm css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
     "start": "remix-serve build/server/index.js",
-    "dev": "remix vite:dev",
-    "dev:auth": "DEBUG=OAuth2Strategy,ws:* remix vite:dev",
+    "dev": "pnpm --filter=@webstudio-is/http-client build && remix vite:dev",
+    "dev:auth": "pnpm --filter=@webstudio-is/http-client build && DEBUG=OAuth2Strategy,ws:* remix vite:dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },

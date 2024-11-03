@@ -13,9 +13,9 @@ import {
   isSlugAvailable,
   registerFolderChildMutable,
   reparentOrphansMutable,
-  filterSelfAndChildren,
   $pageRootScope,
   isPathAvailable,
+  reparentPageOrFolderMutable,
 } from "./page-utils";
 import {
   $dataSourceVariables,
@@ -284,6 +284,49 @@ describe("registerFolderChildMutable", () => {
   });
 });
 
+describe("reparent pages and folders", () => {
+  test("move page up within single parent", () => {
+    const { f, p, register, pages } = createPages();
+    register([
+      f("folder", [
+        p("page1", "/page1"),
+        p("page2", "/page2"),
+        p("page3", "/page3"),
+      ]),
+    ]);
+    reparentPageOrFolderMutable(pages.folders, "page3", "folder", 1);
+    const folder = pages.folders.find((folder) => folder.id === "folder");
+    expect(folder?.children).toEqual(["page1", "page3", "page2"]);
+  });
+
+  test("move page down within single parent", () => {
+    const { f, p, register, pages } = createPages();
+    register([
+      f("folder", [
+        p("page1", "/page1"),
+        p("page2", "/page2"),
+        p("page3", "/page3"),
+      ]),
+    ]);
+    reparentPageOrFolderMutable(pages.folders, "page1", "folder", 2);
+    const folder = pages.folders.find((folder) => folder.id === "folder");
+    expect(folder?.children).toEqual(["page2", "page1", "page3"]);
+  });
+
+  test("move page into another folder", () => {
+    const { f, p, register, pages } = createPages();
+    register([
+      f("folder1", [p("page1", "/page1"), p("page2", "/page2")]),
+      f("folder2", [p("page3", "/page3")]),
+    ]);
+    reparentPageOrFolderMutable(pages.folders, "page1", "folder2", 1);
+    const folder1 = pages.folders.find((folder) => folder.id === "folder1");
+    const folder2 = pages.folders.find((folder) => folder.id === "folder2");
+    expect(folder1?.children).toEqual(["page2"]);
+    expect(folder2?.children).toEqual(["page3", "page1"]);
+  });
+});
+
 describe("getAllChildrenAndSelf", () => {
   const folders: Array<Folder> = [
     {
@@ -350,34 +393,6 @@ describe("deleteFolderWithChildrenMutable", () => {
       folderIds: ["1", "2", "3"],
       pageIds: ["page1"],
     });
-  });
-});
-
-describe("filterSelfAndChildren", () => {
-  const folders = [
-    {
-      id: "1",
-      name: "1",
-      slug: "1",
-      children: ["2"],
-    },
-    {
-      id: "2",
-      name: "2",
-      slug: "2",
-      children: ["page1"],
-    },
-    {
-      id: "3",
-      name: "3",
-      slug: "3",
-      children: [],
-    },
-  ];
-
-  test("filter self and child folders", () => {
-    const result = filterSelfAndChildren("1", folders);
-    expect(result).toEqual([folders[2]]);
   });
 });
 

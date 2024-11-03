@@ -824,26 +824,6 @@ const FormFields = ({
           </Grid>
 
           {values.isHomePage === false && (
-            <Grid gap={1}>
-              <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
-              <Select
-                options={pages.folders}
-                getValue={(folder) => folder.id}
-                getLabel={(folder) => folder.name}
-                value={pages.folders.find(
-                  ({ id }) => id === values.parentFolderId
-                )}
-                onChange={(folder) => {
-                  onChange({
-                    field: "parentFolderId",
-                    value: folder.id,
-                  });
-                }}
-              />
-            </Grid>
-          )}
-
-          {values.isHomePage === false && (
             <PathField
               errors={errors.path}
               value={values.path}
