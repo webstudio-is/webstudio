@@ -45,7 +45,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
   const search = word.text;
   const availableVariables = $availableVariables.get();
   const options = availableVariables.map((varValue) => ({
-    label: `--var(${varValue.value})`,
+    label: `var(--${varValue.value})`,
     displayLabel: `--${varValue.value}`,
   }));
   const matches = matchSorter(options, search, {
