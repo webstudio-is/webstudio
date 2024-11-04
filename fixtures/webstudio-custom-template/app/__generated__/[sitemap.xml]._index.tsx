@@ -25,7 +25,7 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Body = (props: any) => props.children;
+const Body = (props: any) => <svg>{props.children}</svg>;
 
 const Page = ({ system: system }: { system: any }) => {
   let sitemapxml = useResource("sitemapxml_1");
