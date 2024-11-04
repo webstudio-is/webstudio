@@ -88,8 +88,8 @@ const ComponentsGroup = () => {
             key={component}
             keywords={["Components"]}
             onSelect={() => {
-              insertComponent(component);
               closeCommandPanel();
+              insertComponent(component);
             }}
           >
             <CommandIcon
@@ -134,9 +134,9 @@ const BreakpointsGroup = () => {
               key={breakpoint.id}
               keywords={["Breakpoints"]}
               onSelect={() => {
+                closeCommandPanel();
                 $selectedBreakpointId.set(breakpoint.id);
                 setCanvasWidth(breakpoint.id);
-                closeCommandPanel();
               }}
             >
               <CommandIcon></CommandIcon>
@@ -167,8 +167,8 @@ const PagesGroup = () => {
               key={page.id}
               keywords={["pages"]}
               onSelect={() => {
-                switchPage(page.id);
                 closeCommandPanel();
+                switchPage(page.id);
               }}
             >
               <CommandIcon></CommandIcon>
