@@ -550,7 +550,6 @@ export const prebuild = async (options: {
             // In case of xml it's the only component we are supporting
             componentImports = `import { XmlNode } from "@webstudio-is/sdk-components-react";\n`;
 
-            // Passthrough (render children) for Body, do not render all other components
             xmlPresentationComponents += Array.from(componentsSet)
               .map(([shortName, component]) =>
                 scope.getName(component, shortName)
@@ -558,8 +557,12 @@ export const prebuild = async (options: {
               .filter((scopedName) => scopedName !== "XmlNode")
               .map((scopedName) =>
                 scopedName === "Body"
-                  ? `const ${scopedName} = (props: any) => props.children;`
-                  : `const ${scopedName} = (props: any) => null;`
+                  ? // Using <svg> prevents React from hoisting elements like <title>, <meta>, and <link>
+                    // out of their intended scope during rendering.
+                    // More details: https://github.com/facebook/react/blob/7c8e5e7ab8bb63de911637892392c5efd8ce1d0f/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js#L3083
+                    `const ${scopedName} = (props: any) => <svg>{props.children}</svg>;`
+                  : // Do not render all other components
+                    `const ${scopedName} = (props: any) => null;`
               )
               .join("\n");
           }
