@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import { CrossIcon } from "@webstudio-is/icons";
 import {
   type WsComponentMeta,
+  collectionComponent,
   componentCategories,
 } from "@webstudio-is/react-sdk";
 import {
@@ -111,7 +112,7 @@ const filterAndGroupComponents = ({
       }
 
       if (documentType === "xml" && meta.category === "data") {
-        return component === "ws:collection";
+        return component === collectionComponent;
       }
 
       if (component === "RemixForm" && isFeatureEnabled("filters") === false) {
