@@ -29,9 +29,7 @@ const SizeProperty = ({ property }: { property: StyleProperty }) => {
     <Grid gap={1}>
       <PropertyLabel
         label={humanizeString(property)}
-        description={
-          propertyDescriptions[property as keyof typeof propertyDescriptions]
-        }
+        description={propertyDescriptions[property]}
         properties={[property]}
       />
       <TextControl property={property} />

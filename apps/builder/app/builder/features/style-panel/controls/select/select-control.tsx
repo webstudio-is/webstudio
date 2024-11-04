@@ -17,6 +17,7 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import { noCase } from "change-case";
 
 export const SelectControl = ({
   property,
@@ -50,6 +51,12 @@ export const SelectControl = ({
     options.push(valueString);
   }
 
+  const hasDescription =
+    options.length > 0 &&
+    options.some(
+      (option) => declarationDescriptions[`${property}:${option}`] !== undefined
+    );
+
   return (
     <Select
       // Show empty field instead of radix placeholder like css value input does.
@@ -77,15 +84,16 @@ export const SelectControl = ({
         }
       }}
       getDescription={(option) => {
-        const description =
-          declarationDescriptions[
-            `${property}:${option}` as keyof typeof declarationDescriptions
-          ];
-
-        if (description === undefined) {
+        if (hasDescription === false) {
           return;
         }
-        return <Box css={{ width: theme.spacing[26] }}>{description}</Box>;
+
+        const description = declarationDescriptions[`${property}:${option}`];
+        return (
+          <Box css={{ width: theme.spacing[26] }}>
+            {description ?? `The ${noCase(property)} is ${option}`}
+          </Box>
+        );
       }}
       getItemProps={() => ({ text: "sentence" })}
     />

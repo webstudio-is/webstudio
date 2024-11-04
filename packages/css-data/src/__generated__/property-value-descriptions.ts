@@ -505,9 +505,9 @@ export const propertiesGenerated = {
   fieldSizing:
     "Controls the algorithm used to calculate the width of form controls.",
   zoom: "Specifies the zoom level of a document.",
-} as const;
+} as Record<string, string | undefined>;
 
-export const propertiesOverrides = {} as const;
+export const propertiesOverrides = {} as Record<string, string | undefined>;
 
 export const propertySyntaxesGenerated = {
   boxShadowOffsetX: "Controls the offset distance of the shadow on the X-axis.",
@@ -544,12 +544,12 @@ export const propertySyntaxesGenerated = {
   transformOriginZ: "Sets the origin of transformation for the z-axis.",
   perspectiveOriginX: "Sets the origin of perspective for the x-axis.",
   perspectiveOriginY: "Sets the origin of perspective for the y-axis.",
-} as const;
+} as Record<string, string | undefined>;
 
 export const properties = {
   ...propertiesGenerated,
   ...propertiesOverrides,
-} as const;
+} as Record<string, string | undefined>;
 
 export const declarationsGenerated = {
   "alignContent:normal":
@@ -4370,11 +4370,11 @@ export const declarationsGenerated = {
   "zoom:initial": "Sets the zoom level to the default value.",
   "zoom:inherit": "Inherits the zoom level from the parent element.",
   "zoom:unset": "Unsets the zoom level, allowing the browser to decide.",
-} as const;
+} as Record<string, string | undefined>;
 
-export const declarationsOverrides = {} as const;
+export const declarationsOverrides = {} as Record<string, string | undefined>;
 
 export const declarations = {
   ...declarationsGenerated,
   ...declarationsOverrides,
-} as const;
+} as Record<string, string | undefined>;
