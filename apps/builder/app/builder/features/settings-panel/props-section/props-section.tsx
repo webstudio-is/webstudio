@@ -162,7 +162,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   return (
     <>
-      <Row css={{ py: theme.spacing[3] }}>
+      <Row css={{ py: theme.panel.paddingBlock }}>
         {logic.systemProps.map((item) => renderProperty(props, item))}
       </Row>
 

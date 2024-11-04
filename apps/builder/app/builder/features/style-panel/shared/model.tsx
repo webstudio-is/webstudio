@@ -10,6 +10,7 @@ import {
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
+  Instances,
   ROOT_INSTANCE_ID,
   Styles,
   StyleSourceSelections,
@@ -17,7 +18,7 @@ import {
   type Instance,
   type StyleDecl,
 } from "@webstudio-is/sdk";
-import { rootComponent } from "@webstudio-is/react-sdk";
+import { rootComponent, WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   $breakpoints,
   $instances,
@@ -96,20 +97,36 @@ export const $matchingBreakpoints = computed(
 
 export const getDefinedStyles = ({
   instanceSelector,
+  instances,
+  metas,
   matchingBreakpoints: matchingBreakpointsArray,
   styleSourceSelections,
   styles,
 }: {
   instanceSelector: InstanceSelector;
+  instances: Instances;
+  metas: Map<string, WsComponentMeta>;
   matchingBreakpoints: Breakpoint["id"][];
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
 }) => {
-  const definedStyles = new Set<StyleDecl>();
+  const definedStyles = new Set<{
+    property: StyleProperty;
+    listed?: boolean;
+  }>();
   const inheritedStyleSources = new Set();
   const instanceStyleSources = new Set();
   const matchingBreakpoints = new Set(matchingBreakpointsArray);
   for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    const meta = instance?.component
+      ? metas.get(instance.component)
+      : undefined;
+    for (const presetStyles of Object.values(meta?.presetStyle ?? {})) {
+      for (const styleDecl of presetStyles) {
+        definedStyles.add(styleDecl);
+      }
+    }
     const styleSources = styleSourceSelections.get(instanceId)?.values;
     if (styleSources) {
       for (const styleSourceId of styleSources) {
@@ -143,23 +160,43 @@ export const getDefinedStyles = ({
   return definedStyles;
 };
 
+const $instanceAndRootSelector = computed(
+  $selectedInstanceSelector,
+  (instanceSelector) => {
+    if (instanceSelector === undefined) {
+      return;
+    }
+    if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+      return instanceSelector;
+    }
+    return [...instanceSelector, ROOT_INSTANCE_ID];
+  }
+);
+
 export const $definedStyles = computed(
   [
-    $selectedInstanceSelector,
+    $instanceAndRootSelector,
+    $instances,
+    $registeredComponentMetas,
     $styleSourceSelections,
     $matchingBreakpoints,
     $styles,
   ],
-  (instanceSelector, styleSourceSelections, matchingBreakpoints, styles) => {
+  (
+    instanceSelector,
+    instances,
+    metas,
+    styleSourceSelections,
+    matchingBreakpoints,
+    styles
+  ) => {
     if (instanceSelector === undefined) {
       return new Set<StyleDecl>();
     }
-    const instanceAndRootSelector =
-      instanceSelector[0] === ROOT_INSTANCE_ID
-        ? instanceSelector
-        : [...instanceSelector, ROOT_INSTANCE_ID];
     return getDefinedStyles({
-      instanceSelector: instanceAndRootSelector,
+      instanceSelector,
+      instances,
+      metas,
       matchingBreakpoints,
       styleSourceSelections,
       styles,
@@ -198,20 +235,7 @@ const $model = computed(
   }
 );
 
-const $instanceAndRootSelector = computed(
-  $selectedInstanceSelector,
-  (instanceSelector) => {
-    if (instanceSelector === undefined) {
-      return;
-    }
-    if (instanceSelector[0] === ROOT_INSTANCE_ID) {
-      return instanceSelector;
-    }
-    return [...instanceSelector, ROOT_INSTANCE_ID];
-  }
-);
-
-export const $availableVariables = computed(
+export const $definedComputedStyles = computed(
   [
     $definedStyles,
     $model,
@@ -219,25 +243,39 @@ export const $availableVariables = computed(
     $selectedOrLastStyleSourceSelector,
   ],
   (definedStyles, model, instanceSelector, styleSourceSelector) => {
-    const availableVariables = new Map<string, VarValue>();
+    const computedStyles = new Map<string, ComputedStyleDecl>();
     for (const { property } of definedStyles) {
-      if (property.startsWith("--")) {
-        const { computedValue } = getComputedStyleDecl({
-          model,
-          instanceSelector,
-          styleSourceId: styleSourceSelector?.styleSourceId,
-          state: styleSourceSelector?.state,
-          property,
-        });
-        // deduplicate by property name
-        availableVariables.set(property, {
+      // deduplicate by property name
+      if (computedStyles.has(property)) {
+        continue;
+      }
+      const computedStyleDecl = getComputedStyleDecl({
+        model,
+        instanceSelector,
+        styleSourceId: styleSourceSelector?.styleSourceId,
+        state: styleSourceSelector?.state,
+        property,
+      });
+      computedStyles.set(property, computedStyleDecl);
+    }
+    return Array.from(computedStyles.values());
+  }
+);
+
+export const $availableVariables = computed(
+  $definedComputedStyles,
+  (computedStyles) => {
+    const availableVariables: VarValue[] = [];
+    for (const styleDecl of computedStyles) {
+      if (styleDecl.property.startsWith("--")) {
+        availableVariables.push({
           type: "var",
-          value: property.slice(2),
-          fallback: toVarFallback(computedValue),
+          value: styleDecl.property.slice(2),
+          fallback: toVarFallback(styleDecl.computedValue),
         });
       }
     }
-    return Array.from(availableVariables.values());
+    return availableVariables;
   }
 );
 

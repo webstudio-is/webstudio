@@ -1,14 +1,11 @@
+import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   ScrollArea,
   css,
   textVariants,
   theme,
 } from "@webstudio-is/design-system";
-// @todo feature should not import another feature
-import {
-  type StyleInfo,
-  useStyleInfo,
-} from "~/builder/features/style-panel/shared/style-info";
 import {
   generateStyleMap,
   hyphenateProperty,
@@ -16,9 +13,10 @@ import {
 } from "@webstudio-is/css-engine";
 import type { StyleMap, StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { useMemo } from "react";
-import { captureError } from "@webstudio-is/error-utils";
 import { highlightCss } from "~/builder/shared/code-highlight";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { $definedComputedStyles } from "~/builder/features/style-panel/shared/model";
 
 const preStyle = css(textVariants.mono, {
   margin: 0,
@@ -27,43 +25,40 @@ const preStyle = css(textVariants.mono, {
   cursor: "text",
 });
 
-// - Compiles a CSS string from the style info
+// - Compiles a CSS string from the style engine
 // - Groups by category and separates categories with comments
-const getCssText = (currentStyle: StyleInfo) => {
+const getCssText = (
+  computedStyles: ComputedStyleDecl[],
+  instanceId: string
+) => {
   const sourceStyles: StyleMap = new Map();
   const inheritedStyles: StyleMap = new Map();
   const cascadedStyles: StyleMap = new Map();
   const presetStyles: StyleMap = new Map();
 
   // Aggregate styles by category so we can group them when rendering.
-  let property: StyleProperty;
-  for (property in currentStyle) {
-    const value = currentStyle[property];
-    property = hyphenateProperty(property) as StyleProperty;
-    if (value === undefined) {
-      continue;
+  for (const styleDecl of computedStyles) {
+    const property = hyphenateProperty(styleDecl.property) as StyleProperty;
+    let group;
+    if (
+      styleDecl.source.name === "local" ||
+      styleDecl.source.name === "overwritten"
+    ) {
+      group = sourceStyles;
     }
-    if (value.local ?? value.nextSource?.value ?? value.previousSource?.value) {
-      sourceStyles.set(property, value.value);
-      continue;
+    if (styleDecl.source.name === "remote") {
+      group = cascadedStyles;
     }
-    if (value.preset) {
-      presetStyles.set(property, value.value);
-      continue;
+    if (styleDecl.source.name === "preset") {
+      group = presetStyles;
     }
-    if (value.cascaded?.value) {
-      cascadedStyles.set(property, value.value);
-      continue;
+    if (group) {
+      if (styleDecl.source.instanceId === instanceId) {
+        group.set(property, styleDecl.cascadedValue);
+      } else {
+        inheritedStyles.set(property, styleDecl.cascadedValue);
+      }
     }
-    if (value.inherited?.value) {
-      inheritedStyles.set(property, value.value);
-      continue;
-    }
-    if (value.value) {
-      // Doesn't need handling
-      continue;
-    }
-    captureError(new Error("Unknown style source"), value);
   }
 
   const result: Array<string> = [];
@@ -84,25 +79,23 @@ const getCssText = (currentStyle: StyleInfo) => {
   return result.join("\n");
 };
 
-const useHighlightedCss = () => {
-  const currentStyle = useStyleInfo();
-
-  return useMemo(() => {
-    if (Object.keys(currentStyle).length === 0) {
+const $highlightedCss = computed(
+  [$selectedInstanceSelector, $definedComputedStyles],
+  (instanceSelector, computedStyles) => {
+    if (instanceSelector === undefined) {
       return;
     }
-    const cssText = getCssText(currentStyle);
+    const [instanceId] = instanceSelector;
+    const cssText = getCssText(computedStyles, instanceId);
     return highlightCss(cssText);
-  }, [currentStyle]);
-};
+  }
+);
 
 export const CssPreview = () => {
-  const code = useHighlightedCss();
-
+  const code = useStore($highlightedCss);
   if (code === undefined) {
     return null;
   }
-
   return (
     <CollapsibleSection label="CSS Preview" fullWidth>
       <ScrollArea css={{ padding: theme.panel.padding }}>
