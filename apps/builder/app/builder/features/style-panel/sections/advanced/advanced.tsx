@@ -138,10 +138,9 @@ const matchOrSuggestToCreate = (
 };
 
 const getNewPropertyDescription = (item: null | SearchItem) => {
-  let description = `Create CSS variable.`;
+  let description: string | undefined = `Create CSS variable.`;
   if (item && item.value in propertyDescriptions) {
-    description =
-      propertyDescriptions[item.value as keyof typeof propertyDescriptions];
+    description = propertyDescriptions[item.value];
   }
   return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
 };
@@ -261,8 +260,7 @@ const AdvancedSearch = ({
 const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
   const styleDecl = useComputedStyleDecl(property);
   const label = hyphenateProperty(property);
-  const description =
-    propertyDescriptions[property as keyof typeof propertyDescriptions];
+  const description = propertyDescriptions[property];
   const color =
     styleDecl.source.name === "default" ? "code" : styleDecl.source.name;
   const [isOpen, setIsOpen] = useState(false);

@@ -331,7 +331,7 @@ function writeFile(descriptions: Record<string, unknown>) {
         ([binding, value]) =>
           `export const ${binding} = ` +
           (typeof value === "string" ? value : JSON.stringify(value, null, 2)) +
-          " as const;"
+          " as Record<string, string | undefined>;"
       )
       .join("\n\n");
 

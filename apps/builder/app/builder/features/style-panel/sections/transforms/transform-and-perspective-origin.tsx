@@ -153,9 +153,7 @@ export const TransformAndPerspectiveOrigin = ({
     <Grid gap="2">
       <PropertyLabel
         label={label}
-        description={
-          propertyDescriptions[property as keyof typeof propertyDescriptions]
-        }
+        description={propertyDescriptions[property]}
         properties={[property]}
       />
       <Flex gap="6">

@@ -79,9 +79,7 @@ export const PositionControl = ({
     <Flex direction="column" gap="1">
       <PropertyInlineLabel
         label="Position"
-        description={
-          propertyDescriptions[property as keyof typeof propertyDescriptions]
-        }
+        description={propertyDescriptions[property]}
         properties={[property]}
       />
       <Flex gap="6">

@@ -219,7 +219,7 @@ export const PropertyLabel = ({
   properties,
 }: {
   label: string;
-  description: string;
+  description?: string;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
@@ -277,7 +277,7 @@ export const PropertySectionLabel = ({
   properties,
 }: {
   label: string;
-  description: string;
+  description: string | undefined;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
@@ -344,7 +344,7 @@ export const PropertyInlineLabel = ({
 }: {
   label: string;
   title?: string;
-  description: string;
+  description?: string;
   properties?: [StyleProperty, ...StyleProperty[]];
   disabled?: boolean;
 }) => {
@@ -400,7 +400,7 @@ export const PropertyValueTooltip = ({
   children,
 }: {
   label: string;
-  description: string;
+  description: string | undefined;
   properties: [StyleProperty, ...StyleProperty[]];
   isAdvanced?: boolean;
   children: ReactNode;

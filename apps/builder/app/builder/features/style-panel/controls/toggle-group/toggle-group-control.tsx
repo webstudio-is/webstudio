@@ -37,7 +37,7 @@ export const ToggleGroupTooltip = ({
   isSelected: boolean;
   label?: string;
   code?: string;
-  description: string;
+  description: string | undefined;
   properties: StyleProperty[];
   isAdvanced?: boolean;
   children: ReactNode;

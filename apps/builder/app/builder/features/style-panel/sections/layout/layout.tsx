@@ -86,10 +86,7 @@ const GapTooltip = ({
   children: ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const description =
-    propertyDescriptions[
-      styleDecl.property as keyof typeof propertyDescriptions
-    ];
+  const description = propertyDescriptions[styleDecl.property];
   return (
     <Tooltip
       open={isOpen}
