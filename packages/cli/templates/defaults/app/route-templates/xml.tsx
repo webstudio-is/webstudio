@@ -56,7 +56,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   // typecheck
   arg.context.EXCLUDE_FROM_SEARCH satisfies boolean;
 
-  const text = renderToString(
+  let text = renderToString(
     <ReactSdkContext.Provider
       value={{
         imageLoader,
@@ -68,6 +68,10 @@ export const loader = async (arg: LoaderFunctionArgs) => {
       <Page system={system} />
     </ReactSdkContext.Provider>
   );
+
+  // Xml is wrapped with <svg> to prevent React from hoisting elements like <title>, <meta>, and <link> out of their intended scope during rendering.
+  // More details: https://github.com/facebook/react/blob/7c8e5e7ab8bb63de911637892392c5efd8ce1d0f/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js#L3083
+  text = text.replace(/^<svg>/g, "").replace(/<\/svg>$/g, "");
 
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${text}`, {
     headers: { "Content-Type": "application/xml" },

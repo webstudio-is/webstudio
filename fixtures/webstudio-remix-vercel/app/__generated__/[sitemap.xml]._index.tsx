@@ -25,7 +25,7 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Body = (props: any) => props.children;
+const Body = (props: any) => <svg>{props.children}</svg>;
 const Heading = (props: any) => null;
 
 const Page = ({ system: system }: { system: any }) => {
@@ -73,6 +73,7 @@ const Page = ({ system: system }: { system: any }) => {
             hreflang={"en"}
             href={"custom-en-location"}
           />
+          <XmlNode tag={"title"}>{"Hello"}</XmlNode>
         </XmlNode>
       </XmlNode>
     </Body>
