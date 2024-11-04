@@ -277,7 +277,7 @@ export const PropertySectionLabel = ({
   properties,
 }: {
   label: string;
-  description: string;
+  description: string | undefined;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
@@ -400,7 +400,7 @@ export const PropertyValueTooltip = ({
   children,
 }: {
   label: string;
-  description: string;
+  description: string | undefined;
   properties: [StyleProperty, ...StyleProperty[]];
   isAdvanced?: boolean;
   children: ReactNode;
