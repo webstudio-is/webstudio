@@ -11,9 +11,9 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import type { StyleSource } from "../../shared/style-info";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
+import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { $availableUnitVariables } from "../../shared/model";
 
 const slideUpAndFade = keyframes({
@@ -28,7 +28,7 @@ const Input = ({
   activeProperties,
   onClosePopover,
 }: {
-  styleSource: StyleSource;
+  styleSource: StyleValueSourceColor;
   property: StyleProperty;
   activeProperties: StyleProperty[];
   value: StyleValue;
@@ -119,7 +119,7 @@ export const InputPopover = ({
   isOpen,
   onClose,
 }: {
-  styleSource: StyleSource;
+  styleSource: StyleValueSourceColor;
   property: StyleProperty;
   activeProperties: StyleProperty[];
   value: StyleValue;
