@@ -1,4 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
+import { setEnv } from "@webstudio-is/feature-flags";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   isRootFolder,
@@ -20,13 +21,13 @@ import {
 import {
   $dataSourceVariables,
   $dataSources,
-  $editingPageId,
   $pages,
   $resourceValues,
   $selectedPageId,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 
+setEnv("*");
 registerContainers();
 
 const createPages = () => {
@@ -396,7 +397,7 @@ describe("deleteFolderWithChildrenMutable", () => {
   });
 });
 
-test("page root scope should rely on editing page", () => {
+test("page root scope should rely on selected page", () => {
   const pages = createDefaultPages({
     rootInstanceId: "homeRootId",
     homePageId: "homePageId",
@@ -412,8 +413,7 @@ test("page root scope should rely on editing page", () => {
     systemDataSourceId: "system",
   });
   $pages.set(pages);
-  $selectedPageId.set("homePageId");
-  $editingPageId.set("pageId");
+  $selectedPageId.set("pageId");
   $dataSources.set(
     toMap([
       {
@@ -447,7 +447,7 @@ test("page root scope should use variable and resource values", () => {
       systemDataSourceId: "system",
     })
   );
-  $editingPageId.set("homePageId");
+  $selectedPageId.set("homePageId");
   $dataSources.set(
     toMap([
       {
@@ -494,7 +494,7 @@ test("page root scope should prefill default system variable value", () => {
       systemDataSourceId: "systemId",
     })
   );
-  $editingPageId.set("homePageId");
+  $selectedPageId.set("homePageId");
   $dataSources.set(
     toMap([
       {

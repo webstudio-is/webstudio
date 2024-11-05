@@ -497,9 +497,6 @@ export const $variableValuesByInstanceSelector = computed(
     ) => {
       const [instanceId] = instanceSelector;
       const instance = instances.get(instanceId);
-      if (instance === undefined) {
-        return;
-      }
 
       let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
@@ -561,6 +558,10 @@ export const $variableValuesByInstanceSelector = computed(
           }
           propValues.set(prop.name, prop.value);
         }
+      }
+
+      if (instance === undefined) {
+        return;
       }
 
       if (instance.component === collectionComponent) {
