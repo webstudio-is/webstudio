@@ -6,13 +6,12 @@ import {
   $authToken,
   $pages,
   $project,
-  $selectedPage,
-  $selectedPageId,
   $selectedPageHash,
   $selectedInstanceSelector,
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
+import { $awareness, $selectedPage } from "../awareness";
 
 export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
   const pages = $pages.get();
@@ -28,7 +27,7 @@ export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
   }
 
   $selectedPageHash.set(pageHash);
-  $selectedPageId.set(page.id);
+  $awareness.set({ pageId: page.id });
   $selectedInstanceSelector.set([page.rootInstanceId]);
 };
 

@@ -37,7 +37,6 @@ import {
   $dataSourceVariables,
   $pages,
   $publishedOrigin,
-  $selectedPage,
   $selectedPageDefaultSystem,
   updateSystem,
 } from "~/shared/nano-states";
@@ -48,6 +47,7 @@ import {
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
 import { savePathInHistory } from "~/shared/pages";
+import { $selectedPage } from "~/shared/awareness";
 
 const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
   if (pages === undefined || page === undefined) {

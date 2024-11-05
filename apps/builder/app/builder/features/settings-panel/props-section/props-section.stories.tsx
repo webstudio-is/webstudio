@@ -10,9 +10,9 @@ import {
   $pages,
   $props,
   registerComponentLibrary,
-  $selectedPageId,
 } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { $awareness } from "~/shared/awareness";
 
 let id = 0;
 const unique = () => `${++id}`;
@@ -95,7 +95,7 @@ const rootInstance = addLinkableSections(
   ["company", "employees"],
   $pages.get()?.pages[0]
 );
-$selectedPageId.set($pages.get()?.homePage.id);
+$awareness.set({ pageId: $pages.get()?.homePage.id ?? "" });
 
 const instance: Instance = {
   id: instanceId,

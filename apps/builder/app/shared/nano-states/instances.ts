@@ -1,8 +1,8 @@
 import { atom, computed } from "nanostores";
 import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "../tree-utils";
-import { $selectedPage } from "./pages";
 import { rootComponent } from "@webstudio-is/react-sdk";
+import type { InstanceSelector } from "../tree-utils";
+import { $selectedPage } from "../awareness";
 
 export const $isResizingCanvas = atom(false);
 

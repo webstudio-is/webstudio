@@ -23,9 +23,9 @@ import {
   $dataSources,
   $pages,
   $resourceValues,
-  $selectedPageId,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
+import { $awareness } from "~/shared/awareness";
 
 setEnv("*");
 registerContainers();
@@ -413,7 +413,7 @@ test("page root scope should rely on selected page", () => {
     systemDataSourceId: "system",
   });
   $pages.set(pages);
-  $selectedPageId.set("pageId");
+  $awareness.set({ pageId: "pageId" });
   $dataSources.set(
     toMap([
       {
@@ -447,7 +447,7 @@ test("page root scope should use variable and resource values", () => {
       systemDataSourceId: "system",
     })
   );
-  $selectedPageId.set("homePageId");
+  $awareness.set({ pageId: "homePageId" });
   $dataSources.set(
     toMap([
       {
@@ -494,7 +494,7 @@ test("page root scope should prefill default system variable value", () => {
       systemDataSourceId: "systemId",
     })
   );
-  $selectedPageId.set("homePageId");
+  $awareness.set({ pageId: "homePageId" });
   $dataSources.set(
     toMap([
       {

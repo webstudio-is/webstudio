@@ -1,3 +1,4 @@
+import htmlTags, { voidHtmlTags, type HtmlTags } from "html-tags";
 import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import {
   getCascadedBreakpointIds,
@@ -9,12 +10,11 @@ import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
-  $selectedPage,
   $stylesIndex,
 } from "~/shared/nano-states";
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import { subscribe } from "~/shared/pubsub";
-import htmlTags, { voidHtmlTags, type HtmlTags } from "html-tags";
+import { $selectedPage } from "~/shared/awareness";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);

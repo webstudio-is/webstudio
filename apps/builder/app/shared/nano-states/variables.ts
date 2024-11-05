@@ -5,7 +5,7 @@ import {
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
 import { $publishedOrigin } from "./misc";
-import { $selectedPage } from "./pages";
+import { $selectedPage } from "../awareness";
 
 export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(
   new Map()

@@ -12,7 +12,7 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { $editingPageId, $pages, $selectedPage } from "~/shared/nano-states";
+import { $editingPageId, $pages } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -27,6 +27,7 @@ import { AddressBarPopover } from "../address-bar";
 import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
 import type { ReactNode } from "react";
 import { CloneButton } from "./clone";
+import { $selectedPage } from "~/shared/awareness";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);

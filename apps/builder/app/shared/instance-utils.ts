@@ -46,7 +46,6 @@ import {
   $breakpoints,
   $pages,
   $resources,
-  $selectedPage,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -64,6 +63,7 @@ import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
+import { $selectedPage } from "./awareness";
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   serverSyncStore.createTransaction(

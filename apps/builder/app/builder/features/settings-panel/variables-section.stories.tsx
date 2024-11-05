@@ -4,12 +4,12 @@ import { VariablesSection as VariablesSectionComponent } from "./variables-secti
 import {
   $pages,
   $selectedInstanceSelector,
-  $selectedPageId,
   $instances,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
+import { $awareness } from "~/shared/awareness";
 
 $userPlanFeatures.set({
   ...$userPlanFeatures.get(),
@@ -28,7 +28,7 @@ $instances.set(
     ["root", { id: "root", type: "instance", component: "Box", children: [] }],
   ])
 );
-$selectedPageId.set("home");
+$awareness.set({ pageId: "home" });
 $pages.set(
   createDefaultPages({ rootInstanceId: "root", systemDataSourceId: "system" })
 );

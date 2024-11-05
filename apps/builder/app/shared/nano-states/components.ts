@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
 import { atom } from "nanostores";
@@ -15,9 +16,8 @@ import { decodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $dataSources, $memoryProps, $props } from "./misc";
 import { $instances, $selectedInstanceSelector } from "./instances";
-import { $selectedPage } from "./pages";
 import { $dataSourceVariables } from "./variables";
-import { nanoid } from "nanoid";
+import { $selectedPage } from "../awareness";
 
 const createHookContext = (): HookContext => {
   const metas = $registeredComponentMetas.get();

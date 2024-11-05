@@ -41,7 +41,6 @@ import {
   $assets,
   $pages,
   $instances,
-  $selectedPage,
   registerComponentLibrary,
   $registeredComponents,
   subscribeComponentHooks,
@@ -66,6 +65,7 @@ import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
 import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
+import { $selectedPage } from "~/shared/awareness";
 
 registerContainers();
 

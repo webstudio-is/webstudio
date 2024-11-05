@@ -15,7 +15,6 @@ import {
   $styleSources,
   $styleSourceSelections,
   $assets,
-  $selectedPageId,
   $selectedPageHash,
   $selectedInstanceSelector,
   $selectedInstanceBrowserStyle,
@@ -44,6 +43,7 @@ import {
   $detectedFontsWeights,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
+import { $awareness } from "../awareness";
 
 enableMapSet();
 // safari structuredClone fix
@@ -98,9 +98,9 @@ export const registerContainers = () => {
   clientStores.set("project", $project);
   clientStores.set("dataSourceVariables", $dataSourceVariables);
   clientStores.set("resourceValues", $resourceValues);
-  clientStores.set("selectedPageId", $selectedPageId);
   clientStores.set("selectedPageHash", $selectedPageHash);
   clientStores.set("selectedInstanceSelector", $selectedInstanceSelector);
+  clientStores.set("awareness", $awareness);
   clientStores.set(
     "selectedInstanceBrowserStyle",
     $selectedInstanceBrowserStyle

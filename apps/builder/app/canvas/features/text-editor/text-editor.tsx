@@ -53,7 +53,6 @@ import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedPage,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -62,6 +61,7 @@ import {
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
 import { setDataCollapsed } from "~/canvas/collapsed";
+import { $selectedPage } from "~/shared/awareness";
 // import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {

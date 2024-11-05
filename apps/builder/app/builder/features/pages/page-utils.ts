@@ -21,11 +21,10 @@ import {
   $dataSources,
   $pages,
   $selectedInstanceSelector,
-  $selectedPage,
-  $selectedPageId,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { insertPageCopyMutable } from "~/shared/page-utils";
+import { $awareness, $selectedPage } from "~/shared/awareness";
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,
@@ -206,8 +205,8 @@ export const getAllChildrenAndSelf = (
 export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
   const { pages } = data;
   // deselect page before deleting to avoid flash of content
-  if ($selectedPageId.get() === pageId) {
-    $selectedPageId.set(pages.homePage.id);
+  if ($awareness.get()?.pageId === pageId) {
+    $awareness.set({ pageId: pages.homePage.id });
     $selectedInstanceSelector.set(undefined);
   }
   const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;

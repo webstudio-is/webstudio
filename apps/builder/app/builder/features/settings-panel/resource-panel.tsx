@@ -41,7 +41,6 @@ import {
   $dataSources,
   $resources,
   $selectedInstanceSelector,
-  $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -56,6 +55,7 @@ import {
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
+import { $selectedPage } from "~/shared/awareness";
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);

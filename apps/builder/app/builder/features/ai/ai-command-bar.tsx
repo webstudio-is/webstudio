@@ -30,7 +30,6 @@ import { useRef, useState, type ComponentPropsWithoutRef } from "react";
 import {
   $collaborativeInstanceSelector,
   $selectedInstanceSelector,
-  $selectedPage,
 } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
@@ -41,6 +40,7 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { AiApiException, RateLimitException } from "./api-exceptions";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
 import { flushSync } from "react-dom";
+import { $selectedPage } from "~/shared/awareness";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
