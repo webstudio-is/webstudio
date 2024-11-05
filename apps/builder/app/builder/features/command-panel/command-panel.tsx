@@ -136,7 +136,7 @@ const BreakpointsGroup = () => {
               key={breakpoint.id}
               keywords={["Breakpoints"]}
               onSelect={() => {
-                closeCommandPanel();
+                closeCommandPanel({ restoreFocus: true });
                 $selectedBreakpointId.set(breakpoint.id);
                 setCanvasWidth(breakpoint.id);
               }}
