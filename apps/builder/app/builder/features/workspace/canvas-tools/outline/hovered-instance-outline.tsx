@@ -10,7 +10,7 @@ import { Label } from "./label";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
-import deepEqual from "fast-deep-equal";
+import { shallowEqual } from "shallow-equal";
 
 export const HoveredInstanceOutline = () => {
   const instances = useStore($instances);
@@ -24,7 +24,7 @@ export const HoveredInstanceOutline = () => {
   }
 
   if (
-    deepEqual(hoveredInstanceSelector, textEditingInstanceSelector?.selector)
+    shallowEqual(hoveredInstanceSelector, textEditingInstanceSelector?.selector)
   ) {
     return;
   }

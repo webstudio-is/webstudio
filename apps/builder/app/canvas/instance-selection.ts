@@ -7,7 +7,15 @@ import {
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { emitCommand } from "./shared/commands";
-import deepEqual from "fast-deep-equal";
+import { shallowEqual } from "shallow-equal";
+
+const isElementBeingEdited = (element: Element) => {
+  if (element.closest("[contenteditable=true]")) {
+    return true;
+  }
+
+  return false;
+};
 
 export const subscribeInstanceSelection = ({
   signal,
@@ -21,28 +29,29 @@ export const subscribeInstanceSelection = ({
 
       emitCommand("clickCanvas");
 
-      if (element === null || !(element instanceof Element)) {
+      if (!(element instanceof Element)) {
         return;
       }
 
-      if (element.closest("[contenteditable=true]")) {
+      if (isElementBeingEdited(element)) {
         return;
       }
 
       const instanceSelector = getInstanceSelectorFromElement(element);
+
       if (instanceSelector === undefined) {
         return;
       }
 
+      // Prevent unnecessary updates (2 clicks are registered before a double click)
       if ($textEditingInstanceSelector.get() !== undefined) {
         $textEditingInstanceSelector.set(undefined);
       }
 
-      if (deepEqual(instanceSelector, $selectedInstanceSelector.get())) {
-        return;
+      // Prevent unnecessary updates (2 clicks are registered before a double click)
+      if (!shallowEqual(instanceSelector, $selectedInstanceSelector.get())) {
+        $selectedInstanceSelector.set(instanceSelector);
       }
-
-      $selectedInstanceSelector.set(instanceSelector);
     },
     { passive: true, signal }
   );
@@ -52,15 +61,16 @@ export const subscribeInstanceSelection = ({
     (event) => {
       const element = event.target;
 
-      if (element === null || !(element instanceof Element)) {
+      if (!(element instanceof Element)) {
         return;
       }
 
-      if (element.closest("[contenteditable=true]")) {
+      if (isElementBeingEdited(element)) {
         return;
       }
 
       const instanceSelector = getInstanceSelectorFromElement(element);
+
       if (instanceSelector === undefined) {
         return;
       }
@@ -75,7 +85,8 @@ export const subscribeInstanceSelection = ({
         return;
       }
 
-      if (!deepEqual(instanceSelector, editableInstanceSelector)) {
+      // Prevent unnecessary updates (should already be selected during click)
+      if (!shallowEqual(instanceSelector, editableInstanceSelector)) {
         $selectedInstanceSelector.set(editableInstanceSelector);
       }
 
