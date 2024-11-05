@@ -23,14 +23,13 @@ import {
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedBreakpointId,
-  $selectedPage,
-  $selectedPageId,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { switchPage } from "~/shared/pages";
 import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
 import { insert as insertComponent } from "~/builder/features/components/insert";
+import { $selectedPage } from "~/shared/awareness";
 
 const $commandPanel = atom<
   | undefined
@@ -155,7 +154,7 @@ const BreakpointsGroup = () => {
 
 const PagesGroup = () => {
   const pagesData = useStore($pages);
-  const selectedPageId = useStore($selectedPageId);
+  const selectedPage = useStore($selectedPage);
   if (pagesData === undefined) {
     return;
   }
@@ -164,7 +163,7 @@ const PagesGroup = () => {
     <CommandGroup heading={<CommandGroupHeading>Pages</CommandGroupHeading>}>
       {pages.map(
         (page) =>
-          page.id !== selectedPageId && (
+          page.id !== selectedPage?.id && (
             <CommandItem
               key={page.id}
               keywords={["pages"]}

@@ -9,8 +9,8 @@ import {
   $breakpoints,
   $pages,
   $registeredComponentMetas,
-  $selectedPageId,
 } from "~/shared/nano-states";
+import { $awareness } from "~/shared/awareness";
 import { registerContainers } from "~/shared/sync";
 import {
   CommandPanel as CommandPanelComponent,
@@ -66,7 +66,7 @@ pages.pages.push({
   meta: {},
 });
 $pages.set(pages);
-$selectedPageId.set(pages.homePage.id);
+$awareness.set({ pageId: pages.homePage.id });
 
 export const CommandPanel: StoryFn = () => {
   useEffect(() => {
