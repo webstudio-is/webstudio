@@ -53,11 +53,13 @@ export const openCommandPanel = () => {
   });
 };
 
-const closeCommandPanel = () => {
+const closeCommandPanel = ({
+  restoreFocus = false,
+}: { restoreFocus?: boolean } = {}) => {
   const commandPanel = $commandPanel.get();
   $commandPanel.set(undefined);
   // restore focus in the next frame
-  if (commandPanel?.lastFocusedElement) {
+  if (restoreFocus && commandPanel?.lastFocusedElement) {
     requestAnimationFrame(() => {
       commandPanel.lastFocusedElement?.focus();
     });
@@ -204,7 +206,10 @@ export const CommandPanel = () => {
     return;
   }
   return (
-    <CommandDialog open={isOpen} onOpenChange={closeCommandPanel}>
+    <CommandDialog
+      open={isOpen}
+      onOpenChange={() => closeCommandPanel({ restoreFocus: true })}
+    >
       <CommandDialogContent />
     </CommandDialog>
   );
