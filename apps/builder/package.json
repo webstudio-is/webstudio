@@ -137,7 +137,7 @@
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.26.1",
     "typescript": "5.6.3",
-    "vite": "^5.4.8"
+    "vite": "^5.4.10"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"
