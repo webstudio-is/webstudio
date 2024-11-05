@@ -1,5 +1,7 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { collectionComponent } from "@webstudio-is/react-sdk";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Kbd,
   Text,
@@ -26,11 +28,9 @@ import {
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { switchPage } from "~/shared/pages";
-import { setCanvasWidth } from "./breakpoints";
-import { insert as insertComponent } from "./components/insert";
-import { collectionComponent } from "@webstudio-is/react-sdk";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
+import { setCanvasWidth } from "~/builder/features/breakpoints";
+import { insert as insertComponent } from "~/builder/features/components/insert";
 
 const $commandPanel = atom<
   | undefined
