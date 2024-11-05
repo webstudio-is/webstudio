@@ -248,19 +248,18 @@ export const $pageRootScope = computed(
     if (page === undefined) {
       return { variableValues: defaultValues, scope, aliases };
     }
-    const values = variableValuesByInstanceSelector.get(
-      JSON.stringify([page.rootInstanceId])
-    );
-    if (values) {
-      for (const [dataSourceId, value] of values) {
-        const dataSource = dataSources.get(dataSourceId);
-        if (dataSource === undefined) {
-          continue;
-        }
-        const name = encodeDataSourceVariable(dataSourceId);
-        scope[name] = value;
-        aliases.set(name, dataSource.name);
+    const values =
+      variableValuesByInstanceSelector.get(
+        JSON.stringify([page.rootInstanceId])
+      ) ?? new Map<string, unknown>();
+    for (const [dataSourceId, value] of values) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource === undefined) {
+        continue;
       }
+      const name = encodeDataSourceVariable(dataSourceId);
+      scope[name] = value;
+      aliases.set(name, dataSource.name);
     }
     return { variableValues: values, scope, aliases };
   }
