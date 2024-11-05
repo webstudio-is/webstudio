@@ -31,7 +31,6 @@ import {
   $props,
   $resources,
   $selectedInstanceSelector,
-  $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
@@ -47,6 +46,7 @@ import {
   VariablePopoverProvider,
   VariablePopoverTrigger,
 } from "./variable-popover";
+import { $selectedPage } from "~/shared/awareness";
 
 /**
  * find variables defined specifically on this selected instance

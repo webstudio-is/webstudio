@@ -17,10 +17,10 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedPage,
 } from "../nano-states";
 import { isBaseBreakpoint } from "../breakpoints";
 import { denormalizeSrcProps } from "./asset-upload";
+import { $selectedPage } from "~/shared/awareness";
 
 const micromarkOptions = {
   extensions: [gfm()],

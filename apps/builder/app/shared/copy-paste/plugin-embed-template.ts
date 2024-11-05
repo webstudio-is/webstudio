@@ -6,7 +6,6 @@ import {
 import {
   $selectedInstanceSelector,
   $instances,
-  $selectedPage,
   $registeredComponentMetas,
   $breakpoints,
 } from "../nano-states";
@@ -16,6 +15,7 @@ import {
   insertTemplateData,
 } from "../instance-utils";
 import { isBaseBreakpoint } from "../breakpoints";
+import { $selectedPage } from "~/shared/awareness";
 
 const version = "@webstudio/template";
 

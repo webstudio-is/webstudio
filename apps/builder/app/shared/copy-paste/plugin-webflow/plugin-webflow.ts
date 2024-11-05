@@ -11,7 +11,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedPage,
   $project,
 } from "../../nano-states";
 import {
@@ -26,6 +25,7 @@ import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
+import { $selectedPage } from "~/shared/awareness";
 
 const { toast } = builderApi;
 

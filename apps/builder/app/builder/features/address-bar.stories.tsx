@@ -7,10 +7,9 @@ import {
   $dataSourceVariables,
   $dataSources,
   $pages,
-  $selectedPage,
-  $selectedPageId,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
+import { $awareness, $selectedPage } from "~/shared/awareness";
 
 registerContainers();
 
@@ -98,7 +97,7 @@ export default {
 } satisfies Meta;
 
 export const AddressBar: StoryFn = () => {
-  $selectedPageId.set("dynamicId");
+  $awareness.set({ pageId: "dynamicId" });
   return (
     <>
       <Box

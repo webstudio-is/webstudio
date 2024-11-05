@@ -10,13 +10,13 @@ import {
   $instances,
   $pages,
   $registeredComponentMetas,
-  $selectedPageId,
   $textEditingInstanceSelector,
   $textToolbar,
 } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
 import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { $awareness } from "~/shared/awareness";
 
 export default {
   component: TextEditor,
@@ -238,7 +238,7 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
       ],
     });
 
-    $selectedPageId.set("pageId");
+    $awareness.set({ pageId: "pageId" });
 
     $registeredComponentMetas.set(
       new Map([

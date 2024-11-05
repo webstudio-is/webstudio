@@ -33,7 +33,7 @@ import {
   $memoryProps,
   $isPreviewMode,
 } from "./misc";
-import { $selectedPage, $pages } from "./pages";
+import { $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
@@ -45,6 +45,7 @@ import {
 } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { fetch } from "~/shared/fetch.client";
+import { $selectedPage } from "../awareness";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],

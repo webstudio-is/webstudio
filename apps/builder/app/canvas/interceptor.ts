@@ -4,11 +4,11 @@ import {
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
+import { $selectedPage } from "~/shared/awareness";
 import {
   $dataSourceVariables,
   $isPreviewMode,
   $pages,
-  $selectedPage,
   updateSystem,
 } from "~/shared/nano-states";
 import { savePathInHistory, switchPage } from "~/shared/pages";

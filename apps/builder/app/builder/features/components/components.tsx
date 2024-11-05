@@ -26,7 +26,7 @@ import {
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import { $registeredComponentMetas, $selectedPage } from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 import {
   getMetaMaps,
   type MetaByCategory,
@@ -38,6 +38,7 @@ import { insert } from "./insert";
 import { matchSorter } from "match-sorter";
 import { parseComponentName } from "@webstudio-is/sdk";
 import type { Publish } from "~/shared/pubsub";
+import { $selectedPage } from "~/shared/awareness";
 
 const matchComponents = (
   metas: Array<WsComponentMeta>,

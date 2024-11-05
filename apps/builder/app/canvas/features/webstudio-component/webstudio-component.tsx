@@ -8,7 +8,7 @@ import {
   Fragment,
   type ReactNode,
 } from "react";
-
+import { $getSelection, $isRangeSelection } from "lexical";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -37,7 +37,6 @@ import {
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   $selectedInstanceSelector,
-  $selectedPage,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -48,7 +47,7 @@ import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
 import { TextEditor } from "../text-editor";
-import { $getSelection, $isRangeSelection } from "lexical";
+import { $selectedPage } from "~/shared/awareness";
 
 const ContentEditable = ({
   renderComponentWithRef,

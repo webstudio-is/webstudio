@@ -5,7 +5,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedPage,
 } from "~/shared/nano-states";
 import {
   computeInstancesConstraints,
@@ -13,6 +12,7 @@ import {
   getComponentTemplateData,
   insertTemplateData,
 } from "~/shared/instance-utils";
+import { $selectedPage } from "~/shared/awareness";
 
 const formatInsertionError = (component: string, meta: WsComponentMeta) => {
   const or = new Intl.ListFormat("en", {

@@ -25,10 +25,10 @@ import {
   $project,
   $props,
   $registeredComponentMetas,
-  $selectedPageId,
 } from "../nano-states";
 import { onCopy, onCut, onPaste } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { $awareness } from "../awareness";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -46,7 +46,7 @@ $pages.set(
     systemDataSourceId: "",
   })
 );
-$selectedPageId.set("home-page");
+$awareness.set({ pageId: "home-page" });
 
 const createInstance = (
   id: Instance["id"],

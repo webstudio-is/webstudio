@@ -1,6 +1,7 @@
 import { shallowEqual } from "shallow-equal";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
+import { portalComponent } from "@webstudio-is/react-sdk";
 import {
   Instance,
   Instances,
@@ -9,7 +10,6 @@ import {
 } from "@webstudio-is/sdk";
 import {
   $selectedInstanceSelector,
-  $selectedPage,
   $project,
   $registeredComponentMetas,
   $instances,
@@ -27,7 +27,7 @@ import {
   getWebstudioData,
   insertInstanceChildrenMutable,
 } from "../instance-utils";
-import { portalComponent } from "@webstudio-is/react-sdk";
+import { $selectedPage } from "~/shared/awareness";
 
 const version = "@webstudio/instance/v0.1";
 

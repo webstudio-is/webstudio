@@ -41,7 +41,6 @@ import {
   $propValuesByInstanceSelector,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedPage,
   getIndexedInstanceId,
   type ItemDropTarget,
 } from "~/shared/nano-states";
@@ -56,6 +55,7 @@ import {
 } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
+import { $selectedPage } from "~/shared/awareness";
 
 type TreeItem = {
   level: number;
