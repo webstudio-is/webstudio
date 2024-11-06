@@ -32,6 +32,7 @@ import {
   $normalizeSelection__EXPERIMENTAL,
   type LexicalEditor,
   type SerializedEditorState,
+  $createTextNode,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -802,6 +803,32 @@ const InitialJSONStatePlugin = ({
   return null;
 };
 
+/**
+ * Removes link nodes and converts them to text nodes inside <a> elements.
+ * Solves the issue with pasting from external sources that contain links.
+ */
+const LinkSanitizePlugin = (): null => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const rootElement = editor.getRootElement();
+    if (rootElement === null) {
+      return;
+    }
+
+    if (!(rootElement instanceof HTMLAnchorElement)) {
+      return;
+    }
+
+    return editor.registerNodeTransform(LinkNode, (linkNode) => {
+      linkNode.insertBefore($createTextNode(linkNode.getTextContent()));
+      linkNode.remove();
+    });
+  }, [editor]);
+
+  return null;
+};
+
 export const TextEditor = ({
   rootInstanceSelector,
   instances,
@@ -985,6 +1012,7 @@ export const TextEditor = ({
         placeholder={<></>}
       />
       <LinkPlugin />
+      <LinkSanitizePlugin />
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
