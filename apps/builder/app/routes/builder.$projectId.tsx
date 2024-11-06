@@ -18,7 +18,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       projectId: params.projectId,
       origin: request.url,
       authToken: url.searchParams.get("authToken") ?? undefined,
-      mode: url.searchParams.get("mode") === "preview" ? "preview" : "edit",
+      mode: url.searchParams.get("mode") === "preview" ? "preview" : "design",
     })
   );
 };

@@ -9,6 +9,7 @@ import {
   Separator,
   Flex,
   Box,
+  Grid,
 } from "@webstudio-is/design-system";
 import {
   descendantComponent,
@@ -18,11 +19,12 @@ import {
   $propValuesByInstanceSelector,
   $propsIndex,
   $props,
+  $isDesignMode,
+  $isContentMode,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
-import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstanceKey } from "~/shared/awareness";
 
@@ -155,41 +157,57 @@ type PropsSectionProps = {
 // A UI componet with minimum logic that can be demoed in Storybook etc.
 export const PropsSection = (props: PropsSectionProps) => {
   const { propsLogic: logic } = props;
-
   const [addingProp, setAddingProp] = useState(false);
+  const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
 
   const hasItems =
     logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
 
+  const showPropertiesSection =
+    isDesignMode || (isContentMode && logic.initialProps.length > 0);
+
   return (
     <>
-      <Row css={{ py: theme.panel.paddingBlock }}>
-        {logic.systemProps.map((item) => renderProperty(props, item))}
-      </Row>
+      <Grid
+        css={{
+          paddingBottom: theme.panel.paddingBlock,
+        }}
+      >
+        {logic.systemProps.map((item) => (
+          <Box
+            key={item.propName}
+            css={{ paddingInline: theme.panel.paddingInline }}
+          >
+            {renderProperty(props, item)}
+          </Box>
+        ))}
+      </Grid>
 
       <Separator />
-
-      <CollapsibleSectionWithAddButton
-        label="Properties & Attributes"
-        onAdd={() => setAddingProp(true)}
-        hasItems={hasItems}
-      >
-        <Flex gap="1" direction="column">
-          {addingProp && (
-            <AddPropertyOrAttribute
-              availableProps={logic.availableProps}
-              onPropSelected={(propName) => {
-                setAddingProp(false);
-                logic.handleAdd(propName);
-              }}
-            />
-          )}
-          {logic.addedProps.map((item) =>
-            renderProperty(props, item, { deletable: true })
-          )}
-          {logic.initialProps.map((item) => renderProperty(props, item))}
-        </Flex>
-      </CollapsibleSectionWithAddButton>
+      {showPropertiesSection && (
+        <CollapsibleSectionWithAddButton
+          label="Properties & Attributes"
+          onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
+          hasItems={hasItems}
+        >
+          <Flex gap="1" direction="column">
+            {addingProp && (
+              <AddPropertyOrAttribute
+                availableProps={logic.availableProps}
+                onPropSelected={(propName) => {
+                  setAddingProp(false);
+                  logic.handleAdd(propName);
+                }}
+              />
+            )}
+            {logic.addedProps.map((item) =>
+              renderProperty(props, item, { deletable: true })
+            )}
+            {logic.initialProps.map((item) => renderProperty(props, item))}
+          </Flex>
+        </CollapsibleSectionWithAddButton>
+      )}
     </>
   );
 };

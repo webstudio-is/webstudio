@@ -1,10 +1,10 @@
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
-  $isPreviewMode,
   $editingItemSelector,
   $instances,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
+  $builderMode,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -123,8 +123,26 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "togglePreview",
       defaultHotkeys: ["meta+shift+p", "ctrl+shift+p"],
       handler: () => {
-        $isPreviewMode.set($isPreviewMode.get() === false);
         setActiveSidebarPanel("auto");
+
+        if ($builderMode.get() === "preview") {
+          $builderMode.set("design");
+        } else {
+          $builderMode.set("preview");
+        }
+      },
+    },
+    {
+      name: "toggleEditor",
+      defaultHotkeys: ["meta+shift+e", "ctrl+shift+e"],
+      handler: () => {
+        setActiveSidebarPanel("auto");
+
+        if ($builderMode.get() === "content") {
+          $builderMode.set("design");
+        } else {
+          $builderMode.set("content");
+        }
       },
     },
     {

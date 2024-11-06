@@ -29,6 +29,7 @@ import {
   $publisherHost,
   $imageLoader,
   $textEditingInstanceSelector,
+  $isDesignMode,
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
@@ -57,8 +58,8 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
-import { initCopyPaste } from "~/shared/copy-paste";
 import { CommandPanel } from "./features/command-panel";
+import { initCopyPaste } from "~/shared/copy-paste/init-copy-paste";
 
 registerContainers();
 
@@ -281,6 +282,8 @@ export const Builder = ({
   });
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
+  const isDesignMode = useStore($isDesignMode);
+
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
   useSetWindowTitle();
@@ -294,6 +297,10 @@ export const Builder = ({
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
 
   useEffect(() => {
+    if (!isDesignMode) {
+      return;
+    }
+
     const abortController = new AbortController();
     // We need to initialize this in both canvas and builder,
     // because the events will fire in either one, depending on where the focus is
@@ -301,6 +308,12 @@ export const Builder = ({
     // in both places
     initCopyPaste(abortController);
 
+    return () => {
+      abortController.abort();
+    };
+  }, [isDesignMode]);
+
+  useEffect(() => {
     const unsubscribe = $loadingState.subscribe((loadingState) => {
       setLoadingState(loadingState);
       // We need to stop updating it once it's ready in case in the future it changes again.
@@ -308,10 +321,7 @@ export const Builder = ({
         unsubscribe();
       }
     });
-    return () => {
-      unsubscribe();
-      abortController.abort();
-    };
+    return unsubscribe;
   }, []);
 
   const canvasUrl = getCanvasUrl();
@@ -399,7 +409,8 @@ export const Builder = ({
                 />
               )}
             </Workspace>
-            <AiCommandBar isPreviewMode={isPreviewMode} />
+
+            {isDesignMode && <AiCommandBar />}
           </Main>
           <SidePanel gridArea="sidebar">
             <SidebarLeft publish={publish} />

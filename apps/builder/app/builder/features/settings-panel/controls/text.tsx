@@ -64,6 +64,7 @@ export const TextControl = ({
         onBlur={localValue.save}
         onSubmit={localValue.save}
       />
+
       <BindingPopover
         scope={scope}
         aliases={aliases}

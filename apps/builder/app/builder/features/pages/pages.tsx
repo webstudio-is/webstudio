@@ -27,7 +27,7 @@ import {
 } from "@webstudio-is/icons";
 import { ExtendedPanel } from "../../shared/extended-sidebar-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
-import { $editingPageId, $pages } from "~/shared/nano-states";
+import { $editingPageId, $isContentMode, $pages } from "~/shared/nano-states";
 import {
   getAllChildrenAndSelf,
   reparentOrphansMutable,
@@ -334,6 +334,10 @@ const PagesTree = ({
               isLastChild={item.isLastChild}
               data={item}
               canDrag={() => {
+                if ($isContentMode.get()) {
+                  return false;
+                }
+
                 // forbid dragging home page
                 if (item.id === pages.homePage.id) {
                   toast.error("Home page cannot be moved");

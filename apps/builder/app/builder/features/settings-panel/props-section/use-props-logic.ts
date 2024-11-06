@@ -9,6 +9,7 @@ import {
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
+  $isContentMode,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
@@ -152,6 +153,28 @@ export const usePropsLogic = ({
   updateProp,
   deleteProp,
 }: UsePropsLogicInput) => {
+  const isContentMode = useStore($isContentMode);
+
+  /**
+   * In content edit mode we show only Image and Link props
+   * In the future I hope the only thing we will show will be Components
+   */
+  const isPropVisible = (propName: string) => {
+    const contentModeWhiteList: Partial<Record<string, string[]>> = {
+      Image: ["src", "width", "height", "alt"],
+      Link: ["href"],
+      RichTextLink: ["href"],
+    };
+
+    if (!isContentMode) {
+      return true;
+    }
+
+    const propsWhiteList = contentModeWhiteList[instance.component] ?? [];
+
+    return propsWhiteList.includes(propName);
+  };
+
   const instanceMeta = useStore($registeredComponentMetas).get(
     instance.component
   );
@@ -185,6 +208,7 @@ export const usePropsLogic = ({
       meta,
     };
   });
+
   const canHaveTextContent =
     instanceMeta?.type === "container" &&
     instance.component !== collectionComponent;
@@ -313,11 +337,13 @@ export const usePropsLogic = ({
     meta,
     /** Similar to Initial, but displayed as a separate group in UI etc.
      * Currentrly used only for the ID prop. */
-    systemProps,
+    systemProps: systemProps.filter(({ propName }) => isPropVisible(propName)),
     /** Initial (not deletable) props */
-    initialProps,
+    initialProps: initialProps.filter(({ propName }) =>
+      isPropVisible(propName)
+    ),
     /** Optional props that were added by user */
-    addedProps,
+    addedProps: addedProps.filter(({ propName }) => isPropVisible(propName)),
     /** List of remaining props still available to add */
     availableProps: Array.from(
       unprocessedKnown.entries(),

@@ -15,6 +15,7 @@ import { UpgradeIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import cmsUpgradeBanner from "./cms-upgrade-banner.svg?url";
+import { $isDesignMode } from "~/shared/nano-states";
 
 export const SettingsPanelContainer = ({
   selectedInstance,
@@ -22,11 +23,16 @@ export const SettingsPanelContainer = ({
   selectedInstance: Instance;
 }) => {
   const { allowDynamicData } = useStore($userPlanFeatures);
+  const isDesignMode = useStore($isDesignMode);
+
   return (
     <Box css={{ pt: theme.spacing[5] }}>
       <SettingsSection />
+
       <PropsSectionContainer selectedInstance={selectedInstance} />
-      <VariablesSection />
+
+      {isDesignMode && <VariablesSection />}
+
       {allowDynamicData === false && (
         <PanelBanner>
           <img
