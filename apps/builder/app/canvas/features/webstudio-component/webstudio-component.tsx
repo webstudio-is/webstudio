@@ -16,14 +16,12 @@ import { mergeRefs } from "@react-aria/utils";
 import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
-  type WebstudioComponentProps,
   idAttribute,
   componentAttribute,
   showAttribute,
   selectorIdAttribute,
   indexAttribute,
   getIndexesWithinAncestors,
-  createInstanceChildrenElements,
   collectionComponent,
   type AnyComponent,
   textContentAttribute,
@@ -48,6 +46,10 @@ import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
 import { TextEditor } from "../text-editor";
 import { $selectedPage } from "~/shared/awareness";
+import {
+  createInstanceChildrenElements,
+  type WebstudioComponentProps,
+} from "~/canvas/elements";
 
 const ContentEditable = ({
   renderComponentWithRef,
