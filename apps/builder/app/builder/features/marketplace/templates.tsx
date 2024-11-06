@@ -27,9 +27,9 @@ import {
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { insertPageCopyMutable } from "~/shared/page-utils";
-import { switchPage } from "~/shared/pages";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
+import { selectPage } from "~/shared/awareness";
 
 /**
  * Insert page as a template.
@@ -65,7 +65,7 @@ const insertPage = ({
     });
   });
   if (newPageId) {
-    switchPage(newPageId);
+    selectPage(newPageId);
   }
 };
 

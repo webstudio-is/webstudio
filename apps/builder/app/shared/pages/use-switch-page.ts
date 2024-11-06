@@ -1,35 +1,15 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
-import { findPageByIdOrPath, type Page } from "@webstudio-is/sdk";
 import {
   $authToken,
   $pages,
   $project,
   $selectedPageHash,
-  $selectedInstanceSelector,
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
-import { $awareness, $selectedPage } from "../awareness";
-
-export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
-  const pages = $pages.get();
-
-  if (pages === undefined) {
-    return;
-  }
-
-  const page = findPageByIdOrPath(pageId, pages);
-
-  if (page === undefined) {
-    return;
-  }
-
-  $selectedPageHash.set(pageHash);
-  $awareness.set({ pageId: page.id });
-  $selectedInstanceSelector.set([page.rootInstanceId]);
-};
+import { $selectedPage, selectPage } from "../awareness";
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -38,11 +18,11 @@ const setPageStateFromUrl = () => {
     return;
   }
   const pageId = searchParams.get("pageId") ?? pages.homePage.id;
-  const pageHash = searchParams.get("pageHash") ?? undefined;
 
   $isPreviewMode.set(searchParams.get("mode") === "preview");
 
-  switchPage(pageId, pageHash);
+  $selectedPageHash.set(searchParams.get("pageHash") ?? "");
+  selectPage(pageId);
 };
 
 /**

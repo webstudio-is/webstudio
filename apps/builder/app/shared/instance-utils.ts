@@ -63,7 +63,7 @@ import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
-import { $selectedPage } from "./awareness";
+import { $selectedPage, selectInstance } from "./awareness";
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   serverSyncStore.createTransaction(
@@ -622,7 +622,7 @@ export const insertTemplateData = (
     }
   });
 
-  $selectedInstanceSelector.set([rootInstanceId, ...dropTarget.parentSelector]);
+  selectInstance([rootInstanceId, ...dropTarget.parentSelector]);
 };
 
 export const getComponentTemplateData = (component: string) => {
@@ -687,10 +687,7 @@ export const reparentInstance = (
     } else {
       newParent.children.splice(reparentDropTarget.position, 0, newChild);
     }
-    $selectedInstanceSelector.set([
-      newRootInstanceId,
-      ...reparentDropTarget.parentSelector,
-    ]);
+    selectInstance([newRootInstanceId, ...reparentDropTarget.parentSelector]);
   });
 };
 

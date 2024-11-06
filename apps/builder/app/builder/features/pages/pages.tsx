@@ -28,7 +28,6 @@ import {
 import { ExtendedPanel } from "../../shared/extended-sidebar-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $editingPageId, $pages } from "~/shared/nano-states";
-import { switchPage } from "~/shared/pages";
 import {
   getAllChildrenAndSelf,
   reparentOrphansMutable,
@@ -50,7 +49,7 @@ import {
 import { atom, computed } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage, selectPage } from "~/shared/awareness";
 
 const ItemSuffix = ({
   isParentSelected,
@@ -448,7 +447,7 @@ const PageEditor = ({
         onClose={onClose}
         onSuccess={(pageId) => {
           onClose();
-          switchPage(pageId);
+          selectPage(pageId);
         }}
       />
     );
@@ -463,13 +462,13 @@ const PageEditor = ({
         if (editingPageId === currentPage?.id) {
           const pages = $pages.get();
           if (pages) {
-            switchPage(pages.homePage.id);
+            selectPage(pages.homePage.id);
           }
         }
       }}
       onDuplicate={(newPageId) => {
         onClose();
-        switchPage(newPageId);
+        selectPage(newPageId);
       }}
       pageId={editingPageId}
       key={editingPageId}
@@ -560,14 +559,14 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       <PagesTree
         selectedPageId={currentPage.id}
         onSelect={(itemId) => {
-          switchPage(itemId);
+          selectPage(itemId);
           onClose();
         }}
         editingItemId={editingItemId}
         onEdit={(itemId) => {
           // always select page when edit its settings
           if (itemId && isFolder(itemId, pages.folders) === false) {
-            switchPage(itemId);
+            selectPage(itemId);
           }
           $editingPageId.set(itemId);
         }}

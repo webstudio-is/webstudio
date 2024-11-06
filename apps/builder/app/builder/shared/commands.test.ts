@@ -5,11 +5,11 @@ import {
   $instances,
   $pages,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { emitCommand } from "./commands";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { $awareness } from "~/shared/awareness";
 
 registerContainers();
 
@@ -45,10 +45,13 @@ describe("deleteInstance", () => {
 
   test("delete selected instance and select next one", () => {
     $registeredComponentMetas.set(metas);
-    $selectedInstanceSelector.set(["child2", "parent", "body"]);
+    $awareness.set({
+      pageId: "",
+      instanceSelector: ["child2", "parent", "body"],
+    });
     $instances.set(threeChildInstances);
     emitCommand("deleteInstance");
-    expect($selectedInstanceSelector.get()).toEqual([
+    expect($awareness.get()?.instanceSelector).toEqual([
       "child3",
       "parent",
       "body",
@@ -57,10 +60,13 @@ describe("deleteInstance", () => {
 
   test("delete selected instance and select previous one", () => {
     $registeredComponentMetas.set(metas);
-    $selectedInstanceSelector.set(["child3", "parent", "body"]);
+    $awareness.set({
+      pageId: "",
+      instanceSelector: ["child3", "parent", "body"],
+    });
     $instances.set(threeChildInstances);
     emitCommand("deleteInstance");
-    expect($selectedInstanceSelector.get()).toEqual([
+    expect($awareness.get()?.instanceSelector).toEqual([
       "child2",
       "parent",
       "body",
@@ -68,7 +74,10 @@ describe("deleteInstance", () => {
   });
 
   test("delete selected instance and select parent one", () => {
-    $selectedInstanceSelector.set(["child1", "parent", "body"]);
+    $awareness.set({
+      pageId: "",
+      instanceSelector: ["child1", "parent", "body"],
+    });
     $registeredComponentMetas.set(metas);
     // body
     //   parent
@@ -81,6 +90,6 @@ describe("deleteInstance", () => {
       ])
     );
     emitCommand("deleteInstance");
-    expect($selectedInstanceSelector.get()).toEqual(["parent", "body"]);
+    expect($awareness.get()?.instanceSelector).toEqual(["parent", "body"]);
   });
 });

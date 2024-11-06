@@ -6,12 +6,10 @@ import {
   $scale,
   $workspaceRect,
 } from "~/builder/shared/nano-states";
-import {
-  $selectedInstanceSelector,
-  $textEditingInstanceSelector,
-} from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useSetCanvasWidth } from "../breakpoints";
+import { selectInstance } from "~/shared/awareness";
 
 const workspaceStyle = css({
   flexGrow: 1,
@@ -101,7 +99,7 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
-    $selectedInstanceSelector.set(undefined);
+    selectInstance(undefined);
     $textEditingInstanceSelector.set(undefined);
   };
 

@@ -34,7 +34,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
-  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -45,7 +44,7 @@ import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
 import { TextEditor } from "../text-editor";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage, selectInstance } from "~/shared/awareness";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
@@ -499,7 +498,7 @@ export const WebstudioComponentCanvas = forwardRef<
           instanceId
         );
         $textEditingInstanceSelector.set(undefined);
-        $selectedInstanceSelector.set(newSelectedSelector);
+        selectInstance(newSelectedSelector);
       }}
     />
   );

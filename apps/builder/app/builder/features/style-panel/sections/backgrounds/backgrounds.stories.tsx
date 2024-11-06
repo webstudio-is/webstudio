@@ -4,11 +4,11 @@ import { registerContainers } from "~/shared/sync";
 import {
   $breakpoints,
   $selectedBreakpointId,
-  $selectedInstanceSelector,
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { Section } from "./backgrounds";
+import { $awareness } from "~/shared/awareness";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -40,7 +40,10 @@ $styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
-$selectedInstanceSelector.set(["box"]);
+$awareness.set({
+  pageId: "",
+  instanceSelector: ["box"],
+});
 
 const Panel = styled("div", {
   width: theme.spacing[30],

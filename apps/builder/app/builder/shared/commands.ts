@@ -27,6 +27,7 @@ import {
   toggleActiveSidebarPanel,
 } from "./nano-states";
 import { toast } from "@webstudio-is/design-system";
+import { selectInstance } from "~/shared/awareness";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -77,7 +78,7 @@ const deleteSelectedInstance = () => {
   }
   updateWebstudioData((data) => {
     if (deleteInstanceMutable(data, selectedInstanceSelector)) {
-      $selectedInstanceSelector.set(newSelectedInstanceSelector);
+      selectInstance(newSelectedInstanceSelector);
     }
   });
 };
@@ -254,10 +255,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             value: newRootInstanceId,
           });
           // select new instance
-          $selectedInstanceSelector.set([
-            newRootInstanceId,
-            ...parentInstanceSelector,
-          ]);
+          selectInstance([newRootInstanceId, ...parentInstanceSelector]);
         });
       },
     },

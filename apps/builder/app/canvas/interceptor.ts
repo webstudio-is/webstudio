@@ -4,14 +4,15 @@ import {
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage, selectPage } from "~/shared/awareness";
 import {
   $dataSourceVariables,
   $isPreviewMode,
   $pages,
+  $selectedPageHash,
   updateSystem,
 } from "~/shared/nano-states";
-import { savePathInHistory, switchPage } from "~/shared/pages";
+import { savePathInHistory } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
   try {
@@ -58,7 +59,8 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
         }
       }
       const search = Object.fromEntries(pageHref.searchParams);
-      switchPage(page.id, pageHref.hash);
+      $selectedPageHash.set(pageHref.hash);
+      selectPage(page.id);
       updateSystem(page, { params, search });
       savePathInHistory(page.id, pageHref.pathname);
       break;
