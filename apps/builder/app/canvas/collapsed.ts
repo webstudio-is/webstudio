@@ -1,12 +1,6 @@
 import htmlTags, { voidHtmlTags, type HtmlTags } from "html-tags";
 import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import {
-  getCascadedBreakpointIds,
-  getCascadedInfo,
-  getInstanceComponent,
-  getPresetStyleRule,
-} from "~/builder/features/style-panel/shared/style-info";
-import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
@@ -15,6 +9,7 @@ import {
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/awareness";
+import { compareMedia, StyleValue } from "@webstudio-is/css-engine";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -70,36 +65,56 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
     };
   }
 
-  const cascadedBreakpointIds = getCascadedBreakpointIds(
-    breakpoints,
-    selectedBreakpointId
-  );
+  let widthValue: undefined | StyleValue;
+  let heightValue: undefined | StyleValue;
 
-  const component = getInstanceComponent(instances, instanceId);
-  const presetStyle =
-    tagName !== undefined && component !== undefined
-      ? getPresetStyleRule(metas.get(component), tagName, new Set())
-      : undefined;
+  const component =
+    instanceId === undefined ? undefined : instances.get(instanceId)?.component;
+  if (component && tagName) {
+    const presetStyles = metas.get(component)?.presetStyle?.[tagName] ?? [];
+    for (const styleDecl of presetStyles) {
+      if (styleDecl.state === undefined) {
+        if (styleDecl.property === "width") {
+          widthValue = styleDecl.value;
+        }
+        if (styleDecl.property === "height") {
+          heightValue = styleDecl.value;
+        }
+      }
+    }
+  }
 
-  const cascadedStyle = getCascadedInfo(
-    stylesByInstanceId,
-    instanceId,
-    [...cascadedBreakpointIds, selectedBreakpointId],
-    new Set()
-  );
+  const sortedBreakpoints = Array.from(breakpoints.values()).sort(compareMedia);
+  const matchingBreakpoints: string[] = [];
+  for (const breakpoint of sortedBreakpoints) {
+    matchingBreakpoints.push(breakpoint.id);
+    if (breakpoint.id === selectedBreakpointId) {
+      break;
+    }
+  }
 
-  const widthStyle = cascadedStyle?.width?.value ?? presetStyle?.width;
-  const heightStyle = cascadedStyle?.height?.value ?? presetStyle?.height;
+  const instanceStyles = stylesByInstanceId.get(instanceId);
+  if (instanceStyles) {
+    for (const breakpointId of matchingBreakpoints) {
+      for (const styleDecl of instanceStyles) {
+        if (
+          styleDecl.breakpointId === breakpointId &&
+          styleDecl.state === undefined
+        ) {
+          if (styleDecl.property === "width") {
+            widthValue = styleDecl.value;
+          }
+          if (styleDecl.property === "height") {
+            heightValue = styleDecl.value;
+          }
+        }
+      }
+    }
+  }
 
   return {
-    width:
-      widthStyle !== undefined && widthStyle.type === "unit"
-        ? widthStyle.value
-        : undefined,
-    height:
-      heightStyle !== undefined && heightStyle.type === "unit"
-        ? heightStyle.value
-        : undefined,
+    width: widthValue?.type === "unit" ? widthValue.value : undefined,
+    height: heightValue?.type === "unit" ? heightValue.value : undefined,
   };
 };
 
