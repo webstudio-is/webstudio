@@ -106,7 +106,14 @@ export const SidebarTabsContent = styled(TabsContent, {
   height: "100%",
   bc: theme.colors.backgroundPanel,
   outline: "none",
-  '&[data-state="active"]': {
-    boxShadow: `inset 1px 0 0 0 ${theme.colors.borderMain}`,
+  // Ensure content still has full width, avoid subpixels give layout round numbers
+  "&::after": {
+    content: "''",
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 1,
+    background: theme.colors.borderMain,
   },
 });
