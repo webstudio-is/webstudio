@@ -5,10 +5,10 @@ import type { Instances } from "@webstudio-is/sdk";
 import {
   type Params,
   type Components,
-  createElementsTree,
   coreMetas,
   corePropsMetas,
 } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
@@ -66,6 +66,7 @@ import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
 import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/awareness";
+import { createInstanceElement } from "./elements";
 
 registerContainers();
 
@@ -108,18 +109,27 @@ const useElementsTree = (
   }
 
   return useMemo(() => {
-    return createElementsTree({
-      renderer: isPreviewMode ? "preview" : "canvas",
-      imageBaseUrl: params.imageBaseUrl,
-      assetBaseUrl: params.assetBaseUrl,
-      imageLoader,
-      instances,
-      rootInstanceId,
-      Component: isPreviewMode
-        ? WebstudioComponentPreview
-        : WebstudioComponentCanvas,
-      components,
-    });
+    return (
+      <ReactSdkContext.Provider
+        value={{
+          renderer: isPreviewMode ? "preview" : "canvas",
+          imageBaseUrl: params.imageBaseUrl,
+          assetBaseUrl: params.assetBaseUrl,
+          imageLoader,
+          resources: {},
+        }}
+      >
+        {createInstanceElement({
+          instances,
+          instanceId: rootInstanceId,
+          instanceSelector: [rootInstanceId],
+          Component: isPreviewMode
+            ? WebstudioComponentPreview
+            : WebstudioComponentCanvas,
+          components,
+        })}
+      </ReactSdkContext.Provider>
+    );
   }, [
     params,
     instances,
