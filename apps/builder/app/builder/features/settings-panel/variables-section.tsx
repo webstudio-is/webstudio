@@ -46,21 +46,20 @@ import {
   VariablePopoverProvider,
   VariablePopoverTrigger,
 } from "./variable-popover";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedInstance, $selectedPage } from "~/shared/awareness";
 
 /**
  * find variables defined specifically on this selected instance
  */
 const $instanceVariables = computed(
-  [$selectedInstanceSelector, $dataSources],
-  (instanceSelector, dataSources) => {
+  [$selectedInstance, $dataSources],
+  (instance, dataSources) => {
     const matchedVariables: DataSource[] = [];
-    if (instanceSelector === undefined) {
+    if (instance === undefined) {
       return matchedVariables;
     }
-    const [instanceId] = instanceSelector;
     for (const dataSource of dataSources.values()) {
-      if (instanceId === dataSource.scopeInstanceId) {
+      if (instance.id === dataSource.scopeInstanceId) {
         matchedVariables.push(dataSource);
       }
     }

@@ -24,7 +24,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $styleSources,
-  $virtualInstances,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import type {
@@ -34,6 +33,7 @@ import type {
 import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
+import { $virtualInstances } from "~/shared/awareness";
 
 const $isAltPressed = atom(false);
 if (typeof window !== "undefined") {

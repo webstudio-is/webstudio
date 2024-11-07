@@ -52,7 +52,6 @@ import {
   $dataSources,
   $resources,
   $areResourcesLoading,
-  $selectedInstanceSelector,
   invalidateResource,
   getComputedResource,
 } from "~/shared/nano-states";
@@ -71,6 +70,7 @@ import {
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
+import { $selectedInstance } from "~/shared/awareness";
 
 const validateName = (value: string) =>
   value.trim().length === 0 ? "Name is required" : "";
@@ -241,11 +241,10 @@ const useValuePanelRef = ({
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
-      const [instanceId] = instanceSelector;
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
       const scopeInstanceId = variable?.scopeInstanceId ?? instanceId;

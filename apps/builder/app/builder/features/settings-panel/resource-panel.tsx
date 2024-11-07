@@ -55,7 +55,7 @@ import {
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedInstance, $selectedPage } from "~/shared/awareness";
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -581,12 +581,11 @@ export const ResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
-      const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name,
@@ -715,12 +714,11 @@ export const SystemResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
-      const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name,
@@ -826,8 +824,8 @@ export const GraphqlResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
@@ -837,7 +835,6 @@ export const GraphqlResourceForm = forwardRef<
           ["variables", variables],
         ])
       );
-      const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name,

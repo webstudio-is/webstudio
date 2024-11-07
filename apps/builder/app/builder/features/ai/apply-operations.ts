@@ -1,6 +1,8 @@
-import { serverSyncStore } from "~/shared/sync";
+import { nanoid } from "nanoid";
+import { getStyleDeclKey, Instance, type StyleSource } from "@webstudio-is/sdk";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import type { copywriter, operations } from "@webstudio-is/ai";
+import { serverSyncStore } from "~/shared/sync";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
@@ -12,14 +14,12 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedInstance,
   $styleSourceSelections,
   $styleSources,
   $styles,
 } from "~/shared/nano-states";
 import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
-import { getStyleDeclKey, Instance, type StyleSource } from "@webstudio-is/sdk";
-import { nanoid } from "nanoid";
+import { $selectedInstance } from "~/shared/awareness";
 
 export const applyOperations = (operations: operations.WsOperations) => {
   for (const operation of operations) {

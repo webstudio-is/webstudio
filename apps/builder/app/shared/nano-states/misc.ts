@@ -28,6 +28,7 @@ import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-
 import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
+import { $selectedInstance } from "../awareness";
 
 export const $project = atom<Project | undefined>();
 
@@ -178,14 +179,14 @@ export const $selectedInstanceRenderState = atom<
 >("notMounted");
 
 export const $selectedInstanceStatesByStyleSourceId = computed(
-  [$styles, $styleSourceSelections, $selectedInstanceSelector],
-  (styles, styleSourceSelections, selectedInstanceSelector) => {
+  [$styles, $styleSourceSelections, $selectedInstance],
+  (styles, styleSourceSelections, selectedInstance) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
-    if (selectedInstanceSelector === undefined) {
+    if (selectedInstance === undefined) {
       return statesByStyleSourceId;
     }
     const styleSourceIds = new Set(
-      styleSourceSelections.get(selectedInstanceSelector[0])?.values
+      styleSourceSelections.get(selectedInstance.id)?.values
     );
     for (const styleDecl of styles.values()) {
       if (
@@ -208,15 +209,14 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
 );
 
 export const $selectedInstanceStyleSources = computed(
-  [$styleSourceSelections, $styleSources, $selectedInstanceSelector],
-  (styleSourceSelections, styleSources, selectedInstanceSelector) => {
+  [$styleSourceSelections, $styleSources, $selectedInstance],
+  (styleSourceSelections, styleSources, selectedInstance) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
-    if (selectedInstanceSelector === undefined) {
+    if (selectedInstance === undefined) {
       return selectedInstanceStyleSources;
     }
-    const [selectedInstanceId] = selectedInstanceSelector;
     const styleSourceIds =
-      styleSourceSelections.get(selectedInstanceId)?.values ?? [];
+      styleSourceSelections.get(selectedInstance.id)?.values ?? [];
     let hasLocal = false;
     for (const styleSourceId of styleSourceIds) {
       const styleSource = styleSources.get(styleSourceId);
@@ -244,20 +244,19 @@ export const $selectedOrLastStyleSourceSelector = computed(
   [
     $selectedInstanceStyleSources,
     $selectedStyleSources,
-    $selectedInstanceSelector,
+    $selectedInstance,
     $selectedStyleState,
   ],
   (
     styleSources,
     selectedStyleSources,
-    selectedInstanceSelector,
+    selectedInstance,
     selectedStyleState
   ) => {
-    if (selectedInstanceSelector === undefined) {
+    if (selectedInstance === undefined) {
       return;
     }
-    const [instanceId] = selectedInstanceSelector;
-    const styleSourceId = selectedStyleSources.get(instanceId);
+    const styleSourceId = selectedStyleSources.get(selectedInstance.id);
     // always fallback to local (the last one) style source
     const lastStyleSource = styleSources.at(-1);
     const matchedStyleSource = styleSources.find(
@@ -275,17 +274,12 @@ export const $selectedOrLastStyleSourceSelector = computed(
  * to the last style source of selected instance
  */
 export const $selectedStyleSource = computed(
-  [
-    $selectedInstanceStyleSources,
-    $selectedStyleSources,
-    $selectedInstanceSelector,
-  ],
-  (styleSources, selectedStyleSources, selectedInstanceSelector) => {
-    if (selectedInstanceSelector === undefined) {
+  [$selectedInstanceStyleSources, $selectedStyleSources, $selectedInstance],
+  (styleSources, selectedStyleSources, selectedInstance) => {
+    if (selectedInstance === undefined) {
       return;
     }
-    const [instanceId] = selectedInstanceSelector;
-    const selectedStyleSourceId = selectedStyleSources.get(instanceId);
+    const selectedStyleSourceId = selectedStyleSources.get(selectedInstance.id);
     return (
       styleSources.find((item) => item.id === selectedStyleSourceId) ??
       styleSources.at(-1)

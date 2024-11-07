@@ -5,6 +5,7 @@ import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import { registerContainers } from "~/shared/sync";
 import {
   $breakpoints,
+  $instances,
   $registeredComponentMetas,
   $selectedStyleSources,
   $styleSourceSelections,
@@ -108,6 +109,14 @@ test("generate styles from preset tokens", () => {
 });
 
 test("add style source to instance", () => {
+  $instances.set(
+    new Map([
+      [
+        "body",
+        { type: "instance", id: "body", component: "Body", children: [] },
+      ],
+    ])
+  );
   $awareness.set({
     pageId: "",
     instanceSelector: ["body"],
