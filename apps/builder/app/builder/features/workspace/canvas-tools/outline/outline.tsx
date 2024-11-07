@@ -31,7 +31,8 @@ const baseStyle = css({
   variants: {
     variant: {
       default: {
-        outline: `1px solid ${theme.colors.backgroundPrimary}`,
+        // Semi-transparent color allows user to see the carret when outlining content editable
+        outline: `1px solid oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7) `,
         outlineOffset: -1,
       },
       collaboration: {
