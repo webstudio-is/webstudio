@@ -3,6 +3,7 @@ import { styled, theme } from "@webstudio-is/design-system";
 import { registerContainers } from "~/shared/sync";
 import {
   $breakpoints,
+  $instances,
   $selectedBreakpointId,
   $styles,
   $styleSourceSelections,
