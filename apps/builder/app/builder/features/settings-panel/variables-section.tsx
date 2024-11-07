@@ -30,7 +30,6 @@ import {
   $instances,
   $props,
   $resources,
-  $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
@@ -46,7 +45,11 @@ import {
   VariablePopoverProvider,
   VariablePopoverTrigger,
 } from "./variable-popover";
-import { $selectedInstance, $selectedPage } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceKey,
+  $selectedPage,
+} from "~/shared/awareness";
 
 /**
  * find variables defined specifically on this selected instance
@@ -68,11 +71,10 @@ const $instanceVariables = computed(
 );
 
 const $instanceVariableValues = computed(
-  [$selectedInstanceSelector, $variableValuesByInstanceSelector],
-  (instanceSelector, variableValuesByInstanceSelector) => {
-    const key = JSON.stringify(instanceSelector);
-    return variableValuesByInstanceSelector.get(key) ?? new Map();
-  }
+  [$selectedInstanceKey, $variableValuesByInstanceSelector],
+  (instanceKey, variableValuesByInstanceSelector) =>
+    variableValuesByInstanceSelector.get(instanceKey ?? "") ??
+    new Map<string, unknown>()
 );
 
 /**

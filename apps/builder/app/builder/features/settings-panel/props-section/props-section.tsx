@@ -1,3 +1,4 @@
+import { computed } from "nanostores";
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
@@ -17,13 +18,13 @@ import {
   $propValuesByInstanceSelector,
   $propsIndex,
   $props,
-  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
+import { $selectedInstanceKey } from "~/shared/awareness";
 
 type Item = {
   name: string;
@@ -193,17 +194,19 @@ export const PropsSection = (props: PropsSectionProps) => {
   );
 };
 
+const $propValues = computed(
+  [$propValuesByInstanceSelector, $selectedInstanceKey],
+  (propValuesByInstanceSelector, instanceKey) =>
+    propValuesByInstanceSelector.get(instanceKey ?? "")
+);
+
 export const PropsSectionContainer = ({
   selectedInstance: instance,
 }: {
   selectedInstance: Instance;
 }) => {
   const { propsByInstanceId } = useStore($propsIndex);
-  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
-  const instanceSelector = useStore($selectedInstanceSelector);
-  const propValues = propValuesByInstanceSelector.get(
-    JSON.stringify(instanceSelector)
-  );
+  const propValues = useStore($propValues);
 
   const logic = usePropsLogic({
     instance,

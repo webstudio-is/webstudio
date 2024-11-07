@@ -54,7 +54,7 @@ const createHookContext = (): HookContext => {
         return;
       }
 
-      const props = $memoryProps.get();
+      const props = new Map($memoryProps.get());
 
       const newProps = props.get(JSON.stringify(instanceSelector)) ?? new Map();
 
@@ -96,7 +96,7 @@ const createHookContext = (): HookContext => {
 
       props.set(JSON.stringify(instanceSelector), newProps);
 
-      $memoryProps.set(new Map(props));
+      $memoryProps.set(props);
     },
 
     setPropVariable: (instanceId, propName, value) => {
