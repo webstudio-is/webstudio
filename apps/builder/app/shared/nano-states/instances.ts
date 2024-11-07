@@ -1,8 +1,6 @@
-import { atom, computed } from "nanostores";
-import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";
-import { rootComponent } from "@webstudio-is/react-sdk";
+import { atom } from "nanostores";
+import type { Instances } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
-import { $selectedPage } from "../awareness";
 
 export const $isResizingCanvas = atom(false);
 
@@ -34,33 +32,6 @@ export const $textEditingInstanceSelector = atom<
 >();
 
 export const $instances = atom<Instances>(new Map());
-
-export const $virtualInstances = computed($selectedPage, (selectedPage) => {
-  const virtualInstances: Instances = new Map();
-  if (selectedPage) {
-    virtualInstances.set(ROOT_INSTANCE_ID, {
-      type: "instance",
-      id: ROOT_INSTANCE_ID,
-      component: rootComponent,
-      children: [{ type: "id", value: selectedPage.rootInstanceId }],
-    });
-  }
-  return virtualInstances;
-});
-
-export const $selectedInstance = computed(
-  [$instances, $virtualInstances, $selectedInstanceSelector],
-  (instances, virtualInstances, selectedInstanceSelector) => {
-    if (selectedInstanceSelector === undefined) {
-      return;
-    }
-    const [selectedInstanceId] = selectedInstanceSelector;
-    return (
-      instances.get(selectedInstanceId) ??
-      virtualInstances.get(selectedInstanceId)
-    );
-  }
-);
 
 export const $synchronizedInstances = [
   ["textEditingInstanceSelector", $textEditingInstanceSelector],

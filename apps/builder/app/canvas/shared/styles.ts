@@ -31,7 +31,6 @@ import {
   $isPreviewMode,
   $props,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $selectedStyleState,
   $styleSourceSelections,
   $styles,
@@ -39,6 +38,7 @@ import {
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles, $params } from "../stores";
 import { canvasApi } from "~/shared/canvas-api";
+import { $selectedInstance } from "~/shared/awareness";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const stateSheet = createRegularStyleSheet({ name: "state-styles" });
@@ -367,27 +367,25 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
 
 const $instanceStyles = computed(
   [
-    $selectedInstanceSelector,
+    $selectedInstance,
     $selectedStyleState,
     $breakpoints,
     $styleSourceSelections,
     $styles,
   ],
   (
-    selectedInstanceSelector,
+    selectedInstance,
     selectedStyleState,
     breakpoints,
     styleSourceSelections,
     styles
   ) => {
-    if (
-      selectedInstanceSelector === undefined ||
-      selectedStyleState === undefined
-    ) {
+    if (selectedInstance === undefined || selectedStyleState === undefined) {
       return;
     }
-    const [instanceId] = selectedInstanceSelector;
-    const styleSources = new Set(styleSourceSelections.get(instanceId)?.values);
+    const styleSources = new Set(
+      styleSourceSelections.get(selectedInstance.id)?.values
+    );
     const instanceStyles: StyleDecl[] = [];
     for (const styleDecl of styles.values()) {
       if (
@@ -398,7 +396,7 @@ const $instanceStyles = computed(
       }
     }
     return {
-      instanceId,
+      instanceId: selectedInstance.id,
       breakpoints: Array.from(breakpoints.values()),
       styles: instanceStyles,
     };
@@ -443,11 +441,10 @@ const subscribeEphemeralStyle = () => {
   const appliedEphemeralDeclarations = new Map<string, StyleDecl>();
 
   return $ephemeralStyles.subscribe((ephemeralStyles) => {
-    const instanceSelector = $selectedInstanceSelector.get();
-    if (instanceSelector === undefined) {
+    const instance = $selectedInstance.get();
+    if (instance === undefined) {
       return;
     }
-    const [instanceId] = instanceSelector;
 
     // reset ephemeral styles
     if (ephemeralStyles.length === 0) {
@@ -476,7 +473,7 @@ const subscribeEphemeralStyle = () => {
     // add ephemeral styles
     if (ephemeralStyles.length > 0) {
       canvasApi.setInert();
-      const selector = `[${idAttribute}="${instanceId}"]`;
+      const selector = `[${idAttribute}="${instance.id}"]`;
       const rule = userSheet.addNestingRule(selector);
       let ephemetalSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {

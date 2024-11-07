@@ -7,7 +7,6 @@ import {
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   $selectedBreakpoint,
-  $selectedInstanceSelector,
   $selectedOrLastStyleSourceSelector,
   $selectedStyleSource,
   $styleSourceSelections,
@@ -16,6 +15,7 @@ import {
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { $ephemeralStyles } from "~/canvas/stores";
+import { $selectedInstance } from "~/shared/awareness";
 
 export type StyleUpdate =
   | {
@@ -64,14 +64,13 @@ const publishUpdates = (
     return;
   }
 
-  const selectedInstanceSelector = $selectedInstanceSelector.get();
-  const selectedInstanceId = selectedInstanceSelector?.[0];
+  const selectedInstance = $selectedInstance.get();
   const selectedBreakpoint = $selectedBreakpoint.get();
   const selectedStyleSource = $selectedStyleSource.get();
   const styleSourceSelector = $selectedOrLastStyleSourceSelector.get();
 
   if (
-    selectedInstanceId === undefined ||
+    selectedInstance === undefined ||
     selectedBreakpoint === undefined ||
     selectedStyleSource === undefined ||
     styleSourceSelector === undefined
@@ -101,7 +100,7 @@ const publishUpdates = (
   serverSyncStore.createTransaction(
     [$styleSourceSelections, $styleSources, $styles],
     (styleSourceSelections, styleSources, styles) => {
-      const instanceId = selectedInstanceId;
+      const instanceId = selectedInstance.id;
       const breakpointId = selectedBreakpoint.id;
       // set only selected style source and update selection with it
       // generated local style source will not be written if not selected

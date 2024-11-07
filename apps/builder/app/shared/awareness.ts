@@ -1,7 +1,14 @@
 import { atom, computed, onSet } from "nanostores";
-import { findPageByIdOrPath, Instance, type Page } from "@webstudio-is/sdk";
+import {
+  findPageByIdOrPath,
+  Instance,
+  Instances,
+  ROOT_INSTANCE_ID,
+  type Page,
+} from "@webstudio-is/sdk";
+import { rootComponent } from "@webstudio-is/react-sdk";
 import { $pages } from "./nano-states/pages";
-import { $selectedInstanceSelector } from "./nano-states/instances";
+import { $instances, $selectedInstanceSelector } from "./nano-states/instances";
 
 type Awareness = {
   pageId: Page["id"];
@@ -21,6 +28,33 @@ export const $selectedPage = computed(
       return;
     }
     return findPageByIdOrPath(awareness.pageId, pages);
+  }
+);
+
+export const $virtualInstances = computed($selectedPage, (selectedPage) => {
+  const virtualInstances: Instances = new Map();
+  if (selectedPage) {
+    virtualInstances.set(ROOT_INSTANCE_ID, {
+      type: "instance",
+      id: ROOT_INSTANCE_ID,
+      component: rootComponent,
+      children: [{ type: "id", value: selectedPage.rootInstanceId }],
+    });
+  }
+  return virtualInstances;
+});
+
+export const $selectedInstance = computed(
+  [$instances, $virtualInstances, $awareness],
+  (instances, virtualInstances, awareness) => {
+    if (awareness?.instanceSelector === undefined) {
+      return;
+    }
+    const [selectedInstanceId] = awareness.instanceSelector;
+    return (
+      instances.get(selectedInstanceId) ??
+      virtualInstances.get(selectedInstanceId)
+    );
   }
 );
 

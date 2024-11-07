@@ -22,7 +22,6 @@ import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
-  $selectedInstance,
   $registeredComponentMetas,
   $dragAndDropState,
 } from "~/shared/nano-states";
@@ -32,7 +31,7 @@ import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedInstance, $selectedPage } from "~/shared/awareness";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);

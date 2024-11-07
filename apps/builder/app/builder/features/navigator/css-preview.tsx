@@ -15,8 +15,8 @@ import type { StyleMap, StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { highlightCss } from "~/builder/shared/code-highlight";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { $definedComputedStyles } from "~/builder/features/style-panel/shared/model";
+import { $selectedInstance } from "~/shared/awareness";
 
 const preStyle = css(textVariants.mono, {
   margin: 0,
@@ -80,13 +80,12 @@ const getCssText = (
 };
 
 const $highlightedCss = computed(
-  [$selectedInstanceSelector, $definedComputedStyles],
-  (instanceSelector, computedStyles) => {
-    if (instanceSelector === undefined) {
+  [$selectedInstance, $definedComputedStyles],
+  (instance, computedStyles) => {
+    if (instance === undefined) {
       return;
     }
-    const [instanceId] = instanceSelector;
-    const cssText = getCssText(computedStyles, instanceId);
+    const cssText = getCssText(computedStyles, instance.id);
     return highlightCss(cssText);
   }
 );
