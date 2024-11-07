@@ -15,6 +15,7 @@ import {
   getActiveEditor,
   hasSelectionFormat,
 } from "../features/text-editor/toolbar-connector";
+import { selectInstance } from "~/shared/awareness";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
@@ -45,7 +46,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // When an event is triggered from the Builder,
         // the canvas element may be unfocused, so it's important to focus the element on the canvas.
         element.focus();
-        $selectedInstanceSelector.set(editableInstanceSelector);
+        selectInstance(editableInstanceSelector);
         $textEditingInstanceSelector.set({
           selector: editableInstanceSelector,
           reason: "enter",
@@ -70,7 +71,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
         // unselect both instance and style source
-        $selectedInstanceSelector.set(undefined);
+        selectInstance(undefined);
       },
     },
 

@@ -53,7 +53,6 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -62,7 +61,7 @@ import {
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
 import { setDataCollapsed } from "~/canvas/collapsed";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage, selectInstance } from "~/shared/awareness";
 // import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
@@ -985,7 +984,7 @@ export const TextEditor = ({
           ...args,
         });
 
-        $selectedInstanceSelector.set(editableInstanceSelectors[nextIndex]);
+        selectInstance(editableInstanceSelectors[nextIndex]);
 
         break;
       }

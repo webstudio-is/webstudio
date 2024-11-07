@@ -20,7 +20,6 @@ import { parseCssFragment } from "./css-fragment";
 import {
   $breakpoints,
   $selectedBreakpointId,
-  $selectedInstanceSelector,
   $styles,
   $styleSources,
   $styleSourceSelections,
@@ -28,6 +27,7 @@ import {
 import { registerContainers } from "~/shared/sync";
 import { setProperty } from "./use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { $awareness } from "~/shared/awareness";
 
 setEnv("*");
 registerContainers();
@@ -35,7 +35,10 @@ registerContainers();
 beforeEach(() => {
   $breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
   $selectedBreakpointId.set("base");
-  $selectedInstanceSelector.set(["box"]);
+  $awareness.set({
+    pageId: "",
+    instanceSelector: ["box"],
+  });
   $styleSourceSelections.set(new Map());
   $styleSources.set(new Map());
   $styles.set(new Map());

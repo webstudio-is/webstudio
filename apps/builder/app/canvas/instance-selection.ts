@@ -1,13 +1,10 @@
 import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
 import { findClosestEditableInstanceSelector } from "~/shared/instance-utils";
-import {
-  $instances,
-  $registeredComponentMetas,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $instances, $registeredComponentMetas } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
+import { $awareness, selectInstance } from "~/shared/awareness";
 
 const isElementBeingEdited = (element: Element) => {
   if (element.closest("[contenteditable=true]")) {
@@ -49,8 +46,8 @@ export const subscribeInstanceSelection = ({
       }
 
       // Prevent unnecessary updates (2 clicks are registered before a double click)
-      if (!shallowEqual(instanceSelector, $selectedInstanceSelector.get())) {
-        $selectedInstanceSelector.set(instanceSelector);
+      if (!shallowEqual(instanceSelector, $awareness.get()?.instanceSelector)) {
+        selectInstance(instanceSelector);
       }
     },
     { passive: true, signal }
@@ -87,7 +84,7 @@ export const subscribeInstanceSelection = ({
 
       // Prevent unnecessary updates (should already be selected during click)
       if (!shallowEqual(instanceSelector, editableInstanceSelector)) {
-        $selectedInstanceSelector.set(editableInstanceSelector);
+        selectInstance(editableInstanceSelector);
       }
 
       $textEditingInstanceSelector.set({

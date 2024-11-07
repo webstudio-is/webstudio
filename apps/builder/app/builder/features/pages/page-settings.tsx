@@ -70,7 +70,6 @@ import {
   $assets,
   $instances,
   $pages,
-  $selectedInstanceSelector,
   $dataSources,
   computeExpression,
   $dataSourceVariables,
@@ -108,6 +107,7 @@ import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { Card } from "../marketplace/card";
+import { selectInstance } from "~/shared/awareness";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -1390,7 +1390,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
       });
 
       registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);
-      $selectedInstanceSelector.set(undefined);
+      selectInstance(undefined);
     }
   );
 };

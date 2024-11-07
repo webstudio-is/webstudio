@@ -55,7 +55,7 @@ import {
 } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage, selectInstance } from "~/shared/awareness";
 
 type TreeItem = {
   level: number;
@@ -485,8 +485,8 @@ export const NavigatorTree = () => {
             level={0}
             isSelected={selectedKey === ROOT_INSTANCE_ID}
             buttonProps={{
-              onClick: () => $selectedInstanceSelector.set([ROOT_INSTANCE_ID]),
-              onFocus: () => $selectedInstanceSelector.set([ROOT_INSTANCE_ID]),
+              onClick: () => selectInstance([ROOT_INSTANCE_ID]),
+              onFocus: () => selectInstance([ROOT_INSTANCE_ID]),
             }}
             action={
               <Tooltip
@@ -588,8 +588,8 @@ export const NavigatorTree = () => {
                   onMouseEnter: () =>
                     $hoveredInstanceSelector.set(item.selector),
                   onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
-                  onClick: () => $selectedInstanceSelector.set(item.selector),
-                  onFocus: () => $selectedInstanceSelector.set(item.selector),
+                  onClick: () => selectInstance(item.selector),
+                  onFocus: () => selectInstance(item.selector),
                   onKeyDown: (event) => {
                     if (event.key === "Enter") {
                       emitCommand("editInstanceText");
