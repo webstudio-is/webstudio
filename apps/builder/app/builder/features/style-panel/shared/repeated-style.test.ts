@@ -19,6 +19,7 @@ import { createComputedStyleDeclStore } from "./model";
 import { parseCssFragment } from "./css-fragment";
 import {
   $breakpoints,
+  $instances,
   $selectedBreakpointId,
   $styles,
   $styleSources,
@@ -39,6 +40,11 @@ beforeEach(() => {
     pageId: "",
     instanceSelector: ["box"],
   });
+  $instances.set(
+    new Map([
+      ["box", { type: "instance", id: "box", component: "Box", children: [] }],
+    ])
+  );
   $styleSourceSelections.set(new Map());
   $styleSources.set(new Map());
   $styles.set(new Map());
