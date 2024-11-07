@@ -96,10 +96,6 @@ const SidePanel = ({
         //overflowY: "auto",
         bc: theme.colors.backgroundPanel,
         height: "100%",
-        "&:last-of-type": {
-          // Ensure content still has full width, avoid subpixels give layout round numbers
-          boxShadow: `inset 1px 0 0 0 ${theme.colors.borderMain}`,
-        },
         ...css,
       }}
     >
@@ -410,7 +406,19 @@ export const Builder = ({
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
-            css={{ overflow: "hidden" }}
+            css={{
+              overflow: "hidden",
+              // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
+              "&::after": {
+                content: "''",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: 1,
+                background: theme.colors.borderMain,
+              },
+            }}
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>

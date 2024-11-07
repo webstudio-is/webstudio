@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Box, Kbd, rawTheme, Text } from "@webstudio-is/design-system";
+import { Kbd, rawTheme, Text } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
 import { Flex } from "@webstudio-is/design-system";
@@ -183,80 +183,79 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   });
 
   return (
-    <Flex grow>
-      <SidebarTabs
-        activationMode="manual"
-        value={activePanel}
-        orientation="vertical"
-      >
-        {
-          // In preview mode, we don't show left sidebar, but we want to allow pages panel to be open in the preview mode.
-          // This way user can switch pages without exiting preview mode.
-        }
-        {isPreviewMode === false && (
-          <>
-            <ExternalDragDropMonitor />
-            <div ref={tabsWrapperRef} style={{ display: "contents" }}>
-              <SidebarTabsList>
-                {panels.map(({ name, Icon, label }) => {
-                  return (
-                    <SidebarTabsTrigger
-                      key={name}
-                      label={label}
-                      value={name}
-                      onClick={() => {
-                        toggleActiveSidebarPanel(name);
-                      }}
-                    >
-                      <Icon size={rawTheme.spacing[10]} />
-                    </SidebarTabsTrigger>
-                  );
-                })}
-              </SidebarTabsList>
-            </div>
-
-            <Box css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}>
-              <AiTabTrigger />
-              <HelpTabTrigger />
-            </Box>
-          </>
-        )}
-
-        <SidebarTabsContent
-          value={activePanel === "none" ? "" : activePanel}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setActiveSidebarPanel("none");
-            }
-          }}
-          css={{
-            width: theme.spacing[30],
-            // We need the node to be rendered but hidden
-            // to keep receiving the drag events.
-            visibility:
-              dragAndDropState.isDragging &&
-              dragAndDropState.dragPayload?.origin === "panel" &&
-              getSetting("navigatorLayout") !== "undocked"
-                ? "hidden"
-                : "visible",
-          }}
+    <SidebarTabs
+      activationMode="manual"
+      value={activePanel}
+      orientation="vertical"
+    >
+      {
+        // In preview mode, we don't show left sidebar, but we want to allow pages panel to be open in the preview mode.
+        // This way user can switch pages without exiting preview mode.
+      }
+      {isPreviewMode === false && (
+        <Flex
+          grow
+          direction="column"
+          css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}
         >
-          <Flex
-            css={{
-              position: "relative",
-              height: "100%",
-              flexGrow: 1,
-              background: theme.colors.backgroundPanel,
-            }}
-            direction="column"
-          >
-            <Panel
-              publish={publish}
-              onClose={() => setActiveSidebarPanel("none")}
-            />
-          </Flex>
-        </SidebarTabsContent>
-      </SidebarTabs>
-    </Flex>
+          <ExternalDragDropMonitor />
+          <div ref={tabsWrapperRef} style={{ display: "contents" }}>
+            <SidebarTabsList>
+              {panels.map(({ name, Icon, label }) => {
+                return (
+                  <SidebarTabsTrigger
+                    key={name}
+                    label={label}
+                    value={name}
+                    onClick={() => {
+                      toggleActiveSidebarPanel(name);
+                    }}
+                  >
+                    <Icon size={rawTheme.spacing[10]} />
+                  </SidebarTabsTrigger>
+                );
+              })}
+            </SidebarTabsList>
+          </div>
+          <AiTabTrigger />
+          <HelpTabTrigger />
+        </Flex>
+      )}
+
+      <SidebarTabsContent
+        value={activePanel === "none" ? "" : activePanel}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setActiveSidebarPanel("none");
+          }
+        }}
+        css={{
+          width: theme.spacing[30],
+          // We need the node to be rendered but hidden
+          // to keep receiving the drag events.
+          visibility:
+            dragAndDropState.isDragging &&
+            dragAndDropState.dragPayload?.origin === "panel" &&
+            getSetting("navigatorLayout") !== "undocked"
+              ? "hidden"
+              : "visible",
+        }}
+      >
+        <Flex
+          css={{
+            position: "relative",
+            height: "100%",
+            flexGrow: 1,
+            background: theme.colors.backgroundPanel,
+          }}
+          direction="column"
+        >
+          <Panel
+            publish={publish}
+            onClose={() => setActiveSidebarPanel("none")}
+          />
+        </Flex>
+      </SidebarTabsContent>
+    </SidebarTabs>
   );
 };

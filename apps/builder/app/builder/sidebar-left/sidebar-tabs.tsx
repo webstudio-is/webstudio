@@ -18,6 +18,7 @@ export const SidebarTabs = styled(Tabs, {
   alignItems: "center",
   position: "relative",
   boxSizing: "border-box",
+  flexGrow: 1,
 });
 
 const triggerFocusRing = focusRingStyle();
@@ -93,7 +94,6 @@ export const SidebarTabsList = styled(TabsList, {
   flexDirection: "column",
   alignItems: "center",
   outline: "none",
-  borderRight: `1px solid  ${theme.colors.borderMain}`,
   flexGrow: 1,
   backgroundColor: theme.colors.backgroundPanel,
 });
@@ -106,7 +106,14 @@ export const SidebarTabsContent = styled(TabsContent, {
   height: "100%",
   bc: theme.colors.backgroundPanel,
   outline: "none",
-  '&[data-state="active"]': {
-    borderRight: `1px solid ${theme.colors.borderMain}`,
+  // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
+  "&::after": {
+    content: "''",
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 1,
+    background: theme.colors.borderMain,
   },
 });
