@@ -58,6 +58,13 @@ export const $selectedInstance = computed(
   }
 );
 
+export const $selectedInstanceKey = computed($awareness, (awareness) => {
+  if (awareness === undefined) {
+    return;
+  }
+  return JSON.stringify(awareness.instanceSelector);
+});
+
 export const selectPage = (pageId: Page["id"]) => {
   const pages = $pages.get();
   if (pages === undefined) {

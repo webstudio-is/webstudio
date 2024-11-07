@@ -40,7 +40,6 @@ import { serverSyncStore } from "~/shared/sync";
 import {
   $dataSources,
   $resources,
-  $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -55,7 +54,11 @@ import {
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
-import { $selectedInstance, $selectedPage } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceKey,
+  $selectedPage,
+} from "~/shared/awareness";
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -380,25 +383,23 @@ const $hiddenDataSourceIds = computed(
 
 const $selectedInstanceScope = computed(
   [
-    $selectedInstanceSelector,
+    $selectedInstanceKey,
     $variableValuesByInstanceSelector,
     $dataSources,
     $hiddenDataSourceIds,
   ],
   (
-    instanceSelector,
+    instanceKey,
     variableValuesByInstanceSelector,
     dataSources,
     hiddenDataSourceIds
   ) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
-    if (instanceSelector === undefined) {
+    if (instanceKey === undefined) {
       return { scope, aliases };
     }
-    const values = variableValuesByInstanceSelector.get(
-      JSON.stringify(instanceSelector)
-    );
+    const values = variableValuesByInstanceSelector.get(instanceKey);
     if (values) {
       for (const [dataSourceId, value] of values) {
         if (hiddenDataSourceIds.has(dataSourceId)) {

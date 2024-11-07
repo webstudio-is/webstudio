@@ -33,11 +33,11 @@ import {
 import {
   $dataSourceVariables,
   $dataSources,
-  $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
+import { $selectedInstanceKey } from "~/shared/awareness";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -312,16 +312,14 @@ export const Row = ({
 );
 
 export const $selectedInstanceScope = computed(
-  [$selectedInstanceSelector, $variableValuesByInstanceSelector, $dataSources],
-  (instanceSelector, variableValuesByInstanceSelector, dataSources) => {
+  [$selectedInstanceKey, $variableValuesByInstanceSelector, $dataSources],
+  (instanceKey, variableValuesByInstanceSelector, dataSources) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
-    if (instanceSelector === undefined) {
+    if (instanceKey === undefined) {
       return { scope, aliases };
     }
-    const values = variableValuesByInstanceSelector.get(
-      JSON.stringify(instanceSelector)
-    );
+    const values = variableValuesByInstanceSelector.get(instanceKey);
     if (values) {
       for (const [dataSourceId, value] of values) {
         const dataSource = dataSources.get(dataSourceId);
