@@ -3,6 +3,7 @@ import { registerContainers } from "~/shared/sync";
 import { Section } from "./advanced";
 import {
   $breakpoints,
+  $instances,
   $selectedBreakpointId,
   $styles,
   $styleSourceSelections,
@@ -26,6 +27,11 @@ $selectedBreakpointId.set("base");
 $styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
+);
+$instances.set(
+  new Map([
+    ["box", { type: "instance", id: "box", component: "Box", children: [] }],
+  ])
 );
 $awareness.set({
   pageId: "",

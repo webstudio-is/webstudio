@@ -40,6 +40,11 @@ $styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
+$instances.set(
+  new Map([
+    ["box", { type: "instance", id: "box", component: "Box", children: [] }],
+  ])
+);
 $awareness.set({
   pageId: "",
   instanceSelector: ["box"],
