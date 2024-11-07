@@ -408,7 +408,7 @@ export const Builder = ({
             isPreviewMode={isPreviewMode}
             css={{
               overflow: "hidden",
-              // Ensure content still has full width, avoid subpixels give layout round numbers
+              // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
               "&::after": {
                 content: "''",
                 position: "absolute",
