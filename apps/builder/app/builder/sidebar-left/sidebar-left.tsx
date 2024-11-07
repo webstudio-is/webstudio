@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Box, Kbd, rawTheme, Text } from "@webstudio-is/design-system";
+import { Kbd, rawTheme, Text } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
 import { Flex } from "@webstudio-is/design-system";
