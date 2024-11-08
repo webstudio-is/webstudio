@@ -51,9 +51,12 @@ export const SectionGeneral = () => {
   );
   const siteNameId = useId();
   const contactEmailId = useId();
+  const contactEmail = (meta.contactEmail ?? "").trim();
   const contactEmailError =
-    (meta.contactEmail ?? "").trim().length === 0 ||
-    Email.safeParse(meta.contactEmail).success
+    contactEmail.length === 0 ||
+    contactEmail
+      .split(",")
+      .every((email) => Email.safeParse(email.trim()).success)
       ? undefined
       : "Contact email is invalid.";
   const assets = useStore($assets);
