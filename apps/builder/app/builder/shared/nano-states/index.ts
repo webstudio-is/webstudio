@@ -41,7 +41,7 @@ export const $activeInspectorPanel = atom<"style" | "settings">("style");
 export const $userPlanFeatures = atom<UserPlanFeatures>({
   allowShareAdminLinks: false,
   allowDynamicData: false,
-  allowContactEmail: false,
+  maxContactEmails: 0,
   maxDomainsAllowedPerUser: 1,
   hasSubscription: false,
   hasProPlan: false,
