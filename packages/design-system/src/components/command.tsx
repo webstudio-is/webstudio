@@ -70,7 +70,7 @@ export const CommandDialog = ({
           <VisuallyHidden asChild>
             <DialogTitle>Command Panel</DialogTitle>
           </VisuallyHidden>
-          <Command>{children}</Command>
+          {children}
         </CommandDialogContent>
       </DialogPortal>
     </Dialog>

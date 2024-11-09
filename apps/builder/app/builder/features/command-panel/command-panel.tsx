@@ -7,8 +7,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
-  Kbd,
-  Text,
+  Command,
   CommandDialog,
   CommandInput,
   CommandList,
@@ -18,9 +17,11 @@ import {
   CommandIcon,
   ScrollArea,
   Flex,
+  Kbd,
+  Text,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
-import type { Breakpoint } from "@webstudio-is/sdk";
+import type { Breakpoint, Page } from "@webstudio-is/sdk";
 import {
   $breakpoints,
   $pages,
@@ -33,6 +34,9 @@ import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
 import { insert as insertComponent } from "~/builder/features/components/insert";
 import { $selectedPage, selectPage } from "~/shared/awareness";
+import { useState } from "react";
+import { matchSorter } from "match-sorter";
+import { mapGroupBy } from "~/shared/shim";
 
 const $commandPanel = atom<
   | undefined
@@ -75,37 +79,57 @@ const getMetaScore = (meta: WsComponentMeta) => {
   return categoryScore * 1000 + componentScore;
 };
 
-const $visibleMetas = computed(
+type ComponentOption = {
+  tokens: string[];
+  type: "component";
+  component: string;
+  label: string;
+  meta: WsComponentMeta;
+};
+
+const $componentOptions = computed(
   [$registeredComponentMetas, $selectedPage],
   (metas, selectedPage) => {
-    const entries = Array.from(metas)
-      .sort(
-        ([_leftComponent, leftMeta], [_rightComponent, rightMeta]) =>
-          getMetaScore(leftMeta) - getMetaScore(rightMeta)
-      )
-      .filter(([component, meta]) => {
-        const category = meta.category ?? "hidden";
-        if (category === "hidden" || category === "internal") {
-          return false;
+    const componentOptions: ComponentOption[] = [];
+    for (const [component, meta] of metas) {
+      const category = meta.category ?? "hidden";
+      if (category === "hidden" || category === "internal") {
+        continue;
+      }
+      // show only xml category and collection component in xml documents
+      if (selectedPage?.meta.documentType === "xml") {
+        if (category !== "xml" && component !== collectionComponent) {
+          continue;
         }
-        // show only xml category and collection component in xml documents
-        if (selectedPage?.meta.documentType === "xml") {
-          return category === "xml" || component === collectionComponent;
-        }
+      } else {
         // show everything except xml category in html documents
-        return category !== "xml";
+        if (category === "xml") {
+          continue;
+        }
+      }
+      const label = getInstanceLabel({ component }, meta);
+      componentOptions.push({
+        tokens: ["components", label, category],
+        type: "component",
+        component,
+        label,
+        meta,
       });
-    return new Map(entries);
+    }
+    componentOptions.sort(
+      ({ meta: leftMeta }, { meta: rightMeta }) =>
+        getMetaScore(leftMeta) - getMetaScore(rightMeta)
+    );
+    return componentOptions;
   }
 );
 
-const ComponentsGroup = () => {
-  const metas = useStore($visibleMetas);
+const ComponentsGroup = ({ options }: { options: ComponentOption[] }) => {
   return (
     <CommandGroup
       heading={<CommandGroupHeading>Components</CommandGroupHeading>}
     >
-      {Array.from(metas).map(([component, meta]) => {
+      {options.map(({ component, label, meta }) => {
         return (
           <CommandItem
             key={component}
@@ -119,9 +143,9 @@ const ComponentsGroup = () => {
               dangerouslySetInnerHTML={{ __html: meta.icon }}
             ></CommandIcon>
             <Text variant="labelsTitleCase">
-              {getInstanceLabel({ component }, meta)}{" "}
+              {label}{" "}
               <Text as="span" color="moreSubtle">
-                ({humanizeString(meta.category ?? "")})
+                {humanizeString(meta.category ?? "")}
               </Text>
             </Text>
           </CommandItem>
@@ -130,6 +154,38 @@ const ComponentsGroup = () => {
     </CommandGroup>
   );
 };
+
+type BreakpointOption = {
+  tokens: string[];
+  type: "breakpoint";
+  breakpoint: Breakpoint;
+  shortcut: string;
+};
+
+const $breakpointOptions = computed(
+  [$breakpoints, $selectedBreakpoint],
+  (breakpoints, selectedBreakpoint) => {
+    const sortedBreakpoints = Array.from(breakpoints.values()).sort(
+      compareMedia
+    );
+    const breakpointOptions: BreakpointOption[] = [];
+    for (let index = 0; index < sortedBreakpoints.length; index += 1) {
+      const breakpoint = sortedBreakpoints[index];
+      if (breakpoint.id === selectedBreakpoint?.id) {
+        continue;
+      }
+      const width =
+        (breakpoint.minWidth ?? breakpoint.maxWidth)?.toString() ?? "";
+      breakpointOptions.push({
+        tokens: ["breakpoints", breakpoint.label, width],
+        type: "breakpoint",
+        breakpoint,
+        shortcut: (index + 1).toString(),
+      });
+    }
+    return breakpointOptions;
+  }
+);
 
 const getBreakpointLabel = (breakpoint: Breakpoint) => {
   let label = "All Sizes";
@@ -142,90 +198,130 @@ const getBreakpointLabel = (breakpoint: Breakpoint) => {
   return `${breakpoint.label}: ${label}`;
 };
 
-const BreakpointsGroup = () => {
-  const breakpoints = useStore($breakpoints);
-  const sortedBreakpoints = Array.from(breakpoints.values()).sort(compareMedia);
-  const selectedBreakpoint = useStore($selectedBreakpoint);
+const BreakpointsGroup = ({ options }: { options: BreakpointOption[] }) => {
   return (
     <CommandGroup
       heading={<CommandGroupHeading>Breakpoints</CommandGroupHeading>}
     >
-      {sortedBreakpoints.map(
-        (breakpoint, index) =>
-          breakpoint.id !== selectedBreakpoint?.id && (
-            <CommandItem
-              key={breakpoint.id}
-              keywords={["Breakpoints"]}
-              onSelect={() => {
-                closeCommandPanel({ restoreFocus: true });
-                $selectedBreakpointId.set(breakpoint.id);
-                setCanvasWidth(breakpoint.id);
-              }}
-            >
-              <CommandIcon></CommandIcon>
-              <Text variant="labelsTitleCase">
-                {getBreakpointLabel(breakpoint)}
-              </Text>
-              <Kbd value={[(index + 1).toString()]} />
-            </CommandItem>
-          )
-      )}
+      {options.map(({ breakpoint, shortcut }) => (
+        <CommandItem
+          key={breakpoint.id}
+          onSelect={() => {
+            closeCommandPanel({ restoreFocus: true });
+            $selectedBreakpointId.set(breakpoint.id);
+            setCanvasWidth(breakpoint.id);
+          }}
+        >
+          <CommandIcon></CommandIcon>
+          <Text variant="labelsTitleCase">
+            {getBreakpointLabel(breakpoint)}
+          </Text>
+          <Kbd value={[shortcut]} />
+        </CommandItem>
+      ))}
     </CommandGroup>
   );
 };
 
-const PagesGroup = () => {
-  const pagesData = useStore($pages);
-  const selectedPage = useStore($selectedPage);
-  if (pagesData === undefined) {
-    return;
+type PageOption = {
+  tokens: string[];
+  type: "page";
+  page: Page;
+};
+
+const $pageOptions = computed(
+  [$pages, $selectedPage],
+  (pages, selectedPage) => {
+    const pageOptions: PageOption[] = [];
+    if (pages) {
+      for (const page of [pages.homePage, ...pages.pages]) {
+        if (page.id === selectedPage?.id) {
+          continue;
+        }
+        pageOptions.push({
+          tokens: ["pages", page.name],
+          type: "page",
+          page,
+        });
+      }
+    }
+    return pageOptions;
   }
-  const pages = [pagesData.homePage, ...pagesData.pages];
+);
+
+const PagesGroup = ({ options }: { options: PageOption[] }) => {
   return (
     <CommandGroup heading={<CommandGroupHeading>Pages</CommandGroupHeading>}>
-      {pages.map(
-        (page) =>
-          page.id !== selectedPage?.id && (
-            <CommandItem
-              key={page.id}
-              keywords={["pages"]}
-              onSelect={() => {
-                closeCommandPanel();
-                selectPage(page.id);
-              }}
-            >
-              <CommandIcon></CommandIcon>
-              <Text variant="labelsTitleCase">{page.name}</Text>
-            </CommandItem>
-          )
-      )}
+      {options.map(({ page }) => (
+        <CommandItem
+          key={page.id}
+          onSelect={() => {
+            closeCommandPanel();
+            selectPage(page.id);
+          }}
+        >
+          <CommandIcon></CommandIcon>
+          <Text variant="labelsTitleCase">{page.name}</Text>
+        </CommandItem>
+      ))}
     </CommandGroup>
   );
 };
 
+const $options = computed(
+  [$componentOptions, $breakpointOptions, $pageOptions],
+  (componentOptions, breakpointOptions, pageOptions) => [
+    ...componentOptions,
+    ...breakpointOptions,
+    ...pageOptions,
+  ]
+);
+
 const CommandDialogContent = () => {
+  const [search, setSearch] = useState("");
+  const options = useStore($options);
+  const matches = matchSorter(options, search, {
+    keys: ["tokens"],
+  });
+  const groups = mapGroupBy(matches, (match) => match.type);
   return (
-    <>
-      <CommandInput />
+    <Command shouldFilter={false}>
+      <CommandInput value={search} onValueChange={setSearch} />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
           <CommandList>
-            <ComponentsGroup />
-            <BreakpointsGroup />
-            <PagesGroup />
+            {Array.from(groups).map(([group, matches]) => {
+              if (group === "component") {
+                return (
+                  <ComponentsGroup
+                    key={group}
+                    options={matches as ComponentOption[]}
+                  />
+                );
+              }
+              if (group === "breakpoint") {
+                return (
+                  <BreakpointsGroup
+                    key={group}
+                    options={matches as BreakpointOption[]}
+                  />
+                );
+              }
+              if (group === "page") {
+                return (
+                  <PagesGroup key={group} options={matches as PageOption[]} />
+                );
+              }
+            })}
           </CommandList>
         </ScrollArea>
       </Flex>
-    </>
+    </Command>
   );
 };
 
 export const CommandPanel = () => {
   const isOpen = useStore($commandPanel) !== undefined;
-
-  if (isOpen === false) {
-    return;
-  }
   return (
     <CommandDialog
       open={isOpen}

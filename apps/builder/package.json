@@ -89,7 +89,7 @@
     "immerhin": "^0.9.0",
     "isbot": "^5.1.17",
     "lexical": "^0.16.0",
-    "match-sorter": "^6.3.4",
+    "match-sorter": "^8.0.0",
     "mdast-util-from-markdown": "^2.0.1",
     "mdast-util-gfm": "^3.0.0",
     "micromark-extension-gfm": "^3.0.0",
