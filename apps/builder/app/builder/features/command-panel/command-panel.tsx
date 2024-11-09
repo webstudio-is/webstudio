@@ -1,6 +1,10 @@
-import { atom } from "nanostores";
+import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { collectionComponent } from "@webstudio-is/react-sdk";
+import {
+  collectionComponent,
+  componentCategories,
+  WsComponentMeta,
+} from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Kbd,
@@ -64,25 +68,44 @@ const closeCommandPanel = ({
   }
 };
 
+const getMetaScore = (meta: WsComponentMeta) => {
+  const categoryScore = componentCategories.indexOf(meta.category ?? "hidden");
+  const componentScore = meta.order ?? Number.MAX_SAFE_INTEGER;
+  // shift category
+  return categoryScore * 1000 + componentScore;
+};
+
+const $visibleMetas = computed(
+  [$registeredComponentMetas, $selectedPage],
+  (metas, selectedPage) => {
+    const entries = Array.from(metas)
+      .sort(
+        ([_leftComponent, leftMeta], [_rightComponent, rightMeta]) =>
+          getMetaScore(leftMeta) - getMetaScore(rightMeta)
+      )
+      .filter(([component, meta]) => {
+        const category = meta.category ?? "hidden";
+        if (category === "hidden" || category === "internal") {
+          return false;
+        }
+        // show only xml category and collection component in xml documents
+        if (selectedPage?.meta.documentType === "xml") {
+          return category === "xml" || component === collectionComponent;
+        }
+        // show everything except xml category in html documents
+        return category !== "xml";
+      });
+    return new Map(entries);
+  }
+);
+
 const ComponentsGroup = () => {
-  const selectedPage = useStore($selectedPage);
-  const metas = useStore($registeredComponentMetas);
+  const metas = useStore($visibleMetas);
   return (
     <CommandGroup
       heading={<CommandGroupHeading>Components</CommandGroupHeading>}
     >
       {Array.from(metas).map(([component, meta]) => {
-        const category = meta.category ?? "hidden";
-        if (category === "hidden" || category === "internal") {
-          return;
-        }
-        if (selectedPage?.meta.documentType === "xml") {
-          if (category !== "xml" && component !== collectionComponent) {
-            return;
-          }
-        } else if (category === "xml") {
-          return;
-        }
         return (
           <CommandItem
             key={component}
@@ -98,7 +121,7 @@ const ComponentsGroup = () => {
             <Text variant="labelsTitleCase">
               {getInstanceLabel({ component }, meta)}{" "}
               <Text as="span" color="moreSubtle">
-                ({humanizeString(category)})
+                ({humanizeString(meta.category ?? "")})
               </Text>
             </Text>
           </CommandItem>
