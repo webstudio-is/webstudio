@@ -280,9 +280,12 @@ const $options = computed(
 const CommandDialogContent = () => {
   const [search, setSearch] = useState("");
   const options = useStore($options);
-  const matches = matchSorter(options, search, {
-    keys: ["tokens"],
-  });
+  let matches = options;
+  for (const word of search.trim().split(/\s+/)) {
+    matches = matchSorter(matches, word, {
+      keys: ["tokens"],
+    });
+  }
   const groups = mapGroupBy(matches, (match) => match.type);
   return (
     <Command shouldFilter={false}>
