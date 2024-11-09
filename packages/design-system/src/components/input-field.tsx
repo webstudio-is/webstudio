@@ -85,16 +85,14 @@ const containerStyle = css({
   border: `solid 1px ${theme.colors.borderMain}`,
   backgroundColor: theme.colors.backgroundControls,
   "&:focus-within": {
-    border: `solid 1px ${theme.colors.borderFocus}`,
+    borderColor: theme.colors.borderFocus,
   },
-
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
   "&:focus-within:has([data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
-
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
     backgroundColor: theme.colors.backgroundInputDisabled,
   },

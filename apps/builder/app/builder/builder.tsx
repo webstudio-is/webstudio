@@ -58,6 +58,7 @@ import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
 import { initCopyPaste } from "~/shared/copy-paste";
+import { CommandPanel } from "./features/command-panel";
 
 registerContainers();
 
@@ -437,6 +438,7 @@ export const Builder = ({
         </ChromeWrapper>
         <Loading state={loadingState} />
         <BlockingAlerts />
+        <CommandPanel />
       </div>
     </TooltipProvider>
   );
