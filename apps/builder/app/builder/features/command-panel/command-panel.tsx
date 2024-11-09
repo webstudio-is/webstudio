@@ -25,11 +25,10 @@ import {
   $selectedBreakpointId,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
-import { switchPage } from "~/shared/pages";
 import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
 import { insert as insertComponent } from "~/builder/features/components/insert";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage, selectPage } from "~/shared/awareness";
 
 const $commandPanel = atom<
   | undefined
@@ -169,7 +168,7 @@ const PagesGroup = () => {
               keywords={["pages"]}
               onSelect={() => {
                 closeCommandPanel();
-                switchPage(page.id);
+                selectPage(page.id);
               }}
             >
               <CommandIcon></CommandIcon>
