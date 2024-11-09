@@ -14,6 +14,7 @@ import {
   Tooltip,
   InputErrorsTooltip,
   ProBadge,
+  TextArea,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { ImageControl } from "./image-control";
@@ -44,38 +45,61 @@ const defaultMetaSettings: ProjectMeta = {
 
 const Email = z.string().email();
 
+const validateContactEmail = (
+  contactEmail: string,
+  maxContactEmails: number
+) => {
+  contactEmail = contactEmail.trim();
+  if (contactEmail.length === 0) {
+    return;
+  }
+  const emails = contactEmail.split(/\s*,\s*/);
+  if (emails.length > maxContactEmails) {
+    return `Only ${maxContactEmails} emails are allowed.`;
+  }
+  if (emails.every((email) => Email.safeParse(email).success) === false) {
+    return "Contact email is invalid.";
+  }
+};
+
+const saveSetting = <Name extends keyof ProjectMeta>(
+  name: keyof ProjectMeta,
+  value: ProjectMeta[Name]
+) => {
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    if (pages.meta === undefined) {
+      pages.meta = {};
+    }
+    pages.meta[name] = value;
+  });
+};
+
 export const SectionGeneral = () => {
-  const { allowContactEmail } = useStore($userPlanFeatures);
+  const { maxContactEmails } = useStore($userPlanFeatures);
+  const allowContactEmail = maxContactEmails > 0;
   const [meta, setMeta] = useState(
     () => $pages.get()?.meta ?? defaultMetaSettings
   );
   const siteNameId = useId();
   const contactEmailId = useId();
-  const contactEmailError =
-    (meta.contactEmail ?? "").trim().length === 0 ||
-    Email.safeParse(meta.contactEmail).success
-      ? undefined
-      : "Contact email is invalid.";
+  const contactEmailError = validateContactEmail(
+    meta.contactEmail ?? "",
+    maxContactEmails
+  );
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
   const imageLoader = useStore($imageLoader);
 
-  const handleSave = <Setting extends keyof ProjectMeta>(setting: Setting) => {
-    return (value: ProjectMeta[Setting]) => {
-      setMeta({
-        ...meta,
-        [setting]: value,
-      });
-      serverSyncStore.createTransaction([$pages], (pages) => {
-        if (pages === undefined) {
-          return;
-        }
-        if (pages.meta === undefined) {
-          pages.meta = {};
-        }
-        pages.meta[setting] = value;
-      });
+  const handleSave = <Name extends keyof ProjectMeta>(
+    name: keyof ProjectMeta
+  ) => {
+    return (value: ProjectMeta[Name]) => {
+      setMeta({ ...meta, [name]: value });
+      saveSetting(name, value);
     };
   };
 
@@ -120,14 +144,19 @@ export const SectionGeneral = () => {
         <InputErrorsTooltip
           errors={contactEmailError ? [contactEmailError] : undefined}
         >
-          <InputField
+          <TextArea
             id={contactEmailId}
             color={contactEmailError ? "error" : undefined}
-            placeholder="email@address.com"
+            placeholder="john@company.com, jane@company.com"
             disabled={allowContactEmail === false}
+            autoGrow={true}
+            rows={1}
             value={meta.contactEmail ?? ""}
-            onChange={(event) => {
-              handleSave("contactEmail")(event.target.value);
+            onChange={(value) => {
+              setMeta({ ...meta, contactEmail: value });
+              if (validateContactEmail(value, maxContactEmails) === undefined) {
+                saveSetting("contactEmail", value);
+              }
             }}
           />
         </InputErrorsTooltip>
