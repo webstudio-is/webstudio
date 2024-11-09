@@ -113,7 +113,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "clickCanvas",
       handler: () => {
         $breakpointsMenuView.set(undefined);
-        setActiveSidebarPanel(undefined);
+        setActiveSidebarPanel("auto");
       },
     },
 
@@ -124,7 +124,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+shift+p", "ctrl+shift+p"],
       handler: () => {
         $isPreviewMode.set($isPreviewMode.get() === false);
-        setActiveSidebarPanel(undefined);
+        setActiveSidebarPanel("auto");
       },
     },
     {
