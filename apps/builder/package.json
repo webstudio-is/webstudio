@@ -78,7 +78,7 @@
     "bcp-47": "^2.1.0",
     "change-case": "^5.4.4",
     "colord": "^2.9.3",
-    "cookie": "^0.6.0",
+    "cookie": "^1.0.1",
     "css-tree": "^2.3.1",
     "date-fns": "^3.6.0",
     "debug": "^4.3.6",
@@ -124,7 +124,6 @@
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@remix-run/dev": "^2.12.1",
-    "@types/cookie": "^0.6.0",
     "@types/debug": "^4.1.12",
     "@types/dom-navigation": "^1.0.4",
     "@types/react": "^18.2.70",
