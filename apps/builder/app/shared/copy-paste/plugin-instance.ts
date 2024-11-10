@@ -8,26 +8,19 @@ import {
   WebstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/sdk";
-import {
-  $selectedInstanceSelector,
-  $project,
-  $registeredComponentMetas,
-  $instances,
-} from "../nano-states";
+import { $selectedInstanceSelector, $instances } from "../nano-states";
 import type { InstanceSelector, DroppableTarget } from "../tree-utils";
 import {
-  computeInstancesConstraints,
   deleteInstanceMutable,
   findAvailableDataSources,
-  findClosestDroppableTarget,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   isInstanceDetachable,
   updateWebstudioData,
   getWebstudioData,
   insertInstanceChildrenMutable,
+  findClosestInsertable,
 } from "../instance-utils";
-import { $selectedPage } from "~/shared/awareness";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -92,14 +85,16 @@ export const getPortalFragmentSelector = (
   return [instance.children[0].value, ...instanceSelector];
 };
 
-const getPasteTarget = (
-  data: InstanceData,
-  instanceSelector: InstanceSelector
-): undefined | DroppableTarget => {
+const findPasteTarget = (data: InstanceData): undefined | DroppableTarget => {
   const instances = $instances.get();
 
+  const instanceSelector = $selectedInstanceSelector.get();
+
   // paste after selected instance
-  if (shallowEqual(instanceSelector, data.instanceSelector)) {
+  if (
+    instanceSelector &&
+    shallowEqual(instanceSelector, data.instanceSelector)
+  ) {
     // body is not allowed to copy
     // so clipboard always have at least two level instance selector
     const [currentInstanceId, parentInstanceId] = instanceSelector;
@@ -116,22 +111,15 @@ const getPasteTarget = (
     };
   }
 
+  const insertable = findClosestInsertable(data);
+  if (insertable === undefined) {
+    return;
+  }
+
   const newInstances: Instances = new Map();
   for (const instance of data.instances) {
     newInstances.set(instance.id, instance);
   }
-  const metas = $registeredComponentMetas.get();
-  const rootInstanceId = data.instances[0].id;
-  const pasteTarget = findClosestDroppableTarget(
-    metas,
-    instances,
-    instanceSelector,
-    computeInstancesConstraints(metas, newInstances, [rootInstanceId])
-  );
-  if (pasteTarget === undefined) {
-    return;
-  }
-
   const newInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
     newInstances,
     data.instances[0].id
@@ -151,36 +139,25 @@ const getPasteTarget = (
   const dropTargetSelector =
     // consider portal fragment when check for cycles to avoid cases
     // like pasting portal directly into portal
-    getPortalFragmentSelector(instances, pasteTarget.parentSelector) ??
-    pasteTarget.parentSelector;
+    getPortalFragmentSelector(instances, insertable.parentSelector) ??
+    insertable.parentSelector;
   for (const instanceId of dropTargetSelector) {
     if (preservedChildIds.has(instanceId)) {
       return;
     }
   }
 
-  return pasteTarget;
+  return insertable;
 };
 
 export const onPaste = (clipboardData: string) => {
   const fragment = parse(clipboardData);
 
-  const selectedPage = $selectedPage.get();
-  const project = $project.get();
-
-  if (
-    fragment === undefined ||
-    selectedPage === undefined ||
-    project === undefined
-  ) {
+  if (fragment === undefined) {
     return false;
   }
 
-  // paste to the root if nothing is selected
-  const instanceSelector = $selectedInstanceSelector.get() ?? [
-    selectedPage.rootInstanceId,
-  ];
-  const pasteTarget = getPasteTarget(fragment, instanceSelector);
+  const pasteTarget = findPasteTarget(fragment);
   if (pasteTarget === undefined) {
     return false;
   }
@@ -192,7 +169,7 @@ export const onPaste = (clipboardData: string) => {
       availableDataSources: findAvailableDataSources(
         data.dataSources,
         data.instances,
-        instanceSelector
+        pasteTarget.parentSelector
       ),
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);

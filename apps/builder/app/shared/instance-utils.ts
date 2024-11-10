@@ -35,7 +35,6 @@ import {
 import {
   $props,
   $styles,
-  $selectedInstanceSelector,
   $styleSourceSelections,
   $styleSources,
   $instances,
@@ -63,7 +62,7 @@ import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
-import { $selectedPage, selectInstance } from "./awareness";
+import { $awareness, $selectedPage, selectInstance } from "./awareness";
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   serverSyncStore.createTransaction(
@@ -420,31 +419,22 @@ export const findClosestDroppableComponentIndex = ({
   return -1;
 };
 
-export const findClosestDroppableTarget = (
+const findClosestDroppableTarget = (
   metas: Map<string, WsComponentMeta>,
   instances: Instances,
   instanceSelector: InstanceSelector,
   insertConstraints: InsertConstraints
 ): undefined | DroppableTarget => {
-  if (instanceSelector[0] === ROOT_INSTANCE_ID) {
-    return;
-  }
-  // We want to always allow dropping into the root.
-  // For example when body has text content and the only viable option is to insert at the end.
-  if (instanceSelector.length === 1) {
-    return {
-      parentSelector: instanceSelector,
-      position: "end",
-    };
-  }
   const droppableIndex = findClosestDroppableComponentIndex({
     metas,
     constraints: insertConstraints,
     instances,
     instanceSelector,
-    allowInsertIntoTextContainer: false,
+    // We want to always allow dropping into the root.
+    // For example when body has text content
+    // and the only viable option is to insert at the end.
+    allowInsertIntoTextContainer: instanceSelector.length === 1,
   });
-
   if (droppableIndex === -1) {
     return;
   }
@@ -517,30 +507,8 @@ export const insertInstanceChildrenMutable = (
 
 export const findTargetAndInsertFragment = (fragment: WebstudioFragment) => {
   let isSuccess = false;
-
-  const selectedPage = $selectedPage.get();
-  if (selectedPage === undefined) {
-    return isSuccess;
-  }
-  const metas = $registeredComponentMetas.get();
-  const newInstances = new Map(
-    fragment.instances.map((instance) => [instance.id, instance])
-  );
-  const rootInstanceIds = fragment.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-  // paste to the root if nothing is selected
-  const instanceSelector = $selectedInstanceSelector.get() ?? [
-    selectedPage.rootInstanceId,
-  ];
-  const target = findClosestDroppableTarget(
-    metas,
-    $instances.get(),
-    instanceSelector,
-    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
-  );
-
-  if (target === undefined) {
+  const insertable = findClosestInsertable(fragment);
+  if (insertable === undefined) {
     return isSuccess;
   }
 
@@ -551,7 +519,7 @@ export const findTargetAndInsertFragment = (fragment: WebstudioFragment) => {
       availableDataSources: findAvailableDataSources(
         data.dataSources,
         data.instances,
-        instanceSelector
+        insertable.parentSelector
       ),
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
@@ -562,7 +530,7 @@ export const findTargetAndInsertFragment = (fragment: WebstudioFragment) => {
     const children: Instance["children"] = [
       { type: "id", value: newRootInstanceId },
     ];
-    insertInstanceChildrenMutable(data, children, target);
+    insertInstanceChildrenMutable(data, children, insertable);
     isSuccess = true;
   });
 
@@ -1620,4 +1588,41 @@ export const findClosestSlot = (
       return instance;
     }
   }
+};
+
+export type Insertable = {
+  parentSelector: InstanceSelector;
+  position: number | "end";
+};
+
+export const findClosestInsertable = (
+  fragment: WebstudioFragment
+): undefined | Insertable => {
+  const selectedPage = $selectedPage.get();
+  const awareness = $awareness.get();
+  if (selectedPage === undefined) {
+    return;
+  }
+  // paste to the page root if nothing is selected
+  const instanceSelector = awareness?.instanceSelector ?? [
+    selectedPage.rootInstanceId,
+  ];
+  if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+    toast.error(`Cannot insert into Global Root`);
+    return;
+  }
+  const metas = $registeredComponentMetas.get();
+  const instances = $instances.get();
+  const rootInstanceIds = fragment.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+  const newInstances = new Map(
+    fragment.instances.map((instance) => [instance.id, instance])
+  );
+  return findClosestDroppableTarget(
+    metas,
+    instances,
+    instanceSelector,
+    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
+  );
 };
