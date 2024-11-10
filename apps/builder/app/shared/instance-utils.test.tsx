@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, ws, renderJsx } from "@webstudio-is/sdk/testing";
+import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/sdk/testing";
 import { parseCss } from "@webstudio-is/css-data";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
@@ -25,13 +25,13 @@ import type {
   StyleSources,
   StyleSourceSelections,
   WebstudioData,
+  WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   computeInstancesConstraints,
   findClosestDroppableComponentIndex,
-  findClosestDroppableTarget,
   findClosestEditableInstanceSelector,
   insertTemplateData,
   type InsertConstraints,
@@ -41,6 +41,7 @@ import {
   reparentInstance,
   getWebstudioData,
   insertInstanceChildrenMutable,
+  findClosestInsertable,
 } from "./instance-utils";
 import {
   $assets,
@@ -58,6 +59,7 @@ import {
 } from "./nano-states";
 import { registerContainers } from "./sync";
 import { mapGroupBy } from "./shim";
+import { $awareness, selectInstance } from "./awareness";
 
 enableMapSet();
 registerContainers();
@@ -66,6 +68,22 @@ $pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
 
 const defaultMetasMap = new Map(Object.entries(defaultMetas));
 $registeredComponentMetas.set(defaultMetasMap);
+
+const createFragment = (
+  fragment: Partial<WebstudioFragment>
+): WebstudioFragment => ({
+  children: [],
+  instances: [],
+  styleSourceSelections: [],
+  styleSources: [],
+  breakpoints: [],
+  styles: [],
+  dataSources: [],
+  resources: [],
+  props: [],
+  assets: [],
+  ...fragment,
+});
 
 const createFakeComponentMetas = (
   itemMeta: Partial<WsComponentMeta>,
@@ -411,204 +429,6 @@ describe("find closest droppable component index", () => {
         instanceSelector: ["div", "form", "box", "body"],
       })
     ).toEqual(-1);
-  });
-});
-
-describe("find closest droppable target", () => {
-  const createInstancePair = (
-    id: Instance["id"],
-    component: string,
-    children: Instance["children"]
-  ): [Instance["id"], Instance] => {
-    return [id, { type: "instance", id, component, children }];
-  };
-
-  test("puts in the end if closest instance is container", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [{ type: "id", value: "paragraph" }]),
-      createInstancePair("paragraph", "Paragraph", [
-        { type: "id", value: "bold" },
-      ]),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["box", "body"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["box", "body"],
-      position: "end",
-    });
-  });
-
-  test("puts in the end of root instance", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [{ type: "id", value: "paragraph" }]),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["body"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["body"],
-      position: "end",
-    });
-  });
-
-  test("puts in the end of root instance when root only has text", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "text", value: "text" }]),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["body"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["body"],
-      position: "end",
-    });
-  });
-
-  test("finds closest container and puts after its child within selection", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "paragraph" }]),
-      createInstancePair("paragraph", "Paragraph", [
-        { type: "id", value: "bold" },
-      ]),
-      createInstancePair("bold", "Bold", []),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["bold", "paragraph", "body"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["paragraph", "body"],
-      position: 1,
-    });
-  });
-
-  test("finds closest container that doesn't have a direct text child", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [
-        { type: "id", value: "box1" },
-        { type: "id", value: "paragraph" },
-        { type: "id", value: "box2" },
-      ]),
-      createInstancePair("paragraph", "Paragraph", [
-        { type: "text", value: "some text" },
-      ]),
-      createInstancePair("box1", "Box1", []),
-      createInstancePair("box2", "Box2", []),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["paragraph", "body"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["body"],
-      position: 2,
-    });
-  });
-
-  test("finds closest container that doesn't have an expression as a child", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [
-        { type: "id", value: "box1" },
-        { type: "id", value: "paragraph" },
-        { type: "id", value: "box2" },
-      ]),
-      createInstancePair("paragraph", "Paragraph", [
-        { type: "expression", value: '"bla"' },
-      ]),
-      createInstancePair("box1", "Box1", []),
-      createInstancePair("box2", "Box2", []),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["paragraph", "body"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["body"],
-      position: 2,
-    });
-  });
-
-  test("finds closest container that doesn't have an expression as a child", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [
-        { type: "id", value: "box1" },
-        { type: "id", value: "paragraph" },
-        { type: "id", value: "box2" },
-      ]),
-      createInstancePair("paragraph", "Paragraph", [
-        { type: "expression", value: '"bla"' },
-      ]),
-      createInstancePair("box1", "Box1", []),
-      createInstancePair("box2", "Box2", []),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["paragraph", "body"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["body"],
-      position: 2,
-    });
-  });
-
-  test("forbids inserting into :root", () => {
-    const instances = new Map([createInstancePair("body", "Body", [])]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        [":root"],
-        emptyInsertConstraints
-      )
-    ).toEqual(undefined);
-  });
-
-  test("allow inserting into collection item", () => {
-    const { instances } = renderJsx(
-      <$.Body ws:id="bodyId">
-        <ws.collection ws:id="collectionId">
-          <$.Box ws:id="boxId"></$.Box>
-        </ws.collection>
-      </$.Body>
-    );
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["collectionId[1]", "collectionId", "bodyId"],
-        emptyInsertConstraints
-      )
-    ).toEqual({
-      parentSelector: ["collectionId", "bodyId"],
-      position: "end",
-    });
   });
 });
 
@@ -3329,5 +3149,146 @@ describe("copy paste", () => {
         color: red;
       }
     `);
+  });
+});
+
+describe("find closest insertable", () => {
+  const newBoxFragment = createFragment({
+    children: [{ type: "id", value: "newBoxId" }],
+    instances: [
+      { type: "instance", id: "newBoxId", component: "Box", children: [] },
+    ],
+  });
+
+  beforeEach(() => {
+    $pages.set(
+      createDefaultPages({
+        homePageId: "homePageId",
+        rootInstanceId: "",
+        systemDataSourceId: "",
+      })
+    );
+    $awareness.set({
+      pageId: "homePageId",
+      instanceSelector: ["collectionId[1]", "collectionId", "bodyId"],
+    });
+    $registeredComponentMetas.set(defaultMetasMap);
+  });
+
+  test("puts in the end if closest instance is container", () => {
+    const { instances } = renderJsx(
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId">
+          <$.Paragraph ws:id="paragraphId">
+            <$.Bold ws:id="boldId"></$.Bold>
+          </$.Paragraph>
+        </$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    selectInstance(["boxId", "bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["boxId", "bodyId"],
+      position: "end",
+    });
+  });
+
+  test("puts in the end of root instance", () => {
+    const { instances } = renderJsx(
+      <$.Body ws:id="bodyId">
+        <$.Paragraph ws:id="paragraphId"></$.Paragraph>
+      </$.Body>
+    );
+    $instances.set(instances);
+    selectInstance(["bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["bodyId"],
+      position: "end",
+    });
+  });
+
+  test("puts in the end of root instance when page root only has text", () => {
+    const { instances } = renderJsx(<$.Body ws:id="bodyId">text</$.Body>);
+    $instances.set(instances);
+    selectInstance(["bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["bodyId"],
+      position: "end",
+    });
+  });
+
+  test("finds closest container and puts after its child within selection", () => {
+    const { instances } = renderJsx(
+      <$.Body ws:id="bodyId">
+        <$.Paragraph ws:id="paragraphId">
+          <$.Bold ws:id="boldId"></$.Bold>
+        </$.Paragraph>
+      </$.Body>
+    );
+    $instances.set(instances);
+    selectInstance(["boldId", "paragraphId", "bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["paragraphId", "bodyId"],
+      position: 1,
+    });
+  });
+
+  test("finds closest container that doesn't have an expression as a child", () => {
+    const { instances } = renderJsx(
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="box1Id"></$.Box>
+        <$.Paragraph ws:id="paragraphId">
+          {new ExpressionValue(`"bla"`)}
+        </$.Paragraph>
+        <$.Box ws:id="box2Id"></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    selectInstance(["paragraphId", "bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["bodyId"],
+      position: 2,
+    });
+  });
+
+  test("forbids inserting into :root", () => {
+    const { instances } = renderJsx(<$.Body ws:id="bodyId"></$.Body>);
+    $instances.set(instances);
+    selectInstance([":root"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual(undefined);
+  });
+
+  test("allow inserting into collection item", () => {
+    const { instances } = renderJsx(
+      <$.Body ws:id="bodyId">
+        <ws.collection ws:id="collectionId">
+          <$.Box ws:id="boxId"></$.Box>
+        </ws.collection>
+      </$.Body>
+    );
+    $instances.set(instances);
+    selectInstance(["collectionId[1]", "collectionId", "bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["collectionId", "bodyId"],
+      position: "end",
+    });
+  });
+
+  test("forbid inserting list item in body", () => {
+    const { instances } = renderJsx(<$.Body ws:id="bodyId"></$.Body>);
+    $instances.set(instances);
+    selectInstance(["bodyId"]);
+    const newListItemFragment = createFragment({
+      children: [{ type: "id", value: "newListItemId" }],
+      instances: [
+        {
+          type: "instance",
+          id: "newListItemId",
+          component: "ListItem",
+          children: [],
+        },
+      ],
+    });
+    expect(findClosestInsertable(newListItemFragment)).toEqual(undefined);
   });
 });

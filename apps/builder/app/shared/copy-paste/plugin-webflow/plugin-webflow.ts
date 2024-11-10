@@ -1,18 +1,12 @@
 import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
 import {
-  computeInstancesConstraints,
   findAvailableDataSources,
-  findClosestDroppableTarget,
+  findClosestInsertable,
   insertInstanceChildrenMutable,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "../../instance-utils";
-import {
-  $instances,
-  $registeredComponentMetas,
-  $selectedInstanceSelector,
-  $project,
-} from "../../nano-states";
+import { $project } from "../../nano-states";
 import {
   WfData,
   wfNodeTypes,
@@ -25,7 +19,6 @@ import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
-import { $selectedPage } from "~/shared/awareness";
 
 const { toast } = builderApi;
 
@@ -179,35 +172,13 @@ export const onPaste = async (clipboardData: string) => {
   }
 
   let fragment = await toWebstudioFragment(wfData);
-  const selectedPage = $selectedPage.get();
-  if (fragment === undefined || selectedPage === undefined) {
+  if (fragment === undefined) {
     return false;
   }
-
   fragment = await denormalizeSrcProps(fragment);
 
-  const metas = $registeredComponentMetas.get();
-  const newInstances = new Map(
-    fragment.instances.map((instance) => [instance.id, instance])
-  );
-
-  // paste to the root if nothing is selected
-  const instanceSelector = $selectedInstanceSelector.get() ?? [
-    selectedPage.rootInstanceId,
-  ];
-
-  const rootInstanceIds = fragment.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-
-  const dropTarget = findClosestDroppableTarget(
-    metas,
-    $instances.get(),
-    instanceSelector,
-    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
-  );
-
-  if (dropTarget === undefined) {
+  const insertable = findClosestInsertable(fragment);
+  if (insertable === undefined) {
     return false;
   }
 
@@ -218,7 +189,7 @@ export const onPaste = async (clipboardData: string) => {
       availableDataSources: findAvailableDataSources(
         data.dataSources,
         data.instances,
-        instanceSelector
+        insertable.parentSelector
       ),
     });
 
@@ -233,7 +204,7 @@ export const onPaste = async (clipboardData: string) => {
       })
       .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
 
-    insertInstanceChildrenMutable(data, children, dropTarget);
+    insertInstanceChildrenMutable(data, children, insertable);
   });
 
   return true;

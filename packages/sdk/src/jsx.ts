@@ -62,6 +62,9 @@ const traverseJsx = (
     if (typeof child === "string") {
       continue;
     }
+    if (child instanceof ExpressionValue) {
+      continue;
+    }
     traverseJsx(child, callback);
   }
 };
@@ -137,7 +140,9 @@ export const renderJsx = (root: JSX.Element) => {
       children: children.map((child) =>
         typeof child === "string"
           ? { type: "text", value: child }
-          : { type: "id", value: child.props?.["ws:id"] ?? getId(child) }
+          : child instanceof ExpressionValue
+            ? { type: "expression", value: child.value }
+            : { type: "id", value: child.props?.["ws:id"] ?? getId(child) }
       ),
     });
   });
@@ -151,7 +156,7 @@ type ComponentProps = Record<string, unknown> &
   Record<`${string}:expression`, string> & {
     "ws:id"?: string;
     "ws:label"?: string;
-    children?: ReactNode;
+    children?: ReactNode | ExpressionValue;
   };
 
 type Component = { displayName: string } & ((

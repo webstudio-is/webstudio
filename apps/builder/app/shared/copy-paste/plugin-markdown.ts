@@ -7,20 +7,10 @@ import type {
   Instance,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
-import {
-  computeInstancesConstraints,
-  findClosestDroppableTarget,
-  insertTemplateData,
-} from "../instance-utils";
-import {
-  $breakpoints,
-  $instances,
-  $registeredComponentMetas,
-  $selectedInstanceSelector,
-} from "../nano-states";
+import { findClosestInsertable, insertTemplateData } from "../instance-utils";
+import { $breakpoints } from "../nano-states";
 import { isBaseBreakpoint } from "../breakpoints";
 import { denormalizeSrcProps } from "./asset-upload";
-import { $selectedPage } from "~/shared/awareness";
 
 const micromarkOptions = {
   extensions: [gfm()],
@@ -221,36 +211,16 @@ const parse = (clipboardData: string, options?: Options) => {
 };
 
 export const onPaste = async (clipboardData: string) => {
-  let data = parse(clipboardData);
-
-  const selectedPage = $selectedPage.get();
-  if (data === undefined || selectedPage === undefined) {
+  let fragment = parse(clipboardData);
+  if (fragment === undefined) {
     return false;
   }
-
-  data = await denormalizeSrcProps(data);
-
-  const metas = $registeredComponentMetas.get();
-  const newInstances = new Map(
-    data.instances.map((instance) => [instance.id, instance])
-  );
-  const rootInstanceIds = data.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-  // paste to the root if nothing is selected
-  const instanceSelector = $selectedInstanceSelector.get() ?? [
-    selectedPage.rootInstanceId,
-  ];
-  const dropTarget = findClosestDroppableTarget(
-    metas,
-    $instances.get(),
-    instanceSelector,
-    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
-  );
-  if (dropTarget === undefined) {
+  fragment = await denormalizeSrcProps(fragment);
+  const insertable = findClosestInsertable(fragment);
+  if (insertable === undefined) {
     return false;
   }
-  insertTemplateData(data, dropTarget);
+  insertTemplateData(fragment, insertable);
   return true;
 };
 

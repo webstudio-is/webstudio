@@ -3,19 +3,9 @@ import {
   WsEmbedTemplate,
   generateDataFromEmbedTemplate,
 } from "@webstudio-is/react-sdk";
-import {
-  $selectedInstanceSelector,
-  $instances,
-  $registeredComponentMetas,
-  $breakpoints,
-} from "../nano-states";
-import {
-  computeInstancesConstraints,
-  findClosestDroppableTarget,
-  insertTemplateData,
-} from "../instance-utils";
+import { $registeredComponentMetas, $breakpoints } from "../nano-states";
+import { findClosestInsertable, insertTemplateData } from "../instance-utils";
 import { isBaseBreakpoint } from "../breakpoints";
-import { $selectedPage } from "~/shared/awareness";
 
 const version = "@webstudio/template";
 
@@ -34,44 +24,25 @@ export const mimeType = "text/plain";
 
 export const onPaste = (clipboardData: string) => {
   const template = parse(clipboardData);
-
-  const selectedPage = $selectedPage.get();
-
-  if (template === undefined || selectedPage === undefined) {
+  if (template === undefined) {
     return false;
   }
-
-  // paste to the root if nothing is selected
-  const instanceSelector = $selectedInstanceSelector.get() ?? [
-    selectedPage.rootInstanceId,
-  ];
+  const metas = $registeredComponentMetas.get();
   const breakpoints = $breakpoints.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   if (baseBreakpoint === undefined) {
     return false;
   }
-  const metas = $registeredComponentMetas.get();
-  const templateData = generateDataFromEmbedTemplate(
+  const fragment = generateDataFromEmbedTemplate(
     template,
     metas,
     baseBreakpoint.id
   );
-  const newInstances = new Map(
-    templateData.instances.map((instance) => [instance.id, instance])
-  );
-  const rootInstanceIds = templateData.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-  const dropTarget = findClosestDroppableTarget(
-    metas,
-    $instances.get(),
-    instanceSelector,
-    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
-  );
-  if (dropTarget === undefined) {
+  const insertable = findClosestInsertable(fragment);
+  if (insertable === undefined) {
     return false;
   }
-  insertTemplateData(templateData, dropTarget);
+  insertTemplateData(fragment, insertable);
   return true;
 };
