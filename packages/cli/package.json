@@ -42,11 +42,11 @@
     "change-case": "^5.4.4",
     "deepmerge": "^4.3.1",
     "env-paths": "^3.0.0",
-    "execa": "^7.2.0",
     "p-limit": "^4.0.0",
     "parse5": "7.1.2",
     "picocolors": "^1.1.0",
     "strip-indent": "^4.0.0",
+    "tinyexec": "^0.3.1",
     "yargs": "^17.7.2",
     "zod": "^3.22.4"
   },

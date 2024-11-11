@@ -346,16 +346,3 @@ export const resolve = async ({
   logger.info(`Resolved ${migrationName} as rolled back`);
   logger.info("");
 };
-
-export const reset = async () => {
-  // Just to make it read the migrations folder
-  // and fail early if something is wrong with it.
-  await getStatus();
-
-  logger.info("You're about to DELETE ALL INFORMATION from the database,");
-  logger.info("and run all migrations from scratch!");
-  logger.info("");
-
-  await prismaMigrations.resetDatabase();
-  await up();
-};
