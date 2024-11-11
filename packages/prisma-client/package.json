@@ -25,8 +25,7 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "dependencies": {
-    "execa": "^7.2.0",
-    "nanoid": "^5.0.1",
+    "tinyexec": "^0.3.1",
     "umzug": "^3.2.1"
   },
   "peerDependencies": {
