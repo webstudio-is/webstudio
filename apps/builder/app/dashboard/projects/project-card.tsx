@@ -36,11 +36,6 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import { CloneProjectDialog } from "~/shared/clone-project";
 
-const titleStyle = css({
-  userSelect: "text",
-  ...truncate(),
-});
-
 const infoIconStyle = css({ flexShrink: 0 });
 
 const PublishedLink = ({
@@ -248,7 +243,12 @@ export const ProjectCard = ({
       <CardFooter>
         <Flex direction="column" justify="around" grow>
           <Flex gap="1">
-            <Text variant="titles" className={titleStyle()}>
+            <Text
+              variant="titles"
+              userSelect="text"
+              truncate
+              css={{ textTransform: "none" }}
+            >
               {title}
             </Text>
             <Tooltip
