@@ -176,6 +176,7 @@ export const CommandInput = (
 };
 
 export const CommandActions = () => {
+  const actionsRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useContext(CommandContext);
   const highlightedValue = useCommandState((state) => state.value);
   useEffect(() => {
@@ -193,9 +194,8 @@ export const CommandActions = () => {
       }
       return { highlightedGroup, actions, actionIndex: 0 };
     });
-  }, [highlightedValue]);
+  }, [highlightedValue, setState]);
 
-  const actionsRef = useRef<HTMLDivElement>(null);
   const loopedSelectedIndex = getLoopedIndex(state);
   useEffect(() => {
     const controller = new AbortController();
@@ -217,7 +217,7 @@ export const CommandActions = () => {
       );
     }
     return () => controller.abort();
-  }, []);
+  }, [setState]);
 
   return (
     <Flex gap={1} css={{ padding: 8 }} ref={actionsRef}>
