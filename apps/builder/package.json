@@ -131,6 +131,7 @@
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
+    "jest-environment-jsdom": "^29.7.0",
     "react-router-dom": "^6.26.2",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.26.1",
