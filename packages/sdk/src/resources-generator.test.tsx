@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { renderJsx, $ } from "./jsx";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";

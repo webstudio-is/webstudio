@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { isPathnamePattern } from "./url-pattern";
 
 test("check pathname is pattern", () => {

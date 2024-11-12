@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { createScope } from "./scope";
 
 test("use variable name for specific id and suffix on collision", () => {

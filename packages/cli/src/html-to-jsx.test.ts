@@ -1,9 +1,9 @@
-import { test, expect } from "@jest/globals";
+import { test, expect } from "vitest";
 import * as React from "react";
 import ReactDOMServer from "react-dom/server";
 import esbuild from "esbuild";
-import { htmlToJsx } from "./html-to-jsx";
 import prettier from "prettier";
+import { htmlToJsx } from "./html-to-jsx";
 
 /**
  * Converts HTML to JSX, renders the JSX to HTML.

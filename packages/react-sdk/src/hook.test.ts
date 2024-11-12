@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { getClosestInstance, type InstancePath } from "./hook";
 
 test("get closest instance", () => {
