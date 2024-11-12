@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
 import { showAttribute } from "./props";
 import type { WsComponentMeta } from "./components/component-meta";

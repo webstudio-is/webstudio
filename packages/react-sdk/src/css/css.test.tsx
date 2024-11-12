@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import { generateCss, type CssConfig } from "./css";
 import { descendantComponent, rootComponent } from "../core-components";

@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import type { StyleValue } from "../schema";
 import { mergeStyles } from "./merger";
 import type { StyleMap } from "./rules";

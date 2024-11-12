@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { generateRemixParams, generateRemixRoute } from "./remix";
 
 test("convert home page to remix route", () => {

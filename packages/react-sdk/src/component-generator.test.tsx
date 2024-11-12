@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import { createScope, type DataSource } from "@webstudio-is/sdk";
 import {
