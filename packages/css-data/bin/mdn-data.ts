@@ -330,6 +330,7 @@ for (property in filteredProperties) {
     unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
     initial: parseInitialValue(property, config.initial, unitGroups),
+    ...("mdn_url" in config && { mdn_url: config.mdn_url }),
   };
 }
 

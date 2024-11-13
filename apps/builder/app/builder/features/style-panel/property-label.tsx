@@ -1,7 +1,7 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
-import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
+import { AlertIcon, ExternalLinkIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
   toValue,
@@ -17,6 +17,7 @@ import {
   Text,
   theme,
   Tooltip,
+  Link,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import {
@@ -34,6 +35,7 @@ import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
 import { $virtualInstances } from "~/shared/awareness";
+import { styleConfigByName } from "./shared/configs";
 
 const $isAltPressed = atom(false);
 if (typeof window !== "undefined") {
@@ -67,12 +69,14 @@ const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
 export const PropertyInfo = ({
   title,
   code,
+  link,
   description,
   styles,
   onReset,
 }: {
   title: string;
   code?: string;
+  link?: string;
   description: ReactNode;
   styles: ComputedStyleDecl[];
   onReset: () => void;
@@ -133,7 +137,22 @@ export const PropertyInfo = ({
 
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-      <Text variant="titles">{title}</Text>
+      <Flex justify="between">
+        <Text variant="titles" truncate>
+          {title}
+        </Text>
+        {link && (
+          <Link
+            href={link}
+            target="_blank"
+            rel="noreferrer"
+            color="inherit"
+            variant="inherit"
+          >
+            <ExternalLinkIcon size={13} />
+          </Link>
+        )}
+      </Flex>
       <Text
         variant="monoBold"
         color="moreSubtle"
@@ -232,6 +251,8 @@ export const PropertyLabel = ({
     }
     batch.publish();
   };
+  const styleConfig = styleConfigByName(properties[0]);
+
   return (
     <Flex align="center">
       <Tooltip
@@ -258,6 +279,7 @@ export const PropertyLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
+            link={styleConfig?.mdn_url}
           />
         }
       >
@@ -290,6 +312,8 @@ export const PropertySectionLabel = ({
     }
     batch.publish();
   };
+  const styleConfig = styleConfigByName(properties[0]);
+
   return (
     <Flex align="center">
       <Tooltip
@@ -316,6 +340,7 @@ export const PropertySectionLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
+            link={styleConfig?.mdn_url}
           />
         }
       >
@@ -414,6 +439,8 @@ export const PropertyValueTooltip = ({
     }
     batch.publish();
   };
+  const styleConfig = styleConfigByName(properties[0]);
+
   return (
     <Tooltip
       open={isOpen}
@@ -448,6 +475,7 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
+          link={styleConfig?.mdn_url}
         />
       }
     >
