@@ -1917,6 +1917,9 @@ importers:
       typescript:
         specifier: 5.6.3
         version: 5.6.3
+      vite:
+        specifier: ^5.4.10
+        version: 5.4.10(@types/node@22.8.1)
       vitest:
         specifier: ^2.1.4
         version: 2.1.4(@types/node@22.8.1)(jsdom@20.0.3)
