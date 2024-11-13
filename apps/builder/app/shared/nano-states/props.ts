@@ -9,12 +9,14 @@ import type {
   ImageAsset,
 } from "@webstudio-is/sdk";
 import {
-  createJsonStringifyProxy,
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  isPlainObject,
   transpileExpression,
 } from "@webstudio-is/sdk";
+import {
+  createJsonStringifyProxy,
+  isPlainObject,
+} from "@webstudio-is/sdk/runtime";
 import {
   collectionComponent,
   normalizeProps,

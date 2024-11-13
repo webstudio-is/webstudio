@@ -1,6 +1,9 @@
 import { createContext, useContext, useMemo } from "react";
 import type { ImageLoader } from "@webstudio-is/image";
-import { createJsonStringifyProxy, isPlainObject } from "@webstudio-is/sdk";
+import {
+  createJsonStringifyProxy,
+  isPlainObject,
+} from "@webstudio-is/sdk/runtime";
 
 export type Params = {
   /**

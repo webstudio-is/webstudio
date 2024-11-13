@@ -12,6 +12,11 @@
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js"
     },
+    "./runtime": {
+      "webstudio": "./src/runtime.ts",
+      "types": "./lib/types/runtime.d.ts",
+      "import": "./lib/runtime.js"
+    },
     "./normalize.css": {
       "webstudio": "./src/__generated__/normalize.css.ts",
       "types": "./lib/types/__generated__/normalize.css.d.ts",
@@ -30,7 +35,7 @@
     "typecheck": "tsc",
     "test": "vitest run",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && prettier --write src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {

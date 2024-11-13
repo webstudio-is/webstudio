@@ -1,6 +1,6 @@
 import type { PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
-import { loadResources } from "@webstudio-is/sdk";
+import { loadResources } from "@webstudio-is/sdk/runtime";
 import {
   getPageMeta,
   getResources,
