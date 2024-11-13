@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
       },
     ],
     resolve: {
-      conditions: ["webstudio", "import", "module", "browser", "default"],
+      conditions: ["webstudio"],
       alias: [
         {
           find: "~",

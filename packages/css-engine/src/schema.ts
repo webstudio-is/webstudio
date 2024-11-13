@@ -3,7 +3,7 @@ import type {
   Property as GeneratedProperty,
   Unit as GeneratedUnit,
 } from "./__generated__/types";
-import { toValue, type TransformValue } from "./core";
+import { toValue, type TransformValue } from "./core/to-value";
 
 export type CustomProperty = `--${string}`;
 

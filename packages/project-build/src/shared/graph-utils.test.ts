@@ -1,4 +1,4 @@
-import { test, expect, describe } from "@jest/globals";
+import { test, expect, describe } from "vitest";
 import { findCycles, breakCyclesMutable } from "./graph-utils";
 import type { Instance } from "@webstudio-is/sdk";
 

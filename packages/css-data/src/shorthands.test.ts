@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { expandShorthands } from "./shorthands";
 
 test("ignore all shorthand to not bloat webstudio data", () => {

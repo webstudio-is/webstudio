@@ -1,5 +1,5 @@
 /* eslint-disable no-irregular-whitespace */
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { truncateByWords, truncate } from "./social-utils";
 
 test("Truncates description", () => {

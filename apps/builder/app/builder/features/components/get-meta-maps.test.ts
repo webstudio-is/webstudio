@@ -1,5 +1,5 @@
 import { type WsComponentMeta } from "@webstudio-is/react-sdk";
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, test } from "vitest";
 import { getMetaMaps } from "./get-meta-maps";
 
 const metaByComponentName: Map<string, WsComponentMeta> = new Map([

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { getExistingRoutePaths } from "./utils";
 
