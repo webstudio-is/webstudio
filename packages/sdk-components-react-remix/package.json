@@ -30,7 +30,7 @@
     }
   },
   "scripts": {
-    "build": "rm -rf lib && esbuild src/components.ts src/metas.ts src/props.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "vite build --config ../../vite.sdk-components.config.ts",
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.ts' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc"
