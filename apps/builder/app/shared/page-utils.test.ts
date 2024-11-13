@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, test } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import {
   ROOT_FOLDER_ID,

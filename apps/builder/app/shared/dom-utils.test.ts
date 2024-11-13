@@ -1,8 +1,8 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
-import { test, expect, beforeEach } from "@jest/globals";
+import { test, expect, beforeEach } from "vitest";
 import {
   getAllElementsByInstanceSelector,
   getVisibleElementsByInstanceSelector,

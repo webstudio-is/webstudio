@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, test } from "vitest";
 import { extractShadowProperties } from "./shadow-properties-extractor";
 import type { LayersValue, TupleValue } from "@webstudio-is/css-engine";
 import { parseCssValue } from "../parse-css-value";

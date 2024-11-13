@@ -1,5 +1,5 @@
 import { enableMapSet } from "immer";
-import { describe, test, expect, beforeEach } from "@jest/globals";
+import { describe, test, expect, beforeEach } from "vitest";
 import {
   portalComponent,
   collectionComponent,

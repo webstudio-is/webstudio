@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "@jest/globals";
+import { beforeEach, describe, expect, test } from "vitest";
 import { setEnv } from "@webstudio-is/feature-flags";
 import {
   toValue,

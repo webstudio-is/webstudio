@@ -1,4 +1,4 @@
-import { test, expect } from "@jest/globals";
+import { test, expect } from "vitest";
 import { type ReadableAtom, atom } from "nanostores";
 import { shallowComputed } from "./store-utils";
 

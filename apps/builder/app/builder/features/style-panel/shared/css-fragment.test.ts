@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { parseCssFragment } from "./css-fragment";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { setEnv } from "@webstudio-is/feature-flags";

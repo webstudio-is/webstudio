@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import type { WebstudioData } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { StyleProperty } from "@webstudio-is/css-engine";

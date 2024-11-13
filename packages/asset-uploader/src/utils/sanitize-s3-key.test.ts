@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import { extendedEncodeURIComponent, sanitizeS3Key } from "./sanitize-s3-key";
 
 describe("sanitizeS3Key", () => {

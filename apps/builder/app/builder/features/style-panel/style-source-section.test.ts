@@ -1,5 +1,5 @@
 import { enableMapSet } from "immer";
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import { registerContainers } from "~/shared/sync";

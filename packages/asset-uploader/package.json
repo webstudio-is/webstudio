@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "vitest run"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
@@ -22,12 +22,11 @@
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@types/fontkit": "^2.0.7",
     "@types/node": "^22.8.1",
-    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.6.3",
+    "vitest": "^2.1.4",
     "zod": "^3.22.4"
   },
   "exports": {

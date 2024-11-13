@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import { parseSubfamily, __testing__ } from "./font-data";
 
 const { normalizeFamily } = __testing__;
