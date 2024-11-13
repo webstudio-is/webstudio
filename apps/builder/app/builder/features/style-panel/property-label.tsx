@@ -279,7 +279,7 @@ export const PropertyLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={styleConfig?.mdn_url}
+            link={styleConfig?.mdnUrl}
           />
         }
       >
@@ -340,7 +340,7 @@ export const PropertySectionLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={styleConfig?.mdn_url}
+            link={styleConfig?.mdnUrl}
           />
         }
       >
@@ -475,7 +475,7 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
-          link={styleConfig?.mdn_url}
+          link={styleConfig?.mdnUrl}
         />
       }
     >

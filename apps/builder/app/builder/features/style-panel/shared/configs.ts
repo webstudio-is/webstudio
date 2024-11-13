@@ -6,7 +6,7 @@ import type * as Controls from "../controls";
 type BaseStyleConfig = {
   label: string;
   property: StyleProperty;
-  mdn_url?: string;
+  mdnUrl?: string;
 };
 
 export type Control = keyof typeof Controls;
@@ -61,7 +61,7 @@ export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
     property,
     control: getControl(property),
     items: keywords.map((keyword) => ({ label: keyword, name: keyword })),
-    ...("mdn_url" in propertyData && { mdn_url: propertyData.mdn_url }),
+    ...("mdnUrl" in propertyData && { mdnUrl: propertyData.mdnUrl }),
   };
 
   styleConfigCache.set(propertyName, result);
