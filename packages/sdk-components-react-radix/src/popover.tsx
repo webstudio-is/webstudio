@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/react-sdk/runtime";
 
 // wrap in forwardRef because Root is functional component without ref
-export const Popover = forwardRef<
+export const Popover = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
@@ -25,7 +25,7 @@ export const Popover = forwardRef<
  * This avoids situations where the Trigger inadvertently passes all styles to its child,
  * which would prevent us from displaying styles properly in the builder.
  */
-export const PopoverTrigger = forwardRef<
+export const PopoverTrigger = /*@__PURE__*/ forwardRef<
   HTMLButtonElement,
   { children: ReactNode }
 >(({ children, ...props }, ref) => {
@@ -38,7 +38,7 @@ export const PopoverTrigger = forwardRef<
   );
 });
 
-export const PopoverContent = forwardRef<
+export const PopoverContent = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(

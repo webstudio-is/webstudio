@@ -46,7 +46,7 @@ const willNavigate = (event: MouseEvent) => {
 };
 
 // wrap in forwardRef because Root is functional component without ref
-export const Dialog = forwardRef<
+export const Dialog = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof DialogPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
@@ -94,7 +94,7 @@ export const Dialog = forwardRef<
  * This avoids situations where the Trigger inadvertently passes all styles to its child,
  * which would prevent us from displaying styles properly in the builder.
  */
-export const DialogTrigger = forwardRef<
+export const DialogTrigger = /*@__PURE__*/ forwardRef<
   HTMLButtonElement,
   { children: ReactNode }
 >(({ children, ...props }, ref) => {
@@ -107,7 +107,7 @@ export const DialogTrigger = forwardRef<
   );
 });
 
-export const DialogOverlay = forwardRef<
+export const DialogOverlay = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >((props, ref) => {
@@ -118,7 +118,7 @@ export const DialogOverlay = forwardRef<
   );
 });
 
-export const DialogContent = forwardRef<
+export const DialogContent = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >((props, ref) => {
@@ -172,7 +172,7 @@ export const DialogClose = DialogPrimitive.Close;
 
 type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 const defaultTag = "h1";
-export const DialogTitle = forwardRef<
+export const DialogTitle = /*@__PURE__*/ forwardRef<
   HTMLHeadingElement,
   ComponentProps<typeof DialogPrimitive.DialogTitle> & { tag?: Tag }
 >(({ tag: Tag = defaultTag, children, ...props }, ref) => (

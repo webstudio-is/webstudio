@@ -6,7 +6,7 @@ import {
 } from "react";
 import { Root, Indicator } from "@radix-ui/react-checkbox";
 
-export const Checkbox = forwardRef<
+export const Checkbox = /*@__PURE__*/ forwardRef<
   HTMLButtonElement,
   // radix checked has complex named type which cannot be parsed
   // cast to boolean

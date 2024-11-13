@@ -12,7 +12,7 @@ import {
   Children,
 } from "react";
 
-export const Tooltip = forwardRef<
+export const Tooltip = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
@@ -29,7 +29,7 @@ export const Tooltip = forwardRef<
  * This avoids situations where the Trigger inadvertently passes all styles to its child,
  * which would prevent us from displaying styles properly in the builder.
  */
-export const TooltipTrigger = forwardRef<
+export const TooltipTrigger = /*@__PURE__*/ forwardRef<
   HTMLButtonElement,
   { children: ReactNode }
 >(({ children, ...props }, ref) => {
@@ -42,7 +42,7 @@ export const TooltipTrigger = forwardRef<
   );
 });
 
-export const TooltipContent = forwardRef<
+export const TooltipContent = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ sideOffset = 4, hideWhenDetached = true, ...props }, ref) => (

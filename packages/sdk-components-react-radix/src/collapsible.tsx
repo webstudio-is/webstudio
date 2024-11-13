@@ -24,7 +24,7 @@ export const Collapsible: ForwardRefExoticComponent<
  * This avoids situations where the Trigger inadvertently passes all styles to its child,
  * which would prevent us from displaying styles properly in the builder.
  */
-export const CollapsibleTrigger = forwardRef<
+export const CollapsibleTrigger = /*@__PURE__*/ forwardRef<
   HTMLButtonElement,
   { children: ReactNode }
 >(({ children, ...props }, ref) => {

@@ -17,7 +17,7 @@ export const SheetClose = Dialog.DialogClose;
 export const SheetTitle = Dialog.DialogTitle;
 export const SheetDescription = Dialog.DialogDescription;
 
-export const SheetContent = forwardRef<
+export const SheetContent = /*@__PURE__*/ forwardRef<
   ElementRef<"div">,
   ComponentPropsWithoutRef<typeof Dialog.DialogContent> & {
     tag?: "div" | "nav";

@@ -9,7 +9,7 @@ import { Root, Item, Indicator } from "@radix-ui/react-radio-group";
 
 const defaultTag = "div";
 
-export const RadioGroup = forwardRef<
+export const RadioGroup = /*@__PURE__*/ forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof Root> & RefAttributes<typeof defaultTag>
   // Make sure children are not passed down to an input, because this will result in error.

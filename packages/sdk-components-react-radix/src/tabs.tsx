@@ -19,7 +19,7 @@ export const Tabs: ForwardRefExoticComponent<
 
 export const TabsList = List;
 
-export const TabsTrigger = forwardRef<
+export const TabsTrigger = /*@__PURE__*/ forwardRef<
   HTMLButtonElement,
   Omit<ComponentPropsWithoutRef<typeof Trigger>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
@@ -27,7 +27,7 @@ export const TabsTrigger = forwardRef<
   return <Trigger ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 
-export const TabsContent = forwardRef<
+export const TabsContent = /*@__PURE__*/ forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof Content>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
