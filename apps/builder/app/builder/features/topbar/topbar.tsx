@@ -28,6 +28,8 @@ import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
 import type { ReactNode } from "react";
 import { CloneButton } from "./clone";
 import { $selectedPage } from "~/shared/awareness";
+import { EditorButton } from "./editor";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -123,6 +125,7 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
         >
           <ViewMode />
           <SyncStatus />
+          {isFeatureEnabled("contentEditableMode") && <EditorButton />}
           <PreviewButton />
           <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
           <PublishButton projectId={project.id} />

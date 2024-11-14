@@ -32,6 +32,7 @@ import {
   subscribeStyles,
   mountStyles,
   manageDesignModeStyles,
+  manageContentEditModeStyles,
 } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
@@ -45,9 +46,14 @@ import {
   $registeredComponents,
   subscribeComponentHooks,
   $isPreviewMode,
+  $isDesignMode,
+  $isContentMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { initCopyPaste } from "~/shared/copy-paste";
+import {
+  initCopyPaste,
+  initCopyPasteForContentEditMode,
+} from "~/shared/copy-paste/init-copy-paste";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
@@ -181,6 +187,40 @@ const DesignMode = () => {
   return null;
 };
 
+const ContentEditMode = () => {
+  const debounceEffect = useDebounceEffect();
+  const ref = useRef<Instances>();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    subscribeScrollNewInstanceIntoView(
+      debounceEffect,
+      ref,
+      abortController.signal
+    );
+    const unsubscribeSelected = subscribeSelected(debounceEffect);
+    return () => {
+      unsubscribeSelected();
+      abortController.abort();
+    };
+  }, [debounceEffect]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    const options = { signal: abortController.signal };
+    manageContentEditModeStyles(options);
+    subscribeInstanceSelection(options);
+    subscribeInstanceHovering(options);
+    subscribeInspectorEdits(options);
+    subscribeFontLoadingDone(options);
+    initCopyPasteForContentEditMode(options);
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+  return null;
+};
+
 type CanvasProps = {
   params: Params;
   imageLoader: ImageLoader;
@@ -188,7 +228,8 @@ type CanvasProps = {
 
 export const Canvas = ({ params, imageLoader }: CanvasProps) => {
   useCanvasStore(publish);
-  const isPreviewMode = useStore($isPreviewMode);
+  const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
 
   useMount(() => {
     registerComponentLibrary({
@@ -283,7 +324,8 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && isInitialized && <DesignMode />}
+      {isDesignMode && isInitialized && <DesignMode />}
+      {isContentMode && isInitialized && <ContentEditMode />}
     </>
   );
 };

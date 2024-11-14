@@ -28,7 +28,6 @@ import {
   $assets,
   $breakpoints,
   $instances,
-  $isPreviewMode,
   $props,
   $registeredComponentMetas,
   $selectedStyleState,
@@ -38,7 +37,9 @@ import {
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles, $params } from "../stores";
 import { canvasApi } from "~/shared/canvas-api";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance, $selectedPage } from "~/shared/awareness";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const stateSheet = createRegularStyleSheet({ name: "state-styles" });
@@ -60,23 +61,7 @@ export const mountStyles = () => {
   helpersSheet.render();
 };
 
-// Helper styles on for canvas in design mode
-// - Only instances that would collapse without helper should receive helper
-// - Helper is removed when any CSS property is changed on that instance that would prevent collapsing, so that helper is not needed
-// - Helper doesn't show on the preview or publish
-// - Helper goes away if an instance inserted as a child
-// - There is no need to set padding-right or padding-bottom if you just need a small div with a defined or layout-based size, as soon as div is not collapsing, helper should not apply
-// - Padding will be only added on the side that would collapse otherwise
-//
-// For example when I add a div, it is a block element, it grows automatically full width but has 0 height, in this case spacing helper with padidng-top: 50px should apply, so that it doesn't collapse.
-// If user sets `height: 100px` or does anything that would give it a height - we remove the helper padding right away, so user can actually see the height they set
-//
-// In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
-const helperStyles = [
-  // When double clicking into an element to edit text, it should not select the word.
-  `[${idAttribute}] {
-    user-select: none;
-  }`,
+const helperStylesShared = [
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
     outline: 1px dashed rgba(0,0,0,0.7);
@@ -110,25 +95,110 @@ const helperStyles = [
   }`,
 ];
 
-const subscribePreviewMode = () => {
-  let isRendered = false;
+// Helper styles on for canvas in design mode
+// - Only instances that would collapse without helper should receive helper
+// - Helper is removed when any CSS property is changed on that instance that would prevent collapsing, so that helper is not needed
+// - Helper doesn't show on the preview or publish
+// - Helper goes away if an instance inserted as a child
+// - There is no need to set padding-right or padding-bottom if you just need a small div with a defined or layout-based size, as soon as div is not collapsing, helper should not apply
+// - Padding will be only added on the side that would collapse otherwise
+//
+// For example when I add a div, it is a block element, it grows automatically full width but has 0 height, in this case spacing helper with padidng-top: 50px should apply, so that it doesn't collapse.
+// If user sets `height: 100px` or does anything that would give it a height - we remove the helper padding right away, so user can actually see the height they set
+//
+// In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
+const helperStyles = [
+  // When double clicking into an element to edit text, it should not select the word.
+  `[${idAttribute}] {
+    user-select: none;
+  }`,
+  ...helperStylesShared,
+];
 
-  const unsubscribe = $isPreviewMode.subscribe((isPreviewMode) => {
-    helpersSheet.setAttribute("media", isPreviewMode ? "not all" : "all");
-    if (isRendered === false) {
-      for (const style of helperStyles) {
-        helpersSheet.addPlaintextRule(style);
-      }
-      helpersSheet.render();
-      isRendered = true;
-    }
-  });
+// Find all editable elements and set cursor text inside
+const helperStylesContentEdit = [
+  `[${idAttribute}] {
+  user-select: none;
+}`,
+  ...helperStylesShared,
+];
+
+const subscribeDesignModeHelperStyles = () => {
+  helpersSheet.setAttribute("media", "all");
+
+  for (const style of helperStyles) {
+    helpersSheet.addPlaintextRule(style);
+  }
+  helpersSheet.render();
 
   return () => {
     helpersSheet.clear();
     helpersSheet.render();
-    unsubscribe();
-    isRendered = false;
+  };
+};
+
+const subscribeContentEditModeHelperStyles = () => {
+  helpersSheet.setAttribute("media", "all");
+
+  for (const style of helperStylesContentEdit) {
+    helpersSheet.addPlaintextRule(style);
+  }
+
+  // Show text cursor on all editable elements (including links and buttons)
+  // to indicate they are editable in the content editor mode
+  //
+  // @todo Consider setting cursor: pointer on non-editable elements by default
+  // to better distinguish clickable vs editable elements, needs more investigation
+  const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+  if (rootInstanceId !== undefined) {
+    const editableInstanceSelectors: InstanceSelector[] = [];
+    const instances = $instances.get();
+
+    findAllEditableInstanceSelector(
+      rootInstanceId,
+      [],
+      instances,
+      $registeredComponentMetas.get(),
+      editableInstanceSelectors
+    );
+
+    // Group IDs into chunks of 20 since :is() allows for more efficient grouping
+    const chunkSize = 20;
+    for (let i = 0; i < editableInstanceSelectors.length; i += chunkSize) {
+      const chunk = editableInstanceSelectors
+        .slice(i, i + chunkSize)
+        .filter((selector) => {
+          const instance = instances.get(selector[0]);
+          if (instance === undefined) {
+            return false;
+          }
+
+          const hasExpressionChildren = instance.children.some(
+            (child) => child.type === "expression"
+          );
+
+          if (hasExpressionChildren) {
+            return false;
+          }
+
+          return true;
+        });
+
+      const selectors = chunk.map(
+        (selector) => `[${idAttribute}="${selector[0]}"]`
+      );
+
+      helpersSheet.addPlaintextRule(
+        `:is(${selectors.join(", ")}), :is(${selectors.join(", ")}) a { cursor: text; }`
+      );
+    }
+  }
+
+  helpersSheet.render();
+
+  return () => {
+    helpersSheet.clear();
+    helpersSheet.render();
   };
 };
 
@@ -315,10 +385,21 @@ export const subscribeStyles = () => {
   };
 };
 
+export const manageContentEditModeStyles = ({
+  signal,
+}: {
+  signal: AbortSignal;
+}) => {
+  const unsubscribePreviewMode = subscribeContentEditModeHelperStyles();
+  signal.addEventListener("abort", () => {
+    unsubscribePreviewMode();
+  });
+};
+
 export const manageDesignModeStyles = ({ signal }: { signal: AbortSignal }) => {
   const unsubscribeStateStyles = subscribeStateStyles();
   const unsubscribeEphemeralStyle = subscribeEphemeralStyle();
-  const unsubscribePreviewMode = subscribePreviewMode();
+  const unsubscribePreviewMode = subscribeDesignModeHelperStyles();
   signal.addEventListener("abort", () => {
     unsubscribeStateStyles();
     unsubscribeEphemeralStyle();

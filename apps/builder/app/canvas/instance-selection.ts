@@ -1,6 +1,12 @@
 import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
 import { findClosestEditableInstanceSelector } from "~/shared/instance-utils";
-import { $instances, $registeredComponentMetas } from "~/shared/nano-states";
+import {
+  $hoveredInstanceOutline,
+  $hoveredInstanceSelector,
+  $instances,
+  $isContentMode,
+  $registeredComponentMetas,
+} from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
@@ -14,6 +20,109 @@ const isElementBeingEdited = (element: Element) => {
   return false;
 };
 
+const handleSelect = (event: MouseEvent) => {
+  const element = event.target;
+
+  if (!(element instanceof Element)) {
+    return;
+  }
+
+  if (isElementBeingEdited(element)) {
+    return;
+  }
+
+  const instanceSelector = getInstanceSelectorFromElement(element);
+
+  if (instanceSelector === undefined) {
+    return;
+  }
+
+  // Prevent unnecessary updates (2 clicks are registered before a double click)
+  if ($textEditingInstanceSelector.get() !== undefined) {
+    $textEditingInstanceSelector.set(undefined);
+  }
+
+  // Prevent unnecessary updates (2 clicks are registered before a double click)
+  if (!shallowEqual(instanceSelector, $awareness.get()?.instanceSelector)) {
+    selectInstance(instanceSelector);
+  }
+};
+
+const handleEdit = (event: MouseEvent) => {
+  const element = event.target;
+
+  if (!(element instanceof Element)) {
+    return;
+  }
+
+  if (isElementBeingEdited(element)) {
+    return;
+  }
+
+  const instanceSelector = getInstanceSelectorFromElement(element);
+
+  if (instanceSelector === undefined) {
+    return;
+  }
+
+  const instances = $instances.get();
+
+  let editableInstanceSelector = findClosestEditableInstanceSelector(
+    instanceSelector,
+    instances,
+    $registeredComponentMetas.get()
+  );
+
+  // Do not allow edit bindable text instances with expression children in Content Mode
+  if (editableInstanceSelector !== undefined && $isContentMode.get()) {
+    const instance = instances.get(editableInstanceSelector[0]);
+    if (instance === undefined) {
+      return false;
+    }
+
+    const hasExpressionChildren = instance.children.some(
+      (child) => child.type === "expression"
+    );
+
+    if (hasExpressionChildren) {
+      editableInstanceSelector = undefined;
+    }
+  }
+
+  if (editableInstanceSelector === undefined) {
+    // Handle non-editable instances in Content Mode:
+
+    // Reset editing state when clicking from an editable text to a non-editable instance
+    if ($textEditingInstanceSelector.get() !== undefined) {
+      $textEditingInstanceSelector.set(undefined);
+    }
+
+    // Select the instance when no editable parent is found
+    if (!shallowEqual(instanceSelector, $awareness.get()?.instanceSelector)) {
+      selectInstance(instanceSelector);
+    }
+
+    return;
+  }
+
+  // Avoid redundant selection if the instance is already selected
+  if (
+    !shallowEqual($awareness.get()?.instanceSelector, editableInstanceSelector)
+  ) {
+    selectInstance(editableInstanceSelector);
+  }
+
+  $hoveredInstanceOutline.set(undefined);
+  $hoveredInstanceSelector.set(undefined);
+
+  $textEditingInstanceSelector.set({
+    selector: editableInstanceSelector,
+    reason: "click",
+    mouseX: event.clientX,
+    mouseY: event.clientY,
+  });
+};
+
 export const subscribeInstanceSelection = ({
   signal,
 }: {
@@ -22,33 +131,14 @@ export const subscribeInstanceSelection = ({
   addEventListener(
     "click",
     (event) => {
-      const element = event.target;
-
       emitCommand("clickCanvas");
 
-      if (!(element instanceof Element)) {
+      if ($isContentMode.get()) {
+        handleEdit(event);
         return;
       }
 
-      if (isElementBeingEdited(element)) {
-        return;
-      }
-
-      const instanceSelector = getInstanceSelectorFromElement(element);
-
-      if (instanceSelector === undefined) {
-        return;
-      }
-
-      // Prevent unnecessary updates (2 clicks are registered before a double click)
-      if ($textEditingInstanceSelector.get() !== undefined) {
-        $textEditingInstanceSelector.set(undefined);
-      }
-
-      // Prevent unnecessary updates (2 clicks are registered before a double click)
-      if (!shallowEqual(instanceSelector, $awareness.get()?.instanceSelector)) {
-        selectInstance(instanceSelector);
-      }
+      handleSelect(event);
     },
     { passive: true, signal }
   );
@@ -56,43 +146,7 @@ export const subscribeInstanceSelection = ({
   addEventListener(
     "dblclick",
     (event) => {
-      const element = event.target;
-
-      if (!(element instanceof Element)) {
-        return;
-      }
-
-      if (isElementBeingEdited(element)) {
-        return;
-      }
-
-      const instanceSelector = getInstanceSelectorFromElement(element);
-
-      if (instanceSelector === undefined) {
-        return;
-      }
-
-      const editableInstanceSelector = findClosestEditableInstanceSelector(
-        instanceSelector,
-        $instances.get(),
-        $registeredComponentMetas.get()
-      );
-
-      if (editableInstanceSelector === undefined) {
-        return;
-      }
-
-      // Prevent unnecessary updates (should already be selected during click)
-      if (!shallowEqual(instanceSelector, editableInstanceSelector)) {
-        selectInstance(editableInstanceSelector);
-      }
-
-      $textEditingInstanceSelector.set({
-        selector: editableInstanceSelector,
-        reason: "click",
-        mouseX: event.clientX,
-        mouseY: event.clientY,
-      });
+      handleEdit(event);
     },
     { passive: true, signal }
   );

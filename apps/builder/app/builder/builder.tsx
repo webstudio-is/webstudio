@@ -29,6 +29,8 @@ import {
   $publisherHost,
   $imageLoader,
   $textEditingInstanceSelector,
+  $isDesignMode,
+  $isContentMode,
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
@@ -57,8 +59,11 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
-import { initCopyPaste } from "~/shared/copy-paste";
 import { CommandPanel } from "./features/command-panel";
+import {
+  initCopyPaste,
+  initCopyPasteForContentEditMode,
+} from "~/shared/copy-paste/init-copy-paste";
 
 registerContainers();
 
@@ -281,6 +286,9 @@ export const Builder = ({
   });
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
+  const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
+
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
   useSetWindowTitle();
@@ -295,12 +303,25 @@ export const Builder = ({
 
   useEffect(() => {
     const abortController = new AbortController();
-    // We need to initialize this in both canvas and builder,
-    // because the events will fire in either one, depending on where the focus is
-    // @todo we need to forward the events from canvas to builder and avoid importing this
-    // in both places
-    initCopyPaste(abortController);
 
+    if (isDesignMode) {
+      // We need to initialize this in both canvas and builder,
+      // because the events will fire in either one, depending on where the focus is
+      // @todo we need to forward the events from canvas to builder and avoid importing this
+      // in both places
+      initCopyPaste(abortController);
+    }
+
+    if (isContentMode) {
+      initCopyPasteForContentEditMode(abortController);
+    }
+
+    return () => {
+      abortController.abort();
+    };
+  }, [isContentMode, isDesignMode]);
+
+  useEffect(() => {
     const unsubscribe = $loadingState.subscribe((loadingState) => {
       setLoadingState(loadingState);
       // We need to stop updating it once it's ready in case in the future it changes again.
@@ -308,10 +329,7 @@ export const Builder = ({
         unsubscribe();
       }
     });
-    return () => {
-      unsubscribe();
-      abortController.abort();
-    };
+    return unsubscribe;
   }, []);
 
   const canvasUrl = getCanvasUrl();
@@ -399,7 +417,8 @@ export const Builder = ({
                 />
               )}
             </Workspace>
-            <AiCommandBar isPreviewMode={isPreviewMode} />
+
+            {isDesignMode && <AiCommandBar />}
           </Main>
           <SidePanel gridArea="sidebar">
             <SidebarLeft publish={publish} />

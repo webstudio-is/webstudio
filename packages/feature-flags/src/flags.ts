@@ -6,4 +6,5 @@ export const cms = false;
 export const filters = false;
 export const xmlElement = false;
 export const staticExport = false;
+export const contentEditableMode = false;
 export const command = false;

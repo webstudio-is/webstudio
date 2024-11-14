@@ -24,6 +24,7 @@ import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
   $registeredComponentMetas,
   $dragAndDropState,
+  $isDesignMode,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/features/navigator";
 import type { Settings } from "~/builder/shared/client-settings";
@@ -78,6 +79,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const metas = useStore($registeredComponentMetas);
   const selectedPage = useStore($selectedPage);
   const activeInspectorPanel = useStore($activeInspectorPanel);
+  const isDesignMode = useStore($isDesignMode);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
@@ -100,7 +102,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   type PanelName = "style" | "settings";
 
   const availablePanels = new Set<PanelName>();
-  if (documentType === "html" && (meta?.stylable ?? true)) {
+  if (documentType === "html" && (meta?.stylable ?? true) && isDesignMode) {
     availablePanels.add("style");
   }
   // @todo hide root component settings until

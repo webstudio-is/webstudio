@@ -61,7 +61,7 @@ const initialPrompts = [
   "Create a testimonials section on 2 rows. The first row has a heading and subheading, the second row has 3 testimonial cards with an image, headline, description and link.",
 ];
 
-export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
+export const AiCommandBar = () => {
   const [value, setValue] = useState("");
   const [prompts, setPrompts] = useState<string[]>(initialPrompts);
   const isMenuOpen = getSetting("isAiMenuOpen");
@@ -166,10 +166,6 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
       enableCanvasPointerEvents();
     },
   });
-
-  if (isPreviewMode) {
-    return;
-  }
 
   const handleAiRequest = async (prompt: string) => {
     if (abortController.current) {

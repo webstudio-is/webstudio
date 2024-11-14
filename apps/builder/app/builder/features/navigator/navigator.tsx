@@ -8,8 +8,11 @@ import {
 import { CrossIcon } from "@webstudio-is/icons";
 import { CssPreview } from "./css-preview";
 import { NavigatorTree } from "./navigator-tree";
+import { $isDesignMode } from "~/shared/nano-states";
+import { useStore } from "@nanostores/react";
 
 export const NavigatorPanel = ({ onClose }: { onClose: () => void }) => {
+  const isDesignMode = useStore($isDesignMode);
   return (
     <>
       <PanelTitle
@@ -30,7 +33,7 @@ export const NavigatorPanel = ({ onClose }: { onClose: () => void }) => {
       <Flex grow direction="column" justify="end">
         <NavigatorTree />
         <Separator />
-        <CssPreview />
+        {isDesignMode && <CssPreview />}
       </Flex>
     </>
   );
