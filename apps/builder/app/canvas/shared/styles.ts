@@ -116,7 +116,12 @@ const helperStyles = [
 ];
 
 // Find all editable elements and set cursor text inside
-const helperStylesContentEdit = [...helperStylesShared];
+const helperStylesContentEdit = [
+  `[${idAttribute}] {
+  user-select: none;
+}`,
+  ...helperStylesShared,
+];
 
 const subscribeDesignModeHelperStyles = () => {
   helpersSheet.setAttribute("media", "all");
