@@ -1,7 +1,7 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
-import { AlertIcon, ExternalLinkIcon, ResetIcon } from "@webstudio-is/icons";
+import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
   toValue,
@@ -17,7 +17,7 @@ import {
   Text,
   theme,
   Tooltip,
-  Link,
+  IconLink,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import {
@@ -142,15 +142,14 @@ export const PropertyInfo = ({
           {title}
         </Text>
         {link && (
-          <Link
+          <IconLink
             href={link}
             target="_blank"
             rel="noreferrer"
             color="inherit"
             variant="inherit"
-          >
-            <ExternalLinkIcon size={13} />
-          </Link>
+            size={13}
+          />
         )}
       </Flex>
       <Text
