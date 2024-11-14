@@ -1,5 +1,4 @@
 import { atom, computed } from "nanostores";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import {
   $isPreviewMode,
   $selectedInstanceRenderState,
@@ -36,16 +35,6 @@ export const $scale = computed(
 );
 
 export const $activeInspectorPanel = atom<"style" | "settings">("style");
-
-// keep in sync with user-plan-features.server
-export const $userPlanFeatures = atom<UserPlanFeatures>({
-  allowShareAdminLinks: false,
-  allowDynamicData: false,
-  maxContactEmails: 0,
-  maxDomainsAllowedPerUser: 1,
-  hasSubscription: false,
-  hasProPlan: false,
-});
 
 export const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 

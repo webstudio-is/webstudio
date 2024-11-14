@@ -13,9 +13,8 @@ import {
 } from "@webstudio-is/design-system";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import cmsUpgradeBanner from "./cms-upgrade-banner.svg?url";
-import { $isDesignMode } from "~/shared/nano-states";
+import { $isDesignMode, $userPlanFeatures } from "~/shared/nano-states";
 
 export const SettingsPanelContainer = ({
   selectedInstance,

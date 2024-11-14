@@ -23,7 +23,7 @@ export const builderPath = ({
   pageId?: string;
   authToken?: string;
   pageHash?: string;
-  mode?: "preview";
+  mode?: "preview" | "content";
 }) => {
   return `/${searchParams({
     pageId,

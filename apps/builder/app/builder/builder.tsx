@@ -31,6 +31,7 @@ import {
   $textEditingInstanceSelector,
   $isDesignMode,
   $isContentMode,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
@@ -46,7 +47,6 @@ import {
   $dataLoadingState,
   $isCloneDialogOpen,
   $loadingState,
-  $userPlanFeatures,
   type SidebarPanelName,
 } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
