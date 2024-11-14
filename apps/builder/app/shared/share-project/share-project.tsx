@@ -32,6 +32,8 @@ import {
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 import { useIds } from "../form-utils";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import type { BuilderMode } from "../nano-states";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -225,6 +227,39 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
             </Grid>
           </Grid>
 
+          {isFeatureEnabled("contentEditableMode") && (
+            <Permission
+              disabled={hasProPlan !== true}
+              onCheckedChange={handleCheckedChange("editors")}
+              checked={value.relation === "editors"}
+              title="Content"
+              info={
+                <Flex direction="column">
+                  Recipients can edit content only, such as text, images, and
+                  predefined components.
+                  {hasProPlan !== true && (
+                    <>
+                      <br />
+                      <br />
+                      Upgrade to a Pro account to share with Content Edit
+                      permissions.
+                      <br /> <br />
+                      <Link
+                        className={buttonStyle({ color: "gradient" })}
+                        color="contrast"
+                        underline="none"
+                        href="https://webstudio.is/pricing"
+                        target="_blank"
+                      >
+                        Upgrade
+                      </Link>
+                    </>
+                  )}
+                </Flex>
+              }
+            />
+          )}
+
           <Permission
             onCheckedChange={handleCheckedChange("builders")}
             checked={value.relation === "builders"}
@@ -301,11 +336,15 @@ type SharedLinkItemType = {
   value: LinkOptions;
   onChange: (value: LinkOptions) => void;
   onDelete: () => void;
-  builderUrl: (props: {
-    authToken: string;
-    mode: "preview" | "design";
-  }) => string;
+  builderUrl: (props: { authToken: string; mode: BuilderMode }) => string;
   hasProPlan: boolean;
+};
+
+const relationToMode: Record<Relation, BuilderMode> = {
+  viewers: "preview",
+  editors: "content",
+  builders: "design",
+  administrators: "design",
 };
 
 const SharedLinkItem = ({
@@ -323,7 +362,7 @@ const SharedLinkItem = ({
       <CopyToClipboard
         text={builderUrl({
           authToken: value.token,
-          mode: value.relation === "viewers" ? "preview" : "design",
+          mode: relationToMode[value.relation],
         })}
         copyText="Copy link"
       >
