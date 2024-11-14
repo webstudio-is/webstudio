@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
-  EnhancedTooltip,
   Flex,
   Text,
   Toolbar,
@@ -156,10 +155,11 @@ export const BreakpointsSelector = ({
         {groupBreakpoints(Array.from(breakpoints.values())).map(
           (breakpoint) => {
             return (
-              <EnhancedTooltip
+              <Tooltip
                 key={breakpoint.id}
                 content={getTooltipContent(breakpoint)}
                 variant="wrapped"
+                disableHoverableContent
               >
                 <ToolbarToggleItem
                   variant="subtle"
@@ -180,7 +180,7 @@ export const BreakpointsSelector = ({
                       <BpStarOffIcon size={22} />
                     ))}
                 </ToolbarToggleItem>
-              </EnhancedTooltip>
+              </Tooltip>
             );
           }
         )}
