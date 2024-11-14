@@ -50,7 +50,10 @@ import {
   $isContentMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { initCopyPaste } from "~/shared/copy-paste/init-copy-paste";
+import {
+  initCopyPaste,
+  initCopyPasteForContentEditMode,
+} from "~/shared/copy-paste/init-copy-paste";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
@@ -210,6 +213,7 @@ const ContentEditMode = () => {
     subscribeInstanceHovering(options);
     subscribeInspectorEdits(options);
     subscribeFontLoadingDone(options);
+    initCopyPasteForContentEditMode(options);
     return () => {
       abortController.abort();
     };

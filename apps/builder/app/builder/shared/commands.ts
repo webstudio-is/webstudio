@@ -5,6 +5,7 @@ import {
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $builderMode,
+  $isDesignMode,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -26,9 +27,9 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { toast } from "@webstudio-is/design-system";
 import { selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
+import { builderApi } from "~/shared/builder-api";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -44,6 +45,11 @@ const makeBreakpointCommand = <CommandName extends string>(
 });
 
 const deleteSelectedInstance = () => {
+  if ($isDesignMode.get() === false) {
+    builderApi.toast.info("Deleting is only allowed in design mode.");
+    return;
+  }
+
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
   const selectedInstanceSelector = $selectedInstanceSelector.get();
   // cannot delete instance while editing
@@ -155,6 +161,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "toggleComponentsPanel",
       defaultHotkeys: ["a"],
       handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info(
+            "Components panel is only available in design mode."
+          );
+          return;
+        }
         toggleActiveSidebarPanel("components");
       },
       disableHotkeyOnFormTags: true,
@@ -173,6 +185,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "openStylePanel",
       defaultHotkeys: ["s"],
       handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info(
+            "Style panel is only available in design mode."
+          );
+          return;
+        }
         $activeInspectorPanel.set("style");
       },
       disableHotkeyOnFormTags: true,
@@ -226,13 +244,18 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info("Duplicating is only allowed in design mode.");
+          return;
+        }
+
         const instanceSelector = $selectedInstanceSelector.get();
         if (instanceSelector === undefined) {
           return;
         }
         const instances = $instances.get();
         if (isInstanceDetachable(instances, instanceSelector) === false) {
-          toast.error(
+          builderApi.toast.error(
             "This instance can not be moved outside of its parent component."
           );
           return;
