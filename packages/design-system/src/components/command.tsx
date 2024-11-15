@@ -171,7 +171,7 @@ export const CommandInput = (
         color="moreSubtle"
         css={{ alignSelf: "center", paddingInline: 8 }}
       >
-        {action} <Kbd value={["enter"]} />
+        {action} <Kbd value={["enter"]} color="moreSubtle" />
       </Text>
     </CommandInputContainer>
   );

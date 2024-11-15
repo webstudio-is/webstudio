@@ -23,6 +23,7 @@ import {
   Kbd,
   Text,
   CommandFooter,
+  Separator,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
@@ -347,6 +348,7 @@ const CommandDialogContent = () => {
           </CommandList>
         </ScrollArea>
       </Flex>
+      <Separator />
       <CommandFooter />
     </>
   );

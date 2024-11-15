@@ -9,6 +9,8 @@ const shortcutSymbolMap: Record<string, string> = {
   shift: "⇧",
   option: "⌥",
   backspace: "⌫",
+  enter: "↵",
+  tab: "tab",
   click: "+click",
 };
 
