@@ -95,7 +95,7 @@
     "mdast-util-gfm": "^3.0.0",
     "micromark-extension-gfm": "^3.0.0",
     "nanoevents": "^8.0.0",
-    "nanoid": "^5.0.1",
+    "nanoid": "^5.0.8",
     "nanostores": "^0.9.3",
     "picocolors": "^1.1.0",
     "pretty-bytes": "^6.1.1",

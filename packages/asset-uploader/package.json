@@ -18,7 +18,7 @@
     "fontkit": "^2.0.2",
     "image-size": "^1.1.1",
     "immer": "^10.0.3",
-    "nanoid": "^5.0.1",
+    "nanoid": "^5.0.8",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
