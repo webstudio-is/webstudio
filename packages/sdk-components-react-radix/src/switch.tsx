@@ -6,7 +6,7 @@ import {
 } from "react";
 import { Root, Thumb } from "@radix-ui/react-switch";
 
-export const Switch = /*@__PURE__*/ forwardRef<
+export const Switch = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof Root>
 >(({ checked, defaultChecked, ...props }, ref) => {

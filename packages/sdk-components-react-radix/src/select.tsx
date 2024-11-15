@@ -24,14 +24,13 @@ import {
   ReactSdkContext,
 } from "@webstudio-is/react-sdk/runtime";
 
-export const Select = /*@__PURE__*/ forwardRef<
-  HTMLDivElement,
-  ComponentProps<typeof Root>
->(({ value, defaultValue, ...props }, _ref) => {
-  return <Root {...props} defaultValue={value ?? defaultValue} />;
-});
+export const Select = forwardRef<HTMLDivElement, ComponentProps<typeof Root>>(
+  ({ value, defaultValue, ...props }, _ref) => {
+    return <Root {...props} defaultValue={value ?? defaultValue} />;
+  }
+);
 
-export const SelectTrigger = /*@__PURE__*/ forwardRef<
+export const SelectTrigger = forwardRef<
   HTMLButtonElement,
   ComponentPropsWithoutRef<typeof Trigger>
 >((props, ref) => {
@@ -47,7 +46,7 @@ export const SelectTrigger = /*@__PURE__*/ forwardRef<
   return <Trigger onPointerDown={onPointerDown} ref={ref} {...props} />;
 });
 
-export const SelectValue = /*@__PURE__*/ forwardRef<
+export const SelectValue = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof Value>, "placeholder"> & {
     placeholder?: string;
@@ -56,7 +55,7 @@ export const SelectValue = /*@__PURE__*/ forwardRef<
   return <Value ref={ref} {...props} />;
 });
 
-export const SelectContent = /*@__PURE__*/ forwardRef<
+export const SelectContent = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof Content>, "position" | "side">
 >((props, ref) => {

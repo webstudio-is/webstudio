@@ -13,7 +13,7 @@ import {
   useContext,
 } from "react";
 
-export const NavigationMenu = /*@__PURE__*/ forwardRef<
+export const NavigationMenu = forwardRef<
   HTMLLIElement,
   Omit<
     ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>,
@@ -40,7 +40,7 @@ export const NavigationMenuList = NavigationMenuPrimitive.List;
 export const NavigationMenuViewport = NavigationMenuPrimitive.Viewport;
 export const NavigationMenuContent = NavigationMenuPrimitive.Content;
 
-export const NavigationMenuItem = /*@__PURE__*/ forwardRef<
+export const NavigationMenuItem = forwardRef<
   HTMLLIElement,
   Omit<ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Item>, "asChild">
 >(({ value, ...props }, ref) => {
@@ -50,7 +50,7 @@ export const NavigationMenuItem = /*@__PURE__*/ forwardRef<
   );
 });
 
-export const NavigationMenuLink = /*@__PURE__*/ forwardRef<
+export const NavigationMenuLink = forwardRef<
   HTMLAnchorElement,
   ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>
 >(({ children, ...props }, ref) => {
@@ -63,7 +63,7 @@ export const NavigationMenuLink = /*@__PURE__*/ forwardRef<
   );
 });
 
-export const NavigationMenuTrigger = /*@__PURE__*/ forwardRef<
+export const NavigationMenuTrigger = forwardRef<
   HTMLButtonElement,
   ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Trigger>
 >(({ children, ...props }, ref) => {

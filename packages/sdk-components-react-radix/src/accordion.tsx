@@ -19,7 +19,7 @@ import {
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
 
-export const Accordion = /*@__PURE__*/ forwardRef<
+export const Accordion = forwardRef<
   HTMLDivElement,
   Omit<
     Extract<ComponentPropsWithoutRef<typeof Root>, { type: "single" }>,
@@ -29,7 +29,7 @@ export const Accordion = /*@__PURE__*/ forwardRef<
   return <Root ref={ref} type="single" {...props} />;
 });
 
-export const AccordionItem = /*@__PURE__*/ forwardRef<
+export const AccordionItem = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof Item>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
