@@ -338,10 +338,13 @@ export const $authToken = atom<string | undefined>(undefined);
 export const $isContentModeAllowed = computed(
   [$authToken, $userPlanFeatures],
   (token, userPlanFeatures) => {
-    return (
-      token === undefined ||
-      (token !== undefined && userPlanFeatures.hasProPlan === true)
-    );
+    // In own projects, everyone can edit content
+    if (token === undefined) {
+      return true;
+    }
+
+    // In shared projects, only Pro users can share editable links, so check the plan features of the user who shared the link
+    return userPlanFeatures.hasProPlan === true;
   }
 );
 
