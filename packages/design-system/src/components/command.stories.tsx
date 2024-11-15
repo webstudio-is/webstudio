@@ -7,7 +7,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  useSelectedAction,
 } from "./command";
 import { Text } from "./text";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -20,7 +19,6 @@ const meta: Meta = {
 export default meta;
 
 const CommandContent = () => {
-  const action = useSelectedAction();
   return (
     <>
       <CommandInput />
@@ -30,7 +28,7 @@ const CommandContent = () => {
           name="suggestions"
           actions={["select", "edit", "delete"]}
         >
-          <CommandItem onSelect={() => console.log(action, "Calendar")}>
+          <CommandItem>
             <Flex gap={2}>
               <CommandIcon>
                 <InfoCircleIcon />
