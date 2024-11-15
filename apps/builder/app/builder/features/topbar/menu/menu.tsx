@@ -16,7 +16,6 @@ import {
   menuItemCss,
 } from "@webstudio-is/design-system";
 import {
-  $userPlanFeatures,
   $isCloneDialogOpen,
   $isShareDialogOpen,
   $isPublishDialogOpen,
@@ -26,6 +25,7 @@ import {
   $authPermit,
   $authToken,
   $authTokenPermissions,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";

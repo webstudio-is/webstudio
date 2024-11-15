@@ -6,6 +6,8 @@ import {
   $textEditingInstanceSelector,
   $builderMode,
   $isDesignMode,
+  $isDesignModeAllowed,
+  setBuilderMode,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -131,10 +133,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         setActiveSidebarPanel("auto");
 
+        // @todo: This is temporary until we have a combo to switch modes
         if ($builderMode.get() === "preview") {
-          $builderMode.set("design");
+          if ($isDesignModeAllowed.get()) {
+            setBuilderMode("design");
+          } else {
+            setBuilderMode("content");
+          }
         } else {
-          $builderMode.set("preview");
+          setBuilderMode("preview");
         }
       },
     },
@@ -144,10 +151,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         setActiveSidebarPanel("auto");
 
+        // @todo: This is temporary until we have a combo to switch modes
         if ($builderMode.get() === "content") {
-          $builderMode.set("design");
+          if ($isDesignModeAllowed.get()) {
+            setBuilderMode("design");
+          } else {
+            setBuilderMode("preview");
+          }
         } else {
-          $builderMode.set("content");
+          setBuilderMode("content");
         }
       },
     },

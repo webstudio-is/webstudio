@@ -1,7 +1,13 @@
 import type { AppContext } from "../context/context.server";
+import type { Database } from "@webstudio-is/postrest/index.server";
 import memoize from "memoize";
 
+type Relation =
+  Database["public"]["Tables"]["AuthorizationToken"]["Row"]["relation"];
+
 export type AuthPermit = "view" | "edit" | "build" | "admin" | "own";
+
+type TokenAuthPermit = Exclude<AuthPermit, "own">;
 
 type CheckInput = {
   namespace: "Project";
@@ -36,28 +42,33 @@ const check = async (
     return { allowed: row.data !== null };
   }
 
-  const permitToRelationRewrite = {
+  if (input.permit === "own") {
+    return { allowed: false };
+  }
+
+  if (subjectSet.namespace !== "Token") {
+    return { allowed: false };
+  }
+
+  const permitToRelationRewrite: Record<TokenAuthPermit, Relation[]> = {
     view: ["viewers", "editors", "builders", "administrators"],
     edit: ["editors", "builders", "administrators"],
     build: ["builders", "administrators"],
     admin: ["administrators"],
-  } as const;
+  };
 
-  if (subjectSet.namespace === "Token" && input.permit !== "own") {
-    const row = await postgrestClient
-      .from("AuthorizationToken")
-      .select("token")
-      .eq("token", subjectSet.id)
-      .in("relation", [...permitToRelationRewrite[input.permit]])
-      .maybeSingle();
-    if (row.error) {
-      throw row.error;
-    }
+  const row = await postgrestClient
+    .from("AuthorizationToken")
+    .select("token")
+    .eq("token", subjectSet.id)
+    .in("relation", [...permitToRelationRewrite[input.permit]])
+    .maybeSingle();
 
-    return { allowed: row.data !== null };
+  if (row.error) {
+    throw row.error;
   }
 
-  return { allowed: false };
+  return { allowed: row.data !== null };
 };
 
 // doesn't work in cloudflare workers
@@ -196,13 +207,13 @@ export const hasProjectPermit = async (
  * @todo think about caching to authorizeTrpc.check.query
  * batching check queries would help too https://github.com/ory/keto/issues/812
  */
-export const getProjectPermit = async <T extends AuthPermit>(
+export const getProjectPermit = async (
   props: {
     projectId: string;
-    permits: readonly T[];
+    permits: readonly AuthPermit[];
   },
   context: AppContext
-): Promise<T | undefined> => {
+): Promise<AuthPermit | undefined> => {
   const permitToCheck = props.permits;
 
   const permits = await Promise.allSettled(
