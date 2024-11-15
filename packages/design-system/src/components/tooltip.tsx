@@ -66,6 +66,7 @@ export const Tooltip = forwardRef(
     },
     ref: Ref<HTMLDivElement>
   ) => {
+    const triggerRef = useRef<HTMLButtonElement>(null);
     // We need to intercept tooltip open
     const [open = false, setOpen] = useControllableState({
       prop: openProp,
@@ -95,7 +96,11 @@ export const Tooltip = forwardRef(
       props.onMouseLeave?.(event);
     };
 
-    return (
+    // There's no way to prevent a rendered trigger from opening.
+    // This causes delay issues when an invisible tooltip forces other tooltips to show immediately.
+    return content == null ? (
+      children
+    ) : (
       <TooltipPrimitive.Root
         open={open}
         defaultOpen={defaultOpen}
@@ -103,7 +108,35 @@ export const Tooltip = forwardRef(
         delayDuration={delayDuration}
         disableHoverableContent={disableHoverableContent}
       >
-        <TooltipPrimitive.Trigger asChild {...triggerProps}>
+        <TooltipPrimitive.Trigger
+          asChild
+          ref={triggerRef}
+          {...triggerProps}
+          onFocus={(event) => {
+            // Prevent the tooltip from opening on focus
+            // The main issue is that after dialogs or selects, the tooltip button is autofocused and causes the tooltip to open
+            event.preventDefault();
+          }}
+          onPointerMove={(event) => {
+            // The tooltip captures pointer events, which can be an issue when the tooltip trigger is also the popover trigger.
+            // This is related to Popover.Anchor, but sometimes it can't be placed above the tooltip trigger.
+            // To prevent pointer movements from affecting the tooltip, we check if there’s an element between the target and the current dialog.
+            let currentElement =
+              event.target instanceof Element ? event.target : null;
+
+            while (
+              currentElement !== null &&
+              currentElement !== event.currentTarget
+            ) {
+              if (currentElement.getAttribute("role") === "dialog") {
+                event.preventDefault();
+                break;
+              }
+
+              currentElement = currentElement.parentElement;
+            }
+          }}
+        >
           {children}
         </TooltipPrimitive.Trigger>
         {content != null && (

@@ -297,7 +297,24 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const $isPreviewMode = atom<boolean>(false);
+const builderModes = ["design", "preview", "content"] as const;
+export type BuilderMode = (typeof builderModes)[number];
+export const isBuilderMode = (mode: string | null): mode is BuilderMode =>
+  builderModes.includes(mode as BuilderMode);
+export const $builderMode = atom<BuilderMode>("design");
+
+export const $isPreviewMode = computed(
+  $builderMode,
+  (mode) => mode === "preview"
+);
+export const $isContentMode = computed(
+  $builderMode,
+  (mode) => mode === "content"
+);
+export const $isDesignMode = computed(
+  $builderMode,
+  (mode) => mode === "design"
+);
 
 export const $authPermit = atom<AuthPermit>("view");
 export const $authTokenPermissions = atom<TokenPermissions>({

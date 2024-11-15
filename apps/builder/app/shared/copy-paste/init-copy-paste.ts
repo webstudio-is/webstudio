@@ -7,6 +7,7 @@ import * as instance from "./plugin-instance";
 import * as embedTemplate from "./plugin-embed-template";
 import * as markdown from "./plugin-markdown";
 import * as webflow from "./plugin-webflow/plugin-webflow";
+import { builderApi } from "../builder-api";
 
 const isTextEditing = (event: ClipboardEvent) => {
   // Text is edited on the Canvas using the default Canvas text editor settings.
@@ -147,6 +148,31 @@ const initPlugins = ({
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
     plugins: [instance, embedTemplate, markdown, webflow],
+    signal,
+  });
+};
+
+export const initCopyPasteForContentEditMode = ({
+  signal,
+}: {
+  signal: AbortSignal;
+}) => {
+  const handleClipboard = (event: ClipboardEvent) => {
+    if (validateClipboardEvent(event) === false) {
+      return;
+    }
+
+    builderApi.toast.info(
+      "Copying and pasting is allowed in design mode only."
+    );
+  };
+
+  document.addEventListener("copy", handleClipboard, { signal });
+  document.addEventListener("cut", handleClipboard, { signal });
+  // Capture is required so we get the element before content-editable removes it
+  // This way we can detect when we are inside content-editable and ignore the event
+  document.addEventListener("paste", handleClipboard, {
+    capture: true,
     signal,
   });
 };

@@ -10,22 +10,21 @@
     "build:html.css": "tsx ./bin/html.css.ts && prettier --write ./src/__generated__/html.ts",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts && prettier --write ./src/__generated__/property-value-descriptions.ts",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "vitest run"
   },
   "bin": {
     "css-to-ws": "./bin/css-to-ws.ts"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@types/css-tree": "^2.3.1",
     "@types/node": "^22.8.1",
-    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "mdn-data": "2.8.0",
     "type-fest": "^4.26.1",
     "typescript": "5.6.3",
+    "vitest": "^2.1.4",
     "zod": "^3.22.4"
   },
   "peerDependencies": {

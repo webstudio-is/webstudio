@@ -1,7 +1,7 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, test } from "vitest";
 import { EmbedTemplateProp, WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import { jsxToWSEmbedTemplate } from "./jsx";
-import { traverseTemplate } from ".";
+import { traverseTemplate } from "./traverse-template";
 
 describe("jsx", () => {
   test("valid template", async () => {

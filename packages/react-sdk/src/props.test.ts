@@ -1,4 +1,4 @@
-import { test, expect, describe } from "@jest/globals";
+import { test, expect, describe } from "vitest";
 import type { Pages, Prop } from "@webstudio-is/sdk";
 import { isAttributeNameSafe, normalizeProps } from "./props";
 

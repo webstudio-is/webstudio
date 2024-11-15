@@ -22,7 +22,6 @@ import {
   $selectedInstanceIntanceToTag,
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
-  $isPreviewMode,
   $authTokenPermissions,
   $toastErrors,
   synchronizedCanvasStores,
@@ -41,6 +40,7 @@ import {
   $uploadingFilesDataStore,
   $memoryProps,
   $detectedFontsWeights,
+  $builderMode,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $awareness } from "../awareness";
@@ -115,7 +115,7 @@ export const registerContainers = () => {
     $selectedInstanceRenderState
   );
   clientStores.set("hoveredInstanceSelector", $hoveredInstanceSelector);
-  clientStores.set("isPreviewMode", $isPreviewMode);
+  clientStores.set("builderMode", $builderMode);
   clientStores.set("authTokenPermissions", $authTokenPermissions);
   clientStores.set("toastErrors", $toastErrors);
 

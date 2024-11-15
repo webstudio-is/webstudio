@@ -45,7 +45,12 @@ import {
   type EditorApi,
 } from "./expression-editor";
 import { useSideOffset } from "./floating-panel";
-import { $dataSourceVariables, computeExpression } from "~/shared/nano-states";
+import {
+  $dataSourceVariables,
+  $isDesignMode,
+  computeExpression,
+} from "~/shared/nano-states";
+import { useStore } from "@nanostores/react";
 
 export const evaluateExpressionWithinScope = (
   expression: string,
@@ -360,6 +365,11 @@ export const BindingPopover = ({
   });
   const hasUnsavedChange = useRef<boolean>(false);
   const preventedClosing = useRef<boolean>(false);
+  const isDesignMode = useStore($isDesignMode);
+
+  if (!isDesignMode) {
+    return;
+  }
 
   const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
   return (

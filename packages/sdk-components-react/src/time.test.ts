@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { __testing__ } from "./time";
 
 const { parseDate } = __testing__;

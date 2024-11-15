@@ -303,7 +303,7 @@ type SharedLinkItemType = {
   onDelete: () => void;
   builderUrl: (props: {
     authToken: string;
-    mode: "preview" | "edit";
+    mode: "preview" | "design";
   }) => string;
   hasProPlan: boolean;
 };
@@ -323,7 +323,7 @@ const SharedLinkItem = ({
       <CopyToClipboard
         text={builderUrl({
           authToken: value.token,
-          mode: value.relation === "viewers" ? "preview" : "edit",
+          mode: value.relation === "viewers" ? "preview" : "design",
         })}
         copyText="Copy link"
       >

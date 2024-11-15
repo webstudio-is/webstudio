@@ -1,7 +1,6 @@
+import { describe, test, expect } from "vitest";
+import { nestedSelectButtonUnitless } from "@webstudio-is/design-system";
 import { buildOptions } from "./unit-select-options";
-import { describe, test, expect } from "@jest/globals";
-//@todo investigate Imports from "@webstudio-is/design-system" cause jest to fail
-export const nestedSelectButtonUnitless = " – ";
 
 describe("Unit menu options", () => {
   test("Should show options", () => {

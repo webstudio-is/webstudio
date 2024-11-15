@@ -36,6 +36,7 @@ import {
   $editingItemSelector,
   $hoveredInstanceSelector,
   $instances,
+  $isContentMode,
   $props,
   $propsIndex,
   $propValuesByInstanceSelector,
@@ -404,6 +405,10 @@ const getBuilderDropTarget = (
 };
 
 const canDrag = (instance: Instance) => {
+  if ($isContentMode.get()) {
+    return false;
+  }
+
   const meta = $registeredComponentMetas.get().get(instance.component);
   if (meta === undefined) {
     return true;

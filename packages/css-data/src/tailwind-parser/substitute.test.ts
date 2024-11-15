@@ -1,4 +1,4 @@
-import { describe, expect, test, jest } from "@jest/globals";
+import { describe, expect, test, vi } from "vitest";
 
 import { substituteVariables } from "./substitute"; // Import the function
 
@@ -87,7 +87,7 @@ describe("expandTailwindShorthand", () => {
           background: linear-gradient(var(--var-c));
       }
     `;
-    const warn = jest.fn();
+    const warn = vi.fn();
 
     expect(substituteVariables(css, warn)).toMatchInlineSnapshot(`""`);
     expect(warn).toHaveBeenCalledTimes(1);

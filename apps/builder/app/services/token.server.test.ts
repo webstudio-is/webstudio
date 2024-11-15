@@ -4,7 +4,7 @@ import {
   createAccessToken,
   readAccessToken,
 } from "./token.server";
-import { test, expect } from "@jest/globals";
+import { test, expect } from "vitest";
 import { nanoid } from "nanoid";
 
 test.each([

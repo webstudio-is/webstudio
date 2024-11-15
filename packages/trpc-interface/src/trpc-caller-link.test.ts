@@ -1,5 +1,5 @@
 import { initTRPC } from "@trpc/server";
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import { callerLink } from "./trpc-caller-link";
 import { createTRPCProxyClient } from "@trpc/client";
 import { z } from "zod";

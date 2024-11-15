@@ -24,7 +24,7 @@
   "scripts": {
     "typecheck": "tsc",
     "build": "rm -rf lib && esbuild src/cli.ts --outdir=lib --bundle --format=esm --packages=external",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "vitest run"
   },
   "license": "AGPL-3.0-or-later",
   "engines": {
@@ -51,7 +51,6 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@netlify/remix-adapter": "^2.5.1",
     "@netlify/remix-edge-adapter": "3.4.2",
     "@remix-run/cloudflare": "^2.12.1",
@@ -65,14 +64,15 @@
     "@types/react-dom": "^18.2.25",
     "@types/yargs": "^17.0.33",
     "@vitejs/plugin-react": "^4.3.3",
-    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "prettier": "3.3.3",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "ts-expect": "^1.3.0",
     "typescript": "5.6.3",
     "vike": "^0.4.182",
     "vite": "^5.4.10",
+    "vitest": "^2.1.4",
     "wrangler": "^3.63.2"
   }
 }

@@ -28,6 +28,7 @@ import {
   $styles,
   $selectedBreakpointId,
   $selectedBreakpoint,
+  $isContentMode,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -47,6 +48,7 @@ export const BreakpointsPopover = () => {
   const breakpoints = useStore($breakpoints);
   const selectedBreakpoint = useStore($selectedBreakpoint);
   const scale = useStore($scale);
+  const isContentMode = useStore($isContentMode);
 
   if (selectedBreakpoint === undefined) {
     return null;
@@ -183,18 +185,27 @@ export const BreakpointsPopover = () => {
                 padding: theme.spacing[5],
               }}
             >
-              <Button
-                color="neutral"
-                css={{ flexGrow: 1 }}
-                onClick={(event) => {
-                  event.preventDefault();
-                  $breakpointsMenuView.set(
-                    view === "initial" ? "editor" : "initial"
-                  );
-                }}
+              <Tooltip
+                content={
+                  isContentMode
+                    ? "Editing is not allowed in content mode"
+                    : undefined
+                }
               >
-                {view === "editor" ? "Done" : "Edit breakpoints"}
-              </Button>
+                <Button
+                  color="neutral"
+                  css={{ flexGrow: 1 }}
+                  disabled={isContentMode}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    $breakpointsMenuView.set(
+                      view === "initial" ? "editor" : "initial"
+                    );
+                  }}
+                >
+                  {view === "editor" ? "Done" : "Edit breakpoints"}
+                </Button>
+              </Tooltip>
             </Flex>
           </>
         )}

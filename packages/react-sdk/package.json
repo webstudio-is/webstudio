@@ -9,19 +9,18 @@
     "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests"
+    "test": "vitest run"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "strip-indent": "^4.0.0",
     "type-fest": "^4.26.1",
     "typescript": "5.6.3",
+    "vitest": "^2.1.4",
     "zod": "^3.22.4"
   },
   "peerDependencies": {

@@ -1,7 +1,11 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Kbd, rawTheme, Text } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
+import {
+  $dragAndDropState,
+  $isContentMode,
+  $isPreviewMode,
+} from "~/shared/nano-states";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import {
@@ -83,6 +87,36 @@ type PanelConfig = {
   label: ReactNode;
   Icon: IconComponent;
   Panel: (props: { publish: Publish; onClose: () => void }) => ReactNode;
+  visibility?: {
+    content?: boolean; // if set, controls visibility in edit mode, if not the panel is visible
+    // Probably other modes
+  };
+};
+
+const isPanelVisible = (
+  panel: Pick<PanelConfig, "visibility">,
+  {
+    isPreviewMode,
+    isContentMode,
+  }: { isPreviewMode: boolean; isContentMode: boolean }
+) => {
+  if (isPreviewMode) {
+    return false;
+  }
+
+  const { visibility } = panel;
+
+  // If visibility is not defined, the panel is always visible
+  if (visibility === undefined) {
+    return true;
+  }
+
+  if (isContentMode) {
+    // If visibility.edit is not defined, the panel is visible
+    return visibility.content ?? true;
+  }
+
+  return true;
 };
 
 const panels: PanelConfig[] = [
@@ -96,6 +130,9 @@ const panels: PanelConfig[] = [
     ),
     Icon: PlusIcon,
     Panel: ComponentsPanel,
+    visibility: {
+      content: false,
+    },
   },
   {
     name: "pages",
@@ -125,6 +162,9 @@ const panels: PanelConfig[] = [
     label: "Marketplace",
     Icon: ExtensionIcon,
     Panel: MarketplacePanel,
+    visibility: {
+      content: false,
+    },
   },
 ];
 
@@ -137,6 +177,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const dragAndDropState = useStore($dragAndDropState);
   const { Panel } = panels.find((item) => item.name === activePanel) ?? none;
   const isPreviewMode = useStore($isPreviewMode);
+  const isContentMode = useStore($isContentMode);
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
   const returnTabRef = useRef<SidebarPanelName | undefined>(undefined);
 
@@ -182,6 +223,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
     setActiveSidebarPanel("assets");
   });
 
+  const modes = { isContentMode, isPreviewMode };
+
   return (
     <SidebarTabs
       activationMode="manual"
@@ -201,20 +244,22 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
           <ExternalDragDropMonitor />
           <div ref={tabsWrapperRef} style={{ display: "contents" }}>
             <SidebarTabsList>
-              {panels.map(({ name, Icon, label }) => {
-                return (
-                  <SidebarTabsTrigger
-                    key={name}
-                    label={label}
-                    value={name}
-                    onClick={() => {
-                      toggleActiveSidebarPanel(name);
-                    }}
-                  >
-                    <Icon size={rawTheme.spacing[10]} />
-                  </SidebarTabsTrigger>
-                );
-              })}
+              {panels
+                .filter((panel) => isPanelVisible(panel, modes))
+                .map(({ name, Icon, label }) => {
+                  return (
+                    <SidebarTabsTrigger
+                      key={name}
+                      label={label}
+                      value={name}
+                      onClick={() => {
+                        toggleActiveSidebarPanel(name);
+                      }}
+                    >
+                      <Icon size={rawTheme.spacing[10]} />
+                    </SidebarTabsTrigger>
+                  );
+                })}
             </SidebarTabsList>
           </div>
           <AiTabTrigger />

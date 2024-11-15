@@ -17,8 +17,8 @@ import {
   generateObjectExpression,
   isLiteralExpression,
   parseObjectExpression,
-  sitemapResourceUrl,
 } from "@webstudio-is/sdk";
+import { sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
 import {
   Box,
   Button,

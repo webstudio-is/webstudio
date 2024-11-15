@@ -1,5 +1,8 @@
-import { createJsonStringifyProxy, isPlainObject } from "@webstudio-is/sdk";
 import { useState, useMemo, type Dispatch, type SetStateAction } from "react";
+import {
+  createJsonStringifyProxy,
+  isPlainObject,
+} from "@webstudio-is/sdk/runtime";
 
 export const useVariableState = <S,>(
   initialState: S | (() => S)
