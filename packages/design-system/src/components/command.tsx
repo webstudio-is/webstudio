@@ -28,6 +28,7 @@ import { Text, textVariants } from "./text";
 import { Flex } from "./flex";
 import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { Kbd } from "./kbd";
 
 const panelWidth = "400px";
 const itemHeight = "32px";
@@ -156,6 +157,7 @@ const CommandInputField = styled(CommandPrimitive.Input, {
 export const CommandInput = (
   props: ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 ) => {
+  const action = useSelectedAction();
   return (
     <CommandInputContainer>
       <CommandInputIcon />
@@ -164,7 +166,13 @@ export const CommandInput = (
         placeholder="Type a command or search..."
         {...props}
       />
-      <CommandActions />
+      <Text
+        variant="labelsTitleCase"
+        color="moreSubtle"
+        css={{ alignSelf: "center", paddingInline: 8 }}
+      >
+        {action} <Kbd value={["enter"]} />
+      </Text>
     </CommandInputContainer>
   );
 };
@@ -185,7 +193,7 @@ const useDebounceEffect = () => {
   }, []);
 };
 
-const CommandActions = () => {
+export const CommandFooter = () => {
   const [isActionOpen, setIsActionOpen] = useState(false);
   const scheduleEffect = useDebounceEffect();
 
@@ -231,14 +239,20 @@ const CommandActions = () => {
   }, [setState]);
 
   return (
-    <Flex alignSelf="center" css={{ paddingInline: 4 }} ref={actionsRef}>
+    <Flex
+      justify="end"
+      align="center"
+      css={{ height: itemHeight, paddingInline: 4 }}
+      ref={actionsRef}
+    >
       <Popover open={isActionOpen} onOpenChange={setIsActionOpen}>
         <PopoverTrigger asChild>
           <Button tabIndex={-1} color="ghost" data-action-trigger>
-            {state.actions[state.actionIndex]}
+            Actions <Kbd value={["tab"]} />
           </Button>
         </PopoverTrigger>
         <PopoverContent
+          side="top"
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             // restore focus to the input instead of button

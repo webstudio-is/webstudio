@@ -1,6 +1,7 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import {
   Command as CommandComponent,
+  CommandFooter,
   CommandGroup,
   CommandGroupHeading,
   CommandIcon,
@@ -12,6 +13,7 @@ import { Text } from "./text";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { Kbd } from "./kbd";
 import { Flex } from "./flex";
+import { Separator } from "./separator";
 
 const meta: Meta = {
   title: "Library/Command",
@@ -87,6 +89,8 @@ const CommandContent = () => {
           </CommandItem>
         </CommandGroup>
       </CommandList>
+      <Separator />
+      <CommandFooter />
     </>
   );
 };
