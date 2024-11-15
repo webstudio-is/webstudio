@@ -2,6 +2,7 @@ import {
   forwardRef,
   type ComponentProps,
   type ElementRef,
+  type ReactElement,
   type ReactNode,
 } from "react";
 import { ChevronFilledRightIcon } from "@webstudio-is/icons";
@@ -108,10 +109,14 @@ const Indicator = styled(
 const StyledRadioItem = styled(DropdownMenuPrimitive.RadioItem, menuItemCss);
 export const DropdownMenuRadioItem = forwardRef<
   ElementRef<typeof StyledRadioItem>,
-  ComponentProps<typeof StyledRadioItem> & { icon?: ReactNode }
->(({ children, icon = <MenuCheckedIcon />, ...props }, forwardedRef) => (
-  <StyledRadioItem withIndicator {...props} ref={forwardedRef}>
-    <Indicator>{icon}</Indicator>
+  ComponentProps<typeof StyledRadioItem> & { icon?: ReactElement }
+>(({ children, icon, ...props }, forwardedRef) => (
+  <StyledRadioItem
+    withIndicator={icon !== undefined}
+    {...props}
+    ref={forwardedRef}
+  >
+    {icon !== undefined && <Indicator>{icon}</Indicator>}
     {children}
   </StyledRadioItem>
 ));

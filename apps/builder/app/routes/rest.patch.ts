@@ -119,12 +119,15 @@ export const action = async ({
       };
     }
 
-    const [canEditContent, canEdit] = await Promise.all([
+    // @todo: Commented until better Content Edit mode checks are implemented
+    const [canEditContent /* canEdit */] = await Promise.all([
       authorizeProject.hasProjectPermit({ projectId, permit: "edit" }, context),
+      /*
       authorizeProject.hasProjectPermit(
         { projectId, permit: "build" },
         context
       ),
+      */
     ]);
 
     if (canEditContent === false) {
@@ -134,7 +137,7 @@ export const action = async ({
       };
     }
 
-    const isContentEditMode = canEditContent && !canEdit;
+    // const isContentEditMode = canEditContent && !canEdit;
 
     const build = await loadRawBuildById(context, buildId);
 
@@ -231,12 +234,14 @@ export const action = async ({
         }
 
         // This is super simple and naive implementation of permissions checks for Content Edit mode
+        // @todo: Implement proper permissions checks, one of idea is to allow any changes to the new instances
+        /*
         if (isContentEditMode) {
           return {
             status: "error",
             errors: `You don't have permission to patch namespace ${namespace}`,
           };
-        }
+        }*/
 
         if (namespace === "styleSourceSelections") {
           const styleSourceSelections =

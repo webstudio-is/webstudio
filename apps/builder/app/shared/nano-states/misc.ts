@@ -352,12 +352,46 @@ export const $isDesignModeAllowed = computed([$authPermit], (authPermit) => {
   return authPermit !== "edit";
 });
 
+let previousBuilderMode: BuilderMode | undefined = undefined;
+
+export const toggleBuilderMode = (mode: BuilderMode) => {
+  const currentMode = $builderMode.get();
+
+  if (currentMode === mode) {
+    if (previousBuilderMode !== undefined) {
+      setBuilderMode(previousBuilderMode);
+      previousBuilderMode = currentMode;
+      return;
+    }
+
+    // Switch back
+    const availableModes: BuilderMode[] = [];
+    if ($isDesignModeAllowed.get() && currentMode !== "design") {
+      availableModes.push("design");
+    }
+    if ($isContentModeAllowed.get() && currentMode !== "content") {
+      availableModes.push("content");
+    }
+    if (currentMode !== "preview") {
+      availableModes.push("preview");
+    }
+
+    setBuilderMode(availableModes[0] ?? "preview");
+
+    previousBuilderMode = currentMode;
+    return;
+  }
+
+  previousBuilderMode = currentMode;
+  setBuilderMode(mode);
+};
+
 export const setBuilderMode = (mode: BuilderMode | null) => {
   const authPermit = $authPermit.get();
 
   if (mode === "content" && !$isContentModeAllowed.get()) {
     // This is content link from a non pro user, we don't allow content mode for such links
-    toast.error(
+    toast.info(
       "Content mode is not available for this link. The link’s author must have a Pro plan."
     );
 
@@ -366,7 +400,7 @@ export const setBuilderMode = (mode: BuilderMode | null) => {
   }
 
   if (mode === "design" && !$isDesignModeAllowed.get()) {
-    toast.error("Design mode is not available for content edit links.");
+    toast.info("Design mode is not available for content edit links.");
 
     $builderMode.set("content");
     return;

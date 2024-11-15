@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $editingPageId, $pages } from "~/shared/nano-states";
-import { PreviewButton } from "./preview";
+
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
@@ -28,8 +28,7 @@ import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
 import type { ReactNode } from "react";
 import { CloneButton } from "./clone";
 import { $selectedPage } from "~/shared/awareness";
-import { EditorButton } from "./editor";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { BuilderModeDropDown } from "./builder-mode";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -125,8 +124,8 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
         >
           <ViewMode />
           <SyncStatus />
-          {isFeatureEnabled("contentEditableMode") && <EditorButton />}
-          <PreviewButton />
+
+          <BuilderModeDropDown />
           <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
           <PublishButton projectId={project.id} />
           <CloneButton />
