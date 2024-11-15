@@ -83,8 +83,9 @@ jobs:
               }
             }
             const results = [
-              await assertSize('./fixtures/ssg/dist/client', 308),
-              await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 396),
+              await assertSize('./fixtures/ssg/dist/client', 288),
+              await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 376),
+              await assertSize('./fixtures/webstudio-remix-vercel/build/client', 904),
             ]
             for (const result of results) {
               if (result.passed) {

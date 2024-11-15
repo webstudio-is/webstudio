@@ -35,7 +35,7 @@
     }
   },
   "scripts": {
-    "build": "rm -rf lib && esbuild src/components.ts src/metas.ts src/props.ts src/hooks.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "vite build --config ../../vite.sdk-components.config.ts",
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts !./src/*.test.{ts,tsx}' -e asChild -e modal -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
     "build:tailwind": "tsx scripts/generate-tailwind-theme.ts && prettier --write src/theme/__generated__",
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
