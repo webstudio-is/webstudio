@@ -1,11 +1,12 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { keywordValues } from "@webstudio-is/css-data";
+import { keywordValues, properties } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import type * as Controls from "../controls";
 
 type BaseStyleConfig = {
   label: string;
   property: StyleProperty;
+  mdnUrl?: string;
 };
 
 export type Control = keyof typeof Controls;
@@ -53,12 +54,14 @@ export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
 
   const keywords = keywordValues[property] || [];
   const label = humanizeString(property);
+  const propertyData = properties[property];
 
   const result = {
     label,
     property,
     control: getControl(property),
     items: keywords.map((keyword) => ({ label: keyword, name: keyword })),
+    ...("mdnUrl" in propertyData && { mdnUrl: propertyData.mdnUrl }),
   };
 
   styleConfigCache.set(propertyName, result);

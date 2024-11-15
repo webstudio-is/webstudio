@@ -37,6 +37,7 @@ export type RawPropertyData = {
   unitGroups: Array<UnitGroup>;
   inherited: boolean;
   initial: StyleValue;
+  mdnUrl?: string;
 };
 
 export const propertiesData: { [property: string]: RawPropertyData } = {};
@@ -49,6 +50,7 @@ propertiesData.WebkitFontSmoothing = {
     type: "keyword",
     value: "auto",
   },
+  mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
 };
 keywordValues.WebkitFontSmoothing = [
   "auto",
@@ -64,6 +66,7 @@ propertiesData.MozOsxFontSmoothing = {
     type: "keyword",
     value: "auto",
   },
+  mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
 };
 keywordValues.MozOsxFontSmoothing = ["auto", "grayscale"];
 
@@ -71,6 +74,7 @@ propertiesData["-webkit-box-orient"] = {
   unitGroups: [],
   inherited: false,
   initial: { type: "keyword", value: "horizontal" },
+  mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/box-orient",
 };
 keywordValues["-webkit-box-orient"] = ["horizontal", "vertical"];
 

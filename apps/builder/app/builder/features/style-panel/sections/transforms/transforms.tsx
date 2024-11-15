@@ -69,9 +69,9 @@ const advancedProperties = [
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
 export const properties = [
+  "transform",
   "translate",
   "scale",
-  "transform",
   ...advancedProperties,
 ] satisfies [StyleProperty, ...StyleProperty[]];
 
