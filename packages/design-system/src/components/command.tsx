@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -23,9 +24,10 @@ import {
 } from "@radix-ui/react-dialog";
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
-import { textVariants } from "./text";
+import { Text, textVariants } from "./text";
 import { Flex } from "./flex";
 import { Button } from "./button";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 const panelWidth = "400px";
 const itemHeight = "32px";
@@ -78,18 +80,9 @@ const CommandContext = createContext<
   () => {},
 ]);
 
-const getLoopedIndex = (state: CommandState) => {
-  let loopedIndex = state.actionIndex % state.actions.length;
-  if (loopedIndex < 0) {
-    loopedIndex += state.actions.length;
-  }
-  return loopedIndex;
-};
-
 export const useSelectedAction = () => {
   const [state] = useContext(CommandContext);
-  const loopedIndex = getLoopedIndex(state);
-  return state.actions[loopedIndex];
+  return state.actions[state.actionIndex];
 };
 
 export const Command = (props: CommandProps) => {
@@ -134,7 +127,7 @@ export const CommandDialog = ({
 
 const CommandInputContainer = styled("div", {
   display: "grid",
-  gridTemplateColumns: `${itemHeight} 1fr`,
+  gridTemplateColumns: `${itemHeight} 1fr max-content`,
   height: itemHeight,
   borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
 });
@@ -171,17 +164,39 @@ export const CommandInput = (
         placeholder="Type a command or search..."
         {...props}
       />
+      <CommandActions />
     </CommandInputContainer>
   );
 };
 
-export const CommandActions = () => {
+const ActionsCommand = styled(CommandPrimitive, {});
+
+const useDebounceEffect = () => {
+  const [updateCallback, setUpdateCallback] = useState(() => () => {
+    /* empty */
+  });
+  useEffect(() => {
+    // Because of how our styles works we need to update after React render to be sure that
+    // all styles are applied
+    updateCallback();
+  }, [updateCallback]);
+  return useCallback((callback: () => void) => {
+    setUpdateCallback(() => callback);
+  }, []);
+};
+
+const CommandActions = () => {
+  const [isActionOpen, setIsActionOpen] = useState(false);
+  const scheduleEffect = useDebounceEffect();
+
   const actionsRef = useRef<HTMLDivElement>(null);
+
+  // store group actions whenever highlighted item is changed
   const [state, setState] = useContext(CommandContext);
   const highlightedValue = useCommandState((state) => state.value);
   useEffect(() => {
-    const root = actionsRef.current?.closest("[cmdk-root]");
-    const selectedGroup = root?.querySelector(
+    const actionsElement = actionsRef.current?.closest("[cmdk-root]");
+    const selectedGroup = actionsElement?.querySelector(
       "[cmdk-group]:has([aria-selected=true])"
     );
     const highlightedGroup = selectedGroup?.getAttribute("data-value") ?? "";
@@ -196,21 +211,17 @@ export const CommandActions = () => {
     });
   }, [highlightedValue, setState]);
 
-  const loopedSelectedIndex = getLoopedIndex(state);
+  // open action popover with Tab
   useEffect(() => {
     const controller = new AbortController();
-    const root = actionsRef.current?.closest("[cmdk-root]");
-    if (root instanceof HTMLElement) {
-      root.addEventListener(
+    const actionsElement = actionsRef.current?.closest("[cmdk-root]");
+    if (actionsElement instanceof HTMLElement) {
+      actionsElement.addEventListener(
         "keydown",
         (event) => {
           if (event.key === "Tab") {
             event.preventDefault();
-            const direction = event.shiftKey ? -1 : 1;
-            setState((prev) => ({
-              ...prev,
-              actionIndex: prev.actionIndex + direction,
-            }));
+            setIsActionOpen(true);
           }
         },
         { signal: controller.signal }
@@ -220,16 +231,17 @@ export const CommandActions = () => {
   }, [setState]);
 
   return (
-    <Flex gap={1} css={{ padding: 8 }} ref={actionsRef}>
-      {state.actions.map((action, actionIndex) => (
-        <Button
-          key={action}
-          tabIndex={-1}
-          color="ghost"
-          state={loopedSelectedIndex === actionIndex ? "focus" : undefined}
-          data-action={action}
-          onClick={() => {
-            setState((prev) => ({ ...prev, actionIndex }));
+    <Flex alignSelf="center" css={{ paddingInline: 4 }} ref={actionsRef}>
+      <Popover open={isActionOpen} onOpenChange={setIsActionOpen}>
+        <PopoverTrigger asChild>
+          <Button tabIndex={-1} color="ghost" data-action-trigger>
+            {state.actions[state.actionIndex]}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            // restore focus to the input instead of button
             const root = actionsRef.current?.closest("[cmdk-root]");
             const input = root?.querySelector("[cmdk-input]");
             if (input instanceof HTMLElement) {
@@ -237,23 +249,62 @@ export const CommandActions = () => {
             }
           }}
         >
-          {action}
-        </Button>
-      ))}
+          <ActionsCommand>
+            <CommandInputContainer>
+              <CommandInputField placeholder="Choose action..." />
+            </CommandInputContainer>
+            <CommandList data-action-list>
+              {state.actions.map((action, actionIndex) => (
+                <CommandItem
+                  key={action}
+                  onSelect={() => {
+                    setState((prev) => ({ ...prev, actionIndex }));
+                    setIsActionOpen(false);
+                    const root = actionsRef.current?.closest("[cmdk-root]");
+                    const item = root?.querySelector(
+                      "[cmdk-group] [aria-selected=true]"
+                    );
+                    // execute after action state is applied
+                    scheduleEffect(() => {
+                      if (item instanceof HTMLElement) {
+                        item.click();
+                      }
+                    });
+                  }}
+                >
+                  <Text variant="labelsTitleCase">{action}</Text>
+                </CommandItem>
+              ))}
+            </CommandList>
+          </ActionsCommand>
+        </PopoverContent>
+      </Popover>
     </Flex>
   );
 };
 
 export const CommandList = CommandPrimitive.List;
 
-type CommandGroupProps = ComponentPropsWithoutRef<
-  typeof CommandPrimitive.Group
+type CommandGroupProps = Omit<
+  ComponentPropsWithoutRef<typeof CommandPrimitive.Group>,
+  "value"
 > & {
+  name: string;
   actions: string[];
 };
 
-export const CommandGroup = ({ actions, ...props }: CommandGroupProps) => {
-  return <CommandPrimitive.Group {...props} data-actions={actions.join()} />;
+export const CommandGroup = ({
+  name,
+  actions,
+  ...props
+}: CommandGroupProps) => {
+  return (
+    <CommandPrimitive.Group
+      {...props}
+      value={name}
+      data-actions={actions.join()}
+    />
+  );
 };
 
 export const CommandGroupHeading = styled("div", {

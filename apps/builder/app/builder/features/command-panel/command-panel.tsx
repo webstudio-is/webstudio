@@ -17,12 +17,11 @@ import {
   CommandGroupHeading,
   CommandItem,
   CommandIcon,
+  useSelectedAction,
   ScrollArea,
   Flex,
   Kbd,
   Text,
-  CommandActions,
-  useSelectedAction,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
@@ -131,7 +130,7 @@ const $componentOptions = computed(
 const ComponentGroup = ({ options }: { options: ComponentOption[] }) => {
   return (
     <CommandGroup
-      value="component"
+      name="component"
       heading={<CommandGroupHeading>Components</CommandGroupHeading>}
       actions={["add"]}
     >
@@ -210,7 +209,7 @@ const getBreakpointLabel = (breakpoint: Breakpoint) => {
 const BreakpointGroup = ({ options }: { options: BreakpointOption[] }) => {
   return (
     <CommandGroup
-      value="breakpoint"
+      name="breakpoint"
       heading={<CommandGroupHeading>Breakpoints</CommandGroupHeading>}
       actions={["select"]}
     >
@@ -265,7 +264,7 @@ const PageGroup = ({ options }: { options: PageOption[] }) => {
   const action = useSelectedAction();
   return (
     <CommandGroup
-      value="page"
+      name="page"
       heading={<CommandGroupHeading>Pages</CommandGroupHeading>}
       actions={["select", "settings"]}
     >
@@ -317,7 +316,6 @@ const CommandDialogContent = () => {
   return (
     <>
       <CommandInput value={search} onValueChange={setSearch} />
-      <CommandActions />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
           <CommandList>

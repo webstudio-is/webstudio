@@ -1,6 +1,5 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import {
-  CommandActions,
   Command as CommandComponent,
   CommandGroup,
   CommandGroupHeading,
@@ -8,6 +7,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  useSelectedAction,
 } from "./command";
 import { Text } from "./text";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -19,17 +19,18 @@ const meta: Meta = {
 };
 export default meta;
 
-export const Command: StoryFn = () => {
+const CommandContent = () => {
+  const action = useSelectedAction();
   return (
-    <CommandComponent>
+    <>
       <CommandInput />
-      <CommandActions />
       <CommandList>
         <CommandGroup
           heading={<CommandGroupHeading>Suggestions</CommandGroupHeading>}
+          name="suggestions"
           actions={["select", "edit", "delete"]}
         >
-          <CommandItem>
+          <CommandItem onSelect={() => console.log(action, "Calendar")}>
             <Flex gap={2}>
               <CommandIcon>
                 <InfoCircleIcon />
@@ -56,6 +57,7 @@ export const Command: StoryFn = () => {
         </CommandGroup>
         <CommandGroup
           heading={<CommandGroupHeading>Settings</CommandGroupHeading>}
+          name="settings"
           actions={["open"]}
         >
           <CommandItem>
@@ -87,6 +89,14 @@ export const Command: StoryFn = () => {
           </CommandItem>
         </CommandGroup>
       </CommandList>
+    </>
+  );
+};
+
+export const Command: StoryFn = () => {
+  return (
+    <CommandComponent>
+      <CommandContent />
     </CommandComponent>
   );
 };
