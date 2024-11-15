@@ -12,7 +12,6 @@ import {
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 import { $selectedPage, selectPage } from "../awareness";
-import invariant from "tiny-invariant";
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -22,13 +21,12 @@ const setPageStateFromUrl = () => {
   }
   const pageId = searchParams.get("pageId") ?? pages.homePage.id;
 
-  const mode = searchParams.get("mode");
+  let mode = searchParams.get("mode");
 
   // Check in case of BuilderMode rename
-  invariant(
-    mode === null || isBuilderMode(mode),
-    `Invalid search param mode: ${mode}`
-  );
+  if (!isBuilderMode(mode)) {
+    mode = null;
+  }
 
   setBuilderMode(mode);
 
