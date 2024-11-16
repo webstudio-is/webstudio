@@ -10,11 +10,11 @@
     "fixtures:build": "pnpm cli build --template netlify-functions --template internal --preview && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "dependencies": {
-    "@netlify/functions": "^2.8.1",
+    "@netlify/functions": "^2.8.2",
     "@netlify/remix-adapter": "^2.5.1",
-    "@remix-run/node": "2.12.1",
-    "@remix-run/react": "2.12.1",
-    "@remix-run/server-runtime": "2.12.1",
+    "@remix-run/node": "2.14.0",
+    "@remix-run/react": "2.14.0",
+    "@remix-run/server-runtime": "2.14.0",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -28,11 +28,11 @@
   "private": true,
   "sideEffects": false,
   "devDependencies": {
-    "@remix-run/dev": "2.12.1",
+    "@remix-run/dev": "2.14.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.6.3",
-    "vite": "^5.4.10",
+    "vite": "^5.4.11",
     "webstudio": "workspace:*"
   },
   "engines": {
