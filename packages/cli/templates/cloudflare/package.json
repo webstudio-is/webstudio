@@ -16,7 +16,7 @@
     "@remix-run/cloudflare-pages": "2.14.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241112.0",
-    "wrangler": "^3.87.0"
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "wrangler": "^3.63.2"
   }
 }

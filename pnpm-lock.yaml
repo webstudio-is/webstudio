@@ -225,7 +225,7 @@ importers:
         version: 2.5.3
       '@vercel/remix':
         specifier: 2.14.0
-        version: 2.14.0(@remix-run/dev@2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0)))(@remix-run/node@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 2.14.0(@remix-run/dev@2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -393,7 +393,7 @@ importers:
         version: 2.0.0(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(remix-auth@3.7.0(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3)))
       remix-auth-oauth2:
         specifier: ^2.3.0
-        version: 2.3.0(@remix-run/cloudflare@2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3))(@remix-run/node@2.14.0(typescript@5.6.3))(remix-auth@3.7.0(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3)))
+        version: 2.3.0(@remix-run/cloudflare@2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3))(@remix-run/node@2.14.0(typescript@5.6.3))(remix-auth@3.7.0(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3)))
       shallow-equal:
         specifier: ^3.1.0
         version: 3.1.0
@@ -433,7 +433,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: ^2.14.0
-        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
@@ -579,10 +579,10 @@ importers:
     dependencies:
       '@remix-run/cloudflare':
         specifier: 2.14.0
-        version: 2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)
+        version: 2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)
       '@remix-run/cloudflare-pages':
         specifier: 2.14.0
-        version: 2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)
+        version: 2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)
       '@remix-run/node':
         specifier: 2.14.0
         version: 2.14.0(typescript@5.6.3)
@@ -630,11 +630,11 @@ importers:
         version: 3.22.4
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^4.20241112.0
-        version: 4.20241112.0
+        specifier: ^4.20240620.0
+        version: 4.20240701.0
       '@remix-run/dev':
         specifier: 2.14.0
-        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -648,8 +648,8 @@ importers:
         specifier: ^5.4.11
         version: 5.4.11(@types/node@22.8.1)
       wrangler:
-        specifier: ^3.87.0
-        version: 3.87.0(@cloudflare/workers-types@4.20241112.0)
+        specifier: ^3.63.2
+        version: 3.63.2(@cloudflare/workers-types@4.20240701.0)
 
   fixtures/webstudio-custom-template:
     dependencies:
@@ -695,7 +695,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.14.0
-        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -719,7 +719,7 @@ importers:
         version: 2.11.0
       '@netlify/remix-edge-adapter':
         specifier: ^3.4.2
-        version: 3.4.2(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 3.4.2(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@remix-run/node':
         specifier: 2.14.0
         version: 2.14.0(typescript@5.6.3)
@@ -759,7 +759,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.14.0
-        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -823,7 +823,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.14.0
-        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -881,7 +881,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.14.0
-        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -1083,16 +1083,16 @@ importers:
         version: 2.5.1(@netlify/functions@2.8.2)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))
       '@netlify/remix-edge-adapter':
         specifier: 3.4.2
-        version: 3.4.2(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 3.4.2(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@remix-run/cloudflare':
         specifier: ^2.14.0
-        version: 2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)
+        version: 2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)
       '@remix-run/cloudflare-pages':
         specifier: ^2.14.0
-        version: 2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)
+        version: 2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)
       '@remix-run/dev':
         specifier: ^2.14.0
-        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+        version: 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@remix-run/node':
         specifier: ^2.14.0
         version: 2.14.0(typescript@5.6.3)
@@ -1145,8 +1145,8 @@ importers:
         specifier: ^2.1.4
         version: 2.1.4(@types/node@22.8.1)(jsdom@20.0.3)
       wrangler:
-        specifier: ^3.87.0
-        version: 3.87.0(@cloudflare/workers-types@4.20241112.0)
+        specifier: ^3.63.2
+        version: 3.63.2(@cloudflare/workers-types@4.20240701.0)
 
   packages/css-data:
     dependencies:
@@ -2326,6 +2326,9 @@ packages:
   '@brillout/json-serializer@0.5.13':
     resolution: {integrity: sha512-9FpmgpuoSISw6fAPVB2qwW1dGAADN28YbWpfwOErfcZxpBH4lsnejuY89qcivInnWXYJvyyPwghCuOTbtuaYFg==}
 
+  '@brillout/picocolors@1.0.14':
+    resolution: {integrity: sha512-XhyZY3/FUh56mDuLIjv5kN9qy+oQj7A/d2uQ6cJJ4uVv55+velua3abcrM5WIvs2RHZGA3EE7S9FWo+TjF10ew==}
+
   '@brillout/picocolors@1.0.15':
     resolution: {integrity: sha512-VrgvPtfnKP/i8kxCAyQVd0DWg6xU8OZJndbLf/lrywd96UdMhnGL/PK42HhHhhwkDSkaiQU+zc+OPWpvqOe4Cg==}
 
@@ -2350,42 +2353,38 @@ packages:
     resolution: {integrity: sha512-YLPHc8yASwjNkmcDMQMY35yiWjoKAKnhUbPRszBRS0YgH+IXtsMp61j+yTcnCE3oO2DgP0U3iejLC8FTtKDC8Q==}
     engines: {node: '>=16.13'}
 
-  '@cloudflare/workerd-darwin-64@1.20241106.1':
-    resolution: {integrity: sha512-zxvaToi1m0qzAScrxFt7UvFVqU8DxrCO2CinM1yQkv5no7pA1HolpIrwZ0xOhR3ny64Is2s/J6BrRjpO5dM9Zw==}
+  '@cloudflare/workerd-darwin-64@1.20240701.0':
+    resolution: {integrity: sha512-XAZa4ZP+qyTn6JQQACCPH09hGZXP2lTnWKkmg5mPwT8EyRzCKLkczAf98vPP5bq7JZD/zORdFWRY0dOTap8zTQ==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [darwin]
 
-  '@cloudflare/workerd-darwin-arm64@1.20241106.1':
-    resolution: {integrity: sha512-j3dg/42D/bPgfNP3cRUBxF+4waCKO/5YKwXNj+lnVOwHxDu+ne5pFw9TIkKYcWTcwn0ZUkbNZNM5rhJqRn4xbg==}
+  '@cloudflare/workerd-darwin-arm64@1.20240701.0':
+    resolution: {integrity: sha512-w80ZVAgfH4UwTz7fXZtk7KmS2FzlXniuQm4ku4+cIgRTilBAuKqjpOjwUCbx5g13Gqcm9NuiHce+IDGtobRTIQ==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
 
-  '@cloudflare/workerd-linux-64@1.20241106.1':
-    resolution: {integrity: sha512-Ih+Ye8E1DMBXcKrJktGfGztFqHKaX1CeByqshmTbODnWKHt6O65ax3oTecUwyC0+abuyraOpAtdhHNpFMhUkmw==}
+  '@cloudflare/workerd-linux-64@1.20240701.0':
+    resolution: {integrity: sha512-UWLr/Anxwwe/25nGv451MNd2jhREmPt/ws17DJJqTLAx6JxwGWA15MeitAIzl0dbxRFAJa+0+R8ag2WR3F/D6g==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [linux]
 
-  '@cloudflare/workerd-linux-arm64@1.20241106.1':
-    resolution: {integrity: sha512-mdQFPk4+14Yywn7n1xIzI+6olWM8Ybz10R7H3h+rk0XulMumCWUCy1CzIDauOx6GyIcSgKIibYMssVHZR30ObA==}
+  '@cloudflare/workerd-linux-arm64@1.20240701.0':
+    resolution: {integrity: sha512-3kCnF9kYgov1ggpuWbgpXt4stPOIYtVmPCa7MO2xhhA0TWP6JDUHRUOsnmIgKrvDjXuXqlK16cdg3v+EWsaPJg==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
-  '@cloudflare/workerd-windows-64@1.20241106.1':
-    resolution: {integrity: sha512-4rtcss31E/Rb/PeFocZfr+B9i1MdrkhsTBWizh8siNR4KMmkslU2xs2wPaH1z8+ErxkOsHrKRa5EPLh5rIiFeg==}
+  '@cloudflare/workerd-windows-64@1.20240701.0':
+    resolution: {integrity: sha512-6IPGITRAeS67j3BH1rN4iwYWDt47SqJG7KlZJ5bB4UaNAia4mvMBSy/p2p4vA89bbXoDRjMtEvRu7Robu6O7hQ==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-shared@0.7.1':
-    resolution: {integrity: sha512-46cP5FCrl3TrvHeoHLb5SRuiDMKH5kc9Yvo36SAfzt8dqJI/qJRoY1GP3ioHn/gP7v2QIoUOTAzIl7Ml7MnfrA==}
-    engines: {node: '>=16.7.0'}
-
-  '@cloudflare/workers-types@4.20241112.0':
-    resolution: {integrity: sha512-Q4p9bAWZrX14bSCKY9to19xl0KMU7nsO5sJ2cTVspHoypsjPUMeQCsjHjmsO2C4Myo8/LPeDvmqFmkyNAPPYZw==}
+  '@cloudflare/workers-types@4.20240701.0':
+    resolution: {integrity: sha512-6Cu6NIAicmb8H6CkzFdQG5Ib+TDs9HU8AKQEGlxnbvEBDmhUNpmL30ETXpLS0asdeyc+rTb2xag0hSv0Z1BflQ==}
 
   '@codemirror/autocomplete@6.18.1':
     resolution: {integrity: sha512-iWHdj/B1ethnHRTwZj+C1obmmuCzquH29EbcKr0qIjA9NfDeBDJ7vs+WOHsFeLeflE4o+dHfYndJloMKHUkWUA==}
@@ -5300,10 +5299,6 @@ packages:
     resolution: {integrity: sha512-Dr3sfKRP6oTcjf2JmUmFJfeVMvXBdegxB0iVQ5eb2V10uFJUCAS8OByZdVAyVb8xXNz3GjjTgj9kLWsZTqE6kw==}
     engines: {node: '>= 8.10.0'}
 
-  chokidar@4.0.1:
-    resolution: {integrity: sha512-n8enUVCED/KVRQlab1hr3MVpcVMvxtZjmEa956u+4YijlmQED223XMSYj2tLuKvr4jcCTzNNMpQDUer72MMmzA==}
-    engines: {node: '>= 14.16.0'}
-
   chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
 
@@ -5408,6 +5403,10 @@ packages:
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
+  consola@3.2.3:
+    resolution: {integrity: sha512-I5qxpzLv+sJhTVEoLYNcTW+bThDCPsit0vLNKShZx6rLtpilNpmmeTPaeqJb9ZE9dV3DGaeby6Vuhrw38WjeyQ==}
+    engines: {node: ^14.18.0 || >=16.10.0}
+
   content-disposition@0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
     engines: {node: '>= 0.6'}
@@ -5508,9 +5507,6 @@ packages:
 
   date-fns@3.6.0:
     resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
-
-  date-fns@4.1.0:
-    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -6483,9 +6479,6 @@ packages:
   isomorphic.js@0.2.5:
     resolution: {integrity: sha512-PIeMbHqMt4DnUP3MA/Flc0HElYjMXArsw1qwJZcm9sqR8mq3l8NYizFMty0pWwE/tzIGH3EKK5+jes5mAr85yw==}
 
-  itty-time@1.0.6:
-    resolution: {integrity: sha512-+P8IZaLLBtFv8hCkIjcymZOp4UJ+xW6bSlQsXGqrkmJh7vSiMFSlNne0mCYagEE0N7HDNR5jJBRxwN0oYv61Rw==}
-
   jackspeak@2.2.1:
     resolution: {integrity: sha512-MXbxovZ/Pm42f6cDIDkl3xpwv1AGwObKwfmjs2nQePiy85tP3fatofl3FC1aBsOtP/6fq5SbtgHwWcMsLP+bDw==}
     engines: {node: '>=14'}
@@ -6987,8 +6980,8 @@ packages:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
 
-  miniflare@3.20241106.0:
-    resolution: {integrity: sha512-PjOoJKjUUofCueQskfhXlGvvHxZj36UAJAp1DnquMK88MFF50zCULblh0KXMSNM+bXeQYA94Gj06a7kfmBGxPw==}
+  miniflare@3.20240701.0:
+    resolution: {integrity: sha512-m9+I+7JNyqDGftCMKp9cK9pCZkK72hAL2mM9IWwhct+ZmucLBA8Uu6+rHQqA5iod86cpwOkrB2PrPA3wx9YNgw==}
     engines: {node: '>=16.13'}
     hasBin: true
 
@@ -7119,6 +7112,9 @@ packages:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
 
+  node-fetch-native@1.6.4:
+    resolution: {integrity: sha512-IhOigYzAKHd244OC0JIMIUrjzctirCmPkaIfhDeGcEETWof5zKYUW7e7MYvChGWh/4CJeXEgsRyGzuF334rOOQ==}
+
   node-fetch@2.6.9:
     resolution: {integrity: sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==}
     engines: {node: 4.x || >=6.0.0}
@@ -7198,9 +7194,6 @@ packages:
   object.assign@4.1.4:
     resolution: {integrity: sha512-1mxKf0e58bvyjSCtKYY4sRe9itRk3PJpquJOjeIkz885CczcI4IvJJDLPS72oowuSh+pBxUFROpX+TU++hxhZQ==}
     engines: {node: '>= 0.4'}
-
-  ohash@1.1.4:
-    resolution: {integrity: sha512-FlDryZAahJmEF3VR3w1KogSEdWX3WhA5GPakFx4J81kEAiHyLMpdLLElS8n8dfNadMgAne/MywcvmogzscVt4g==}
 
   on-finished@2.3.0:
     resolution: {integrity: sha512-ikqdkGAAyf/X/gPhXGvfgAytDZtDbr+bkNUJ0N9h5MI/dmdgCs3l6hoHrcUv41sRKew3jIwrp4qQDXiK99Utww==}
@@ -7329,8 +7322,8 @@ packages:
   path-to-regexp@0.1.10:
     resolution: {integrity: sha512-7lf7qcQidTku0Gu3YDPc8DJ1q7OOucfa/BSsIwjuh56VU7katFvuM8hULfkwB3Fns/rsVF7PwPKVw1sl5KQS9w==}
 
-  path-to-regexp@6.3.0:
-    resolution: {integrity: sha512-Yhpw4T9C6hPpgPeA28us07OJeqZ5EzQTkbfwuhsUg0c237RomFoETJgmp2sa3F/41gfLE6G5cqcYwznmeEeOlQ==}
+  path-to-regexp@6.2.1:
+    resolution: {integrity: sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==}
 
   pathe@1.1.2:
     resolution: {integrity: sha512-whLdWMYL2TwI08hn8/ZqAbrVemu0LNaNNJZX73O6qaIdCTfXutsLhMkjdENX0qhsQ9uIimo4/aQOmXkoon2nDQ==}
@@ -7722,10 +7715,6 @@ packages:
   readdirp@3.6.0:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
-
-  readdirp@4.0.2:
-    resolution: {integrity: sha512-yDMz9g+VaZkqBYS/ozoBJwaBhTbZo3UNYQHNRw1D3UFQB8oHB4uS/tAODO+ZLjGWmUbKnIlOWO+aaIiAxrUWHA==}
-    engines: {node: '>= 14.16.0'}
 
   recast@0.23.7:
     resolution: {integrity: sha512-MpQlLZVpqbbxYcqEjwpRWo88sGvjOYoXptySz710RuddNMHx+wPkoNX6YyLZJlXAh5VZr1qmPrTwcTuFMh0Lag==}
@@ -8383,9 +8372,6 @@ packages:
   ufo@1.5.3:
     resolution: {integrity: sha512-Y7HYmWaFwPUmkoQCUIAYpKqkOf+SbVj/2fJJZ4RJMCfZp0rTGwRbzQD+HghfnhKOjL9E01okqz+ncJskGYfBNw==}
 
-  ufo@1.5.4:
-    resolution: {integrity: sha512-UsUk3byDzKd04EyoZ7U4DOlxQaD14JUKQl6/P7wiX4FNvUfm3XL246n9W5AmqwW5RSFJ27NAuM0iLscAOYUiGQ==}
-
   ultraflag@0.1.0:
     resolution: {integrity: sha512-F6J/7SZHkep//Ihd5N63b1ghzBUclZvFuSzsZgurFPS0h0Fj482mNdz8R9REm89ETSPPsPB9eJ3z7E52WkDMQw==}
 
@@ -8404,8 +8390,8 @@ packages:
     resolution: {integrity: sha512-VviMt2tlMg1BvQ0FKXxrz1eJuyrcISrL2sPfBf7ZskX/FCEc/7LeThQaoygsMJpNqrATWQIsRVx+1Dpe4jaYuQ==}
     engines: {node: '>=18.17'}
 
-  unenv-nightly@2.0.0-20241024-111401-d4156ac:
-    resolution: {integrity: sha512-xJO1hfY+Te+/XnfCYrCbFbRcgu6XEODND1s5wnVbaBCkuQX7JXF7fHEXPrukFE2j8EOH848P8QN19VO47XN8hw==}
+  unenv-nightly@1.10.0-1717606461.a117952:
+    resolution: {integrity: sha512-u3TfBX02WzbHTpaEfWEKwDijDSFAHcgXkayUZ+MVDrjhLFvgAJzFGTSTmwlEhwWi2exyRQey23ah9wELMM6etg==}
 
   unicode-properties@1.4.1:
     resolution: {integrity: sha512-CLjCCLQ6UuMxWnbIylkisbRj31qxHPAurvena/0iwSVbQ2G1VY5/HjV0IRabOEbDHlzZlRdCrD4NhB0JtU40Pg==}
@@ -8745,8 +8731,8 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
-  workerd@1.20241106.1:
-    resolution: {integrity: sha512-1GdKl0kDw8rrirr/ThcK66Kbl4/jd4h8uHx5g7YHBrnenY5SX1UPuop2cnCzYUxlg55kPjzIqqYslz1muRFgFw==}
+  workerd@1.20240701.0:
+    resolution: {integrity: sha512-qSgNVqauqzNCij9MaJLF2c2ko3AnFioVSIxMSryGbRK+LvtGr9BKBt6JOxCb24DoJASoJDx3pe3DJHBVydUiBg==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -8754,12 +8740,12 @@ packages:
     resolution: {integrity: sha512-+TvsA6VAVoMC3XDKR5MoC/qlLqDixEfOBysDEKnPIPou/NvoPWCAuXHXMsswwlvmEuvX56lQjvELLyLuzTKvRw==}
     engines: {node: '>=12'}
 
-  wrangler@3.87.0:
-    resolution: {integrity: sha512-BExktnSLeGgG+uxgnr4h9eZ5nefdpTVcTHR+gEIWRvqk07XL04nJwpPYAOIPKPpB7E2tMdDJgNLGQN/CY6e1xQ==}
+  wrangler@3.63.2:
+    resolution: {integrity: sha512-c7F46JtBGTIQehTOgfGbxfDMYgO9AjC70CXVSohxHiF9ajHz56HEV2k3aowhJJiP3MBB8sJMm8rdG10f5zUs+w==}
     engines: {node: '>=16.17.0'}
     hasBin: true
     peerDependencies:
-      '@cloudflare/workers-types': ^4.20241106.0
+      '@cloudflare/workers-types': ^4.20240620.0
     peerDependenciesMeta:
       '@cloudflare/workers-types':
         optional: true
@@ -9158,6 +9144,9 @@ snapshots:
 
   '@brillout/json-serializer@0.5.13': {}
 
+  '@brillout/picocolors@1.0.14':
+    optional: true
+
   '@brillout/picocolors@1.0.15': {}
 
   '@brillout/require-shim@0.1.2': {}
@@ -9185,27 +9174,22 @@ snapshots:
     dependencies:
       mime: 3.0.0
 
-  '@cloudflare/workerd-darwin-64@1.20241106.1':
+  '@cloudflare/workerd-darwin-64@1.20240701.0':
     optional: true
 
-  '@cloudflare/workerd-darwin-arm64@1.20241106.1':
+  '@cloudflare/workerd-darwin-arm64@1.20240701.0':
     optional: true
 
-  '@cloudflare/workerd-linux-64@1.20241106.1':
+  '@cloudflare/workerd-linux-64@1.20240701.0':
     optional: true
 
-  '@cloudflare/workerd-linux-arm64@1.20241106.1':
+  '@cloudflare/workerd-linux-arm64@1.20240701.0':
     optional: true
 
-  '@cloudflare/workerd-windows-64@1.20241106.1':
+  '@cloudflare/workerd-windows-64@1.20240701.0':
     optional: true
 
-  '@cloudflare/workers-shared@0.7.1':
-    dependencies:
-      mime: 3.0.0
-      zod: 3.22.4
-
-  '@cloudflare/workers-types@4.20241112.0': {}
+  '@cloudflare/workers-types@4.20240701.0': {}
 
   '@codemirror/autocomplete@6.18.1(@codemirror/language@6.10.3)(@codemirror/state@6.4.1)(@codemirror/view@6.34.1)(@lezer/common@1.2.3)':
     dependencies:
@@ -9847,7 +9831,7 @@ snapshots:
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.0
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.4.15
 
   '@jspm/core@2.0.1': {}
 
@@ -10078,10 +10062,10 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@netlify/remix-edge-adapter@3.4.2(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))':
+  '@netlify/remix-edge-adapter@3.4.2(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
     dependencies:
       '@netlify/remix-runtime': 2.3.1(@remix-run/server-runtime@2.14.0(typescript@5.6.3))
-      '@remix-run/dev': 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+      '@remix-run/dev': 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       isbot: 5.1.17
     optionalDependencies:
       vite: 5.4.11(@types/node@22.8.1)
@@ -10914,22 +10898,22 @@ snapshots:
     dependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@remix-run/cloudflare-pages@2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)':
+  '@remix-run/cloudflare-pages@2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)':
     dependencies:
-      '@cloudflare/workers-types': 4.20241112.0
-      '@remix-run/cloudflare': 2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)
+      '@cloudflare/workers-types': 4.20240701.0
+      '@remix-run/cloudflare': 2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)
     optionalDependencies:
       typescript: 5.6.3
 
-  '@remix-run/cloudflare@2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)':
+  '@remix-run/cloudflare@2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)':
     dependencies:
       '@cloudflare/kv-asset-handler': 0.1.3
-      '@cloudflare/workers-types': 4.20241112.0
+      '@cloudflare/workers-types': 4.20240701.0
       '@remix-run/server-runtime': 2.14.0(typescript@5.6.3)
     optionalDependencies:
       typescript: 5.6.3
 
-  '@remix-run/dev@2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))':
+  '@remix-run/dev@2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
     dependencies:
       '@babel/core': 7.25.7
       '@babel/generator': 7.25.7
@@ -10991,7 +10975,7 @@ snapshots:
       '@remix-run/serve': 2.14.0(typescript@5.6.3)
       typescript: 5.6.3
       vite: 5.4.11(@types/node@22.8.1)
-      wrangler: 3.87.0(@cloudflare/workers-types@4.20241112.0)
+      wrangler: 3.63.2(@cloudflare/workers-types@4.20240701.0)
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -11692,9 +11676,9 @@ snapshots:
 
   '@vanilla-extract/private@1.0.5': {}
 
-  '@vercel/remix@2.14.0(@remix-run/dev@2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0)))(@remix-run/node@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@vercel/remix@2.14.0(@remix-run/dev@2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.14.0(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@remix-run/dev': 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0))
+      '@remix-run/dev': 2.14.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/serve@2.14.0(typescript@5.6.3))(@types/node@22.8.1)(typescript@5.6.3)(vite@5.4.11(@types/node@22.8.1))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@remix-run/node': 2.14.0(typescript@5.6.3)
       '@remix-run/server-runtime': 2.14.0(typescript@5.6.3)
       '@vercel/static-config': 3.0.0
@@ -12174,10 +12158,6 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  chokidar@4.0.1:
-    dependencies:
-      readdirp: 4.0.2
-
   chownr@1.1.4: {}
 
   chownr@2.0.0: {}
@@ -12276,6 +12256,8 @@ snapshots:
 
   concat-map@0.0.1: {}
 
+  consola@3.2.3: {}
+
   content-disposition@0.5.4:
     dependencies:
       safe-buffer: 5.2.1
@@ -12363,8 +12345,6 @@ snapshots:
     optional: true
 
   date-fns@3.6.0: {}
-
-  date-fns@4.1.0: {}
 
   debug@2.6.9:
     dependencies:
@@ -13531,8 +13511,6 @@ snapshots:
 
   isomorphic.js@0.2.5: {}
 
-  itty-time@1.0.6: {}
-
   jackspeak@2.2.1:
     dependencies:
       '@isaacs/cliui': 8.0.2
@@ -14381,7 +14359,7 @@ snapshots:
 
   min-indent@1.0.1: {}
 
-  miniflare@3.20241106.0:
+  miniflare@3.20240701.0:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       acorn: 8.12.1
@@ -14391,7 +14369,7 @@ snapshots:
       glob-to-regexp: 0.4.1
       stoppable: 1.1.0
       undici: 5.28.4
-      workerd: 1.20241106.1
+      workerd: 1.20240701.0
       ws: 8.18.0
       youch: 3.3.3
       zod: 3.22.4
@@ -14502,6 +14480,8 @@ snapshots:
 
   node-domexception@1.0.0: {}
 
+  node-fetch-native@1.6.4: {}
+
   node-fetch@2.6.9:
     dependencies:
       whatwg-url: 5.0.0
@@ -14578,8 +14558,6 @@ snapshots:
       define-properties: 1.2.0
       has-symbols: 1.0.3
       object-keys: 1.1.1
-
-  ohash@1.1.4: {}
 
   on-finished@2.3.0:
     dependencies:
@@ -14742,7 +14720,7 @@ snapshots:
 
   path-to-regexp@0.1.10: {}
 
-  path-to-regexp@6.3.0: {}
+  path-to-regexp@6.2.1: {}
 
   pathe@1.1.2: {}
 
@@ -15076,7 +15054,7 @@ snapshots:
     dependencies:
       '@brillout/import': 0.2.3
       '@brillout/json-serializer': 0.5.13
-      '@brillout/picocolors': 1.0.15
+      '@brillout/picocolors': 1.0.14
       isbot-fast: 1.2.0
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
@@ -15138,8 +15116,6 @@ snapshots:
   readdirp@3.6.0:
     dependencies:
       picomatch: 2.3.1
-
-  readdirp@4.0.2: {}
 
   recast@0.23.7:
     dependencies:
@@ -15234,7 +15210,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  remix-auth-oauth2@2.3.0(@remix-run/cloudflare@2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3))(@remix-run/node@2.14.0(typescript@5.6.3))(remix-auth@3.7.0(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))):
+  remix-auth-oauth2@2.3.0(@remix-run/cloudflare@2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3))(@remix-run/node@2.14.0(typescript@5.6.3))(remix-auth@3.7.0(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))):
     dependencies:
       '@oslojs/crypto': 0.6.2
       '@oslojs/encoding': 0.4.1
@@ -15242,7 +15218,7 @@ snapshots:
       debug: 4.3.7
       remix-auth: 3.7.0(@remix-run/react@2.14.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.6.3))(@remix-run/server-runtime@2.14.0(typescript@5.6.3))
     optionalDependencies:
-      '@remix-run/cloudflare': 2.14.0(@cloudflare/workers-types@4.20241112.0)(typescript@5.6.3)
+      '@remix-run/cloudflare': 2.14.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.6.3)
       '@remix-run/node': 2.14.0(typescript@5.6.3)
     transitivePeerDependencies:
       - supports-color
@@ -15844,8 +15820,6 @@ snapshots:
 
   ufo@1.5.3: {}
 
-  ufo@1.5.4: {}
-
   ultraflag@0.1.0: {}
 
   umzug@3.2.1:
@@ -15865,12 +15839,14 @@ snapshots:
 
   undici@6.15.0: {}
 
-  unenv-nightly@2.0.0-20241024-111401-d4156ac:
+  unenv-nightly@1.10.0-1717606461.a117952:
     dependencies:
+      consola: 3.2.3
       defu: 6.1.4
-      ohash: 1.1.4
+      mime: 3.0.0
+      node-fetch-native: 1.6.4
       pathe: 1.1.2
-      ufo: 1.5.4
+      ufo: 1.5.3
 
   unicode-properties@1.4.1:
     dependencies:
@@ -16261,42 +16237,39 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  workerd@1.20241106.1:
+  workerd@1.20240701.0:
     optionalDependencies:
-      '@cloudflare/workerd-darwin-64': 1.20241106.1
-      '@cloudflare/workerd-darwin-arm64': 1.20241106.1
-      '@cloudflare/workerd-linux-64': 1.20241106.1
-      '@cloudflare/workerd-linux-arm64': 1.20241106.1
-      '@cloudflare/workerd-windows-64': 1.20241106.1
+      '@cloudflare/workerd-darwin-64': 1.20240701.0
+      '@cloudflare/workerd-darwin-arm64': 1.20240701.0
+      '@cloudflare/workerd-linux-64': 1.20240701.0
+      '@cloudflare/workerd-linux-arm64': 1.20240701.0
+      '@cloudflare/workerd-windows-64': 1.20240701.0
 
   worktop@0.8.0-next.18:
     dependencies:
       mrmime: 2.0.0
       regexparam: 3.0.0
 
-  wrangler@3.87.0(@cloudflare/workers-types@4.20241112.0):
+  wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
-      '@cloudflare/workers-shared': 0.7.1
       '@esbuild-plugins/node-globals-polyfill': 0.2.3(esbuild@0.17.19)
       '@esbuild-plugins/node-modules-polyfill': 0.2.2(esbuild@0.17.19)
       blake3-wasm: 2.1.5
-      chokidar: 4.0.1
-      date-fns: 4.1.0
+      chokidar: 3.5.3
+      date-fns: 3.6.0
       esbuild: 0.17.19
-      itty-time: 1.0.6
-      miniflare: 3.20241106.0
+      miniflare: 3.20240701.0
       nanoid: 3.3.7
-      path-to-regexp: 6.3.0
+      path-to-regexp: 6.2.1
       resolve: 1.22.8
       resolve.exports: 2.0.2
       selfsigned: 2.1.1
       source-map: 0.6.1
-      unenv: unenv-nightly@2.0.0-20241024-111401-d4156ac
-      workerd: 1.20241106.1
+      unenv: unenv-nightly@1.10.0-1717606461.a117952
       xxhash-wasm: 1.0.2
     optionalDependencies:
-      '@cloudflare/workers-types': 4.20241112.0
+      '@cloudflare/workers-types': 4.20240701.0
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
