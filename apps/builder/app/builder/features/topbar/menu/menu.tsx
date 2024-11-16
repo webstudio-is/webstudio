@@ -219,6 +219,13 @@ export const Menu = () => {
 
           <DropdownMenuSeparator />
 
+          <DropdownMenuItem onSelect={() => emitCommand("openCommandPanel")}>
+            Search & Commands
+            <DropdownMenuItemRightSlot>
+              <Kbd value={["cmd", "k"]} />
+            </DropdownMenuItemRightSlot>
+          </DropdownMenuItem>
+
           <DropdownMenuItem
             onSelect={() => {
               window.open(

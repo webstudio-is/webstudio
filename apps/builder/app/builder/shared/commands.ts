@@ -349,7 +349,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
 
     {
-      name: "search",
+      name: "openCommandPanel",
       defaultHotkeys: ["meta+k", "ctrl+k"],
       handler: openCommandPanel,
     },
