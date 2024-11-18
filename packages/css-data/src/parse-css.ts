@@ -94,7 +94,15 @@ type Selector = {
   state?: string;
 };
 
-export const parseCss = (css: string) => {
+type ParserOptions = {
+  customProperties?: boolean;
+};
+
+export const parseCss = (
+  css: string,
+  options: ParserOptions = {}
+): Array<ParsedStyleDecl> => {
+  const customProperties = options.customProperties ?? false;
   const ast = cssTreeTryParse(css);
   const styles = new Map<string, ParsedStyleDecl>();
 
@@ -168,35 +176,37 @@ export const parseCss = (css: string) => {
         continue;
       }
       let selector: Selector | undefined = undefined;
-      for (const childNode of node.children) {
+      node.children.forEach((node) => {
         let name: string = "";
         let state: string | undefined;
-        switch (childNode.type) {
+        switch (node.type) {
           case "TypeSelector":
-            name = childNode.name;
+            name = node.name;
             break;
           case "ClassSelector":
-            name = `.${childNode.name}`;
+            // .a {} vs a.b {}
+            name = selector ? `.${node.name}` : node.name;
             break;
           case "AttributeSelector":
-            name = csstree.generate(childNode);
+            if (node.value) {
+              name = `[${csstree.generate(node.name)}${node.matcher}${csstree.generate(node.value)}]`;
+            }
             break;
           case "PseudoClassSelector": {
             // First pseudo selector is not a state but an element selector, e.g. :root
             if (selector) {
-              state = `:${childNode.name}`;
+              state = `:${node.name}`;
             } else {
-              name = `:${childNode.name}`;
+              name = `:${node.name}`;
             }
             break;
           }
-          case "PseudoElementSelector":
-            state = `::${childNode.name}`;
-            break;
           case "Combinator":
             // " " vs " > "
-            name =
-              childNode.name === " " ? childNode.name : ` ${childNode.name} `;
+            name = node.name === " " ? node.name : ` ${node.name} `;
+            break;
+          case "PseudoElementSelector":
+            state = `::${node.name}`;
             break;
         }
 
@@ -205,9 +215,13 @@ export const parseCss = (css: string) => {
           if (state) {
             selector.state = state;
           }
-        } else {
-          selector = { name, state };
+          return;
         }
+        selector = { name, state };
+      });
+      if (selector) {
+        selectors.push(selector);
+        selector = undefined;
       }
       if (selector) {
         selectors.push(selector);

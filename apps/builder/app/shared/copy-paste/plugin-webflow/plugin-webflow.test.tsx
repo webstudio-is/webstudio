@@ -534,38 +534,6 @@ test("Section", async () => {
   `);
 });
 
-test("Figure", async () => {
-  const fragment = await toWebstudioFragment({
-    type: "@webflow/XscpData",
-    payload: {
-      nodes: [
-        {
-          _id: "7c6bc1fd-128d-514b-167b-605a910e435c",
-          type: "Block",
-          tag: "figure",
-          classes: [],
-          children: [],
-        },
-      ],
-      styles: [],
-      assets: [],
-    },
-  });
-
-  equalFragment(fragment, <$.Box tag="figure" />);
-  expect(toCss(fragment)).toMatchInlineSnapshot(`
-    "@media all {
-      figure {
-        display: block;
-        margin-top: 0;
-        margin-right: 0;
-        margin-bottom: 10px;
-        margin-left: 0
-      }
-    }"
-  `);
-});
-
 test("BlockContainer", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
@@ -1550,6 +1518,162 @@ test("RichText", async () => {
   `);
 });
 
+test("RichText with Figure and Figcaption", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "a7a2b490-c6c5-30aa-1827-b38a0ae42a08",
+          type: "RichText",
+          tag: "div",
+          classes: [],
+          children: ["3ddc1727-a0f4-33c5-3879-cb1d9d932c59"],
+        },
+        {
+          _id: "3ddc1727-a0f4-33c5-3879-cb1d9d932c59",
+          type: "Figure",
+          tag: "figure",
+          classes: [],
+          children: [
+            "72cdf71c-b2da-c44a-3ecd-9ec9891f6023",
+            "f48219da-c3ef-2439-07e3-a843ef8c0891",
+          ],
+          data: {
+            figure: {
+              type: "image",
+              align: "center",
+            },
+          },
+        },
+        {
+          _id: "72cdf71c-b2da-c44a-3ecd-9ec9891f6023",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: ["4b0dc79a-bbb0-b136-d913-f1e3581f2b36"],
+          data: {
+            text: false,
+          },
+        },
+        {
+          _id: "4b0dc79a-bbb0-b136-d913-f1e3581f2b36",
+          type: "Image",
+          tag: "img",
+          classes: [],
+          children: [],
+          data: {
+            //srcsetDisabled: false,
+            attr: {
+              width: "auto",
+              height: "auto",
+              alt: "__wf_reserved_inherit",
+              src: "https://test.com/image.jpg",
+              loading: "lazy",
+              id: "",
+            },
+            xattr: [],
+            visibility: {
+              conditions: [],
+            },
+          },
+        },
+        {
+          _id: "f48219da-c3ef-2439-07e3-a843ef8c0891",
+          type: "Figcaption",
+          tag: "figcaption",
+          classes: [],
+          children: ["d5e8480a-f395-38d5-530b-78cb05b6888f"],
+        },
+        {
+          _id: "d5e8480a-f395-38d5-530b-78cb05b6888f",
+          text: true,
+          v: "test",
+        },
+      ],
+      styles: [],
+      assets: [
+        {
+          cdnUrl: "https://test.com/image.jpg",
+          siteId: "66ab8a32bcc969149d6a7a1a",
+          width: 174,
+          height: 136,
+          fileName:
+            "66d8522c8e9dbb5e2b2de76c_Screenshot 2024-09-02 at 18.20.14.png",
+          createdOn: "2024-09-04T12:27:24.621Z",
+          origFileName: "Screenshot 2024-09-02 at 18.20.14.png",
+          fileHash: "496bace14fbde33d31e0417dd70216d0",
+          //translationLoading: false,
+          variants: [],
+          mimeType: "image/png",
+          _id: "66d8522c8e9dbb5e2b2de76c",
+          fileSize: 20599,
+        },
+      ],
+    },
+  });
+
+  equalFragment(
+    fragment,
+    <$.Box>
+      <$.Box tag="figure">
+        <$.Box>
+          <$.Image loading="lazy" src="https://test.com/image.jpg" />
+        </$.Box>
+        <$.Text tag="figcaption">test</$.Text>
+      </$.Box>
+    </$.Box>
+  );
+
+  expect(toCss(fragment)).toMatchInlineSnapshot(`
+    "@media all {
+      w-richtext:after {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table;
+        clear: both
+      }
+      w-richtext:before {
+        content: " ";
+        grid-row-start: 1;
+        grid-column-start: 1;
+        grid-row-end: 2;
+        grid-column-end: 2;
+        display: table
+      }
+      figure {
+        display: block;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        margin-left: 0
+      }
+      w-richtext figure.w-richtext-figure-type-image {
+        display: table
+      }
+      w-richtext figure.w-richtext-align-center {
+        clear: both;
+        margin-left: auto;
+        margin-right: auto
+      }
+      img {
+        vertical-align: middle;
+        max-width: 100%;
+        display: inline-block;
+        border: 0 none currentcolor
+      }
+      figcaption {
+        display: block;
+        text-align: center;
+        margin-top: 5px
+      }
+    }"
+  `);
+});
+
 test("Form", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
@@ -1670,12 +1794,7 @@ test("Form", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -1684,9 +1803,9 @@ test("Form", async () => {
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgba(255, 255, 255, 1);
         width: 100%;
-        height: auto;
+        height: 38px;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1695,7 +1814,6 @@ test("Form", async () => {
         font-size: 14px;
         line-height: 1.42857;
         display: block;
-        cursor: not-allowed;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -1754,12 +1872,7 @@ test("FormButton", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -1781,7 +1894,6 @@ test("FormButton", async () => {
         text-decoration-style: solid;
         text-decoration-color: currentcolor;
         display: inline-block;
-        appearance: button;
         border: 0 none currentcolor
       }
     }"
@@ -1842,12 +1954,7 @@ test("FormTextInput", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -1856,9 +1963,9 @@ test("FormTextInput", async () => {
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgba(255, 255, 255, 1);
         width: 100%;
-        height: auto;
+        height: 38px;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -1867,7 +1974,6 @@ test("FormTextInput", async () => {
         font-size: 14px;
         line-height: 1.42857;
         display: block;
-        cursor: not-allowed;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -1984,15 +2090,14 @@ test("FormTextarea", async () => {
         font-family: inherit;
         overflow-x: auto;
         overflow-y: auto;
-        height: auto;
         margin: 0
       }
       w-input {
         color: rgba(51, 51, 51, 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgba(255, 255, 255, 1);
         width: 100%;
-        height: auto;
+        height: 38px;
         margin-bottom: 10px;
         padding-top: 8px;
         padding-right: 12px;
@@ -2001,7 +2106,6 @@ test("FormTextarea", async () => {
         font-size: 14px;
         line-height: 1.42857;
         display: block;
-        cursor: not-allowed;
         border: 1px solid rgba(204, 204, 204, 1)
       }
       w-input:-moz-placeholder {
@@ -2161,12 +2265,7 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -2286,12 +2385,7 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
         font-size: inherit;
         line-height: normal;
         font-family: inherit;
-        appearance: button;
-        cursor: pointer;
-        box-sizing: border-box;
-        height: auto;
-        margin: 0;
-        padding: 0
+        margin: 0
       }
       input::-moz-focus-inner {
         border: 0 none currentcolor;
@@ -3239,8 +3333,6 @@ describe("Styles", () => {
             children: ["b69a5869-f046-5a0c-151e-9b134a6852aa"],
             data: {
               tag: "h2",
-              devlink: { runtimeProps: {}, slot: "" },
-              displayName: "",
               attr: { id: "" },
               xattr: [],
               search: { exclude: false },
