@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Box } from "@webstudio-is/design-system";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $pages, $instances } from "~/shared/nano-states";
+import { $pages, $instances, $userPlanFeatures } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import { $awareness } from "~/shared/awareness";
 import { VariablesSection as VariablesSectionComponent } from "./variables-section";
 

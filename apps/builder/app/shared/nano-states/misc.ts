@@ -1,7 +1,7 @@
 import { atom, computed, onSet } from "nanostores";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { Placement } from "@webstudio-is/design-system";
+import { toast, type Placement } from "@webstudio-is/design-system";
 import type {
   Assets,
   DataSources,
@@ -29,6 +29,7 @@ import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
 import { $selectedInstance } from "../awareness";
+import type { UserPlanFeatures } from "../db/user-plan-features.server";
 
 export const $project = atom<Project | undefined>();
 
@@ -297,6 +298,16 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
+// keep in sync with user-plan-features.server
+export const $userPlanFeatures = atom<UserPlanFeatures>({
+  allowShareAdminLinks: false,
+  allowDynamicData: false,
+  maxContactEmails: 0,
+  maxDomainsAllowedPerUser: 1,
+  hasSubscription: false,
+  hasProPlan: false,
+});
+
 const builderModes = ["design", "preview", "content"] as const;
 export type BuilderMode = (typeof builderModes)[number];
 export const isBuilderMode = (mode: string | null): mode is BuilderMode =>
@@ -323,6 +334,57 @@ export const $authTokenPermissions = atom<TokenPermissions>({
 });
 
 export const $authToken = atom<string | undefined>(undefined);
+
+export const $isContentModeAllowed = computed(
+  [$authToken, $userPlanFeatures],
+  (token, userPlanFeatures) => {
+    // In own projects, everyone can edit content
+    if (token === undefined) {
+      return true;
+    }
+
+    // In shared projects, only Pro users can share editable links, so check the plan features of the user who shared the link
+    return userPlanFeatures.hasProPlan === true;
+  }
+);
+
+export const $isDesignModeAllowed = computed([$authPermit], (authPermit) => {
+  return authPermit !== "edit";
+});
+
+export const setBuilderMode = (mode: BuilderMode | null) => {
+  const authPermit = $authPermit.get();
+
+  if (mode === "content" && !$isContentModeAllowed.get()) {
+    // This is content link from a non pro user, we don't allow content mode for such links
+    toast.error(
+      "Content mode is not available for this link. The link’s author must have a Pro plan."
+    );
+
+    $builderMode.set("preview");
+    return;
+  }
+
+  if (mode === "design" && !$isDesignModeAllowed.get()) {
+    toast.error("Design mode is not available for content edit links.");
+
+    $builderMode.set("content");
+    return;
+  }
+
+  if (authPermit === "view") {
+    $builderMode.set(mode ?? "preview");
+    return;
+  }
+
+  const defaultMode = $isDesignModeAllowed.get()
+    ? "design"
+    : $isContentModeAllowed.get()
+      ? "content"
+      : "preview";
+
+  $builderMode.set(mode ?? defaultMode);
+};
 
 export const $toastErrors = atom<string[]>([]);
 

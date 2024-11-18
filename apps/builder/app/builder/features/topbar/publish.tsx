@@ -35,12 +35,14 @@ import {
   RadioGroup,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
-import {
-  $isPublishDialogOpen,
-  $userPlanFeatures,
-} from "../../shared/nano-states";
+import { $isPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { $authPermit, $project, $publishedOrigin } from "~/shared/nano-states";
+import {
+  $authPermit,
+  $project,
+  $publishedOrigin,
+  $userPlanFeatures,
+} from "~/shared/nano-states";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {

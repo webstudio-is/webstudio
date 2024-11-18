@@ -13,7 +13,7 @@
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "nanoid": "^5.0.1",
+    "nanoid": "^5.0.8",
     "slugify": "^1.6.6",
     "type-fest": "^4.26.1",
     "zod": "^3.22.4"

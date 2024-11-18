@@ -213,8 +213,8 @@ export const SectionMarketplace = () => {
 
       <Grid gap={2} css={sectionSpacing}>
         <Label>Thumbnail</Label>
-        <Grid flow="column" gap={3}>
-          <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
+        <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
+          <Grid flow="column" gap={3}>
             <Box className={thumbnailStyle()}>
               <Image
                 className={thumbnailImageStyle({
@@ -224,18 +224,18 @@ export const SectionMarketplace = () => {
                 loader={imageLoader}
               />
             </Box>
-          </InputErrorsTooltip>
 
-          <Grid gap={2}>
-            <Text color="subtle">
-              The optimal dimensions in marketplace are 600x315 px or larger
-              with a 1.91:1 aspect ratio.
-            </Text>
-            <ImageControl onAssetIdChange={handleSave("thumbnailAssetId")}>
-              <Button css={{ justifySelf: "start" }}>Upload</Button>
-            </ImageControl>
+            <Grid gap={2}>
+              <Text color="subtle">
+                The optimal dimensions in marketplace are 600x315 px or larger
+                with a 1.91:1 aspect ratio.
+              </Text>
+              <ImageControl onAssetIdChange={handleSave("thumbnailAssetId")}>
+                <Button css={{ justifySelf: "start" }}>Upload</Button>
+              </ImageControl>
+            </Grid>
           </Grid>
-        </Grid>
+        </InputErrorsTooltip>
       </Grid>
 
       <Grid gap={1} css={sectionSpacing}>

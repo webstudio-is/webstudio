@@ -20,11 +20,15 @@ import { InfoCircleIcon } from "@webstudio-is/icons";
 import { ImageControl } from "./image-control";
 import { Image } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
-import { $assets, $imageLoader, $pages } from "~/shared/nano-states";
+import {
+  $assets,
+  $imageLoader,
+  $pages,
+  $userPlanFeatures,
+} from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/builder/shared/code-editor";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 const imgStyle = css({
   objectFit: "contain",

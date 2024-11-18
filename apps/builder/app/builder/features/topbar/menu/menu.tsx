@@ -16,7 +16,6 @@ import {
   menuItemCss,
 } from "@webstudio-is/design-system";
 import {
-  $userPlanFeatures,
   $isCloneDialogOpen,
   $isShareDialogOpen,
   $isPublishDialogOpen,
@@ -26,6 +25,7 @@ import {
   $authPermit,
   $authToken,
   $authTokenPermissions,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
@@ -218,6 +218,13 @@ export const Menu = () => {
           </Tooltip>
 
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem onSelect={() => emitCommand("openCommandPanel")}>
+            Search & Commands
+            <DropdownMenuItemRightSlot>
+              <Kbd value={["cmd", "k"]} />
+            </DropdownMenuItemRightSlot>
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             onSelect={() => {

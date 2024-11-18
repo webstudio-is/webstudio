@@ -25,6 +25,7 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "dependencies": {
+    "nanoid": "^5.0.8",
     "tinyexec": "^0.3.1",
     "umzug": "^3.2.1"
   },

@@ -1,5 +1,7 @@
 import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { useState } from "react";
+import { matchSorter } from "match-sorter";
 import {
   collectionComponent,
   componentCategories,
@@ -15,15 +17,19 @@ import {
   CommandGroupHeading,
   CommandItem,
   CommandIcon,
+  useSelectedAction,
   ScrollArea,
   Flex,
   Kbd,
   Text,
+  CommandFooter,
+  Separator,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
 import {
   $breakpoints,
+  $editingPageId,
   $pages,
   $registeredComponentMetas,
   $selectedBreakpoint,
@@ -34,9 +40,8 @@ import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
 import { insert as insertComponent } from "~/builder/features/components/insert";
 import { $selectedPage, selectPage } from "~/shared/awareness";
-import { useState } from "react";
-import { matchSorter } from "match-sorter";
 import { mapGroupBy } from "~/shared/shim";
+import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 
 const $commandPanel = atom<
   | undefined
@@ -124,30 +129,35 @@ const $componentOptions = computed(
   }
 );
 
-const ComponentsGroup = ({ options }: { options: ComponentOption[] }) => {
+const ComponentGroup = ({ options }: { options: ComponentOption[] }) => {
   return (
     <CommandGroup
+      name="component"
       heading={<CommandGroupHeading>Components</CommandGroupHeading>}
+      actions={["add"]}
     >
       {options.map(({ component, label, meta }) => {
         return (
           <CommandItem
             key={component}
-            keywords={["Components"]}
+            // preserve selected state when rerender
+            value={component}
             onSelect={() => {
               closeCommandPanel();
               insertComponent(component);
             }}
           >
-            <CommandIcon
-              dangerouslySetInnerHTML={{ __html: meta.icon }}
-            ></CommandIcon>
-            <Text variant="labelsTitleCase">
-              {label}{" "}
-              <Text as="span" color="moreSubtle">
-                {humanizeString(meta.category ?? "")}
+            <Flex gap={2}>
+              <CommandIcon
+                dangerouslySetInnerHTML={{ __html: meta.icon }}
+              ></CommandIcon>
+              <Text variant="labelsTitleCase">
+                {label}{" "}
+                <Text as="span" color="moreSubtle">
+                  {humanizeString(meta.category ?? "")}
+                </Text>
               </Text>
-            </Text>
+            </Flex>
           </CommandItem>
         );
       })}
@@ -198,21 +208,24 @@ const getBreakpointLabel = (breakpoint: Breakpoint) => {
   return `${breakpoint.label}: ${label}`;
 };
 
-const BreakpointsGroup = ({ options }: { options: BreakpointOption[] }) => {
+const BreakpointGroup = ({ options }: { options: BreakpointOption[] }) => {
   return (
     <CommandGroup
+      name="breakpoint"
       heading={<CommandGroupHeading>Breakpoints</CommandGroupHeading>}
+      actions={["select"]}
     >
       {options.map(({ breakpoint, shortcut }) => (
         <CommandItem
           key={breakpoint.id}
+          // preserve selected state when rerender
+          value={breakpoint.id}
           onSelect={() => {
             closeCommandPanel({ restoreFocus: true });
             $selectedBreakpointId.set(breakpoint.id);
             setCanvasWidth(breakpoint.id);
           }}
         >
-          <CommandIcon></CommandIcon>
           <Text variant="labelsTitleCase">
             {getBreakpointLabel(breakpoint)}
           </Text>
@@ -249,18 +262,33 @@ const $pageOptions = computed(
   }
 );
 
-const PagesGroup = ({ options }: { options: PageOption[] }) => {
+const PageGroup = ({ options }: { options: PageOption[] }) => {
+  const action = useSelectedAction();
   return (
-    <CommandGroup heading={<CommandGroupHeading>Pages</CommandGroupHeading>}>
+    <CommandGroup
+      name="page"
+      heading={<CommandGroupHeading>Pages</CommandGroupHeading>}
+      actions={["select", "settings"]}
+    >
       {options.map(({ page }) => (
         <CommandItem
           key={page.id}
+          // preserve selected state when rerender
+          value={page.id}
           onSelect={() => {
             closeCommandPanel();
-            selectPage(page.id);
+            if (action === "select") {
+              selectPage(page.id);
+              setActiveSidebarPanel("auto");
+              $editingPageId.set(undefined);
+            }
+            if (action === "settings") {
+              selectPage(page.id);
+              setActiveSidebarPanel("pages");
+              $editingPageId.set(page.id);
+            }
           }}
         >
-          <CommandIcon></CommandIcon>
           <Text variant="labelsTitleCase">{page.name}</Text>
         </CommandItem>
       ))}
@@ -288,7 +316,7 @@ const CommandDialogContent = () => {
   }
   const groups = mapGroupBy(matches, (match) => match.type);
   return (
-    <Command shouldFilter={false}>
+    <>
       <CommandInput value={search} onValueChange={setSearch} />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
@@ -296,7 +324,7 @@ const CommandDialogContent = () => {
             {Array.from(groups).map(([group, matches]) => {
               if (group === "component") {
                 return (
-                  <ComponentsGroup
+                  <ComponentGroup
                     key={group}
                     options={matches as ComponentOption[]}
                   />
@@ -304,7 +332,7 @@ const CommandDialogContent = () => {
               }
               if (group === "breakpoint") {
                 return (
-                  <BreakpointsGroup
+                  <BreakpointGroup
                     key={group}
                     options={matches as BreakpointOption[]}
                   />
@@ -312,14 +340,17 @@ const CommandDialogContent = () => {
               }
               if (group === "page") {
                 return (
-                  <PagesGroup key={group} options={matches as PageOption[]} />
+                  <PageGroup key={group} options={matches as PageOption[]} />
                 );
               }
+              group satisfies never;
             })}
           </CommandList>
         </ScrollArea>
       </Flex>
-    </Command>
+      <Separator />
+      <CommandFooter />
+    </>
   );
 };
 
@@ -330,7 +361,9 @@ export const CommandPanel = () => {
       open={isOpen}
       onOpenChange={() => closeCommandPanel({ restoreFocus: true })}
     >
-      <CommandDialogContent />
+      <Command shouldFilter={false}>
+        <CommandDialogContent />
+      </Command>
     </CommandDialog>
   );
 };

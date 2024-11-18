@@ -139,7 +139,6 @@ export const InputPopover = ({
         <Trigger />
       </PopoverTrigger>
       <PopoverContentStyled
-        hideArrow
         sideOffset={-24}
         // prevent propagating click on input or combobox menu
         // and closing popover before applying changes
