@@ -33,6 +33,7 @@ import {
 } from "@webstudio-is/icons";
 import {
   $dragAndDropState,
+  $editableBlockChildOutline,
   $editingItemSelector,
   $hoveredInstanceSelector,
   $instances,
@@ -590,8 +591,10 @@ export const NavigatorTree = () => {
                   },
                 }}
                 buttonProps={{
-                  onMouseEnter: () =>
-                    $hoveredInstanceSelector.set(item.selector),
+                  onMouseEnter: () => {
+                    $hoveredInstanceSelector.set(item.selector);
+                    $editableBlockChildOutline.set(undefined);
+                  },
                   onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
                   onClick: () => selectInstance(item.selector),
                   onFocus: () => selectInstance(item.selector),

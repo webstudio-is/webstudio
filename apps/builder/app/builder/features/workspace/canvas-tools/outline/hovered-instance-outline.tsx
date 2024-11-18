@@ -1,20 +1,103 @@
 import { useStore } from "@nanostores/react";
 import {
+  $editableBlockChildOutline,
   $hoveredInstanceOutlineAndInstance,
   $hoveredInstanceSelector,
   $instances,
+  $isContentMode,
   $textEditingInstanceSelector,
+  type EditableBlockChildOutline,
 } from "~/shared/nano-states";
-import { Outline } from "./outline";
+import { EditableBlockChildAddButtonOutline, Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 import { shallowEqual } from "shallow-equal";
+import type { InstanceSelector } from "~/shared/tree-utils";
+import { IconButton, Tooltip } from "@webstudio-is/design-system";
+import { PlusIcon } from "@webstudio-is/icons";
+import { useRef, useState } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+
+export const EditableBlockChildHoveredInstanceOutline = () => {
+  const editableBlockChildOutline = useStore($editableBlockChildOutline);
+  const scale = useStore($scale);
+  const isContentMode = useStore($isContentMode);
+  const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
+    undefined
+  );
+  const [buttonOutline, setButtonOutline] = useState<
+    undefined | EditableBlockChildOutline
+  >(undefined);
+
+  const outline = editableBlockChildOutline ?? buttonOutline;
+
+  if (isFeatureEnabled("contentEditableMode") === false) {
+    return;
+  }
+
+  if (!isContentMode) {
+    return;
+  }
+
+  if (outline === undefined) {
+    return;
+  }
+
+  const rect = applyScale(outline.rect, scale);
+
+  return (
+    <EditableBlockChildAddButtonOutline rect={rect}>
+      <Tooltip content="Add next block" side="top" disableHoverableContent>
+        <IconButton
+          variant={"local"}
+          // @todo colors
+          css={{
+            borderStyle: "dashed",
+            borderColor: `#4f46e5`,
+            color: "#6366f1",
+            pointerEvents: "all",
+            backgroundColor: `#eef2ff`,
+            "&:hover": {
+              backgroundColor: `#e0e7ff`,
+              color: "#4f46e5",
+            },
+          }}
+          onClick={() => {
+            alert("not implemented");
+          }}
+          onMouseEnter={() => {
+            clearTimeout(timeoutRef.current);
+
+            setButtonOutline(outline);
+          }}
+          onMouseLeave={() => {
+            clearTimeout(timeoutRef.current);
+
+            timeoutRef.current = setTimeout(() => {
+              setButtonOutline(undefined);
+            }, 100);
+          }}
+        >
+          <PlusIcon />
+        </IconButton>
+      </Tooltip>
+    </EditableBlockChildAddButtonOutline>
+  );
+};
+
+const isDescendantOrSelf = (
+  descendant: InstanceSelector,
+  self: InstanceSelector
+) => {
+  return descendant.join(",").endsWith(self.join(","));
+};
 
 export const HoveredInstanceOutline = () => {
   const instances = useStore($instances);
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
+  const editableBlockChildOutline = useStore($editableBlockChildOutline);
   const outline = useStore($hoveredInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -23,8 +106,20 @@ export const HoveredInstanceOutline = () => {
     return;
   }
 
+  if (isFeatureEnabled("contentEditableMode")) {
+    if (
+      shallowEqual(editableBlockChildOutline?.selector, hoveredInstanceSelector)
+    ) {
+      return;
+    }
+  }
+
   if (
-    shallowEqual(hoveredInstanceSelector, textEditingInstanceSelector?.selector)
+    textEditingInstanceSelector?.selector &&
+    isDescendantOrSelf(
+      hoveredInstanceSelector,
+      textEditingInstanceSelector?.selector
+    )
   ) {
     return;
   }

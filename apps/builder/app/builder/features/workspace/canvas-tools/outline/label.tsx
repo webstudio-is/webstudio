@@ -61,12 +61,14 @@ const LabelContainer = styled(
     variants: {
       position: {
         top: {
+          left: -1,
           top: `-${theme.spacing[10]}`,
         },
         inside: {
           top: 0,
         },
         bottom: {
+          left: -1,
           bottom: `-${theme.spacing[10]}`,
         },
       },

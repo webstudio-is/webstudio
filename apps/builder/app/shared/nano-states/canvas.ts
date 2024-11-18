@@ -3,6 +3,7 @@ import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { FontWeight } from "@webstudio-is/fonts";
 import { $instances } from "./instances";
 import type { InstanceSelector } from "../tree-utils";
+import { editableBlockComponent } from "@webstudio-is/react-sdk";
 
 export type TextToolbarState = {
   selectionRect: undefined | DOMRect;
@@ -18,6 +19,11 @@ export const $textToolbar = atom<undefined | TextToolbarState>(undefined);
 
 type InstanceOutline = {
   instanceId: Instance["id"];
+  rect: DOMRect;
+};
+
+export type EditableBlockChildOutline = {
+  selector: InstanceSelector;
   rect: DOMRect;
 };
 
@@ -62,6 +68,26 @@ export const $collaborativeInstanceSelector = atom<
 >(undefined);
 
 export const $collaborativeInstanceRect = atom<undefined | DOMRect>(undefined);
+
+export const $editableBlockChildOutline = atom<
+  undefined | EditableBlockChildOutline
+>(undefined);
+
+export const findEditableBlockChildSelector = (
+  instanceSelector: InstanceSelector
+) => {
+  const instances = $instances.get();
+  let editableBlockChildSelector: InstanceSelector | undefined = undefined;
+
+  for (let i = 1; i < instanceSelector.length; ++i) {
+    const instance = instances.get(instanceSelector[i]);
+    if (instance?.component === editableBlockComponent) {
+      editableBlockChildSelector = instanceSelector.slice(i - 1);
+
+      return editableBlockChildSelector;
+    }
+  }
+};
 
 export const $canvasIframeState = atom<"idle" | "ready">("idle");
 
