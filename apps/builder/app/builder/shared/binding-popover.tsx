@@ -271,6 +271,8 @@ const BindingButton = forwardRef<
           left: 0,
           boxSizing: "border-box",
           padding: 2,
+          // Because of the InputErrorsTooltip, we need to set zIndex to 1 (as InputErrorsTooltip needs an additional position relative wrapper)
+          zIndex: 1,
           transform: "translate(-50%, -50%) scale(1)",
           transition: "transform 60ms, opacity 0ms 60ms",
           // https://easings.net/#easeInOutSine
