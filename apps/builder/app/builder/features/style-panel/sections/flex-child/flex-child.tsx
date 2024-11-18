@@ -228,8 +228,10 @@ const FlexChildSectionSizing = () => {
             code={item.codeLines.join("\n")}
             description={item.description}
             properties={["flexGrow", "flexShrink", "flexBasis"]}
+            isAdvanced={selectedValue === ""}
           >
             <ToggleGroupButton
+              aria-checked={item.value === selectedValue}
               value={item.value}
               onMouseEnter={() =>
                 // reset only when highlighted is not active
