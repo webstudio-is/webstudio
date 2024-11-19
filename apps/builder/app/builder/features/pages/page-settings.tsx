@@ -75,6 +75,7 @@ import {
   $dataSourceVariables,
   $publishedOrigin,
   $project,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import {
   BindingControl,
@@ -103,7 +104,6 @@ import {
   isPathAvailable,
 } from "./page-utils";
 import { Form } from "./form";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { Card } from "../marketplace/card";

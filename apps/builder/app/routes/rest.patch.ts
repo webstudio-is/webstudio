@@ -119,16 +119,22 @@ export const action = async ({
       };
     }
 
-    const canEdit = await authorizeProject.hasProjectPermit(
-      { projectId, permit: "edit" },
-      context
-    );
-    if (canEdit === false) {
+    const [canEditContent, canEdit] = await Promise.all([
+      authorizeProject.hasProjectPermit({ projectId, permit: "edit" }, context),
+      authorizeProject.hasProjectPermit(
+        { projectId, permit: "build" },
+        context
+      ),
+    ]);
+
+    if (canEditContent === false) {
       return {
         status: "authorization_error",
         errors: "You don't have permission to edit this project.",
       };
     }
+
+    const isContentEditMode = canEditContent && !canEdit;
 
     const build = await loadRawBuildById(context, buildId);
 
@@ -209,6 +215,29 @@ export const action = async ({
           continue;
         }
 
+        if (namespace === "props") {
+          const props = buildData.props ?? parseData<Prop>(build.props);
+          buildData.props = applyPatches(props, patches);
+          continue;
+        }
+
+        if (namespace === "assets") {
+          // assets implements own patching
+          // @todo parallelize the updates
+          // currently not possible because we fetch the entire tree
+          // and parallelized updates will cause unpredictable side effects
+          await patchAssets({ projectId }, patches, context);
+          continue;
+        }
+
+        // This is super simple and naive implementation of permissions checks for Content Edit mode
+        if (isContentEditMode) {
+          return {
+            status: "error",
+            errors: `You don't have permission to patch namespace ${namespace}`,
+          };
+        }
+
         if (namespace === "styleSourceSelections") {
           const styleSourceSelections =
             buildData.styleSourceSelections ??
@@ -239,12 +268,6 @@ export const action = async ({
           continue;
         }
 
-        if (namespace === "props") {
-          const props = buildData.props ?? parseData<Prop>(build.props);
-          buildData.props = applyPatches(props, patches);
-          continue;
-        }
-
         if (namespace === "dataSources") {
           const dataSources =
             buildData.dataSources ?? parseData<DataSource>(build.dataSources);
@@ -263,15 +286,6 @@ export const action = async ({
           const breakpoints =
             buildData.breakpoints ?? parseData<Breakpoint>(build.breakpoints);
           buildData.breakpoints = applyPatches(breakpoints, patches);
-          continue;
-        }
-
-        if (namespace === "assets") {
-          // assets implements own patching
-          // @todo parallelize the updates
-          // currently not possible because we fetch the entire tree
-          // and parallelized updates will cause unpredictable side effects
-          await patchAssets({ projectId }, patches, context);
           continue;
         }
 

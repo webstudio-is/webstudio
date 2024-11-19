@@ -353,8 +353,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       nanoid:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.0.8
+        version: 5.0.8
       nanostores:
         specifier: ^0.9.3
         version: 0.9.3
@@ -974,8 +974,8 @@ importers:
         specifier: ^10.0.3
         version: 10.0.3
       nanoid:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.0.8
+        version: 5.0.8
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
@@ -1014,6 +1014,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      type-fest:
+        specifier: ^4.26.1
+        version: 4.26.1
       typescript:
         specifier: 5.6.3
         version: 5.6.3
@@ -1446,8 +1449,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       nanoid:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.0.8
+        version: 5.0.8
       type-fest:
         specifier: ^4.26.1
         version: 4.26.1
@@ -1655,6 +1658,9 @@ importers:
 
   packages/prisma-client:
     dependencies:
+      nanoid:
+        specifier: ^5.0.8
+        version: 5.0.8
       tinyexec:
         specifier: ^0.3.1
         version: 0.3.1
@@ -1696,8 +1702,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       nanoid:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.0.8
+        version: 5.0.8
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
@@ -1727,8 +1733,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       nanoid:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.0.8
+        version: 5.0.8
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -1770,8 +1776,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       nanoid:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.0.8
+        version: 5.0.8
       title-case:
         specifier: ^4.3.2
         version: 4.3.2
@@ -7100,8 +7106,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@5.0.1:
-    resolution: {integrity: sha512-vWeVtV5Cw68aML/QaZvqN/3QQXc6fBfIieAlu05m7FZW2Dgb+3f0xc0TTxuJW+7u30t7iSDTV/j3kVI0oJqIfQ==}
+  nanoid@5.0.8:
+    resolution: {integrity: sha512-TcJPw+9RV9dibz1hHUzlLVy8N4X9TnwirAjrU08Juo6BNKggzVfP2ZJ/3ZUSq15Xl5i85i+Z89XBO90pB2PghQ==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -13346,7 +13352,7 @@ snapshots:
   immerhin@0.9.0:
     dependencies:
       immer: 10.0.3
-      nanoid: 5.0.1
+      nanoid: 5.0.8
 
   import-fresh@3.3.0:
     dependencies:
@@ -14492,7 +14498,7 @@ snapshots:
 
   nanoid@3.3.7: {}
 
-  nanoid@5.0.1: {}
+  nanoid@5.0.8: {}
 
   nanostores@0.9.3: {}
 

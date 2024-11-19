@@ -99,7 +99,7 @@ if (env.DEV_LOGIN === "true") {
         .toString()
         .split(":");
 
-      if (secret === env.AUTH_SECRET?.slice(0, 4)) {
+      if (secret === env.AUTH_SECRET) {
         try {
           const context = await createContext(request);
 

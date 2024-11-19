@@ -8,8 +8,8 @@ import {
   buttonStyle,
   Checkbox,
 } from "@webstudio-is/design-system";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
-import { $project } from "~/shared/nano-states";
+
+import { $project, $userPlanFeatures } from "~/shared/nano-states";
 
 export const domainToPublishName = "domainToPublish[]";
 

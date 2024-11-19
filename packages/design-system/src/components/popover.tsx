@@ -21,31 +21,15 @@ const contentStyle = css({
   },
 });
 
-const ArrowBackground = styled("path", { fill: theme.colors.backgroundMenu });
-const ArrowInnerBorder = styled("path", { fill: theme.colors.borderMenuInner });
-const ArrowOuterBorder = styled("path", { fill: theme.colors.borderMain });
-const ArrowSgv = styled("svg", { transform: "translateY(-3px)" });
-const Arrow = () => (
-  <Primitive.Arrow width={16} height={11} asChild>
-    <ArrowSgv xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11">
-      <ArrowOuterBorder d="M8.73 9.76a1 1 0 0 1-1.46 0L.5 2.54h15L8.73 9.76Z" />
-      <ArrowInnerBorder d="M8.146 8.909a.2.2 0 0 1-.292 0L.5 1.065h15L8.146 8.909Z" />
-      <ArrowBackground d="M8.073 7.52a.1.1 0 0 1-.146 0L.877 0h14.246l-7.05 7.52Z" />
-    </ArrowSgv>
-  </Primitive.Arrow>
-);
-
 export const PopoverContent = forwardRef(
   (
     {
       children,
       className,
       css,
-      hideArrow,
       sideOffset,
       ...props
     }: ComponentProps<typeof Primitive.Content> & {
-      hideArrow?: boolean;
       css?: CSS;
     },
     ref: Ref<HTMLDivElement>
@@ -59,7 +43,6 @@ export const PopoverContent = forwardRef(
         ref={ref}
       >
         {children}
-        {hideArrow !== true && <Arrow />}
       </Primitive.Content>
     </Primitive.Portal>
   )

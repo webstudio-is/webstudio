@@ -245,25 +245,42 @@ export const InputErrorsTooltip = ({
   // Wrap the error tooltip with its own provider to avoid logic intersection with ordinary tooltips.
   // This is especially important for hover delays.
   // Here we ensure that hovering over the tooltip trigger after any input will not show the tooltip immediately.
+  // --
+  // Additionally, we can't wrap the underlying Input with Tooltip because we are not rendering Tooltips in case of no errors.
+  // This causes a full re-render of the Input and loss of focus.
+  // Because of that, we are wrapping the Tooltip with the relative Box component and providing an invisible trigger for the Tooltip.
   return (
     <TooltipProvider>
       <Box ref={ref as never} css={{ display: "contents" }}></Box>
-      <Tooltip
-        {...rest}
-        collisionBoundary={collisionBoundary as never}
-        collisionPadding={-8}
-        hideWhenDetached={true}
-        content={
-          errors !== undefined && errors.length !== 0
-            ? (content ?? " ")
-            : undefined
-        }
-        open={errors !== undefined && errors.length !== 0}
-        side={side ?? "right"}
-        css={css}
-      >
+      <Box css={{ position: "relative" }}>
+        <Tooltip
+          {...rest}
+          collisionBoundary={collisionBoundary as never}
+          collisionPadding={-8}
+          hideWhenDetached={true}
+          content={
+            errors !== undefined && errors.length !== 0
+              ? (content ?? " ")
+              : undefined
+          }
+          open={errors !== undefined && errors.length !== 0}
+          side={side ?? "right"}
+          css={css}
+        >
+          <Box
+            css={{
+              position: "absolute",
+              inset: 0,
+              visibility: "hidden",
+              // Uncomment for debugging
+              // backgroundColor: "red",
+              // opacity: 0.3,
+              // pointerEvents: "none",
+            }}
+          ></Box>
+        </Tooltip>
         {children}
-      </Tooltip>
+      </Box>
     </TooltipProvider>
   );
 };

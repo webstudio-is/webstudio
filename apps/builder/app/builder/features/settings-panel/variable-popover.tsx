@@ -54,9 +54,10 @@ import {
   $areResourcesLoading,
   invalidateResource,
   getComputedResource,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
+
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
 import {

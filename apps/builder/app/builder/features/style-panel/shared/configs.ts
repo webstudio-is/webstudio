@@ -54,7 +54,8 @@ export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
 
   const keywords = keywordValues[property] || [];
   const label = humanizeString(property);
-  const propertyData = properties[property];
+  // property data does not exist for css custom properties
+  const propertyData = properties[property] ?? {};
 
   const result = {
     label,
