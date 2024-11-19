@@ -3,11 +3,14 @@
 Based on this article https://dev.to/istarkov/fast-and-easy-way-to-setup-web-developer-certificates-450e
 
 ```bash
-rm -rf /tmp/certbot/
-rm -rf /tmp/letsencrypt/
+sudo rm -rf /tmp/certbot/
+sudo rm -rf /tmp/letsencrypt/
 
 mkdir -p /tmp/certbot/
 mkdir -p /tmp/letsencrypt/
+
+infisical login
+infisical init
 
 CLOUDFLARE_API_KEY=$(infisical secrets get WSTD_DEV-CLOUDFLARE_ZONE_TOKEN --path='/CLI' --env=staging --plain)
 
@@ -27,6 +30,7 @@ certbot/dns-cloudflare certonly \
 -d wstd.dev \
 -d '*.wstd.dev'
 
+sudo chown -R $USER:$USER /tmp/letsencrypt
 
 cp /tmp/letsencrypt/data/live/wstd.dev/fullchain.pem ./https/fullchain.pem
 cp /tmp/letsencrypt/data/live/wstd.dev/privkey.pem ./https/privkey.pem
