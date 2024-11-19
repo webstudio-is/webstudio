@@ -115,6 +115,7 @@ export const checkProjectPermit = async (
     "400b1bde-def1-49e0-9b64-e26416d326fa",
     "2e802ad7-ef32-48e6-8706-3a162785ef95",
     "01f6f1d8-06f5-4a6c-a3b1-89a0448046c7",
+    "5b33acf4-53cf-4f03-8973-d5679772edee",
     // Staging IDs
     "c236999d-be6b-43fb-9edc-78a2ba59e56d",
     "a1371dce-752c-4ccf-8ea4-88bab577fe50",
