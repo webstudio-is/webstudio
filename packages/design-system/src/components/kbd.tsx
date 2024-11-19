@@ -4,33 +4,19 @@ const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
 
 const shortcutSymbolMap: Record<string, string> = {
-  cmd: "⌘",
-  ctrl: "⌃",
+  cmd: isMac ? "⌘" : "Ctrl",
   shift: "⇧",
-  option: "⌥",
+  option: isMac ? "⌥" : "Alt",
   backspace: "⌫",
   enter: "↵",
-  tab: "tab",
-  click: "+click",
+  tab: isMac ? "tab" : "Tab",
+  click: isMac ? "+click" : "+ Click",
 };
 
-const shortcutWinMap: Record<string, string> = {
-  cmd: "ctrl",
-};
-
-type ShortcutDefinition = Array<string>;
-
-// @todo check what linux needs
-// Converts commands to OS specific equivalent, e.g. cmd on mac to ctrl on win
-const mapToOs = (value: ShortcutDefinition) => {
-  if (isMac) {
-    return value;
-  }
-  return value.map((key) => shortcutWinMap[key] || key);
-};
+type ShortcutDefinition = ReadonlyArray<string>;
 
 const format = (value: ShortcutDefinition) => {
-  return mapToOs(value).map(
+  return value.map(
     (shortcut) => shortcutSymbolMap[shortcut] ?? shortcut.toUpperCase()
   );
 };
@@ -44,7 +30,7 @@ export const Kbd = ({
 }) => {
   return (
     <Text color={color} as="kbd">
-      {format(value)}
+      {format(value).join(isMac ? "" : " ")}
     </Text>
   );
 };

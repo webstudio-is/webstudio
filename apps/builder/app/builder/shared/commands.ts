@@ -4,10 +4,8 @@ import {
   $instances,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
-  $builderMode,
   $isDesignMode,
-  $isDesignModeAllowed,
-  setBuilderMode,
+  toggleBuilderMode,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -128,39 +126,27 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     // ui
 
     {
-      name: "togglePreview",
+      name: "togglePreviewMode",
       defaultHotkeys: ["meta+shift+p", "ctrl+shift+p"],
       handler: () => {
         setActiveSidebarPanel("auto");
-
-        // @todo: This is temporary until we have a combo to switch modes
-        if ($builderMode.get() === "preview") {
-          if ($isDesignModeAllowed.get()) {
-            setBuilderMode("design");
-          } else {
-            setBuilderMode("content");
-          }
-        } else {
-          setBuilderMode("preview");
-        }
+        toggleBuilderMode("preview");
       },
     },
     {
-      name: "toggleEditor",
-      defaultHotkeys: ["meta+shift+e", "ctrl+shift+e"],
+      name: "toggleDesignMode",
+      defaultHotkeys: ["meta+shift+d", "ctrl+shift+d"],
       handler: () => {
         setActiveSidebarPanel("auto");
-
-        // @todo: This is temporary until we have a combo to switch modes
-        if ($builderMode.get() === "content") {
-          if ($isDesignModeAllowed.get()) {
-            setBuilderMode("design");
-          } else {
-            setBuilderMode("preview");
-          }
-        } else {
-          setBuilderMode("content");
-        }
+        toggleBuilderMode("design");
+      },
+    },
+    {
+      name: "toggleBuildMode",
+      defaultHotkeys: ["meta+shift+b", "ctrl+shift+b"],
+      handler: () => {
+        setActiveSidebarPanel("auto");
+        toggleBuilderMode("content");
       },
     },
     {

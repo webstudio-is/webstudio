@@ -115,7 +115,7 @@ export const Menu = () => {
           <DropdownMenuItem onSelect={() => emitCommand("redo")}>
             Redo
             <DropdownMenuItemRightSlot>
-              <Kbd value={["shift", "cmd", "z"]} />
+              <Kbd value={["cmd", "shift", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           {/* https://github.com/webstudio-is/webstudio/issues/499
@@ -145,7 +145,7 @@ export const Menu = () => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
+          <DropdownMenuItem onSelect={() => emitCommand("togglePreviewMode")}>
             Preview
             <DropdownMenuItemRightSlot>
               <Kbd value={["cmd", "shift", "p"]} />
