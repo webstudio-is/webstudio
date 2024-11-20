@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { Store, type Change } from "immerhin";
+import { Store } from "immerhin";
 import { enableMapSet, setAutoFreeze } from "immer";
 import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
@@ -44,7 +44,12 @@ import {
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $awareness } from "../awareness";
-import { SyncClient, type SyncEmitter } from "../sync-client";
+import {
+  ImmerhinSyncObject,
+  SyncClient,
+  SyncObjectPool,
+  type SyncEmitter,
+} from "../sync-client";
 
 enableMapSet();
 // safari structuredClone fix
@@ -67,12 +72,6 @@ declare module "~/shared/pubsub" {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
       data: StoreData[];
-    };
-    sendStoreChanges: {
-      // distinct source to avoid infinite loop
-      source: SyncEventSource;
-      namespace: "client";
-      changes: Change[];
     };
   }
 }
@@ -157,44 +156,6 @@ export const registerContainers = () => {
   }
 };
 
-const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
-  const unsubscribeRemoteChanges = subscribe(
-    "sendStoreChanges",
-    ({ source, namespace, changes }) => {
-      /// prevent reapplying own changes
-      if (source === name) {
-        return;
-      }
-      if (namespace === "client") {
-        clientSyncStore.createTransactionFromChanges(changes, "remote");
-      }
-    }
-  );
-
-  const unsubscribeClientImmerhinStoreChanges = clientSyncStore.subscribe(
-    (_transactionId, changes, source) => {
-      // prevent sending remote patches back
-      if (source === "remote") {
-        return;
-      }
-
-      publish({
-        type: "sendStoreChanges",
-        payload: {
-          source: name,
-          namespace: "client",
-          changes,
-        },
-      });
-    }
-  );
-
-  return () => {
-    unsubscribeRemoteChanges();
-    unsubscribeClientImmerhinStoreChanges();
-  };
-};
-
 const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   const latestData = new Map<string, unknown>();
 
@@ -206,11 +167,6 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
         return;
       }
       for (const { namespace, value } of data) {
-        // apply immerhin stores data
-        const clientContainer = clientSyncStore.containers.get(namespace);
-        if (clientContainer) {
-          clientContainer.set(value);
-        }
         // apply state stores data
         const $state = clientStores.get(namespace);
         if ($state) {
@@ -275,11 +231,16 @@ const sharedSyncEmitter =
     ? undefined
     : window.__webstudioSharedSyncEmitter__;
 
+const objectPool = new SyncObjectPool(
+  new ImmerhinSyncObject("server", serverSyncStore),
+  new ImmerhinSyncObject("client", clientSyncStore)
+);
+
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
     const canvasClient = new SyncClient({
       role: "follower",
-      store: serverSyncStore,
+      object: objectPool,
       emitter: sharedSyncEmitter,
     });
 
@@ -313,7 +274,6 @@ export const useCanvasStore = (publish: Publish) => {
     // subscribe stores after connect even so builder is ready to receive
     // changes from immerhin queue
     const unsubscribeStoresState = syncStoresState("canvas", publish);
-    const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
 
     return () => {
       publish({
@@ -321,7 +281,6 @@ export const useCanvasStore = (publish: Publish) => {
         payload: { sourceAppId: appId },
       });
       unsubscribeStoresState();
-      unsubscribeStoresChanges();
       controller.abort();
     };
   }, [publish]);
@@ -329,7 +288,7 @@ export const useCanvasStore = (publish: Publish) => {
 
 export const builderClient = new SyncClient({
   role: "leader",
-  store: serverSyncStore,
+  object: objectPool,
 });
 
 export const useBuilderStore = (publish: Publish) => {
@@ -337,7 +296,6 @@ export const useBuilderStore = (publish: Publish) => {
     const controller = new AbortController();
     builderClient.connect({ signal: controller.signal });
     let unsubscribeStoresState: undefined | (() => void);
-    let unsubscribeStoresChanges: undefined | (() => void);
 
     const unsubscribeConnect = subscribe("connect", () => {
       // subscribe stores after connection so canvas is ready to receive
@@ -363,20 +321,16 @@ export const useBuilderStore = (publish: Publish) => {
           data,
         },
       });
-
-      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
     });
 
     const unsubscribeDisconnect = subscribe("disconnect", () => {
       unsubscribeStoresState?.();
-      unsubscribeStoresChanges?.();
     });
 
     return () => {
       unsubscribeConnect();
       unsubscribeDisconnect();
       unsubscribeStoresState?.();
-      unsubscribeStoresChanges?.();
       controller.abort();
     };
   }, [publish]);

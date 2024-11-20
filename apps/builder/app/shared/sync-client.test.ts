@@ -3,7 +3,7 @@ import { createNanoEvents } from "nanoevents";
 import { atom } from "nanostores";
 import { Store } from "immerhin";
 import { enableMapSet } from "immer";
-import { SyncClient } from "./sync-client";
+import { ImmerhinSyncObject, SyncClient, SyncObjectPool } from "./sync-client";
 
 enableMapSet();
 
@@ -33,12 +33,12 @@ test("synchronize initial state when follower is connected", () => {
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
     role: "leader",
-    store: leaderStore,
+    object: new ImmerhinSyncObject("my-data", leaderStore),
     emitter,
   });
   const follower = new SyncClient({
     role: "follower",
-    store: followerStore,
+    object: new ImmerhinSyncObject("my-data", followerStore),
     emitter,
   });
   expect(leaderStore.containers.get("users")?.get().size).toEqual(2);
@@ -62,12 +62,12 @@ test("synchronize initial state when leader is connected", () => {
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
     role: "leader",
-    store: leaderStore,
+    object: new ImmerhinSyncObject("my-data", leaderStore),
     emitter,
   });
   const follower = new SyncClient({
     role: "follower",
-    store: followerStore,
+    object: new ImmerhinSyncObject("my-data", followerStore),
     emitter,
   });
   expect(leaderStore.containers.get("users")?.get().size).toEqual(2);
@@ -91,12 +91,12 @@ test("synchronize initial state when one of followers become leader", () => {
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
     role: "follower",
-    store: leaderStore,
+    object: new ImmerhinSyncObject("my-data", leaderStore),
     emitter,
   });
   const follower = new SyncClient({
     role: "follower",
-    store: followerStore,
+    object: new ImmerhinSyncObject("my-data", followerStore),
     emitter,
   });
   leader.connect({ signal: new AbortController().signal });
@@ -119,12 +119,12 @@ test("exchange transactions between leader and follower", async () => {
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
     role: "leader",
-    store: leaderStore,
+    object: new ImmerhinSyncObject("my-data", leaderStore),
     emitter,
   });
   const follower = new SyncClient({
     role: "follower",
-    store: followerStore,
+    object: new ImmerhinSyncObject("my-data", followerStore),
     emitter,
   });
   leader.connect({ signal: new AbortController().signal });
@@ -156,12 +156,12 @@ test("exchange transactions between followers", async () => {
   const follower2Store = createFollowerStore();
   const follower1 = new SyncClient({
     role: "follower",
-    store: follower1Store,
+    object: new ImmerhinSyncObject("my-data", follower1Store),
     emitter,
   });
   const follower2 = new SyncClient({
     role: "follower",
-    store: follower2Store,
+    object: new ImmerhinSyncObject("my-data", follower2Store),
     emitter,
   });
   follower1.connect({ signal: new AbortController().signal });
@@ -184,5 +184,30 @@ test("exchange transactions between followers", async () => {
   expect(follower2Store.containers.get("users")?.get().size).toEqual(2);
   expect(follower1Store.containers.get("users")?.get()).toEqual(
     follower2Store.containers.get("users")?.get()
+  );
+});
+
+test("support pool of objects", () => {
+  const store1 = createFollowerStore();
+  const store2 = createFollowerStore();
+  const leader = new SyncClient({
+    role: "leader",
+    object: new SyncObjectPool(
+      new ImmerhinSyncObject("store1", store1),
+      new ImmerhinSyncObject("store2", store2)
+    ),
+  });
+  leader.connect({ signal: new AbortController().signal });
+  store1.createTransaction([store1.containers.get("users")!], (users) => {
+    users.set("james", "James Jameson");
+  });
+  store2.createTransaction([store2.containers.get("users")!], (users) => {
+    users.set("mark", "Mark Grayson");
+  });
+  expect(store1.containers.get("users")?.get()).toEqual(
+    new Map([["james", "James Jameson"]])
+  );
+  expect(store2.containers.get("users")?.get()).toEqual(
+    new Map([["mark", "Mark Grayson"]])
   );
 });
