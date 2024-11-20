@@ -403,7 +403,6 @@ export const Builder = ({
                     ? false
                     : true
                 }
-                backgroundColor={theme.colors.backgroundTopbar}
               />
             }
           />
