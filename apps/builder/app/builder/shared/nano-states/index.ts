@@ -48,7 +48,7 @@ export const $loadingState = computed(
       ["dataLoadingState", dataLoadingState === "loaded"],
       [
         "selectedInstanceRenderState",
-        selectedInstanceRenderState === "mounted",
+        selectedInstanceRenderState !== "pending",
       ],
       ["canvasIframeState", canvasIframeState === "ready"],
     ]);
