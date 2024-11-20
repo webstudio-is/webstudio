@@ -130,7 +130,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <TransitionProperty
           value={property ?? properties.transitionProperty.initial}
           onChange={(value) => {
-            updateIntermediateValue({ duration: value });
+            updateIntermediateValue({ property: value });
             setRepeatedStyleItem(transitionProperty, index, value);
           }}
         />
