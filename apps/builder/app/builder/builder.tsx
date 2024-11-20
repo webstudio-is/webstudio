@@ -7,7 +7,11 @@ import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
-import { registerContainers, useBuilderStore } from "~/shared/sync";
+import {
+  builderClient,
+  registerContainers,
+  useBuilderStore,
+} from "~/shared/sync";
 import { startProjectSync, useSyncServer } from "./shared/sync/sync-server";
 import { SidebarLeft } from "./sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -294,6 +298,12 @@ export const Builder = ({
   useSetWindowTitle();
 
   const iframeRefCallback = mergeRefs((element: HTMLIFrameElement | null) => {
+    if (element?.contentWindow) {
+      // added to iframe window and stored in local variable right away to prevent
+      // overriding in emebedded scripts on canvas
+      element.contentWindow.__webstudioSharedSyncEmitter__ =
+        builderClient.emitter;
+    }
     onRefReadCanvas(element);
   }, publishRef);
 

@@ -44,6 +44,7 @@ import {
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $awareness } from "../awareness";
+import { SyncClient, type SyncEmitter } from "../sync-client";
 
 enableMapSet();
 // safari structuredClone fix
@@ -70,7 +71,7 @@ declare module "~/shared/pubsub" {
     sendStoreChanges: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
-      namespace: "client" | "server";
+      namespace: "client";
       changes: Change[];
     };
   }
@@ -164,30 +165,9 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
       if (source === name) {
         return;
       }
-      if (namespace === "server") {
-        serverSyncStore.createTransactionFromChanges(changes, "remote");
-      }
       if (namespace === "client") {
         clientSyncStore.createTransactionFromChanges(changes, "remote");
       }
-    }
-  );
-
-  const unsubscribeStoreChanges = serverSyncStore.subscribe(
-    (_transactionId, changes, source) => {
-      // prevent sending remote patches back
-      if (source === "remote") {
-        return;
-      }
-
-      publish({
-        type: "sendStoreChanges",
-        payload: {
-          source: name,
-          namespace: "server",
-          changes,
-        },
-      });
     }
   );
 
@@ -211,7 +191,6 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
 
   return () => {
     unsubscribeRemoteChanges();
-    unsubscribeStoreChanges();
     unsubscribeClientImmerhinStoreChanges();
   };
 };
@@ -228,10 +207,6 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
       }
       for (const { namespace, value } of data) {
         // apply immerhin stores data
-        const container = serverSyncStore.containers.get(namespace);
-        if (container) {
-          container.set(value);
-        }
         const clientContainer = clientSyncStore.containers.get(namespace);
         if (clientContainer) {
           clientContainer.set(value);
@@ -285,8 +260,31 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   };
 };
 
+declare global {
+  interface Window {
+    __webstudioSharedSyncEmitter__: SyncEmitter | undefined;
+  }
+}
+
+/**
+ * prevent syncEmitter interception from embedded scripts on canvas
+ * i.e., `globalThis.syncEmitter = () => console.log('INTERCEPTED');`,
+ */
+const sharedSyncEmitter =
+  typeof window === "undefined"
+    ? undefined
+    : window.__webstudioSharedSyncEmitter__;
+
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
+    const canvasClient = new SyncClient({
+      role: "follower",
+      store: serverSyncStore,
+      emitter: sharedSyncEmitter,
+    });
+
+    const controller = new AbortController();
+    canvasClient.connect({ signal: controller.signal });
     // connect to builder to get latest changes
     publish({
       type: "connect",
@@ -324,14 +322,23 @@ export const useCanvasStore = (publish: Publish) => {
       });
       unsubscribeStoresState();
       unsubscribeStoresChanges();
+      controller.abort();
     };
   }, [publish]);
 };
 
+export const builderClient = new SyncClient({
+  role: "leader",
+  store: serverSyncStore,
+});
+
 export const useBuilderStore = (publish: Publish) => {
   useEffect(() => {
+    const controller = new AbortController();
+    builderClient.connect({ signal: controller.signal });
     let unsubscribeStoresState: undefined | (() => void);
     let unsubscribeStoresChanges: undefined | (() => void);
+
     const unsubscribeConnect = subscribe("connect", () => {
       // subscribe stores after connection so canvas is ready to receive
       // changes from immerhin queue
@@ -341,12 +348,6 @@ export const useBuilderStore = (publish: Publish) => {
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
-      for (const [namespace, container] of serverSyncStore.containers) {
-        data.push({
-          namespace,
-          value: container.get(),
-        });
-      }
       for (const [namespace, store] of clientStores) {
         if (initializedStores.has(namespace)) {
           data.push({
@@ -376,6 +377,7 @@ export const useBuilderStore = (publish: Publish) => {
       unsubscribeDisconnect();
       unsubscribeStoresState?.();
       unsubscribeStoresChanges?.();
+      controller.abort();
     };
   }, [publish]);
 };

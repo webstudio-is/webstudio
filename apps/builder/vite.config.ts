@@ -12,6 +12,20 @@ import {
 import { readFileSync } from "node:fs";
 
 export default defineConfig(({ mode }) => {
+  if (mode === "test") {
+    return {
+      resolve: {
+        conditions: ["webstudio"],
+        alias: [
+          {
+            find: "~",
+            replacement: resolve("app"),
+          },
+        ],
+      },
+    };
+  }
+
   if (mode === "development") {
     // Enable self-signed certificates for development service 2 service fetch calls.
     // This is particularly important for secure communication with the oauth.ws.token endpoint.
