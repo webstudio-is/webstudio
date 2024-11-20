@@ -192,10 +192,10 @@ test("support pool of objects", () => {
   const store2 = createFollowerStore();
   const leader = new SyncClient({
     role: "leader",
-    object: new SyncObjectPool(
+    object: new SyncObjectPool([
       new ImmerhinSyncObject("store1", store1),
-      new ImmerhinSyncObject("store2", store2)
-    ),
+      new ImmerhinSyncObject("store2", store2),
+    ]),
   });
   leader.connect({ signal: new AbortController().signal });
   store1.createTransaction([store1.containers.get("users")!], (users) => {

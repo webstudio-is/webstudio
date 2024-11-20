@@ -231,10 +231,10 @@ const sharedSyncEmitter =
     ? undefined
     : window.__webstudioSharedSyncEmitter__;
 
-const objectPool = new SyncObjectPool(
+const objectPool = new SyncObjectPool([
   new ImmerhinSyncObject("server", serverSyncStore),
-  new ImmerhinSyncObject("client", clientSyncStore)
-);
+  new ImmerhinSyncObject("client", clientSyncStore),
+]);
 
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {

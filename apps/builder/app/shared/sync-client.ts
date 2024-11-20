@@ -54,7 +54,7 @@ export class ImmerhinSyncObject implements SyncObject {
 export class SyncObjectPool implements SyncObject {
   name = "SyncObjectPool";
   objects = new Map<string, SyncObject>();
-  constructor(...objects: SyncObject[]) {
+  constructor(objects: SyncObject[]) {
     for (const object of objects) {
       this.objects.set(object.name, object);
     }
