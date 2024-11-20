@@ -267,7 +267,7 @@ declare global {
 }
 
 /**
- * prevent syncEmitter interception from embeded scripts on canvas
+ * prevent syncEmitter interception from embedded scripts on canvas
  * i.e., `globalThis.syncEmitter = () => console.log('INTERCEPTED');`,
  */
 const sharedSyncEmitter =

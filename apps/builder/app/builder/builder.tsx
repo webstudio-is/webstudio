@@ -299,6 +299,8 @@ export const Builder = ({
 
   const iframeRefCallback = mergeRefs((element: HTMLIFrameElement | null) => {
     if (element?.contentWindow) {
+      // added to iframe window and stored in local variable right away to prevent
+      // overriding in emebedded scripts on canvas
       element.contentWindow.syncEmitter = builderClient.emitter;
     }
     onRefReadCanvas(element);
