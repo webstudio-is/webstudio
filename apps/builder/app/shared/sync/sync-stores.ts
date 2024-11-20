@@ -262,7 +262,7 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
 
 declare global {
   interface Window {
-    syncEmitter: SyncEmitter | undefined;
+    __webstudioSharedSyncEmitter__: SyncEmitter | undefined;
   }
 }
 
@@ -271,7 +271,9 @@ declare global {
  * i.e., `globalThis.syncEmitter = () => console.log('INTERCEPTED');`,
  */
 const sharedSyncEmitter =
-  typeof window === "undefined" ? undefined : window.syncEmitter;
+  typeof window === "undefined"
+    ? undefined
+    : window.__webstudioSharedSyncEmitter__;
 
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
