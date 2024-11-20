@@ -266,12 +266,19 @@ declare global {
   }
 }
 
+/**
+ * prevent syncEmitter interception from embeded scripts on canvas
+ * i.e., `globalThis.syncEmitter = () => console.log('INTERCEPTED');`,
+ */
+const sharedSyncEmitter =
+  typeof window === "undefined" ? undefined : window.syncEmitter;
+
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
     const canvasClient = new SyncClient({
       role: "follower",
       store: serverSyncStore,
-      emitter: window.syncEmitter,
+      emitter: sharedSyncEmitter,
     });
 
     const controller = new AbortController();
