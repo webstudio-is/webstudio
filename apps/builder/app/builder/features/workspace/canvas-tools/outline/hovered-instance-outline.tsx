@@ -101,12 +101,13 @@ export const HoveredInstanceOutline = () => {
   const outline = useStore($hoveredInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
+  const isContentMode = useStore($isContentMode);
 
   if (outline === undefined || hoveredInstanceSelector === undefined) {
     return;
   }
 
-  if (isFeatureEnabled("contentEditableMode")) {
+  if (isFeatureEnabled("contentEditableMode") && isContentMode) {
     if (
       shallowEqual(editableBlockChildOutline?.selector, hoveredInstanceSelector)
     ) {
