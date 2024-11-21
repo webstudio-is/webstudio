@@ -28,7 +28,3 @@ export const $selectedBreakpoint = computed(
     );
   }
 );
-
-export const $synchronizedBreakpoints = [
-  ["selectedBreakpointId", $selectedBreakpointId],
-] as const;

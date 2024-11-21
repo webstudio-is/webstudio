@@ -351,11 +351,13 @@ export const updateExpressionValue = (expression: string, value: unknown) => {
   }
 };
 
+type BindingState = {
+  overwritable: boolean;
+  variant: BindingVariant;
+};
+
 export const useBindingState = (expression: undefined | string) => {
-  const $bindingState = useMemo((): ReadableAtom<{
-    overwritable: boolean;
-    variant: BindingVariant;
-  }> => {
+  const $bindingState = useMemo((): ReadableAtom<BindingState> => {
     if (expression === undefined) {
       // value is not bound to expression and can be updated
       return atom({ overwritable: true, variant: "default" });
@@ -368,7 +370,7 @@ export const useBindingState = (expression: undefined | string) => {
     }
     return computed(
       [$dataSources, $dataSourceVariables],
-      (dataSources, dataSourceVariables) => {
+      (dataSources, dataSourceVariables): BindingState => {
         const dataSource = dataSources.get(potentialVariableId);
         // resources and parameters cannot be updated
         if (dataSource?.type !== "variable") {

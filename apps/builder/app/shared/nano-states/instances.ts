@@ -32,8 +32,3 @@ export const $textEditingInstanceSelector = atom<
 >();
 
 export const $instances = atom<Instances>(new Map());
-
-export const $synchronizedInstances = [
-  ["textEditingInstanceSelector", $textEditingInstanceSelector],
-  ["isResizingCanvas", $isResizingCanvas],
-] as const;

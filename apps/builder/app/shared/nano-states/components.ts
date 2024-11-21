@@ -241,8 +241,3 @@ export const registerComponentLibrary = ({
   }
   $registeredComponentPropsMetas.set(nextPropsMetas);
 };
-
-export const synchronizedComponentsMetaStores = [
-  ["registeredComponentMetas", $registeredComponentMetas],
-  ["registeredComponentPropsMetas", $registeredComponentPropsMetas],
-] as const;

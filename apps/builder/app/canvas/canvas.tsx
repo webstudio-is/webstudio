@@ -227,7 +227,7 @@ type CanvasProps = {
 };
 
 export const Canvas = ({ params, imageLoader }: CanvasProps) => {
-  useCanvasStore(publish);
+  useCanvasStore();
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
 
