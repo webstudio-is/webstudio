@@ -1,5 +1,6 @@
 import htmlTags, { voidHtmlTags, type HtmlTags } from "html-tags";
 import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
+import { compareMedia, StyleValue } from "@webstudio-is/css-engine";
 import {
   $breakpoints,
   $instances,
@@ -7,9 +8,8 @@ import {
   $stylesIndex,
 } from "~/shared/nano-states";
 import { $selectedBreakpoint } from "~/shared/nano-states";
-import { subscribe } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/awareness";
-import { compareMedia, StyleValue } from "@webstudio-is/css-engine";
+import { serverSyncStore } from "~/shared/sync";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -297,8 +297,8 @@ export const setDataCollapsed = (instanceId: string, syncExec = false) => {
  * For optimisation reasons try to extract instanceId of changed elements from pubsub
  * In that case we just check the subtree of parent/common ancestor of changed elements to find collapsed elements
  **/
-export const subscribeCollapsedToPubSub = () =>
-  subscribe("sendStoreChanges", ({ changes }) => {
+export const subscribeCollapsed = () => {
+  return serverSyncStore.subscribe((_transactionId, changes) => {
     for (const change of changes) {
       if (change.namespace === "styleSourceSelections") {
         for (const patch of change.patches) {
@@ -311,3 +311,4 @@ export const subscribeCollapsedToPubSub = () =>
       }
     }
   });
+};
