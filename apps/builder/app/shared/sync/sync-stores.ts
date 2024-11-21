@@ -77,73 +77,84 @@ export const registerContainers = () => {
   serverSyncStore.register("marketplaceProduct", $marketplaceProduct);
 };
 
-const objectPool = new SyncObjectPool([
-  new ImmerhinSyncObject("server", serverSyncStore),
-  new ImmerhinSyncObject("client", clientSyncStore),
-  new NanostoresSyncObject(
-    "selectedInstanceSelector",
-    $selectedInstanceSelector
-  ),
-  new NanostoresSyncObject("awareness", $awareness),
-  new NanostoresSyncObject("project", $project),
-  new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
-  new NanostoresSyncObject("resourceValues", $resourceValues),
-  new NanostoresSyncObject("selectedPageHash", $selectedPageHash),
-  new NanostoresSyncObject(
-    "selectedInstanceBrowserStyle",
-    $selectedInstanceBrowserStyle
-  ),
-  new NanostoresSyncObject(
-    "$selectedInstanceIntanceToTag",
-    $selectedInstanceIntanceToTag
-  ),
-  new NanostoresSyncObject(
-    "$selectedInstanceUnitSizes",
-    $selectedInstanceUnitSizes
-  ),
-  new NanostoresSyncObject(
-    "$selectedInstanceRenderState",
-    $selectedInstanceRenderState
-  ),
-  new NanostoresSyncObject("hoveredInstanceSelector", $hoveredInstanceSelector),
-  new NanostoresSyncObject("builderMode", $builderMode),
-  new NanostoresSyncObject("authTokenPermissions", $authTokenPermissions),
-  new NanostoresSyncObject("toastErrors", $toastErrors),
-  new NanostoresSyncObject("selectedStyleSources", $selectedStyleSources),
-  new NanostoresSyncObject("selectedStyleState", $selectedStyleState),
-  new NanostoresSyncObject("dragAndDropState", $dragAndDropState),
-  new NanostoresSyncObject("ephemeralStyles", $ephemeralStyles),
-  new NanostoresSyncObject("selectedInstanceStates", $selectedInstanceStates),
-  new NanostoresSyncObject("canvasIframeState", $canvasIframeState),
-  new NanostoresSyncObject("uploadingFilesDataStore", $uploadingFilesDataStore),
-  new NanostoresSyncObject("memoryProps", $memoryProps),
-  new NanostoresSyncObject("detectedFontsWeights", $detectedFontsWeights),
-  new NanostoresSyncObject("selectedBreakpointId", $selectedBreakpointId),
-  new NanostoresSyncObject(
-    "textEditingInstanceSelector",
-    $textEditingInstanceSelector
-  ),
-  new NanostoresSyncObject("isResizingCanvas", $isResizingCanvas),
-  new NanostoresSyncObject("textToolbar", $textToolbar),
-  new NanostoresSyncObject("selectedInstanceOutline", $selectedInstanceOutline),
-  new NanostoresSyncObject("hoveredInstanceOutline", $hoveredInstanceOutline),
-  new NanostoresSyncObject(
-    "collaborativeInstanceSelector",
-    $collaborativeInstanceSelector
-  ),
-  new NanostoresSyncObject(
-    "collaborativeInstanceRect",
-    $collaborativeInstanceRect
-  ),
-  new NanostoresSyncObject(
-    "registeredComponentMetas",
-    $registeredComponentMetas
-  ),
-  new NanostoresSyncObject(
-    "registeredComponentPropsMetas",
-    $registeredComponentPropsMetas
-  ),
-]);
+const createObjectPool = () => {
+  return new SyncObjectPool([
+    new ImmerhinSyncObject("server", serverSyncStore),
+    new ImmerhinSyncObject("client", clientSyncStore),
+    new NanostoresSyncObject(
+      "selectedInstanceSelector",
+      $selectedInstanceSelector
+    ),
+    new NanostoresSyncObject("awareness", $awareness),
+    new NanostoresSyncObject("project", $project),
+    new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
+    new NanostoresSyncObject("resourceValues", $resourceValues),
+    new NanostoresSyncObject("selectedPageHash", $selectedPageHash),
+    new NanostoresSyncObject(
+      "selectedInstanceBrowserStyle",
+      $selectedInstanceBrowserStyle
+    ),
+    new NanostoresSyncObject(
+      "$selectedInstanceIntanceToTag",
+      $selectedInstanceIntanceToTag
+    ),
+    new NanostoresSyncObject(
+      "$selectedInstanceUnitSizes",
+      $selectedInstanceUnitSizes
+    ),
+    new NanostoresSyncObject(
+      "$selectedInstanceRenderState",
+      $selectedInstanceRenderState
+    ),
+    new NanostoresSyncObject(
+      "hoveredInstanceSelector",
+      $hoveredInstanceSelector
+    ),
+    new NanostoresSyncObject("builderMode", $builderMode),
+    new NanostoresSyncObject("authTokenPermissions", $authTokenPermissions),
+    new NanostoresSyncObject("toastErrors", $toastErrors),
+    new NanostoresSyncObject("selectedStyleSources", $selectedStyleSources),
+    new NanostoresSyncObject("selectedStyleState", $selectedStyleState),
+    new NanostoresSyncObject("dragAndDropState", $dragAndDropState),
+    new NanostoresSyncObject("ephemeralStyles", $ephemeralStyles),
+    new NanostoresSyncObject("selectedInstanceStates", $selectedInstanceStates),
+    new NanostoresSyncObject("canvasIframeState", $canvasIframeState),
+    new NanostoresSyncObject(
+      "uploadingFilesDataStore",
+      $uploadingFilesDataStore
+    ),
+    new NanostoresSyncObject("memoryProps", $memoryProps),
+    new NanostoresSyncObject("detectedFontsWeights", $detectedFontsWeights),
+    new NanostoresSyncObject("selectedBreakpointId", $selectedBreakpointId),
+    new NanostoresSyncObject(
+      "textEditingInstanceSelector",
+      $textEditingInstanceSelector
+    ),
+    new NanostoresSyncObject("isResizingCanvas", $isResizingCanvas),
+    new NanostoresSyncObject("textToolbar", $textToolbar),
+    new NanostoresSyncObject(
+      "selectedInstanceOutline",
+      $selectedInstanceOutline
+    ),
+    new NanostoresSyncObject("hoveredInstanceOutline", $hoveredInstanceOutline),
+    new NanostoresSyncObject(
+      "collaborativeInstanceSelector",
+      $collaborativeInstanceSelector
+    ),
+    new NanostoresSyncObject(
+      "collaborativeInstanceRect",
+      $collaborativeInstanceRect
+    ),
+    new NanostoresSyncObject(
+      "registeredComponentMetas",
+      $registeredComponentMetas
+    ),
+    new NanostoresSyncObject(
+      "registeredComponentPropsMetas",
+      $registeredComponentPropsMetas
+    ),
+  ]);
+};
 
 declare global {
   interface Window {
@@ -164,7 +175,7 @@ export const useCanvasStore = () => {
   useEffect(() => {
     const canvasClient = new SyncClient({
       role: "follower",
-      object: objectPool,
+      object: createObjectPool(),
       emitter: sharedSyncEmitter,
     });
 
@@ -178,7 +189,7 @@ export const useCanvasStore = () => {
 
 export const builderClient = new SyncClient({
   role: "leader",
-  object: objectPool,
+  object: createObjectPool(),
 });
 
 export const useBuilderStore = () => {
