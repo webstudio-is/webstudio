@@ -3,13 +3,13 @@ import { createNanoEvents, type Emitter } from "nanoevents";
 import type { Change, Store } from "immerhin";
 import type { WritableAtom } from "nanostores";
 
-export type Transaction<Payload = unknown> = {
+type Transaction<Payload = unknown> = {
   id: string;
   object: string;
   payload: Payload;
 };
 
-export type RevertedTransaction = {
+type RevertedTransaction = {
   id: string;
   object: string;
 };
@@ -18,10 +18,10 @@ interface SyncObject {
   name: string;
   getState(): unknown;
   setState(state: unknown): void;
-  addTransaction(transaction: Transaction): void;
+  applyTransaction(transaction: Transaction): void;
   revertTransaction(transaction: RevertedTransaction): void;
   subscribe(
-    callback: (transaction: Transaction) => void,
+    sendTransaction: (transaction: Transaction) => void,
     signal: AbortSignal
   ): void;
 }
@@ -48,21 +48,21 @@ export class ImmerhinSyncObject implements SyncObject {
       $store.set(structuredClone(state.get(namespace)));
     }
   }
-  addTransaction(transaction: Transaction<Change[]>) {
+  applyTransaction(transaction: Transaction<Change[]>) {
     this.store.addTransaction(transaction.id, transaction.payload, "remote");
   }
   revertTransaction(transaction: RevertedTransaction) {
     this.store.revertTransaction(transaction.id);
   }
   subscribe(
-    callback: (transaction: Transaction<Change[]>) => void,
+    sendTransaction: (transaction: Transaction<Change[]>) => void,
     signal: AbortSignal
   ) {
     const unsubscribe = this.store.subscribe((id, payload, source) => {
       if (source === "remote") {
         return;
       }
-      callback({ id, object: this.name, payload });
+      sendTransaction({ id, object: this.name, payload });
     });
     signal.addEventListener("abort", unsubscribe);
   }
@@ -85,7 +85,7 @@ export class NanostoresSyncObject implements SyncObject {
     this.store.set(state);
     this.operation = "local";
   }
-  addTransaction(transaction: Transaction) {
+  applyTransaction(transaction: Transaction) {
     this.operation = "add";
     // `instanceof` checks do not work with instances like Map, File, etc., from another realm.
     // Use `clone` to recreate the data with the current realm's classes.
@@ -96,13 +96,16 @@ export class NanostoresSyncObject implements SyncObject {
   revertTransaction(_transaction: RevertedTransaction) {
     // @todo store the list of transactions
   }
-  subscribe(callback: (transaction: Transaction) => void, signal: AbortSignal) {
+  subscribe(
+    sendTransaction: (transaction: Transaction) => void,
+    signal: AbortSignal
+  ) {
     const unsubscribe = this.store.listen((payload) => {
       if (this.operation !== "local") {
         return;
       }
       const transaction = { id: nanoid(), object: this.name, payload };
-      callback(transaction);
+      sendTransaction(transaction);
     });
     signal.addEventListener("abort", unsubscribe);
   }
@@ -128,15 +131,18 @@ export class SyncObjectPool implements SyncObject {
       object.setState(state.get(name) as never);
     }
   }
-  addTransaction(transaction: Transaction) {
-    this.objects.get(transaction.object)?.addTransaction(transaction);
+  applyTransaction(transaction: Transaction) {
+    this.objects.get(transaction.object)?.applyTransaction(transaction);
   }
   revertTransaction(transaction: RevertedTransaction) {
     this.objects.get(transaction.object)?.revertTransaction(transaction);
   }
-  subscribe(callback: (transaction: Transaction) => void, signal: AbortSignal) {
+  subscribe(
+    sendTransaction: (transaction: Transaction) => void,
+    signal: AbortSignal
+  ) {
     for (const object of this.objects.values()) {
-      object.subscribe(callback, signal);
+      object.subscribe(sendTransaction, signal);
     }
   }
 }
@@ -144,7 +150,7 @@ export class SyncObjectPool implements SyncObject {
 type SyncMessage =
   | { type: "connect"; clientId: string }
   | { type: "state"; clientId: string; state: unknown }
-  | { type: "commit"; clientId: string; transaction: Transaction }
+  | { type: "apply"; clientId: string; transaction: Transaction }
   | { type: "revert"; clientId: string; transaction: RevertedTransaction };
 
 export type SyncEmitter = Emitter<{
@@ -202,7 +208,7 @@ export class SyncClient {
         this.connection = "connected";
         this.object.setState(message.state);
       }
-      if (message.type === "commit") {
+      if (message.type === "apply") {
         /*
         // leader interacts with server
         // and should validate transactions from various actors
@@ -211,7 +217,7 @@ export class SyncClient {
           return;
         }
         */
-        this.object.addTransaction(message.transaction);
+        this.object.applyTransaction(message.transaction);
       }
       if (message.type === "revert") {
         this.object.revertTransaction(message.transaction);
@@ -222,7 +228,7 @@ export class SyncClient {
     this.object.subscribe((transaction) => {
       this.emitter.emit("message", {
         clientId: this.clientId,
-        type: "commit",
+        type: "apply",
         transaction,
       });
     }, signal);
