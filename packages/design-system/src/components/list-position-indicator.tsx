@@ -27,7 +27,7 @@ const CircleOutline = styled(Box, {
   left: -CIRCLE_SIZE / 2 - OUTLINE_WIDTH,
   borderRadius: "50%",
   pointerEvents: "none",
-  bc: theme.colors.borderContrast,
+  backgroundColor: theme.colors.borderContrast,
 });
 
 const Circle = styled(Box, {

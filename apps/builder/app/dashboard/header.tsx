@@ -27,7 +27,7 @@ import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 const containerStyle = css({
   px: theme.spacing[13],
-  bc: theme.colors.backgroundPanel,
+  backgroundColor: theme.colors.backgroundPanel,
   height: theme.spacing[15],
   boxShadow: theme.shadows.brandElevationBig,
 });

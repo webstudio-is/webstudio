@@ -104,7 +104,7 @@ export const SidebarTabsContent = styled(TabsContent, {
   top: 0,
   left: "100%",
   height: "100%",
-  bc: theme.colors.backgroundPanel,
+  backgroundColor: theme.colors.backgroundPanel,
   outline: "none",
   // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
   "&::after": {

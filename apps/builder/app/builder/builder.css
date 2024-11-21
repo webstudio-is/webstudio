@@ -6,6 +6,11 @@ body {
   overflow: hidden;
   overscroll-behavior: contain;
   -webkit-font-smoothing: antialiased;
+  /* 
+    This is the top bar and loading screen color (--colors-backgroundTopbar).
+    We are setting it to avoid a white screen flash when opening project from the dashboard.
+   */
+  background-color: #2d2d2d;
 }
 
 [data-radix-scroll-area-viewport] {
