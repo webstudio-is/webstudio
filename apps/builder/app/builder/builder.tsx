@@ -283,7 +283,7 @@ export const Builder = ({
     $publisher.set({ publish });
   }, [publish]);
 
-  useBuilderStore(publish);
+  useBuilderStore();
   useSyncServer({
     projectId: project.id,
     authPermit,

@@ -188,8 +188,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1
       '@nanostores/react':
-        specifier: ^0.7.1
-        version: 0.7.1(nanostores@0.9.3)(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^0.8.0
+        version: 0.8.0(nanostores@0.11.3)(react@18.3.0-canary-14898b6a9-20240318)
       '@radix-ui/react-select':
         specifier: ^2.1.2
         version: 2.1.2(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -356,8 +356,8 @@ importers:
         specifier: ^5.0.8
         version: 5.0.8
       nanostores:
-        specifier: ^0.9.3
-        version: 0.9.3
+        specifier: ^0.11.3
+        version: 0.11.3
       picocolors:
         specifier: ^1.1.0
         version: 1.1.0
@@ -3493,11 +3493,11 @@ packages:
   '@mdx-js/mdx@2.3.0':
     resolution: {integrity: sha512-jLuwRlz8DQfQNiUCJR50Y09CGPq3fLtmtUQfVrj79E0JWu3dvsVcxVIcfhR5h0iXu+/z++zDrYeiJqifRynJkA==}
 
-  '@nanostores/react@0.7.1':
-    resolution: {integrity: sha512-EXQg9N4MdI4eJQz/AZLIx3hxQ6BuBmV4Q55bCd5YCSgEOAW7tGTsIZxpRXxvxLXzflNvHTBvfrDNY38TlSVBkQ==}
-    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
+  '@nanostores/react@0.8.0':
+    resolution: {integrity: sha512-MhbVB7NQLboq/Z9fRTDen9zib/YCffe6mn+3Xg5MOYByMX5Xx98SOZjk/Nd3yvOd/g7GjlQqwXj0KF2lPb6CEQ==}
+    engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
-      nanostores: ^0.9.0
+      nanostores: ^0.9.0 || ^0.10.0 || ^0.11.0
       react: 18.3.0-canary-14898b6a9-20240318
 
   '@netlify/edge-functions@2.11.0':
@@ -7094,9 +7094,9 @@ packages:
     engines: {node: ^18 || >=20}
     hasBin: true
 
-  nanostores@0.9.3:
-    resolution: {integrity: sha512-KobZjcVyNndNrb5DAjfs0WG0lRcZu5Q1BOrfTOxokFLi25zFrWPjg+joXC6kuDqNfSt9fQwppyjUBkRPtsL+8w==}
-    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
+  nanostores@0.11.3:
+    resolution: {integrity: sha512-TUes3xKIX33re4QzdxwZ6tdbodjmn3tWXCEc1uokiEmo14sI1EaGYNs2k3bU2pyyGNmBqFGAVl6jAGWd06AVIg==}
+    engines: {node: ^18.0.0 || >=20.0.0}
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
@@ -10033,9 +10033,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@nanostores/react@0.7.1(nanostores@0.9.3)(react@18.3.0-canary-14898b6a9-20240318)':
+  '@nanostores/react@0.8.0(nanostores@0.11.3)(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      nanostores: 0.9.3
+      nanostores: 0.11.3
       react: 18.3.0-canary-14898b6a9-20240318
 
   '@netlify/edge-functions@2.11.0': {}
@@ -14466,7 +14466,7 @@ snapshots:
 
   nanoid@5.0.8: {}
 
-  nanostores@0.9.3: {}
+  nanostores@0.11.3: {}
 
   natural-compare@1.4.0: {}
 

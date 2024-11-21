@@ -1,4 +1,4 @@
-export * from "./is-base-breakpoint";
+export { isBaseBreakpoint } from "~/shared/nano-states/breakpoints";
 export * from "./select-breakpoint-by-order";
 export * from "./group-breakpoints";
 export * from "./constants";

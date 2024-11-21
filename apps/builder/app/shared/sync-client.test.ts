@@ -1,9 +1,15 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { createNanoEvents } from "nanoevents";
 import { atom } from "nanostores";
 import { Store } from "immerhin";
 import { enableMapSet } from "immer";
-import { ImmerhinSyncObject, SyncClient, SyncObjectPool } from "./sync-client";
+import {
+  ImmerhinSyncObject,
+  NanostoresSyncObject,
+  SyncClient,
+  SyncObjectPool,
+  type Transaction,
+} from "./sync-client";
 
 enableMapSet();
 
@@ -210,4 +216,58 @@ test("support pool of objects", () => {
   expect(store2.containers.get("users")?.get()).toEqual(
     new Map([["mark", "Mark Grayson"]])
   );
+});
+
+describe("nanostores sync object", () => {
+  test("sync initial state and exchange transactions", () => {
+    const emitter = createNanoEvents();
+    const $leader = atom(1);
+    const $follower = atom(2);
+    new SyncClient({
+      role: "leader",
+      object: new NanostoresSyncObject("my-data", $leader),
+      emitter,
+    }).connect({ signal: new AbortController().signal });
+    new SyncClient({
+      role: "follower",
+      object: new NanostoresSyncObject("my-data", $follower),
+      emitter,
+    }).connect({ signal: new AbortController().signal });
+    expect($leader.get()).toEqual(1);
+    expect($follower.get()).toEqual(1);
+    $leader.set(3);
+    expect($leader.get()).toEqual(3);
+    expect($follower.get()).toEqual(3);
+    $follower.set(5);
+    expect($leader.get()).toEqual(5);
+    expect($follower.get()).toEqual(5);
+  });
+
+  test("prevent sending back state", () => {
+    const $store = atom(1);
+    const object = new NanostoresSyncObject("nanostores", $store);
+    const transactions: Transaction[] = [];
+    object.subscribe((transaction) => {
+      transactions.push(transaction);
+    }, new AbortController().signal);
+    expect(transactions).toEqual([]);
+    object.setState(2);
+    expect(transactions).toEqual([]);
+  });
+
+  test("prevent sending back transactions", () => {
+    const $store = atom(1);
+    const object = new NanostoresSyncObject("nanostores", $store);
+    const transactions: Transaction[] = [];
+    object.subscribe((transaction) => {
+      transactions.push(transaction);
+    }, new AbortController().signal);
+    expect(transactions).toEqual([]);
+    object.addTransaction({
+      id: "my-transaction",
+      object: "nanostores",
+      payload: 2,
+    });
+    expect(transactions).toEqual([]);
+  });
 });

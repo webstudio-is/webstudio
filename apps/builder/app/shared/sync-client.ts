@@ -1,17 +1,30 @@
 import { nanoid } from "nanoid";
 import { createNanoEvents, type Emitter } from "nanoevents";
 import type { Change, Store } from "immerhin";
+import type { WritableAtom } from "nanostores";
 
-type Transaction = {
+export type Transaction<Payload = unknown> = {
   id: string;
   object: string;
-  changes: Change[];
+  payload: Payload;
 };
 
-type RevertedTransaction = {
+export type RevertedTransaction = {
   id: string;
   object: string;
 };
+
+interface SyncObject {
+  name: string;
+  getState(): unknown;
+  setState(state: unknown): void;
+  addTransaction(transaction: Transaction): void;
+  revertTransaction(transaction: RevertedTransaction): void;
+  subscribe(
+    callback: (transaction: Transaction) => void,
+    signal: AbortSignal
+  ): void;
+}
 
 export class ImmerhinSyncObject implements SyncObject {
   name: string;
@@ -34,18 +47,58 @@ export class ImmerhinSyncObject implements SyncObject {
       $store.set(structuredClone(state.get(namespace)));
     }
   }
-  addTransaction(transaction: Transaction) {
-    this.store.addTransaction(transaction.id, transaction.changes, "remote");
+  addTransaction(transaction: Transaction<Change[]>) {
+    this.store.addTransaction(transaction.id, transaction.payload, "remote");
   }
   revertTransaction(transaction: RevertedTransaction) {
     this.store.revertTransaction(transaction.id);
   }
-  subscribe(callback: (transaction: Transaction) => void, signal: AbortSignal) {
-    const unsubscribe = this.store.subscribe((id, changes, source) => {
+  subscribe(
+    callback: (transaction: Transaction<Change[]>) => void,
+    signal: AbortSignal
+  ) {
+    const unsubscribe = this.store.subscribe((id, payload, source) => {
       if (source === "remote") {
         return;
       }
-      callback({ id, object: this.name, changes });
+      callback({ id, object: this.name, payload });
+    });
+    signal.addEventListener("abort", unsubscribe);
+  }
+}
+
+export class NanostoresSyncObject implements SyncObject {
+  name: string;
+  store: WritableAtom<unknown>;
+  // track the source of "store.set" to avoid cyclic updates
+  operation: "local" | "state" | "add" = "local";
+  constructor(name: string, store: WritableAtom<unknown>) {
+    this.name = name;
+    this.store = store;
+  }
+  getState() {
+    return this.store.get();
+  }
+  setState(state: unknown) {
+    this.operation = "state";
+    this.store.set(state);
+    this.operation = "local";
+  }
+  addTransaction(transaction: Transaction) {
+    this.operation = "add";
+    this.store.set(transaction.payload);
+    this.operation = "local";
+  }
+  revertTransaction(_transaction: RevertedTransaction) {
+    // @todo store the list of transactions
+  }
+  subscribe(callback: (transaction: Transaction) => void, signal: AbortSignal) {
+    const unsubscribe = this.store.listen((payload) => {
+      if (this.operation !== "local") {
+        return;
+      }
+      const transaction = { id: nanoid(), object: this.name, payload };
+      callback(transaction);
     });
     signal.addEventListener("abort", unsubscribe);
   }
@@ -86,7 +139,7 @@ export class SyncObjectPool implements SyncObject {
 
 type SyncMessage =
   | { type: "connect"; clientId: string }
-  | { type: "state"; clientId: string; state: Map<string, unknown> }
+  | { type: "state"; clientId: string; state: unknown }
   | { type: "commit"; clientId: string; transaction: Transaction }
   | { type: "revert"; clientId: string; transaction: RevertedTransaction };
 
@@ -99,18 +152,6 @@ type SyncClientOptions = {
   object: SyncObject;
   emitter?: SyncEmitter;
 };
-
-interface SyncObject {
-  name: string;
-  getState(): Map<string, unknown>;
-  setState(state: Map<string, unknown>): void;
-  addTransaction(transaction: Transaction): void;
-  revertTransaction(transaction: RevertedTransaction): void;
-  subscribe(
-    callback: (transaction: Transaction) => void,
-    signal: AbortSignal
-  ): void;
-}
 
 export class SyncClient {
   clientId = nanoid();
