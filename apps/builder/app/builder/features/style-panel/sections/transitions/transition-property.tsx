@@ -108,14 +108,6 @@ export const TransitionProperty = ({
         keys: [itemToString],
         sorter: (rankedItems) =>
           rankedItems.sort((a, b) => {
-            // Prioritize exact matches
-            if (a.item.name === search) {
-              return -1;
-            }
-            if (b.item.name === search) {
-              return 1;
-            }
-
             // Keep the proeprties on instance at the top
             if (animatableDefinedProperties.has(a.item.name)) {
               return -1;
