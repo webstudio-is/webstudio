@@ -1,7 +1,7 @@
 {
   "packageManager": "pnpm@9.14.2",
   "name": "webstudio-root",
-  "version": "0.0.0",
+  "version": "0.190.0",
   "private": true,
   "type": "module",
   "scripts": {
