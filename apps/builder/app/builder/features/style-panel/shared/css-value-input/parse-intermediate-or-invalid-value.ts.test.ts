@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toKebabCase, toPascalCase } from "../keyword-utils";
 

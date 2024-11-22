@@ -1,6 +1,7 @@
 import { chdir, cwd } from "node:process";
 import { join } from "node:path";
 import pc from "picocolors";
+import { x } from "tinyexec";
 import {
   cancel,
   confirm,
@@ -10,7 +11,6 @@ import {
   spinner,
   text,
 } from "@clack/prompts";
-import { $ } from "execa";
 import { createFolderIfNotExists, isFileExists } from "../fs-utils";
 import { PROJECT_TEMPLATES } from "../config";
 import { link, validateShareLink } from "./link";
@@ -112,7 +112,7 @@ export const initFlow = async (
   if (shouldInstallDeps === true) {
     const install = spinner();
     install.start("Installing dependencies");
-    await $`npm install`;
+    await x("npm", ["install"]);
     install.stop("Installed dependencies");
   }
 

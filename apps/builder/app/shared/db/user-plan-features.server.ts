@@ -44,7 +44,7 @@ export const getUserPlanFeatures = async (
     return {
       allowShareAdminLinks: true,
       allowDynamicData: true,
-      allowContactEmail: true,
+      maxContactEmails: 5,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription,
       hasProPlan: true,
@@ -56,7 +56,7 @@ export const getUserPlanFeatures = async (
     return {
       allowShareAdminLinks: true,
       allowDynamicData: true,
-      allowContactEmail: true,
+      maxContactEmails: 5,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription: true,
       hasProPlan: true,
@@ -67,7 +67,7 @@ export const getUserPlanFeatures = async (
   return {
     allowShareAdminLinks: false,
     allowDynamicData: false,
-    allowContactEmail: false,
+    maxContactEmails: 0,
     maxDomainsAllowedPerUser: 1,
     hasSubscription: false,
     hasProPlan: false,

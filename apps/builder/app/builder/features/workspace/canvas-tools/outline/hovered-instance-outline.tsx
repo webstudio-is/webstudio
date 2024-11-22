@@ -10,6 +10,7 @@ import { Label } from "./label";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
+import { shallowEqual } from "shallow-equal";
 
 export const HoveredInstanceOutline = () => {
   const instances = useStore($instances);
@@ -17,12 +18,13 @@ export const HoveredInstanceOutline = () => {
   const outline = useStore($hoveredInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
-  const isEditingText = textEditingInstanceSelector !== undefined;
+
+  if (outline === undefined || hoveredInstanceSelector === undefined) {
+    return;
+  }
 
   if (
-    outline === undefined ||
-    isEditingText ||
-    hoveredInstanceSelector === undefined
+    shallowEqual(hoveredInstanceSelector, textEditingInstanceSelector?.selector)
   ) {
     return;
   }

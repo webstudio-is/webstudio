@@ -67,8 +67,8 @@ export const CollapsibleSectionRoot = ({
           gap="2"
           direction="column"
           css={{
-            pb: theme.spacing[9],
-            px: fullWidth ? 0 : theme.spacing[9],
+            pb: theme.panel.paddingBlock,
+            px: fullWidth ? 0 : theme.panel.paddingInline,
             paddingTop: 0,
             "&:empty": { display: "none" },
           }}
@@ -107,7 +107,7 @@ export const CollapsibleSectionWithAddButton = ({
   hasItems = true,
   ...props
 }: Omit<CollapsibleSectionProps, "trigger" | "categoryProps"> & {
-  onAdd: () => void;
+  onAdd?: () => void;
 
   /**
    * If set to `true`, dots aren't shown,
@@ -139,15 +139,17 @@ export const CollapsibleSectionWithAddButton = ({
         <SectionTitle
           dots={Array.isArray(hasItems) ? hasItems : []}
           suffix={
-            <SectionTitleButton
-              prefix={<PlusIcon />}
-              onClick={() => {
-                if (isOpenFinal === false) {
-                  setIsOpen(true);
-                }
-                onAdd();
-              }}
-            />
+            onAdd ? (
+              <SectionTitleButton
+                prefix={<PlusIcon />}
+                onClick={() => {
+                  if (isOpenFinal === false) {
+                    setIsOpen(true);
+                  }
+                  onAdd();
+                }}
+              />
+            ) : undefined
           }
         >
           <SectionTitleLabel>{props.label}</SectionTitleLabel>

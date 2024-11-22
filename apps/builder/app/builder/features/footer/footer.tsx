@@ -11,7 +11,6 @@ export const Footer = () => {
         height: theme.spacing[11],
         background: theme.colors.backgroundTopbar,
         color: theme.colors.foregroundContrastMain,
-        boxShadow: `inset 0 1px 0 0 ${theme.colors.panelOutline}`,
       }}
     >
       <Breadcrumbs />

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   FloatingPanel,
@@ -7,12 +7,12 @@ import {
 import {
   $breakpoints,
   $selectedBreakpointId,
-  $selectedInstanceSelector,
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { BackgroundContent } from "./background-content";
+import { $awareness } from "~/shared/awareness";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -31,10 +31,14 @@ $styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
-$selectedInstanceSelector.set(["box"]);
+$awareness.set({
+  pageId: "",
+  instanceSelector: ["box"],
+});
 
 export const BackgroundContentStory = () => {
   const elementRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <>
@@ -42,7 +46,8 @@ export const BackgroundContentStory = () => {
 
       <FloatingPanelProvider container={elementRef}>
         <FloatingPanel
-          open={true}
+          isOpen={isOpen}
+          onIsOpenChange={setIsOpen}
           title="Background"
           content={<BackgroundContent index={0} />}
         >

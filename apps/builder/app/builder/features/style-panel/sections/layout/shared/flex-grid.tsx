@@ -49,14 +49,19 @@ export const FlexGrid = () => {
     flexDirectionValue === "column" || flexDirectionValue === "column-reverse";
 
   let color = theme.colors.foregroundFlexUiMain;
+  let borderColor = theme.colors.foregroundFlexUiMain;
+
   if (styleValueSourceColor === "local") {
-    color = theme.colors.borderLocalFlexUi;
+    borderColor = theme.colors.borderLocalMain;
+    color = theme.colors.foregroundLocalFlexUi;
   }
   if (styleValueSourceColor === "overwritten") {
-    color = theme.colors.borderOverwrittenFlexUi;
+    borderColor = theme.colors.borderOverwrittenFlexUi;
+    color = theme.colors.foregroundOverwrittenFlexUi;
   }
   if (styleValueSourceColor === "remote") {
-    color = theme.colors.borderRemoteFlexUi;
+    borderColor = theme.colors.borderRemoteFlexUi;
+    color = theme.colors.foregroundRemoteFlexUi;
   }
 
   const addjustLinesPadding = (padding: number | undefined) => {
@@ -72,12 +77,9 @@ export const FlexGrid = () => {
     <Grid
       tabIndex={0}
       css={{
-        width: 72,
-        height: 72,
-        padding: theme.spacing[4],
+        padding: theme.spacing[2],
         borderRadius: theme.borderRadius[4],
-        outline: "none",
-        border: `1px solid ${color}`,
+        outline: `1px solid ${borderColor}`,
         background: theme.colors.backgroundControls,
         alignItems: "center",
         gap: 0,
@@ -85,7 +87,7 @@ export const FlexGrid = () => {
         gridTemplateRows: "repeat(3, 1fr)",
         color,
         "&:focus-within": {
-          borderColor: theme.colors.borderLocalFlexUi,
+          outlineColor: theme.colors.borderLocalFlexUi,
         },
       }}
     >
@@ -113,12 +115,12 @@ export const FlexGrid = () => {
             <IconButton
               tabIndex={-1}
               css={{
-                width: "100%",
-                height: "100%",
+                width: "90%",
+                height: "90%",
                 color: theme.colors.foregroundFlexUiMain,
                 "&:hover": {
                   // @todo not clear which token to use here
-                  background: theme.colors.slate4,
+                  background: theme.colors.backgroundHover,
                 },
                 "&:focus": {
                   background: "none",
@@ -174,15 +176,15 @@ export const FlexGrid = () => {
           ),
         }}
       >
-        {[11, 16, 9].map((size) => (
+        {[7, 12, 5].map((size) => (
           <Box
             key={size}
             css={{
               borderRadius: theme.borderRadius[1],
               backgroundColor: "currentColor",
               ...(isFlexDirectionColumn
-                ? { minWidth: size, minHeight: 4 }
-                : { minWidth: 4, minHeight: size }),
+                ? { minWidth: size, minHeight: 3 }
+                : { minWidth: 3, minHeight: size }),
             }}
           />
         ))}

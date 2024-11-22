@@ -112,6 +112,11 @@ const getSelectionClienRect = () => {
   if (nativeSelection === null) {
     return;
   }
+
+  if (nativeSelection.rangeCount === 0) {
+    return;
+  }
+
   const domRange = nativeSelection.getRangeAt(0);
   return domRange.getBoundingClientRect();
 };

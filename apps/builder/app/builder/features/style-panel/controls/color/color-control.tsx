@@ -1,7 +1,10 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorPicker } from "../../shared/color-picker";
 import { styleConfigByName } from "../../shared/configs";
-import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
+import {
+  $availableColorVariables,
+  useComputedStyleDecl,
+} from "../../shared/model";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 
 export const ColorControl = ({ property }: { property: StyleProperty }) => {
@@ -19,7 +22,7 @@ export const ColorControl = ({ property }: { property: StyleProperty }) => {
           type: "keyword" as const,
           value: item.name,
         })),
-        ...$availableVariables.get(),
+        ...$availableColorVariables.get(),
       ]}
       onChange={(styleValue) => setValue(styleValue, { isEphemeral: true })}
       onChangeComplete={setValue}

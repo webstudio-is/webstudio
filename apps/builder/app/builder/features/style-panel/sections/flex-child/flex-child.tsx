@@ -230,6 +230,7 @@ const FlexChildSectionSizing = () => {
             properties={["flexGrow", "flexShrink", "flexBasis"]}
           >
             <ToggleGroupButton
+              aria-checked={item.value === selectedValue}
               value={item.value}
               onMouseEnter={() =>
                 // reset only when highlighted is not active
@@ -253,10 +254,10 @@ const FlexChildSectionSizingPopover = () => {
       title="Sizing"
       content={
         <Grid
+          gap="3"
           css={{
             gridTemplateColumns: "1fr 1fr 1.5fr",
-            gap: theme.spacing[9],
-            padding: theme.spacing[9],
+            padding: theme.panel.padding,
           }}
         >
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
@@ -368,6 +369,15 @@ const FlexChildSectionOrder = () => {
             properties={["flexGrow", "flexShrink", "flexBasis"]}
           >
             <ToggleGroupButton
+              aria-checked={
+                item.value === selectedValue ||
+                // flex-order takes integer value, so the value can be anything from +- 0-9
+                // And we already have toggle buttons for -1, 0, 1
+                // https://developer.mozilla.org/en-US/docs/Web/CSS/order#formal_syntax
+                (item.value === "" &&
+                  (Number.parseFloat(selectedValue) > 1 ||
+                    Number.parseFloat(selectedValue) < -1))
+              }
               value={item.value}
               onMouseEnter={() =>
                 // reset only when highlighted is not active
@@ -390,7 +400,7 @@ const FlexChildSectionOrderPopover = () => {
     <FloatingPanel
       title="Order"
       content={
-        <Grid css={{ padding: theme.spacing[9] }}>
+        <Grid css={{ padding: theme.panel.padding }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyLabel
               label="Order"

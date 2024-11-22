@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useStore } from "@nanostores/react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { theme, Button, Flex, Text } from "@webstudio-is/design-system";
@@ -9,7 +10,7 @@ import {
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
-import { Fragment } from "react";
+import { selectInstance } from "~/shared/awareness";
 
 export const Breadcrumbs = () => {
   const instances = useStore($instances);
@@ -41,7 +42,7 @@ export const Breadcrumbs = () => {
                   css={{ color: "inherit" }}
                   key={instance.id}
                   onClick={() => {
-                    $selectedInstanceSelector.set(
+                    selectInstance(
                       getAncestorInstanceSelector(
                         selectedInstanceSelector,
                         instance.id

@@ -11,7 +11,6 @@ import {
   PanelTabsContent,
   Card,
   Text,
-  Box,
   EnhancedTooltipProvider,
   Flex,
   ScrollArea,
@@ -23,17 +22,17 @@ import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
-  $selectedInstance,
   $registeredComponentMetas,
   $dragAndDropState,
-  $selectedPage,
+  $isDesignMode,
 } from "~/shared/nano-states";
-import { NavigatorTree } from "~/builder/features/sidebar-left/panels/navigator";
+import { NavigatorTree } from "~/builder/features/navigator";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
+import { $selectedInstance, $selectedPage } from "~/shared/awareness";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
@@ -48,9 +47,8 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
       gap="1"
       align="center"
       css={{
-        px: theme.spacing[9],
-        my: theme.spacing[3],
-        height: theme.spacing[13],
+        p: theme.panel.padding,
+        pb: 0,
         color: theme.colors.foregroundSubtle,
       }}
     >
@@ -81,6 +79,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const metas = useStore($registeredComponentMetas);
   const selectedPage = useStore($selectedPage);
   const activeInspectorPanel = useStore($activeInspectorPanel);
+  const isDesignMode = useStore($isDesignMode);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
@@ -88,14 +87,12 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
 
   if (selectedInstance === undefined) {
     return (
-      <Box css={{ p: theme.spacing[5], flexBasis: "100%" }}>
+      <Flex css={{ p: theme.spacing[9] }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
-        <Card
-          css={{ p: theme.spacing[9], mt: theme.spacing[9], width: "100%" }}
-        >
+        <Card css={{ p: theme.spacing[9], width: "100%" }}>
           <Text>Select an instance on the canvas</Text>
         </Card>
-      </Box>
+      </Flex>
     );
   }
 
@@ -105,7 +102,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   type PanelName = "style" | "settings";
 
   const availablePanels = new Set<PanelName>();
-  if (documentType === "html" && (meta?.stylable ?? true)) {
+  if (documentType === "html" && (meta?.stylable ?? true) && isDesignMode) {
     availablePanels.add("style");
   }
   // @todo hide root component settings until
@@ -183,9 +180,8 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                 <ScrollArea>
                   <InstanceInfo instance={selectedInstance} />
                   <SettingsPanelContainer
-                    key={
-                      selectedInstance.id /* Re-render when instance changes */
-                    }
+                    // Re-render when instance changes
+                    key={selectedInstance.id}
                     selectedInstance={selectedInstance}
                   />
                 </ScrollArea>

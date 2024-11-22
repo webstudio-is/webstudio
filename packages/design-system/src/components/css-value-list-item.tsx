@@ -17,6 +17,7 @@ const listItemAttribute = "data-list-item";
 const listItemAttributes = { [listItemAttribute]: true };
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
+  width: theme.spacing[7],
   visibility: "hidden",
   cursor: "grab",
   color: theme.colors.foregroundSubtle,
@@ -24,15 +25,13 @@ const DragHandleIconStyled = styled(DragHandleIcon, {
 });
 
 const ThumbHolder = styled("div", {
-  width: theme.spacing[10],
-  height: theme.spacing[10],
   flexShrink: 0,
 });
 
 /**
  * We draw button above rela button positions, therefore we need to have same padding
  */
-const sharedPaddingRight = theme.spacing[9];
+const sharedPaddingRight = theme.spacing[7];
 
 const IconButtonsWrapper = styled(Flex, {
   position: "absolute",
@@ -64,7 +63,7 @@ const ItemButton = styled("button", {
 
   paddingRight: sharedPaddingRight,
 
-  height: theme.spacing[13],
+  height: theme.spacing[11],
   position: "relative",
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
@@ -185,7 +184,7 @@ export const CssValueListItem = forwardRef(
             >
               <DragHandleIconStyled />
 
-              <Flex gap={2} shrink>
+              <Flex shrink align="center">
                 {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}
                 {label}
               </Flex>

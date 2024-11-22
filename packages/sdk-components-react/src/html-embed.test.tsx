@@ -1,9 +1,9 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import * as React from "react";
 import ReactDOMServer from "react-dom/server";
-import { test, expect, describe } from "@jest/globals";
+import { test, expect, describe, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { __testing__, HtmlEmbed } from "./html-embed";
@@ -54,6 +54,13 @@ const App = (props: {
     </ReactSdkContext.Provider>
   );
 };
+
+beforeEach(() => {
+  // clear body
+  for (const child of document.body.children) {
+    child.remove();
+  }
+});
 
 describe("Published site", () => {
   /**

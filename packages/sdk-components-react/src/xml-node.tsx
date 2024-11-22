@@ -14,7 +14,11 @@ export const defaultTag = "div";
 type Props = {
   tag: string;
   xmlns?: string;
-  children: ReactNode;
+  children?: ReactNode;
+  rel?: string;
+  hreflang?: string;
+  href?: string;
+  "xmlns:xhtml"?: string;
 };
 
 export const XmlNode = forwardRef<ElementRef<"div">, Props>(
@@ -34,29 +38,40 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       return createElement(tag, attrProps, children);
     }
 
-    const isTextChild = Children.toArray(children).every(
-      (child) => typeof child === "string"
-    );
+    const childrenArray = Children.toArray(children);
+    const isTextChild =
+      childrenArray.length > 0 &&
+      childrenArray.every((child) => typeof child === "string");
 
     const elementName = tag
       // Must start from letter or underscore
       .replace(/^[^\p{L}_]+/u, "")
       // Clear all non letter, number, underscore, dot, and dash
-      .replaceAll(/[^\p{L}\p{N}\-._]+/gu, "");
+      .replaceAll(/[^\p{L}\p{N}\-._:]+/gu, "");
 
     const attributes = attributeEntries.map(
       ([key, value]) => `${key}=${JSON.stringify(value)}`
     );
 
     return (
-      <div style={{ display: isTextChild ? "flex" : "contents" }} {...props}>
-        <div style={{ color: "rgb(16, 23, 233)" }}>
+      <div {...props}>
+        <span style={{ color: "rgb(16, 23, 233)" }}>
           &lt;{[elementName, ...attributes].join(" ")}&gt;
-        </div>
-        <div ref={ref} style={{ marginLeft: isTextChild ? 0 : "1rem" }}>
-          {children}
-        </div>
-        <div style={{ color: "rgb(16, 23, 233)" }}>&lt;/{elementName}&gt;</div>
+        </span>
+        {childrenArray.length > 0 && (
+          <div
+            ref={ref}
+            style={{
+              display: isTextChild ? "inline" : "block",
+              marginLeft: isTextChild ? 0 : "1rem",
+            }}
+          >
+            {children}
+          </div>
+        )}
+        <span style={{ color: "rgb(16, 23, 233)" }}>
+          &lt;/{elementName}&gt;
+        </span>
       </div>
     );
   }

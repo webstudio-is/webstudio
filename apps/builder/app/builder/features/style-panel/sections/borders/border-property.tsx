@@ -15,7 +15,7 @@ import {
   deleteProperty,
   setProperty,
 } from "../../shared/use-style-data";
-import { $availableVariables, useComputedStyles } from "../../shared/model";
+import { $availableUnitVariables, useComputedStyles } from "../../shared/model";
 
 export const BorderProperty = ({
   individualModeIcon,
@@ -83,7 +83,7 @@ export const BorderProperty = ({
                 type: "keyword" as const,
                 value: item.name,
               })),
-              ...$availableVariables.get(),
+              ...$availableUnitVariables.get(),
             ]}
             value={value}
             setValue={(newValue, options) => {

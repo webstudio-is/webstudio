@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from "@jest/globals";
+import { beforeEach, expect, test } from "vitest";
 import { cleanStores } from "nanostores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
@@ -13,10 +13,11 @@ import {
   $variableValuesByInstanceSelector,
   computeExpression,
 } from "./props";
-import { $pages, $selectedPageId } from "./pages";
+import { $pages } from "./pages";
 import { $assets, $dataSources, $props, $resources } from "./misc";
 import { $params } from "~/canvas/stores";
 import { $dataSourceVariables, $resourceValues } from "./variables";
+import { $awareness } from "../awareness";
 
 setEnv("*");
 
@@ -39,7 +40,7 @@ const selectPageRoot = (rootInstanceId: Instance["id"]) => {
     systemDataSourceId: "systemId",
   });
   $pages.set(defaultPages);
-  $selectedPageId.set(defaultPages.homePage.id);
+  $awareness.set({ pageId: defaultPages.homePage.id });
 };
 
 beforeEach(() => {

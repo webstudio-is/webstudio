@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
 import { atom } from "nanostores";
@@ -15,9 +16,8 @@ import { decodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $dataSources, $memoryProps, $props } from "./misc";
 import { $instances, $selectedInstanceSelector } from "./instances";
-import { $selectedPage } from "./pages";
 import { $dataSourceVariables } from "./variables";
-import { nanoid } from "nanoid";
+import { $selectedPage } from "../awareness";
 
 const createHookContext = (): HookContext => {
   const metas = $registeredComponentMetas.get();
@@ -54,7 +54,7 @@ const createHookContext = (): HookContext => {
         return;
       }
 
-      const props = $memoryProps.get();
+      const props = new Map($memoryProps.get());
 
       const newProps = props.get(JSON.stringify(instanceSelector)) ?? new Map();
 
@@ -96,7 +96,7 @@ const createHookContext = (): HookContext => {
 
       props.set(JSON.stringify(instanceSelector), newProps);
 
-      $memoryProps.set(new Map(props));
+      $memoryProps.set(props);
     },
 
     setPropVariable: (instanceId, propName, value) => {
@@ -241,8 +241,3 @@ export const registerComponentLibrary = ({
   }
   $registeredComponentPropsMetas.set(nextPropsMetas);
 };
-
-export const synchronizedComponentsMetaStores = [
-  ["registeredComponentMetas", $registeredComponentMetas],
-  ["registeredComponentPropsMetas", $registeredComponentPropsMetas],
-] as const;

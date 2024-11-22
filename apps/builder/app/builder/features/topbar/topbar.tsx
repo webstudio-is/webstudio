@@ -12,8 +12,8 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { $editingPageId, $pages, $selectedPage } from "~/shared/nano-states";
-import { PreviewButton } from "./preview";
+import { $editingPageId, $pages } from "~/shared/nano-states";
+
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
@@ -27,6 +27,8 @@ import { AddressBarPopover } from "../address-bar";
 import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
 import type { ReactNode } from "react";
 import { CloneButton } from "./clone";
+import { $selectedPage } from "~/shared/awareness";
+import { BuilderModeDropDown } from "./builder-mode";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -45,7 +47,7 @@ const PagesButton = () => {
     >
       <ToolbarButton
         css={{
-          px: theme.spacing[9],
+          paddingInline: theme.panel.paddingInline,
           maxWidth: theme.spacing[24],
         }}
         aria-label="Toggle Pages"
@@ -66,8 +68,7 @@ const topbarContainerStyle = css({
   display: "flex",
   background: theme.colors.backgroundTopbar,
   height: theme.spacing[15],
-  boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
-  paddingRight: theme.spacing[9],
+  paddingRight: theme.panel.paddingInline,
   color: theme.colors.foregroundContrastMain,
 });
 
@@ -123,7 +124,8 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
         >
           <ViewMode />
           <SyncStatus />
-          <PreviewButton />
+
+          <BuilderModeDropDown />
           <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
           <PublishButton projectId={project.id} />
           <CloneButton />

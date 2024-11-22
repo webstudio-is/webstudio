@@ -65,7 +65,7 @@ export const CollapsibleDomainSection = ({
     >
       <Flex
         css={{
-          mx: theme.spacing[9],
+          paddingInline: theme.panel.paddingInline,
           overflowWrap: "anywhere",
         }}
         gap={2}

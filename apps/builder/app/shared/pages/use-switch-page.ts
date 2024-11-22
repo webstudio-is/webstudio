@@ -1,36 +1,17 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
-import { findPageByIdOrPath, type Page } from "@webstudio-is/sdk";
 import {
   $authToken,
   $pages,
   $project,
-  $selectedPage,
-  $selectedPageId,
   $selectedPageHash,
-  $selectedInstanceSelector,
-  $isPreviewMode,
+  $builderMode,
+  isBuilderMode,
+  setBuilderMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
-
-export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
-  const pages = $pages.get();
-
-  if (pages === undefined) {
-    return;
-  }
-
-  const page = findPageByIdOrPath(pageId, pages);
-
-  if (page === undefined) {
-    return;
-  }
-
-  $selectedPageHash.set(pageHash);
-  $selectedPageId.set(page.id);
-  $selectedInstanceSelector.set([page.rootInstanceId]);
-};
+import { $selectedPage, selectPage } from "../awareness";
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -39,11 +20,18 @@ const setPageStateFromUrl = () => {
     return;
   }
   const pageId = searchParams.get("pageId") ?? pages.homePage.id;
-  const pageHash = searchParams.get("pageHash") ?? undefined;
 
-  $isPreviewMode.set(searchParams.get("mode") === "preview");
+  let mode = searchParams.get("mode");
 
-  switchPage(pageId, pageHash);
+  // Check in case of BuilderMode rename
+  if (!isBuilderMode(mode)) {
+    mode = null;
+  }
+
+  setBuilderMode(mode);
+
+  $selectedPageHash.set(searchParams.get("pageHash") ?? "");
+  selectPage(pageId);
 };
 
 /**
@@ -59,7 +47,7 @@ export const useSyncPageUrl = () => {
   const navigate = useNavigate();
   const page = useStore($selectedPage);
   const pageHash = useStore($selectedPageHash);
-  const isPreviewMode = useStore($isPreviewMode);
+  const builderMode = useStore($builderMode);
 
   // Get pageId and pageHash from URL
   // once pages are loaded
@@ -92,13 +80,16 @@ export const useSyncPageUrl = () => {
 
     const searchParamsPageId = searchParams.get("pageId") ?? pages.homePage.id;
     const searchParamsPageHash = searchParams.get("pageHash") ?? "";
-    const searchParamsIsPreviewMode = searchParams.get("mode") === "preview";
+    const searParamsModeRaw = searchParams.get("mode");
+    const searParamsMode = isBuilderMode(searParamsModeRaw)
+      ? searParamsModeRaw
+      : undefined;
 
     // Do not navigate on popstate change
     if (
       searchParamsPageId === page.id &&
       searchParamsPageHash === pageHash &&
-      searchParamsIsPreviewMode === isPreviewMode
+      searParamsMode === builderMode
     ) {
       return;
     }
@@ -108,10 +99,10 @@ export const useSyncPageUrl = () => {
         pageId: page.id === pages.homePage.id ? undefined : page.id,
         authToken: $authToken.get(),
         pageHash: pageHash === "" ? undefined : pageHash,
-        mode: isPreviewMode ? "preview" : undefined,
+        mode: builderMode === "design" ? undefined : builderMode,
       })
     );
-  }, [isPreviewMode, navigate, page, pageHash]);
+  }, [builderMode, navigate, page, pageHash]);
 };
 
 /**

@@ -33,11 +33,11 @@ import {
 import {
   $dataSourceVariables,
   $dataSources,
-  $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
+import { $selectedInstanceKey } from "~/shared/awareness";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -266,7 +266,7 @@ export const HorizontalLayout = ({
       gridTemplateColumns: deletable
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
-      minHeight: theme.spacing[13],
+      minHeight: theme.spacing[12],
     }}
     align="center"
     gap="2"
@@ -303,22 +303,23 @@ export const Row = ({
   children,
   css,
 }: Pick<ComponentProps<typeof Flex>, "css" | "children">) => (
-  <Flex css={{ px: theme.spacing[9], ...css }} direction="column">
+  <Flex
+    css={{ paddingInline: theme.panel.paddingInline, ...css }}
+    direction="column"
+  >
     {children}
   </Flex>
 );
 
 export const $selectedInstanceScope = computed(
-  [$selectedInstanceSelector, $variableValuesByInstanceSelector, $dataSources],
-  (instanceSelector, variableValuesByInstanceSelector, dataSources) => {
+  [$selectedInstanceKey, $variableValuesByInstanceSelector, $dataSources],
+  (instanceKey, variableValuesByInstanceSelector, dataSources) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
-    if (instanceSelector === undefined) {
+    if (instanceKey === undefined) {
       return { scope, aliases };
     }
-    const values = variableValuesByInstanceSelector.get(
-      JSON.stringify(instanceSelector)
-    );
+    const values = variableValuesByInstanceSelector.get(instanceKey);
     if (values) {
       for (const [dataSourceId, value] of values) {
         const dataSource = dataSources.get(dataSourceId);
@@ -350,11 +351,13 @@ export const updateExpressionValue = (expression: string, value: unknown) => {
   }
 };
 
+type BindingState = {
+  overwritable: boolean;
+  variant: BindingVariant;
+};
+
 export const useBindingState = (expression: undefined | string) => {
-  const $bindingState = useMemo((): ReadableAtom<{
-    overwritable: boolean;
-    variant: BindingVariant;
-  }> => {
+  const $bindingState = useMemo((): ReadableAtom<BindingState> => {
     if (expression === undefined) {
       // value is not bound to expression and can be updated
       return atom({ overwritable: true, variant: "default" });
@@ -367,7 +370,7 @@ export const useBindingState = (expression: undefined | string) => {
     }
     return computed(
       [$dataSources, $dataSourceVariables],
-      (dataSources, dataSourceVariables) => {
+      (dataSources, dataSourceVariables): BindingState => {
         const dataSource = dataSources.get(potentialVariableId);
         // resources and parameters cannot be updated
         if (dataSource?.type !== "variable") {

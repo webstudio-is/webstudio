@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { generateCurl, parseCurl, type CurlRequest } from "./curl";
 
 test("support url", () => {

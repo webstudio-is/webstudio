@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
-import {
-  loadResource,
-  isLocalResource,
-  ResourceRequest,
-} from "@webstudio-is/sdk";
+import { ResourceRequest } from "@webstudio-is/sdk";
+import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";

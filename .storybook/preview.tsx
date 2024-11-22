@@ -40,8 +40,7 @@ const WaitForFonts = ({ children }) => {
 
 const globalStyles = globalCss({
   body: {
-    backgroundColor: theme.colors.background,
-    color: theme.colors.hiContrast,
+    color: theme.colors.foregroundMain,
     fontFamily: theme.fonts.sans,
   },
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it as test, jest } from "@jest/globals";
+import { describe, expect, test, vi } from "vitest";
 
 import { parseTailwindToCss, parseTailwindToWebstudio } from "./parse";
 
@@ -341,7 +341,7 @@ describe("parseTailwindToCss", () => {
 
   test("warn if variable is not defined and omits property and empty selectors", async () => {
     const tailwindClasses = `bg-gradient-to-r`;
-    const warn = jest.fn();
+    const warn = vi.fn();
 
     expect(
       await parseTailwindToCss(tailwindClasses, warn)

@@ -1,6 +1,7 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
 import { publicStaticEnv } from "~/env/env.static";
 import { getAuthorizationServerOrigin } from "./origins";
+import type { BuilderMode } from "../nano-states/misc";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
@@ -22,7 +23,7 @@ export const builderPath = ({
   pageId?: string;
   authToken?: string;
   pageHash?: string;
-  mode?: "preview";
+  mode?: "preview" | "content";
 }) => {
   return `/${searchParams({
     pageId,
@@ -37,7 +38,7 @@ export const builderUrl = (props: {
   pageId?: string;
   origin: string;
   authToken?: string;
-  mode?: "edit" | "preview";
+  mode?: BuilderMode;
 }) => {
   const authServerOrigin = getAuthorizationServerOrigin(props.origin);
 

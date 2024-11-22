@@ -1,7 +1,7 @@
 import { atom, computed, onSet } from "nanostores";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { Placement } from "@webstudio-is/design-system";
+import { toast, type Placement } from "@webstudio-is/design-system";
 import type {
   Assets,
   DataSources,
@@ -28,6 +28,8 @@ import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-
 import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
+import { $selectedInstance } from "../awareness";
+import type { UserPlanFeatures } from "../db/user-plan-features.server";
 
 export const $project = atom<Project | undefined>();
 
@@ -178,14 +180,14 @@ export const $selectedInstanceRenderState = atom<
 >("notMounted");
 
 export const $selectedInstanceStatesByStyleSourceId = computed(
-  [$styles, $styleSourceSelections, $selectedInstanceSelector],
-  (styles, styleSourceSelections, selectedInstanceSelector) => {
+  [$styles, $styleSourceSelections, $selectedInstance],
+  (styles, styleSourceSelections, selectedInstance) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
-    if (selectedInstanceSelector === undefined) {
+    if (selectedInstance === undefined) {
       return statesByStyleSourceId;
     }
     const styleSourceIds = new Set(
-      styleSourceSelections.get(selectedInstanceSelector[0])?.values
+      styleSourceSelections.get(selectedInstance.id)?.values
     );
     for (const styleDecl of styles.values()) {
       if (
@@ -208,15 +210,14 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
 );
 
 export const $selectedInstanceStyleSources = computed(
-  [$styleSourceSelections, $styleSources, $selectedInstanceSelector],
-  (styleSourceSelections, styleSources, selectedInstanceSelector) => {
+  [$styleSourceSelections, $styleSources, $selectedInstance],
+  (styleSourceSelections, styleSources, selectedInstance) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
-    if (selectedInstanceSelector === undefined) {
+    if (selectedInstance === undefined) {
       return selectedInstanceStyleSources;
     }
-    const [selectedInstanceId] = selectedInstanceSelector;
     const styleSourceIds =
-      styleSourceSelections.get(selectedInstanceId)?.values ?? [];
+      styleSourceSelections.get(selectedInstance.id)?.values ?? [];
     let hasLocal = false;
     for (const styleSourceId of styleSourceIds) {
       const styleSource = styleSources.get(styleSourceId);
@@ -244,20 +245,19 @@ export const $selectedOrLastStyleSourceSelector = computed(
   [
     $selectedInstanceStyleSources,
     $selectedStyleSources,
-    $selectedInstanceSelector,
+    $selectedInstance,
     $selectedStyleState,
   ],
   (
     styleSources,
     selectedStyleSources,
-    selectedInstanceSelector,
+    selectedInstance,
     selectedStyleState
   ) => {
-    if (selectedInstanceSelector === undefined) {
+    if (selectedInstance === undefined) {
       return;
     }
-    const [instanceId] = selectedInstanceSelector;
-    const styleSourceId = selectedStyleSources.get(instanceId);
+    const styleSourceId = selectedStyleSources.get(selectedInstance.id);
     // always fallback to local (the last one) style source
     const lastStyleSource = styleSources.at(-1);
     const matchedStyleSource = styleSources.find(
@@ -275,17 +275,12 @@ export const $selectedOrLastStyleSourceSelector = computed(
  * to the last style source of selected instance
  */
 export const $selectedStyleSource = computed(
-  [
-    $selectedInstanceStyleSources,
-    $selectedStyleSources,
-    $selectedInstanceSelector,
-  ],
-  (styleSources, selectedStyleSources, selectedInstanceSelector) => {
-    if (selectedInstanceSelector === undefined) {
+  [$selectedInstanceStyleSources, $selectedStyleSources, $selectedInstance],
+  (styleSources, selectedStyleSources, selectedInstance) => {
+    if (selectedInstance === undefined) {
       return;
     }
-    const [instanceId] = selectedInstanceSelector;
-    const selectedStyleSourceId = selectedStyleSources.get(instanceId);
+    const selectedStyleSourceId = selectedStyleSources.get(selectedInstance.id);
     return (
       styleSources.find((item) => item.id === selectedStyleSourceId) ??
       styleSources.at(-1)
@@ -303,7 +298,34 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const $isPreviewMode = atom<boolean>(false);
+// keep in sync with user-plan-features.server
+export const $userPlanFeatures = atom<UserPlanFeatures>({
+  allowShareAdminLinks: false,
+  allowDynamicData: false,
+  maxContactEmails: 0,
+  maxDomainsAllowedPerUser: 1,
+  hasSubscription: false,
+  hasProPlan: false,
+});
+
+const builderModes = ["design", "preview", "content"] as const;
+export type BuilderMode = (typeof builderModes)[number];
+export const isBuilderMode = (mode: string | null): mode is BuilderMode =>
+  builderModes.includes(mode as BuilderMode);
+export const $builderMode = atom<BuilderMode>("design");
+
+export const $isPreviewMode = computed(
+  $builderMode,
+  (mode) => mode === "preview"
+);
+export const $isContentMode = computed(
+  $builderMode,
+  (mode) => mode === "content"
+);
+export const $isDesignMode = computed(
+  $builderMode,
+  (mode) => mode === "design"
+);
 
 export const $authPermit = atom<AuthPermit>("view");
 export const $authTokenPermissions = atom<TokenPermissions>({
@@ -312,6 +334,91 @@ export const $authTokenPermissions = atom<TokenPermissions>({
 });
 
 export const $authToken = atom<string | undefined>(undefined);
+
+export const $isContentModeAllowed = computed(
+  [$authToken, $userPlanFeatures],
+  (token, userPlanFeatures) => {
+    // In own projects, everyone can edit content
+    if (token === undefined) {
+      return true;
+    }
+
+    // In shared projects, only Pro users can share editable links, so check the plan features of the user who shared the link
+    return userPlanFeatures.hasProPlan === true;
+  }
+);
+
+export const $isDesignModeAllowed = computed([$authPermit], (authPermit) => {
+  return authPermit !== "edit";
+});
+
+let previousBuilderMode: BuilderMode | undefined = undefined;
+
+export const toggleBuilderMode = (mode: BuilderMode) => {
+  const currentMode = $builderMode.get();
+
+  if (currentMode === mode) {
+    if (previousBuilderMode !== undefined) {
+      setBuilderMode(previousBuilderMode);
+      previousBuilderMode = currentMode;
+      return;
+    }
+
+    // Switch back
+    const availableModes: BuilderMode[] = [];
+    if ($isDesignModeAllowed.get() && currentMode !== "design") {
+      availableModes.push("design");
+    }
+    if ($isContentModeAllowed.get() && currentMode !== "content") {
+      availableModes.push("content");
+    }
+    if (currentMode !== "preview") {
+      availableModes.push("preview");
+    }
+
+    setBuilderMode(availableModes[0] ?? "preview");
+
+    previousBuilderMode = currentMode;
+    return;
+  }
+
+  previousBuilderMode = currentMode;
+  setBuilderMode(mode);
+};
+
+export const setBuilderMode = (mode: BuilderMode | null) => {
+  const authPermit = $authPermit.get();
+
+  if (mode === "content" && !$isContentModeAllowed.get()) {
+    // This is content link from a non pro user, we don't allow content mode for such links
+    toast.info(
+      "Content mode is not available for this link. The link’s author must have a Pro plan."
+    );
+
+    $builderMode.set("preview");
+    return;
+  }
+
+  if (mode === "design" && !$isDesignModeAllowed.get()) {
+    toast.info("Design mode is not available for content edit links.");
+
+    $builderMode.set("content");
+    return;
+  }
+
+  if (authPermit === "view") {
+    $builderMode.set(mode ?? "preview");
+    return;
+  }
+
+  const defaultMode = $isDesignModeAllowed.get()
+    ? "design"
+    : $isContentModeAllowed.get()
+      ? "content"
+      : "preview";
+
+  $builderMode.set(mode ?? defaultMode);
+};
 
 export const $toastErrors = atom<string[]>([]);
 

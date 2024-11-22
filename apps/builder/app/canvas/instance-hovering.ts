@@ -17,6 +17,7 @@ export const subscribeInstanceHovering = ({
   signal: AbortSignal;
 }) => {
   let hoveredElement: undefined | Element = undefined;
+  let updateOnMouseMove = false;
   let isScrolling = false;
 
   const updateHoveredInstance = (element: Element) => {
@@ -32,16 +33,31 @@ export const subscribeInstanceHovering = ({
 
   window.addEventListener(
     "mouseover",
-    (event: MouseEvent) => {
+    (event) => {
       if (event.target instanceof Element) {
         const element = event.target.closest(`[${idAttribute}]`) ?? undefined;
         if (element !== undefined) {
           clearTimeout(mouseOutTimeoutId);
           // store hovered element locally to update outline when scroll ends
           hoveredElement = element;
-          updateHoveredInstance(element);
+          updateOnMouseMove = true;
         }
       }
+    },
+    eventOptions
+  );
+  window.addEventListener(
+    "mousemove",
+    () => {
+      // We want the hover outline to appear only if a mouse or trackpad action caused it, not from keyboard navigation.
+      // Otherwise, when we leave the Lexical editor using the keyboard,
+      // the mouseover event triggers on elements created after Lexical loses focus.
+      // This causes an outline to appear on the element under the now-invisible mouse pointer
+      // (as the browser hides the pointer on blur), creating some visual distraction.
+      if (updateOnMouseMove && hoveredElement !== undefined) {
+        updateHoveredInstance(hoveredElement);
+      }
+      updateOnMouseMove = false;
     },
     eventOptions
   );
@@ -50,6 +66,7 @@ export const subscribeInstanceHovering = ({
     "mouseout",
     () => {
       mouseOutTimeoutId = setTimeout(() => {
+        updateOnMouseMove = false;
         hoveredElement = undefined;
         $hoveredInstanceSelector.set(undefined);
         $hoveredInstanceOutline.set(undefined);

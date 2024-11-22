@@ -63,6 +63,7 @@ span {
 /**
  * 1. Layout source https://twitter.com/ChallengesCss/status/1471128244720181258
  * 2. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
+ * 3. For visual editors
  */
 html {
   /* 1 */
@@ -72,6 +73,14 @@ html {
   font-family: Arial, Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.2;
+  /* webstudio custom opinionated preset */
+  /* 3. We decided to use preserve in visual builders:
+    Preserves multiple spaces & trailing spaces,
+    Matches what users see while editing to final output (Provides more predictable WYSIWYG experience)
+
+  vs text editors' collapse (default): Normalizes multiple spaces into one, Removes trailing whitespace, Better for clean text content
+  */
+  white-space-collapse: preserve;
 }
 
 /**

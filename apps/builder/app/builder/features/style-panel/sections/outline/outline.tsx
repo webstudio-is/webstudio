@@ -1,4 +1,4 @@
-import { theme, Grid, Box } from "@webstudio-is/design-system";
+import { Grid, theme } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
@@ -28,8 +28,7 @@ export const Section = () => {
     <StyleSection label="Outline" properties={properties}>
       <Grid
         css={{
-          // label gap (input gap expand)
-          gridTemplateColumns: `1fr calc(${theme.spacing[20]} + ${theme.spacing[5]} + ${theme.spacing[12]})`,
+          gridTemplateColumns: `1fr ${theme.spacing[22]}`,
         }}
         gap={2}
       >
@@ -38,18 +37,16 @@ export const Section = () => {
           description={propertyDescriptions.outlineStyle}
           properties={["outlineStyle"]}
         />
-        <Box css={{ justifySelf: "end" }}>
-          <ToggleGroupControl
-            label="Style"
-            properties={["outlineStyle"]}
-            items={[
-              { child: <SmallXIcon />, value: "none" },
-              { child: <DashBorderIcon />, value: "solid" },
-              { child: <DashedBorderIcon />, value: "dashed" },
-              { child: <DottedBorderIcon />, value: "dotted" },
-            ]}
-          />
-        </Box>
+        <ToggleGroupControl
+          label="Style"
+          properties={["outlineStyle"]}
+          items={[
+            { child: <SmallXIcon />, value: "none" },
+            { child: <DashBorderIcon />, value: "solid" },
+            { child: <DashedBorderIcon />, value: "dashed" },
+            { child: <DottedBorderIcon />, value: "dotted" },
+          ]}
+        />
 
         {outlineStyleValue !== "none" && (
           <>

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react-radix",
-  "version": "0.185.0",
+  "version": "0.189.0",
   "description": "Webstudio wrapper for radix library",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -35,7 +35,7 @@
     }
   },
   "scripts": {
-    "build": "rm -rf lib && esbuild src/components.ts src/metas.ts src/props.ts src/hooks.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "vite build --config ../../vite.sdk-components.config.ts",
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts !./src/*.test.{ts,tsx}' -e asChild -e modal -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
     "build:tailwind": "tsx scripts/generate-tailwind-theme.ts && prettier --write src/theme/__generated__",
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
@@ -47,25 +47,25 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "dependencies": {
-    "@radix-ui/react-accordion": "^1.2.0",
-    "@radix-ui/react-checkbox": "^1.1.1",
-    "@radix-ui/react-collapsible": "^1.1.0",
-    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-accordion": "^1.2.1",
+    "@radix-ui/react-checkbox": "^1.1.2",
+    "@radix-ui/react-collapsible": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-label": "^2.1.0",
-    "@radix-ui/react-navigation-menu": "^1.2.0",
-    "@radix-ui/react-popover": "^1.1.1",
-    "@radix-ui/react-radio-group": "^1.2.0",
-    "@radix-ui/react-select": "^2.1.1",
-    "@radix-ui/react-switch": "^1.1.0",
-    "@radix-ui/react-tabs": "^1.1.0",
-    "@radix-ui/react-tooltip": "^1.1.2",
+    "@radix-ui/react-navigation-menu": "^1.2.1",
+    "@radix-ui/react-popover": "^1.1.2",
+    "@radix-ui/react-radio-group": "^1.2.1",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-switch": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.1",
+    "@radix-ui/react-tooltip": "^1.1.4",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.6.1",
+    "@types/node": "^22.9.1",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/css-data": "workspace:*",
@@ -76,6 +76,6 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.5.2"
+    "typescript": "^5.6.3"
   }
 }

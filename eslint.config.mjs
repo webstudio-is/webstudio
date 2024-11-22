@@ -1,7 +1,6 @@
 // @ts-check
 
 import eslint from "@eslint/js";
-import { fixupPluginRules } from "@eslint/compat";
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import unicorn from "eslint-plugin-unicorn";
@@ -22,8 +21,7 @@ export default tseslint.config({
     ...tseslint.configs.recommended,
     {
       plugins: {
-        // @ts-ignore
-        "react-hooks": fixupPluginRules(reactHooks),
+        "react-hooks": /** @type {any} */ (reactHooks),
         unicorn,
       },
     },

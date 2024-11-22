@@ -5,7 +5,7 @@ import {
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
 import { $publishedOrigin } from "./misc";
-import { $selectedPage } from "./pages";
+import { $selectedPage } from "../awareness";
 
 export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(
   new Map()
@@ -13,45 +13,35 @@ export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(
 
 export const $resourceValues = atom(new Map<Resource["id"], unknown>());
 
-export const getPageDefaultSystem = ({
-  origin,
-  path,
-  history,
-}: {
-  origin: string;
-  path?: string;
-  history?: string[];
-}) => {
-  const defaultSystem: System = {
-    params: {},
-    search: {},
-    origin,
-  };
-  if (path) {
-    const tokens = tokenizePathnamePattern(path);
-    // try to match the first item in history to let user
-    // see the page without manually entering params
-    // or selecting them in address bar
-    const matchedParams = history
-      ? matchPathnamePattern(path, history[0])
-      : undefined;
-    for (const token of tokens) {
-      if (token.type === "param") {
-        defaultSystem.params[token.name] =
-          matchedParams?.[token.name] ?? undefined;
-      }
-    }
-  }
-  return defaultSystem;
-};
-
 const $selectedPagePath = computed($selectedPage, (page) => page?.path);
 
 const $selectedPageHistory = computed($selectedPage, (page) => page?.history);
 
 export const $selectedPageDefaultSystem = computed(
   [$publishedOrigin, $selectedPagePath, $selectedPageHistory],
-  (origin, path, history) => getPageDefaultSystem({ origin, path, history })
+  (origin, path, history) => {
+    const defaultSystem: System = {
+      params: {},
+      search: {},
+      origin,
+    };
+    if (path) {
+      const tokens = tokenizePathnamePattern(path);
+      // try to match the first item in history to let user
+      // see the page without manually entering params
+      // or selecting them in address bar
+      const matchedParams = history
+        ? matchPathnamePattern(path, history[0])
+        : undefined;
+      for (const token of tokens) {
+        if (token.type === "param") {
+          defaultSystem.params[token.name] =
+            matchedParams?.[token.name] ?? undefined;
+        }
+      }
+    }
+    return defaultSystem;
+  }
 );
 
 export const mergeSystem = (left: System, right?: System): System => {

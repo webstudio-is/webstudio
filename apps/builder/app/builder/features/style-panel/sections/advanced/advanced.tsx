@@ -1,3 +1,4 @@
+import { lexer } from "css-tree";
 import { colord } from "colord";
 import {
   memo,
@@ -10,21 +11,30 @@ import {
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   Box,
-  Combobox,
+  ComboboxAnchor,
+  ComboboxContent,
+  ComboboxItemDescription,
+  ComboboxListbox,
+  ComboboxListboxItem,
+  ComboboxRoot,
+  ComboboxScrollArea,
   Flex,
+  InputField,
   Label,
+  NestedInputButton,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
   Text,
   theme,
   Tooltip,
+  useCombobox,
 } from "@webstudio-is/design-system";
 import {
+  parseCss,
   properties as propertiesData,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
@@ -40,7 +50,11 @@ import {
 } from "~/builder/shared/collapsible-section";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
-import { deleteProperty, setProperty } from "../../shared/use-style-data";
+import {
+  createBatchUpdate,
+  deleteProperty,
+  setProperty,
+} from "../../shared/use-style-data";
 import {
   $availableVariables,
   $matchingBreakpoints,
@@ -53,6 +67,8 @@ import { PropertyInfo } from "../../property-label";
 import { sections } from "../sections";
 import { ColorPopover } from "../../shared/color-picker";
 import {
+  $instances,
+  $registeredComponentMetas,
   $selectedInstanceSelector,
   $styles,
   $styleSourceSelections,
@@ -108,24 +124,58 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-  if (isFeatureEnabled("cssVars") === false) {
-    return matched;
-  }
-  if (search.trim().startsWith("--")) {
+  const propertyName = search.trim();
+  if (
+    propertyName.startsWith("--") &&
+    lexer.match("<custom-ident>", propertyName).matched
+  ) {
     matched.unshift({
-      value: search.trim(),
-      label: `Create "${search.trim()}"`,
+      value: propertyName,
+      label: `Create "${propertyName}"`,
     });
   }
   return matched;
 };
 
+const getNewPropertyDescription = (item: null | SearchItem) => {
+  let description: string | undefined = `Create CSS variable.`;
+  if (item && item.value in propertyDescriptions) {
+    description = propertyDescriptions[item.value];
+  }
+  return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
+};
+
+const insertStyles = (text: string) => {
+  const parsedStyles = parseCss(`selector{${text}}`);
+  if (parsedStyles.length === 0) {
+    return false;
+  }
+  const batch = createBatchUpdate();
+  for (const { property, value } of parsedStyles) {
+    batch.setProperty(property)(value);
+  }
+  batch.publish({ listed: true });
+  return true;
+};
+
+/**
+ *
+ * Advanced search control supports following interactions
+ *
+ * find property
+ * create custom property
+ * submit css declarations
+ * paste css declarations
+ *
+ */
 const AdvancedSearch = ({
   usedProperties,
   onSelect,
+  onClose,
 }: {
   usedProperties: string[];
   onSelect: (value: StyleProperty) => void;
+  onClose: () => void;
 }) => {
   const availableProperties = useMemo(() => {
     const properties = Object.keys(propertiesData).sort(
@@ -147,39 +197,70 @@ const AdvancedSearch = ({
     label: "",
   });
 
+  const combobox = useCombobox<SearchItem>({
+    getItems: () => availableProperties,
+    itemToString: (item) => item?.label ?? "",
+    value: item,
+    defaultHighlightedIndex: 0,
+    getItemProps: () => ({ text: "sentence" }),
+    match: matchOrSuggestToCreate,
+    onChange: (value) => setItem({ value: value ?? "", label: value ?? "" }),
+    onItemSelect: (item) => onSelect(item.value as StyleProperty),
+  });
+
+  const descriptionItem = combobox.items[combobox.highlightedIndex];
+  const description = getNewPropertyDescription(descriptionItem);
+  const descriptions = combobox.items.map(getNewPropertyDescription);
+
   return (
-    <Combobox
-      autoFocus
-      placeholder="Find or create a property"
-      getItems={() => availableProperties}
-      defaultHighlightedIndex={0}
-      value={item}
-      itemToString={(item) => item?.label ?? ""}
-      getItemProps={() => ({ text: "sentence" })}
-      getDescription={(item) => {
-        let description = `Create CSS variable.`;
-        if (item && item.value in propertyDescriptions) {
-          description =
-            propertyDescriptions[
-              item.value as keyof typeof propertyDescriptions
-            ];
-        }
-        return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
-      }}
-      match={matchOrSuggestToCreate}
-      onChange={(value) => {
-        setItem({ value: value ?? "", label: value ?? "" });
-      }}
-      onItemSelect={(item) => onSelect(item.value as StyleProperty)}
-    />
+    <ComboboxRoot open={combobox.isOpen}>
+      <form
+        {...combobox.getComboboxProps()}
+        onSubmit={(event) => {
+          event.preventDefault();
+          const isInserted = insertStyles(item.value);
+          if (isInserted) {
+            onClose();
+          }
+        }}
+      >
+        <input type="submit" hidden />
+        <ComboboxAnchor>
+          <InputField
+            {...combobox.getInputProps()}
+            autoFocus={true}
+            placeholder="Add styles"
+            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
+          />
+        </ComboboxAnchor>
+        <ComboboxContent>
+          <ComboboxListbox {...combobox.getMenuProps()}>
+            <ComboboxScrollArea>
+              {combobox.items.map((item, index) => (
+                <ComboboxListboxItem
+                  {...combobox.getItemProps({ item, index })}
+                  key={index}
+                >
+                  {item.label}
+                </ComboboxListboxItem>
+              ))}
+            </ComboboxScrollArea>
+            {description && (
+              <ComboboxItemDescription descriptions={descriptions}>
+                {description}
+              </ComboboxItemDescription>
+            )}
+          </ComboboxListbox>
+        </ComboboxContent>
+      </form>
+    </ComboboxRoot>
   );
 };
 
 const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
   const styleDecl = useComputedStyleDecl(property);
   const label = hyphenateProperty(property);
-  const description =
-    propertyDescriptions[property as keyof typeof propertyDescriptions];
+  const description = propertyDescriptions[property];
   const color =
     styleDecl.source.name === "default" ? "code" : styleDecl.source.name;
   const [isOpen, setIsOpen] = useState(false);
@@ -237,13 +318,11 @@ const AdvancedPropertyValue = ({
     <CssValueInputContainer
       inputRef={inputRef}
       variant="chromeless"
-      size="2"
       text="mono"
       fieldSizing="content"
       prefix={
         isColor && (
           <ColorPopover
-            size={1}
             value={styleDecl.usedValue}
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
@@ -298,11 +377,20 @@ const initialProperties = new Set<StyleProperty>([
 const $advancedProperties = computed(
   [
     $selectedInstanceSelector,
+    $instances,
+    $registeredComponentMetas,
     $styleSourceSelections,
     $matchingBreakpoints,
     $styles,
   ],
-  (instanceSelector, styleSourceSelections, matchingBreakpoints, styles) => {
+  (
+    instanceSelector,
+    instances,
+    metas,
+    styleSourceSelections,
+    matchingBreakpoints,
+    styles
+  ) => {
     if (instanceSelector === undefined) {
       return [];
     }
@@ -314,6 +402,8 @@ const $advancedProperties = computed(
           instanceSelector;
     const definedStyles = getDefinedStyles({
       instanceSelector: instanceAndRootSelector,
+      instances,
+      metas,
       matchingBreakpoints,
       styleSourceSelections,
       styles,
@@ -433,6 +523,7 @@ export const Section = () => {
               { listed: true }
             );
           }}
+          onClose={() => setIsAdding(false)}
         />
       )}
       <Box>

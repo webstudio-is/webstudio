@@ -21,7 +21,7 @@
 
 ## Before merging
 
-- [ ] tested locally and on preview environment (preview dev login: 5de6)
+- [ ] tested locally and on preview environment (preview dev login: 0000)
 - [ ] updated [test cases](https://github.com/webstudio-is/webstudio/blob/main/apps/builder/docs/test-cases.md) document
 - [ ] added tests
 - [ ] if any new env variables are added, added them to `.env` file

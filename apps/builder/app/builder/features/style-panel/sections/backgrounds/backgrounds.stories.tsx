@@ -3,12 +3,13 @@ import { styled, theme } from "@webstudio-is/design-system";
 import { registerContainers } from "~/shared/sync";
 import {
   $breakpoints,
+  $instances,
   $selectedBreakpointId,
-  $selectedInstanceSelector,
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { Section } from "./backgrounds";
+import { $awareness } from "~/shared/awareness";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -40,7 +41,15 @@ $styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
-$selectedInstanceSelector.set(["box"]);
+$instances.set(
+  new Map([
+    ["box", { type: "instance", id: "box", component: "Box", children: [] }],
+  ])
+);
+$awareness.set({
+  pageId: "",
+  instanceSelector: ["box"],
+});
 
 const Panel = styled("div", {
   width: theme.spacing[30],

@@ -3,16 +3,18 @@ import { SettingsSection } from "./settings-section";
 import { PropsSectionContainer } from "./props-section/props-section";
 import { VariablesSection } from "./variables-section";
 import {
+  Box,
   Flex,
   Link,
   PanelBanner,
   Text,
   rawTheme,
+  theme,
 } from "@webstudio-is/design-system";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import cmsUpgradeBanner from "./cms-upgrade-banner.svg?url";
+import { $isDesignMode, $userPlanFeatures } from "~/shared/nano-states";
 
 export const SettingsPanelContainer = ({
   selectedInstance,
@@ -20,11 +22,16 @@ export const SettingsPanelContainer = ({
   selectedInstance: Instance;
 }) => {
   const { allowDynamicData } = useStore($userPlanFeatures);
+  const isDesignMode = useStore($isDesignMode);
+
   return (
-    <>
+    <Box css={{ pt: theme.spacing[5] }}>
       <SettingsSection />
+
       <PropsSectionContainer selectedInstance={selectedInstance} />
-      <VariablesSection />
+
+      {isDesignMode && <VariablesSection />}
+
       {allowDynamicData === false && (
         <PanelBanner>
           <img
@@ -50,6 +57,6 @@ export const SettingsPanelContainer = ({
           </Flex>
         </PanelBanner>
       )}
-    </>
+    </Box>
   );
 };

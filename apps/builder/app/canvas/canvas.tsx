@@ -5,10 +5,10 @@ import type { Instances } from "@webstudio-is/sdk";
 import {
   type Params,
   type Components,
-  createElementsTree,
   coreMetas,
   corePropsMetas,
 } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
@@ -32,6 +32,7 @@ import {
   subscribeStyles,
   mountStyles,
   manageDesignModeStyles,
+  manageContentEditModeStyles,
 } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
@@ -41,15 +42,19 @@ import {
   $assets,
   $pages,
   $instances,
-  $selectedPage,
   registerComponentLibrary,
   $registeredComponents,
   subscribeComponentHooks,
   $isPreviewMode,
+  $isDesignMode,
+  $isContentMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { initCopyPaste } from "~/shared/copy-paste";
-import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
+import {
+  initCopyPaste,
+  initCopyPasteForContentEditMode,
+} from "~/shared/copy-paste/init-copy-paste";
+import { setDataCollapsed, subscribeCollapsed } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
@@ -66,6 +71,8 @@ import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
 import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
+import { $selectedPage } from "~/shared/awareness";
+import { createInstanceElement } from "./elements";
 
 registerContainers();
 
@@ -108,18 +115,27 @@ const useElementsTree = (
   }
 
   return useMemo(() => {
-    return createElementsTree({
-      renderer: isPreviewMode ? "preview" : "canvas",
-      imageBaseUrl: params.imageBaseUrl,
-      assetBaseUrl: params.assetBaseUrl,
-      imageLoader,
-      instances,
-      rootInstanceId,
-      Component: isPreviewMode
-        ? WebstudioComponentPreview
-        : WebstudioComponentCanvas,
-      components,
-    });
+    return (
+      <ReactSdkContext.Provider
+        value={{
+          renderer: isPreviewMode ? "preview" : "canvas",
+          imageBaseUrl: params.imageBaseUrl,
+          assetBaseUrl: params.assetBaseUrl,
+          imageLoader,
+          resources: {},
+        }}
+      >
+        {createInstanceElement({
+          instances,
+          instanceId: rootInstanceId,
+          instanceSelector: [rootInstanceId],
+          Component: isPreviewMode
+            ? WebstudioComponentPreview
+            : WebstudioComponentCanvas,
+          components,
+        })}
+      </ReactSdkContext.Provider>
+    );
   }, [
     params,
     instances,
@@ -171,14 +187,49 @@ const DesignMode = () => {
   return null;
 };
 
+const ContentEditMode = () => {
+  const debounceEffect = useDebounceEffect();
+  const ref = useRef<Instances>();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    subscribeScrollNewInstanceIntoView(
+      debounceEffect,
+      ref,
+      abortController.signal
+    );
+    const unsubscribeSelected = subscribeSelected(debounceEffect);
+    return () => {
+      unsubscribeSelected();
+      abortController.abort();
+    };
+  }, [debounceEffect]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    const options = { signal: abortController.signal };
+    manageContentEditModeStyles(options);
+    subscribeInstanceSelection(options);
+    subscribeInstanceHovering(options);
+    subscribeInspectorEdits(options);
+    subscribeFontLoadingDone(options);
+    initCopyPasteForContentEditMode(options);
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+  return null;
+};
+
 type CanvasProps = {
   params: Params;
   imageLoader: ImageLoader;
 };
 
 export const Canvas = ({ params, imageLoader }: CanvasProps) => {
-  useCanvasStore(publish);
-  const isPreviewMode = useStore($isPreviewMode);
+  useCanvasStore();
+  const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
 
   useMount(() => {
     registerComponentLibrary({
@@ -243,7 +294,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
     }
   });
 
-  useEffect(subscribeCollapsedToPubSub, []);
+  useEffect(subscribeCollapsed, []);
 
   useHashLinkSync();
 
@@ -273,7 +324,8 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && isInitialized && <DesignMode />}
+      {isDesignMode && isInitialized && <DesignMode />}
+      {isContentMode && isInitialized && <ContentEditMode />}
     </>
   );
 };

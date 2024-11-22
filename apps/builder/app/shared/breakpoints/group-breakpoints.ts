@@ -1,5 +1,5 @@
 import { compareMedia } from "@webstudio-is/css-engine";
-import { isBaseBreakpoint } from "./is-base-breakpoint";
+import { isBaseBreakpoint } from "../nano-states";
 
 // We group in 3 groups: min-width, base (no min/max), max-width conditions
 export const groupBreakpoints = <

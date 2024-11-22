@@ -22,7 +22,6 @@ import {
   $project,
   $props,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $styleSourceSelections,
   $styles,
 } from "~/shared/nano-states";
@@ -37,6 +36,7 @@ import {
 } from "./api-exceptions";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { fetch } from "~/shared/fetch.client";
+import { $selectedInstance } from "~/shared/awareness";
 
 const unknownArray = z.array(z.unknown());
 
@@ -253,7 +253,7 @@ const restoreComponentsNamespace = (operations: operations.WsOperations) => {
 
 const $jsx = computed(
   [
-    $selectedInstanceSelector,
+    $selectedInstance,
     $instances,
     $props,
     $dataSources,
@@ -262,7 +262,7 @@ const $jsx = computed(
     $styleSourceSelections,
   ],
   (
-    selectedInstanceSelector,
+    instance,
     instances,
     props,
     dataSources,
@@ -270,17 +270,12 @@ const $jsx = computed(
     styles,
     styleSourceSelections
   ) => {
-    if (selectedInstanceSelector === undefined) {
-      return;
-    }
-
-    const [rootInstanceId] = selectedInstanceSelector;
-    const instance = instances.get(rootInstanceId);
     if (instance === undefined) {
       return;
     }
+
     const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
-      rootInstanceId,
+      instance.id,
     ]);
     const scope = createScope();
 
@@ -303,7 +298,7 @@ const $jsx = computed(
       }),
     });
 
-    const treeInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
+    const treeInstanceIds = findTreeInstanceIds(instances, instance.id);
 
     const sheet = createRegularStyleSheet({ name: "ssr" });
     for (const styleDecl of styles.values()) {

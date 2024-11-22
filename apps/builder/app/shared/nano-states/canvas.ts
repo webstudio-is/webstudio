@@ -63,14 +63,6 @@ export const $collaborativeInstanceSelector = atom<
 
 export const $collaborativeInstanceRect = atom<undefined | DOMRect>(undefined);
 
-export const synchronizedCanvasStores = [
-  ["textToolbar", $textToolbar],
-  ["selectedInstanceOutline", $selectedInstanceOutline],
-  ["hoveredInstanceOutline", $hoveredInstanceOutline],
-  ["$collaborativeInstanceSelector", $collaborativeInstanceSelector],
-  ["$collaborativeInstanceRect", $collaborativeInstanceRect],
-] as const;
-
 export const $canvasIframeState = atom<"idle" | "ready">("idle");
 
 export const $detectedFontsWeights = atom<Map<string, Array<FontWeight>>>(

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk",
-  "version": "0.185.0",
+  "version": "0.189.0",
   "description": "Webstudio project data schema",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -11,6 +11,11 @@
       "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js"
+    },
+    "./runtime": {
+      "webstudio": "./src/runtime.ts",
+      "types": "./lib/types/runtime.d.ts",
+      "import": "./lib/runtime.js"
     },
     "./normalize.css": {
       "webstudio": "./src/__generated__/normalize.css.ts",
@@ -28,9 +33,9 @@
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "vitest run",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && prettier --write src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
@@ -39,15 +44,14 @@
     "acorn": "^8.12.1",
     "acorn-walk": "^8.3.4",
     "reserved-identifiers": "^1.0.0",
-    "type-fest": "^4.24.0",
+    "type-fest": "^4.27.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@webstudio-is/css-data": "workspace:*",
-    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
-    "strip-indent": "^4.0.0"
+    "strip-indent": "^4.0.0",
+    "vitest": "^2.1.5"
   }
 }

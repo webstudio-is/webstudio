@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeEach, jest } from "@jest/globals";
+import { describe, expect, test, beforeEach, vi, type Mock } from "vitest";
 
 import { loadResource } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
@@ -6,11 +6,11 @@ import type { ResourceRequest } from "./schema/resources";
 // Mock the fetch function
 
 describe("loadResource", () => {
-  let mockFetch: jest.Mock<typeof fetch>;
+  let mockFetch: Mock<typeof fetch>;
 
   beforeEach(() => {
-    mockFetch = jest.fn();
-    jest.clearAllMocks();
+    mockFetch = vi.fn();
+    vi.clearAllMocks();
   });
 
   test("should successfully fetch a resource and return a JSON response", async () => {

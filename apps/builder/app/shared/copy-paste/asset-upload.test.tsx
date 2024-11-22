@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { $, renderJsx, AssetValue } from "@webstudio-is/sdk/testing";
 import { denormalizeSrcProps } from "./asset-upload";
 import type { StyleDecl, WebstudioFragment } from "@webstudio-is/sdk";

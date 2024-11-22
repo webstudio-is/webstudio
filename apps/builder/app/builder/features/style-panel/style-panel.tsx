@@ -8,53 +8,29 @@ import {
 } from "@webstudio-is/design-system";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import type { HtmlTags } from "html-tags";
-import {
-  setProperty,
-  deleteProperty,
-  createBatchUpdate,
-} from "./shared/use-style-data";
 import { StyleSourcesSection } from "./style-source-section";
 import { $selectedInstanceRenderState } from "~/shared/nano-states";
-import {
-  $selectedInstanceIntanceToTag,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedInstanceIntanceToTag } from "~/shared/nano-states";
 import { sections } from "./sections";
-import { useParentStyle } from "./parent-style";
-import { useStyleInfo, type StyleInfo } from "./shared/style-info";
 import { toValue } from "@webstudio-is/css-engine";
+import { useParentComputedStyleDecl } from "./shared/model";
+import { $selectedInstance } from "~/shared/awareness";
 
 const $selectedInstanceTag = computed(
-  [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
-  (instanceSelector, instanceToTag) => {
-    if (instanceSelector === undefined || instanceToTag === undefined) {
+  [$selectedInstance, $selectedInstanceIntanceToTag],
+  (selectedInstance, instanceToTag) => {
+    if (selectedInstance === undefined || instanceToTag === undefined) {
       return;
     }
-    return instanceToTag.get(instanceSelector[0]);
+    return instanceToTag.get(selectedInstance.id);
   }
 );
 
-const shouldRenderCategory = (
-  category: string,
-  parentStyle: StyleInfo,
-  tag: undefined | HtmlTags
-) => {
-  switch (category) {
-    case "flexChild":
-      return toValue(parentStyle.display?.value).includes("flex");
-    case "listItem":
-      return tag === "ul" || tag === "ol" || tag === "li";
-  }
-  return true;
-};
-
 export const StylePanel = () => {
-  const currentStyle = useStyleInfo();
-
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
-  const selectedInstanceTag = useStore($selectedInstanceTag);
-  const parentStyle = useParentStyle();
+  const tag = useStore($selectedInstanceTag);
+  const display = useParentComputedStyleDecl("display");
+  const displayValue = toValue(display.computedValue);
 
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.
@@ -72,23 +48,26 @@ export const StylePanel = () => {
   const all = [];
 
   for (const [category, { Section }] of sections.entries()) {
-    if (shouldRenderCategory(category, parentStyle, selectedInstanceTag)) {
-      all.push(
-        <Section
-          key={category}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          createBatchUpdate={createBatchUpdate}
-          currentStyle={currentStyle}
-        />
-      );
+    // show flex child UI only when parent is flex or inline-flex
+    if (category === "flexChild" && displayValue.includes("flex") === false) {
+      continue;
     }
+    // allow customizing list item type only for list and list item
+    if (
+      category === "listItem" &&
+      tag !== "ul" &&
+      tag !== "ol" &&
+      tag !== "li"
+    ) {
+      continue;
+    }
+    all.push(<Section key={category} />);
   }
 
   return (
     <>
-      <Box css={{ px: theme.spacing[9], pb: theme.spacing[9] }}>
-        <Text css={{ py: theme.spacing[7] }} variant="titles">
+      <Box css={{ padding: theme.panel.padding }}>
+        <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
           Style Sources
         </Text>
         <StyleSourcesSection />

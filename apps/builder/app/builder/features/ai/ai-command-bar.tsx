@@ -30,7 +30,6 @@ import { useRef, useState, type ComponentPropsWithoutRef } from "react";
 import {
   $collaborativeInstanceSelector,
   $selectedInstanceSelector,
-  $selectedPage,
 } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
@@ -41,6 +40,7 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { AiApiException, RateLimitException } from "./api-exceptions";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
 import { flushSync } from "react-dom";
+import { $selectedPage } from "~/shared/awareness";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -61,7 +61,7 @@ const initialPrompts = [
   "Create a testimonials section on 2 rows. The first row has a heading and subheading, the second row has 3 testimonial cards with an image, headline, description and link.",
 ];
 
-export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
+export const AiCommandBar = () => {
   const [value, setValue] = useState("");
   const [prompts, setPrompts] = useState<string[]>(initialPrompts);
   const isMenuOpen = getSetting("isAiMenuOpen");
@@ -166,10 +166,6 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
       enableCanvasPointerEvents();
     },
   });
-
-  if (isPreviewMode) {
-    return;
-  }
 
   const handleAiRequest = async (prompt: string) => {
     if (abortController.current) {

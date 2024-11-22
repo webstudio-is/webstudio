@@ -7,9 +7,13 @@ import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
-import { registerContainers, useBuilderStore } from "~/shared/sync";
+import {
+  builderClient,
+  registerContainers,
+  useBuilderStore,
+} from "~/shared/sync";
 import { startProjectSync, useSyncServer } from "./shared/sync/sync-server";
-import { SidebarLeft } from "./features/sidebar-left";
+import { SidebarLeft } from "./sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";
@@ -29,6 +33,9 @@ import {
   $publisherHost,
   $imageLoader,
   $textEditingInstanceSelector,
+  $isDesignMode,
+  $isContentMode,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
@@ -44,7 +51,6 @@ import {
   $dataLoadingState,
   $isCloneDialogOpen,
   $loadingState,
-  $userPlanFeatures,
   type SidebarPanelName,
 } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
@@ -57,7 +63,11 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
-import { initCopyPaste } from "~/shared/copy-paste";
+import { CommandPanel } from "./features/command-panel";
+import {
+  initCopyPaste,
+  initCopyPasteForContentEditMode,
+} from "~/shared/copy-paste/init-copy-paste";
 
 registerContainers();
 
@@ -94,12 +104,8 @@ const SidePanel = ({
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
         //overflowY: "auto",
-        bc: theme.colors.backgroundPanel,
+        backgroundColor: theme.colors.backgroundPanel,
         height: "100%",
-        "&:last-of-type": {
-          // Ensure content still has full width, avoid subpixels give layout round numbers
-          boxShadow: `inset 1px 0 0 0 ${theme.colors.borderMain}`,
-        },
         ...css,
       }}
     >
@@ -277,18 +283,27 @@ export const Builder = ({
     $publisher.set({ publish });
   }, [publish]);
 
-  useBuilderStore(publish);
+  useBuilderStore();
   useSyncServer({
     projectId: project.id,
     authPermit,
   });
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
+  const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
+
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
   useSetWindowTitle();
 
   const iframeRefCallback = mergeRefs((element: HTMLIFrameElement | null) => {
+    if (element?.contentWindow) {
+      // added to iframe window and stored in local variable right away to prevent
+      // overriding in emebedded scripts on canvas
+      element.contentWindow.__webstudioSharedSyncEmitter__ =
+        builderClient.emitter;
+    }
     onRefReadCanvas(element);
   }, publishRef);
 
@@ -298,12 +313,25 @@ export const Builder = ({
 
   useEffect(() => {
     const abortController = new AbortController();
-    // We need to initialize this in both canvas and builder,
-    // because the events will fire in either one, depending on where the focus is
-    // @todo we need to forward the events from canvas to builder and avoid importing this
-    // in both places
-    initCopyPaste(abortController);
 
+    if (isDesignMode) {
+      // We need to initialize this in both canvas and builder,
+      // because the events will fire in either one, depending on where the focus is
+      // @todo we need to forward the events from canvas to builder and avoid importing this
+      // in both places
+      initCopyPaste(abortController);
+    }
+
+    if (isContentMode) {
+      initCopyPasteForContentEditMode(abortController);
+    }
+
+    return () => {
+      abortController.abort();
+    };
+  }, [isContentMode, isDesignMode]);
+
+  useEffect(() => {
     const unsubscribe = $loadingState.subscribe((loadingState) => {
       setLoadingState(loadingState);
       // We need to stop updating it once it's ready in case in the future it changes again.
@@ -311,10 +339,7 @@ export const Builder = ({
         unsubscribe();
       }
     });
-    return () => {
-      unsubscribe();
-      abortController.abort();
-    };
+    return unsubscribe;
   }, []);
 
   const canvasUrl = getCanvasUrl();
@@ -346,6 +371,16 @@ export const Builder = ({
   }, []);
 
   /**
+   * Prevent Radix from stealing focus during editing in the style sources
+   * For example, when the user select or create new style source item inside a dialog.
+   */
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    if (event.target instanceof HTMLInputElement) {
+      canvasApi.setInert();
+    }
+  }, []);
+
+  /**
    * Prevent Radix from stealing focus during editing in the settings panel.
    * For example, when the user modifies the text content of an H1 element inside a dialog.
    */
@@ -359,6 +394,7 @@ export const Builder = ({
         style={{ display: "contents" }}
         onPointerDown={handlePointerDown}
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
       >
         <ChromeWrapper
           isPreviewMode={isPreviewMode}
@@ -377,7 +413,6 @@ export const Builder = ({
                     ? false
                     : true
                 }
-                backgroundColor={theme.colors.backgroundTopbar}
               />
             }
           />
@@ -391,7 +426,8 @@ export const Builder = ({
                 />
               )}
             </Workspace>
-            <AiCommandBar isPreviewMode={isPreviewMode} />
+
+            {isDesignMode && <AiCommandBar />}
           </Main>
           <SidePanel gridArea="sidebar">
             <SidebarLeft publish={publish} />
@@ -399,7 +435,19 @@ export const Builder = ({
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
-            css={{ overflow: "hidden" }}
+            css={{
+              overflow: "hidden",
+              // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
+              "&::after": {
+                content: "''",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: 1,
+                background: theme.colors.borderMain,
+              },
+            }}
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
@@ -418,6 +466,7 @@ export const Builder = ({
         </ChromeWrapper>
         <Loading state={loadingState} />
         <BlockingAlerts />
+        <CommandPanel />
       </div>
     </TooltipProvider>
   );

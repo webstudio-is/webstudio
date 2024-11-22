@@ -17,8 +17,8 @@ import {
   generateObjectExpression,
   isLiteralExpression,
   parseObjectExpression,
-  sitemapResourceUrl,
 } from "@webstudio-is/sdk";
+import { sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
 import {
   Box,
   Button,
@@ -40,8 +40,6 @@ import { serverSyncStore } from "~/shared/sync";
 import {
   $dataSources,
   $resources,
-  $selectedInstanceSelector,
-  $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -56,6 +54,11 @@ import {
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
+import {
+  $selectedInstance,
+  $selectedInstanceKey,
+  $selectedPage,
+} from "~/shared/awareness";
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -380,25 +383,23 @@ const $hiddenDataSourceIds = computed(
 
 const $selectedInstanceScope = computed(
   [
-    $selectedInstanceSelector,
+    $selectedInstanceKey,
     $variableValuesByInstanceSelector,
     $dataSources,
     $hiddenDataSourceIds,
   ],
   (
-    instanceSelector,
+    instanceKey,
     variableValuesByInstanceSelector,
     dataSources,
     hiddenDataSourceIds
   ) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
-    if (instanceSelector === undefined) {
+    if (instanceKey === undefined) {
       return { scope, aliases };
     }
-    const values = variableValuesByInstanceSelector.get(
-      JSON.stringify(instanceSelector)
-    );
+    const values = variableValuesByInstanceSelector.get(instanceKey);
     if (values) {
       for (const [dataSourceId, value] of values) {
         if (hiddenDataSourceIds.has(dataSourceId)) {
@@ -581,12 +582,11 @@ export const ResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
-      const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name,
@@ -715,12 +715,11 @@ export const SystemResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
-      const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name,
@@ -826,8 +825,8 @@ export const GraphqlResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
@@ -837,7 +836,6 @@ export const GraphqlResourceForm = forwardRef<
           ["variables", variables],
         ])
       );
-      const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name,

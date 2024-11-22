@@ -25,7 +25,10 @@ import {
 } from "../../shared/use-style-data";
 import type { IntermediateStyleValue } from "../../shared/css-value-input/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
-import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
+import {
+  $availableUnitVariables,
+  useComputedStyleDecl,
+} from "../../shared/model";
 
 const property: StyleProperty = "scale";
 
@@ -97,7 +100,7 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            getOptions={() => $availableVariables.get()}
+            getOptions={() => $availableUnitVariables.get()}
             value={scaleX}
             intermediateValue={intermediateScalingX}
             onChange={(value) => {
@@ -138,7 +141,7 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            getOptions={() => $availableVariables.get()}
+            getOptions={() => $availableUnitVariables.get()}
             value={scaleY}
             intermediateValue={intermediateScalingY}
             onChange={(value) => {
@@ -179,7 +182,7 @@ export const ScalePanelContent = () => {
           <CssValueInput
             styleSource="local"
             property={property}
-            getOptions={() => $availableVariables.get()}
+            getOptions={() => $availableUnitVariables.get()}
             value={scaleZ}
             intermediateValue={intermediateScalingZ}
             onChange={(value) => {
@@ -207,7 +210,7 @@ export const ScalePanelContent = () => {
       </Flex>
       <Flex
         direction="column"
-        css={{ paddingLeft: theme.spacing[5], marginTop: theme.spacing[3] }}
+        css={{ paddingLeft: theme.spacing[3], width: theme.spacing[11] }}
       >
         <Box css={{ rotate: "90deg" }}>
           <BorderRadiusIcon size="12" />

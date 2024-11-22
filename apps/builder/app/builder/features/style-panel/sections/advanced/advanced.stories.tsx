@@ -3,12 +3,13 @@ import { registerContainers } from "~/shared/sync";
 import { Section } from "./advanced";
 import {
   $breakpoints,
+  $instances,
   $selectedBreakpointId,
-  $selectedInstanceSelector,
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { setProperty } from "../../shared/use-style-data";
+import { $awareness } from "~/shared/awareness";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -27,7 +28,15 @@ $styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
-$selectedInstanceSelector.set(["box"]);
+$instances.set(
+  new Map([
+    ["box", { type: "instance", id: "box", component: "Box", children: [] }],
+  ])
+);
+$awareness.set({
+  pageId: "",
+  instanceSelector: ["box"],
+});
 
 setProperty("accentColor")({ type: "keyword", value: "red" });
 setProperty("alignContent")({ type: "keyword", value: "normal" });

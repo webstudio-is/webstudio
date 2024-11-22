@@ -49,8 +49,8 @@ jobs:
       - name: pnpm instal
         run: pnpm install --ignore-scripts
 
-      - name: build prisma client
-        run: pnpm --filter '@webstudio-is/prisma-client...' run build
+      - name: generate prisma
+        run: pnpm --filter=@webstudio-is/prisma-client generate
 
       - name: execute migration
         run: pnpm --filter '@webstudio-is/prisma-client' run migrations migrate
@@ -105,8 +105,8 @@ jobs:
       - name: pnpm instal
         run: pnpm install --ignore-scripts
 
-      - name: build prisma client
-        run: pnpm --filter '@webstudio-is/prisma-client...' run build
+      - name: generate prisma
+        run: pnpm --filter=@webstudio-is/prisma-client generate
 
       - name: get pending
         id: pending

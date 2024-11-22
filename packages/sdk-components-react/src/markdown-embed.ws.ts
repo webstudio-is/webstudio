@@ -67,6 +67,10 @@ export const meta: WsComponentMeta = {
         property: "display",
         value: { type: "keyword", value: "contents" },
       },
+      {
+        property: "whiteSpaceCollapse",
+        value: { type: "keyword", value: "collapse" },
+      },
     ],
   },
   order: 4,

@@ -13,6 +13,8 @@
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
+    white-space: pre-wrap;
+    white-space-collapse: preserve;
   }
   :where(body.w-body) {
     box-sizing: border-box;
@@ -199,6 +201,8 @@
   }
   :where(div.w-html-embed) {
     display: contents;
+    white-space: normal;
+    white-space-collapse: collapse;
   }
   :where(div.w-spinner) {
     box-sizing: border-box;

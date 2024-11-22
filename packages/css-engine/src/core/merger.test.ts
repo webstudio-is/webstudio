@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import type { StyleValue } from "../schema";
 import { mergeStyles } from "./merger";
 import type { StyleMap } from "./rules";
@@ -271,6 +271,18 @@ test("merge text-wrap-mode and text-wrap-style into text-wrap", () => {
   ).toEqual([
     ["white-space", "normal"],
     ["text-wrap", "pretty"],
+  ]);
+  expect(
+    mergeKeywords([
+      ["text-wrap-mode", "wrap"],
+      ["text-wrap-style", "auto"],
+    ])
+  ).toEqual([
+    ["white-space", "normal"],
+    ["text-wrap", "wrap"],
+  ]);
+  expect(mergeKeywords([["text-wrap-style", "auto"]])).toEqual([
+    ["text-wrap", "wrap"],
   ]);
 });
 

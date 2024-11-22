@@ -7,10 +7,8 @@ import {
   completionKeymap,
   type CompletionSource,
 } from "@codemirror/autocomplete";
-import { toValue } from "@webstudio-is/css-engine";
 import { parseCss } from "@webstudio-is/css-data";
 import { css as style } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   CodeEditorBase,
   getMinMaxHeightVars,
@@ -18,14 +16,10 @@ import {
 import { $availableVariables } from "./model";
 
 export const parseCssFragment = (css: string, fallbacks: string[]) => {
-  let parsed = parseCss(`.styles{${css}}`, {
-    customProperties: isFeatureEnabled("cssVars"),
-  });
+  let parsed = parseCss(`.styles{${css}}`);
   if (parsed.length === 0) {
     for (const fallbackProperty of fallbacks) {
-      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`, {
-        customProperties: isFeatureEnabled("cssVars"),
-      });
+      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`);
       parsed = parsed.filter((styleDecl) => styleDecl.value.type !== "invalid");
       if (parsed.length > 0) {
         break;
@@ -51,7 +45,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
   const search = word.text;
   const availableVariables = $availableVariables.get();
   const options = availableVariables.map((varValue) => ({
-    label: toValue(varValue),
+    label: `var(--${varValue.value})`,
     displayLabel: `--${varValue.value}`,
   }));
   const matches = matchSorter(options, search, {

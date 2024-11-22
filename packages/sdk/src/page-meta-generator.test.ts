@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { createScope } from "./scope";
 import { generatePageMeta } from "./page-meta-generator";
 import type { Asset } from "./schema/assets";

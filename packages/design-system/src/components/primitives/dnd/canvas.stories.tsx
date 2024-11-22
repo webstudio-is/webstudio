@@ -35,8 +35,8 @@ const Item = ({
         minHeight: 100,
         margin: 10,
         padding: 10,
-        background: theme.colors.mint5,
-        border: `1px solid ${theme.colors.mint9}`,
+        background: theme.colors.backgroundCanvas,
+        border: `1px solid ${theme.colors.borderContrast}`,
       }}
       style={data.style}
       data-id={data.id}

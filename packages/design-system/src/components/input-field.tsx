@@ -85,16 +85,14 @@ const containerStyle = css({
   border: `solid 1px ${theme.colors.borderMain}`,
   backgroundColor: theme.colors.backgroundControls,
   "&:focus-within": {
-    border: `solid 1px ${theme.colors.borderFocus}`,
+    borderColor: theme.colors.borderFocus,
   },
-
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
   "&:focus-within:has([data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
-
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
     backgroundColor: theme.colors.backgroundInputDisabled,
   },
@@ -114,13 +112,10 @@ const containerStyle = css({
       2: {
         height: theme.spacing[11],
       },
-      3: {
-        height: theme.spacing[12],
-      },
     },
   },
   defaultVariants: {
-    size: 3,
+    size: 2,
   },
 });
 
@@ -210,7 +205,7 @@ type InputFieldProps = {
   containerRef?: Ref<HTMLDivElement>;
   inputRef?: Ref<HTMLInputElement>;
   variant?: "chromeless";
-  size?: "1" | "2" | "3";
+  size?: "1" | "2";
   type?: (typeof inputFieldTypes)[number];
   color?: (typeof inputFieldColors)[number];
   css?: CSS;

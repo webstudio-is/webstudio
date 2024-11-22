@@ -4,7 +4,6 @@ import type { IconComponent } from "@webstudio-is/icons";
 import {
   Box,
   DropdownMenu,
-  DropdownMenuArrow,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuPortal,
@@ -14,6 +13,7 @@ import {
   DropdownMenuTrigger,
   Flex,
   IconButton,
+  MenuCheckedIcon,
   theme,
 } from "@webstudio-is/design-system";
 import { declarationDescriptions } from "@webstudio-is/css-data";
@@ -86,6 +86,7 @@ export const MenuControl = ({
                   text="sentence"
                   key={name}
                   value={name}
+                  icon={<MenuCheckedIcon />}
                   onFocus={() => {
                     setValue(
                       { type: "keyword", value: name },
@@ -120,7 +121,6 @@ export const MenuControl = ({
           <DropdownMenuItem hint>
             <Box css={{ width: theme.spacing[25] }}>{description}</Box>
           </DropdownMenuItem>
-          <DropdownMenuArrow />
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>

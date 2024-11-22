@@ -1,10 +1,12 @@
 #!/usr/bin/env tsx
 
-import { loadEnvFile } from "node:process";
+import { chdir, loadEnvFile } from "node:process";
 import * as commands from "./commands";
 import * as logger from "./logger";
 import * as args from "./args";
 import { UserError } from "./errors";
+
+chdir(args.values.cwd);
 
 const USAGE = `Usage: migrations <command> [--dev]
 
@@ -12,7 +14,6 @@ Commands:
   create-schema <name> — Create a migration based on the changes in schema.prisma
   create-data <name>   — Create a migration that will change data rather than schema
   migrate              — Apply all pending migrations
-  reset                — Clear the database and apply all migrations
   status               — Information about the state of the migrations
   pending-count        — Get the number of pending migrations
   resolve <applied|rolled-back> <name> — Mark a failed migration as applied or rolled-back
@@ -97,11 +98,6 @@ const main = async () => {
     }
 
     await commands.resolve({ migrationName: name, resolveAs: type });
-    return;
-  }
-
-  if (command === "reset") {
-    await commands.reset();
     return;
   }
 

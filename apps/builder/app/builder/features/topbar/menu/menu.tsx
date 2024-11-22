@@ -16,7 +16,6 @@ import {
   menuItemCss,
 } from "@webstudio-is/design-system";
 import {
-  $userPlanFeatures,
   $isCloneDialogOpen,
   $isShareDialogOpen,
   $isPublishDialogOpen,
@@ -26,6 +25,7 @@ import {
   $authPermit,
   $authToken,
   $authTokenPermissions,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
@@ -115,7 +115,7 @@ export const Menu = () => {
           <DropdownMenuItem onSelect={() => emitCommand("redo")}>
             Redo
             <DropdownMenuItemRightSlot>
-              <Kbd value={["shift", "cmd", "z"]} />
+              <Kbd value={["cmd", "shift", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           {/* https://github.com/webstudio-is/webstudio/issues/499
@@ -145,7 +145,7 @@ export const Menu = () => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
+          <DropdownMenuItem onSelect={() => emitCommand("togglePreviewMode")}>
             Preview
             <DropdownMenuItemRightSlot>
               <Kbd value={["cmd", "shift", "p"]} />
@@ -218,6 +218,13 @@ export const Menu = () => {
           </Tooltip>
 
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem onSelect={() => emitCommand("openCommandPanel")}>
+            Search & Commands
+            <DropdownMenuItemRightSlot>
+              <Kbd value={["cmd", "k"]} />
+            </DropdownMenuItemRightSlot>
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             onSelect={() => {

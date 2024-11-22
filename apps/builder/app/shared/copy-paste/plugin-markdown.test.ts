@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import { __testing__ } from "./plugin-markdown";
 import { $breakpoints } from "../nano-states";
 

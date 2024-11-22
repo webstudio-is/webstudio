@@ -24,10 +24,10 @@
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "@vitejs/plugin-react": "^4.3.2",
+    "@vitejs/plugin-react": "^4.3.3",
     "prettier": "3.3.3",
-    "typescript": "5.5.2",
-    "vite": "^5.4.8",
+    "typescript": "5.6.3",
+    "vite": "^5.4.11",
     "webstudio": "workspace:*"
   },
   "dependencies": {
@@ -39,6 +39,6 @@
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "vike": "^0.4.182"
+    "vike": "^0.4.204"
   }
 }

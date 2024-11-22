@@ -7,6 +7,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
   },
   MozOsxFontSmoothing: {
     unitGroups: [],
@@ -15,6 +16,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
   },
   "-webkit-box-orient": {
     unitGroups: [],
@@ -23,6 +25,7 @@ export const properties = {
       type: "keyword",
       value: "horizontal",
     },
+    mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/box-orient",
   },
   "-webkit-line-clamp": {
     unitGroups: ["number"],
@@ -31,6 +34,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/-webkit-line-clamp",
   },
   "-webkit-overflow-scrolling": {
     unitGroups: [],
@@ -39,6 +43,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/-webkit-overflow-scrolling",
   },
   "-webkit-tap-highlight-color": {
     unitGroups: [],
@@ -47,6 +53,8 @@ export const properties = {
       type: "keyword",
       value: "black",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/-webkit-tap-highlight-color",
   },
   accentColor: {
     unitGroups: [],
@@ -55,6 +63,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/accent-color",
   },
   alignContent: {
     unitGroups: [],
@@ -63,6 +72,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/align-content",
   },
   alignItems: {
     unitGroups: [],
@@ -71,6 +81,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/align-items",
   },
   alignSelf: {
     unitGroups: [],
@@ -79,6 +90,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/align-self",
   },
   animationDelay: {
     unitGroups: ["time"],
@@ -88,6 +100,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-delay",
   },
   animationDirection: {
     unitGroups: [],
@@ -96,6 +109,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-direction",
   },
   animationDuration: {
     unitGroups: ["time"],
@@ -105,6 +119,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-duration",
   },
   animationFillMode: {
     unitGroups: [],
@@ -113,6 +128,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-fill-mode",
   },
   animationIterationCount: {
     unitGroups: ["number"],
@@ -122,6 +138,8 @@ export const properties = {
       unit: "number",
       value: 1,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/animation-iteration-count",
   },
   animationName: {
     unitGroups: [],
@@ -130,6 +148,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-name",
   },
   animationPlayState: {
     unitGroups: [],
@@ -138,6 +157,7 @@ export const properties = {
       type: "keyword",
       value: "running",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/animation-play-state",
   },
   animationTimingFunction: {
     unitGroups: [],
@@ -146,6 +166,8 @@ export const properties = {
       type: "keyword",
       value: "ease",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/animation-timing-function",
   },
   appearance: {
     unitGroups: [],
@@ -154,6 +176,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/appearance",
   },
   aspectRatio: {
     unitGroups: ["number"],
@@ -162,6 +185,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/aspect-ratio",
   },
   backdropFilter: {
     unitGroups: [],
@@ -170,6 +194,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/backdrop-filter",
   },
   backfaceVisibility: {
     unitGroups: [],
@@ -178,6 +203,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/backface-visibility",
   },
   backgroundAttachment: {
     unitGroups: [],
@@ -186,6 +212,7 @@ export const properties = {
       type: "keyword",
       value: "scroll",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-attachment",
   },
   backgroundBlendMode: {
     unitGroups: [],
@@ -194,6 +221,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-blend-mode",
   },
   backgroundClip: {
     unitGroups: [],
@@ -202,6 +230,7 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-clip",
   },
   backgroundColor: {
     unitGroups: [],
@@ -210,6 +239,7 @@ export const properties = {
       type: "keyword",
       value: "transparent",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-color",
   },
   backgroundImage: {
     unitGroups: [],
@@ -218,6 +248,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-image",
   },
   backgroundOrigin: {
     unitGroups: [],
@@ -226,6 +257,7 @@ export const properties = {
       type: "keyword",
       value: "padding-box",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-origin",
   },
   backgroundPositionX: {
     unitGroups: ["length", "percentage"],
@@ -235,6 +267,7 @@ export const properties = {
       unit: "%",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-position-x",
   },
   backgroundPositionY: {
     unitGroups: ["length", "percentage"],
@@ -244,6 +277,7 @@ export const properties = {
       unit: "%",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-position-y",
   },
   backgroundRepeat: {
     unitGroups: [],
@@ -252,6 +286,7 @@ export const properties = {
       type: "keyword",
       value: "repeat",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-repeat",
   },
   backgroundSize: {
     unitGroups: ["length", "percentage"],
@@ -260,6 +295,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-size",
   },
   blockSize: {
     unitGroups: ["length", "percentage"],
@@ -268,6 +304,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/block-size",
   },
   borderBlockColor: {
     unitGroups: [],
@@ -276,6 +313,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-block-color",
   },
   borderBlockStyle: {
     unitGroups: [],
@@ -284,6 +322,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-block-style",
   },
   borderBlockWidth: {
     unitGroups: ["length"],
@@ -292,6 +331,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-block-width",
   },
   borderBlockEndColor: {
     unitGroups: [],
@@ -300,6 +340,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-block-end-color",
   },
   borderBlockEndStyle: {
     unitGroups: [],
@@ -308,6 +349,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-block-end-style",
   },
   borderBlockEndWidth: {
     unitGroups: ["length"],
@@ -316,6 +358,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-block-end-width",
   },
   borderBlockStartColor: {
     unitGroups: [],
@@ -324,6 +367,8 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-block-start-color",
   },
   borderBlockStartStyle: {
     unitGroups: [],
@@ -332,6 +377,8 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-block-start-style",
   },
   borderBlockStartWidth: {
     unitGroups: ["length"],
@@ -340,6 +387,8 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-block-start-width",
   },
   borderBottomColor: {
     unitGroups: [],
@@ -348,6 +397,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-color",
   },
   borderBottomLeftRadius: {
     unitGroups: ["length", "percentage"],
@@ -357,6 +407,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-bottom-left-radius",
   },
   borderBottomRightRadius: {
     unitGroups: ["length", "percentage"],
@@ -366,6 +418,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-bottom-right-radius",
   },
   borderBottomStyle: {
     unitGroups: [],
@@ -374,6 +428,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-style",
   },
   borderBottomWidth: {
     unitGroups: ["length"],
@@ -382,6 +437,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-width",
   },
   borderCollapse: {
     unitGroups: [],
@@ -390,6 +446,7 @@ export const properties = {
       type: "keyword",
       value: "separate",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-collapse",
   },
   borderEndEndRadius: {
     unitGroups: ["length", "percentage"],
@@ -399,6 +456,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-end-end-radius",
   },
   borderEndStartRadius: {
     unitGroups: ["length", "percentage"],
@@ -408,6 +466,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-end-start-radius",
   },
   borderImageOutset: {
     unitGroups: ["length", "number"],
@@ -417,6 +477,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-image-outset",
   },
   borderImageRepeat: {
     unitGroups: [],
@@ -425,6 +486,7 @@ export const properties = {
       type: "keyword",
       value: "stretch",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-image-repeat",
   },
   borderImageSlice: {
     unitGroups: ["number", "percentage"],
@@ -434,6 +496,7 @@ export const properties = {
       unit: "%",
       value: 100,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-image-slice",
   },
   borderImageSource: {
     unitGroups: [],
@@ -442,6 +505,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-image-source",
   },
   borderImageWidth: {
     unitGroups: ["length", "percentage", "number"],
@@ -451,6 +515,7 @@ export const properties = {
       unit: "number",
       value: 1,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-image-width",
   },
   borderInlineColor: {
     unitGroups: [],
@@ -459,6 +524,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-inline-color",
   },
   borderInlineStyle: {
     unitGroups: [],
@@ -467,6 +533,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-inline-style",
   },
   borderInlineWidth: {
     unitGroups: ["length"],
@@ -475,6 +542,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-inline-width",
   },
   borderInlineEndColor: {
     unitGroups: [],
@@ -483,6 +551,8 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-inline-end-color",
   },
   borderInlineEndStyle: {
     unitGroups: [],
@@ -491,6 +561,8 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-inline-end-style",
   },
   borderInlineEndWidth: {
     unitGroups: ["length"],
@@ -499,6 +571,8 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-inline-end-width",
   },
   borderInlineStartColor: {
     unitGroups: [],
@@ -507,6 +581,8 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-inline-start-color",
   },
   borderInlineStartStyle: {
     unitGroups: [],
@@ -515,6 +591,8 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-inline-start-style",
   },
   borderInlineStartWidth: {
     unitGroups: ["length"],
@@ -523,6 +601,8 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-inline-start-width",
   },
   borderLeftColor: {
     unitGroups: [],
@@ -531,6 +611,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-left-color",
   },
   borderLeftStyle: {
     unitGroups: [],
@@ -539,6 +620,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-left-style",
   },
   borderLeftWidth: {
     unitGroups: ["length"],
@@ -547,6 +629,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-left-width",
   },
   borderRightColor: {
     unitGroups: [],
@@ -555,6 +638,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-right-color",
   },
   borderRightStyle: {
     unitGroups: [],
@@ -563,6 +647,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-right-style",
   },
   borderRightWidth: {
     unitGroups: ["length"],
@@ -571,6 +656,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-right-width",
   },
   borderSpacing: {
     unitGroups: ["length"],
@@ -580,6 +666,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-spacing",
   },
   borderStartEndRadius: {
     unitGroups: ["length", "percentage"],
@@ -589,6 +676,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-start-end-radius",
   },
   borderStartStartRadius: {
     unitGroups: ["length", "percentage"],
@@ -598,6 +687,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-start-start-radius",
   },
   borderTopColor: {
     unitGroups: [],
@@ -606,6 +697,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-top-color",
   },
   borderTopLeftRadius: {
     unitGroups: ["length", "percentage"],
@@ -615,6 +707,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-top-left-radius",
   },
   borderTopRightRadius: {
     unitGroups: ["length", "percentage"],
@@ -624,6 +717,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/border-top-right-radius",
   },
   borderTopStyle: {
     unitGroups: [],
@@ -632,6 +727,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-top-style",
   },
   borderTopWidth: {
     unitGroups: ["length"],
@@ -640,6 +736,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/border-top-width",
   },
   bottom: {
     unitGroups: ["length", "percentage"],
@@ -648,6 +745,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/bottom",
   },
   boxDecorationBreak: {
     unitGroups: [],
@@ -656,6 +754,7 @@ export const properties = {
       type: "keyword",
       value: "slice",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/box-decoration-break",
   },
   boxShadow: {
     unitGroups: ["length"],
@@ -664,6 +763,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/box-shadow",
   },
   boxSizing: {
     unitGroups: [],
@@ -672,6 +772,7 @@ export const properties = {
       type: "keyword",
       value: "content-box",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/box-sizing",
   },
   breakAfter: {
     unitGroups: [],
@@ -680,6 +781,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/break-after",
   },
   breakBefore: {
     unitGroups: [],
@@ -688,6 +790,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/break-before",
   },
   breakInside: {
     unitGroups: [],
@@ -696,6 +799,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/break-inside",
   },
   captionSide: {
     unitGroups: [],
@@ -704,6 +808,7 @@ export const properties = {
       type: "keyword",
       value: "top",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/caption-side",
   },
   caretColor: {
     unitGroups: [],
@@ -712,6 +817,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/caret-color",
   },
   clear: {
     unitGroups: [],
@@ -720,6 +826,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/clear",
   },
   clip: {
     unitGroups: [],
@@ -728,6 +835,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/clip",
   },
   clipPath: {
     unitGroups: [],
@@ -736,6 +844,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/clip-path",
   },
   color: {
     unitGroups: [],
@@ -744,6 +853,7 @@ export const properties = {
       type: "keyword",
       value: "black",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/color",
   },
   colorScheme: {
     unitGroups: [],
@@ -752,6 +862,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/color-scheme",
   },
   columnCount: {
     unitGroups: ["number"],
@@ -760,6 +871,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-count",
   },
   columnFill: {
     unitGroups: [],
@@ -768,6 +880,7 @@ export const properties = {
       type: "keyword",
       value: "balance",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-fill",
   },
   columnGap: {
     unitGroups: ["length", "percentage"],
@@ -777,6 +890,7 @@ export const properties = {
       value: 0,
       unit: "px",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-gap",
   },
   columnRuleColor: {
     unitGroups: [],
@@ -785,6 +899,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-rule-color",
   },
   columnRuleStyle: {
     unitGroups: [],
@@ -793,6 +908,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-rule-style",
   },
   columnRuleWidth: {
     unitGroups: ["length"],
@@ -801,6 +917,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-rule-width",
   },
   columnSpan: {
     unitGroups: [],
@@ -809,6 +926,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-span",
   },
   columnWidth: {
     unitGroups: ["length"],
@@ -817,6 +935,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-width",
   },
   contain: {
     unitGroups: [],
@@ -825,6 +944,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/contain",
   },
   containIntrinsicBlockSize: {
     unitGroups: ["length"],
@@ -833,6 +953,8 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-block-size",
   },
   containIntrinsicHeight: {
     unitGroups: ["length"],
@@ -841,6 +963,8 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-height",
   },
   containIntrinsicInlineSize: {
     unitGroups: ["length"],
@@ -849,6 +973,8 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-inline-size",
   },
   containIntrinsicWidth: {
     unitGroups: ["length"],
@@ -857,6 +983,8 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/contain-intrinsic-width",
   },
   containerName: {
     unitGroups: [],
@@ -865,6 +993,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/container-name",
   },
   containerType: {
     unitGroups: [],
@@ -873,6 +1002,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/container-type",
   },
   content: {
     unitGroups: [],
@@ -881,6 +1011,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/content",
   },
   contentVisibility: {
     unitGroups: [],
@@ -889,6 +1020,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/content-visibility",
   },
   counterIncrement: {
     unitGroups: ["number"],
@@ -897,6 +1029,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/counter-increment",
   },
   counterReset: {
     unitGroups: ["number"],
@@ -905,6 +1038,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/counter-reset",
   },
   counterSet: {
     unitGroups: ["number"],
@@ -913,6 +1047,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/counter-set",
   },
   cursor: {
     unitGroups: [],
@@ -921,6 +1056,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/cursor",
   },
   direction: {
     unitGroups: [],
@@ -929,6 +1065,7 @@ export const properties = {
       type: "keyword",
       value: "ltr",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/direction",
   },
   display: {
     unitGroups: [],
@@ -937,6 +1074,7 @@ export const properties = {
       type: "keyword",
       value: "inline",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/display",
   },
   emptyCells: {
     unitGroups: [],
@@ -945,6 +1083,7 @@ export const properties = {
       type: "keyword",
       value: "show",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/empty-cells",
   },
   fieldSizing: {
     unitGroups: [],
@@ -953,6 +1092,7 @@ export const properties = {
       type: "keyword",
       value: "fixed",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/field-sizing",
   },
   filter: {
     unitGroups: [],
@@ -961,6 +1101,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/filter",
   },
   flexBasis: {
     unitGroups: ["length", "percentage"],
@@ -969,6 +1110,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/flex-basis",
   },
   flexDirection: {
     unitGroups: [],
@@ -977,6 +1119,7 @@ export const properties = {
       type: "keyword",
       value: "row",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/flex-direction",
   },
   flexGrow: {
     unitGroups: ["number"],
@@ -986,6 +1129,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/flex-grow",
   },
   flexShrink: {
     unitGroups: ["number"],
@@ -995,6 +1139,7 @@ export const properties = {
       unit: "number",
       value: 1,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/flex-shrink",
   },
   flexWrap: {
     unitGroups: [],
@@ -1003,6 +1148,7 @@ export const properties = {
       type: "keyword",
       value: "nowrap",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/flex-wrap",
   },
   float: {
     unitGroups: [],
@@ -1011,6 +1157,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/float",
   },
   fontFamily: {
     unitGroups: [],
@@ -1019,6 +1166,7 @@ export const properties = {
       type: "fontFamily",
       value: ["serif"],
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-family",
   },
   fontFeatureSettings: {
     unitGroups: ["number"],
@@ -1027,6 +1175,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-feature-settings",
   },
   fontKerning: {
     unitGroups: [],
@@ -1035,6 +1184,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-kerning",
   },
   fontLanguageOverride: {
     unitGroups: [],
@@ -1043,6 +1193,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-language-override",
   },
   fontOpticalSizing: {
     unitGroups: [],
@@ -1051,6 +1202,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-optical-sizing",
   },
   fontVariationSettings: {
     unitGroups: ["number"],
@@ -1059,6 +1211,8 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/font-variation-settings",
   },
   fontSize: {
     unitGroups: ["length", "percentage"],
@@ -1067,6 +1221,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-size",
   },
   fontSizeAdjust: {
     unitGroups: ["number"],
@@ -1075,6 +1230,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-size-adjust",
   },
   fontStretch: {
     unitGroups: ["percentage"],
@@ -1083,6 +1239,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-stretch",
   },
   fontStyle: {
     unitGroups: ["angle"],
@@ -1091,6 +1248,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-style",
   },
   fontSynthesisSmallCaps: {
     unitGroups: [],
@@ -1099,6 +1257,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/font-synthesis-small-caps",
   },
   fontSynthesisStyle: {
     unitGroups: [],
@@ -1107,6 +1267,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-synthesis-style",
   },
   fontSynthesisWeight: {
     unitGroups: [],
@@ -1115,6 +1276,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-synthesis-weight",
   },
   fontVariantAlternates: {
     unitGroups: [],
@@ -1123,6 +1285,8 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/font-variant-alternates",
   },
   fontVariantCaps: {
     unitGroups: [],
@@ -1131,6 +1295,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-variant-caps",
   },
   fontVariantEastAsian: {
     unitGroups: [],
@@ -1139,6 +1304,8 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/font-variant-east-asian",
   },
   fontVariantLigatures: {
     unitGroups: [],
@@ -1147,6 +1314,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-variant-ligatures",
   },
   fontVariantNumeric: {
     unitGroups: [],
@@ -1155,6 +1323,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-variant-numeric",
   },
   fontVariantPosition: {
     unitGroups: [],
@@ -1163,6 +1332,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-variant-position",
   },
   fontWeight: {
     unitGroups: ["number"],
@@ -1171,6 +1341,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/font-weight",
   },
   gridAutoColumns: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1179,6 +1350,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-auto-columns",
   },
   gridAutoFlow: {
     unitGroups: [],
@@ -1187,6 +1359,7 @@ export const properties = {
       type: "keyword",
       value: "row",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-auto-flow",
   },
   gridAutoRows: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1195,6 +1368,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-auto-rows",
   },
   gridColumnEnd: {
     unitGroups: ["number"],
@@ -1203,6 +1377,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-column-end",
   },
   gridColumnStart: {
     unitGroups: ["number"],
@@ -1211,6 +1386,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-column-start",
   },
   gridRowEnd: {
     unitGroups: ["number"],
@@ -1219,6 +1395,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-row-end",
   },
   gridRowStart: {
     unitGroups: ["number"],
@@ -1227,6 +1404,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-row-start",
   },
   gridTemplateAreas: {
     unitGroups: [],
@@ -1235,6 +1413,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-template-areas",
   },
   gridTemplateColumns: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1243,6 +1422,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-template-columns",
   },
   gridTemplateRows: {
     unitGroups: ["length", "percentage", "flex"],
@@ -1251,6 +1431,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/grid-template-rows",
   },
   hangingPunctuation: {
     unitGroups: [],
@@ -1259,6 +1440,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/hanging-punctuation",
   },
   height: {
     unitGroups: ["length", "percentage"],
@@ -1267,6 +1449,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/height",
   },
   hyphenateCharacter: {
     unitGroups: [],
@@ -1275,6 +1458,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/hyphenate-character",
   },
   hyphenateLimitChars: {
     unitGroups: ["number"],
@@ -1283,6 +1467,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/hyphenate-limit-chars",
   },
   hyphens: {
     unitGroups: [],
@@ -1291,6 +1476,7 @@ export const properties = {
       type: "keyword",
       value: "manual",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/hyphens",
   },
   imageOrientation: {
     unitGroups: ["angle"],
@@ -1299,6 +1485,7 @@ export const properties = {
       type: "keyword",
       value: "from-image",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/image-orientation",
   },
   imageRendering: {
     unitGroups: [],
@@ -1307,6 +1494,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/image-rendering",
   },
   inlineSize: {
     unitGroups: ["length", "percentage"],
@@ -1315,6 +1503,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/inline-size",
   },
   insetBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1323,6 +1512,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/inset-block-end",
   },
   insetBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -1331,6 +1521,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/inset-block-start",
   },
   insetInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -1339,6 +1530,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/inset-inline-end",
   },
   insetInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -1347,6 +1539,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/inset-inline-start",
   },
   isolation: {
     unitGroups: [],
@@ -1355,6 +1548,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/isolation",
   },
   justifyContent: {
     unitGroups: [],
@@ -1363,6 +1557,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/justify-content",
   },
   justifyItems: {
     unitGroups: [],
@@ -1371,6 +1566,7 @@ export const properties = {
       type: "keyword",
       value: "legacy",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/justify-items",
   },
   justifySelf: {
     unitGroups: [],
@@ -1379,6 +1575,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/justify-self",
   },
   left: {
     unitGroups: ["length", "percentage"],
@@ -1387,6 +1584,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/left",
   },
   letterSpacing: {
     unitGroups: ["length"],
@@ -1395,6 +1593,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/letter-spacing",
   },
   lineBreak: {
     unitGroups: [],
@@ -1403,6 +1602,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/line-break",
   },
   lineHeight: {
     unitGroups: ["number", "length", "percentage"],
@@ -1411,6 +1611,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/line-height",
   },
   listStyleImage: {
     unitGroups: [],
@@ -1419,6 +1620,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/list-style-image",
   },
   listStylePosition: {
     unitGroups: [],
@@ -1427,6 +1629,7 @@ export const properties = {
       type: "keyword",
       value: "outside",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/list-style-position",
   },
   listStyleType: {
     unitGroups: [],
@@ -1435,6 +1638,7 @@ export const properties = {
       type: "keyword",
       value: "disc",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/list-style-type",
   },
   marginBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1444,6 +1648,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-block-end",
   },
   marginBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -1453,6 +1658,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-block-start",
   },
   marginBottom: {
     unitGroups: ["length", "percentage"],
@@ -1462,6 +1668,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-bottom",
   },
   marginInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -1471,6 +1678,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-inline-end",
   },
   marginInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -1480,6 +1688,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-inline-start",
   },
   marginLeft: {
     unitGroups: ["length", "percentage"],
@@ -1489,6 +1698,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-left",
   },
   marginRight: {
     unitGroups: ["length", "percentage"],
@@ -1498,6 +1708,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-right",
   },
   marginTop: {
     unitGroups: ["length", "percentage"],
@@ -1507,6 +1718,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/margin-top",
   },
   maskBorderMode: {
     unitGroups: [],
@@ -1515,6 +1727,7 @@ export const properties = {
       type: "keyword",
       value: "alpha",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-border-mode",
   },
   maskBorderOutset: {
     unitGroups: ["length", "number"],
@@ -1524,6 +1737,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-border-outset",
   },
   maskBorderRepeat: {
     unitGroups: [],
@@ -1532,6 +1746,7 @@ export const properties = {
       type: "keyword",
       value: "stretch",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-border-repeat",
   },
   maskBorderSlice: {
     unitGroups: ["number", "percentage"],
@@ -1541,6 +1756,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-border-slice",
   },
   maskBorderSource: {
     unitGroups: [],
@@ -1549,6 +1765,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-border-source",
   },
   maskBorderWidth: {
     unitGroups: ["length", "percentage", "number"],
@@ -1557,6 +1774,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-border-width",
   },
   maskClip: {
     unitGroups: [],
@@ -1565,6 +1783,7 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-clip",
   },
   maskComposite: {
     unitGroups: [],
@@ -1573,6 +1792,7 @@ export const properties = {
       type: "keyword",
       value: "add",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-composite",
   },
   maskImage: {
     unitGroups: [],
@@ -1581,6 +1801,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-image",
   },
   maskMode: {
     unitGroups: [],
@@ -1589,6 +1810,7 @@ export const properties = {
       type: "keyword",
       value: "match-source",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-mode",
   },
   maskOrigin: {
     unitGroups: [],
@@ -1597,6 +1819,7 @@ export const properties = {
       type: "keyword",
       value: "border-box",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-origin",
   },
   maskPosition: {
     unitGroups: ["length", "percentage"],
@@ -1616,6 +1839,7 @@ export const properties = {
         },
       ],
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-position",
   },
   maskRepeat: {
     unitGroups: [],
@@ -1624,6 +1848,7 @@ export const properties = {
       type: "keyword",
       value: "repeat",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-repeat",
   },
   maskSize: {
     unitGroups: ["length", "percentage"],
@@ -1632,6 +1857,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-size",
   },
   maskType: {
     unitGroups: [],
@@ -1640,6 +1866,7 @@ export const properties = {
       type: "keyword",
       value: "luminance",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mask-type",
   },
   mathDepth: {
     unitGroups: ["number"],
@@ -1649,6 +1876,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/math-depth",
   },
   mathShift: {
     unitGroups: [],
@@ -1657,6 +1885,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/math-shift",
   },
   mathStyle: {
     unitGroups: [],
@@ -1665,6 +1894,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/math-style",
   },
   maxBlockSize: {
     unitGroups: ["length", "percentage"],
@@ -1673,6 +1903,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/max-block-size",
   },
   maxHeight: {
     unitGroups: ["length", "percentage"],
@@ -1681,6 +1912,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/max-height",
   },
   maxInlineSize: {
     unitGroups: ["length", "percentage"],
@@ -1689,6 +1921,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/max-inline-size",
   },
   maxWidth: {
     unitGroups: ["length", "percentage"],
@@ -1697,6 +1930,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/max-width",
   },
   minBlockSize: {
     unitGroups: ["length", "percentage"],
@@ -1706,6 +1940,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/min-block-size",
   },
   minHeight: {
     unitGroups: ["length", "percentage"],
@@ -1714,6 +1949,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/min-height",
   },
   minInlineSize: {
     unitGroups: ["length", "percentage"],
@@ -1723,6 +1959,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/min-inline-size",
   },
   minWidth: {
     unitGroups: ["length", "percentage"],
@@ -1731,6 +1968,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/min-width",
   },
   mixBlendMode: {
     unitGroups: [],
@@ -1739,6 +1977,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/mix-blend-mode",
   },
   objectFit: {
     unitGroups: [],
@@ -1747,6 +1986,7 @@ export const properties = {
       type: "keyword",
       value: "fill",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/object-fit",
   },
   objectPosition: {
     unitGroups: ["length", "percentage"],
@@ -1766,6 +2006,7 @@ export const properties = {
         },
       ],
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/object-position",
   },
   offsetAnchor: {
     unitGroups: ["length", "percentage"],
@@ -1783,6 +2024,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/offset-distance",
   },
   offsetPath: {
     unitGroups: [],
@@ -1791,6 +2033,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/offset-path",
   },
   offsetPosition: {
     unitGroups: ["length", "percentage"],
@@ -1807,6 +2050,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/offset-rotate",
   },
   opacity: {
     unitGroups: ["number", "percentage"],
@@ -1816,6 +2060,7 @@ export const properties = {
       unit: "number",
       value: 1,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/opacity",
   },
   order: {
     unitGroups: ["number"],
@@ -1825,6 +2070,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/order",
   },
   orphans: {
     unitGroups: ["number"],
@@ -1834,6 +2080,7 @@ export const properties = {
       unit: "number",
       value: 2,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/orphans",
   },
   outlineColor: {
     unitGroups: [],
@@ -1842,6 +2089,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/outline-color",
   },
   outlineOffset: {
     unitGroups: ["length"],
@@ -1851,6 +2099,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/outline-offset",
   },
   outlineStyle: {
     unitGroups: [],
@@ -1859,6 +2108,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/outline-style",
   },
   outlineWidth: {
     unitGroups: ["length"],
@@ -1867,6 +2117,7 @@ export const properties = {
       type: "keyword",
       value: "medium",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/outline-width",
   },
   overflowWrap: {
     unitGroups: [],
@@ -1875,6 +2126,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overflow-wrap",
   },
   overflowX: {
     unitGroups: [],
@@ -1883,6 +2135,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overflow-x",
   },
   overflowY: {
     unitGroups: [],
@@ -1891,6 +2144,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overflow-y",
   },
   overscrollBehavior: {
     unitGroups: [],
@@ -1899,6 +2153,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior",
   },
   overscrollBehaviorBlock: {
     unitGroups: [],
@@ -1907,6 +2162,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-block",
   },
   overscrollBehaviorInline: {
     unitGroups: [],
@@ -1915,6 +2172,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-inline",
   },
   overscrollBehaviorX: {
     unitGroups: [],
@@ -1923,6 +2182,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-x",
   },
   overscrollBehaviorY: {
     unitGroups: [],
@@ -1931,6 +2191,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-y",
   },
   paddingBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -1940,6 +2201,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-block-end",
   },
   paddingBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -1949,6 +2211,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-block-start",
   },
   paddingBottom: {
     unitGroups: ["length", "percentage"],
@@ -1958,6 +2221,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-bottom",
   },
   paddingInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -1967,6 +2231,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-inline-end",
   },
   paddingInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -1976,6 +2241,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-inline-start",
   },
   paddingLeft: {
     unitGroups: ["length", "percentage"],
@@ -1985,6 +2251,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-left",
   },
   paddingRight: {
     unitGroups: ["length", "percentage"],
@@ -1994,6 +2261,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-right",
   },
   paddingTop: {
     unitGroups: ["length", "percentage"],
@@ -2003,6 +2271,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/padding-top",
   },
   page: {
     unitGroups: [],
@@ -2011,6 +2280,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/page",
   },
   pageBreakAfter: {
     unitGroups: [],
@@ -2019,6 +2289,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/page-break-after",
   },
   pageBreakBefore: {
     unitGroups: [],
@@ -2027,6 +2298,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/page-break-before",
   },
   pageBreakInside: {
     unitGroups: [],
@@ -2035,6 +2307,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/page-break-inside",
   },
   paintOrder: {
     unitGroups: [],
@@ -2043,6 +2316,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/paint-order",
   },
   perspective: {
     unitGroups: ["length"],
@@ -2051,6 +2325,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/perspective",
   },
   perspectiveOrigin: {
     unitGroups: ["length", "percentage"],
@@ -2070,6 +2345,7 @@ export const properties = {
         },
       ],
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/perspective-origin",
   },
   pointerEvents: {
     unitGroups: [],
@@ -2078,6 +2354,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/pointer-events",
   },
   position: {
     unitGroups: [],
@@ -2086,6 +2363,7 @@ export const properties = {
       type: "keyword",
       value: "static",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/position",
   },
   printColorAdjust: {
     unitGroups: [],
@@ -2094,6 +2372,7 @@ export const properties = {
       type: "keyword",
       value: "economy",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/print-color-adjust",
   },
   quotes: {
     unitGroups: [],
@@ -2102,6 +2381,7 @@ export const properties = {
       type: "keyword",
       value: "dependsOnUserAgent",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/quotes",
   },
   resize: {
     unitGroups: [],
@@ -2110,6 +2390,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/resize",
   },
   right: {
     unitGroups: ["length", "percentage"],
@@ -2118,6 +2399,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/right",
   },
   rotate: {
     unitGroups: ["angle", "number"],
@@ -2126,6 +2408,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/rotate",
   },
   rowGap: {
     unitGroups: ["length", "percentage"],
@@ -2135,6 +2418,7 @@ export const properties = {
       value: 0,
       unit: "px",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/row-gap",
   },
   scale: {
     unitGroups: ["number"],
@@ -2143,6 +2427,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scale",
   },
   scrollbarColor: {
     unitGroups: [],
@@ -2151,6 +2436,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scrollbar-color",
   },
   scrollbarGutter: {
     unitGroups: [],
@@ -2159,6 +2445,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scrollbar-gutter",
   },
   scrollbarWidth: {
     unitGroups: [],
@@ -2167,6 +2454,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scrollbar-width",
   },
   scrollBehavior: {
     unitGroups: [],
@@ -2175,6 +2463,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-behavior",
   },
   scrollMarginBlockStart: {
     unitGroups: ["length"],
@@ -2184,6 +2473,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-start",
   },
   scrollMarginBlockEnd: {
     unitGroups: ["length"],
@@ -2193,6 +2484,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-end",
   },
   scrollMarginBottom: {
     unitGroups: ["length"],
@@ -2202,6 +2495,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-bottom",
   },
   scrollMarginInlineStart: {
     unitGroups: ["length"],
@@ -2211,6 +2505,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-start",
   },
   scrollMarginInlineEnd: {
     unitGroups: ["length"],
@@ -2220,6 +2516,8 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-end",
   },
   scrollMarginLeft: {
     unitGroups: ["length"],
@@ -2229,6 +2527,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-left",
   },
   scrollMarginRight: {
     unitGroups: ["length"],
@@ -2238,6 +2537,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-right",
   },
   scrollMarginTop: {
     unitGroups: ["length"],
@@ -2247,6 +2547,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-top",
   },
   scrollPaddingBlockStart: {
     unitGroups: ["length", "percentage"],
@@ -2255,6 +2556,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-start",
   },
   scrollPaddingBlockEnd: {
     unitGroups: ["length", "percentage"],
@@ -2263,6 +2566,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-end",
   },
   scrollPaddingBottom: {
     unitGroups: ["length", "percentage"],
@@ -2271,6 +2576,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-bottom",
   },
   scrollPaddingInlineStart: {
     unitGroups: ["length", "percentage"],
@@ -2279,6 +2585,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-start",
   },
   scrollPaddingInlineEnd: {
     unitGroups: ["length", "percentage"],
@@ -2287,6 +2595,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-end",
   },
   scrollPaddingLeft: {
     unitGroups: ["length", "percentage"],
@@ -2295,6 +2605,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-left",
   },
   scrollPaddingRight: {
     unitGroups: ["length", "percentage"],
@@ -2303,6 +2614,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-right",
   },
   scrollPaddingTop: {
     unitGroups: ["length", "percentage"],
@@ -2311,6 +2623,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-top",
   },
   scrollSnapAlign: {
     unitGroups: [],
@@ -2319,6 +2632,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-align",
   },
   scrollSnapStop: {
     unitGroups: [],
@@ -2327,6 +2641,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-stop",
   },
   scrollSnapType: {
     unitGroups: [],
@@ -2335,6 +2650,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type",
   },
   shapeImageThreshold: {
     unitGroups: ["number", "percentage"],
@@ -2344,6 +2660,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/shape-image-threshold",
   },
   shapeMargin: {
     unitGroups: ["length", "percentage"],
@@ -2353,6 +2670,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/shape-margin",
   },
   shapeOutside: {
     unitGroups: [],
@@ -2361,6 +2679,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/shape-outside",
   },
   tabSize: {
     unitGroups: ["number", "length"],
@@ -2370,6 +2689,7 @@ export const properties = {
       unit: "number",
       value: 8,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/tab-size",
   },
   tableLayout: {
     unitGroups: [],
@@ -2378,6 +2698,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/table-layout",
   },
   textAlign: {
     unitGroups: [],
@@ -2386,6 +2707,7 @@ export const properties = {
       type: "keyword",
       value: "start",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-align",
   },
   textAlignLast: {
     unitGroups: [],
@@ -2394,6 +2716,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-align-last",
   },
   textCombineUpright: {
     unitGroups: ["number"],
@@ -2402,6 +2725,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-combine-upright",
   },
   textDecorationColor: {
     unitGroups: [],
@@ -2410,6 +2734,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-color",
   },
   textDecorationLine: {
     unitGroups: [],
@@ -2418,6 +2743,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-line",
   },
   textDecorationSkipInk: {
     unitGroups: [],
@@ -2426,6 +2752,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip-ink",
   },
   textDecorationStyle: {
     unitGroups: [],
@@ -2434,6 +2762,7 @@ export const properties = {
       type: "keyword",
       value: "solid",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-style",
   },
   textDecorationThickness: {
     unitGroups: ["length", "percentage"],
@@ -2442,6 +2771,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/text-decoration-thickness",
   },
   textEmphasisColor: {
     unitGroups: [],
@@ -2450,6 +2781,7 @@ export const properties = {
       type: "keyword",
       value: "currentColor",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis-color",
   },
   textEmphasisPosition: {
     unitGroups: [],
@@ -2467,6 +2799,7 @@ export const properties = {
         },
       ],
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis-position",
   },
   textEmphasisStyle: {
     unitGroups: [],
@@ -2475,6 +2808,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis-style",
   },
   textIndent: {
     unitGroups: ["length", "percentage"],
@@ -2484,6 +2818,7 @@ export const properties = {
       unit: "px",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-indent",
   },
   textJustify: {
     unitGroups: [],
@@ -2492,6 +2827,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-justify",
   },
   textOrientation: {
     unitGroups: [],
@@ -2500,6 +2836,7 @@ export const properties = {
       type: "keyword",
       value: "mixed",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-orientation",
   },
   textOverflow: {
     unitGroups: [],
@@ -2508,6 +2845,7 @@ export const properties = {
       type: "keyword",
       value: "clip",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-overflow",
   },
   textRendering: {
     unitGroups: [],
@@ -2516,6 +2854,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-rendering",
   },
   textShadow: {
     unitGroups: ["length"],
@@ -2524,6 +2863,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-shadow",
   },
   textSizeAdjust: {
     unitGroups: ["percentage"],
@@ -2532,6 +2872,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-size-adjust",
   },
   textTransform: {
     unitGroups: [],
@@ -2540,6 +2881,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-transform",
   },
   textUnderlineOffset: {
     unitGroups: ["length", "percentage"],
@@ -2548,6 +2890,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-underline-offset",
   },
   textUnderlinePosition: {
     unitGroups: [],
@@ -2556,6 +2899,8 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/text-underline-position",
   },
   textWrapMode: {
     unitGroups: [],
@@ -2564,6 +2909,7 @@ export const properties = {
       type: "keyword",
       value: "wrap",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-wrap-mode",
   },
   textWrapStyle: {
     unitGroups: [],
@@ -2572,6 +2918,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-wrap-style",
   },
   top: {
     unitGroups: ["length", "percentage"],
@@ -2580,6 +2927,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/top",
   },
   touchAction: {
     unitGroups: [],
@@ -2588,6 +2936,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/touch-action",
   },
   transform: {
     unitGroups: [],
@@ -2596,6 +2945,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transform",
   },
   transformBox: {
     unitGroups: [],
@@ -2604,6 +2954,7 @@ export const properties = {
       type: "keyword",
       value: "view-box",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transform-box",
   },
   transformOrigin: {
     unitGroups: ["length", "percentage"],
@@ -2628,6 +2979,7 @@ export const properties = {
         },
       ],
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transform-origin",
   },
   transformStyle: {
     unitGroups: [],
@@ -2636,6 +2988,7 @@ export const properties = {
       type: "keyword",
       value: "flat",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transform-style",
   },
   transitionBehavior: {
     unitGroups: [],
@@ -2644,6 +2997,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transition-behavior",
   },
   transitionDelay: {
     unitGroups: ["time"],
@@ -2653,6 +3007,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transition-delay",
   },
   transitionDuration: {
     unitGroups: ["time"],
@@ -2662,6 +3017,7 @@ export const properties = {
       unit: "s",
       value: 0,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transition-duration",
   },
   transitionProperty: {
     unitGroups: [],
@@ -2670,6 +3026,7 @@ export const properties = {
       type: "keyword",
       value: "all",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/transition-property",
   },
   transitionTimingFunction: {
     unitGroups: [],
@@ -2678,6 +3035,8 @@ export const properties = {
       type: "keyword",
       value: "ease",
     },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/transition-timing-function",
   },
   translate: {
     unitGroups: ["length", "percentage"],
@@ -2686,6 +3045,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/translate",
   },
   unicodeBidi: {
     unitGroups: [],
@@ -2694,6 +3054,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/unicode-bidi",
   },
   userSelect: {
     unitGroups: [],
@@ -2702,6 +3063,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/user-select",
   },
   verticalAlign: {
     unitGroups: ["percentage", "length"],
@@ -2710,6 +3072,7 @@ export const properties = {
       type: "keyword",
       value: "baseline",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/vertical-align",
   },
   visibility: {
     unitGroups: [],
@@ -2718,6 +3081,7 @@ export const properties = {
       type: "keyword",
       value: "visible",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/visibility",
   },
   whiteSpaceCollapse: {
     unitGroups: [],
@@ -2726,6 +3090,7 @@ export const properties = {
       type: "keyword",
       value: "collapse",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/white-space-collapse",
   },
   widows: {
     unitGroups: ["number"],
@@ -2735,6 +3100,7 @@ export const properties = {
       unit: "number",
       value: 2,
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/widows",
   },
   width: {
     unitGroups: ["length", "percentage"],
@@ -2743,6 +3109,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/width",
   },
   willChange: {
     unitGroups: [],
@@ -2751,6 +3118,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/will-change",
   },
   wordBreak: {
     unitGroups: [],
@@ -2759,6 +3127,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/word-break",
   },
   wordSpacing: {
     unitGroups: ["length"],
@@ -2767,6 +3136,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/word-spacing",
   },
   wordWrap: {
     unitGroups: [],
@@ -2775,6 +3145,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/overflow-wrap",
   },
   writingMode: {
     unitGroups: [],
@@ -2783,6 +3154,7 @@ export const properties = {
       type: "keyword",
       value: "horizontal-tb",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/writing-mode",
   },
   zIndex: {
     unitGroups: ["number"],
@@ -2791,6 +3163,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/z-index",
   },
   zoom: {
     unitGroups: ["number", "percentage"],
@@ -2799,5 +3172,6 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/zoom",
   },
 } as const;

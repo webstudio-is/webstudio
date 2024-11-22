@@ -5,11 +5,9 @@ import { useInterval } from "~/shared/hook-utils/use-interval";
 
 export const LoadingBackground = ({
   show,
-  backgroundColor,
   onTransitionEnd,
 }: {
   show: boolean;
-  backgroundColor: string;
   onTransitionEnd?: () => void;
 }) => {
   const [transitionEnded, setTransitionEnded] = useState(false);
@@ -26,7 +24,7 @@ export const LoadingBackground = ({
         transitionDuration: "300ms",
         pointerEvents: "none",
         transitionProperty: "opacity",
-        backgroundColor,
+        backgroundColor: theme.colors.backgroundTopbar,
         opacity: show ? 1 : 0,
         isolation: "isolate",
       }}
@@ -83,7 +81,6 @@ export const Loading = ({ state }: { state: LoadingState }) => {
     >
       <LoadingBackground
         show={state.state !== "ready"}
-        backgroundColor={theme.colors.backgroundCanvas}
         onTransitionEnd={() => {
           setTransitionEnded(true);
         }}
@@ -96,10 +93,7 @@ export const Loading = ({ state }: { state: LoadingState }) => {
           gap="3"
           css={{ isolation: "isolate" }}
         >
-          <WebstudioIcon
-            size={60}
-            style={{ filter: "drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7))" }}
-          />
+          <WebstudioIcon size={60} />
           <Progress value={fakeProgress} />
         </Flex>
       )}

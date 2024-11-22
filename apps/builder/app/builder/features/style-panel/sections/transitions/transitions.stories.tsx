@@ -3,13 +3,13 @@ import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
   $selectedBreakpointId,
-  $selectedInstanceSelector,
   $styles,
   $styleSources,
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { Section } from "./transitions";
+import { $awareness } from "~/shared/awareness";
 
 const Panel = styled("div", {
   width: theme.spacing[30],
@@ -50,7 +50,10 @@ $styles.set(
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
-$selectedInstanceSelector.set(["box"]);
+$awareness.set({
+  pageId: "",
+  instanceSelector: ["box"],
+});
 
 export const Transitions = () => {
   return (

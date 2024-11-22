@@ -1,4 +1,4 @@
-import { useState, useMemo, type ComponentProps } from "react";
+import { useState, useMemo } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import type { Unit } from "@webstudio-is/css-engine";
 import {
@@ -25,7 +25,6 @@ export type UnitOption =
 type UseUnitSelectType = {
   property: string;
   value: CssValueInputValue;
-  size: ComponentProps<typeof NestedInputButton>["size"];
   onChange: (
     value: { type: "unit"; value: Unit } | { type: "keyword"; value: string }
   ) => void;
@@ -35,7 +34,6 @@ type UseUnitSelectType = {
 export const useUnitSelect = ({
   property,
   value,
-  size,
   onChange,
   onCloseAutoFocus,
 }: UseUnitSelectType): [boolean, JSX.Element | null] => {
@@ -60,7 +58,6 @@ export const useUnitSelect = ({
 
   const select = (
     <UnitSelect
-      size={size}
       value={unitOrKeyword}
       label={unit ?? nestedSelectButtonUnitless}
       options={options}
@@ -89,7 +86,6 @@ type UnitSelectProps = {
   onOpenChange: (open: boolean) => void;
   onCloseAutoFocus: (event: Event) => void;
   open: boolean;
-  size: UseUnitSelectType["size"];
 };
 
 const UnitSelect = ({
@@ -100,7 +96,6 @@ const UnitSelect = ({
   onOpenChange,
   onCloseAutoFocus,
   open,
-  size,
 }: UnitSelectProps) => {
   return (
     <SelectPrimitive.Root
@@ -116,7 +111,7 @@ const UnitSelect = ({
       open={open}
     >
       <SelectPrimitive.SelectTrigger asChild>
-        <NestedInputButton tabIndex={-1} size={size}>
+        <NestedInputButton tabIndex={-1}>
           <SelectPrimitive.Value>
             {value === "number" ? nestedSelectButtonUnitless : label}
           </SelectPrimitive.Value>

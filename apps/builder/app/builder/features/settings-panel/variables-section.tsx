@@ -30,8 +30,6 @@ import {
   $instances,
   $props,
   $resources,
-  $selectedInstanceSelector,
-  $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
@@ -47,20 +45,24 @@ import {
   VariablePopoverProvider,
   VariablePopoverTrigger,
 } from "./variable-popover";
+import {
+  $selectedInstance,
+  $selectedInstanceKey,
+  $selectedPage,
+} from "~/shared/awareness";
 
 /**
  * find variables defined specifically on this selected instance
  */
 const $instanceVariables = computed(
-  [$selectedInstanceSelector, $dataSources],
-  (instanceSelector, dataSources) => {
+  [$selectedInstance, $dataSources],
+  (instance, dataSources) => {
     const matchedVariables: DataSource[] = [];
-    if (instanceSelector === undefined) {
+    if (instance === undefined) {
       return matchedVariables;
     }
-    const [instanceId] = instanceSelector;
     for (const dataSource of dataSources.values()) {
-      if (instanceId === dataSource.scopeInstanceId) {
+      if (instance.id === dataSource.scopeInstanceId) {
         matchedVariables.push(dataSource);
       }
     }
@@ -69,11 +71,10 @@ const $instanceVariables = computed(
 );
 
 const $instanceVariableValues = computed(
-  [$selectedInstanceSelector, $variableValuesByInstanceSelector],
-  (instanceSelector, variableValuesByInstanceSelector) => {
-    const key = JSON.stringify(instanceSelector);
-    return variableValuesByInstanceSelector.get(key) ?? new Map();
-  }
+  [$selectedInstanceKey, $variableValuesByInstanceSelector],
+  (instanceKey, variableValuesByInstanceSelector) =>
+    variableValuesByInstanceSelector.get(instanceKey ?? "") ??
+    new Map<string, unknown>()
 );
 
 /**
@@ -162,14 +163,14 @@ const deleteVariable = (variableId: DataSource["id"]) => {
 
 const EmptyVariables = () => {
   return (
-    <Flex direction="column" css={{ gap: theme.spacing[5] }}>
-      <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
+    <Flex direction="column" gap="2">
+      <Flex justify="center" align="center">
         <Text variant="labelsSentenceCase" align="center">
           No data variables created
           <br /> on this instance
         </Text>
       </Flex>
-      <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
+      <Flex justify="center" align="center">
         <VariablePopoverTrigger>
           <Button prefix={<PlusIcon />}>Create data variable</Button>
         </VariablePopoverTrigger>

@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { mapGroupBy, setDifference, setUnion } from "./shim";
 
 test("Set.prototype.difference", () => {

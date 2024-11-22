@@ -6,7 +6,7 @@ import {
   useEffect,
 } from "react";
 import { useFetcher, type Fetcher, type FormProps } from "@remix-run/react";
-import { formIdFieldName, formBotFieldName } from "@webstudio-is/sdk";
+import { formIdFieldName, formBotFieldName } from "@webstudio-is/sdk/runtime";
 
 export const defaultTag = "form";
 

@@ -59,6 +59,5 @@ export const CardFooter = styled(Flex, {
   flexGap: theme.spacing[3],
   background: theme.colors.brandBackgroundProjectCardTextArea,
   height: theme.spacing[17],
-  py: theme.spacing[5],
-  px: theme.spacing[7],
+  padding: theme.panel.padding,
 });

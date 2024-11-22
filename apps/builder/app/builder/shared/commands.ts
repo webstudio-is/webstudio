@@ -1,10 +1,11 @@
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
-  $isPreviewMode,
   $editingItemSelector,
   $instances,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
+  $isDesignMode,
+  toggleBuilderMode,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -26,7 +27,9 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { toast } from "@webstudio-is/design-system";
+import { selectInstance } from "~/shared/awareness";
+import { openCommandPanel } from "../features/command-panel";
+import { builderApi } from "~/shared/builder-api";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -42,6 +45,11 @@ const makeBreakpointCommand = <CommandName extends string>(
 });
 
 const deleteSelectedInstance = () => {
+  if ($isDesignMode.get() === false) {
+    builderApi.toast.info("Deleting is only allowed in design mode.");
+    return;
+  }
+
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
   const selectedInstanceSelector = $selectedInstanceSelector.get();
   // cannot delete instance while editing
@@ -77,7 +85,7 @@ const deleteSelectedInstance = () => {
   }
   updateWebstudioData((data) => {
     if (deleteInstanceMutable(data, selectedInstanceSelector)) {
-      $selectedInstanceSelector.set(newSelectedInstanceSelector);
+      selectInstance(newSelectedInstanceSelector);
     }
   });
 };
@@ -111,18 +119,34 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "clickCanvas",
       handler: () => {
         $breakpointsMenuView.set(undefined);
-        setActiveSidebarPanel(undefined);
+        setActiveSidebarPanel("auto");
       },
     },
 
     // ui
 
     {
-      name: "togglePreview",
+      name: "togglePreviewMode",
       defaultHotkeys: ["meta+shift+p", "ctrl+shift+p"],
       handler: () => {
-        $isPreviewMode.set($isPreviewMode.get() === false);
-        setActiveSidebarPanel(undefined);
+        setActiveSidebarPanel("auto");
+        toggleBuilderMode("preview");
+      },
+    },
+    {
+      name: "toggleDesignMode",
+      defaultHotkeys: ["meta+shift+d", "ctrl+shift+d"],
+      handler: () => {
+        setActiveSidebarPanel("auto");
+        toggleBuilderMode("design");
+      },
+    },
+    {
+      name: "toggleBuildMode",
+      defaultHotkeys: ["meta+shift+b", "ctrl+shift+b"],
+      handler: () => {
+        setActiveSidebarPanel("auto");
+        toggleBuilderMode("content");
       },
     },
     {
@@ -135,6 +159,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "toggleComponentsPanel",
       defaultHotkeys: ["a"],
       handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info(
+            "Components panel is only available in design mode."
+          );
+          return;
+        }
         toggleActiveSidebarPanel("components");
       },
       disableHotkeyOnFormTags: true,
@@ -153,6 +183,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "openStylePanel",
       defaultHotkeys: ["s"],
       handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info(
+            "Style panel is only available in design mode."
+          );
+          return;
+        }
         $activeInspectorPanel.set("style");
       },
       disableHotkeyOnFormTags: true,
@@ -206,13 +242,18 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info("Duplicating is only allowed in design mode.");
+          return;
+        }
+
         const instanceSelector = $selectedInstanceSelector.get();
         if (instanceSelector === undefined) {
           return;
         }
         const instances = $instances.get();
         if (isInstanceDetachable(instances, instanceSelector) === false) {
-          toast.error(
+          builderApi.toast.error(
             "This instance can not be moved outside of its parent component."
           );
           return;
@@ -254,10 +295,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             value: newRootInstanceId,
           });
           // select new instance
-          $selectedInstanceSelector.set([
-            newRootInstanceId,
-            ...parentInstanceSelector,
-          ]);
+          selectInstance([newRootInstanceId, ...parentInstanceSelector]);
         });
       },
     },
@@ -294,6 +332,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         serverSyncStore.redo();
       },
+    },
+
+    {
+      name: "openCommandPanel",
+      defaultHotkeys: ["meta+k", "ctrl+k"],
+      handler: openCommandPanel,
     },
   ],
 });

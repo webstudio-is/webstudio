@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 import { evaluateExpressionWithinScope } from "./binding-popover";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 

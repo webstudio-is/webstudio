@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, test } from "vitest";
 import { parseCss, parseMediaQuery } from "./parse-css";
 
 describe("Parse CSS", () => {
@@ -406,18 +406,7 @@ describe("Parse CSS", () => {
     ]);
   });
 
-  // @todo https://github.com/webstudio-is/webstudio/issues/3399
-  test("parse variable as unset default", () => {
-    expect(parseCss(`a { color: var(--color) }`)).toEqual([
-      {
-        selector: "a",
-        property: "color",
-        value: { type: "keyword", value: "unset" },
-      },
-    ]);
-  });
-
-  test("optionally parse variable as var value", () => {
+  test("parse variable as var value", () => {
     expect(
       parseCss(
         `
@@ -425,8 +414,7 @@ describe("Parse CSS", () => {
           color: var(--color);
           background-color: var(--color, red);
         }
-        `,
-        { customProperties: true }
+        `
       )
     ).toEqual([
       {

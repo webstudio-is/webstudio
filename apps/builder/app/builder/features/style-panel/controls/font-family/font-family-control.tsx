@@ -68,7 +68,8 @@ export const FontFamilyControl = () => {
         suffix={
           <FloatingPanel
             title="Fonts"
-            onOpenChange={setIsFontMangerOpen}
+            isOpen={isFontManagerOpen}
+            onIsOpenChange={setIsFontMangerOpen}
             content={
               <FontsManager
                 value={value.type === "fontFamily" ? value : undefined}

@@ -52,12 +52,12 @@ import {
   $dataSources,
   $resources,
   $areResourcesLoading,
-  $selectedInstanceSelector,
   invalidateResource,
   getComputedResource,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
+
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
 import {
@@ -71,6 +71,7 @@ import {
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
+import { $selectedInstance } from "~/shared/awareness";
 
 const validateName = (value: string) =>
   value.trim().length === 0 ? "Name is required" : "";
@@ -241,11 +242,10 @@ const useValuePanelRef = ({
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceSelector = $selectedInstanceSelector.get();
-      if (instanceSelector === undefined) {
+      const instanceId = $selectedInstance.get()?.id;
+      if (instanceId === undefined) {
         return;
       }
-      const [instanceId] = instanceSelector;
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
       const scopeInstanceId = variable?.scopeInstanceId ?? instanceId;
@@ -674,8 +674,8 @@ export const VariablePopoverTrigger = forwardRef<
             direction="column"
             css={{
               overflow: "hidden",
-              gap: theme.spacing[9],
-              p: theme.spacing[9],
+              gap: theme.spacing[7],
+              p: theme.panel.padding,
             }}
           >
             {requiresUpgrade && (

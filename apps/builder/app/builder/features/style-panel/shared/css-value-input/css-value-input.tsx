@@ -16,6 +16,7 @@ import {
   theme,
   Flex,
   styled,
+  Text,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -38,7 +39,6 @@ import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
-import type { StyleSource } from "../style-info";
 import {
   declarationDescriptions,
   isValidDeclaration,
@@ -51,6 +51,8 @@ import {
 import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
+import type { StyleValueSourceColor } from "~/shared/style-object-model";
+import { ColorThumb } from "../color-thumb";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -253,8 +255,7 @@ type CssValueInputProps = Pick<
   | "prefix"
   | "inputRef"
 > & {
-  size?: "1" | "2";
-  styleSource: StyleSource;
+  styleSource: StyleValueSourceColor;
   property: StyleProperty;
   value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;
@@ -276,14 +277,20 @@ const initialValue: IntermediateStyleValue = {
 };
 
 const itemToString = (item: CssValueInputValue | null) => {
-  return item === null
-    ? ""
-    : item.type === "keyword" || item.type === "var"
-      ? // E.g. we want currentcolor to be lower case
-        toValue(item).toLocaleLowerCase()
-      : item.type === "intermediate" || item.type === "unit"
-        ? String(item.value)
-        : toValue(item);
+  if (item === null) {
+    return "";
+  }
+  if (item.type === "var") {
+    return `var(--${item.value})`;
+  }
+  if (item.type === "keyword") {
+    // E.g. we want currentcolor to be lower case
+    return toValue(item).toLocaleLowerCase();
+  }
+  if (item.type === "intermediate" || item.type === "unit") {
+    return String(item.value);
+  }
+  return toValue(item);
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
@@ -334,11 +341,13 @@ export const CssValueInput = ({
   ["aria-disabled"]: ariaDisabled,
   fieldSizing,
   variant,
-  size,
   text,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
   // Used to show description
   const [highlightedValue, setHighlighedValue] = useState<
     StyleValue | undefined
@@ -368,6 +377,8 @@ export const CssValueInput = ({
     const defaultProps = { altKey: false, shiftKey: false };
 
     if (value.type !== "intermediate" && value.type !== "invalid") {
+      // The value might be valid but not selected from the combo menu. Close the menu.
+      closeMenu();
       props.onChangeComplete({ ...defaultProps, ...event, value });
       return;
     }
@@ -379,6 +390,8 @@ export const CssValueInput = ({
       return;
     }
 
+    // The value might be valid but not selected from the combo menu. Close the menu.
+    closeMenu();
     props.onChangeComplete({
       ...defaultProps,
       ...event,
@@ -395,6 +408,7 @@ export const CssValueInput = ({
     getItemProps,
     isOpen,
     highlightedIndex,
+    closeMenu,
   } = useCombobox<CssValueInputValue>({
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
     getItems: getOptions,
@@ -424,7 +438,6 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
-    size: size === "2" ? "1" : "2",
     property,
     value,
     onChange: (unitOrKeyword) => {
@@ -514,7 +527,15 @@ export const CssValueInput = ({
   });
 
   const shouldHandleEvent = useCallback((node: Node) => {
-    return suffixRef.current?.contains?.(node) === false;
+    // prevent scrubbing when css variable is selected
+    if (valueRef.current.type === "var") {
+      return false;
+    }
+    // prevent scrubbing when unit select is in use
+    if (suffixRef.current?.contains?.(node)) {
+      return false;
+    }
+    return true;
   }, []);
 
   const [scrubRef, inputRef] = useScrub({
@@ -578,7 +599,6 @@ export const CssValueInput = ({
       {...getToggleButtonProps()}
       data-state={isOpen ? "open" : "closed"}
       tabIndex={-1}
-      size={size === "2" ? "1" : "2"}
     />
   );
 
@@ -604,11 +624,13 @@ export const CssValueInput = ({
   const valueForDescription =
     highlightedValue?.type === "keyword"
       ? highlightedValue
-      : props.value?.type === "keyword"
-        ? props.value
-        : items[0]?.type === "keyword"
-          ? items[0]
-          : undefined;
+      : highlightedValue?.type === "var"
+        ? undefined
+        : props.value?.type === "keyword"
+          ? props.value
+          : items[0]?.type === "keyword"
+            ? items[0]
+            : undefined;
 
   if (valueForDescription) {
     const key = `${property}:${toValue(
@@ -698,7 +720,6 @@ export const CssValueInput = ({
       <Box {...getComboboxProps()}>
         <ComboboxAnchor asChild>
           <InputField
-            size={size}
             variant={variant}
             disabled={disabled}
             aria-disabled={ariaDisabled}
@@ -732,9 +753,28 @@ export const CssValueInput = ({
                     {...getItemProps({ item, index })}
                     key={index}
                   >
-                    {item.type === "var"
-                      ? `--${item.value}`
-                      : itemToString(item)}
+                    {item.type === "var" ? (
+                      <Flex justify="between" align="center" grow gap={2}>
+                        <Box>--{item.value}</Box>
+                        {item.fallback?.type === "unit" && (
+                          <Text variant="small" color="subtle">
+                            {toValue(item.fallback)}
+                          </Text>
+                        )}
+                        {item.fallback?.type === "rgb" && (
+                          <ColorThumb
+                            color={{
+                              r: item.fallback.r,
+                              g: item.fallback.g,
+                              b: item.fallback.b,
+                              a: item.fallback.alpha,
+                            }}
+                          />
+                        )}
+                      </Flex>
+                    ) : (
+                      itemToString(item)
+                    )}
                   </ComboboxListboxItem>
                 ))}
               </ComboboxScrollArea>

@@ -33,7 +33,7 @@ import {
   SelectSeparator,
   SelectGroup,
 } from "./select";
-import { MenuCheckedAndSetIcon, MenuSetDotIcon } from "./menu";
+import { MenuCheckedAndSetIcon, MenuCheckedIcon, MenuSetDotIcon } from "./menu";
 import { Button } from "./button";
 import {
   ChevronDownIcon,
@@ -124,8 +124,10 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
               value={radioValue}
               onValueChange={setRadioValue}
             >
-              <DropdownMenuRadioItem value="apple">Apple</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="orange">
+              <DropdownMenuRadioItem icon={<MenuCheckedIcon />} value="apple">
+                Apple
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem icon={<MenuCheckedIcon />} value="orange">
                 Orange
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>

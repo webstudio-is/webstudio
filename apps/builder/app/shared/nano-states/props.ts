@@ -9,12 +9,14 @@ import type {
   ImageAsset,
 } from "@webstudio-is/sdk";
 import {
-  createJsonStringifyProxy,
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  isPlainObject,
   transpileExpression,
 } from "@webstudio-is/sdk";
+import {
+  createJsonStringifyProxy,
+  isPlainObject,
+} from "@webstudio-is/sdk/runtime";
 import {
   collectionComponent,
   normalizeProps,
@@ -33,7 +35,7 @@ import {
   $memoryProps,
   $isPreviewMode,
 } from "./misc";
-import { $selectedPage, $pages } from "./pages";
+import { $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
@@ -45,6 +47,7 @@ import {
 } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { fetch } from "~/shared/fetch.client";
+import { $selectedPage } from "../awareness";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
@@ -497,9 +500,6 @@ export const $variableValuesByInstanceSelector = computed(
     ) => {
       const [instanceId] = instanceSelector;
       const instance = instances.get(instanceId);
-      if (instance === undefined) {
-        return;
-      }
 
       let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
@@ -561,6 +561,10 @@ export const $variableValuesByInstanceSelector = computed(
           }
           propValues.set(prop.name, prop.value);
         }
+      }
+
+      if (instance === undefined) {
+        return;
       }
 
       if (instance.component === collectionComponent) {

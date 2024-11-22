@@ -1,3 +1,6 @@
+import { useState, type ChangeEvent, useRef } from "react";
+import { flushSync } from "react-dom";
+import { useStore } from "@nanostores/react";
 import {
   Grid,
   Flex,
@@ -15,18 +18,15 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
-import { useState, type ChangeEvent, useRef } from "react";
 import {
   PagePath,
   PageRedirect,
   ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
-import { useStore } from "@nanostores/react";
-import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
 import { $pages, $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { flushSync } from "react-dom";
-import { sectionSpacing } from "./utils";
+import { matchPathnamePattern } from "~/builder/shared/url-pattern";
+import { getExistingRoutePaths, sectionSpacing } from "./utils";
 
 export const SectionRedirects = () => {
   const publishedOrigin = useStore($publishedOrigin);
@@ -94,7 +94,13 @@ export const SectionRedirects = () => {
       }
 
       if (newPath.startsWith("/") === true) {
-        if (existingPaths.has(newPath) === false) {
+        let matched = false;
+        for (const pattern of existingPaths) {
+          if (matchPathnamePattern(pattern, newPath)) {
+            matched = true;
+          }
+        }
+        if (matched === false) {
           return ["This path doesn't exist in the project"];
         }
       }

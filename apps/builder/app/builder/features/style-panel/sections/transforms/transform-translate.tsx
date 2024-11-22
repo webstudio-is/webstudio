@@ -8,7 +8,10 @@ import {
   type StyleUpdateOptions,
 } from "../../shared/use-style-data";
 import { PropertyInlineLabel } from "../../property-label";
-import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
+import {
+  $availableUnitVariables,
+  useComputedStyleDecl,
+} from "../../shared/model";
 
 const property: StyleProperty = "translate";
 
@@ -58,7 +61,7 @@ export const TranslatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property={property}
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={translateX}
           setValue={(newValue, options) => setAxis(0, newValue, options)}
           deleteProperty={(property, options) =>
@@ -78,7 +81,7 @@ export const TranslatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property={property}
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={translateY}
           setValue={(newValue, options) => setAxis(1, newValue, options)}
           deleteProperty={(property, options) =>
@@ -98,7 +101,7 @@ export const TranslatePanelContent = () => {
         <CssValueInputContainer
           styleSource="local"
           property={property}
-          getOptions={() => $availableVariables.get()}
+          getOptions={() => $availableUnitVariables.get()}
           value={translateZ}
           setValue={(newValue, options) => setAxis(2, newValue, options)}
           deleteProperty={(property, options) =>

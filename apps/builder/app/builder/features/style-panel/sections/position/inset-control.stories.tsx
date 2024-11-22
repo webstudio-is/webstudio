@@ -6,11 +6,11 @@ import { registerContainers } from "~/shared/sync";
 import {
   $breakpoints,
   $selectedBreakpointId,
-  $selectedInstanceSelector,
   $styles,
   $styleSources,
   $styleSourceSelections,
 } from "~/shared/nano-states";
+import { $awareness } from "~/shared/awareness";
 
 const right: StyleDecl = {
   breakpointId: "base",
@@ -41,7 +41,10 @@ $styles.set(new Map([[getStyleDeclKey(right), right]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
-$selectedInstanceSelector.set(["box"]);
+$awareness.set({
+  pageId: "",
+  instanceSelector: ["box"],
+});
 
 export const InsetControlComponent = () => {
   return (

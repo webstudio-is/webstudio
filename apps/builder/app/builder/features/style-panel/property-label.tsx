@@ -2,7 +2,6 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   hyphenateProperty,
   toValue,
@@ -18,6 +17,7 @@ import {
   Text,
   theme,
   Tooltip,
+  IconLink,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import {
@@ -25,7 +25,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $styleSources,
-  $virtualInstances,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import type {
@@ -35,6 +34,8 @@ import type {
 import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
+import { $virtualInstances } from "~/shared/awareness";
+import { styleConfigByName } from "./shared/configs";
 
 const $isAltPressed = atom(false);
 if (typeof window !== "undefined") {
@@ -55,7 +56,7 @@ const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   for (const styleDecl of styles) {
     const property = hyphenateProperty(styleDecl.property);
     let value;
-    if (isComputed && isFeatureEnabled("cssVars")) {
+    if (isComputed) {
       value = toValue(styleDecl.usedValue);
     } else {
       value = toValue(styleDecl.cascadedValue);
@@ -68,12 +69,14 @@ const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
 export const PropertyInfo = ({
   title,
   code,
+  link,
   description,
   styles,
   onReset,
 }: {
   title: string;
   code?: string;
+  link?: string;
   description: ReactNode;
   styles: ComputedStyleDecl[];
   onReset: () => void;
@@ -134,7 +137,21 @@ export const PropertyInfo = ({
 
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-      <Text variant="titles">{title}</Text>
+      <Flex justify="between">
+        <Text variant="titles" truncate>
+          {title}
+        </Text>
+        {link && (
+          <IconLink
+            href={link}
+            target="_blank"
+            rel="noreferrer"
+            color="inherit"
+            variant="inherit"
+            size={13}
+          />
+        )}
+      </Flex>
       <Text
         variant="monoBold"
         color="moreSubtle"
@@ -183,10 +200,12 @@ export const PropertyInfo = ({
             </Flex>
           }
           suffix={<Kbd value={["option", "click"]} color="moreSubtle" />}
-          css={{ gridTemplateColumns: "2fr 3fr 1fr" }}
+          css={{ gridTemplateColumns: "1fr max-content 1fr" }}
           onClick={onReset}
         >
-          Reset value
+          {styles[0].property.startsWith("--")
+            ? "Delete variable"
+            : "Reset value"}
         </Button>
       )}
     </Flex>
@@ -218,7 +237,7 @@ export const PropertyLabel = ({
   properties,
 }: {
   label: string;
-  description: string;
+  description?: string;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
@@ -231,6 +250,8 @@ export const PropertyLabel = ({
     }
     batch.publish();
   };
+  const styleConfig = styleConfigByName(properties[0]);
+
   return (
     <Flex align="center">
       <Tooltip
@@ -257,6 +278,7 @@ export const PropertyLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
+            link={styleConfig?.mdnUrl}
           />
         }
       >
@@ -276,7 +298,7 @@ export const PropertySectionLabel = ({
   properties,
 }: {
   label: string;
-  description: string;
+  description: string | undefined;
   properties: [StyleProperty, ...StyleProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
@@ -289,6 +311,8 @@ export const PropertySectionLabel = ({
     }
     batch.publish();
   };
+  const styleConfig = styleConfigByName(properties[0]);
+
   return (
     <Flex align="center">
       <Tooltip
@@ -315,6 +339,7 @@ export const PropertySectionLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
+            link={styleConfig?.mdnUrl}
           />
         }
       >
@@ -343,7 +368,7 @@ export const PropertyInlineLabel = ({
 }: {
   label: string;
   title?: string;
-  description: string;
+  description?: string;
   properties?: [StyleProperty, ...StyleProperty[]];
   disabled?: boolean;
 }) => {
@@ -399,7 +424,7 @@ export const PropertyValueTooltip = ({
   children,
 }: {
   label: string;
-  description: string;
+  description: string | undefined;
   properties: [StyleProperty, ...StyleProperty[]];
   isAdvanced?: boolean;
   children: ReactNode;
@@ -413,6 +438,8 @@ export const PropertyValueTooltip = ({
     }
     batch.publish();
   };
+  const styleConfig = styleConfigByName(properties[0]);
+
   return (
     <Tooltip
       open={isOpen}
@@ -447,6 +474,7 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
+          link={styleConfig?.mdnUrl}
         />
       }
     >

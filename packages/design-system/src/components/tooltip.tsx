@@ -13,7 +13,6 @@ import { Box } from "./box";
 import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
-import { disableCanvasPointerEvents } from "../utilities";
 
 export const TooltipProvider = TooltipPrimitive.TooltipProvider;
 
@@ -27,10 +26,10 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: theme.colors.hiContrast,
-  color: theme.colors.loContrast,
+  backgroundColor: theme.colors.backgroundTooltipMain,
+  color: theme.colors.foregroundContrastMain,
   borderRadius: theme.borderRadius[7],
-  padding: theme.spacing[5],
+  padding: theme.panel.padding,
   position: "relative",
 
   variants: {
@@ -40,14 +39,13 @@ const Content = styled(TooltipPrimitive.Content, {
       },
       large: {
         maxWidth: theme.spacing["32"],
-        padding: theme.spacing[9],
       },
     },
   },
 });
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: theme.colors.hiContrast,
+  fill: theme.colors.backgroundTooltipMain,
   marginTop: -0.5,
 });
 
@@ -68,6 +66,7 @@ export const Tooltip = forwardRef(
     },
     ref: Ref<HTMLDivElement>
   ) => {
+    const triggerRef = useRef<HTMLButtonElement>(null);
     // We need to intercept tooltip open
     const [open = false, setOpen] = useControllableState({
       prop: openProp,
@@ -78,20 +77,30 @@ export const Tooltip = forwardRef(
     });
 
     /**
-     * When the mouse leaves Tooltip.Content and moves over an iframe, the Radix Tooltip stays open.
-     * This happens because Radix's internal grace area relies on the pointermove event, which isn't triggered over iframes.
-     * The current workaround is to set pointer-events: none on the canvas when the tooltip is open.
-     **/
-    useEffect(() => {
-      if (open) {
-        const enableCanvasPointerEvents = disableCanvasPointerEvents();
-        return () => {
-          enableCanvasPointerEvents?.();
-        };
-      }
-    }, [open]);
+     * When the mouse leaves Tooltip.Content and hovers over an iframe, the Radix Tooltip stays open.
+     * This occurs because Radix's grace area depends on the pointermove event, which iframes don't trigger.
+     *
+     * Two possible workarounds:
+     * 1. Set pointer-events: none on the canvas when the tooltip is open and content is hovered.
+     *    (This doesn't work well in Chrome, as scrolling stops working on elements hovered with pointer-events: none,
+     *    even after removing pointer-events.)
+     * 2. Close the tooltip on onMouseLeave.
+     *    (This breaks some grace area behavior, such as closing the tooltip when moving the mouse from the content to the trigger.)
+     *
+     * The simpler solution with fewer side effects is to close the tooltip on mouse leave.
+     */
+    const handleMouseEnterComposed: React.MouseEventHandler<HTMLDivElement> = (
+      event
+    ) => {
+      setOpen(false);
+      props.onMouseLeave?.(event);
+    };
 
-    return (
+    // There's no way to prevent a rendered trigger from opening.
+    // This causes delay issues when an invisible tooltip forces other tooltips to show immediately.
+    return content == null ? (
+      children
+    ) : (
       <TooltipPrimitive.Root
         open={open}
         defaultOpen={defaultOpen}
@@ -99,7 +108,35 @@ export const Tooltip = forwardRef(
         delayDuration={delayDuration}
         disableHoverableContent={disableHoverableContent}
       >
-        <TooltipPrimitive.Trigger asChild {...triggerProps}>
+        <TooltipPrimitive.Trigger
+          asChild
+          ref={triggerRef}
+          {...triggerProps}
+          onFocus={(event) => {
+            // Prevent the tooltip from opening on focus
+            // The main issue is that after dialogs or selects, the tooltip button is autofocused and causes the tooltip to open
+            event.preventDefault();
+          }}
+          onPointerMove={(event) => {
+            // The tooltip captures pointer events, which can be an issue when the tooltip trigger is also the popover trigger.
+            // This is related to Popover.Anchor, but sometimes it can't be placed above the tooltip trigger.
+            // To prevent pointer movements from affecting the tooltip, we check if there’s an element between the target and the current dialog.
+            let currentElement =
+              event.target instanceof Element ? event.target : null;
+
+            while (
+              currentElement !== null &&
+              currentElement !== event.currentTarget
+            ) {
+              if (currentElement.getAttribute("role") === "dialog") {
+                event.preventDefault();
+                break;
+              }
+
+              currentElement = currentElement.parentElement;
+            }
+          }}
+        >
           {children}
         </TooltipPrimitive.Trigger>
         {content != null && (
@@ -112,9 +149,10 @@ export const Tooltip = forwardRef(
               collisionPadding={8}
               arrowPadding={8}
               {...props}
+              onMouseLeave={handleMouseEnterComposed}
             >
               {typeof content === "string" ? <Text>{content}</Text> : content}
-              <Box css={{ color: theme.colors.transparentExtreme }}>
+              <Box css={{ color: "transparent" }}>
                 <Arrow offset={5} width={11} height={5} />
               </Box>
             </Content>
@@ -207,25 +245,42 @@ export const InputErrorsTooltip = ({
   // Wrap the error tooltip with its own provider to avoid logic intersection with ordinary tooltips.
   // This is especially important for hover delays.
   // Here we ensure that hovering over the tooltip trigger after any input will not show the tooltip immediately.
+  // --
+  // Additionally, we can't wrap the underlying Input with Tooltip because we are not rendering Tooltips in case of no errors.
+  // This causes a full re-render of the Input and loss of focus.
+  // Because of that, we are wrapping the Tooltip with the relative Box component and providing an invisible trigger for the Tooltip.
   return (
     <TooltipProvider>
       <Box ref={ref as never} css={{ display: "contents" }}></Box>
-      <Tooltip
-        {...rest}
-        collisionBoundary={collisionBoundary as never}
-        collisionPadding={-8}
-        hideWhenDetached={true}
-        content={
-          errors !== undefined && errors.length !== 0
-            ? (content ?? " ")
-            : undefined
-        }
-        open={errors !== undefined && errors.length !== 0}
-        side={side ?? "right"}
-        css={css}
-      >
+      <Box css={{ position: "relative" }}>
+        <Tooltip
+          {...rest}
+          collisionBoundary={collisionBoundary as never}
+          collisionPadding={-8}
+          hideWhenDetached={true}
+          content={
+            errors !== undefined && errors.length !== 0
+              ? (content ?? " ")
+              : undefined
+          }
+          open={errors !== undefined && errors.length !== 0}
+          side={side ?? "right"}
+          css={css}
+        >
+          <Box
+            css={{
+              position: "absolute",
+              inset: 0,
+              visibility: "hidden",
+              // Uncomment for debugging
+              // backgroundColor: "red",
+              // opacity: 0.3,
+              // pointerEvents: "none",
+            }}
+          ></Box>
+        </Tooltip>
         {children}
-      </Tooltip>
+      </Box>
     </TooltipProvider>
   );
 };

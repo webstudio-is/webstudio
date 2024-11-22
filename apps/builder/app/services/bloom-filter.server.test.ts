@@ -1,4 +1,4 @@
-import { test, expect, describe, beforeEach } from "@jest/globals";
+import { test, expect, describe, beforeEach } from "vitest";
 import { BloomFilter } from "./bloom-filter.server";
 
 describe("BloomFilter add/has", () => {

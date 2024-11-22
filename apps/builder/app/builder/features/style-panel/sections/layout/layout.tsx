@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
   Box,
@@ -54,7 +53,7 @@ import { PropertyInfo, PropertyLabel } from "../../property-label";
 import {
   useComputedStyles,
   useComputedStyleDecl,
-  $availableVariables,
+  $availableUnitVariables,
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
@@ -87,10 +86,7 @@ const GapTooltip = ({
   children: ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const description =
-    propertyDescriptions[
-      styleDecl.property as keyof typeof propertyDescriptions
-    ];
+  const description = propertyDescriptions[styleDecl.property];
   return (
     <Tooltip
       open={isOpen}
@@ -161,7 +157,7 @@ const GapInput = ({
             type: "keyword" as const,
             value: item.name,
           })),
-          ...$availableVariables.get(),
+          ...$availableUnitVariables.get(),
         ]}
         onChange={(styleValue) => {
           onIntermediateChange(styleValue);
@@ -214,7 +210,6 @@ const FlexGap = () => {
           "columnGap linked rowGap"
         `,
         alignItems: "center",
-        height: theme.spacing[13],
       }}
     >
       <Box css={{ gridArea: "columnGap" }}>
@@ -466,10 +461,6 @@ const orderedDisplayValues = [
   "none",
 ];
 
-if (isFeatureEnabled("displayContents")) {
-  orderedDisplayValues.push("contents");
-}
-
 export const properties = [
   "display",
   "flexDirection",
@@ -490,7 +481,6 @@ export const Section = () => {
         <Grid
           css={{
             gridTemplateColumns: `1fr ${theme.spacing[24]}`,
-            height: theme.spacing[13],
             alignItems: "center",
           }}
         >

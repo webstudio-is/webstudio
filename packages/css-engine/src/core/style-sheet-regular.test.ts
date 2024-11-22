@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import { createRegularStyleSheet } from "./create-style-sheet";
 import type { TransformValue } from "./to-value";
 import type { NestingRule } from "./rules";
