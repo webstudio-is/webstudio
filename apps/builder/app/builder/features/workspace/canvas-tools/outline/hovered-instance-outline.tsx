@@ -15,7 +15,7 @@ import { $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 import { shallowEqual } from "shallow-equal";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { IconButton, Tooltip } from "@webstudio-is/design-system";
+import { IconButton, theme, Tooltip } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -54,15 +54,21 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
           variant={"local"}
           // @todo colors
           css={{
-            borderStyle: "dashed",
-            borderColor: `#4f46e5`,
-            color: "#6366f1",
+            borderStyle: "solid",
+            borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+            borderRadius: "100%",
             pointerEvents: "all",
-            backgroundColor: `#eef2ff`,
+            // marginTop: 8,
+            /*
+
+
+            color: "#f59e0b",
+            backgroundColor: `#fffbeb`,
             "&:hover": {
               backgroundColor: `#e0e7ff`,
               color: "#4f46e5",
             },
+            */
           }}
           onClick={() => {
             alert("not implemented");

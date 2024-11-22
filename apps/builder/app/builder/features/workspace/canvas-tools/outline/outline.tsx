@@ -23,7 +23,7 @@ const angleKeyframes = keyframes({
 
 const baseOutlineStyle = css({
   borderWidth: 1,
-
+  // mixBlendMode: "color-burn",
   variants: {
     variant: {
       default: {
@@ -39,11 +39,12 @@ const baseOutlineStyle = css({
       slot: {
         borderStyle: "solid",
         borderColor: theme.colors.foregroundReusable,
-        outlineOffset: -1,
       },
       content: {
-        borderStyle: "dashed",
-        borderColor: `#4f46e5`,
+        borderStyle: "solid",
+        // borderColor: `#f59e0b`,
+        borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+        // backgroundColor: "oklch(from #eef2ff l c h / 0.5)",
       },
     },
 
@@ -73,7 +74,7 @@ const baseStyle = css({
   boxSizing: "border-box",
   position: "absolute",
   display: "grid",
-  gap: 1, // Border dashed looks strange without gap
+  // gap: 1, // Border dashed looks strange without gap
   gridTemplateColumns: `1fr auto 1fr`,
   // pointerEvents: "none",
   top: 0,
