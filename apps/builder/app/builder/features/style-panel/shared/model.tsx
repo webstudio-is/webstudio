@@ -295,7 +295,7 @@ export const $availableColorVariables = computed(
 let prevModel: undefined | StyleObjectModel;
 // store cached computed declarations by following key
 // instanceSelector + styleSourceId + state + property
-let cache = new Map<string, ComputedStyleDecl>();
+const cache = new Map<string, ComputedStyleDecl>();
 
 const validateCache = (model: StyleObjectModel) => {
   if (model !== prevModel) {
