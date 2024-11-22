@@ -361,7 +361,7 @@ const getStaticPublishStatusAndText = ({
   publishStatus,
 }: {
   updatedAt: string;
-  publishStatus: string;
+  publishStatus: "PENDING" | "FAILED" | "PUBLISHED";
 }) => {
   let status = publishStatus;
 
@@ -411,8 +411,7 @@ const PublishStatic = ({
 
   const [isPending, setIsPendingOptimistic] = useOptimistic(false);
 
-  const isPublishInProgress =
-    project.latestStaticBuild?.publishStatus === "PENDING" || isPending;
+  const isPublishInProgress = status === "PENDING" || isPending;
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
