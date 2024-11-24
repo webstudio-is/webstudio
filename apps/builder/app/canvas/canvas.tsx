@@ -245,7 +245,8 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
     });
     registerComponentLibrary({
       components: {
-        // override only body canvas specific component
+        // override only canvas specific body component
+        // not related to sdk-components-react-remix anymore
         Body,
       },
       metas: remixComponentMetas,
