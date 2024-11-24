@@ -13,7 +13,6 @@ import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
 import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
-import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
@@ -73,6 +72,7 @@ import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";
+import { Body } from "./shared/body";
 
 registerContainers();
 
@@ -244,7 +244,10 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
       hooks: baseComponentHooks,
     });
     registerComponentLibrary({
-      components: remixComponents,
+      components: {
+        // override only body canvas specific component
+        Body,
+      },
       metas: remixComponentMetas,
       propsMetas: remixComponentPropsMetas,
     });
@@ -310,7 +313,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
   }, []);
 
   if (components.size === 0 || instances.size === 0) {
-    return <remixComponents.Body />;
+    return <Body />;
   }
 
   return (
