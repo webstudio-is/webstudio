@@ -77,7 +77,10 @@ export const clientLoader = async ({
   serverLoader,
 }: ClientLoaderFunctionArgs) => {
   const serverData = await serverLoader<typeof loader>();
-  console.log(serverData);
+  // client loader is invoked twice with server data and with null
+  if (!serverData) {
+    return;
+  }
 
   if (clientCsrfToken === undefined) {
     const { csrfToken } = serverData;
