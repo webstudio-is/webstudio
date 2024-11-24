@@ -66,20 +66,18 @@ export const CanvasTools = () => {
   }
 
   return (
-    <div className={containerStyle()}>
+    <>
       <MediaBadge />
       <ResizeHandles />
       {isPreviewMode === false && (
         <>
-          <div className={containerStyle({ overflow: "hidden" })}>
-            <SelectedInstanceOutline />
-            <HoveredInstanceOutline />
-            <EditableBlockChildHoveredInstanceOutline />
-            <CollaborativeInstanceOutline />
-          </div>
+          <SelectedInstanceOutline />
+          <HoveredInstanceOutline />
+          <EditableBlockChildHoveredInstanceOutline />
+          <CollaborativeInstanceOutline />
           <TextToolbar />
         </>
       )}
-    </div>
+    </>
   );
 };

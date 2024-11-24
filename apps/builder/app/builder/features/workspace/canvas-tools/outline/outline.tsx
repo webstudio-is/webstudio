@@ -23,7 +23,6 @@ const angleKeyframes = keyframes({
 
 const baseOutlineStyle = css({
   borderWidth: 1,
-  // mixBlendMode: "color-burn",
   variants: {
     variant: {
       default: {
@@ -40,43 +39,16 @@ const baseOutlineStyle = css({
         borderStyle: "solid",
         borderColor: theme.colors.foregroundReusable,
       },
-      content: {
-        borderStyle: "solid",
-        // borderColor: `#f59e0b`,
-        borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
-        // backgroundColor: "oklch(from #eef2ff l c h / 0.5)",
-      },
-    },
-
-    borderBlock: {
-      left: {
-        borderRightWidth: 0,
-      },
-      right: {
-        borderLeftWidth: 0,
-      },
-      center: {
-        borderRightWidth: 0,
-        borderLeftWidth: 0,
-        borderBottomWidth: 0,
-        alignContent: "end",
-      },
-      full: {},
-      none: {
-        borderWidth: 0,
-      },
     },
   },
-  defaultVariants: { variant: "default", borderBlock: "full" },
+  defaultVariants: { variant: "default" },
 });
 
 const baseStyle = css({
   boxSizing: "border-box",
   position: "absolute",
   display: "grid",
-  // gap: 1, // Border dashed looks strange without gap
-  gridTemplateColumns: `1fr auto 1fr`,
-  // pointerEvents: "none",
+  pointerEvents: "none",
   top: 0,
   left: 0,
 });
@@ -107,35 +79,28 @@ export const EditableBlockChildAddButtonOutline = ({
   rect: Rect;
   children: ReactNode;
 }) => {
-  const variant = "content";
   const dynamicStyle = useDynamicStyle(rect);
 
   return (
     <>
       <div
-        className={`${baseStyle()} ${baseOutlineStyle({ borderBlock: "none" })}`}
+        className={`${baseStyle()} ${baseOutlineStyle()}`}
         style={dynamicStyle}
       >
         <div
-          className={baseOutlineStyle({ variant, borderBlock: "left" })}
-        ></div>
+          style={{
+            height: 0,
+            width: 0,
+            display: "grid",
+            alignContent: "center",
+            justifyContent: "center",
 
-        <div className={baseOutlineStyle({ variant, borderBlock: "center" })}>
-          <div
-            style={{
-              height: 0,
-              display: "grid",
-              alignContent: "center",
-              alignSelf: "end",
-            }}
-          >
-            {children}
-          </div>
+            justifySelf: "start",
+            alignSelf: "start",
+          }}
+        >
+          {children}
         </div>
-
-        <div
-          className={baseOutlineStyle({ variant, borderBlock: "right" })}
-        ></div>
       </div>
     </>
   );

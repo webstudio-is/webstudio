@@ -52,23 +52,12 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
       <Tooltip content="Add next block" side="top" disableHoverableContent>
         <IconButton
           variant={"local"}
-          // @todo colors
           css={{
             borderStyle: "solid",
             borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
             borderRadius: "100%",
             pointerEvents: "all",
-            // marginTop: 8,
-            /*
-
-
-            color: "#f59e0b",
-            backgroundColor: `#fffbeb`,
-            "&:hover": {
-              backgroundColor: `#e0e7ff`,
-              color: "#4f46e5",
-            },
-            */
+            // mr: theme.spacing[12],
           }}
           onClick={() => {
             alert("not implemented");
