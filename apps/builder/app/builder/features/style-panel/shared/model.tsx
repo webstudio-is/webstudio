@@ -318,15 +318,41 @@ export const useComputedStyleDecl = (property: StyleProperty) => {
   return useStore($store);
 };
 
+const $closestStylableInstanceSelector = computed(
+  [$instanceAndRootSelector, $instances, $registeredComponentMetas],
+  (instanceSelector, instances, metas) => {
+    // ignore unstylable instances which do not affect parent/child relationships
+    if (instanceSelector === undefined) {
+      return;
+    }
+    const closestStylableIndex = instanceSelector.findIndex(
+      (instanceId, index) => {
+        // start with parent
+        if (index === 0) {
+          return false;
+        }
+        const component = instances.get(instanceId)?.component;
+        if (component) {
+          return metas.get(component)?.stylable ?? true;
+        }
+        // ids without instances are collection items
+        // they are not stylable
+        return false;
+      }
+    );
+    return instanceSelector.slice(closestStylableIndex);
+  }
+);
+
 export const useParentComputedStyleDecl = (property: StyleProperty) => {
   const $store = useMemo(
     () =>
       computed(
-        [$model, $instanceAndRootSelector],
+        [$model, $closestStylableInstanceSelector],
         (model, instanceSelector) => {
           return getComputedStyleDecl({
             model,
-            instanceSelector: instanceSelector?.slice(1),
+            instanceSelector,
             property,
           });
         }
