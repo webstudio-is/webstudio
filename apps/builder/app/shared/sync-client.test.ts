@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { createNanoEvents } from "nanoevents";
 import { atom } from "nanostores";
 import { Store } from "immerhin";
@@ -8,7 +8,6 @@ import {
   NanostoresSyncObject,
   SyncClient,
   SyncObjectPool,
-  type Transaction,
 } from "./sync-client";
 
 enableMapSet();
@@ -243,31 +242,51 @@ describe("nanostores sync object", () => {
     expect($follower.get()).toEqual(5);
   });
 
-  test("prevent sending back state", () => {
+  test("set received state and access it", () => {
     const $store = atom(1);
     const object = new NanostoresSyncObject("nanostores", $store);
-    const transactions: Transaction[] = [];
-    object.subscribe((transaction) => {
-      transactions.push(transaction);
-    }, new AbortController().signal);
-    expect(transactions).toEqual([]);
+    expect($store.get()).toEqual(1);
+    expect(object.getState()).toEqual(1);
     object.setState(2);
-    expect(transactions).toEqual([]);
+    expect($store.get()).toEqual(2);
+    expect(object.getState()).toEqual(2);
   });
 
-  test("prevent sending back transactions", () => {
+  test("send new store value as transaction", () => {
     const $store = atom(1);
     const object = new NanostoresSyncObject("nanostores", $store);
-    const transactions: Transaction[] = [];
-    object.subscribe((transaction) => {
-      transactions.push(transaction);
-    }, new AbortController().signal);
-    expect(transactions).toEqual([]);
-    object.addTransaction({
+    const sendTransaction = vi.fn();
+    object.subscribe(sendTransaction, new AbortController().signal);
+    $store.set(2);
+    expect(sendTransaction).toBeCalledTimes(1);
+    expect(sendTransaction).toBeCalledWith({
+      id: expect.any(String),
+      object: "nanostores",
+      payload: 2,
+    });
+  });
+
+  test("prevent sending back received state", () => {
+    const $store = atom(1);
+    const object = new NanostoresSyncObject("nanostores", $store);
+    const sendTransaction = vi.fn();
+    object.subscribe(sendTransaction, new AbortController().signal);
+    expect(sendTransaction).toBeCalledTimes(0);
+    object.setState(2);
+    expect(sendTransaction).toBeCalledTimes(0);
+  });
+
+  test("prevent sending back applied transactions", () => {
+    const $store = atom(1);
+    const object = new NanostoresSyncObject("nanostores", $store);
+    const sendTransaction = vi.fn();
+    object.subscribe(sendTransaction, new AbortController().signal);
+    expect(sendTransaction).toBeCalledTimes(0);
+    object.applyTransaction({
       id: "my-transaction",
       object: "nanostores",
       payload: 2,
     });
-    expect(transactions).toEqual([]);
+    expect(sendTransaction).toBeCalledTimes(0);
   });
 });
