@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, json } from "@remix-run/server-runtime";
+import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { z } from "zod";
 import { findAuthenticatedUser } from "~/services/auth.server";
@@ -119,7 +119,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   n8nResponse satisfies never;
 
-  return json({});
+  return {};
 };
 
 export const ErrorBoundary = () => {

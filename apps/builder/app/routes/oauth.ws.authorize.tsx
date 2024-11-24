@@ -1,4 +1,4 @@
-import { json, type LoaderFunction } from "@remix-run/server-runtime";
+import { data, type LoaderFunction } from "@remix-run/server-runtime";
 import { z } from "zod";
 import { createDebug } from "~/shared/debug";
 import { fromError } from "zod-validation-error";
@@ -103,7 +103,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     if (false === parsedRedirect.success) {
       debug("redirect_uri not provided in query params");
 
-      return json(
+      return data(
         {
           error: "invalid_request",
           error_description: "No redirect_uri provided",
@@ -126,7 +126,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     ) {
       debug("redirect_uri does not match the registered redirect URIs");
 
-      return json(
+      return data(
         {
           error: "invalid_request",
           error_description:
@@ -196,7 +196,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       ) {
         debug("redirect_uri does not match the registered redirect URIs");
 
-        return json(
+        return data(
           {
             error: "invalid_request",
             error_description:
@@ -260,7 +260,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     console.error("error", error);
     debug("error", error);
 
-    throw json(
+    throw data(
       {
         error: "server_error",
         error_description:

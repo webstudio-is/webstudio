@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
+import { data, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { ResourceRequest } from "@webstudio-is/sdk";
 import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
@@ -11,13 +11,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
 
   // Hope Remix will have customFetch by default, see https://kit.svelte.dev/docs/load#making-fetch-requests
-  const customFetch: typeof fetch = (input, init) => {
+  const customFetch: typeof fetch = async (input, init) => {
     if (typeof input !== "string") {
       return fetch(input, init);
     }
 
     if (isLocalResource(input, "sitemap.xml")) {
-      return siteMapLoader({ request });
+      return Response.json(siteMapLoader({ request }));
     }
 
     return fetch(input, init);
@@ -36,7 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
     console.error("data:", requestJson);
 
-    throw json(computedResourcesParsed.error, {
+    throw data(computedResourcesParsed.error, {
       status: 400,
     });
   }

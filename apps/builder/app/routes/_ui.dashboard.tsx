@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
-import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
@@ -112,7 +112,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const { sourceOrigin } = parseBuilderUrl(request.url);
 
-  return json({
+  return {
     user,
     projects,
     projectTemplates,
@@ -121,7 +121,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     imageBaseUrl: env.IMAGE_BASE_URL,
     origin: sourceOrigin,
     projectToClone,
-  });
+  };
 };
 
 /**

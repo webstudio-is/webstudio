@@ -1,5 +1,5 @@
 import {
-  json,
+  data,
   type LoaderFunctionArgs,
   type TypedResponse,
 } from "@remix-run/server-runtime";
@@ -34,7 +34,7 @@ export const loader = async ({
     const projectId = params.projectId;
 
     if (projectId === undefined) {
-      throw json("Required project id", { status: 400 });
+      throw data("Required project id", { status: 400 });
     }
 
     // @todo Create a context without user authentication information.
@@ -55,7 +55,7 @@ export const loader = async ({
 
     console.error(error);
 
-    throw json(parseError(error), {
+    throw data(parseError(error), {
       status: 500,
     });
   }

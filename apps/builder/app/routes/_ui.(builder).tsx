@@ -7,7 +7,7 @@ import { lazy } from "react";
 import { useLoaderData } from "@remix-run/react";
 import type { MetaFunction, ShouldRevalidateFunction } from "@remix-run/react";
 import {
-  json,
+  data,
   type HeadersArgs,
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
@@ -207,7 +207,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       `frame-src ${url.origin}/canvas https://app.goentri.com/; worker-src 'none'`
     );
 
-    return json(
+    return data(
       {
         project,
         publisherHost,

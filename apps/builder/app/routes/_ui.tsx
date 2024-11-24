@@ -11,7 +11,7 @@ import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
 import robotoMonoFont from "@fontsource/roboto-mono/index.css?url";
 import appCss from "../shared/app.css?url";
 import {
-  json,
+  data,
   type LinksFunction,
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
@@ -56,7 +56,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [csrfToken, setCookieValue] = await getCsrfTokenAndCookie(request);
 
   if (request.headers.get("sec-fetch-mode") !== "navigate") {
-    return json({ csrfToken: "" });
+    return { csrfToken: "" };
   }
 
   const headers = new Headers();
@@ -65,7 +65,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     headers.set("Set-Cookie", setCookieValue);
   }
 
-  return json(
+  return data(
     { csrfToken },
     {
       headers,

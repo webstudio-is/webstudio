@@ -1,4 +1,4 @@
-import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
+import { data, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { createDebug } from "~/shared/debug";
 import { builderAuthenticator } from "~/services/builder-auth.server";
 import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (request.method !== "POST") {
-    return json(
+    return data(
       { message: "Method not allowed" },
       {
         status: 405,

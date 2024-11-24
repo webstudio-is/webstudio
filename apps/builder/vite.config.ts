@@ -11,6 +11,13 @@ import {
 } from "./app/shared/router-utils/origins";
 import { readFileSync } from "node:fs";
 
+declare module "@remix-run/node" {
+  // or cloudflare, deno, etc.
+  interface Future {
+    v3_singleFetch: true;
+  }
+}
+
 export default defineConfig(({ mode }) => {
   if (mode === "test") {
     return {
@@ -36,6 +43,13 @@ export default defineConfig(({ mode }) => {
     plugins: [
       remix({
         presets: [vercelPreset()],
+        future: {
+          v3_singleFetch: true,
+          v3_fetcherPersist: true,
+          v3_relativeSplatPath: true,
+          v3_throwAbortReason: true,
+          v3_lazyRouteDiscovery: true,
+        },
       }),
       {
         name: "request-timing-logger",
