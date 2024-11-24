@@ -93,6 +93,7 @@ const SidePanel = ({
 }: SidePanelProps) => {
   return (
     <Box
+      id="jopa"
       as="aside"
       css={{
         position: "relative",
@@ -120,7 +121,6 @@ const Main = ({ children }: { children: ReactNode }) => (
     direction="column"
     css={{
       gridArea: "main",
-      overflow: "hidden",
       position: "relative",
     }}
   >
@@ -416,6 +416,9 @@ export const Builder = ({
               />
             }
           />
+          <SidePanel gridArea="sidebar">
+            <SidebarLeft publish={publish} />
+          </SidePanel>
           <Main>
             <Workspace onTransitionEnd={onTransitionEnd}>
               {dataLoadingState === "loaded" && (
@@ -429,9 +432,6 @@ export const Builder = ({
 
             {isDesignMode && <AiCommandBar />}
           </Main>
-          <SidePanel gridArea="sidebar">
-            <SidebarLeft publish={publish} />
-          </SidePanel>
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}

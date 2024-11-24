@@ -16,7 +16,8 @@ const workspaceStyle = css({
   background: theme.colors.backgroundCanvas,
   position: "relative",
   // Prevent scrollIntoView from scrolling the whole page
-  overflow: "clip",
+  // Commented to see what it will break
+  // overflow: "clip",
 });
 
 const canvasContainerStyle = css({
@@ -104,22 +105,28 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
   };
 
   return (
-    <div
-      className={workspaceStyle()}
-      onClick={handleWorkspaceClick}
-      ref={workspaceRef}
-    >
+    <>
       <div
-        className={canvasContainerStyle()}
-        style={canvasStyle}
-        onTransitionEnd={onTransitionEnd}
+        className={workspaceStyle()}
+        onClick={handleWorkspaceClick}
+        ref={workspaceRef}
       >
-        {children}
-      </div>
-      <div className={canvasContainerStyle()} style={outlineStyle}>
-        <CanvasTools />
+        <div
+          className={canvasContainerStyle()}
+          style={canvasStyle}
+          onTransitionEnd={onTransitionEnd}
+        >
+          {children}
+        </div>
+        <div
+          data-name="canvas-tools-wrapper"
+          className={canvasContainerStyle()}
+          style={outlineStyle}
+        >
+          <CanvasTools />
+        </div>
       </div>
       <Toaster />
-    </div>
+    </>
   );
 };

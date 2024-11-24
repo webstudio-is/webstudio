@@ -33,6 +33,8 @@ import {
   type LexicalEditor,
   type SerializedEditorState,
   $createTextNode,
+  KEY_DOWN_COMMAND,
+  COMMAND_PRIORITY_NORMAL,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -44,7 +46,11 @@ import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
+import {
+  collapsedAttribute,
+  idAttribute,
+  selectorIdAttribute,
+} from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
@@ -52,6 +58,9 @@ import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
+  $editableBlockChildOutline,
+  $hoveredInstanceOutline,
+  $hoveredInstanceSelector,
   $registeredComponentMetas,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
@@ -62,10 +71,16 @@ import {
 import deepEqual from "fast-deep-equal";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { $selectedPage, selectInstance } from "~/shared/awareness";
-// import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 
-const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
+const BindInstanceToNodePlugin = ({
+  refs,
+  rootInstanceSelector,
+}: {
+  refs: Refs;
+  rootInstanceSelector: InstanceSelector;
+}) => {
   const [editor] = useLexicalComposerContext();
+
   useEffect(() => {
     for (const [nodeKey, instanceId] of refs) {
       // extract key from stored key:style format
@@ -73,9 +88,16 @@ const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
       const element = editor.getElementByKey(key);
       if (element) {
         element.setAttribute(idAttribute, instanceId);
+        // We set id + root selector here, for simplicity
+        // This solves hover behavior during mouseMove for editable child outline
+        // @todo: A normal selector must be used, but it would require significantly more code to detect the tree structure.
+        element.setAttribute(
+          selectorIdAttribute,
+          [idAttribute, ...rootInstanceSelector].join(",")
+        );
       }
     }
-  }, [editor, refs]);
+  }, [editor, refs, rootInstanceSelector]);
   return null;
 };
 
@@ -828,6 +850,28 @@ const LinkSanitizePlugin = (): null => {
   return null;
 };
 
+const AnyKeyDownPlugin = ({ onKeyDown }: { onKeyDown: () => void }) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      () => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        onKeyDown();
+        return false;
+      },
+      COMMAND_PRIORITY_NORMAL
+    );
+  }, [editor, onKeyDown]);
+
+  return null;
+};
+
 export const TextEditor = ({
   rootInstanceSelector,
   instances,
@@ -980,17 +1024,23 @@ export const TextEditor = ({
         handleChange(state);
 
         $textEditingInstanceSelector.set({
-          selector: editableInstanceSelectors[nextIndex],
+          selector: nextSelector,
           ...args,
         });
 
-        selectInstance(editableInstanceSelectors[nextIndex]);
+        selectInstance(nextSelector);
 
         break;
       }
     },
     [handleChange, instances, rootInstanceSelector]
   );
+
+  const handleAnyKeydown = useCallback(() => {
+    $editableBlockChildOutline.set(undefined);
+    $hoveredInstanceOutline.set(undefined);
+    $hoveredInstanceSelector.set(undefined);
+  }, []);
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
@@ -1004,7 +1054,10 @@ export const TextEditor = ({
           }
         }}
       />
-      <BindInstanceToNodePlugin refs={refs} />
+      <BindInstanceToNodePlugin
+        refs={refs}
+        rootInstanceSelector={rootInstanceSelector}
+      />
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
@@ -1017,6 +1070,7 @@ export const TextEditor = ({
       <SwitchBlockPlugin onNext={handleNext} />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
+      <AnyKeyDownPlugin onKeyDown={handleAnyKeydown} />
       <InitialJSONStatePlugin
         onInitialState={(json) => {
           lastSavedStateJsonRef.current = json;

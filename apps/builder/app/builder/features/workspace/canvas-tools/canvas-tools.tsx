@@ -19,6 +19,7 @@ import { ResizeHandles } from "./resize-handles";
 import { MediaBadge } from "./media-badge";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
+import { EditableBlockChildHoveredInstanceOutline } from "./outline/hovered-instance-outline";
 
 const containerStyle = css({
   position: "absolute",
@@ -65,19 +66,18 @@ export const CanvasTools = () => {
   }
 
   return (
-    <div className={containerStyle()}>
+    <>
       <MediaBadge />
       <ResizeHandles />
       {isPreviewMode === false && (
         <>
-          <div className={containerStyle({ overflow: "hidden" })}>
-            <SelectedInstanceOutline />
-            <HoveredInstanceOutline />
-            <CollaborativeInstanceOutline />
-          </div>
+          <SelectedInstanceOutline />
+          <HoveredInstanceOutline />
+          <EditableBlockChildHoveredInstanceOutline />
+          <CollaborativeInstanceOutline />
           <TextToolbar />
         </>
       )}
-    </div>
+    </>
   );
 };
