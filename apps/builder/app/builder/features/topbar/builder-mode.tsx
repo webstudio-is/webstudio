@@ -1,5 +1,9 @@
 import { useStore } from "@nanostores/react";
-import { EditIcon, PaintBrushIcon, PlayIcon } from "@webstudio-is/icons";
+import {
+  NotebookAndPenIcon,
+  PaintBrushIcon,
+  PlayIcon,
+} from "@webstudio-is/icons";
 import {
   Box,
   DropdownMenuItemRightSlot,
@@ -56,7 +60,7 @@ export const BuilderModeDropDown = () => {
       enabled: isDesignModeAllowed,
     },
     content: {
-      icon: <EditIcon />,
+      icon: <NotebookAndPenIcon />,
       description: "Modify the page content",
       title: "Build",
       shortcut: ["cmd", "shift", "b"],

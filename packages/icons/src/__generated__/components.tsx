@@ -3490,6 +3490,30 @@ export const NoWrapIcon: IconComponent = forwardRef(
 );
 NoWrapIcon.displayName = "NoWrapIcon";
 
+export const NotebookAndPenIcon: IconComponent = forwardRef(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M2.5 2.15a.35.35 0 0 0-.35.35v11a.35.35 0 0 0 .35.35h1.35V2.15H2.5Zm0-1.3A1.65 1.65 0 0 0 .85 2.5v11a1.65 1.65 0 0 0 1.65 1.65H9a.65.65 0 1 0 0-1.3H5.15V2.15H10a.65.65 0 1 0 0-1.3H2.5Zm10.5 0a.65.65 0 0 1 .581.36l1.5 3a.65.65 0 0 1 .069.29V13a2.15 2.15 0 1 1-4.3 0V4.5c0-.1.024-.2.069-.29l1.5-3A.65.65 0 0 1 13 .85Zm-.85 10.3V13a.85.85 0 1 0 1.7 0v-1.85h-1.7Zm1.7-1.3h-1.7V4.653l.85-1.7.85 1.7V9.85ZM6.35 5A.65.65 0 0 1 7 4.35h2a.65.65 0 0 1 0 1.3H7A.65.65 0 0 1 6.35 5Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+NotebookAndPenIcon.displayName = "NotebookAndPenIcon";
+
 export const OfflineIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -3655,14 +3679,19 @@ export const PlayIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 22 22"
+        viewBox="0 0 16 16"
         width={size}
         height={size}
         fill={color}
         {...props}
         ref={forwardedRef}
       >
-        <path d="M4.766 5.765c0-.725 0-1.088.178-1.288a.93.93 0 0 1 .648-.294c.294-.015.65.186 1.359.588l9.234 5.235c.586.332.88.498.982.708.09.183.09.389 0 .572-.102.21-.396.376-.982.708l-9.234 5.235c-.71.402-1.065.603-1.359.588a.93.93 0 0 1-.648-.294c-.178-.2-.178-.563-.178-1.288V5.765Z" />
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="m5.327 1.783.026.018 7.033 4.688c.202.135.394.263.542.382.156.126.35.308.462.58.146.351.146.747 0 1.099a1.48 1.48 0 0 1-.462.579c-.148.12-.34.248-.542.382l-7.06 4.706c-.246.164-.473.316-.667.42-.194.106-.476.235-.81.215a1.435 1.435 0 0 1-1.058-.566c-.202-.267-.25-.573-.27-.793-.021-.22-.021-.493-.021-.789V3.296c0-.296 0-.57.02-.789.02-.22.069-.526.27-.792.254-.335.64-.542 1.06-.567.333-.02.615.109.81.214.193.105.42.257.667.42Zm-1.284.999c-.005.13-.005.302-.005.546v9.344c0 .244 0 .416.005.546.11-.068.254-.163.457-.298l7.009-4.672c.165-.11.28-.188.364-.248-.084-.06-.198-.137-.364-.248L4.5 3.08a15.74 15.74 0 0 0-.457-.298Z"
+          clipRule="evenodd"
+        />
       </svg>
     );
   }

@@ -10,6 +10,7 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "./components/component-meta";
+import { NotebookAndPenIcon } from "@webstudio-is/icons";
 
 export const rootComponent = "ws:root";
 
@@ -148,7 +149,7 @@ const editableBlockMeta: WsComponentMeta = {
   order: 2,
   type: "container",
   label: "Editable Block",
-  icon: EditIcon,
+  icon: NotebookAndPenIcon,
   stylable: false,
   template: [
     {
