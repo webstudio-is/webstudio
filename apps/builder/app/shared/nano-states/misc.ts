@@ -327,6 +327,12 @@ export const $isDesignMode = computed(
   (mode) => mode === "design"
 );
 
+export const $newEditableChildAnchor = atom<InstanceSelector | undefined>(
+  undefined
+);
+
+export const $newEditableChildRect = atom<DOMRect | undefined>(undefined);
+
 export const $authPermit = atom<AuthPermit>("view");
 export const $authTokenPermissions = atom<TokenPermissions>({
   canClone: true,

@@ -5,6 +5,7 @@ import {
   $hoveredInstanceSelector,
   $instances,
   $isContentMode,
+  $newEditableChildAnchor,
   $textEditingInstanceSelector,
   type EditableBlockChildOutline,
 } from "~/shared/nano-states";
@@ -60,7 +61,7 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
             // mr: theme.spacing[12],
           }}
           onClick={() => {
-            alert("not implemented");
+            $newEditableChildAnchor.set(outline.selector);
           }}
           onMouseEnter={() => {
             clearTimeout(timeoutRef.current);
