@@ -5,27 +5,27 @@ test("get closest instance", () => {
   const instancePath: InstancePath = [
     {
       id: "4",
-      instanceSelector: ["4", "3", "2", "1", "0"],
+      instanceKey: JSON.stringify(["4", "3", "2", "1", "0"]),
       component: "Content",
     },
     {
       id: "3",
-      instanceSelector: ["3", "2", "1", "0"],
+      instanceKey: JSON.stringify(["3", "2", "1", "0"]),
       component: "Tabs",
     },
     {
       id: "2",
-      instanceSelector: ["2", "1", "0"],
+      instanceKey: JSON.stringify(["2", "1", "0"]),
       component: "Content",
     },
     {
       id: "1",
-      instanceSelector: ["1", "0"],
+      instanceKey: JSON.stringify(["1", "0"]),
       component: "Tabs",
     },
     {
       id: "0",
-      instanceSelector: ["0"],
+      instanceKey: JSON.stringify(["0"]),
       component: "Body",
     },
   ];
