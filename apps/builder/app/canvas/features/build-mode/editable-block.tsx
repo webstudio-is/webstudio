@@ -25,7 +25,6 @@ const MenuPositionInitializer = () => {
 
   return (
     <div
-      ref={ref}
       style={{
         minWidth: "50px",
         backgroundColor: "orange",
@@ -33,8 +32,8 @@ const MenuPositionInitializer = () => {
       }}
     >
       <div
+        ref={ref}
         style={{
-          minWidth: "50px",
           backgroundColor: "yellow",
         }}
       >
