@@ -4,13 +4,17 @@ import { FontMeta } from "@webstudio-is/fonts";
 import { ImageMeta } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
 
-export const AssetData = z.object({
+export type AssetData = {
+  size: number;
+  format: string;
+  meta: ImageMeta | FontMeta;
+};
+
+export const AssetData: z.ZodType<AssetData> = z.object({
   size: z.number(),
   format: z.string(),
   meta: z.union([ImageMeta, FontMeta]),
 });
-
-export type AssetData = z.infer<typeof AssetData>;
 
 type BaseAssetOptions = {
   size: number;
