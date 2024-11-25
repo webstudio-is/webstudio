@@ -12,7 +12,6 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   ReactSdkContext,
   getClosestInstance,
-  getInstanceSelectorById,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
 
@@ -202,11 +201,7 @@ export const hooksDialog: Hook = {
           `${namespace}:Dialog`
         );
         if (dialog) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            dialog.id
-          );
-          context.setMemoryProp(instanceSelector, "open", undefined);
+          context.setMemoryProp(dialog, "open", undefined);
         }
       }
     }
@@ -219,14 +214,8 @@ export const hooksDialog: Hook = {
           instance,
           `${namespace}:Dialog`
         );
-
         if (dialog) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            dialog.id
-          );
-
-          context.setMemoryProp(instanceSelector, "open", true);
+          context.setMemoryProp(dialog, "open", true);
         }
       }
     }

@@ -20,7 +20,6 @@ import {
 import {
   type Hook,
   getClosestInstance,
-  getInstanceSelectorById,
   ReactSdkContext,
 } from "@webstudio-is/react-sdk/runtime";
 
@@ -99,11 +98,7 @@ export const hooksSelect: Hook = {
           `${namespace}:Select`
         );
         if (select) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            select.id
-          );
-          context.setMemoryProp(instanceSelector, "open", undefined);
+          context.setMemoryProp(select, "open", undefined);
         }
       }
     }
@@ -117,11 +112,7 @@ export const hooksSelect: Hook = {
           `${namespace}:Select`
         );
         if (select) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            select.id
-          );
-          context.setMemoryProp(instanceSelector, "open", true);
+          context.setMemoryProp(select, "open", true);
         }
       }
     }
