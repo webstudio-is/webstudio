@@ -16,7 +16,6 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "typescript": "5.6.3",
     "vitest": "^2.1.5"
   },
   "exports": {

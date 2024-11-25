@@ -336,9 +336,7 @@ const caretFromPoint = (
       node: range.startContainer,
       offset: range.startOffset,
     };
-    // @ts-expect-error no types
-  } else if (document.caretPositionFromPoint !== "undefined") {
-    // @ts-expect-error no types
+  } else if (typeof document.caretPositionFromPoint !== "undefined") {
     const range = document.caretPositionFromPoint(x, y);
     if (range === null) {
       return null;
