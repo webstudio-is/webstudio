@@ -145,18 +145,17 @@ const Dashboard = lazy(async () => {
 const DashboardRoute = () => {
   const data = useLoaderData<typeof loader>();
 
+  data.projects.slice(0, 5).forEach((project) => {
+    prefetchDNS(builderUrl({ projectId: project.id, origin: data.origin }));
+  });
+  data.projects.slice(0, 5).forEach((project) => {
+    preconnect(builderUrl({ projectId: project.id, origin: data.origin }));
+  });
+
   return (
-    <>
-      {data.projects.slice(0, 5).map((project) => {
-        prefetchDNS(builderUrl({ projectId: project.id, origin: data.origin }));
-      })}
-      {data.projects.slice(0, 5).map((project) => {
-        preconnect(builderUrl({ projectId: project.id, origin: data.origin }));
-      })}
-      <ClientOnly>
-        <Dashboard {...data} />
-      </ClientOnly>
-    </>
+    <ClientOnly>
+      <Dashboard {...data} />
+    </ClientOnly>
   );
 };
 
