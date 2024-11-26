@@ -23,13 +23,18 @@ import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { HtmlTags } from "html-tags";
-import { $selectedInstanceSelector } from "./instances";
+import { $instances, $selectedInstanceSelector } from "./instances";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
 import { $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
+import {
+  editableBlockComponent,
+  editableBlockTemplateComponent,
+} from "@webstudio-is/react-sdk";
+import { shallowEqual } from "shallow-equal";
 
 export const $project = atom<Project | undefined>();
 
@@ -327,11 +332,178 @@ export const $isDesignMode = computed(
   (mode) => mode === "design"
 );
 
+/**
+ * Selector for the editable block instance:
+ * - If a new or first child is being added, this is the selector for the editable block.
+ * - Otherwise, it is the selector for the previous child instance, used to determine the position of the new child.
+ **/
 export const $newEditableChildAnchor = atom<InstanceSelector | undefined>(
   undefined
 );
 
+export const $newEditableChildTemplateInstanceId = atom<string | undefined>(
+  undefined
+);
+
+/**
+ * $newEditableChildTemplateInstanceId is used to force re-render on all deps of the $newEditableBlockInstanceSelector
+ * when the template instance changes
+ */
+export const $newEditableBlockInstanceSelector = computed(
+  [$newEditableChildAnchor, $instances, $newEditableChildTemplateInstanceId],
+  (anchor, instances) => {
+    if (anchor === undefined) {
+      return;
+    }
+
+    if (anchor.length === 0) {
+      return undefined;
+    }
+
+    let editableBlockInstanceSelector: InstanceSelector | undefined = undefined;
+
+    for (let i = 0; i < anchor.length; ++i) {
+      const instanceId = anchor[i];
+
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return;
+      }
+
+      if (instance.component === editableBlockComponent) {
+        editableBlockInstanceSelector = anchor.slice(i);
+        break;
+      }
+    }
+
+    if (editableBlockInstanceSelector === undefined) {
+      toast.error("Editable block not found");
+      return;
+    }
+
+    return editableBlockInstanceSelector;
+  }
+);
+
+/**
+ * Synced from canvas to the builder
+ */
 export const $newEditableChildRect = atom<DOMRect | undefined>(undefined);
+
+export const $newEditableChildBlockTemplates = computed(
+  [$newEditableBlockInstanceSelector, $instances],
+  (editableBlockInstanceSelector, instances) => {
+    if (editableBlockInstanceSelector === undefined) {
+      return;
+    }
+
+    const editableBlockInstance = instances.get(
+      editableBlockInstanceSelector[0]
+    )!;
+
+    const editableTemplateInstanceId = editableBlockInstance.children.find(
+      (child) =>
+        child.type === "id" &&
+        instances.get(child.value)?.component === editableBlockTemplateComponent
+    )?.value;
+
+    if (editableTemplateInstanceId === undefined) {
+      toast.error("Editable block template not found");
+      return;
+    }
+
+    const templateChildren = instances
+      .get(editableTemplateInstanceId)
+      ?.children?.filter((child) => child.type === "id");
+
+    if (templateChildren === undefined) {
+      toast.error("Editable block template children not found");
+      return;
+    }
+
+    const templates = templateChildren
+      .map((child) => instances.get(child.value))
+      .filter((value) => value !== undefined);
+
+    return templates;
+  }
+);
+
+export const getChildrenPreview = () => {
+  const newEditableChildBlockTemplates = $newEditableChildBlockTemplates.get();
+  if (newEditableChildBlockTemplates === undefined) {
+    return;
+  }
+
+  const newEditableBlockInstanceSelector =
+    $newEditableBlockInstanceSelector.get();
+
+  if (newEditableBlockInstanceSelector === undefined) {
+    return;
+  }
+
+  const newEditableChildAnchor = $newEditableChildAnchor.get();
+
+  if (newEditableChildAnchor === undefined) {
+    return;
+  }
+
+  const instances = $instances.get();
+
+  const editableBlockInstance = instances.get(
+    newEditableBlockInstanceSelector[0]
+  );
+
+  if (editableBlockInstance === undefined) {
+    return;
+  }
+
+  // Let's initial will be immediately after the template block
+  const insertAtInitialPosition = shallowEqual(
+    newEditableChildAnchor,
+    newEditableBlockInstanceSelector
+  );
+
+  const index = editableBlockInstance.children.findIndex((child) => {
+    if (child.type !== "id") {
+      return false;
+    }
+
+    if (insertAtInitialPosition) {
+      return (
+        instances.get(child.value)?.component === editableBlockTemplateComponent
+      );
+    }
+
+    return child.value === newEditableChildAnchor[0];
+  });
+
+  if (index === -1) {
+    return;
+  }
+
+  let templateInstanceId = $newEditableChildTemplateInstanceId.get();
+
+  if (templateInstanceId === undefined) {
+    templateInstanceId = newEditableChildBlockTemplates[0]?.id;
+  }
+
+  if (templateInstanceId === undefined) {
+    return;
+  }
+
+  const children: (
+    | Instance["children"][0]
+    | { type: "new-editable-content-id"; value: string }
+  )[] = [...editableBlockInstance.children];
+
+  children.splice(index, 0, {
+    type: "new-editable-content-id",
+    value: templateInstanceId,
+  });
+
+  return children;
+};
 
 export const $authPermit = atom<AuthPermit>("view");
 export const $authTokenPermissions = atom<TokenPermissions>({

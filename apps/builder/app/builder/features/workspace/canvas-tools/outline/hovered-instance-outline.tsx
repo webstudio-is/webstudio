@@ -25,6 +25,7 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
   const editableBlockChildOutline = useStore($editableBlockChildOutline);
   const scale = useStore($scale);
   const isContentMode = useStore($isContentMode);
+  const newEditableChildAnchor = useStore($newEditableChildAnchor);
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
     undefined
   );
@@ -46,6 +47,10 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
     return;
   }
 
+  if (newEditableChildAnchor !== undefined) {
+    return;
+  }
+
   const rect = applyScale(outline.rect, scale);
 
   return (
@@ -61,6 +66,8 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
             // mr: theme.spacing[12],
           }}
           onClick={() => {
+            // $editableBlockChildOutline.set(undefined);
+            // setButtonOutline(undefined);
             $newEditableChildAnchor.set(outline.selector);
           }}
           onMouseEnter={() => {

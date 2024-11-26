@@ -1,11 +1,15 @@
 import {
   Fragment,
+  useEffect,
+  useRef,
   type ForwardRefExoticComponent,
   type RefAttributes,
+  type RefObject,
 } from "react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { $newEditableChildRect } from "~/shared/nano-states";
 
 export type WebstudioComponentProps = {
   instance: Instance;
@@ -19,6 +23,7 @@ export const createInstanceElement = ({
   instanceSelector,
   Component,
   components,
+  ref,
 }: {
   instances: Instances;
   instanceId: Instance["id"];
@@ -27,6 +32,7 @@ export const createInstanceElement = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  ref?: RefObject<HTMLElement>;
 }) => {
   const instance = instances.get(instanceId);
   if (instance === undefined) {
@@ -34,6 +40,7 @@ export const createInstanceElement = ({
   }
   return (
     <Component
+      ref={ref}
       key={instance.id}
       instance={instance}
       instanceSelector={instanceSelector}
@@ -52,6 +59,30 @@ const renderText = (text: string): Array<JSX.Element> => {
   ));
 };
 
+const PositionNotifier = (props: {
+  children: (ref: RefObject<HTMLElement>) => JSX.Element | null;
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (ref.current == null) {
+      return;
+    }
+
+    // Remove collapsed from all parents, can occur when you add new node into empty parent
+    let parent = ref.current;
+    while (parent.parentElement) {
+      parent = parent.parentElement;
+      parent.removeAttribute("data-ws-collapsed");
+    }
+
+    const rect = ref.current.getBoundingClientRect();
+
+    $newEditableChildRect.set(rect);
+  }, []);
+
+  return props.children(ref);
+};
+
 export const createInstanceChildrenElements = ({
   instances,
   instanceSelector,
@@ -61,7 +92,10 @@ export const createInstanceChildrenElements = ({
 }: {
   instances: Instances;
   instanceSelector: InstanceSelector;
-  children: Instance["children"];
+  children: (
+    | Instance["children"][0]
+    | { type: "new-editable-content-id"; value: string }
+  )[];
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
@@ -83,6 +117,24 @@ export const createInstanceChildrenElements = ({
         components,
       });
     }
+
+    if (child.type === "new-editable-content-id") {
+      return (
+        <PositionNotifier key="new-editable-content-id">
+          {(ref) =>
+            createInstanceElement({
+              instances,
+              instanceId: child.value,
+              instanceSelector: [child.value, ...instanceSelector],
+              Component,
+              components,
+              ref,
+            })
+          }
+        </PositionNotifier>
+      );
+    }
+
     child satisfies never;
   });
   // let empty children be coalesced with fallback

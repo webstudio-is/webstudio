@@ -35,6 +35,7 @@ import {
   $detectedFontsWeights,
   $builderMode,
   $newEditableChildAnchor,
+  $newEditableChildTemplateInstanceId,
   $selectedBreakpointId,
   $textEditingInstanceSelector,
   $isResizingCanvas,
@@ -119,6 +120,10 @@ const createObjectPool = () => {
       $newEditableChildAnchor
     ),
     new NanostoresSyncObject("newEditableChildRect", $newEditableChildRect),
+    new NanostoresSyncObject(
+      "newEditableChildTemplateInstanceId",
+      $newEditableChildTemplateInstanceId
+    ),
 
     new NanostoresSyncObject("authTokenPermissions", $authTokenPermissions),
     new NanostoresSyncObject("toastErrors", $toastErrors),
