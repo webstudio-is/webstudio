@@ -16,5 +16,5 @@ export const EditableBlockTemplate = React.forwardRef<
     return <></>;
   }
 
-  return <div ref={ref} {...props} />;
+  return <div style={{ display: "contents" }} ref={ref} {...props} />;
 }) as AnyComponent;

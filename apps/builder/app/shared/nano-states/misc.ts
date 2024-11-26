@@ -464,7 +464,7 @@ export const getChildrenPreview = () => {
     newEditableBlockInstanceSelector
   );
 
-  const index = editableBlockInstance.children.findIndex((child) => {
+  let index = editableBlockInstance.children.findIndex((child) => {
     if (child.type !== "id") {
       return false;
     }
@@ -481,6 +481,7 @@ export const getChildrenPreview = () => {
   if (index === -1) {
     return;
   }
+  index += 1;
 
   let templateInstanceId = $newEditableChildTemplateInstanceId.get();
 

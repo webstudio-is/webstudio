@@ -119,6 +119,7 @@ export const EditableBlockChildMenu = () => {
       onClose={() => {
         $newEditableChildRect.set(undefined);
         $newEditableChildAnchor.set(undefined);
+        // force recalc of collapsed state
       }}
     />
   );

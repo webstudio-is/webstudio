@@ -68,6 +68,7 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
           onClick={() => {
             // $editableBlockChildOutline.set(undefined);
             // setButtonOutline(undefined);
+            setButtonOutline(undefined);
             $newEditableChildAnchor.set(outline.selector);
           }}
           onMouseEnter={() => {

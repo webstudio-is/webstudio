@@ -10,6 +10,7 @@ import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $newEditableChildRect } from "~/shared/nano-states";
+import { setDataCollapsed } from "./collapsed";
 
 export type WebstudioComponentProps = {
   instance: Instance;
@@ -60,6 +61,7 @@ const renderText = (text: string): Array<JSX.Element> => {
 };
 
 const PositionNotifier = (props: {
+  parentInstanceId: string;
   children: (ref: RefObject<HTMLElement>) => JSX.Element | null;
 }) => {
   const ref = useRef<HTMLElement>(null);
@@ -68,7 +70,7 @@ const PositionNotifier = (props: {
       return;
     }
 
-    // Remove collapsed from all parents, can occur when you add new node into empty parent
+    // Remove collapsed from all parents, it prevents right rect detection
     let parent = ref.current;
     while (parent.parentElement) {
       parent = parent.parentElement;
@@ -78,7 +80,12 @@ const PositionNotifier = (props: {
     const rect = ref.current.getBoundingClientRect();
 
     $newEditableChildRect.set(rect);
-  }, []);
+
+    return () => {
+      // Restore collapsed state
+      setDataCollapsed(props.parentInstanceId);
+    };
+  }, [props.parentInstanceId]);
 
   return props.children(ref);
 };
@@ -120,7 +127,10 @@ export const createInstanceChildrenElements = ({
 
     if (child.type === "new-editable-content-id") {
       return (
-        <PositionNotifier key="new-editable-content-id">
+        <PositionNotifier
+          key="new-editable-content-id"
+          parentInstanceId={instanceSelector[0]}
+        >
           {(ref) =>
             createInstanceElement({
               instances,
