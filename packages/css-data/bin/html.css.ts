@@ -11,8 +11,8 @@ for (const styleDecl of parsed) {
 let code = "";
 code += `import type { HtmlTags } from "html-tags";\n`;
 code += `import type { StyleValue } from "@webstudio-is/css-engine";\n\n`;
-const map = "new Map<`${HtmlTags}:${string}`, StyleValue>";
-code += `export const html = ${map}(${JSON.stringify(result)})`;
+const type = "Map<`${HtmlTags}:${string}`, StyleValue>";
+code += `export const html: ${type} = new Map(${JSON.stringify(result)})`;
 
 mkdirSync("./src/__generated__", { recursive: true });
 writeFileSync("./src/__generated__/html.ts", code);

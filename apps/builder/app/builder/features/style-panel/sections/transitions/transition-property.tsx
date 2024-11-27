@@ -2,11 +2,7 @@ import { useState, useEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
-import {
-  animatableProperties,
-  commonTransitionProperties,
-  isAnimatableProperty,
-} from "@webstudio-is/css-data";
+import { animatableProperties } from "@webstudio-is/css-data";
 import {
   InputField,
   ComboboxRoot,
@@ -29,6 +25,32 @@ import {
 } from "@webstudio-is/css-engine";
 import { setUnion } from "~/shared/shim";
 import { $definedStyles } from "../../shared/model";
+
+type AnimatableProperty = (typeof animatableProperties)[number];
+
+const commonTransitionProperties = [
+  "all",
+  "opacity",
+  "margin",
+  "padding",
+  "border",
+  "transform",
+  "filter",
+  "flex",
+  "background-color",
+];
+
+const isAnimatableProperty = (
+  property: string
+): property is AnimatableProperty => {
+  if (property === "all") {
+    return true;
+  }
+
+  return [...commonTransitionProperties, ...animatableProperties].some(
+    (item) => item === property
+  );
+};
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
