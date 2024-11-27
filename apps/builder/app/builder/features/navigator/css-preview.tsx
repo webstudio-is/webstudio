@@ -32,7 +32,6 @@ const getCssText = (
   instanceId: string
 ) => {
   const sourceStyles: StyleMap = new Map();
-  const inheritedStyles: StyleMap = new Map();
   const cascadedStyles: StyleMap = new Map();
   const presetStyles: StyleMap = new Map();
 
@@ -55,8 +54,6 @@ const getCssText = (
     if (group) {
       if (styleDecl.source.instanceId === instanceId) {
         group.set(property, styleDecl.cascadedValue);
-      } else {
-        inheritedStyles.set(property, styleDecl.cascadedValue);
       }
     }
   }
@@ -73,7 +70,6 @@ const getCssText = (
 
   add("Style Sources", sourceStyles);
   add("Cascaded", cascadedStyles);
-  add("Inherited", inheritedStyles);
   add("Preset", presetStyles);
 
   return result.join("\n");
