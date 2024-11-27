@@ -328,7 +328,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {/*isDesignMode && isInitialized && <DesignMode />*/}
+      {isDesignMode && isInitialized && <DesignMode />}
       {isContentMode && isInitialized && <ContentEditMode />}
     </>
   );
