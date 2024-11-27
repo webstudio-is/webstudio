@@ -19,8 +19,7 @@ import { ResizeHandles } from "./resize-handles";
 import { MediaBadge } from "./media-badge";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
-import { EditableBlockChildHoveredInstanceOutline } from "./outline/hovered-instance-outline";
-import { EditableBlockChildMenu } from "./editable-block";
+import { EditableBlockChildHoveredInstanceOutline } from "./outline/editable-block-instance-outline";
 
 const containerStyle = css({
   position: "absolute",
@@ -78,7 +77,6 @@ export const CanvasTools = () => {
           <TextToolbar />
 
           <EditableBlockChildHoveredInstanceOutline />
-          <EditableBlockChildMenu />
         </>
       )}
     </>

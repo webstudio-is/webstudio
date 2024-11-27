@@ -23,18 +23,13 @@ import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { HtmlTags } from "html-tags";
-import { $instances, $selectedInstanceSelector } from "./instances";
+import { $selectedInstanceSelector } from "./instances";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
 import { $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
-import {
-  editableBlockComponent,
-  editableBlockTemplateComponent,
-} from "@webstudio-is/react-sdk";
-import { shallowEqual } from "shallow-equal";
 
 export const $project = atom<Project | undefined>();
 
@@ -337,18 +332,23 @@ export const $isDesignMode = computed(
  * - If a new or first child is being added, this is the selector for the editable block.
  * - Otherwise, it is the selector for the previous child instance, used to determine the position of the new child.
  **/
+/*
 export const $newEditableChildAnchor = atom<InstanceSelector | undefined>(
   undefined
 );
+*/
 
+/*
 export const $newEditableChildTemplateInstanceId = atom<string | undefined>(
   undefined
 );
+*/
 
 /**
  * $newEditableChildTemplateInstanceId is used to force re-render on all deps of the $newEditableBlockInstanceSelector
  * when the template instance changes
  */
+/*
 export const $newEditableBlockInstanceSelector = computed(
   [$newEditableChildAnchor, $instances, $newEditableChildTemplateInstanceId],
   (anchor, instances) => {
@@ -384,12 +384,14 @@ export const $newEditableBlockInstanceSelector = computed(
     return editableBlockInstanceSelector;
   }
 );
+*/
 
 /**
  * Synced from canvas to the builder
  */
-export const $newEditableChildRect = atom<DOMRect | undefined>(undefined);
+// export const $newEditableChildRect = atom<DOMRect | undefined>(undefined);
 
+/*
 export const $newEditableChildBlockTemplates = computed(
   [$newEditableBlockInstanceSelector, $instances],
   (editableBlockInstanceSelector, instances) => {
@@ -428,7 +430,8 @@ export const $newEditableChildBlockTemplates = computed(
     return templates;
   }
 );
-
+*/
+/*
 export const getChildrenPreview = () => {
   const newEditableChildBlockTemplates = $newEditableChildBlockTemplates.get();
   if (newEditableChildBlockTemplates === undefined) {
@@ -505,6 +508,7 @@ export const getChildrenPreview = () => {
 
   return children;
 };
+*/
 
 export const $authPermit = atom<AuthPermit>("view");
 export const $authTokenPermissions = atom<TokenPermissions>({

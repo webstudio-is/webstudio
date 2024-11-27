@@ -1,7 +1,5 @@
 import {
   Fragment,
-  useEffect,
-  useRef,
   type ForwardRefExoticComponent,
   type RefAttributes,
   type RefObject,
@@ -9,8 +7,6 @@ import {
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { $newEditableChildRect } from "~/shared/nano-states";
-import { setDataCollapsed } from "./collapsed";
 
 export type WebstudioComponentProps = {
   instance: Instance;
@@ -60,36 +56,6 @@ const renderText = (text: string): Array<JSX.Element> => {
   ));
 };
 
-const PositionNotifier = (props: {
-  parentInstanceId: string;
-  children: (ref: RefObject<HTMLElement>) => JSX.Element | null;
-}) => {
-  const ref = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (ref.current == null) {
-      return;
-    }
-
-    // Remove collapsed from all parents, it prevents right rect detection
-    let parent = ref.current;
-    while (parent.parentElement) {
-      parent = parent.parentElement;
-      parent.removeAttribute("data-ws-collapsed");
-    }
-
-    const rect = ref.current.getBoundingClientRect();
-
-    $newEditableChildRect.set(rect);
-
-    return () => {
-      // Restore collapsed state
-      setDataCollapsed(props.parentInstanceId);
-    };
-  }, [props.parentInstanceId]);
-
-  return props.children(ref);
-};
-
 export const createInstanceChildrenElements = ({
   instances,
   instanceSelector,
@@ -99,10 +65,7 @@ export const createInstanceChildrenElements = ({
 }: {
   instances: Instances;
   instanceSelector: InstanceSelector;
-  children: (
-    | Instance["children"][0]
-    | { type: "new-editable-content-id"; value: string }
-  )[];
+  children: Instance["children"][0][];
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
@@ -123,26 +86,6 @@ export const createInstanceChildrenElements = ({
         Component,
         components,
       });
-    }
-
-    if (child.type === "new-editable-content-id") {
-      return (
-        <PositionNotifier
-          key="new-editable-content-id"
-          parentInstanceId={instanceSelector[0]}
-        >
-          {(ref) =>
-            createInstanceElement({
-              instances,
-              instanceId: child.value,
-              instanceSelector: [child.value, ...instanceSelector],
-              Component,
-              components,
-              ref,
-            })
-          }
-        </PositionNotifier>
-      );
     }
 
     child satisfies never;

@@ -34,8 +34,6 @@ import {
   $memoryProps,
   $detectedFontsWeights,
   $builderMode,
-  $newEditableChildAnchor,
-  $newEditableChildTemplateInstanceId,
   $selectedBreakpointId,
   $textEditingInstanceSelector,
   $isResizingCanvas,
@@ -47,7 +45,6 @@ import {
   $textToolbar,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
-  $newEditableChildRect,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $awareness } from "../awareness";
@@ -115,16 +112,6 @@ const createObjectPool = () => {
       $hoveredInstanceSelector
     ),
     new NanostoresSyncObject("builderMode", $builderMode),
-    new NanostoresSyncObject(
-      "previousOrParentSelectorOfNewEditorBlockChild",
-      $newEditableChildAnchor
-    ),
-    new NanostoresSyncObject("newEditableChildRect", $newEditableChildRect),
-    new NanostoresSyncObject(
-      "newEditableChildTemplateInstanceId",
-      $newEditableChildTemplateInstanceId
-    ),
-
     new NanostoresSyncObject("authTokenPermissions", $authTokenPermissions),
     new NanostoresSyncObject("toastErrors", $toastErrors),
     new NanostoresSyncObject("selectedStyleSources", $selectedStyleSources),

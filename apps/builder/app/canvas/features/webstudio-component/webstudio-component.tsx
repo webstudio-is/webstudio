@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { $getSelection, $isRangeSelection } from "lexical";
-import { computed, type ReadableAtom } from "nanostores";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRefs } from "@react-aria/utils";
@@ -36,8 +36,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
-  getChildrenPreview,
-  $newEditableBlockInstanceSelector,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -346,17 +344,6 @@ const getTextContent = (instanceProps: Record<string, unknown>) => {
   return value as ReactNode;
 };
 
-const useStoreSelector = <T, R>(
-  atom: ReadableAtom<T>,
-  selector: (value: T) => R,
-  selectordeps: Array<unknown>
-): R => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const store = useMemo(() => computed(atom, selector), selectordeps);
-  const result = useStore(store);
-  return result;
-};
-
 export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
@@ -369,28 +356,12 @@ export const WebstudioComponentCanvas = forwardRef<
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
 
-  const instancePreviewChildren = useStoreSelector(
-    $newEditableBlockInstanceSelector,
-    (newEditableBlockInstanceSelector) => {
-      if (newEditableBlockInstanceSelector === undefined) {
-        return;
-      }
-
-      if (newEditableBlockInstanceSelector[0] === instanceId) {
-        return getChildrenPreview();
-      }
-    },
-    [instanceId]
-  );
-
-  const instanceChildren = instancePreviewChildren ?? instance.children;
-
   const children =
     getTextContent(instanceProps) ??
     createInstanceChildrenElements({
       instances,
       instanceSelector,
-      children: instanceChildren,
+      children: instance.children,
       Component: WebstudioComponentCanvas,
       components,
     });
