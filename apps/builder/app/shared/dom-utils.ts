@@ -133,7 +133,10 @@ const sumRects = (first: Rect, second: Rect) => {
   };
 };
 
-export const getAllElementsBoundingBox = (elements: Element[]): DOMRect => {
+export const getAllElementsBoundingBox = (
+  elements: Element[],
+  depth: number = 0
+): DOMRect => {
   const rects: Rect[] = [];
 
   if (elements.length === 0) {
@@ -151,30 +154,51 @@ export const getAllElementsBoundingBox = (elements: Element[]): DOMRect => {
 
     if (element.children.length === 0) {
       const textNode = element.firstChild;
-      if (textNode?.nodeType !== Node.TEXT_NODE) {
+
+      if (textNode?.nodeType === Node.TEXT_NODE) {
+        // Create a range object
+        const range = document.createRange();
+        // Set the range to encompass the text node
+        range.selectNodeContents(textNode);
+        // Get the bounding rectangle
+        const rect = range.getBoundingClientRect();
+
+        if (rect.width !== 0 || rect.height !== 0) {
+          rects.push(rect);
+          range.detach();
+          continue;
+        }
+        range.detach();
+      }
+    }
+
+    if (element.children.length > 0) {
+      const childRect = getAllElementsBoundingBox(
+        [...element.children],
+        depth + 1
+      );
+      if (childRect.width !== 0 || childRect.height !== 0) {
+        const { top, right, bottom, left } = childRect;
+        rects.push({ top, right, bottom, left });
         continue;
       }
+    }
 
-      // Create a range object
-      const range = document.createRange();
-      // Set the range to encompass the text node
-      range.selectNodeContents(textNode);
-      // Get the bounding rectangle
-      const rect = range.getBoundingClientRect();
-
-      if (rect.width !== 0 || rect.height !== 0) {
-        rects.push(rect);
-      }
-
-      range.detach();
-
+    if (depth > 0) {
       continue;
     }
 
-    const childRect = getAllElementsBoundingBox([...element.children]);
-    if (childRect.width !== 0 || childRect.height !== 0) {
-      const { top, right, bottom, left } = childRect;
+    // We here, let's try ancestor size
+    const parentElement = element.parentElement;
+    if (parentElement === null) {
+      continue;
+    }
+    const parentRect = getAllElementsBoundingBox([parentElement]);
+
+    if (parentRect.width !== 0 || parentRect.height !== 0) {
+      const { top, right, bottom, left } = parentRect;
       rects.push({ top, right, bottom, left });
+      continue;
     }
   }
 

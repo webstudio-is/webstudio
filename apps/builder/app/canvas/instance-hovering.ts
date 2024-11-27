@@ -3,6 +3,7 @@ import {
   $editableBlockChildOutline,
   $hoveredInstanceSelector,
   $instances,
+  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   findEditableBlockChildSelector,
 } from "~/shared/nano-states";
@@ -204,9 +205,21 @@ export const subscribeInstanceHovering = ({
     }
   );
 
+  // selected instance selection can change hovered instance outlines (example EditableBlock/Template/Child)
+  const usubscribeSelectedInstanceSelector =
+    $selectedInstanceSelector.subscribe(() => {
+      const instanceSelector = $hoveredInstanceSelector.get();
+      if (instanceSelector) {
+        updateHoveredRect(instanceSelector);
+      } else {
+        $hoveredInstanceOutline.set(undefined);
+      }
+    });
+
   signal.addEventListener("abort", () => {
     unsubscribeScrollState();
     clearTimeout(mouseOutTimeoutId);
     unsubscribeHoveredInstanceId();
+    usubscribeSelectedInstanceSelector();
   });
 };
