@@ -33,7 +33,7 @@ export const NavigatorPanel = ({ onClose }: { onClose: () => void }) => {
       <Flex grow direction="column" justify="end">
         <NavigatorTree />
         <Separator />
-        {isDesignMode && <CssPreview />}
+        {/*isDesignMode && <CssPreview />*/}
       </Flex>
     </>
   );
