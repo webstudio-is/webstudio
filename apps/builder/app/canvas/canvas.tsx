@@ -129,9 +129,7 @@ const useElementsTree = (
           instances,
           instanceId: rootInstanceId,
           instanceSelector: [rootInstanceId],
-          Component: isPreviewMode
-            ? WebstudioComponentPreview
-            : WebstudioComponentCanvas,
+          Component: WebstudioComponentPreview,
           components,
         })}
       </ReactSdkContext.Provider>
