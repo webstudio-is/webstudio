@@ -25,16 +25,25 @@ import { $scale } from "~/builder/shared/nano-states";
 import { BoxIcon, PlusIcon } from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import type { InstanceSelector } from "~/shared/tree-utils";
-import type { Instance } from "@webstudio-is/sdk";
+import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import {
   editableBlockComponent,
   editableBlockTemplateComponent,
 } from "@webstudio-is/react-sdk";
+import {
+  extractWebstudioFragment,
+  findAvailableDataSources,
+  getWebstudioData,
+  insertInstanceChildrenMutable,
+  insertWebstudioFragmentCopy,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
+import { shallowEqual } from "shallow-equal";
 
 const findEditableBlockSelector = (
   anchor: InstanceSelector,
-  instances: Map<string, Instance>
+  instances: Instances
 ) => {
   if (anchor === undefined) {
     return;
@@ -67,10 +76,7 @@ const findEditableBlockSelector = (
   return editableBlockInstanceSelector;
 };
 
-const findTemplates = (
-  anchor: InstanceSelector,
-  instances: Map<string, Instance>
-) => {
+const findTemplates = (anchor: InstanceSelector, instances: Instances) => {
   const editableBlockInstanceSelector = findEditableBlockSelector(
     anchor,
     instances
@@ -105,11 +111,55 @@ const findTemplates = (
     return;
   }
 
-  return templateInstance.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value)
-    .map((childId) => instances.get(childId))
-    .filter((child) => child !== undefined);
+  const result: [instance: Instance, instanceSelector: InstanceSelector][] =
+    templateInstance.children
+      .filter((child) => child.type === "id")
+      .map((child) => child.value)
+      .map((childId) => instances.get(childId))
+      .filter((child) => child !== undefined)
+      .map((child) => [
+        child,
+        [child.id, templateInstanceId, ...editableBlockInstanceSelector],
+      ]);
+
+  return result;
+};
+
+const getInsertionIndex = (anchor: InstanceSelector, instances: Instances) => {
+  const editableBlockSelector = findEditableBlockSelector(anchor, instances);
+  if (editableBlockSelector === undefined) {
+    return;
+  }
+
+  const insertAtInitialPosition = shallowEqual(editableBlockSelector, anchor);
+
+  const editableBlockInstance = instances.get(editableBlockSelector[0]);
+
+  if (editableBlockInstance === undefined) {
+    toast.error("Editable block instance not found");
+    return;
+  }
+
+  let index = editableBlockInstance.children.findIndex((child) => {
+    if (child.type !== "id") {
+      return false;
+    }
+
+    if (insertAtInitialPosition) {
+      return (
+        instances.get(child.value)?.component === editableBlockTemplateComponent
+      );
+    }
+
+    return child.value === anchor[0];
+  });
+
+  if (index === -1) {
+    return;
+  }
+  index += 1;
+
+  return index;
 };
 
 const TemplatesMenu = ({
@@ -124,10 +174,11 @@ const TemplatesMenu = ({
   const instances = useStore($instances);
   const templates = findTemplates(anchor, instances);
 
-  const menuItems = (templates ?? []).map((template) => ({
+  const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
     icon: <BoxIcon />,
     title: template.label ?? template.component,
+    value: templateSelector,
   }));
 
   return (
@@ -145,12 +196,58 @@ const TemplatesMenu = ({
           loop
         >
           <DropdownMenuRadioGroup
-            onValueChange={(_value) => {
-              // console.log("value", _value);
+            onValueChange={(value) => {
+              const templateSelector = JSON.parse(value) as InstanceSelector;
+              const fragment = extractWebstudioFragment(
+                getWebstudioData(),
+                templateSelector[0]
+              );
+
+              const parentSelector = findEditableBlockSelector(
+                anchor,
+                instances
+              );
+
+              if (parentSelector === undefined) {
+                return;
+              }
+
+              const position = getInsertionIndex(anchor, instances);
+
+              if (position === undefined) {
+                return;
+              }
+
+              const target: DroppableTarget = {
+                parentSelector,
+                position,
+              };
+
+              updateWebstudioData((data) => {
+                const { newInstanceIds } = insertWebstudioFragmentCopy({
+                  data,
+                  fragment,
+                  availableDataSources: findAvailableDataSources(
+                    data.dataSources,
+                    data.instances,
+                    target.parentSelector
+                  ),
+                });
+                const newRootInstanceId = newInstanceIds.get(
+                  fragment.instances[0].id
+                );
+                if (newRootInstanceId === undefined) {
+                  return;
+                }
+                const children: Instance["children"] = [
+                  { type: "id", value: newRootInstanceId },
+                ];
+                insertInstanceChildrenMutable(data, children, target);
+              });
             }}
           >
-            {menuItems.map(({ icon, title, id }) => (
-              <DropdownMenuRadioItem key={id} value={id}>
+            {menuItems?.map(({ icon, title, id, value }) => (
+              <DropdownMenuRadioItem key={id} value={JSON.stringify(value)}>
                 <Flex
                   css={{ py: theme.spacing[4], px: theme.spacing[5] }}
                   gap={2}
