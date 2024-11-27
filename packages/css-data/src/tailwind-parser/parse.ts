@@ -1,7 +1,6 @@
 import { UnoGenerator, createGenerator } from "@unocss/core";
 import { type Theme, presetUno } from "@unocss/preset-uno";
 import warnOnce from "warn-once";
-import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { substituteVariables } from "./substitute";
 import { parseCss, type ParsedStyleDecl } from "../parse-css";
 
@@ -35,7 +34,7 @@ export const parseTailwindToCss = async (
  * Tailwind by default has border-style: solid, but WebStudio doesn't.
  * Provide border-style: solid if border-width is provided.
  **/
-const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
+const postprocessBorder = (styles: Omit<ParsedStyleDecl, "selector">[]) => {
   const borderPairs = [
     ["borderTopWidth", "borderTopStyle"],
     ["borderRightWidth", "borderRightStyle"],

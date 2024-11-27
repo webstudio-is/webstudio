@@ -18,7 +18,6 @@
   "devDependencies": {
     "@types/css-tree": "^2.3.1",
     "@types/node": "^22.9.3",
-    "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "mdn-data": "2.8.0",

@@ -1172,9 +1172,6 @@ importers:
       '@types/node':
         specifier: ^22.9.3
         version: 22.9.3
-      '@webstudio-is/react-sdk':
-        specifier: workspace:*
-        version: link:../react-sdk
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
