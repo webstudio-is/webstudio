@@ -92,8 +92,9 @@ export const EditableBlockChildAddButtonOutline = ({
             height: 0,
             width: 0,
             display: "grid",
-            alignContent: "center",
-            justifyContent: "center",
+
+            alignContent: "start",
+            justifyContent: "end",
 
             justifySelf: "start",
             alignSelf: "start",

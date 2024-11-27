@@ -296,44 +296,57 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
 
   return (
     <EditableBlockChildAddButtonOutline rect={rect}>
-      <TemplatesMenu
-        onOpenChange={(open) => {
-          setIsMenuOpen(open);
-
-          if (!open) {
-            setButtonOutline(undefined);
-          }
+      <Flex
+        css={{
+          width: "min-content",
+          height: "min-content",
+          pointerEvents: isMenuOpen ? "none" : "all",
         }}
-        anchor={outline.selector}
+        onMouseEnter={() => {
+          clearTimeout(timeoutRef.current);
+
+          setButtonOutline(outline);
+        }}
+        onMouseLeave={() => {
+          if (isMenuOpen) {
+            return;
+          }
+
+          clearTimeout(timeoutRef.current);
+
+          timeoutRef.current = setTimeout(() => {
+            setButtonOutline(undefined);
+          }, 100);
+        }}
       >
-        <IconButton
-          variant={"local"}
-          css={{
-            borderStyle: "solid",
-            borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
-            borderRadius: "100%",
-            pointerEvents: isMenuOpen ? "none" : "all",
-          }}
-          onMouseEnter={() => {
-            clearTimeout(timeoutRef.current);
+        <TemplatesMenu
+          onOpenChange={(open) => {
+            setIsMenuOpen(open);
 
-            setButtonOutline(outline);
-          }}
-          onMouseLeave={() => {
-            if (isMenuOpen) {
-              return;
-            }
-
-            clearTimeout(timeoutRef.current);
-
-            timeoutRef.current = setTimeout(() => {
+            if (!open) {
               setButtonOutline(undefined);
-            }, 100);
+            }
           }}
+          anchor={outline.selector}
         >
-          <PlusIcon />
-        </IconButton>
-      </TemplatesMenu>
+          <IconButton
+            variant={"local"}
+            css={{
+              borderStyle: "solid",
+              borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+            }}
+          >
+            <PlusIcon />
+          </IconButton>
+        </TemplatesMenu>
+        <Box
+          css={{
+            width: theme.spacing[4],
+            // For easier hover
+            height: theme.spacing[12],
+          }}
+        ></Box>
+      </Flex>
     </EditableBlockChildAddButtonOutline>
   );
 };
