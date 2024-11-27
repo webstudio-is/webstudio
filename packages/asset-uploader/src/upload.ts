@@ -7,6 +7,7 @@ import type { AssetClient } from "./client";
 import { getUniqueFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
+import type { Asset } from "@webstudio-is/sdk";
 
 type UploadData = {
   projectId: string;
@@ -20,7 +21,7 @@ const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 export const createUploadName = async (
   data: UploadData,
   context: AppContext
-) => {
+): Promise<string> => {
   const { projectId, maxAssetsPerProject, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
@@ -96,7 +97,7 @@ export const uploadFile = async (
   data: ReadableStream<Uint8Array>,
   client: AssetClient,
   context: AppContext
-) => {
+): Promise<Asset> => {
   let file = await context.postgrest.client
     .from("File")
     .select("*")

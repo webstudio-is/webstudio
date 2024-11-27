@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { buffer } from "node:stream/consumers";
-import { getAssetData } from "../../utils/get-asset-data";
+import { type AssetData, getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
 
 export const uploadToFs = async ({
@@ -16,7 +16,7 @@ export const uploadToFs = async ({
   data: AsyncIterable<Uint8Array>;
   maxSize: number;
   fileDirectory: string;
-}) => {
+}): Promise<AssetData> => {
   const filepath = resolve(fileDirectory, name);
 
   await mkdir(dirname(filepath), { recursive: true }).catch(() => {});

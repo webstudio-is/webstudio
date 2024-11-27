@@ -11,7 +11,7 @@ export const deleteAssets = async (
     projectId: string;
   },
   context: AppContext
-) => {
+): Promise<void> => {
   const canDelete = await authorizeProject.hasProjectPermit(
     { projectId: props.projectId, permit: "edit" },
     context

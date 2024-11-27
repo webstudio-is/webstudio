@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
-    "@smithy/signature-v4": "^2.3.0",
+    "@smithy/signature-v4": "^4.2.3",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "fontkit": "^2.0.2",
+    "fontkit": "^2.0.4",
     "image-size": "^1.1.1",
     "immer": "^10.1.1",
     "nanoid": "^5.0.8",
