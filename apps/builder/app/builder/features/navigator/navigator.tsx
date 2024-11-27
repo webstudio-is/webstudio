@@ -31,7 +31,7 @@ export const NavigatorPanel = ({ onClose }: { onClose: () => void }) => {
       </PanelTitle>
       <Separator />
       <Flex grow direction="column" justify="end">
-        {/*<NavigatorTree />*/}
+        <NavigatorTree />
         <Separator />
         {isDesignMode && <CssPreview />}
       </Flex>
