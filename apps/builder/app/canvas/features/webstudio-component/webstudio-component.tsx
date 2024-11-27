@@ -372,7 +372,7 @@ export const WebstudioComponentCanvas = forwardRef<
    */
   const initialContentEditableContent = useRef(children);
 
-  useCollapsedOnNewElement(instanceId);
+  // useCollapsedOnNewElement(instanceId);
 
   // this assumes presence of `useStore($selectedInstanceSelector)` above
   // we rely on root re-rendering after selected instance changes

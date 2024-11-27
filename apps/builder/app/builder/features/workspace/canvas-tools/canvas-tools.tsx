@@ -69,7 +69,7 @@ export const CanvasTools = () => {
     <>
       <MediaBadge />
       <ResizeHandles />
-      {isPreviewMode === false && (
+      {/*isPreviewMode === false && (
         <>
           <SelectedInstanceOutline />
           <HoveredInstanceOutline />
@@ -77,7 +77,7 @@ export const CanvasTools = () => {
           <CollaborativeInstanceOutline />
           <TextToolbar />
         </>
-      )}
+      )*/}
     </>
   );
 };
