@@ -443,6 +443,7 @@ export const WebstudioComponentCanvas = forwardRef<
   const props: {
     [componentAttribute]: string;
     [idAttribute]: string;
+    [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
     ...mergeProps(restProps, instanceProps, "delete"),
     // current props should override bypassed from parent
@@ -527,6 +528,7 @@ export const WebstudioComponentPreview = forwardRef<
     ...mergeProps(restProps, instanceProps, "merge"),
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
+    [selectorIdAttribute]: instanceSelector.join(","),
   };
   if (show === false) {
     return <></>;

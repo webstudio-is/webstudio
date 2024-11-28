@@ -87,6 +87,12 @@ export const findEditableBlockChildSelector = (
       return editableBlockChildSelector;
     }
   }
+
+  if (
+    instances.get(instanceSelector[0])?.component === editableBlockComponent
+  ) {
+    return instanceSelector;
+  }
 };
 
 export const $canvasIframeState = atom<"idle" | "ready">("idle");
