@@ -23,6 +23,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   commands: [
     {
       name: "editInstanceText",
+      hidden: true,
       defaultHotkeys: ["enter"],
       // builder invokes command with custom hotkey setup
       disableHotkeyOutsideApp: true,
@@ -56,6 +57,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "escapeSelection",
+      hidden: true,
       defaultHotkeys: ["escape"],
       // reset selection for canvas, but not for the builder
       disableHotkeyOutsideApp: true,

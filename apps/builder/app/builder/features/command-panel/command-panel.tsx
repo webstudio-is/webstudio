@@ -42,6 +42,8 @@ import { insert as insertComponent } from "~/builder/features/components/insert"
 import { $selectedPage, selectPage } from "~/shared/awareness";
 import { mapGroupBy } from "~/shared/shim";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
+import { $commandMetas } from "~/shared/commands-emitter";
+import { emitCommand } from "~/builder/shared/commands";
 
 const $commandPanel = atom<
   | undefined
@@ -129,7 +131,7 @@ const $componentOptions = computed(
   }
 );
 
-const ComponentGroup = ({ options }: { options: ComponentOption[] }) => {
+const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
   return (
     <CommandGroup
       name="component"
@@ -208,7 +210,11 @@ const getBreakpointLabel = (breakpoint: Breakpoint) => {
   return `${breakpoint.label}: ${label}`;
 };
 
-const BreakpointGroup = ({ options }: { options: BreakpointOption[] }) => {
+const BreakpointOptionsGroup = ({
+  options,
+}: {
+  options: BreakpointOption[];
+}) => {
   return (
     <CommandGroup
       name="breakpoint"
@@ -262,7 +268,7 @@ const $pageOptions = computed(
   }
 );
 
-const PageGroup = ({ options }: { options: PageOption[] }) => {
+const PageOptionsGroup = ({ options }: { options: PageOption[] }) => {
   const action = useSelectedAction();
   return (
     <CommandGroup
@@ -296,12 +302,66 @@ const PageGroup = ({ options }: { options: PageOption[] }) => {
   );
 };
 
+type ShortcutOption = {
+  tokens: string[];
+  type: "shortcut";
+  name: string;
+  label: string;
+  keys: string[];
+};
+
+const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
+  const shortcutOptions: ShortcutOption[] = [];
+  for (const [name, meta] of commandMetas) {
+    if (meta.defaultHotkeys && !meta.hidden) {
+      const label = humanizeString(name);
+      const keys = meta.defaultHotkeys[0]
+        .split("+")
+        .map((key) => (key === "meta" ? "cmd" : key));
+      shortcutOptions.push({
+        tokens: ["shortcuts", "commands", label],
+        type: "shortcut",
+        name,
+        label,
+        keys,
+      });
+    }
+  }
+  return shortcutOptions;
+});
+
+const ShortcutOptionsGroup = ({ options }: { options: ShortcutOption[] }) => {
+  return (
+    <CommandGroup
+      name="shortcut"
+      heading={<CommandGroupHeading>Shortcuts</CommandGroupHeading>}
+      actions={["execute"]}
+    >
+      {options.map(({ name, label, keys }) => (
+        <CommandItem
+          key={name}
+          // preserve selected state when rerender
+          value={name}
+          onSelect={() => {
+            closeCommandPanel();
+            emitCommand(name as never);
+          }}
+        >
+          <Text variant="labelsTitleCase">{label}</Text>
+          <Kbd value={keys} />
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  );
+};
+
 const $options = computed(
-  [$componentOptions, $breakpointOptions, $pageOptions],
-  (componentOptions, breakpointOptions, pageOptions) => [
+  [$componentOptions, $breakpointOptions, $pageOptions, $shortcutOptions],
+  (componentOptions, breakpointOptions, pageOptions, commandOptions) => [
     ...componentOptions,
     ...breakpointOptions,
     ...pageOptions,
+    ...commandOptions,
   ]
 );
 
@@ -309,10 +369,14 @@ const CommandDialogContent = () => {
   const [search, setSearch] = useState("");
   const options = useStore($options);
   let matches = options;
-  for (const word of search.trim().split(/\s+/)) {
-    matches = matchSorter(matches, word, {
-      keys: ["tokens"],
-    });
+  // prevent searching when value is empty
+  // to preserve original items order
+  if (search.trim().length > 0) {
+    for (const word of search.trim().split(/\s+/)) {
+      matches = matchSorter(matches, word, {
+        keys: ["tokens"],
+      });
+    }
   }
   const groups = mapGroupBy(matches, (match) => match.type);
   return (
@@ -324,7 +388,7 @@ const CommandDialogContent = () => {
             {Array.from(groups).map(([group, matches]) => {
               if (group === "component") {
                 return (
-                  <ComponentGroup
+                  <ComponentOptionsGroup
                     key={group}
                     options={matches as ComponentOption[]}
                   />
@@ -332,7 +396,7 @@ const CommandDialogContent = () => {
               }
               if (group === "breakpoint") {
                 return (
-                  <BreakpointGroup
+                  <BreakpointOptionsGroup
                     key={group}
                     options={matches as BreakpointOption[]}
                   />
@@ -340,7 +404,18 @@ const CommandDialogContent = () => {
               }
               if (group === "page") {
                 return (
-                  <PageGroup key={group} options={matches as PageOption[]} />
+                  <PageOptionsGroup
+                    key={group}
+                    options={matches as PageOption[]}
+                  />
+                );
+              }
+              if (group === "shortcut") {
+                return (
+                  <ShortcutOptionsGroup
+                    key={group}
+                    options={matches as ShortcutOption[]}
+                  />
                 );
               }
               group satisfies never;

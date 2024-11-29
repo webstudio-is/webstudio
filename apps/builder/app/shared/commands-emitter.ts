@@ -22,6 +22,10 @@ type CommandMeta<CommandName extends string> = {
    * event behavior is prevented
    **/
   disableHotkeyOnContentEditable?: boolean;
+  /**
+   * hide the command in cmd+k panel
+   */
+  hidden?: boolean;
 };
 
 type CommandHandler = () => void;
@@ -40,7 +44,7 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
 /*
  * expose command metas to synchronize between builder, canvas and plugins
  */
-const $commandMetas = atom(new Map<string, CommandMeta<string>>());
+export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 clientSyncStore.register("commandMetas", $commandMetas);
 
 // Copied from https://github.com/ai/keyux/blob/main/hotkey.js#L1C1-L2C1
