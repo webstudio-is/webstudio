@@ -1,11 +1,19 @@
 import { useCallback, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { styled, type Rect } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  Separator,
+  SmallIconButton,
+  styled,
+  type Rect,
+} from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { EllipsesIcon } from "@webstudio-is/icons";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -40,29 +48,32 @@ const useLabelPosition = (
   return [ref, position];
 };
 
+const backgroundColorVar = `--ws-instance-label-background-color`;
+const height = theme.spacing[10];
+
 const LabelContainer = styled(
   "div",
   {
     position: "absolute",
     display: "flex",
-    padding: `0 ${theme.spacing[3]}`,
-    height: theme.spacing[10],
+    height,
     color: "white",
     alignItems: "center",
     justifyContent: "center",
-    gap: theme.spacing[3],
     fontSize: theme.deprecatedFontSize[3],
     fontFamily: theme.fonts.sans,
     lineHeight: 1,
     minWidth: theme.spacing[13],
     whiteSpace: "nowrap",
+    pointerEvents: "auto",
+    backgroundColor: `var(${backgroundColorVar})`,
   },
   {
     variants: {
       position: {
         top: {
           left: -1,
-          top: `-${theme.spacing[10]}`,
+          top: `-${height}`,
           borderTopLeftRadius: theme.borderRadius[4],
           borderTopRightRadius: theme.borderRadius[4],
         },
@@ -73,17 +84,17 @@ const LabelContainer = styled(
         },
         bottom: {
           left: -1,
-          bottom: `-${theme.spacing[10]}`,
+          bottom: `-${height}`,
           borderBottomLeftRadius: theme.borderRadius[4],
           borderBottomRightRadius: theme.borderRadius[4],
         },
       },
       variant: {
         default: {
-          backgroundColor: theme.colors.backgroundPrimary,
+          [backgroundColorVar]: theme.colors.backgroundPrimary,
         },
         slot: {
-          backgroundColor: theme.colors.foregroundReusable,
+          [backgroundColorVar]: theme.colors.foregroundReusable,
         },
       },
     },
@@ -108,8 +119,27 @@ export const Label = ({ instance, instanceRect, variant }: LabelProps) => {
 
   return (
     <LabelContainer position={position} variant={variant} ref={labelRef}>
-      <MetaIcon size="1em" icon={meta.icon} />
-      {getInstanceLabel(instance, meta)}
+      <Flex gap="1" css={{ px: theme.spacing[3] }}>
+        <MetaIcon size="1em" icon={meta.icon} />
+        {getInstanceLabel(instance, meta)}
+      </Flex>
+      <SmallIconButton
+        css={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "currentColor",
+          height: height,
+          width: height,
+          borderRadius: theme.borderRadius[4],
+          background: `var(${backgroundColorVar})`,
+          "&:hover, &[data-state=open]": {
+            color: "currentColor",
+            backgroundColor: `oklch(from var(${backgroundColorVar}) 53% c h)`,
+          },
+        }}
+        icon={<EllipsesIcon size="1em" />}
+      ></SmallIconButton>
     </LabelContainer>
   );
 };
