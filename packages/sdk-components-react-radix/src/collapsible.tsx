@@ -7,11 +7,7 @@ import {
   type RefAttributes,
 } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
-import {
-  type Hook,
-  getClosestInstance,
-  getInstanceSelectorById,
-} from "@webstudio-is/react-sdk/runtime";
+import { type Hook, getClosestInstance } from "@webstudio-is/react-sdk/runtime";
 
 export const Collapsible: ForwardRefExoticComponent<
   Omit<ComponentProps<typeof Root>, "defaultOpen" | "asChild"> &
@@ -58,11 +54,7 @@ export const hooksCollapsible: Hook = {
           `${namespace}:Collapsible`
         );
         if (collapsible) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            collapsible.id
-          );
-          context.setMemoryProp(instanceSelector, "open", true);
+          context.setMemoryProp(collapsible, "open", true);
         }
       }
     }

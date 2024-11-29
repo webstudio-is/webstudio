@@ -15,7 +15,6 @@ import {
 import {
   getClosestInstance,
   getIndexWithinAncestorFromComponentProps,
-  getInstanceSelectorById,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
 
@@ -75,15 +74,11 @@ export const hooksAccordion: Hook = {
         );
         if (accordion && item) {
           const itemValue =
-            context.getPropValue(item.id, "value") ??
+            context.getPropValue(item, "value") ??
             context.indexesWithinAncestors.get(item.id)?.toString();
 
           if (itemValue) {
-            const instanceSelector = getInstanceSelectorById(
-              event.instanceSelector,
-              accordion.id
-            );
-            context.setMemoryProp(instanceSelector, "value", itemValue);
+            context.setMemoryProp(accordion, "value", itemValue);
           }
         }
       }

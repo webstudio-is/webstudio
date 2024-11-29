@@ -46,7 +46,11 @@ import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
 import { TextEditor } from "../text-editor";
-import { $selectedPage, selectInstance } from "~/shared/awareness";
+import {
+  $selectedPage,
+  getInstanceKey,
+  selectInstance,
+} from "~/shared/awareness";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
@@ -250,7 +254,7 @@ const $indexesWithinAncestors = computed(
 );
 
 const useInstanceProps = (instanceSelector: InstanceSelector) => {
-  const instanceSelectorKey = JSON.stringify(instanceSelector);
+  const instanceKey = getInstanceKey(instanceSelector);
   const [instanceId] = instanceSelector;
   const $instancePropsObject = useMemo(() => {
     return computed(
@@ -261,8 +265,7 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
         if (index !== undefined) {
           instancePropsObject[indexAttribute] = index.toString();
         }
-        const instanceProps =
-          propValuesByInstanceSelector.get(instanceSelectorKey);
+        const instanceProps = propValuesByInstanceSelector.get(instanceKey);
         if (instanceProps) {
           for (const [name, value] of instanceProps) {
             instancePropsObject[name] = value;
@@ -271,7 +274,7 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
         return instancePropsObject;
       }
     );
-  }, [instanceSelectorKey, instanceId]);
+  }, [instanceKey, instanceId]);
   const instancePropsObject = useStore($instancePropsObject);
   return instancePropsObject;
 };

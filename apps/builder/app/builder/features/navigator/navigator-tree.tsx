@@ -57,7 +57,11 @@ import {
 } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import { $selectedPage, selectInstance } from "~/shared/awareness";
+import {
+  $selectedPage,
+  getInstanceKey,
+  selectInstance,
+} from "~/shared/awareness";
 
 type TreeItem = {
   level: number;
@@ -112,7 +116,7 @@ const $flatTree = computed(
         return;
       }
       const propValues = propValuesByInstanceSelector.get(
-        JSON.stringify(selector)
+        getInstanceKey(selector)
       );
       const isHidden =
         isParentHidden ||
@@ -519,7 +523,7 @@ export const NavigatorTree = () => {
         {flatTree.map((item) => {
           const key = item.selector.join();
           const propValues = propValuesByInstanceSelector.get(
-            JSON.stringify(item.selector)
+            getInstanceKey(item.selector)
           );
           const show = Boolean(propValues?.get(showAttribute) ?? true);
           const meta = metas.get(item.instance.component);

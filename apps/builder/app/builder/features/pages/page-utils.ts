@@ -23,7 +23,7 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { insertPageCopyMutable } from "~/shared/page-utils";
-import { $selectedPage, selectPage } from "~/shared/awareness";
+import { $selectedPage, getInstanceKey, selectPage } from "~/shared/awareness";
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,
@@ -247,7 +247,7 @@ export const $pageRootScope = computed(
     }
     const values =
       variableValuesByInstanceSelector.get(
-        JSON.stringify([page.rootInstanceId])
+        getInstanceKey([page.rootInstanceId])
       ) ?? new Map<string, unknown>();
     for (const [dataSourceId, value] of values) {
       const dataSource = dataSources.get(dataSourceId);

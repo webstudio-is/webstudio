@@ -9,7 +9,6 @@ import { Root, List, Trigger, Content } from "@radix-ui/react-tabs";
 import {
   getClosestInstance,
   getIndexWithinAncestorFromComponentProps,
-  getInstanceSelectorById,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
 
@@ -52,14 +51,10 @@ export const hooksTabs: Hook = {
           `${namespace}:Tabs`
         );
         const contentValue =
-          context.getPropValue(instance.id, "value") ??
+          context.getPropValue(instance, "value") ??
           context.indexesWithinAncestors.get(instance.id)?.toString();
         if (tabs && contentValue) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            tabs.id
-          );
-          context.setMemoryProp(instanceSelector, "value", contentValue);
+          context.setMemoryProp(tabs, "value", contentValue);
         }
       }
     }
