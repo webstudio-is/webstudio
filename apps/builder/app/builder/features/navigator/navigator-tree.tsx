@@ -21,6 +21,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   collectionComponent,
+  editableBlockComponent,
   rootComponent,
   showAttribute,
   WsComponentMeta,
@@ -62,8 +63,6 @@ import {
   getInstanceKey,
   selectInstance,
 } from "~/shared/awareness";
-import { findEditableBlockSelector } from "../workspace/canvas-tools/outline/editable-block-instance-outline";
-import { shallowEqual } from "shallow-equal";
 
 type TreeItem = {
   level: number;
@@ -413,18 +412,19 @@ const getBuilderDropTarget = (
 
 const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
   if ($isContentMode.get()) {
-    const editableBlockSelector = findEditableBlockSelector(
-      instanceSelector,
-      $instances.get()
-    );
-    if (editableBlockSelector === undefined) {
+    const parentId = instanceSelector[1];
+
+    if (parentId === undefined) {
       return false;
     }
 
-    const isChild =
-      instanceSelector.length - editableBlockSelector.length === 1;
+    const parentInstance = $instances.get().get(parentId);
 
-    if (!isChild) {
+    if (parentInstance === undefined) {
+      return false;
+    }
+
+    if (parentInstance.component !== editableBlockComponent) {
       return false;
     }
   }
@@ -447,12 +447,15 @@ const canDrop = (
   dragSelector: InstanceSelector,
   dropTarget: ItemDropTarget
 ) => {
+  const instances = $instances.get();
   const dropSelector = dropTarget.itemSelector;
 
-  const isDropTargetEditableBlock = shallowEqual(
-    findEditableBlockSelector(dropSelector, $instances.get()),
-    dropSelector
-  );
+  // Allow dropping into the parent only
+  const isSameParent = dragSelector[1] === dropSelector[0];
+
+  const isDropTargetEditableBlock =
+    isSameParent &&
+    instances.get(dropSelector[0])?.component === editableBlockComponent;
 
   if ($isContentMode.get()) {
     return isDropTargetEditableBlock && dropTarget.indexWithinChildren > 0;
@@ -464,7 +467,6 @@ const canDrop = (
   }
 
   const metas = $registeredComponentMetas.get();
-  const instances = $instances.get();
   const insertConstraints = computeInstancesConstraints(metas, instances, [
     dragSelector[0],
   ]);
