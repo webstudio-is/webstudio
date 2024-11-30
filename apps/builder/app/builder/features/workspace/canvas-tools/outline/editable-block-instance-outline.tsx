@@ -43,7 +43,7 @@ import {
 } from "~/shared/instance-utils";
 import { shallowEqual } from "shallow-equal";
 
-const findEditableBlockSelector = (
+export const findEditableBlockSelector = (
   anchor: InstanceSelector,
   instances: Instances
 ) => {
