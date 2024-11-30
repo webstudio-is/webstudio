@@ -3,7 +3,7 @@ import {
   ListViewIcon,
   PaintBrushIcon,
   SettingsIcon,
-  TriggerIcon,
+  AddTemplateInstanceIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "@webstudio-is/sdk/normalize.css";
 import type {
@@ -132,7 +132,7 @@ export const editableBlockTemplateMeta: WsComponentMeta = {
   category: "hidden",
   detachable: false,
   type: "container",
-  icon: TriggerIcon,
+  icon: AddTemplateInstanceIcon,
   stylable: false,
 };
 
