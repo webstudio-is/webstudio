@@ -352,8 +352,8 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
       <Flex
         css={{
           width: "min-content",
-          height: "min-content",
           pointerEvents: isMenuOpen ? "none" : "all",
+          clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 24px)`,
         }}
         onMouseEnter={() => {
           clearTimeout(timeoutRef.current);
@@ -385,6 +385,7 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
           <IconButton
             variant={"local"}
             css={{
+              mr: theme.spacing[4],
               borderStyle: "solid",
               borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
             }}
@@ -392,13 +393,6 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
             <PlusIcon />
           </IconButton>
         </TemplatesMenu>
-        <Box
-          css={{
-            width: theme.spacing[4],
-            // For easier hover
-            height: theme.spacing[12],
-          }}
-        ></Box>
       </Flex>
     </EditableBlockChildAddButtonOutline>
   );
