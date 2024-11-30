@@ -206,7 +206,7 @@ const TemplatesMenu = ({
     <>
       <Flex gap={1}>
         <Kbd value={["click"]} color="contrast" />
-        <Text color="subtle">to add next</Text>
+        <Text color="subtle">to add after</Text>
       </Flex>
       <Flex gap={1}>
         <Kbd value={["option", "click"]} color="contrast" />{" "}
