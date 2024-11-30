@@ -45,13 +45,6 @@ export const BuilderModeDropDown = () => {
   const isDesignModeAllowed = useStore($isDesignModeAllowed);
 
   const menuItems = {
-    preview: {
-      icon: <PlayIcon />,
-      description: "View the page as it will appear to users",
-      title: "Preview",
-      shortcut: ["cmd", "shift", "p"],
-      enabled: true,
-    },
     design: {
       icon: <PaintBrushIcon />,
       description: "Edit components, styles, and properties",
@@ -65,6 +58,13 @@ export const BuilderModeDropDown = () => {
       title: "Build",
       shortcut: ["cmd", "shift", "b"],
       enabled: isContentModeAllowed,
+    },
+    preview: {
+      icon: <PlayIcon />,
+      description: "View the page as it will appear to users",
+      title: "Preview",
+      shortcut: ["cmd", "shift", "p"],
+      enabled: true,
     },
   } as const;
 
@@ -125,6 +125,7 @@ export const BuilderModeDropDown = () => {
                   <DropdownMenuItemRightSlot>
                     <Kbd value={shortcut} />
                   </DropdownMenuItemRightSlot>
+                  &nbsp;
                 </StyledMenuItem>
               ))}
           </DropdownMenuRadioGroup>
