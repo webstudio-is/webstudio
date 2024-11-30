@@ -387,8 +387,6 @@ export const toggleBuilderMode = (mode: BuilderMode) => {
 };
 
 export const setBuilderMode = (mode: BuilderMode | null) => {
-  const authPermit = $authPermit.get();
-
   if (mode === "content" && !$isContentModeAllowed.get()) {
     // This is content link from a non pro user, we don't allow content mode for such links
     toast.info(
@@ -403,11 +401,6 @@ export const setBuilderMode = (mode: BuilderMode | null) => {
     toast.info("Design mode is not available for content edit links.");
 
     $builderMode.set("content");
-    return;
-  }
-
-  if (authPermit === "view") {
-    $builderMode.set(mode ?? "preview");
     return;
   }
 
