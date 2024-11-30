@@ -18,6 +18,8 @@ import {
   IconButton,
   Tooltip,
   toast,
+  Kbd,
+  Text,
 } from "@webstudio-is/design-system";
 import { EditableBlockChildAddButtonOutline } from "./outline";
 import { applyScale } from "./apply-scale";
@@ -50,7 +52,7 @@ const findEditableBlockSelector = (
   }
 
   if (anchor.length === 0) {
-    return undefined;
+    return;
   }
 
   let editableBlockInstanceSelector: InstanceSelector | undefined = undefined;
@@ -125,7 +127,11 @@ const findTemplates = (anchor: InstanceSelector, instances: Instances) => {
   return result;
 };
 
-const getInsertionIndex = (anchor: InstanceSelector, instances: Instances) => {
+const getInsertionIndex = (
+  anchor: InstanceSelector,
+  instances: Instances,
+  insertBefore: boolean = false
+) => {
   const editableBlockSelector = findEditableBlockSelector(anchor, instances);
   if (editableBlockSelector === undefined) {
     return;
@@ -140,7 +146,7 @@ const getInsertionIndex = (anchor: InstanceSelector, instances: Instances) => {
     return;
   }
 
-  let index = editableBlockInstance.children.findIndex((child) => {
+  const index = editableBlockInstance.children.findIndex((child) => {
     if (child.type !== "id") {
       return false;
     }
@@ -157,9 +163,13 @@ const getInsertionIndex = (anchor: InstanceSelector, instances: Instances) => {
   if (index === -1) {
     return;
   }
-  index += 1;
 
-  return index;
+  // Independent of insertBefore, we always insert after the Templates instance
+  if (insertAtInitialPosition) {
+    return index + 1;
+  }
+
+  return insertBefore ? index : index + 1;
 };
 
 const TemplatesMenu = ({
@@ -172,6 +182,17 @@ const TemplatesMenu = ({
   anchor: InstanceSelector;
 }) => {
   const instances = useStore($instances);
+
+  const optionPointerDownTime = useRef(0);
+  const isMenuOpenedWithOption = useRef(false);
+
+  const handleOpen = (open: boolean) => {
+    onOpenChange(open);
+
+    isMenuOpenedWithOption.current =
+      Date.now() - optionPointerDownTime.current < 100;
+  };
+
   const templates = findTemplates(anchor, instances);
 
   const menuItems = templates?.map(([template, templateSelector]) => ({
@@ -181,86 +202,118 @@ const TemplatesMenu = ({
     value: templateSelector,
   }));
 
+  const tooltipContent = (
+    <>
+      <Flex gap={1}>
+        <Kbd value={["click"]} color="contrast" />
+        <Text color="subtle">to add after</Text>
+      </Flex>
+      <Flex gap={1}>
+        <Kbd value={["option", "click"]} color="contrast" />{" "}
+        <Text color="subtle">to add before</Text>
+      </Flex>
+    </>
+  );
+
   return (
-    <DropdownMenu onOpenChange={onOpenChange} modal>
-      <Tooltip content="Add next block" side="top" disableHoverableContent>
-        <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-      </Tooltip>
+    <div
+      style={{ display: "contents" }}
+      onPointerDown={(event) => {
+        if (event.altKey) {
+          optionPointerDownTime.current = Date.now();
+        }
+      }}
+    >
+      <DropdownMenu onOpenChange={handleOpen} modal>
+        <Tooltip content={tooltipContent} side="top" disableHoverableContent>
+          <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+        </Tooltip>
 
-      <DropdownMenuPortal>
-        <DropdownMenuContent
-          align="start"
-          sideOffset={4}
-          collisionPadding={16}
-          side="bottom"
-          loop
-        >
-          <DropdownMenuRadioGroup
-            onValueChange={(value) => {
-              const templateSelector = JSON.parse(value) as InstanceSelector;
-              const fragment = extractWebstudioFragment(
-                getWebstudioData(),
-                templateSelector[0]
-              );
+        <DropdownMenuPortal>
+          <DropdownMenuContent
+            align="start"
+            sideOffset={4}
+            collisionPadding={16}
+            side="bottom"
+            loop
+          >
+            <DropdownMenuRadioGroup
+              onValueChange={(value) => {
+                const isOptionDownOnMenuItemClick =
+                  Date.now() - optionPointerDownTime.current < 100;
 
-              const parentSelector = findEditableBlockSelector(
-                anchor,
-                instances
-              );
+                const insertBefore =
+                  isMenuOpenedWithOption.current || isOptionDownOnMenuItemClick;
 
-              if (parentSelector === undefined) {
-                return;
-              }
-
-              const position = getInsertionIndex(anchor, instances);
-
-              if (position === undefined) {
-                return;
-              }
-
-              const target: DroppableTarget = {
-                parentSelector,
-                position,
-              };
-
-              updateWebstudioData((data) => {
-                const { newInstanceIds } = insertWebstudioFragmentCopy({
-                  data,
-                  fragment,
-                  availableDataSources: findAvailableDataSources(
-                    data.dataSources,
-                    data.instances,
-                    target.parentSelector
-                  ),
-                });
-                const newRootInstanceId = newInstanceIds.get(
-                  fragment.instances[0].id
+                const templateSelector = JSON.parse(value) as InstanceSelector;
+                const fragment = extractWebstudioFragment(
+                  getWebstudioData(),
+                  templateSelector[0]
                 );
-                if (newRootInstanceId === undefined) {
+
+                const parentSelector = findEditableBlockSelector(
+                  anchor,
+                  instances
+                );
+
+                if (parentSelector === undefined) {
                   return;
                 }
-                const children: Instance["children"] = [
-                  { type: "id", value: newRootInstanceId },
-                ];
-                insertInstanceChildrenMutable(data, children, target);
-              });
-            }}
-          >
-            {menuItems?.map(({ icon, title, id, value }) => (
-              <DropdownMenuRadioItem key={id} value={JSON.stringify(value)}>
-                <Flex
-                  css={{ py: theme.spacing[4], px: theme.spacing[5] }}
-                  gap={2}
-                >
-                  {icon}
-                  <Box>{title}</Box>
-                </Flex>
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenu>
+
+                const position = getInsertionIndex(
+                  anchor,
+                  instances,
+                  insertBefore
+                );
+
+                if (position === undefined) {
+                  return;
+                }
+
+                const target: DroppableTarget = {
+                  parentSelector,
+                  position,
+                };
+
+                updateWebstudioData((data) => {
+                  const { newInstanceIds } = insertWebstudioFragmentCopy({
+                    data,
+                    fragment,
+                    availableDataSources: findAvailableDataSources(
+                      data.dataSources,
+                      data.instances,
+                      target.parentSelector
+                    ),
+                  });
+                  const newRootInstanceId = newInstanceIds.get(
+                    fragment.instances[0].id
+                  );
+                  if (newRootInstanceId === undefined) {
+                    return;
+                  }
+                  const children: Instance["children"] = [
+                    { type: "id", value: newRootInstanceId },
+                  ];
+                  insertInstanceChildrenMutable(data, children, target);
+                });
+              }}
+            >
+              {menuItems?.map(({ icon, title, id, value }) => (
+                <DropdownMenuRadioItem key={id} value={JSON.stringify(value)}>
+                  <Flex
+                    css={{ py: theme.spacing[4], px: theme.spacing[5] }}
+                    gap={2}
+                  >
+                    {icon}
+                    <Box>{title}</Box>
+                  </Flex>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
+      </DropdownMenu>
+    </div>
   );
 };
 

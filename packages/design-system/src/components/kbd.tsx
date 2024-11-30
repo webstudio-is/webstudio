@@ -11,25 +11,31 @@ const shortcutSymbolMap: Record<string, string> = {
   enter: "↵",
   tab: isMac ? "tab" : "Tab",
   click: isMac ? "+click" : "+ Click",
+  "click[0]": isMac ? "click" : "Click",
 };
 
 type ShortcutDefinition = ReadonlyArray<string>;
 
 const format = (value: ShortcutDefinition) => {
   return value.map(
-    (shortcut) => shortcutSymbolMap[shortcut] ?? shortcut.toUpperCase()
+    (shortcut, index) =>
+      shortcutSymbolMap[`${shortcut}[${index}]`] ??
+      shortcutSymbolMap[shortcut] ??
+      shortcut.toUpperCase()
   );
 };
 
 export const Kbd = ({
   value,
   color = "subtle",
+  variant,
 }: {
   value: ShortcutDefinition;
-  color?: "subtle" | "moreSubtle";
+  color?: "subtle" | "moreSubtle" | "contrast";
+  variant?: "regular";
 }) => {
   return (
-    <Text color={color} as="kbd">
+    <Text color={color} variant={variant} as="kbd">
       {format(value).join(isMac ? "" : " ")}
     </Text>
   );
