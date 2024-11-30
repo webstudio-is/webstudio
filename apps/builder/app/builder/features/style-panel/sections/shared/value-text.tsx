@@ -54,7 +54,7 @@ export const ValueText = ({
   source,
   truncate = false,
   ...rest
-}: { value: StyleValue; truncate: boolean } & Omit<
+}: { value: StyleValue; truncate?: boolean } & Omit<
   ComponentProps<typeof Container>,
   "value"
 >) => {

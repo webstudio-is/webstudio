@@ -11,7 +11,7 @@ import { movementMapSpace, useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { useModifierKeys } from "../../shared/modifier-keys";
-import { theme, truncate } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 const Cell = ({
   isPopoverOpen,
