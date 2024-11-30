@@ -569,7 +569,16 @@ export const WebstudioComponentPreview = forwardRef<
     return <></>;
   }
 
-  const Component = components.get(instance.component);
+  let Component = components.get(instance.component);
+
+  if (instance.component === editableBlockComponent) {
+    Component = EditableBlock;
+  }
+
+  if (instance.component === editableBlockTemplateComponent) {
+    Component = EditableBlockTemplate;
+  }
+
   if (Component === undefined) {
     return <></>;
   }
