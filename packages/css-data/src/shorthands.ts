@@ -1401,7 +1401,7 @@ const parseValue = function* (property: string, value: string) {
 
 export const expandShorthands = (
   shorthands: [property: string, value: string][]
-) => {
+): [property: string, value: string][] => {
   const longhands: [property: string, value: string][] = [];
   for (const [property, value] of shorthands) {
     const generator = parseValue(property, value);

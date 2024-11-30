@@ -1,7 +1,7 @@
 import type { HtmlTags } from "html-tags";
 import type { StyleValue } from "@webstudio-is/css-engine";
 
-export const html = new Map<`${HtmlTags}:${string}`, StyleValue>([
+export const html: Map<`${HtmlTags}:${string}`, StyleValue> = new Map([
   ["article:display", { type: "keyword", value: "block" }],
   ["aside:display", { type: "keyword", value: "block" }],
   ["details:display", { type: "keyword", value: "block" }],

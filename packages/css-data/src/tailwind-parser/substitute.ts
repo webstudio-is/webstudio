@@ -1,11 +1,16 @@
 import * as csstree from "css-tree";
 import warnOnce from "warn-once";
 
+type Warn = (condition: boolean, message: string) => void;
+
 /**
  * Resolves CSS variables by replacing their references with actual values.
  * Transforms `.class { --property: 1px; margin: var(--property); }` into `.class { margin: 1px; }`.
  **/
-export const substituteVariables = (css: string, warn = warnOnce) => {
+export const substituteVariables = (
+  css: string,
+  warn: Warn = warnOnce
+): string => {
   const ast = csstree.parse(css);
 
   // Cleanup

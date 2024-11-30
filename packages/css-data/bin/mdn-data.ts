@@ -30,7 +30,7 @@ const normalizePropertyName = (property: string) => {
   return camelCase(property);
 };
 
-const units: Record<customData.UnitGroup, Array<string>> = {
+const units: Record<string, Array<string>> = {
   number: [],
   // consider % as unit
   percentage: ["%"],
@@ -87,7 +87,7 @@ const convertToStyleValue = (
   node: CssNode,
   property: string,
   value: string,
-  unitGroups: Set<customData.UnitGroup>
+  unitGroups: Set<string>
 ): undefined | UnitValue | KeywordValue | UnparsedValue => {
   if (node?.type === "Identifier") {
     return {
@@ -132,7 +132,7 @@ const convertToStyleValue = (
 const parseInitialValue = (
   property: string,
   value: string,
-  unitGroups: Set<customData.UnitGroup>
+  unitGroups: Set<string>
 ): StyleValue => {
   // Our default values hardcoded because no single standard
   if (property in normalizedValues) {
@@ -302,7 +302,7 @@ const propertiesData = {
 let property: Property;
 for (property in filteredProperties) {
   const config = filteredProperties[property];
-  const unitGroups = new Set<customData.UnitGroup>();
+  const unitGroups = new Set<string>();
   walkSyntax(config.syntax, (node) => {
     if (node.type === "Type") {
       if (node.name === "integer" || node.name === "number") {
@@ -312,7 +312,7 @@ for (property in filteredProperties) {
 
       // type names match unit groups
       if (node.name in units) {
-        unitGroups.add(node.name as customData.UnitGroup);
+        unitGroups.add(node.name);
         return;
       }
     }
