@@ -126,9 +126,9 @@ const descendantPropsMeta: WsComponentPropsMeta = {
   initialProps: ["selector"],
 };
 
-export const editableBlockTemplateComponent = "ws:editable-block-template";
+export const blockTemplateComponent = "ws:block-template";
 
-export const editableBlockTemplateMeta: WsComponentMeta = {
+export const blockTemplateMeta: WsComponentMeta = {
   category: "hidden",
   detachable: false,
   type: "container",
@@ -136,30 +136,30 @@ export const editableBlockTemplateMeta: WsComponentMeta = {
   stylable: false,
 };
 
-const editableBlockTemplatePropsMeta: WsComponentPropsMeta = {
+const blockTemplatePropsMeta: WsComponentPropsMeta = {
   props: {},
   initialProps: [],
 };
 
-export const editableBlockComponent = "ws:editable-block";
+export const blockComponent = "ws:block";
 
-const editableBlockMeta: WsComponentMeta = {
+const blockMeta: WsComponentMeta = {
   category: "data",
   order: 2,
   type: "container",
-  label: "Editable Block",
+  label: "Content Block",
   icon: EditIcon,
   stylable: false,
   template: [
     {
       type: "instance",
-      component: editableBlockComponent,
+      component: blockComponent,
       props: [],
       children: [
         {
           type: "instance",
           label: "Templates",
-          component: editableBlockTemplateComponent,
+          component: blockTemplateComponent,
           children: [],
         },
       ],
@@ -167,7 +167,7 @@ const editableBlockMeta: WsComponentMeta = {
   ],
 };
 
-const editableBlockPropsMeta: WsComponentPropsMeta = {
+const blockPropsMeta: WsComponentPropsMeta = {
   props: {},
   initialProps: [],
 };
@@ -176,16 +176,16 @@ export const coreMetas = {
   [rootComponent]: rootMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
-  [editableBlockComponent]: editableBlockMeta,
-  [editableBlockTemplateComponent]: editableBlockTemplateMeta,
+  [blockComponent]: blockMeta,
+  [blockTemplateComponent]: blockTemplateMeta,
 };
 
 export const corePropsMetas = {
   [rootComponent]: rootPropsMeta,
   [collectionComponent]: collectionPropsMeta,
   [descendantComponent]: descendantPropsMeta,
-  [editableBlockComponent]: editableBlockPropsMeta,
-  [editableBlockTemplateComponent]: editableBlockTemplatePropsMeta,
+  [blockComponent]: blockPropsMeta,
+  [blockTemplateComponent]: blockTemplatePropsMeta,
 };
 
 // components with custom implementation
@@ -194,5 +194,5 @@ export const isCoreComponent = (component: string) =>
   component === rootComponent ||
   component === collectionComponent ||
   component === descendantComponent ||
-  component === editableBlockComponent ||
-  component === editableBlockTemplateComponent;
+  component === blockComponent ||
+  component === blockTemplateComponent;

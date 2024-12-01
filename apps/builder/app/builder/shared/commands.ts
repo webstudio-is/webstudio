@@ -32,8 +32,8 @@ import {
 import { selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-import { findEditableBlockSelector } from "../features/workspace/canvas-tools/outline/editable-block-instance-outline";
-import { editableBlockTemplateComponent } from "@webstudio-is/react-sdk";
+import { findBlockSelector } from "../features/workspace/canvas-tools/outline/editable-block-instance-outline";
+import { blockTemplateComponent } from "@webstudio-is/react-sdk";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -71,7 +71,7 @@ const deleteSelectedInstance = () => {
 
   if ($isContentMode.get()) {
     // In content mode we are allowing to delete childen of the editable block
-    const editableInstanceSelector = findEditableBlockSelector(
+    const editableInstanceSelector = findBlockSelector(
       selectedInstanceSelector,
       instances
     );
@@ -80,19 +80,19 @@ const deleteSelectedInstance = () => {
       return;
     }
 
-    const isChildOfEditableBlock =
+    const isChildOfBlock =
       selectedInstanceSelector.length - editableInstanceSelector.length === 1;
 
     const isTemplateInstance =
       instances.get(selectedInstanceSelector[0])?.component ===
-      editableBlockTemplateComponent;
+      blockTemplateComponent;
 
     if (isTemplateInstance) {
       builderApi.toast.info("You can't delete this instance in conent mode.");
       return;
     }
 
-    if (!isChildOfEditableBlock) {
+    if (!isChildOfBlock) {
       builderApi.toast.info("You can't delete this instance in conent mode.");
       return;
     }

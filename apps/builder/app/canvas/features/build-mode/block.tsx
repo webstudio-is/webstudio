@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
-  editableBlockTemplateComponent,
+  blockTemplateComponent,
   idAttribute,
   selectorIdAttribute,
   type AnyComponent,
@@ -14,7 +14,7 @@ import {
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
 
-export const EditableBlock = React.forwardRef<
+export const Block = React.forwardRef<
   HTMLDivElement,
   { children: React.ReactNode } & WebstudioComponentSystemProps
 >(({ children, ...props }, ref) => {
@@ -36,7 +36,7 @@ export const EditableBlock = React.forwardRef<
     const templateInstanceId = instance.children.find(
       (child) =>
         child.type === "id" &&
-        instances.get(child.value)?.component === editableBlockTemplateComponent
+        instances.get(child.value)?.component === blockTemplateComponent
     )?.value;
 
     if (templateInstanceId === undefined) {

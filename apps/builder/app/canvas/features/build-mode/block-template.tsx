@@ -7,7 +7,7 @@ import {
 import * as React from "react";
 import { $isDesignMode, $selectedInstanceSelector } from "~/shared/nano-states";
 
-export const EditableBlockTemplate = React.forwardRef<
+export const BlockTemplate = React.forwardRef<
   HTMLDivElement,
   WebstudioComponentSystemProps & { children: React.ReactNode }
 >(({ ...props }, ref) => {

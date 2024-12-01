@@ -1,11 +1,11 @@
 import { idAttribute } from "@webstudio-is/react-sdk";
 import {
-  $editableBlockChildOutline,
+  $blockChildOutline,
   $hoveredInstanceSelector,
   $instances,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
-  findEditableBlockChildSelector,
+  findBlockChildSelector,
 } from "~/shared/nano-states";
 import { $hoveredInstanceOutline } from "~/shared/nano-states";
 import {
@@ -76,7 +76,7 @@ export const subscribeInstanceHovering = ({
             if (
               textSelector &&
               isDescendantOrSelf(instanceSelector, textSelector) && // optimisation
-              $editableBlockChildOutline.get() === undefined
+              $blockChildOutline.get() === undefined
             ) {
               updateEditableChildOutline(instanceSelector);
             }
@@ -95,7 +95,7 @@ export const subscribeInstanceHovering = ({
         updateOnMouseMove = false;
         hoveredElement = undefined;
 
-        $editableBlockChildOutline.set(undefined);
+        $blockChildOutline.set(undefined);
         $hoveredInstanceSelector.set(undefined);
         $hoveredInstanceOutline.set(undefined);
       }, 100);
@@ -118,29 +118,25 @@ export const subscribeInstanceHovering = ({
       return;
     }
 
-    const editableBlockChildSelector =
-      findEditableBlockChildSelector(instanceSelector);
+    const blockChildSelector = findBlockChildSelector(instanceSelector);
 
-    if (editableBlockChildSelector === undefined) {
-      $editableBlockChildOutline.set(undefined);
+    if (blockChildSelector === undefined) {
+      $blockChildOutline.set(undefined);
       return;
     }
 
-    const editableBlockChildElements = getVisibleElementsByInstanceSelector(
-      editableBlockChildSelector
-    );
-    const editableBlockChildRect = getAllElementsBoundingBox(
-      editableBlockChildElements
-    );
+    const blockChildElements =
+      getVisibleElementsByInstanceSelector(blockChildSelector);
+    const blockChildRect = getAllElementsBoundingBox(blockChildElements);
 
-    if (editableBlockChildRect === undefined) {
-      $editableBlockChildOutline.set(undefined);
+    if (blockChildRect === undefined) {
+      $blockChildOutline.set(undefined);
       return;
     }
 
-    $editableBlockChildOutline.set({
-      selector: editableBlockChildSelector,
-      rect: editableBlockChildRect,
+    $blockChildOutline.set({
+      selector: blockChildSelector,
+      rect: blockChildRect,
     });
   };
 
@@ -178,7 +174,7 @@ export const subscribeInstanceHovering = ({
     onScrollStart() {
       isScrolling = true;
       $hoveredInstanceOutline.set(undefined);
-      $editableBlockChildOutline.set(undefined);
+      $blockChildOutline.set(undefined);
     },
     onScrollEnd() {
       isScrolling = false;
@@ -205,7 +201,7 @@ export const subscribeInstanceHovering = ({
     }
   );
 
-  // selected instance selection can change hovered instance outlines (example EditableBlock/Template/Child)
+  // selected instance selection can change hovered instance outlines (example Block/Template/Child)
   const usubscribeSelectedInstanceSelector =
     $selectedInstanceSelector.subscribe(() => {
       const instanceSelector = $hoveredInstanceSelector.get();

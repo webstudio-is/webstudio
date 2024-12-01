@@ -58,7 +58,7 @@ import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
-  $editableBlockChildOutline,
+  $blockChildOutline,
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
   $registeredComponentMetas,
@@ -1035,7 +1035,7 @@ export const TextEditor = ({
   );
 
   const handleAnyKeydown = useCallback(() => {
-    $editableBlockChildOutline.set(undefined);
+    $blockChildOutline.set(undefined);
     $hoveredInstanceOutline.set(undefined);
     $hoveredInstanceSelector.set(undefined);
   }, []);

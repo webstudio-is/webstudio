@@ -1,10 +1,10 @@
 import { useStore } from "@nanostores/react";
 import {
-  $editableBlockChildOutline,
+  $blockChildOutline,
   $instances,
   $isContentMode,
   $registeredComponentMetas,
-  type EditableBlockChildOutline,
+  type BlockChildOutline,
 } from "~/shared/nano-states";
 import {
   Box,
@@ -23,7 +23,7 @@ import {
   Text,
   iconButtonSize,
 } from "@webstudio-is/design-system";
-import { EditableBlockChildAddButtonOutline } from "./outline";
+import { BlockChildAddButtonOutline } from "./outline";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
 import { PlusIcon } from "@webstudio-is/icons";
@@ -33,8 +33,8 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import {
-  editableBlockComponent,
-  editableBlockTemplateComponent,
+  blockComponent,
+  blockTemplateComponent,
 } from "@webstudio-is/react-sdk";
 import {
   extractWebstudioFragment,
@@ -47,7 +47,7 @@ import {
 import { shallowEqual } from "shallow-equal";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 
-export const findEditableBlockSelector = (
+export const findBlockSelector = (
   anchor: InstanceSelector,
   instances: Instances
 ) => {
@@ -59,7 +59,7 @@ export const findEditableBlockSelector = (
     return;
   }
 
-  let editableBlockInstanceSelector: InstanceSelector | undefined = undefined;
+  let blockInstanceSelector: InstanceSelector | undefined = undefined;
 
   for (let i = 0; i < anchor.length; ++i) {
     const instanceId = anchor[i];
@@ -69,40 +69,37 @@ export const findEditableBlockSelector = (
       return;
     }
 
-    if (instance.component === editableBlockComponent) {
-      editableBlockInstanceSelector = anchor.slice(i);
+    if (instance.component === blockComponent) {
+      blockInstanceSelector = anchor.slice(i);
       break;
     }
   }
 
-  if (editableBlockInstanceSelector === undefined) {
+  if (blockInstanceSelector === undefined) {
     return;
   }
 
-  return editableBlockInstanceSelector;
+  return blockInstanceSelector;
 };
 
 const findTemplates = (anchor: InstanceSelector, instances: Instances) => {
-  const editableBlockInstanceSelector = findEditableBlockSelector(
-    anchor,
-    instances
-  );
-  if (editableBlockInstanceSelector === undefined) {
+  const blockInstanceSelector = findBlockSelector(anchor, instances);
+  if (blockInstanceSelector === undefined) {
     toast.error("Editable block not found");
     return;
   }
 
-  const editableBlockInstance = instances.get(editableBlockInstanceSelector[0]);
+  const blockInstance = instances.get(blockInstanceSelector[0]);
 
-  if (editableBlockInstance === undefined) {
+  if (blockInstance === undefined) {
     toast.error("Editable block instance not found");
     return;
   }
 
-  const templateInstanceId = editableBlockInstance.children.find(
+  const templateInstanceId = blockInstance.children.find(
     (child) =>
       child.type === "id" &&
-      instances.get(child.value)?.component === editableBlockTemplateComponent
+      instances.get(child.value)?.component === blockTemplateComponent
   )?.value;
 
   if (templateInstanceId === undefined) {
@@ -125,7 +122,7 @@ const findTemplates = (anchor: InstanceSelector, instances: Instances) => {
       .filter((child) => child !== undefined)
       .map((child) => [
         child,
-        [child.id, templateInstanceId, ...editableBlockInstanceSelector],
+        [child.id, templateInstanceId, ...blockInstanceSelector],
       ]);
 
   return result;
@@ -136,29 +133,27 @@ const getInsertionIndex = (
   instances: Instances,
   insertBefore: boolean = false
 ) => {
-  const editableBlockSelector = findEditableBlockSelector(anchor, instances);
-  if (editableBlockSelector === undefined) {
+  const blockSelector = findBlockSelector(anchor, instances);
+  if (blockSelector === undefined) {
     return;
   }
 
-  const insertAtInitialPosition = shallowEqual(editableBlockSelector, anchor);
+  const insertAtInitialPosition = shallowEqual(blockSelector, anchor);
 
-  const editableBlockInstance = instances.get(editableBlockSelector[0]);
+  const blockInstance = instances.get(blockSelector[0]);
 
-  if (editableBlockInstance === undefined) {
+  if (blockInstance === undefined) {
     toast.error("Editable block instance not found");
     return;
   }
 
-  const index = editableBlockInstance.children.findIndex((child) => {
+  const index = blockInstance.children.findIndex((child) => {
     if (child.type !== "id") {
       return false;
     }
 
     if (insertAtInitialPosition) {
-      return (
-        instances.get(child.value)?.component === editableBlockTemplateComponent
-      );
+      return instances.get(child.value)?.component === blockTemplateComponent;
     }
 
     return child.value === anchor[0];
@@ -256,10 +251,7 @@ const TemplatesMenu = ({
                   templateSelector[0]
                 );
 
-                const parentSelector = findEditableBlockSelector(
-                  anchor,
-                  instances
-                );
+                const parentSelector = findBlockSelector(anchor, instances);
 
                 if (parentSelector === undefined) {
                   return;
@@ -322,8 +314,8 @@ const TemplatesMenu = ({
   );
 };
 
-export const EditableBlockChildHoveredInstanceOutline = () => {
-  const editableBlockChildOutline = useStore($editableBlockChildOutline);
+export const BlockChildHoveredInstanceOutline = () => {
+  const blockChildOutline = useStore($blockChildOutline);
   const scale = useStore($scale);
   const isContentMode = useStore($isContentMode);
 
@@ -331,10 +323,10 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
     undefined
   );
   const [buttonOutline, setButtonOutline] = useState<
-    undefined | EditableBlockChildOutline
+    undefined | BlockChildOutline
   >(undefined);
 
-  const outline = editableBlockChildOutline ?? buttonOutline;
+  const outline = blockChildOutline ?? buttonOutline;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -353,7 +345,7 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
   const rect = applyScale(outline.rect, scale);
 
   return (
-    <EditableBlockChildAddButtonOutline rect={rect}>
+    <BlockChildAddButtonOutline rect={rect}>
       <Flex
         css={{
           width: "min-content",
@@ -399,6 +391,6 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
           </IconButton>
         </TemplatesMenu>
       </Flex>
-    </EditableBlockChildAddButtonOutline>
+    </BlockChildAddButtonOutline>
   );
 };
