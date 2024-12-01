@@ -6,6 +6,8 @@ import {
   $textEditingInstanceSelector,
   $isDesignMode,
   toggleBuilderMode,
+  $isPreviewMode,
+  $isContentMode,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -30,6 +32,8 @@ import {
 import { selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
+import { findEditableBlockSelector } from "../features/workspace/canvas-tools/outline/editable-block-instance-outline";
+import { editableBlockTemplateComponent } from "@webstudio-is/react-sdk";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -46,11 +50,10 @@ const makeBreakpointCommand = <CommandName extends string>(
 });
 
 const deleteSelectedInstance = () => {
-  if ($isDesignMode.get() === false) {
-    builderApi.toast.info("Deleting is only allowed in design mode.");
+  if ($isPreviewMode.get()) {
+    builderApi.toast.info("Deleting is not allowed in preview mode.");
     return;
   }
-
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
   const selectedInstanceSelector = $selectedInstanceSelector.get();
   // cannot delete instance while editing
@@ -63,8 +66,39 @@ const deleteSelectedInstance = () => {
   if (selectedInstanceSelector.length === 1) {
     return;
   }
-  let newSelectedInstanceSelector: undefined | InstanceSelector;
+
   const instances = $instances.get();
+
+  if ($isContentMode.get()) {
+    // In content mode we are allowing to delete childen of the editable block
+    const editableInstanceSelector = findEditableBlockSelector(
+      selectedInstanceSelector,
+      instances
+    );
+    if (editableInstanceSelector === undefined) {
+      builderApi.toast.info("You can't delete this instance in conent mode.");
+      return;
+    }
+
+    const isChildOfEditableBlock =
+      selectedInstanceSelector.length - editableInstanceSelector.length === 1;
+
+    const isTemplateInstance =
+      instances.get(selectedInstanceSelector[0])?.component ===
+      editableBlockTemplateComponent;
+
+    if (isTemplateInstance) {
+      builderApi.toast.info("You can't delete this instance in conent mode.");
+      return;
+    }
+
+    if (!isChildOfEditableBlock) {
+      builderApi.toast.info("You can't delete this instance in conent mode.");
+      return;
+    }
+  }
+
+  let newSelectedInstanceSelector: undefined | InstanceSelector;
   const [selectedInstanceId, parentInstanceId] = selectedInstanceSelector;
   const parentInstance = instances.get(parentInstanceId);
   if (parentInstance) {

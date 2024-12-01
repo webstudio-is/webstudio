@@ -21,6 +21,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   collectionComponent,
+  editableBlockComponent,
   rootComponent,
   showAttribute,
   WsComponentMeta,
@@ -409,9 +410,23 @@ const getBuilderDropTarget = (
   };
 };
 
-const canDrag = (instance: Instance) => {
+const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
   if ($isContentMode.get()) {
-    return false;
+    const parentId = instanceSelector[1];
+
+    if (parentId === undefined) {
+      return false;
+    }
+
+    const parentInstance = $instances.get().get(parentId);
+
+    if (parentInstance === undefined) {
+      return false;
+    }
+
+    if (parentInstance.component !== editableBlockComponent) {
+      return false;
+    }
   }
 
   const meta = $registeredComponentMetas.get().get(instance.component);
@@ -430,10 +445,28 @@ const canDrag = (instance: Instance) => {
 
 const canDrop = (
   dragSelector: InstanceSelector,
-  dropSelector: InstanceSelector
+  dropTarget: ItemDropTarget
 ) => {
-  const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
+  const dropSelector = dropTarget.itemSelector;
+
+  // Allow dropping into the parent only
+  const isSameParent = dragSelector[1] === dropSelector[0];
+
+  const isDropTargetEditableBlock =
+    isSameParent &&
+    instances.get(dropSelector[0])?.component === editableBlockComponent;
+
+  if ($isContentMode.get()) {
+    return isDropTargetEditableBlock && dropTarget.indexWithinChildren > 0;
+  }
+
+  if (isDropTargetEditableBlock && dropTarget.indexWithinChildren === 0) {
+    // We want Templates to be the first child of the editable block
+    return false;
+  }
+
+  const metas = $registeredComponentMetas.get();
   const insertConstraints = computeInstancesConstraints(metas, instances, [
     dragSelector[0],
   ]);
@@ -537,16 +570,17 @@ export const NavigatorTree = () => {
               isExpanded={item.isExpanded}
               isLastChild={item.isLastChild}
               data={item}
-              canDrag={() => canDrag(item.instance)}
+              canDrag={() => canDrag(item.instance, item.selector)}
               dropTarget={item.dropTarget}
               onDropTargetChange={(dropTarget, draggingItem) => {
                 const builderDropTarget = getBuilderDropTarget(
                   item.selector,
                   dropTarget
                 );
+
                 if (
                   builderDropTarget &&
-                  canDrop(draggingItem.selector, builderDropTarget.itemSelector)
+                  canDrop(draggingItem.selector, builderDropTarget)
                 ) {
                   $dragAndDropState.set({
                     ...$dragAndDropState.get(),
