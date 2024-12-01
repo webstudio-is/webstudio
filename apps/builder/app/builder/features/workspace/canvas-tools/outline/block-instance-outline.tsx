@@ -1,6 +1,8 @@
 import { useStore } from "@nanostores/react";
 import {
   $blockChildOutline,
+  $hoveredInstanceOutline,
+  $hoveredInstanceSelector,
   $instances,
   $isContentMode,
   $modifierKeys,
@@ -19,15 +21,17 @@ import {
   theme,
   IconButton,
   Tooltip,
-  toast,
   Kbd,
   Text,
   iconButtonSize,
+  Grid,
+  DropdownMenuSeparator,
+  menuItemCss,
 } from "@webstudio-is/design-system";
-import { BlockChildAddButtonOutline } from "./outline";
+import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
-import { PlusIcon } from "@webstudio-is/icons";
+import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 import { useRef, useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -38,6 +42,7 @@ import {
   blockTemplateComponent,
 } from "@webstudio-is/react-sdk";
 import {
+  deleteInstanceMutable,
   extractWebstudioFragment,
   findAvailableDataSources,
   getWebstudioData,
@@ -86,14 +91,12 @@ export const findBlockSelector = (
 const findTemplates = (anchor: InstanceSelector, instances: Instances) => {
   const blockInstanceSelector = findBlockSelector(anchor, instances);
   if (blockInstanceSelector === undefined) {
-    toast.error("Editable block not found");
     return;
   }
 
   const blockInstance = instances.get(blockInstanceSelector[0]);
 
   if (blockInstance === undefined) {
-    toast.error("Editable block instance not found");
     return;
   }
 
@@ -104,14 +107,12 @@ const findTemplates = (anchor: InstanceSelector, instances: Instances) => {
   )?.value;
 
   if (templateInstanceId === undefined) {
-    toast.error("Templates instance id not found");
     return;
   }
 
   const templateInstance = instances.get(templateInstanceId);
 
   if (templateInstance === undefined) {
-    toast.error("Templates instance not found");
     return;
   }
 
@@ -144,7 +145,6 @@ const getInsertionIndex = (
   const blockInstance = instances.get(blockSelector[0]);
 
   if (blockInstance === undefined) {
-    toast.error("Editable block instance not found");
     return;
   }
 
@@ -174,25 +174,18 @@ const getInsertionIndex = (
 
 const TemplatesMenu = ({
   onOpenChange,
+  open,
   children,
   anchor,
 }: {
   children: React.ReactNode;
+  open: boolean;
   onOpenChange: (open: boolean) => void;
   anchor: InstanceSelector;
 }) => {
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
-
-  const optionPointerDownTime = useRef(0);
-  const isMenuOpenedWithOption = useRef(false);
-
-  const handleOpen = (open: boolean) => {
-    onOpenChange(open);
-
-    isMenuOpenedWithOption.current =
-      Date.now() - optionPointerDownTime.current < 100;
-  };
+  const modifierKeys = useStore($modifierKeys);
 
   const templates = findTemplates(anchor, instances);
 
@@ -203,115 +196,100 @@ const TemplatesMenu = ({
     value: templateSelector,
   }));
 
-  const tooltipContent = (
-    <>
-      <Flex gap={1}>
-        <Kbd value={["click"]} color="contrast" />
-        <Text color="subtle">to add after</Text>
-      </Flex>
-      <Flex gap={1}>
-        <Kbd value={["option", "click"]} color="contrast" />{" "}
-        <Text color="subtle">to add before</Text>
-      </Flex>
-    </>
-  );
-
   return (
-    <div
-      style={{ display: "contents" }}
-      onPointerDown={(event) => {
-        if (event.altKey) {
-          optionPointerDownTime.current = Date.now();
-        }
-      }}
-    >
-      <DropdownMenu onOpenChange={handleOpen} modal>
-        <Tooltip content={tooltipContent} side="top" disableHoverableContent>
-          <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-        </Tooltip>
+    <DropdownMenu onOpenChange={onOpenChange} open={open} modal>
+      {children}
+      <DropdownMenuPortal>
+        <DropdownMenuContent
+          align="start"
+          sideOffset={4}
+          collisionPadding={16}
+          side="bottom"
+          loop
+        >
+          <DropdownMenuRadioGroup
+            onValueChange={(value) => {
+              const insertBefore = modifierKeys.altKey;
 
-        <DropdownMenuPortal>
-          <DropdownMenuContent
-            align="start"
-            sideOffset={4}
-            collisionPadding={16}
-            side="bottom"
-            loop
-          >
-            <DropdownMenuRadioGroup
-              onValueChange={(value) => {
-                const isOptionDownOnMenuItemClick =
-                  Date.now() - optionPointerDownTime.current < 100;
+              const templateSelector = JSON.parse(value) as InstanceSelector;
+              const fragment = extractWebstudioFragment(
+                getWebstudioData(),
+                templateSelector[0]
+              );
 
-                const insertBefore =
-                  isMenuOpenedWithOption.current || isOptionDownOnMenuItemClick;
+              const parentSelector = findBlockSelector(anchor, instances);
 
-                const templateSelector = JSON.parse(value) as InstanceSelector;
-                const fragment = extractWebstudioFragment(
-                  getWebstudioData(),
-                  templateSelector[0]
-                );
+              if (parentSelector === undefined) {
+                return;
+              }
 
-                const parentSelector = findBlockSelector(anchor, instances);
+              const position = getInsertionIndex(
+                anchor,
+                instances,
+                insertBefore
+              );
 
-                if (parentSelector === undefined) {
-                  return;
-                }
+              if (position === undefined) {
+                return;
+              }
 
-                const position = getInsertionIndex(
-                  anchor,
-                  instances,
-                  insertBefore
-                );
+              const target: DroppableTarget = {
+                parentSelector,
+                position,
+              };
 
-                if (position === undefined) {
-                  return;
-                }
-
-                const target: DroppableTarget = {
-                  parentSelector,
-                  position,
-                };
-
-                updateWebstudioData((data) => {
-                  const { newInstanceIds } = insertWebstudioFragmentCopy({
-                    data,
-                    fragment,
-                    availableDataSources: findAvailableDataSources(
-                      data.dataSources,
-                      data.instances,
-                      target.parentSelector
-                    ),
-                  });
-                  const newRootInstanceId = newInstanceIds.get(
-                    fragment.instances[0].id
-                  );
-                  if (newRootInstanceId === undefined) {
-                    return;
-                  }
-                  const children: Instance["children"] = [
-                    { type: "id", value: newRootInstanceId },
-                  ];
-                  insertInstanceChildrenMutable(data, children, target);
+              updateWebstudioData((data) => {
+                const { newInstanceIds } = insertWebstudioFragmentCopy({
+                  data,
+                  fragment,
+                  availableDataSources: findAvailableDataSources(
+                    data.dataSources,
+                    data.instances,
+                    target.parentSelector
+                  ),
                 });
-              }}
-            >
-              {menuItems?.map(({ icon, title, id, value }) => (
-                <DropdownMenuRadioItem key={id} value={JSON.stringify(value)}>
-                  <Flex
-                    css={{ py: theme.spacing[4], px: theme.spacing[5] }}
-                    gap={2}
-                  >
-                    {icon}
-                    <Box>{title}</Box>
-                  </Flex>
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenuPortal>
-      </DropdownMenu>
-    </div>
+                const newRootInstanceId = newInstanceIds.get(
+                  fragment.instances[0].id
+                );
+                if (newRootInstanceId === undefined) {
+                  return;
+                }
+                const children: Instance["children"] = [
+                  { type: "id", value: newRootInstanceId },
+                ];
+                insertInstanceChildrenMutable(data, children, target);
+              });
+            }}
+          >
+            {menuItems?.map(({ icon, title, id, value }) => (
+              <DropdownMenuRadioItem key={id} value={JSON.stringify(value)}>
+                <Flex
+                  css={{ py: theme.spacing[4], px: theme.spacing[5] }}
+                  gap={2}
+                >
+                  {icon}
+                  <Box>{title}</Box>
+                </Flex>
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+
+          <div className={menuItemCss({ hint: true })}>
+            <Grid css={{ width: theme.spacing[25] }}>
+              <Flex gap={1} css={{ order: modifierKeys.altKey ? 2 : 0 }}>
+                <Kbd value={["click"]} />
+                <Text color="subtle">to add after</Text>
+              </Flex>
+              <Flex gap={1} css={{ order: 1 }}>
+                <Kbd value={["option", "click"]} />{" "}
+                <Text color="subtle">to add before</Text>
+              </Flex>
+            </Grid>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
+    </DropdownMenu>
   );
 };
 
@@ -344,57 +322,107 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
-  console.log("altKey", modifierKeys.altKey);
-
   const rect = applyScale(outline.rect, scale);
 
+  const isAddMode = isMenuOpen || !modifierKeys.altKey;
+
+  const tooltipContent = (
+    <Grid>
+      <Flex gap={1} css={{ order: isAddMode ? 0 : 2 }}>
+        <Kbd value={["click"]} color="contrast" />
+        <Text color="subtle">to add block</Text>
+      </Flex>
+      <Flex gap={1} css={{ order: 1 }}>
+        <Kbd value={["option", "click"]} color="contrast" />{" "}
+        <Text color="subtle">to delete</Text>
+      </Flex>
+    </Grid>
+  );
+
   return (
-    <BlockChildAddButtonOutline rect={rect}>
-      <Flex
-        css={{
-          width: "min-content",
-          pointerEvents: isMenuOpen ? "none" : "all",
-          clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% ${iconButtonSize})`,
-        }}
-        onMouseEnter={() => {
-          clearTimeout(timeoutRef.current);
+    <Outline rect={rect}>
+      <div
+        style={{
+          width: 0,
+          display: "grid",
 
-          setButtonOutline(outline);
-        }}
-        onMouseLeave={() => {
-          if (isMenuOpen) {
-            return;
-          }
-
-          clearTimeout(timeoutRef.current);
-
-          timeoutRef.current = setTimeout(() => {
-            setButtonOutline(undefined);
-          }, 100);
+          alignContent: "stretch",
+          justifyContent: "end",
         }}
       >
-        <TemplatesMenu
-          onOpenChange={(open) => {
-            setIsMenuOpen(open);
-
-            if (!open) {
-              setButtonOutline(undefined);
-            }
+        <Flex
+          css={{
+            width: "min-content",
+            pointerEvents: isMenuOpen ? "none" : "all",
+            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% ${iconButtonSize})`,
           }}
-          anchor={outline.selector}
+          onMouseEnter={() => {
+            clearTimeout(timeoutRef.current);
+
+            setButtonOutline(outline);
+          }}
+          onMouseLeave={() => {
+            if (isMenuOpen) {
+              return;
+            }
+
+            clearTimeout(timeoutRef.current);
+
+            timeoutRef.current = setTimeout(() => {
+              setButtonOutline(undefined);
+            }, 100);
+          }}
         >
-          <IconButton
-            variant={"local"}
-            css={{
-              mr: theme.spacing[4],
-              borderStyle: "solid",
-              borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+          <TemplatesMenu
+            open={isMenuOpen}
+            onOpenChange={(open) => {
+              if (!isAddMode) {
+                return;
+              }
+
+              setIsMenuOpen(open);
+
+              if (!open) {
+                setButtonOutline(undefined);
+              }
             }}
+            anchor={outline.selector}
           >
-            <PlusIcon />
-          </IconButton>
-        </TemplatesMenu>
-      </Flex>
-    </BlockChildAddButtonOutline>
+            <Tooltip
+              content={tooltipContent}
+              side="top"
+              disableHoverableContent
+            >
+              <DropdownMenuTrigger asChild>
+                <IconButton
+                  onClick={() => {
+                    if (isAddMode) {
+                      return;
+                    }
+
+                    updateWebstudioData((data) => {
+                      deleteInstanceMutable(data, outline.selector);
+                    });
+
+                    setButtonOutline(undefined);
+                    $blockChildOutline.set(undefined);
+                    $hoveredInstanceSelector.set(undefined);
+                    $hoveredInstanceOutline.set(undefined);
+                  }}
+                  variant={"local"}
+                  css={{
+                    mr: theme.spacing[4],
+                    borderStyle: "solid",
+                    borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+                  }}
+                >
+                  {isAddMode ? <PlusIcon /> : <MinusIcon />}
+                </IconButton>
+              </DropdownMenuTrigger>
+            </Tooltip>
+          </TemplatesMenu>
+        </Flex>
+      </div>
+    </Outline>
   );
 };

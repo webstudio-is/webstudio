@@ -434,9 +434,7 @@ export const subscribeModifierKeys = (options: AddEventListenerOptions) => {
 
   document.addEventListener("keydown", handleKeyEvent, eventOptions);
   document.addEventListener("keyup", handleKeyEvent, eventOptions);
-  document.addEventListener("pointerenter", handleKeyEvent, eventOptions);
-  document.addEventListener("pointerleave", handleKeyEvent, eventOptions);
-  document.addEventListener("pointermove", handleKeyEvent, eventOptions);
+  document.addEventListener("mousemove", handleKeyEvent, eventOptions);
 };
 
 export type ItemDropTarget = {
