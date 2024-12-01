@@ -328,6 +328,15 @@ const TemplatesMenu = ({
   );
 };
 
+const distanceToButton = theme.spacing[4];
+
+/**
+ * The button's grace area must slightly overlap with the outline rectangle.
+ * This is because the outline rectangle has `pointer-events: none`, and some UI elements, like resize handles, are placed above it.
+ * The overlap ensures the grace area starts earlier to account for this.
+ */
+const hoverPolygonOverlap = theme.spacing[4];
+
 export const BlockChildHoveredInstanceOutline = () => {
   const blockChildOutline = useStore($blockChildOutline);
   const scale = useStore($scale);
@@ -416,9 +425,10 @@ export const BlockChildHoveredInstanceOutline = () => {
       >
         <Flex
           css={{
-            width: "min-content",
+            width: `calc(${iconButtonSize} + ${distanceToButton} + ${hoverPolygonOverlap})`,
+            marginRight: `-${hoverPolygonOverlap}`,
             pointerEvents: isMenuOpen ? "none" : "all",
-            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% ${iconButtonSize})`,
+            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${hoverPolygonOverlap}) 100%, 0% ${iconButtonSize})`,
           }}
           onMouseEnter={() => {
             clearTimeout(timeoutRef.current);
@@ -475,7 +485,6 @@ export const BlockChildHoveredInstanceOutline = () => {
                     $hoveredInstanceOutline.set(undefined);
                   }}
                   css={{
-                    mr: theme.spacing[4],
                     borderStyle: "solid",
                     borderColor: isAddMode
                       ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
