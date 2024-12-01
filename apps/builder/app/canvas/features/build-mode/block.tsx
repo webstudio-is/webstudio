@@ -28,21 +28,27 @@ export const Block = React.forwardRef<
     React.isValidElement(child)
   );
 
+  if (instance === undefined) {
+    return <div>Content Block instance is undefined</div>;
+  }
+
+  const templateInstanceId = instance.children.find(
+    (child) =>
+      child.type === "id" &&
+      instances.get(child.value)?.component === blockTemplateComponent
+  )?.value;
+
+  if (templateInstanceId === undefined) {
+    return <div>Content Block template child is not found</div>;
+  }
+
+  const templateInstance = instances.get(templateInstanceId);
+
+  if (templateInstance === undefined) {
+    return <div>Content Block template instance is not found</div>;
+  }
+
   if (isDesignMode) {
-    if (instance === undefined) {
-      return <div>Editable Block instance is undefined</div>;
-    }
-
-    const templateInstanceId = instance.children.find(
-      (child) =>
-        child.type === "id" &&
-        instances.get(child.value)?.component === blockTemplateComponent
-    )?.value;
-
-    if (templateInstanceId === undefined) {
-      return <div>Editable Block template instance not found</div>;
-    }
-
     if (selectedInstanceSelector !== undefined) {
       const selectedSelector = selectedInstanceSelector.join(",");
       // If any template child is selected then render only template
@@ -64,6 +70,12 @@ export const Block = React.forwardRef<
   }
 
   const hasContent = childArray.length > 1;
+  const hasTemplates = templateInstance.children.length > 0;
+
+  if (!isDesignMode && !hasContent && !hasTemplates) {
+    return <></>;
+  }
+
   const editableBlockStyle = hasContent ? { display: "contents" } : {};
 
   return (

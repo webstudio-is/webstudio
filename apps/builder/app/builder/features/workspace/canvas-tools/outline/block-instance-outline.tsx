@@ -188,7 +188,13 @@ const TemplatesMenu = ({
   const metas = useStore($registeredComponentMetas);
   const modifierKeys = useStore($modifierKeys);
 
-  const blockInstance = instances.get(anchor[0]);
+  const blockInstanceSelector = findBlockSelector(anchor, instances);
+
+  if (blockInstanceSelector === undefined) {
+    return;
+  }
+
+  const blockInstance = instances.get(blockInstanceSelector[0]);
 
   if (blockInstance === undefined) {
     return;
@@ -352,9 +358,25 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
-  const blockInstance = instances.get(outline.selector[0]);
+  const blockInstanceSelector = findBlockSelector(outline.selector, instances);
+
+  if (blockInstanceSelector === undefined) {
+    return;
+  }
+
+  const blockInstance = instances.get(blockInstanceSelector[0]);
 
   if (blockInstance === undefined) {
+    return;
+  }
+
+  const templates = findTemplates(outline.selector, instances);
+
+  if (templates === undefined) {
+    return;
+  }
+
+  if (templates.length === 0) {
     return;
   }
 
