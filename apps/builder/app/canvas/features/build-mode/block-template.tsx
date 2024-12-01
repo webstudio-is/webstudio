@@ -34,5 +34,13 @@ export const BlockTemplate = React.forwardRef<
     return;
   }
 
-  return <div style={{ display: "contents" }} ref={ref} {...props} />;
+  const childrenCount = React.Children.count(props.children);
+
+  return (
+    <div
+      style={{ display: childrenCount === 0 ? "block" : "contents" }}
+      ref={ref}
+      {...props}
+    />
+  );
 }) as AnyComponent;
