@@ -335,7 +335,7 @@ const distanceToButton = theme.spacing[4];
  * This is because the outline rectangle has `pointer-events: none`, and some UI elements, like resize handles, are placed above it.
  * The overlap ensures the grace area starts earlier to account for this.
  */
-const hoverPolygonOverlap = theme.spacing[4];
+const graceAreaOverlap = theme.spacing[4];
 
 export const BlockChildHoveredInstanceOutline = () => {
   const blockChildOutline = useStore($blockChildOutline);
@@ -425,10 +425,11 @@ export const BlockChildHoveredInstanceOutline = () => {
       >
         <Flex
           css={{
-            width: `calc(${iconButtonSize} + ${distanceToButton} + ${hoverPolygonOverlap})`,
-            marginRight: `-${hoverPolygonOverlap}`,
+            // Define grace area for the button
+            width: `calc(${iconButtonSize} + ${distanceToButton} + ${graceAreaOverlap})`,
+            marginRight: `-${graceAreaOverlap}`,
             pointerEvents: isMenuOpen ? "none" : "all",
-            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${hoverPolygonOverlap}) 100%, 0% ${iconButtonSize})`,
+            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${graceAreaOverlap}) 100%, 0% ${iconButtonSize})`,
           }}
           onMouseEnter={() => {
             clearTimeout(timeoutRef.current);
