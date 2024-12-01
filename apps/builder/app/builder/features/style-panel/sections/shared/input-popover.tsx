@@ -77,8 +77,8 @@ const Input = ({
         batch.publish({ isEphemeral: true });
       }}
       onChangeComplete={({ value }) => {
-        const batch = createBatchUpdate();
         setIntermediateValue(undefined);
+        const batch = createBatchUpdate();
         for (const property of activeProperties) {
           batch.setProperty(property)(value);
         }
@@ -89,6 +89,15 @@ const Input = ({
         const batch = createBatchUpdate();
         batch.deleteProperty(property);
         batch.publish({ isEphemeral: true });
+      }}
+      onReset={() => {
+        setIntermediateValue(undefined);
+        const batch = createBatchUpdate();
+        for (const property of activeProperties) {
+          batch.deleteProperty(property);
+        }
+        batch.publish();
+        onClosePopover();
       }}
     />
   );

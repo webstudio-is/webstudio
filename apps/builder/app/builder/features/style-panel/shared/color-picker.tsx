@@ -169,6 +169,7 @@ const ColorPickerPopoverContent = ({
 type ColorPickerProps = {
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
+  onReset: () => void;
   onAbort: () => void;
   value: StyleValue;
   currentColor: StyleValue;
@@ -243,6 +244,7 @@ export const ColorPicker = ({
   onChange,
   onChangeComplete,
   onAbort,
+  onReset,
 }: ColorPickerProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -326,6 +328,10 @@ export const ColorPicker = ({
         onChange(invalidValue);
       }}
       onAbort={onAbort}
+      onReset={() => {
+        setIntermediateValue(undefined);
+        onReset();
+      }}
     />
   );
 };

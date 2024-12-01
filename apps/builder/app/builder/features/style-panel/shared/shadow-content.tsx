@@ -336,6 +336,9 @@ export const ShadowContent = ({
               handlePropertyChange({ color: styleValue })
             }
             onAbort={() => handlePropertyChange({ color: colorControlProp })}
+            onReset={() => {
+              handlePropertyChange({ color: undefined });
+            }}
           />
         </Flex>
 

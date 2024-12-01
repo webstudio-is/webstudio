@@ -55,6 +55,10 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
       onAbort={() => {
         deleteProperty(property, { isEphemeral: true });
       }}
+      onReset={() => {
+        setIntermediateValue(undefined);
+        deleteProperty(property);
+      }}
     />
   );
 };
