@@ -138,65 +138,86 @@ const subscribeDesignModeHelperStyles = () => {
 };
 
 const subscribeContentEditModeHelperStyles = () => {
-  helpersSheet.setAttribute("media", "all");
+  const renderHelperStyles = () => {
+    helpersSheet.clear();
+    helpersSheet.setAttribute("media", "all");
 
-  for (const style of helperStylesContentEdit) {
-    helpersSheet.addPlaintextRule(style);
-  }
-
-  // Show text cursor on all editable elements (including links and buttons)
-  // to indicate they are editable in the content editor mode
-  //
-  // @todo Consider setting cursor: pointer on non-editable elements by default
-  // to better distinguish clickable vs editable elements, needs more investigation
-  const rootInstanceId = $selectedPage.get()?.rootInstanceId;
-  if (rootInstanceId !== undefined) {
-    const editableInstanceSelectors: InstanceSelector[] = [];
-    const instances = $instances.get();
-
-    findAllEditableInstanceSelector(
-      rootInstanceId,
-      [],
-      instances,
-      $registeredComponentMetas.get(),
-      editableInstanceSelectors
-    );
-
-    // Group IDs into chunks of 20 since :is() allows for more efficient grouping
-    const chunkSize = 20;
-    for (let i = 0; i < editableInstanceSelectors.length; i += chunkSize) {
-      const chunk = editableInstanceSelectors
-        .slice(i, i + chunkSize)
-        .filter((selector) => {
-          const instance = instances.get(selector[0]);
-          if (instance === undefined) {
-            return false;
-          }
-
-          const hasExpressionChildren = instance.children.some(
-            (child) => child.type === "expression"
-          );
-
-          if (hasExpressionChildren) {
-            return false;
-          }
-
-          return true;
-        });
-
-      const selectors = chunk.map(
-        (selector) => `[${idAttribute}="${selector[0]}"]`
-      );
-
-      helpersSheet.addPlaintextRule(
-        `:is(${selectors.join(", ")}), :is(${selectors.join(", ")}) a { cursor: text; }`
-      );
+    for (const style of helperStylesContentEdit) {
+      helpersSheet.addPlaintextRule(style);
     }
-  }
 
-  helpersSheet.render();
+    // Show text cursor on all editable elements (including links and buttons)
+    // to indicate they are editable in the content editor mode
+    //
+    // @todo Consider setting cursor: pointer on non-editable elements by default
+    // to better distinguish clickable vs editable elements, needs more investigation
+    const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+    if (rootInstanceId !== undefined) {
+      const editableInstanceSelectors: InstanceSelector[] = [];
+      const instances = $instances.get();
+
+      findAllEditableInstanceSelector(
+        rootInstanceId,
+        [],
+        instances,
+        $registeredComponentMetas.get(),
+        editableInstanceSelectors
+      );
+
+      // Group IDs into chunks of 20 since :is() allows for more efficient grouping
+      const chunkSize = 20;
+      for (let i = 0; i < editableInstanceSelectors.length; i += chunkSize) {
+        const chunk = editableInstanceSelectors
+          .slice(i, i + chunkSize)
+          .filter((selector) => {
+            const instance = instances.get(selector[0]);
+            if (instance === undefined) {
+              return false;
+            }
+
+            const hasExpressionChildren = instance.children.some(
+              (child) => child.type === "expression"
+            );
+
+            if (hasExpressionChildren) {
+              return false;
+            }
+
+            return true;
+          });
+
+        const selectors = chunk.map(
+          (selector) => `[${idAttribute}="${selector[0]}"]`
+        );
+
+        helpersSheet.addPlaintextRule(
+          `:is(${selectors.join(", ")}), :is(${selectors.join(", ")}) a { cursor: text; }`
+        );
+      }
+    }
+
+    helpersSheet.render();
+  };
+
+  renderHelperStyles();
+
+  const requestIdleCallbackFn =
+    globalThis.requestIdleCallback ?? requestAnimationFrame;
+  const cancelIdleCallbackFn =
+    globalThis.cancelIdleCallback ?? cancelAnimationFrame;
+
+  let idleId: number;
+  const renderHelperStylesIdle = () => {
+    cancelIdleCallbackFn(idleId);
+    idleId = requestIdleCallbackFn(renderHelperStyles);
+  };
+
+  const unsubscribeInstances = $instances.listen(renderHelperStylesIdle);
+  const unsubscribeSelectedPage = $selectedPage.listen(renderHelperStylesIdle);
 
   return () => {
+    unsubscribeInstances();
+    unsubscribeSelectedPage();
     helpersSheet.clear();
     helpersSheet.render();
   };

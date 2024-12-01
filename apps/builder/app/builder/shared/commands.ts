@@ -32,7 +32,7 @@ import {
 import { selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-import { findBlockSelector } from "../features/workspace/canvas-tools/outline/editable-block-instance-outline";
+import { findBlockSelector } from "../features/workspace/canvas-tools/outline/block-instance-outline";
 import { blockTemplateComponent } from "@webstudio-is/react-sdk";
 
 const makeBreakpointCommand = <CommandName extends string>(

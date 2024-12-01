@@ -415,6 +415,28 @@ export const setBuilderMode = (mode: BuilderMode | null) => {
 
 export const $toastErrors = atom<string[]>([]);
 
+export const $modifierKeys = atom<{ altKey: boolean }>({ altKey: false });
+
+export const subscribeModifierKeys = (options: AddEventListenerOptions) => {
+  const handleKeyEvent = (event: MouseEvent | KeyboardEvent) => {
+    const altKey = event.altKey;
+    if ($modifierKeys.get().altKey !== altKey) {
+      $modifierKeys.set({ altKey });
+    }
+  };
+
+  const eventOptions: AddEventListenerOptions = {
+    ...options,
+    capture: true,
+
+    passive: true,
+  };
+
+  document.addEventListener("keydown", handleKeyEvent, eventOptions);
+  document.addEventListener("keyup", handleKeyEvent, eventOptions);
+  document.addEventListener("mousemove", handleKeyEvent, eventOptions);
+};
+
 export type ItemDropTarget = {
   itemSelector: InstanceSelector;
   indexWithinChildren: number;

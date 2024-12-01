@@ -19,7 +19,7 @@ import { ResizeHandles } from "./resize-handles";
 import { MediaBadge } from "./media-badge";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
-import { BlockChildHoveredInstanceOutline } from "./outline/editable-block-instance-outline";
+import { BlockChildHoveredInstanceOutline } from "./outline/block-instance-outline";
 
 const containerStyle = css({
   position: "absolute",
