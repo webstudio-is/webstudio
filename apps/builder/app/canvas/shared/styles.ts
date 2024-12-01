@@ -201,8 +201,23 @@ const subscribeContentEditModeHelperStyles = () => {
 
   renderHelperStyles();
 
-  const unsubscribeInstances = $instances.listen(renderHelperStyles);
-  const unsubscribeSelectedPage = $selectedPage.listen(renderHelperStyles);
+  const requestIdleCallbackFn =
+    typeof requestIdleCallback !== "undefined"
+      ? requestIdleCallback
+      : requestAnimationFrame;
+  const cancelIdleCallbackFn =
+    typeof cancelIdleCallback !== "undefined"
+      ? cancelIdleCallback
+      : cancelAnimationFrame;
+
+  let idleId: number;
+  const renderHelperStylesIdle = () => {
+    cancelIdleCallbackFn(idleId);
+    idleId = requestIdleCallbackFn(renderHelperStyles);
+  };
+
+  const unsubscribeInstances = $instances.listen(renderHelperStylesIdle);
+  const unsubscribeSelectedPage = $selectedPage.listen(renderHelperStylesIdle);
 
   return () => {
     unsubscribeInstances();
