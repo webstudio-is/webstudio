@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
-  $editableBlockChildOutline,
+  $blockChildOutline,
   $hoveredInstanceOutlineAndInstance,
   $hoveredInstanceSelector,
   $instances,
@@ -26,7 +26,7 @@ const isDescendantOrSelf = (
 export const HoveredInstanceOutline = () => {
   const instances = useStore($instances);
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
-  const editableBlockChildOutline = useStore($editableBlockChildOutline);
+  const blockChildOutline = useStore($blockChildOutline);
   const outline = useStore($hoveredInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -37,9 +37,7 @@ export const HoveredInstanceOutline = () => {
   }
 
   if (isFeatureEnabled("contentEditableMode") && isContentMode) {
-    if (
-      shallowEqual(editableBlockChildOutline?.selector, hoveredInstanceSelector)
-    ) {
+    if (shallowEqual(blockChildOutline?.selector, hoveredInstanceSelector)) {
       return;
     }
   }

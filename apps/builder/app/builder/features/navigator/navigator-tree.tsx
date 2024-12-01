@@ -21,7 +21,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   collectionComponent,
-  editableBlockComponent,
+  blockComponent,
   rootComponent,
   showAttribute,
   WsComponentMeta,
@@ -34,7 +34,7 @@ import {
 } from "@webstudio-is/icons";
 import {
   $dragAndDropState,
-  $editableBlockChildOutline,
+  $blockChildOutline,
   $editingItemSelector,
   $hoveredInstanceSelector,
   $instances,
@@ -424,7 +424,7 @@ const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
       return false;
     }
 
-    if (parentInstance.component !== editableBlockComponent) {
+    if (parentInstance.component !== blockComponent) {
       return false;
     }
   }
@@ -453,16 +453,16 @@ const canDrop = (
   // Allow dropping into the parent only
   const isSameParent = dragSelector[1] === dropSelector[0];
 
-  const isDropTargetEditableBlock =
+  const isDropTargetBlock =
     isSameParent &&
-    instances.get(dropSelector[0])?.component === editableBlockComponent;
+    instances.get(dropSelector[0])?.component === blockComponent;
 
   if ($isContentMode.get()) {
-    return isDropTargetEditableBlock && dropTarget.indexWithinChildren > 0;
+    return isDropTargetBlock && dropTarget.indexWithinChildren > 0;
   }
 
-  if (isDropTargetEditableBlock && dropTarget.indexWithinChildren === 0) {
-    // We want Templates to be the first child of the editable block
+  if (isDropTargetBlock && dropTarget.indexWithinChildren === 0) {
+    // We want Templates to be the first child of the content block
     return false;
   }
 
@@ -631,7 +631,7 @@ export const NavigatorTree = () => {
                 buttonProps={{
                   onMouseEnter: () => {
                     $hoveredInstanceSelector.set(item.selector);
-                    $editableBlockChildOutline.set(undefined);
+                    $blockChildOutline.set(undefined);
                   },
                   onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
                   onClick: () => selectInstance(item.selector),

@@ -41,7 +41,7 @@ import {
   $collaborativeInstanceSelector,
   $hoveredInstanceOutline,
   $selectedInstanceOutline,
-  $editableBlockChildOutline,
+  $blockChildOutline,
   $textToolbar,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
@@ -138,10 +138,7 @@ const createObjectPool = () => {
       $selectedInstanceOutline
     ),
     new NanostoresSyncObject("hoveredInstanceOutline", $hoveredInstanceOutline),
-    new NanostoresSyncObject(
-      "editableBlockChildOutline",
-      $editableBlockChildOutline
-    ),
+    new NanostoresSyncObject("blockChildOutline", $blockChildOutline),
 
     new NanostoresSyncObject(
       "collaborativeInstanceSelector",

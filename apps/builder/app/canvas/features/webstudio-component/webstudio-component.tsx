@@ -26,8 +26,8 @@ import {
   type AnyComponent,
   textContentAttribute,
   descendantComponent,
-  editableBlockComponent,
-  editableBlockTemplateComponent,
+  blockComponent,
+  blockTemplateComponent,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import {
@@ -55,8 +55,8 @@ import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
 } from "~/canvas/elements";
-import { EditableBlock } from "../build-mode/editable-block";
-import { EditableBlockTemplate } from "../build-mode/editable-block-template";
+import { Block } from "../build-mode/block";
+import { BlockTemplate } from "../build-mode/block-template";
 
 const ContentEditable = ({
   renderComponentWithRef,
@@ -435,12 +435,12 @@ export const WebstudioComponentCanvas = forwardRef<
     return <></>;
   }
 
-  if (instance.component === editableBlockComponent) {
-    Component = EditableBlock;
+  if (instance.component === blockComponent) {
+    Component = Block;
   }
 
-  if (instance.component === editableBlockTemplateComponent) {
-    Component = EditableBlockTemplate;
+  if (instance.component === blockTemplateComponent) {
+    Component = BlockTemplate;
   }
 
   const props: {
@@ -571,12 +571,12 @@ export const WebstudioComponentPreview = forwardRef<
 
   let Component = components.get(instance.component);
 
-  if (instance.component === editableBlockComponent) {
-    Component = EditableBlock;
+  if (instance.component === blockComponent) {
+    Component = Block;
   }
 
-  if (instance.component === editableBlockTemplateComponent) {
-    Component = EditableBlockTemplate;
+  if (instance.component === blockTemplateComponent) {
+    Component = BlockTemplate;
   }
 
   if (Component === undefined) {

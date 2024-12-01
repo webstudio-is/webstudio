@@ -72,7 +72,7 @@ type OutlineProps = {
   variant?: "default" | "collaboration" | "slot";
 };
 
-export const EditableBlockChildAddButtonOutline = ({
+export const BlockChildAddButtonOutline = ({
   rect,
   children,
 }: {
