@@ -65,7 +65,6 @@ import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
-import { subscribeInspectorEdits } from "./inspector-edits";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
@@ -179,7 +178,6 @@ const DesignMode = () => {
     updateCollaborativeInstanceRect(options);
     subscribeInstanceSelection(options);
     subscribeInstanceHovering(options);
-    subscribeInspectorEdits(options);
     subscribeFontLoadingDone(options);
     subscribeModifierKeys(options);
     return () => {
@@ -213,7 +211,6 @@ const ContentEditMode = () => {
     manageContentEditModeStyles(options);
     subscribeInstanceSelection(options);
     subscribeInstanceHovering(options);
-    subscribeInspectorEdits(options);
     subscribeFontLoadingDone(options);
     initCopyPasteForContentEditMode(options);
     subscribeModifierKeys(options);

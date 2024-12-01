@@ -52,6 +52,7 @@ import {
 } from "~/shared/instance-utils";
 import { shallowEqual } from "shallow-equal";
 import { MetaIcon } from "~/builder/shared/meta-icon";
+import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 
 export const findBlockSelector = (
   anchor: InstanceSelector,
@@ -262,7 +263,11 @@ const TemplatesMenu = ({
             }}
           >
             {menuItems?.map(({ icon, title, id, value }) => (
-              <DropdownMenuRadioItem key={id} value={JSON.stringify(value)}>
+              <DropdownMenuRadioItem
+                key={id}
+                value={JSON.stringify(value)}
+                {...{ [skipInertHandlersAttribute]: true }}
+              >
                 <Flex
                   css={{ py: theme.spacing[4], px: theme.spacing[5] }}
                   gap={2}
