@@ -31,7 +31,7 @@ import {
 import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
-import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
+import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 import { useRef, useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -276,10 +276,12 @@ const TemplatesMenu = ({
                 key={id}
                 value={JSON.stringify(value)}
                 {...{ [skipInertHandlersAttribute]: true }}
+                data-yyy
               >
                 <Flex
                   css={{ py: theme.spacing[4], px: theme.spacing[5] }}
                   gap={2}
+                  data-xxx
                 >
                   {icon}
                   <Box>{title}</Box>
@@ -435,6 +437,7 @@ export const BlockChildHoveredInstanceOutline = () => {
             >
               <DropdownMenuTrigger asChild>
                 <IconButton
+                  variant={isAddMode ? "local" : "overwritten"}
                   onClick={() => {
                     if (isAddMode) {
                       return;
@@ -449,14 +452,15 @@ export const BlockChildHoveredInstanceOutline = () => {
                     $hoveredInstanceSelector.set(undefined);
                     $hoveredInstanceOutline.set(undefined);
                   }}
-                  variant={"local"}
                   css={{
                     mr: theme.spacing[4],
                     borderStyle: "solid",
-                    borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
+                    borderColor: isAddMode
+                      ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
+                      : undefined,
                   }}
                 >
-                  {isAddMode ? <PlusIcon /> : <MinusIcon />}
+                  {isAddMode ? <PlusIcon /> : <TrashIcon />}
                 </IconButton>
               </DropdownMenuTrigger>
             </Tooltip>
