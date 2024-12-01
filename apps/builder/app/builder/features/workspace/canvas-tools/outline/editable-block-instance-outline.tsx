@@ -21,6 +21,7 @@ import {
   toast,
   Kbd,
   Text,
+  iconButtonSize,
 } from "@webstudio-is/design-system";
 import { EditableBlockChildAddButtonOutline } from "./outline";
 import { applyScale } from "./apply-scale";
@@ -357,7 +358,7 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
         css={{
           width: "min-content",
           pointerEvents: isMenuOpen ? "none" : "all",
-          clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 24px)`,
+          clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% ${iconButtonSize})`,
         }}
         onMouseEnter={() => {
           clearTimeout(timeoutRef.current);
