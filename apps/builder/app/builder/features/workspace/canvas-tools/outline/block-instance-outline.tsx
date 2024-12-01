@@ -188,6 +188,15 @@ const TemplatesMenu = ({
   const metas = useStore($registeredComponentMetas);
   const modifierKeys = useStore($modifierKeys);
 
+  const blockInstance = instances.get(anchor[0]);
+
+  if (blockInstance === undefined) {
+    return;
+  }
+
+  // 1 child is Templates instance
+  const hasChildren = blockInstance.children.length > 1;
+
   const templates = findTemplates(anchor, instances);
 
   const menuItems = templates?.map(([template, templateSelector]) => ({
@@ -282,13 +291,26 @@ const TemplatesMenu = ({
 
           <div className={menuItemCss({ hint: true })}>
             <Grid css={{ width: theme.spacing[25] }}>
-              <Flex gap={1} css={{ order: modifierKeys.altKey ? 2 : 0 }}>
+              <Flex gap={1} css={{ display: hasChildren ? "none" : undefined }}>
                 <Kbd value={["click"]} />
-                <Text color="subtle">to add after</Text>
+                <Text>to add first</Text>
               </Flex>
-              <Flex gap={1} css={{ order: 1 }}>
-                <Kbd value={["option", "click"]} />{" "}
-                <Text color="subtle">to add before</Text>
+
+              <Flex
+                gap={1}
+                css={{
+                  order: modifierKeys.altKey ? 2 : 0,
+                  display: hasChildren ? undefined : "none",
+                }}
+              >
+                <Kbd value={["click"]} />
+                <Text>to add after</Text>
+              </Flex>
+              <Flex
+                gap={1}
+                css={{ order: 1, display: hasChildren ? undefined : "none" }}
+              >
+                <Kbd value={["option", "click"]} /> <Text>to add before</Text>
               </Flex>
             </Grid>
           </div>
@@ -303,6 +325,7 @@ export const BlockChildHoveredInstanceOutline = () => {
   const scale = useStore($scale);
   const isContentMode = useStore($isContentMode);
   const modifierKeys = useStore($modifierKeys);
+  const instances = useStore($instances);
 
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
     undefined
@@ -327,9 +350,18 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
+  const blockInstance = instances.get(outline.selector[0]);
+
+  if (blockInstance === undefined) {
+    return;
+  }
+
+  // 1 child is Templates instance
+  const hasChildren = blockInstance.children.length > 1;
+
   const rect = applyScale(outline.rect, scale);
 
-  const isAddMode = isMenuOpen || !modifierKeys.altKey;
+  const isAddMode = isMenuOpen || !modifierKeys.altKey || !hasChildren;
 
   const tooltipContent = (
     <Grid>
@@ -337,7 +369,10 @@ export const BlockChildHoveredInstanceOutline = () => {
         <Kbd value={["click"]} color="contrast" />
         <Text color="subtle">to add block</Text>
       </Flex>
-      <Flex gap={1} css={{ order: 1 }}>
+      <Flex
+        gap={1}
+        css={{ order: 1, display: !hasChildren ? "none" : undefined }}
+      >
         <Kbd value={["option", "click"]} color="contrast" />{" "}
         <Text color="subtle">to delete</Text>
       </Flex>
