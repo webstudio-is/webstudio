@@ -202,13 +202,9 @@ const subscribeContentEditModeHelperStyles = () => {
   renderHelperStyles();
 
   const requestIdleCallbackFn =
-    typeof requestIdleCallback !== "undefined"
-      ? requestIdleCallback
-      : requestAnimationFrame;
+    globalThis.requestIdleCallback ?? requestAnimationFrame;
   const cancelIdleCallbackFn =
-    typeof cancelIdleCallback !== "undefined"
-      ? cancelIdleCallback
-      : cancelAnimationFrame;
+    globalThis.cancelIdleCallback ?? cancelAnimationFrame;
 
   let idleId: number;
   const renderHelperStylesIdle = () => {
