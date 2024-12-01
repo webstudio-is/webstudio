@@ -3,6 +3,7 @@ import {
   $editableBlockChildOutline,
   $instances,
   $isContentMode,
+  $registeredComponentMetas,
   type EditableBlockChildOutline,
 } from "~/shared/nano-states";
 import {
@@ -20,11 +21,13 @@ import {
   toast,
   Kbd,
   Text,
+  iconButtonSize,
 } from "@webstudio-is/design-system";
 import { EditableBlockChildAddButtonOutline } from "./outline";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
-import { BoxIcon, PlusIcon } from "@webstudio-is/icons";
+import { PlusIcon } from "@webstudio-is/icons";
+import { BoxIcon } from "@webstudio-is/icons/svg";
 import { useRef, useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
@@ -42,6 +45,7 @@ import {
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { shallowEqual } from "shallow-equal";
+import { MetaIcon } from "~/builder/shared/meta-icon";
 
 export const findEditableBlockSelector = (
   anchor: InstanceSelector,
@@ -182,6 +186,7 @@ const TemplatesMenu = ({
   anchor: InstanceSelector;
 }) => {
   const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
 
   const optionPointerDownTime = useRef(0);
   const isMenuOpenedWithOption = useRef(false);
@@ -197,7 +202,7 @@ const TemplatesMenu = ({
 
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
-    icon: <BoxIcon />,
+    icon: <MetaIcon icon={metas.get(template.component)?.icon ?? BoxIcon} />,
     title: template.label ?? template.component,
     value: templateSelector,
   }));
@@ -352,8 +357,8 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
       <Flex
         css={{
           width: "min-content",
-          height: "min-content",
           pointerEvents: isMenuOpen ? "none" : "all",
+          clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% ${iconButtonSize})`,
         }}
         onMouseEnter={() => {
           clearTimeout(timeoutRef.current);
@@ -385,6 +390,7 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
           <IconButton
             variant={"local"}
             css={{
+              mr: theme.spacing[4],
               borderStyle: "solid",
               borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
             }}
@@ -392,13 +398,6 @@ export const EditableBlockChildHoveredInstanceOutline = () => {
             <PlusIcon />
           </IconButton>
         </TemplatesMenu>
-        <Box
-          css={{
-            width: theme.spacing[4],
-            // For easier hover
-            height: theme.spacing[12],
-          }}
-        ></Box>
       </Flex>
     </EditableBlockChildAddButtonOutline>
   );

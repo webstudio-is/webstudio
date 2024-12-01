@@ -89,15 +89,11 @@ export const EditableBlockChildAddButtonOutline = ({
       >
         <div
           style={{
-            height: 0,
             width: 0,
             display: "grid",
 
-            alignContent: "start",
+            alignContent: "stretch",
             justifyContent: "end",
-
-            justifySelf: "start",
-            alignSelf: "start",
           }}
         >
           {children}
