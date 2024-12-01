@@ -47,6 +47,7 @@ import {
   $isPreviewMode,
   $isDesignMode,
   $isContentMode,
+  subscribeModifierKeys,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
@@ -180,6 +181,7 @@ const DesignMode = () => {
     subscribeInstanceHovering(options);
     subscribeInspectorEdits(options);
     subscribeFontLoadingDone(options);
+    subscribeModifierKeys(options);
     return () => {
       abortController.abort();
     };
@@ -214,6 +216,7 @@ const ContentEditMode = () => {
     subscribeInspectorEdits(options);
     subscribeFontLoadingDone(options);
     initCopyPasteForContentEditMode(options);
+    subscribeModifierKeys(options);
     return () => {
       abortController.abort();
     };

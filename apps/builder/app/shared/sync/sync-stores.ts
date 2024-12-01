@@ -45,6 +45,7 @@ import {
   $textToolbar,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
+  $modifierKeys,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $awareness } from "../awareness";
@@ -139,6 +140,7 @@ const createObjectPool = () => {
     ),
     new NanostoresSyncObject("hoveredInstanceOutline", $hoveredInstanceOutline),
     new NanostoresSyncObject("blockChildOutline", $blockChildOutline),
+    new NanostoresSyncObject("modifierKeys", $modifierKeys),
 
     new NanostoresSyncObject(
       "collaborativeInstanceSelector",

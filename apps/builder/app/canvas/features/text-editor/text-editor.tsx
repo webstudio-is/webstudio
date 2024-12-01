@@ -848,19 +848,23 @@ const LinkSanitizePlugin = (): null => {
   return null;
 };
 
-const AnyKeyDownPlugin = ({ onKeyDown }: { onKeyDown: () => void }) => {
+const AnyKeyDownPlugin = ({
+  onKeyDown,
+}: {
+  onKeyDown: (event: KeyboardEvent) => void;
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,
-      () => {
+      (event) => {
         const selection = $getSelection();
         if (!$isRangeSelection(selection)) {
           return false;
         }
 
-        onKeyDown();
+        onKeyDown(event);
         return false;
       },
       COMMAND_PRIORITY_NORMAL
@@ -1034,7 +1038,12 @@ export const TextEditor = ({
     [handleChange, instances, rootInstanceSelector]
   );
 
-  const handleAnyKeydown = useCallback(() => {
+  const handleAnyKeydown = useCallback((event: KeyboardEvent) => {
+    // Skip alt as Block outline depends on Alt key press
+    if (event.key === "Alt") {
+      return;
+    }
+
     $blockChildOutline.set(undefined);
     $hoveredInstanceOutline.set(undefined);
     $hoveredInstanceSelector.set(undefined);

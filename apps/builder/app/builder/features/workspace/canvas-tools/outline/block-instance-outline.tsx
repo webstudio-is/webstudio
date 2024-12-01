@@ -3,6 +3,7 @@ import {
   $blockChildOutline,
   $instances,
   $isContentMode,
+  $modifierKeys,
   $registeredComponentMetas,
   type BlockChildOutline,
 } from "~/shared/nano-states";
@@ -318,6 +319,7 @@ export const BlockChildHoveredInstanceOutline = () => {
   const blockChildOutline = useStore($blockChildOutline);
   const scale = useStore($scale);
   const isContentMode = useStore($isContentMode);
+  const modifierKeys = useStore($modifierKeys);
 
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
     undefined
@@ -341,6 +343,8 @@ export const BlockChildHoveredInstanceOutline = () => {
   if (outline === undefined) {
     return;
   }
+
+  console.log("altKey", modifierKeys.altKey);
 
   const rect = applyScale(outline.rect, scale);
 

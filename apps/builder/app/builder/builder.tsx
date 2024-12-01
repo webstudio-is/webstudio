@@ -36,6 +36,7 @@ import {
   $isDesignMode,
   $isContentMode,
   $userPlanFeatures,
+  subscribeModifierKeys,
 } from "~/shared/nano-states";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
@@ -320,10 +321,12 @@ export const Builder = ({
       // @todo we need to forward the events from canvas to builder and avoid importing this
       // in both places
       initCopyPaste(abortController);
+      subscribeModifierKeys({ signal: abortController.signal });
     }
 
     if (isContentMode) {
       initCopyPasteForContentEditMode(abortController);
+      subscribeModifierKeys({ signal: abortController.signal });
     }
 
     return () => {
