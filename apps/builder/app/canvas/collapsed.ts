@@ -120,6 +120,28 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
 
 const MAX_SIZE_TO_USE_OPTIMIZATION = 50;
 
+const findFirstNonContentsParent = (element: Element) => {
+  // Start with the element's parent
+  let parent = element.parentElement;
+
+  // Continue traversing up until we find a non-contents parent or reach the top
+  while (parent) {
+    // Get the computed style of the parent
+    const computedStyle = window.getComputedStyle(parent);
+
+    // Check if the display is not 'contents'
+    if (computedStyle.display !== "contents") {
+      return parent;
+    }
+
+    // Move up to the next parent
+    parent = parent.parentElement;
+  }
+
+  // Return null if no non-contents parent is found
+  return null;
+};
+
 const recalculate = () => {
   const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
@@ -180,20 +202,23 @@ const recalculate = () => {
       elementsToRecalculate.push(element);
     }
 
-    const elementPosition = window.getComputedStyle(element).position;
+    const elementStyle = window.getComputedStyle(element);
+    // const elementPosition = window.getComputedStyle(element).position;
 
-    if (element.parentElement) {
+    const parentElement = findFirstNonContentsParent(element);
+
+    if (parentElement) {
       if (
-        elementPosition === "absolute" ||
-        elementPosition === "fixed" ||
-        element.offsetParent == null
+        elementStyle.position === "absolute" ||
+        elementStyle.position === "fixed" ||
+        element.offsetParent == null // collapsed or none
       ) {
         parentsWithAbsoluteChildren.set(
-          element.parentElement,
-          parentsWithAbsoluteChildren.get(element.parentElement) ?? 0
+          parentElement,
+          parentsWithAbsoluteChildren.get(parentElement) ?? 0
         );
       } else {
-        parentsWithAbsoluteChildren.set(element.parentElement, 1);
+        parentsWithAbsoluteChildren.set(parentElement, 1);
       }
     }
   }
