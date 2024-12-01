@@ -18,6 +18,7 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
+  console.log({ property, value, intermediateValue });
   return (
     <CssValueInput
       styleSource={computedStyleDecl.source.name}
@@ -54,6 +55,10 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
       }}
       onAbort={() => {
         deleteProperty(property, { isEphemeral: true });
+      }}
+      onReset={() => {
+        setIntermediateValue(undefined);
+        deleteProperty(property);
       }}
     />
   );

@@ -127,6 +127,9 @@ export const ScalePanelContent = () => {
               }
             }}
             onAbort={() => deleteProperty(property, { isEphemeral: true })}
+            onReset={() => {
+              deleteProperty(property);
+            }}
           />
         </Grid>
         <Grid
@@ -168,6 +171,9 @@ export const ScalePanelContent = () => {
               }
             }}
             onAbort={() => deleteProperty(property, { isEphemeral: true })}
+            onReset={() => {
+              deleteProperty(property);
+            }}
           />
         </Grid>
         <Grid
@@ -205,6 +211,9 @@ export const ScalePanelContent = () => {
               }
             }}
             onAbort={() => deleteProperty(property, { isEphemeral: true })}
+            onReset={() => {
+              deleteProperty(property);
+            }}
           />
         </Grid>
       </Flex>

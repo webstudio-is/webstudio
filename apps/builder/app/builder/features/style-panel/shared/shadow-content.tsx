@@ -190,6 +190,7 @@ export const ShadowContent = ({
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     const newLayer = convertValuesToTupple({ ...layerValues, ...params });
+    console.log(newLayer, toValue(newLayer));
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),
@@ -336,6 +337,9 @@ export const ShadowContent = ({
               handlePropertyChange({ color: styleValue })
             }
             onAbort={() => handlePropertyChange({ color: colorControlProp })}
+            onReset={() => {
+              handlePropertyChange({ color: undefined });
+            }}
           />
         </Flex>
 

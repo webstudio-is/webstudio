@@ -60,6 +60,7 @@ const publishUpdates = (
   updates: StyleUpdates["updates"],
   options: StyleUpdateOptions
 ) => {
+  console.log("publishUpdates", type, updates, options);
   if (updates.length === 0) {
     return;
   }

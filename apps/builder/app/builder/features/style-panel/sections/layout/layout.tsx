@@ -183,6 +183,10 @@ const GapInput = ({
         onAbort={() => {
           onPreviewChange();
         }}
+        onReset={() => {
+          onIntermediateChange(undefined);
+          onReset();
+        }}
       />
     </Box>
   );

@@ -47,6 +47,9 @@ export const WithKeywords = () => {
       onAbort={() => {
         action("onAbort")();
       }}
+      onReset={() => {
+        action("onReset")();
+      }}
     />
   );
 };
@@ -91,6 +94,9 @@ export const WithIcons = () => {
       onAbort={() => {
         action("onAbort")();
       }}
+      onReset={() => {
+        action("onReset")();
+      }}
     />
   );
 };
@@ -133,6 +139,9 @@ export const WithUnits = () => {
         }}
         onAbort={() => {
           action("onAbort")();
+        }}
+        onReset={() => {
+          action("onReset")();
         }}
       />
       <InputField
