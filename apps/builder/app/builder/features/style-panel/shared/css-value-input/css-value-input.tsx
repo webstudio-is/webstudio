@@ -267,6 +267,7 @@ type CssValueInputProps = Pick<
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   onAbort: () => void;
+  onReset: () => void;
   icon?: ReactNode;
   showSuffix?: boolean;
 };
@@ -337,6 +338,7 @@ export const CssValueInput = ({
   getOptions = () => [],
   onHighlight,
   onAbort,
+  onReset,
   disabled,
   ["aria-disabled"]: ariaDisabled,
   fieldSizing,
@@ -375,6 +377,13 @@ export const CssValueInput = ({
   ) => {
     const { value } = event;
     const defaultProps = { altKey: false, shiftKey: false };
+
+    // We are resetting by setting the value to an empty string
+    if (value.type === "intermediate" && value.value === "") {
+      closeMenu();
+      onReset();
+      return;
+    }
 
     if (value.type !== "intermediate" && value.type !== "invalid") {
       // The value might be valid but not selected from the combo menu. Close the menu.

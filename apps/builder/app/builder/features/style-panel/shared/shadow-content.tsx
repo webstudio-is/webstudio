@@ -190,7 +190,6 @@ export const ShadowContent = ({
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     const newLayer = convertValuesToTupple({ ...layerValues, ...params });
-    console.log(newLayer, toValue(newLayer));
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),

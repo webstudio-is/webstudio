@@ -18,7 +18,6 @@ export const TextControl = ({ property }: { property: StyleProperty }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
-  console.log({ property, value, intermediateValue });
   return (
     <CssValueInput
       styleSource={computedStyleDecl.source.name}
