@@ -285,6 +285,7 @@ export type ComputedStyleDecl = {
  * https://drafts.csswg.org/css-cascade-5/#value-stages
  */
 export const getComputedStyleDecl = ({
+  cache = new Map(),
   model,
   instanceSelector = [],
   styleSourceId,
@@ -292,6 +293,7 @@ export const getComputedStyleDecl = ({
   property,
   customPropertiesGraph = new Map(),
 }: {
+  cache?: Map<string, ComputedStyleDecl>;
   model: StyleObjectModel;
   instanceSelector?: InstanceSelector;
   styleSourceId?: StyleDecl["styleSourceId"];
@@ -302,6 +304,17 @@ export const getComputedStyleDecl = ({
    */
   customPropertiesGraph?: Map<Instance["id"], Set<Property>>;
 }): ComputedStyleDecl => {
+  const cacheKey = JSON.stringify({
+    instanceSelector,
+    styleSourceId,
+    state,
+    property,
+  });
+  const cachedValue = cache.get(cacheKey);
+  if (cachedValue) {
+    return cachedValue;
+  }
+
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
@@ -431,5 +444,13 @@ export const getComputedStyleDecl = ({
   // fallback to inherited value
   cascadedValue ??= computedValue;
 
-  return { property, source, cascadedValue, computedValue, usedValue };
+  const computedStyleDecl: ComputedStyleDecl = {
+    property,
+    source,
+    cascadedValue,
+    computedValue,
+    usedValue,
+  };
+  cache.set(cacheKey, computedStyleDecl);
+  return computedStyleDecl;
 };
