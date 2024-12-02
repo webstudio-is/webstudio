@@ -23,7 +23,7 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
       styleDecl.usedValue.type === "unparsed" ||
       styleDecl.usedValue.type === "guaranteedInvalid"
     ) {
-      return;
+      return [];
     }
 
     const source = styleDecl.source.name;
