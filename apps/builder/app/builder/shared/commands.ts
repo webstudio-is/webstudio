@@ -178,8 +178,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
     },
     {
-      name: "toggleBuildMode",
-      defaultHotkeys: ["meta+shift+b", "ctrl+shift+b"],
+      name: "toggleContentMode",
+      defaultHotkeys: ["meta+shift+c", "ctrl+shift+c"],
       handler: () => {
         setActiveSidebarPanel("auto");
         toggleBuilderMode("content");

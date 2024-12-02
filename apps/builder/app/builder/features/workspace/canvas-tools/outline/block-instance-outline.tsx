@@ -284,11 +284,7 @@ const TemplatesMenu = ({
                 {...{ [skipInertHandlersAttribute]: true }}
                 data-yyy
               >
-                <Flex
-                  css={{ py: theme.spacing[4], px: theme.spacing[5] }}
-                  gap={2}
-                  data-xxx
-                >
+                <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
                   {icon}
                   <Box>{title}</Box>
                 </Flex>
@@ -301,7 +297,7 @@ const TemplatesMenu = ({
             <Grid css={{ width: theme.spacing[25] }}>
               <Flex gap={1} css={{ display: hasChildren ? "none" : undefined }}>
                 <Kbd value={["click"]} />
-                <Text>to add first</Text>
+                <Text>to add before</Text>
               </Flex>
 
               <Flex
