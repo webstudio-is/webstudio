@@ -7,6 +7,7 @@ export const Footer = () => {
       as="footer"
       align="center"
       css={{
+        isolation: "isolate",
         gridArea: "footer",
         height: theme.spacing[11],
         background: theme.colors.backgroundTopbar,
