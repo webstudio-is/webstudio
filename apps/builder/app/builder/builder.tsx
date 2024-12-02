@@ -124,6 +124,7 @@ const Main = ({ children, css }: { children: ReactNode; css?: CSS }) => (
     css={{
       gridArea: "main",
       position: "relative",
+      isolation: "isolate",
       ...css,
     }}
   >
