@@ -1,7 +1,8 @@
 import { styled, Collapsible, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
+import { $canvasToolsVisible } from "~/shared/nano-states";
 
 const CollapsibleRoot = styled(Collapsible.Root, {
   position: "absolute",
@@ -20,16 +21,20 @@ const CollapsibleContent = styled(Collapsible.Content, {
   flexDirection: "column",
 });
 
-export const ExtendedPanel = ({
-  children,
-  isOpen,
-}: {
-  children: React.ReactNode;
-  isOpen: boolean;
-}) => {
+export const ExtendedPanel = ({ children }: { children: React.ReactNode }) => {
   const settingsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Quick workaround to hide the outline above extended panels.
+    // These panels should ideally be implemented as `Sheet`-style dialogs.
+    $canvasToolsVisible.set(false);
+    return () => {
+      $canvasToolsVisible.set(true);
+    };
+  }, []);
+
   return (
-    <CollapsibleRoot ref={settingsRef} open={isOpen}>
+    <CollapsibleRoot ref={settingsRef} open={true}>
       <CollapsibleContent>
         <Flex
           direction="column"

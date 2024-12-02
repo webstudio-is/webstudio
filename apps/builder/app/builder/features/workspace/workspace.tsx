@@ -83,7 +83,6 @@ const useOutlineStyle = () => {
 
   return {
     ...style,
-    pointerEvents: "none",
     width:
       canvasWidth === undefined ? "100%" : (canvasWidth ?? 0) * (scale / 100),
   } as const;
@@ -96,7 +95,6 @@ type WorkspaceProps = {
 
 export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle();
-  const outlineStyle = useOutlineStyle();
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
@@ -118,13 +116,23 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
         >
           {children}
         </div>
-        <div
-          data-name="canvas-tools-wrapper"
-          className={canvasContainerStyle()}
-          style={outlineStyle}
-        >
-          <CanvasTools />
-        </div>
+      </div>
+    </>
+  );
+};
+
+export const CanvasToolsContainer = () => {
+  const outlineStyle = useOutlineStyle();
+  useSetCanvasWidth();
+
+  return (
+    <>
+      <div
+        data-name="canvas-tools-wrapper"
+        className={canvasContainerStyle()}
+        style={outlineStyle}
+      >
+        <CanvasTools />
       </div>
       <Toaster />
     </>

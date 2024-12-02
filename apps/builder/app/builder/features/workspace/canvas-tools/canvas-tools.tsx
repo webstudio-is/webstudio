@@ -5,6 +5,7 @@ import {
   $instances,
   $isPreviewMode,
   $dragAndDropState,
+  $canvasToolsVisible,
 } from "~/shared/nano-states";
 import {
   CollaborativeInstanceOutline,
@@ -37,11 +38,16 @@ const containerStyle = css({
 export const CanvasTools = () => {
   // @todo try to setup cross-frame atoms to avoid this
   useSubscribeDragAndDropState();
-
+  const canvasToolsVisible = useStore($canvasToolsVisible);
   const isPreviewMode = useStore($isPreviewMode);
   const dragAndDropState = useStore($dragAndDropState);
   const instances = useStore($instances);
   const scale = useStore($scale);
+
+  if (!canvasToolsVisible) {
+    return;
+  }
+
   if (
     dragAndDropState.isDragging &&
     dragAndDropState.placementIndicator !== undefined
