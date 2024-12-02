@@ -256,9 +256,7 @@ export const generateJsxElement = ({
     generatedElement += `</Fragment>\n`;
     generatedElement += `)}\n`;
   } else if (instance.component === blockComponent) {
-    if (instance.children.length > 1) {
-      generatedElement += children;
-    }
+    generatedElement += children;
   } else {
     const [_namespace, shortName] = parseComponentName(instance.component);
     const componentVariable = scope.getName(instance.component, shortName);
