@@ -87,14 +87,16 @@ export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
           <SpinnerIcon size={rawTheme.spacing[15]} />
         </Flex>
       )}
-      <ExtendedPanel isOpen={openAboutItem !== undefined}>
-        <About
-          item={openAboutItem}
-          onClose={() => {
-            setOpenAbout(undefined);
-          }}
-        />
-      </ExtendedPanel>
+      {openAboutItem !== undefined && (
+        <ExtendedPanel>
+          <About
+            item={openAboutItem}
+            onClose={() => {
+              setOpenAbout(undefined);
+            }}
+          />
+        </ExtendedPanel>
+      )}
     </>
   );
 };

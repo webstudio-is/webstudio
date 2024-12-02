@@ -575,9 +575,8 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           $editingPageId.set(itemId);
         }}
       />
-
-      <ExtendedPanel isOpen={editingItemId !== undefined}>
-        {editingItemId !== undefined && (
+      {editingItemId !== undefined && (
+        <ExtendedPanel>
           <>
             {isFolder(editingItemId, pages.folders) ? (
               <FolderEditor
@@ -591,8 +590,8 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
               />
             )}
           </>
-        )}
-      </ExtendedPanel>
+        </ExtendedPanel>
+      )}
     </>
   );
 };
