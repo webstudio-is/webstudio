@@ -55,8 +55,8 @@ export const BuilderModeDropDown = () => {
     content: {
       icon: <NotebookAndPenIcon />,
       description: "Modify the page content",
-      title: "Build",
-      shortcut: ["cmd", "shift", "b"],
+      title: "Content",
+      shortcut: ["cmd", "shift", "c"],
       enabled: isContentModeAllowed,
     },
     preview: {
@@ -115,10 +115,7 @@ export const BuilderModeDropDown = () => {
                   onFocus={handleFocus(mode as BuilderMode)}
                   onBlur={handleBlur}
                 >
-                  <Flex
-                    css={{ py: theme.spacing[4], px: theme.spacing[5] }}
-                    gap={2}
-                  >
+                  <Flex css={{ px: theme.spacing[3] }} gap={2}>
                     {icon}
                     <Box>{title}</Box>
                   </Flex>
