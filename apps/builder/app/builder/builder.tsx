@@ -64,11 +64,13 @@ import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
+
 import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
 } from "~/shared/copy-paste/init-copy-paste";
 import { useInertHandlers } from "./shared/inert-handlers";
+import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
 
 registerContainers();
 
@@ -416,6 +418,9 @@ export const Builder = ({
               />
             }
           />
+          <Main css={{ pointerEvents: "none" }}>
+            <TextToolbar />
+          </Main>
           {isPreviewMode === false && <Footer />}
           <CloneProjectDialog
             isOpen={isCloneDialogOpen}

@@ -12,7 +12,7 @@ import {
   HoveredInstanceOutline,
   SelectedInstanceOutline,
 } from "./outline";
-import { TextToolbar } from "./text-toolbar";
+
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
 import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
@@ -80,8 +80,6 @@ export const CanvasTools = () => {
           <SelectedInstanceOutline />
           <HoveredInstanceOutline />
           <CollaborativeInstanceOutline />
-          <TextToolbar />
-
           <BlockChildHoveredInstanceOutline />
         </>
       )}
