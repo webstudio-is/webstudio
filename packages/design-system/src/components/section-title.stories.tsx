@@ -100,6 +100,12 @@ export const Demo = () => (
         <Variants state="open" />
       </StoryGrid>
     </StorySection>
+
+    <StorySection title="Inactive">
+      <StoryGrid>
+        <Variants state="inactive" />
+      </StoryGrid>
+    </StorySection>
   </>
 );
 
