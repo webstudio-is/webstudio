@@ -41,8 +41,6 @@ export type QueueStatus =
 
 export const queueStatus = atom<QueueStatus>({ status: "idle" });
 
-const pendingTransactions: Transaction<Change[]>[] = [];
-
 const getRandomBetween = (a: number, b: number) => {
   return Math.random() * (b - a) + a;
 };
@@ -289,25 +287,6 @@ const useSyncProject = ({
       return;
     }
     syncServer();
-
-    const updateProjectTransactions = () => {
-      if (pendingTransactions.length === 0) {
-        return;
-      }
-      const transactions = [...pendingTransactions];
-      pendingTransactions.splice(0);
-      commandQueue.enqueue({ type: "transactions", transactions, projectId });
-    };
-
-    const intervalHandle = setInterval(
-      updateProjectTransactions,
-      NEW_ENTRIES_INTERVAL
-    );
-
-    return () => {
-      updateProjectTransactions();
-      clearInterval(intervalHandle);
-    };
   }, [projectId, authPermit]);
 };
 
@@ -315,7 +294,12 @@ export class ServerSyncStorage implements SyncStorage {
   name = "server";
   sendTransaction(transaction: Transaction<Change[]>) {
     if (transaction.object === "server") {
-      pendingTransactions.push(transaction);
+      const projectId = $project.get()?.id ?? "";
+      commandQueue.enqueue({
+        type: "transactions",
+        transactions: [transaction],
+        projectId,
+      });
     }
   }
   subscribe(setState: (state: unknown) => void, signal: AbortSignal) {
