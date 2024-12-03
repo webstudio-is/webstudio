@@ -20,7 +20,7 @@ const Variants = ({
   noContent,
 }: {
   state: ComponentProps<typeof SectionTitle>["data-state"];
-  noContent: ComponentProps<typeof SectionTitle>["noContent"];
+  noContent?: ComponentProps<typeof SectionTitle>["noContent"];
 }) => (
   <>
     <Wrap>
