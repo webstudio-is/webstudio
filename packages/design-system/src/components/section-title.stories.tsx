@@ -17,12 +17,14 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 const Variants = ({
   state,
+  noContent,
 }: {
   state: ComponentProps<typeof SectionTitle>["data-state"];
+  noContent: ComponentProps<typeof SectionTitle>["noContent"];
 }) => (
   <>
     <Wrap>
-      <SectionTitle data-state={state}>
+      <SectionTitle data-state={state} noContent={noContent}>
         <SectionTitleLabel>Simplest</SectionTitleLabel>
       </SectionTitle>
     </Wrap>
@@ -30,6 +32,7 @@ const Variants = ({
       <SectionTitle
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        noContent={noContent}
       >
         <SectionTitleLabel>With button</SectionTitleLabel>
       </SectionTitle>
@@ -39,6 +42,7 @@ const Variants = ({
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        noContent={noContent}
       >
         <SectionTitleLabel>With dots</SectionTitleLabel>
       </SectionTitle>
@@ -48,6 +52,7 @@ const Variants = ({
         dots={["local"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        noContent={noContent}
       >
         <SectionTitleLabel color="local">With label</SectionTitleLabel>
       </SectionTitle>
@@ -57,6 +62,7 @@ const Variants = ({
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        noContent={noContent}
       >
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
@@ -64,7 +70,7 @@ const Variants = ({
       </SectionTitle>
     </Wrap>
     <Wrap>
-      <SectionTitle data-state={state}>
+      <SectionTitle data-state={state} noContent={noContent}>
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
         </SectionTitleLabel>
@@ -103,7 +109,7 @@ export const Demo = () => (
 
     <StorySection title="Inactive">
       <StoryGrid>
-        <Variants state="inactive" />
+        <Variants noContent state="closed" />
       </StoryGrid>
     </StorySection>
   </>
