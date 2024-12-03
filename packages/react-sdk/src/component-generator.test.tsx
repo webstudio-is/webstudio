@@ -1133,3 +1133,75 @@ test("variable names can be js identifiers", () => {
     )
   );
 });
+
+test("Renders nothing if only templates are present in block", () => {
+  const Bt = ws["block-template"];
+
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <ws.block ws:id="block">
+            <Bt>
+              <$.Box>Test</$.Box>
+            </Bt>
+          </ws.block>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("Renders only block children", () => {
+  const Bt = ws["block-template"];
+
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      dataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <ws.block ws:id="block">
+            <Bt>
+              <$.Box>Test</$.Box>
+            </Bt>
+            <$.Box>Child0</$.Box>
+          </ws.block>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Box>
+      {"Child0"}
+      </Box>
+      </Body>
+      }
+    `)
+    )
+  );
+});

@@ -10,6 +10,8 @@ import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useSetCanvasWidth } from "../breakpoints";
 import { selectInstance } from "~/shared/awareness";
+import { ResizeHandles } from "./canvas-tools/resize-handles";
+import { MediaBadge } from "./canvas-tools/media-badge";
 
 const workspaceStyle = css({
   flexGrow: 1,
@@ -101,6 +103,7 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
     selectInstance(undefined);
     $textEditingInstanceSelector.set(undefined);
   };
+  const outlineStyle = useOutlineStyle();
 
   return (
     <>
@@ -116,6 +119,14 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
         >
           {children}
         </div>
+        <div
+          data-name="canvas-tools-wrapper"
+          className={canvasContainerStyle({ css: { pointerEvents: "none" } })}
+          style={outlineStyle}
+        >
+          <MediaBadge />
+          <ResizeHandles />
+        </div>
       </div>
     </>
   );
@@ -123,7 +134,6 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
 
 export const CanvasToolsContainer = () => {
   const outlineStyle = useOutlineStyle();
-  useSetCanvasWidth();
 
   return (
     <>

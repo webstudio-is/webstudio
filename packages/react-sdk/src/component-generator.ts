@@ -14,7 +14,12 @@ import {
   transpileExpression,
 } from "@webstudio-is/sdk";
 import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
-import { collectionComponent, descendantComponent } from "./core-components";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  collectionComponent,
+  descendantComponent,
+} from "./core-components";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 /**
@@ -231,6 +236,10 @@ export const generateJsxElement = ({
   }
 
   let generatedElement = "";
+  if (instance.component === blockTemplateComponent) {
+    return "";
+  }
+
   if (instance.component === collectionComponent) {
     // prevent generating invalid collection
     if (
@@ -246,6 +255,8 @@ export const generateJsxElement = ({
     generatedElement += children;
     generatedElement += `</Fragment>\n`;
     generatedElement += `)}\n`;
+  } else if (instance.component === blockComponent) {
+    generatedElement += children;
   } else {
     const [_namespace, shortName] = parseComponentName(instance.component);
     const componentVariable = scope.getName(instance.component, shortName);
