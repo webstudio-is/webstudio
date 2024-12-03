@@ -68,8 +68,9 @@ export const RepeatedStyleSection = (props: {
   properties: [StyleProperty, ...StyleProperty[]];
   onAdd: () => void;
   children: ReactNode;
+  noContent?: boolean;
 }) => {
-  const { label, description, children, properties, onAdd } = props;
+  const { label, description, children, properties, onAdd, noContent } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
   const styles = useComputedStyles(properties);
   const dots = getDots(styles);
@@ -82,7 +83,7 @@ export const RepeatedStyleSection = (props: {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          noContent={dots.length === 0}
+          noContent={noContent === undefined ? dots.length === 0 : noContent}
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton
