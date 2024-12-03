@@ -768,6 +768,10 @@ test("add namespace to selected components in embed template", () => {
         icon: "",
         requiredAncestors: ["Button", "Box"],
         invalidAncestors: ["Tooltip"],
+        constraints: {
+          relation: "ancestor",
+          component: { $nin: ["Button", "Box"] },
+        },
         indexWithinAncestor: "Tooltip",
         presetTokens: {
           base: { styles: [] },
@@ -805,6 +809,10 @@ test("add namespace to selected components in embed template", () => {
     icon: "",
     requiredAncestors: ["my-namespace:Button", "Box"],
     invalidAncestors: ["my-namespace:Tooltip"],
+    constraints: {
+      relation: "ancestor",
+      component: { $nin: ["my-namespace:Button", "my-namespace:Box"] },
+    },
     indexWithinAncestor: "my-namespace:Tooltip",
     presetTokens: {
       base: { styles: [] },

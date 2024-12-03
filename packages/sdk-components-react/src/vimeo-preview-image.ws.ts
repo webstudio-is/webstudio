@@ -14,6 +14,10 @@ export const meta: WsComponentMeta = {
   category: "hidden",
   label: "Preview Image",
   requiredAncestors: ["Vimeo"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Vimeo" },
+  },
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -63,6 +63,10 @@ import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import { $awareness, $selectedPage, selectInstance } from "./awareness";
+import {
+  findClosestContainer,
+  findClosestInstanceMatchingFragment,
+} from "./matcher";
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   serverSyncStore.createTransaction(
@@ -417,63 +421,6 @@ export const findClosestDroppableComponentIndex = ({
     return containerIndex;
   }
   return -1;
-};
-
-const findClosestDroppableTarget = (
-  metas: Map<string, WsComponentMeta>,
-  instances: Instances,
-  instanceSelector: InstanceSelector,
-  insertConstraints: InsertConstraints
-): undefined | DroppableTarget => {
-  const droppableIndex = findClosestDroppableComponentIndex({
-    metas,
-    constraints: insertConstraints,
-    instances,
-    instanceSelector,
-    // We want to always allow dropping into the root.
-    // For example when body has text content
-    // and the only viable option is to insert at the end.
-    allowInsertIntoTextContainer: instanceSelector.length === 1,
-  });
-  if (droppableIndex === -1) {
-    return;
-  }
-
-  const dropTargetParentInstance = instances.get(
-    instanceSelector[droppableIndex + 1]
-  );
-  let dropTargetInstance = instances.get(instanceSelector[droppableIndex]);
-  // skip collection item when inserting something and go straight into collection instance
-  if (
-    dropTargetInstance === undefined &&
-    dropTargetParentInstance?.component === collectionComponent
-  ) {
-    instanceSelector = instanceSelector.slice(1);
-    dropTargetInstance = dropTargetParentInstance;
-  }
-  if (dropTargetInstance === undefined) {
-    return;
-  }
-
-  if (droppableIndex === 0) {
-    return {
-      parentSelector: instanceSelector,
-      position: "end",
-    };
-  }
-
-  const dropTargetSelector = instanceSelector.slice(droppableIndex);
-  if (dropTargetInstance === undefined) {
-    return;
-  }
-  const lastChildInstanceId = instanceSelector[droppableIndex - 1];
-  const lastChildPosition = dropTargetInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === lastChildInstanceId
-  );
-  return {
-    parentSelector: dropTargetSelector,
-    position: lastChildPosition + 1,
-  };
 };
 
 export const insertInstanceChildrenMutable = (
@@ -1604,7 +1551,7 @@ export const findClosestInsertable = (
     return;
   }
   // paste to the page root if nothing is selected
-  const instanceSelector = awareness?.instanceSelector ?? [
+  let instanceSelector = awareness?.instanceSelector ?? [
     selectedPage.rootInstanceId,
   ];
   if (instanceSelector[0] === ROOT_INSTANCE_ID) {
@@ -1613,16 +1560,50 @@ export const findClosestInsertable = (
   }
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
-  const rootInstanceIds = fragment.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-  const newInstances = new Map(
-    fragment.instances.map((instance) => [instance.id, instance])
-  );
-  return findClosestDroppableTarget(
+  const closestContainerIndex = findClosestContainer({
     metas,
     instances,
     instanceSelector,
-    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
+  });
+  if (closestContainerIndex === -1) {
+    return;
+  }
+  let insertableIndex = findClosestInstanceMatchingFragment({
+    metas,
+    instances,
+    instanceSelector: instanceSelector.slice(closestContainerIndex),
+    fragment,
+  });
+  if (insertableIndex === -1) {
+    return;
+  }
+
+  // adjust with container lookup
+  insertableIndex = insertableIndex + closestContainerIndex;
+  const parentSelector = instanceSelector.slice(insertableIndex);
+  if (insertableIndex === 0) {
+    return {
+      parentSelector,
+      position: "end",
+    };
+  }
+  const instance = instances.get(instanceSelector[insertableIndex]);
+  if (instance === undefined) {
+    return;
+  }
+  // skip collection item when inserting something and go straight into collection instance
+  if (instance?.component === collectionComponent && insertableIndex === 1) {
+    return {
+      parentSelector,
+      position: "end",
+    };
+  }
+  const lastChildInstanceId = instanceSelector[insertableIndex - 1];
+  const lastChildPosition = instance.children.findIndex(
+    (child) => child.type === "id" && child.value === lastChildInstanceId
   );
+  return {
+    parentSelector,
+    position: lastChildPosition + 1,
+  };
 };
