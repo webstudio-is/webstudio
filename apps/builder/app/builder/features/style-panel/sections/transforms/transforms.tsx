@@ -147,6 +147,7 @@ export const Section = () => {
       styles,
     })
   );
+  const dots = getDots(styles);
 
   return (
     <CollapsibleSectionRoot
@@ -156,7 +157,8 @@ export const Section = () => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(styles)}
+          noContent={dots.length === 0}
+          dots={dots}
           suffix={
             <Flex gap="1" align="center">
               <TransformAdvancedPopover />

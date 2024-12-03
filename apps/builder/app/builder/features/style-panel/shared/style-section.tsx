@@ -72,6 +72,8 @@ export const RepeatedStyleSection = (props: {
   const { label, description, children, properties, onAdd } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
   const styles = useComputedStyles(properties);
+  const dots = getDots(styles);
+
   return (
     <CollapsibleSectionRoot
       fullWidth
@@ -80,6 +82,7 @@ export const RepeatedStyleSection = (props: {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
+          noContent={dots.length === 0}
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton
