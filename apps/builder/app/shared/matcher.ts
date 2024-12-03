@@ -59,13 +59,12 @@ export const isInstanceMatching = ({
     return true;
   }
   const queries = Array.isArray(query) ? query : [query];
-  let selfMatches: undefined | boolean;
-  let parentMatches: undefined | boolean;
-  let ancestorMatches: undefined | boolean;
+  const matchesByMatcher = new Map<Matcher, boolean>();
   let index = 0;
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
-    for (const { relation, component } of queries) {
+    for (const matcher of queries) {
+      const { relation, component } = matcher;
       if (isRelationMatching(index, relation)) {
         let matches = isMatching(instance?.component, component);
         if (isNegated(component)) {
@@ -75,28 +74,15 @@ export const isInstanceMatching = ({
           // inverse negated match
           matches = true;
         }
-        if (relation === "self") {
-          selfMatches ??= false;
-          selfMatches = selfMatches || matches;
-        }
-        if (relation === "parent") {
-          parentMatches ??= false;
-          parentMatches = parentMatches || matches;
-        }
-        if (relation === "ancestor") {
-          ancestorMatches ??= false;
-          ancestorMatches = ancestorMatches || matches;
-        }
+        matchesByMatcher.set(
+          matcher,
+          (matchesByMatcher.get(matcher) ?? false) || matches
+        );
       }
     }
     index += 1;
   }
-  // relations without matchers always match
-  return (
-    (selfMatches ?? true) &&
-    (parentMatches ?? true) &&
-    (ancestorMatches ?? true)
-  );
+  return Array.from(matchesByMatcher.values()).every((matched) => matched);
 };
 
 export const isTreeMatching = ({

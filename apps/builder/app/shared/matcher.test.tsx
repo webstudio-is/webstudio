@@ -3,7 +3,7 @@ import { renderJsx, $, ExpressionValue } from "@webstudio-is/sdk/testing";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
-import type { WebstudioFragment } from "@webstudio-is/sdk";
+import type { Matcher, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   findClosestContainer,
   findClosestInstanceMatchingFragment,
@@ -344,6 +344,43 @@ describe("is instance matching", () => {
         },
       })
     ).toBeTruthy();
+  });
+
+  test("combines multiple ancestor matchers", () => {
+    const query: Matcher[] = [
+      {
+        relation: "ancestor",
+        component: { $eq: "Body" },
+      },
+      {
+        relation: "ancestor",
+        component: { $in: ["Box"] },
+      },
+    ];
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.Box ws:id="box">
+              <$.List ws:id="list"></$.List>
+            </$.Box>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "box", "body"],
+        query,
+      })
+    ).toBeTruthy();
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list"></$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query,
+      })
+    ).toBeFalsy();
   });
 });
 

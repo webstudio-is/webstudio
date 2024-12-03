@@ -488,14 +488,17 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   type: "container",
   stylable: false,
   icon: BoxIcon,
-  // https://github.com/webstudio-is/webstudio/issues/2193
-  // requiredAncestors: ["NavigationMenuContent", "NavigationMenuItem"],
-  // Temporary restrict to NavigationMenu
   requiredAncestors: ["NavigationMenu"],
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "NavigationMenu" },
-  },
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "NavigationMenu" },
+    },
+    {
+      relation: "ancestor",
+      component: { $in: ["NavigationMenuContent", "NavigationMenuItem"] },
+    },
+  ],
   presetStyle,
   label: "Accessible Link Wrapper",
 };
