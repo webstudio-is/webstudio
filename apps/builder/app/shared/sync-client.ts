@@ -3,15 +3,40 @@ import { createNanoEvents, type Emitter } from "nanoevents";
 import type { Change, Store } from "immerhin";
 import type { WritableAtom } from "nanostores";
 
-type Transaction<Payload = unknown> = {
+export type Transaction<Payload = unknown> = {
   id: string;
   object: string;
   payload: Payload;
 };
 
-type RevertedTransaction = {
+export type RevertedTransaction = {
   id: string;
   object: string;
+};
+
+export interface SyncStorage {
+  name: string;
+  sendTransaction(transaction: Transaction): void;
+  subscribe(setState: (state: unknown) => void, signal: AbortSignal): void;
+}
+
+const subscribeStorages = (
+  storages: SyncStorage[],
+  setState: (state: unknown) => void,
+  signal: AbortSignal
+) => {
+  if (storages.length === 0) {
+    setState(undefined);
+    return;
+  }
+  storages[0].subscribe((value) => {
+    if (value === undefined) {
+      // invoke the next storage
+      subscribeStorages(storages.slice(1), setState, signal);
+      return;
+    }
+    setState(value);
+  }, signal);
 };
 
 interface SyncObject {
@@ -128,7 +153,10 @@ export class SyncObjectPool implements SyncObject {
   }
   setState(state: Map<string, unknown>) {
     for (const [name, object] of this.objects) {
-      object.setState(state.get(name) as never);
+      // merge into existing state to partially restore from storage
+      if (state.has(name)) {
+        object.setState(state.get(name) as never);
+      }
     }
   }
   applyTransaction(transaction: Transaction) {
@@ -161,18 +189,21 @@ type SyncClientOptions = {
   role: "leader" | "follower";
   object: SyncObject;
   emitter?: SyncEmitter;
+  storages?: SyncStorage[];
 };
 
 export class SyncClient {
   clientId = nanoid();
   role: SyncClientOptions["role"];
   object: SyncObject;
+  storages: SyncStorage[];
   emitter: SyncEmitter;
   connection: "disconnected" | "connecting" | "connected" = "disconnected";
 
   constructor(options: SyncClientOptions) {
     this.role = options.role;
     this.object = options.object;
+    this.storages = options.storages ?? [];
     this.emitter = options.emitter ?? createNanoEvents();
   }
 
@@ -185,7 +216,7 @@ export class SyncClient {
     });
   }
 
-  connect({ signal }: { signal: AbortSignal }) {
+  connect({ signal, onReady }: { signal: AbortSignal; onReady?: () => void }) {
     const off = this.emitter.on("message", (message) => {
       // ignore own messages
       if (this.clientId === message.clientId) {
@@ -218,6 +249,11 @@ export class SyncClient {
         }
         */
         this.object.applyTransaction(message.transaction);
+        if (this.role === "leader") {
+          for (const storage of this.storages) {
+            storage.sendTransaction(message.transaction);
+          }
+        }
       }
       if (message.type === "revert") {
         this.object.revertTransaction(message.transaction);
@@ -231,6 +267,11 @@ export class SyncClient {
         type: "apply",
         transaction,
       });
+      if (this.role === "leader") {
+        for (const storage of this.storages) {
+          storage.sendTransaction(transaction);
+        }
+      }
     }, signal);
 
     this.emitter.emit("message", {
@@ -241,11 +282,21 @@ export class SyncClient {
       this.connection = "connecting";
     }
     if (this.role === "leader") {
-      this.emitter.emit("message", {
-        clientId: this.clientId,
-        type: "state",
-        state: this.object.getState(),
-      });
+      subscribeStorages(
+        this.storages,
+        (state) => {
+          // fallback to default object state
+          state ??= this.object.getState();
+          this.object.setState(state);
+          this.emitter.emit("message", {
+            clientId: this.clientId,
+            type: "state",
+            state,
+          });
+          onReady?.();
+        },
+        signal
+      );
     }
   }
 }
