@@ -162,6 +162,19 @@ const blockMeta: WsComponentMeta = {
           component: blockTemplateComponent,
           children: [],
         },
+
+        {
+          type: "instance",
+          label: "Initial",
+          component: "Box",
+          children: [
+            {
+              type: "text",
+              value:
+                "Content Block component designates regions on the page where pre-styled instances can be inserted in Content mode",
+            },
+          ],
+        },
       ],
     },
   ],
