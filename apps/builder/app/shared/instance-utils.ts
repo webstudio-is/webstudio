@@ -1551,7 +1551,7 @@ export const findClosestInsertable = (
     return;
   }
   // paste to the page root if nothing is selected
-  let instanceSelector = awareness?.instanceSelector ?? [
+  const instanceSelector = awareness?.instanceSelector ?? [
     selectedPage.rootInstanceId,
   ];
   if (instanceSelector[0] === ROOT_INSTANCE_ID) {
