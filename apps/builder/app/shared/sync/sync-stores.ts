@@ -174,6 +174,9 @@ const sharedSyncEmitter =
   typeof window === "undefined"
     ? undefined
     : window.__webstudioSharedSyncEmitter__;
+if (typeof window !== "undefined") {
+  delete window.__webstudioSharedSyncEmitter__;
+}
 
 export const useCanvasStore = () => {
   useEffect(() => {
