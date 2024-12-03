@@ -16,8 +16,6 @@ import {
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
 import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
-import { ResizeHandles } from "./resize-handles";
-import { MediaBadge } from "./media-badge";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
 import { BlockChildHoveredInstanceOutline } from "./outline/block-instance-outline";
@@ -73,8 +71,6 @@ export const CanvasTools = () => {
 
   return (
     <>
-      <MediaBadge />
-      <ResizeHandles />
       {isPreviewMode === false && (
         <>
           <SelectedInstanceOutline />
