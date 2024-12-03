@@ -83,7 +83,7 @@ export const RepeatedStyleSection = (props: {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          noContent={noContent === undefined ? dots.length === 0 : noContent}
+          inactive={noContent === undefined ? dots.length === 0 : noContent}
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton

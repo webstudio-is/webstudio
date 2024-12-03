@@ -113,10 +113,10 @@ export const SectionTitle = forwardRef(
       css,
       children,
       suffix,
-      noContent = false,
+      inactive = false,
       ...props
     }: ComponentProps<"button"> & {
-      noContent?: boolean;
+      inactive?: boolean;
       /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
       "data-state"?: "open" | "closed";
       dots?: Array<"local" | "overwritten" | "remote">;
@@ -126,7 +126,7 @@ export const SectionTitle = forwardRef(
     },
     ref: Ref<HTMLButtonElement>
   ) => {
-    const state = noContent ? "inactive" : (props["data-state"] ?? "closed");
+    const state = inactive ? "inactive" : (props["data-state"] ?? "closed");
     const finalDots = state === "open" ? [] : (dots ?? []);
 
     return (
@@ -138,12 +138,12 @@ export const SectionTitle = forwardRef(
               className={containerStyle({
                 className,
                 css,
-                color: noContent ? "disabled" : "default",
+                color: inactive ? "disabled" : "default",
               })}
               data-state={state}
               onKeyDown={handleKeyDown}
             >
-              {noContent === false && (
+              {inactive === false && (
                 <button
                   className={titleButtonStyle()}
                   data-state={state}

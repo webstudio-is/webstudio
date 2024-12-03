@@ -157,7 +157,7 @@ export const Section = () => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          noContent={dots.length === 0}
+          inactive={dots.length === 0}
           dots={dots}
           suffix={
             <Flex gap="1" align="center">

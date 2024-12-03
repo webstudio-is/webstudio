@@ -17,14 +17,14 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 const Variants = ({
   state,
-  noContent,
+  inactive,
 }: {
   state: ComponentProps<typeof SectionTitle>["data-state"];
-  noContent?: ComponentProps<typeof SectionTitle>["noContent"];
+  inactive?: ComponentProps<typeof SectionTitle>["inactive"];
 }) => (
   <>
     <Wrap>
-      <SectionTitle data-state={state} noContent={noContent}>
+      <SectionTitle data-state={state} inactive={inactive}>
         <SectionTitleLabel>Simplest</SectionTitleLabel>
       </SectionTitle>
     </Wrap>
@@ -32,7 +32,7 @@ const Variants = ({
       <SectionTitle
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
-        noContent={noContent}
+        inactive={inactive}
       >
         <SectionTitleLabel>With button</SectionTitleLabel>
       </SectionTitle>
@@ -42,7 +42,7 @@ const Variants = ({
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
-        noContent={noContent}
+        inactive={inactive}
       >
         <SectionTitleLabel>With dots</SectionTitleLabel>
       </SectionTitle>
@@ -52,7 +52,7 @@ const Variants = ({
         dots={["local"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
-        noContent={noContent}
+        inactive={inactive}
       >
         <SectionTitleLabel color="local">With label</SectionTitleLabel>
       </SectionTitle>
@@ -62,7 +62,7 @@ const Variants = ({
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
-        noContent={noContent}
+        inactive={inactive}
       >
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
@@ -70,7 +70,7 @@ const Variants = ({
       </SectionTitle>
     </Wrap>
     <Wrap>
-      <SectionTitle data-state={state} noContent={noContent}>
+      <SectionTitle data-state={state} inactive={inactive}>
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
         </SectionTitleLabel>
@@ -109,7 +109,7 @@ export const Demo = () => (
 
     <StorySection title="Inactive">
       <StoryGrid>
-        <Variants noContent state="closed" />
+        <Variants inactive state="closed" />
       </StoryGrid>
     </StorySection>
   </>
