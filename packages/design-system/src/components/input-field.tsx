@@ -248,50 +248,6 @@ export const InputField = forwardRef(
         unfocusContainerRef.current?.focus();
       }
     };
-    const inputScrollRef = useRef();
-
-    const scrollProps = {
-      onMouseOver: (event) => {
-        //console.log("onscroll", event);
-        this.onMouseMove(event);
-      },
-      onMouseMove(event) {
-        if (inputScrollRef.current == null) {
-          return;
-        }
-        const mousePosition = { x: event.clientX, y: event.clientY };
-        const inputRect = inputScrollRef.current.getBoundingClientRect();
-
-        // Calculate the relative x position of the mouse within the input element
-        const relativeMouseX = mousePosition.x - inputRect.x;
-
-        // Calculate the percentage position (0% at the beginning, 100% at the end)
-        const inputWidth = inputRect.width;
-        const mousePercentageX = Math.ceil((relativeMouseX / inputWidth) * 100);
-
-        // Apply acceleration based on the relative position of the mouse
-        // Closer to the beginning (-20%), closer to the end (+20%)
-        const accelerationFactor = (mousePercentageX - 50) / 50; // Range: [-1, 1]
-        const adjustedMousePercentageX = Math.min(
-          Math.max(mousePercentageX + accelerationFactor * 20, 0),
-          100
-        );
-
-        // Get the scrollable width of the input element
-        const scrollWidth = inputScrollRef.current.scrollWidth;
-        const visibleWidth = inputScrollRef.current.clientWidth;
-
-        // Calculate the scroll position corresponding to the adjusted percentage
-        const scrollPosition =
-          (adjustedMousePercentageX / 100) * (scrollWidth - visibleWidth);
-
-        // Scroll the input element
-        inputScrollRef.current.scroll({
-          left: scrollPosition,
-          //behavior: "smooth",
-        });
-      },
-    };
 
     return (
       <Container
@@ -314,8 +270,7 @@ export const InputField = forwardRef(
         />
         <input
           {...inputProps}
-          {...scrollProps}
-          ref={mergeRefs(inputRef, inputScrollRef)}
+          ref={inputRef}
           spellCheck={false}
           data-input-field-input // to distinguish from potential other inputs in prefix/suffix
           data-color={color}
