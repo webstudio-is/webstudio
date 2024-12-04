@@ -204,7 +204,6 @@ export const SectionTitleLabel = forwardRef(
     const { openState, inactive } = useContext(context);
 
     const commonCss = { flex: "0 1 auto" };
-    console.log({ openState, inactive, children });
     const color = inactive
       ? "inactive"
       : openState === "closed"
