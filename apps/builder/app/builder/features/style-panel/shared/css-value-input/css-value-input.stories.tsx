@@ -157,3 +157,43 @@ export const WithUnits = () => {
     </Flex>
   );
 };
+
+export const AutoScroll = () => {
+  const [value, setValue] = React.useState<StyleValue>({
+    type: "var",
+    value: "start-test-test-test-test-test-test-test-end",
+  });
+
+  const [intermediateValue, setIntermediateValue] = React.useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
+  return (
+    <Flex css={{ width: 100 }}>
+      <CssValueInput
+        styleSource="preset"
+        property="alignItems"
+        value={value}
+        intermediateValue={intermediateValue}
+        onChange={(newValue) => {
+          setIntermediateValue(newValue);
+        }}
+        onHighlight={(value) => {
+          action("onHighlight")(value);
+        }}
+        onChangeComplete={({ value }) => {
+          // on blur, select, enter etc.
+          setValue(value);
+          setIntermediateValue(undefined);
+          action("onChangeComplete")(value);
+        }}
+        onAbort={() => {
+          action("onAbort")();
+        }}
+        onReset={() => {
+          action("onReset")();
+        }}
+      />
+    </Flex>
+  );
+};
