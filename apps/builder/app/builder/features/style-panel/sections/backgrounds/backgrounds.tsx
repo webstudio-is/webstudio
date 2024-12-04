@@ -36,6 +36,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(styles, parseCssFragment("none", ["background"]));
       }}
+      collapsible
     >
       <Flex gap={1} direction="column">
         <RepeatedStyle

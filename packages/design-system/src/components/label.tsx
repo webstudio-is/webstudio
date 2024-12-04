@@ -16,6 +16,7 @@ export const labelColors = [
   "overwritten",
   "remote",
   "code",
+  "inactive",
 ] as const;
 
 const StyledLabel = styled(RadixLabel, {
@@ -94,6 +95,13 @@ const StyledLabel = styled(RadixLabel, {
         color: theme.colors.foregroundLocalMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundHover,
+        },
+      },
+      // Example is collapsible section title label when section has no content.
+      inactive: {
+        color: theme.colors.foregroundTextSubtle,
+        "&:hover": {
+          color: theme.colors.foregroundMain,
         },
       },
     },
