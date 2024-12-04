@@ -48,7 +48,7 @@ import {
   $modifierKeys,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
-import { $awareness } from "../awareness";
+import { $awareness, $temporaryInstances } from "../awareness";
 import {
   ImmerhinSyncObject,
   NanostoresSyncObject,
@@ -88,6 +88,8 @@ export const createObjectPool = () => {
       $selectedInstanceSelector
     ),
     new NanostoresSyncObject("awareness", $awareness),
+    new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
+
     new NanostoresSyncObject("project", $project),
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourceValues", $resourceValues),
