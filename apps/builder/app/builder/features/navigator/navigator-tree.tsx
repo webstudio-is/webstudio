@@ -51,12 +51,7 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import {
-  computeInstancesConstraints,
-  findClosestDroppableComponentIndex,
-  getInstanceLabel,
-  reparentInstance,
-} from "~/shared/instance-utils";
+import { getInstanceLabel, reparentInstance } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
 import {
@@ -64,6 +59,7 @@ import {
   getInstanceKey,
   selectInstance,
 } from "~/shared/awareness";
+import { isTreeMatching } from "~/shared/matcher";
 
 type TreeItem = {
   level: number;
@@ -530,17 +526,12 @@ const canDrop = (
     return false;
   }
 
-  const metas = $registeredComponentMetas.get();
-  const insertConstraints = computeInstancesConstraints(metas, instances, [
-    dragSelector[0],
-  ]);
-  const ancestorIndex = findClosestDroppableComponentIndex({
-    metas,
-    constraints: insertConstraints,
+  return isTreeMatching({
     instances,
-    instanceSelector: dropSelector,
+    metas: $registeredComponentMetas.get(),
+    // make sure dragging tree can be put inside of drop instance
+    instanceSelector: [dragSelector[0], ...dropSelector],
   });
-  return ancestorIndex === 0;
 };
 
 export const NavigatorTree = () => {
