@@ -75,7 +75,7 @@ const chevronStyle = css({
   transition: "transform 150ms, opacity 200ms",
   color: theme.colors.backgroundIconSubtle,
   variants: {
-    state: {
+    openState: {
       open: {
         transform: "rotate(90deg)",
       },
@@ -101,8 +101,12 @@ const dotStyle = css({
   },
 });
 
-const context = createContext<{ state: "open" | "closed" | "inactive" }>({
-  state: "closed",
+const context = createContext<{
+  openState: "open" | "closed";
+  inactive: boolean;
+}>({
+  openState: "closed",
+  inactive: false,
 });
 
 export const SectionTitle = forwardRef(
@@ -114,9 +118,11 @@ export const SectionTitle = forwardRef(
       children,
       suffix,
       inactive = false,
+      collapsible = true,
       ...props
     }: ComponentProps<"button"> & {
       inactive?: boolean;
+      collapsible?: boolean;
       /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
       "data-state"?: "open" | "closed";
       dots?: Array<"local" | "overwritten" | "remote">;
@@ -126,11 +132,11 @@ export const SectionTitle = forwardRef(
     },
     ref: Ref<HTMLButtonElement>
   ) => {
-    const state = inactive ? "inactive" : (props["data-state"] ?? "closed");
-    const finalDots = state === "open" ? [] : (dots ?? []);
+    const openState = props["data-state"] ?? "closed";
+    const finalDots = openState === "open" ? [] : (dots ?? []);
 
     return (
-      <context.Provider value={{ state }}>
+      <context.Provider value={{ openState, inactive }}>
         <ArrowFocus
           render={({ handleKeyDown }) => (
             <Flex
@@ -140,17 +146,17 @@ export const SectionTitle = forwardRef(
                 css,
                 color: inactive ? "disabled" : "default",
               })}
-              data-state={state}
+              data-state={openState}
               onKeyDown={handleKeyDown}
             >
-              {inactive === false && (
+              {collapsible && (
                 <button
                   className={titleButtonStyle()}
-                  data-state={state}
+                  data-state={openState}
                   ref={ref}
                   {...props}
                 >
-                  <ChevronRightIcon className={chevronStyle({ state })} />
+                  <ChevronRightIcon className={chevronStyle({ openState })} />
                 </button>
               )}
               {/*
@@ -158,7 +164,7 @@ export const SectionTitle = forwardRef(
                 Therefore, we render the label in a layer above the SectionTitle button
               */}
               <div className={labelContainerStyle()}>
-                <div className={titleButtonLayoutStyle({ state })}>
+                <div className={titleButtonLayoutStyle({ openState })}>
                   {children}
 
                   {finalDots.length > 0 && (
@@ -195,15 +201,15 @@ export const SectionTitleLabel = forwardRef(
     }: Omit<ComponentProps<typeof Label>, "truncate" | "text">,
     ref: Ref<HTMLLabelElement>
   ) => {
-    const { state } = useContext(context);
+    const { openState, inactive } = useContext(context);
 
     const commonCss = { flex: "0 1 auto" };
-    const stateColorMap = {
-      open: props.color,
-      closed: "default",
-      inactive: "inactive",
-    } as const;
-    const color = stateColorMap[state] ?? props.color;
+    console.log({ openState, inactive, children });
+    const color = inactive
+      ? "inactive"
+      : openState === "closed"
+        ? "default"
+        : props.color;
 
     const isButton = isLabelButton(color);
 
@@ -214,7 +220,10 @@ export const SectionTitleLabel = forwardRef(
         {...props}
         color={color}
         css={{
-          color: state === "closed" ? `var(${labelTextColor})` : undefined,
+          color:
+            openState === "closed" && inactive === false
+              ? `var(${labelTextColor})`
+              : undefined,
           ...commonCss,
           ...css,
 

@@ -158,6 +158,7 @@ export const Section = () => {
       trigger={
         <SectionTitle
           inactive={dots.length === 0}
+          collapsible={dots.length !== 0}
           dots={dots}
           suffix={
             <Flex gap="1" align="center">
