@@ -135,7 +135,7 @@
     "type-fest": "^4.28.0",
     "typescript": "5.7.2",
     "vite": "^5.4.11",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"

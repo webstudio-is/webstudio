@@ -24,6 +24,10 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   invalidAncestors: ["Button", "Heading", "Link"],
+  constraints: {
+    relation: "ancestor",
+    component: { $nin: ["Button", "Link", "Heading"] },
+  },
   template: [
     {
       type: "instance",

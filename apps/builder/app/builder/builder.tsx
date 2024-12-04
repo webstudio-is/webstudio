@@ -7,12 +7,12 @@ import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
+import { registerContainers, createObjectPool } from "~/shared/sync";
 import {
-  builderClient,
-  registerContainers,
-  useBuilderStore,
-} from "~/shared/sync";
-import { startProjectSync, useSyncServer } from "./shared/sync/sync-server";
+  ServerSyncStorage,
+  startProjectSync,
+  useSyncServer,
+} from "./shared/sync/sync-server";
 import { SidebarLeft } from "./sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
@@ -57,18 +57,20 @@ import {
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
-import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { initBuilderApi } from "~/shared/builder-api";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
+
 import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
 } from "~/shared/copy-paste/init-copy-paste";
 import { useInertHandlers } from "./shared/inert-handlers";
+import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
+import { SyncClient } from "~/shared/sync-client";
 
 registerContainers();
 
@@ -122,6 +124,7 @@ const Main = ({ children, css }: { children: ReactNode; css?: CSS }) => (
     css={{
       gridArea: "main",
       position: "relative",
+      isolation: "isolate",
       ...css,
     }}
   >
@@ -203,6 +206,12 @@ const ChromeWrapper = ({
   );
 };
 
+const builderClient = new SyncClient({
+  role: "leader",
+  object: createObjectPool(),
+  storages: [new ServerSyncStorage()],
+});
+
 export type BuilderProps = {
   project: Project;
   publisherHost: string;
@@ -239,9 +248,9 @@ export const Builder = ({
     const controller = new AbortController();
 
     $dataLoadingState.set("loading");
-    loadBuilderData({ projectId: project.id, signal: controller.signal })
-      .then((data) => {
-        setBuilderData(data);
+    builderClient.connect({
+      signal: controller.signal,
+      onReady() {
         startProjectSync({
           projectId: project.id,
           buildId: build.id,
@@ -257,12 +266,10 @@ export const Builder = ({
         // so builder is started listening for connect event
         // when canvas is rendered
         $dataLoadingState.set("loaded");
-      })
-      .catch((error) => {
-        console.error(error);
+
         // @todo make needs error handling and error state? e.g. a toast
-        $dataLoadingState.set("idle");
-      });
+      },
+    });
     return () => {
       $dataLoadingState.set("idle");
       controller.abort("unmount");
@@ -284,7 +291,6 @@ export const Builder = ({
     $publisher.set({ publish });
   }, [publish]);
 
-  useBuilderStore();
   useSyncServer({
     projectId: project.id,
     authPermit,
@@ -416,6 +422,9 @@ export const Builder = ({
               />
             }
           />
+          <Main css={{ pointerEvents: "none" }}>
+            <TextToolbar />
+          </Main>
           {isPreviewMode === false && <Footer />}
           <CloneProjectDialog
             isOpen={isCloneDialogOpen}

@@ -1,12 +1,13 @@
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
-import type { SyncItem } from "immerhin";
+import type { Change } from "immerhin";
+import type { Transaction } from "~/shared/sync-client";
 
 type Command =
   | {
       type: "transactions";
       projectId: Project["id"];
-      transactions: SyncItem[];
+      transactions: Transaction<Change[]>[];
     }
   | {
       type: "setDetails";

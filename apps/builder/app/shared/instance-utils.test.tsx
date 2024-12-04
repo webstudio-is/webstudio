@@ -9,6 +9,7 @@ import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/sdk/testing";
 import { parseCss } from "@webstudio-is/css-data";
+import { coreMetas } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Asset,
@@ -66,7 +67,9 @@ registerContainers();
 
 $pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
 
-const defaultMetasMap = new Map(Object.entries(defaultMetas));
+const defaultMetasMap = new Map(
+  Object.entries({ ...defaultMetas, ...coreMetas })
+);
 $registeredComponentMetas.set(defaultMetasMap);
 
 const createFragment = (

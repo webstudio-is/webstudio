@@ -30,6 +30,6 @@
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
     "type-fest": "^4.28.0",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   }
 }

@@ -37,3 +37,34 @@ export type Instance = z.infer<typeof Instance>;
 export const Instances = z.map(InstanceId, Instance);
 
 export type Instances = z.infer<typeof Instances>;
+
+export const MatcherRelation = z.union([
+  z.literal("ancestor"),
+  z.literal("parent"),
+  z.literal("self"),
+  z.literal("child"),
+  z.literal("descendant"),
+]);
+
+export type MatcherRelation = z.infer<typeof MatcherRelation>;
+
+export const MatcherOperation = z.object({
+  $eq: z.string().optional(),
+  $neq: z.string().optional(),
+  $in: z.array(z.string()).optional(),
+  $nin: z.array(z.string()).optional(),
+});
+
+export type MatcherOperation = z.infer<typeof MatcherOperation>;
+
+export const Matcher = z.object({
+  relation: MatcherRelation,
+  component: MatcherOperation.optional(),
+  tag: MatcherOperation.optional(),
+});
+
+export type Matcher = z.infer<typeof Matcher>;
+
+export const Matchers = z.union([Matcher, z.array(Matcher)]);
+
+export type Matchers = z.infer<typeof Matchers>;
