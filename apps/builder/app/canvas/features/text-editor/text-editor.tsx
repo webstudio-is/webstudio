@@ -62,6 +62,7 @@ import {
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
   $registeredComponentMetas,
+  $selectedInstanceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -71,6 +72,7 @@ import {
 import deepEqual from "fast-deep-equal";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { $selectedPage, selectInstance } from "~/shared/awareness";
+import { shallowEqual } from "shallow-equal";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -93,7 +95,7 @@ const BindInstanceToNodePlugin = ({
         // @todo: A normal selector must be used, but it would require significantly more code to detect the tree structure.
         element.setAttribute(
           selectorIdAttribute,
-          [idAttribute, ...rootInstanceSelector].join(",")
+          [instanceId, ...rootInstanceSelector].join(",")
         );
       }
     }
@@ -170,6 +172,67 @@ const OnChangeOnBlurPlugin = ({
       prevRootElement?.removeEventListener("blur", handleBlur);
     });
   }, [editor, handleChange]);
+
+  return null;
+};
+
+const LinkSelectionPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+  const [preservedSelection] = useState($selectedInstanceSelector.get());
+
+  useEffect(() => {
+    if (!editor.isEditable()) {
+      return;
+    }
+
+    const removeUpdateListener = editor.registerUpdateListener(
+      ({ editorState }) => {
+        editorState.read(() => {
+          const selection = $getSelection();
+          // console.log(selection);
+          if (!$isRangeSelection(selection)) {
+            return false;
+          }
+          const key = selection.anchor.getNode().getKey();
+
+          const elt = editor.getElementByKey(key);
+          const link = elt?.closest(`a[${selectorIdAttribute}]`);
+
+          if (link == null) {
+            if (
+              shallowEqual(preservedSelection, $selectedInstanceSelector.get())
+            ) {
+              return false;
+            }
+
+            selectInstance(preservedSelection);
+
+            return false;
+          }
+
+          const selectorAttribute = link
+            .getAttribute(selectorIdAttribute)
+            ?.split(",");
+
+          if (selectorAttribute === undefined) {
+            return false;
+          }
+
+          if (
+            shallowEqual(selectorAttribute, $selectedInstanceSelector.get())
+          ) {
+            return false;
+          }
+
+          selectInstance(selectorAttribute);
+        });
+      }
+    );
+
+    return () => {
+      removeUpdateListener();
+    };
+  }, [editor, preservedSelection]);
 
   return null;
 };
@@ -434,6 +497,7 @@ const InitCursorPlugin = () => {
             }
             const normalizedSelection =
               $normalizeSelection__EXPERIMENTAL(selection);
+
             $setSelection(normalizedSelection);
             return;
           }
@@ -1071,12 +1135,14 @@ export const TextEditor = ({
         placeholder={<></>}
       />
       <LinkPlugin />
+
       <LinkSanitizePlugin />
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
+      <LinkSelectionPlugin />
       <AnyKeyDownPlugin onKeyDown={handleAnyKeydown} />
       <InitialJSONStatePlugin
         onInitialState={(json) => {
