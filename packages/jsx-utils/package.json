@@ -14,7 +14,7 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "fast-glob": "^3.3.2",
     "type-fest": "^4.28.0",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   },
   "exports": {
     ".": {
