@@ -35,8 +35,6 @@ import {
   useState,
   useMemo,
   type ComponentProps,
-  type MouseEvent,
-  type MouseEventHandler,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
@@ -297,19 +295,20 @@ const itemToString = (item: CssValueInputValue | null) => {
   return toValue(item);
 };
 
-const scrollAhead: MouseEventHandler = (event) => {
+const scrollAhead = ({ target, clientX }: MouseEvent) => {
+  const element = target as HTMLInputElement;
   // Get the scrollable width of the input element
-  const scrollWidth = event.target.scrollWidth;
-  const visibleWidth = event.target.clientWidth;
+  const scrollWidth = element.scrollWidth;
+  const visibleWidth = element.clientWidth;
 
   if (scrollWidth === visibleWidth) {
     // Nothing to scroll.
     return false;
   }
-  const inputRect = event.target.getBoundingClientRect();
+  const inputRect = element.getBoundingClientRect();
 
   // Calculate the relative x position of the mouse within the input element
-  const relativeMouseX = event.clientX - inputRect.x;
+  const relativeMouseX = clientX - inputRect.x;
 
   // Calculate the percentage position (0% at the beginning, 100% at the end)
   const inputWidth = inputRect.width;
@@ -328,7 +327,7 @@ const scrollAhead: MouseEventHandler = (event) => {
     (adjustedMousePercentageX / 100) * (scrollWidth - visibleWidth);
 
   // Scroll the input element
-  event.target.scroll({ left: scrollPosition });
+  element.scroll({ left: scrollPosition });
   return true;
 };
 
@@ -341,7 +340,7 @@ const getAutoScrollProps = () => {
 
   return {
     abort,
-    onMouseOver(event: MouseEvent<HTMLInputElement>) {
+    onMouseOver(event: MouseEvent) {
       if (event.target === document.activeElement) {
         abort("focused");
         return;
@@ -361,7 +360,7 @@ const getAutoScrollProps = () => {
             return;
           }
           requestAnimationFrame(() => {
-            scrollAhead(event);
+            scrollAhead(event as MouseEvent);
           });
         },
         {
@@ -370,7 +369,7 @@ const getAutoScrollProps = () => {
         }
       );
     },
-    onMouseOut(event: MouseEvent<HTMLInputElement>) {
+    onMouseOut(event: MouseEvent) {
       if (event.target === document.activeElement) {
         abort("focused");
         return;
