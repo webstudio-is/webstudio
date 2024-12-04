@@ -297,6 +297,14 @@ const itemToString = (item: CssValueInputValue | null) => {
 };
 
 const scrollAhead = (event) => {
+  // Get the scrollable width of the input element
+  const scrollWidth = event.target.scrollWidth;
+  const visibleWidth = event.target.clientWidth;
+
+  if (scrollWidth === visibleWidth) {
+    // Nothing to scroll.
+    return false;
+  }
   const inputRect = event.target.getBoundingClientRect();
 
   // Calculate the relative x position of the mouse within the input element
@@ -308,15 +316,11 @@ const scrollAhead = (event) => {
 
   // Apply acceleration based on the relative position of the mouse
   // Closer to the beginning (-20%), closer to the end (+20%)
-  const accelerationFactor = (mousePercentageX - 50) / 50; // Range: [-1, 1]
+  const accelerationFactor = (mousePercentageX - 50) / 50;
   const adjustedMousePercentageX = Math.min(
     Math.max(mousePercentageX + accelerationFactor * 20, 0),
     100
   );
-
-  // Get the scrollable width of the input element
-  const scrollWidth = event.target.scrollWidth;
-  const visibleWidth = event.target.clientWidth;
 
   // Calculate the scroll position corresponding to the adjusted percentage
   const scrollPosition =
@@ -324,20 +328,37 @@ const scrollAhead = (event) => {
 
   // Scroll the input element
   event.target.scroll({ left: scrollPosition });
+  return true;
 };
 
 const getAutoScrollProps = () => {
   let abortController = new AbortController();
+
+  const abort = (reason: string) => {
+    abortController.abort(reason);
+  };
+
   return {
-    abort() {
-      abortController.abort();
-    },
+    abort,
     onMouseOver(event: MouseEvent<HTMLInputElement>) {
-      scrollAhead(event);
+      if (event.target === document.activeElement) {
+        abort("focused");
+        return;
+      }
+
+      if (scrollAhead(event) === false) {
+        // Nothing to scroll.
+        return;
+      }
+
       abortController = new AbortController();
       event.target?.addEventListener(
         "mousemove",
         (event) => {
+          if (event.target === document.activeElement) {
+            abort("focused");
+            return;
+          }
           requestAnimationFrame(() => {
             scrollAhead(event);
           });
@@ -349,11 +370,18 @@ const getAutoScrollProps = () => {
       );
     },
     onMouseOut(event: MouseEvent<HTMLInputElement>) {
+      if (event.target === document.activeElement) {
+        abort("focused");
+        return;
+      }
       (event.target as HTMLInputElement).scroll({
         left: 0,
         behavior: "smooth",
       });
-      abortController?.abort("mouseout");
+      abort("mouseout");
+    },
+    onFocus() {
+      abort("focus");
     },
   };
 };
@@ -791,7 +819,9 @@ export const CssValueInput = ({
   const { abort, ...autoScrollProps } = useMemo(() => {
     return getAutoScrollProps();
   }, []);
-  useEffect(() => abort, [abort]);
+  useEffect(() => {
+    return () => abort("unmount");
+  }, [abort]);
 
   return (
     <ComboboxRoot open={isOpen}>
