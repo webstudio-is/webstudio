@@ -36,6 +36,7 @@ import {
   useMemo,
   type ComponentProps,
   type MouseEvent,
+  type MouseEventHandler,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
@@ -296,7 +297,7 @@ const itemToString = (item: CssValueInputValue | null) => {
   return toValue(item);
 };
 
-const scrollAhead = (event) => {
+const scrollAhead: MouseEventHandler = (event) => {
   // Get the scrollable width of the input element
   const scrollWidth = event.target.scrollWidth;
   const visibleWidth = event.target.clientWidth;
