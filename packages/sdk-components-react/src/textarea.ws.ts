@@ -31,6 +31,10 @@ export const meta: WsComponentMeta = {
   presetStyle,
   order: 4,
   invalidAncestors: ["Button", "Link"],
+  constraints: {
+    relation: "ancestor",
+    component: { $nin: ["Button", "Link"] },
+  },
   states: [
     ...defaultStates,
     { selector: "::placeholder", label: "Placeholder" },

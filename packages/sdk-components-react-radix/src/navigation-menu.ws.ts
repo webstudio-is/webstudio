@@ -432,6 +432,10 @@ export const metaNavigationMenuList: WsComponentMeta = {
   type: "container",
   icon: ListIcon,
   requiredAncestors: ["NavigationMenu"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenu" },
+  },
   presetStyle,
   label: "Menu List",
 };
@@ -441,6 +445,10 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   type: "container",
   icon: ListItemIcon,
   requiredAncestors: ["NavigationMenu"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenu" },
+  },
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
   label: "Menu Item",
@@ -452,6 +460,10 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
   type: "container",
   icon: TriggerIcon,
   requiredAncestors: ["NavigationMenuItem"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenuItem" },
+  },
   presetStyle,
   label: "Menu Trigger",
 };
@@ -461,6 +473,10 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   type: "container",
   icon: ContentIcon,
   requiredAncestors: ["NavigationMenuItem"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenuItem" },
+  },
   indexWithinAncestor: "NavigationMenu",
   presetStyle,
   label: "Menu Content",
@@ -472,10 +488,17 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   type: "container",
   stylable: false,
   icon: BoxIcon,
-  // https://github.com/webstudio-is/webstudio/issues/2193
-  // requiredAncestors: ["NavigationMenuContent", "NavigationMenuItem"],
-  // Temporary restrict to NavigationMenu
   requiredAncestors: ["NavigationMenu"],
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "NavigationMenu" },
+    },
+    {
+      relation: "ancestor",
+      component: { $in: ["NavigationMenuContent", "NavigationMenuItem"] },
+    },
+  ],
   presetStyle,
   label: "Accessible Link Wrapper",
 };
@@ -486,6 +509,10 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   type: "container",
   icon: ViewportIcon,
   requiredAncestors: ["NavigationMenu"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenu" },
+  },
   presetStyle,
   label: "Menu Viewport",
 };

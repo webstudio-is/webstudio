@@ -17,6 +17,10 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   requiredAncestors: ["List"],
+  constraints: {
+    relation: "parent",
+    component: { $eq: "List" },
+  },
   description: "Adds a new item to an existing list.",
   icon: ListItemIcon,
   states: defaultStates,
