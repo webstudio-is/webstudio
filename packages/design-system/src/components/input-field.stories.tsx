@@ -85,18 +85,6 @@ export const Demo = () => (
         ))}
       </StoryGrid>
     </StorySection>
-
-    <StorySection title="Auto Scroll">
-      <StoryGrid horizontal>
-        <InputField
-          autoScroll
-          defaultValue="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
-          prefix={prefix}
-          suffix={suffix}
-          autoFocus
-        />
-      </StoryGrid>
-    </StorySection>
   </>
 );
 
