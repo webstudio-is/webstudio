@@ -31,6 +31,12 @@ export const $selectedPage = computed(
   }
 );
 
+export const $temporaryInstances = atom<Instances>(new Map());
+export const addTemporaryInstance = (instance: Instance) => {
+  $temporaryInstances.get().set(instance.id, instance);
+  $temporaryInstances.set($temporaryInstances.get());
+};
+
 export const $virtualInstances = computed($selectedPage, (selectedPage) => {
   const virtualInstances: Instances = new Map();
   if (selectedPage) {
@@ -45,15 +51,16 @@ export const $virtualInstances = computed($selectedPage, (selectedPage) => {
 });
 
 export const $selectedInstance = computed(
-  [$instances, $virtualInstances, $awareness],
-  (instances, virtualInstances, awareness) => {
+  [$instances, $virtualInstances, $temporaryInstances, $awareness],
+  (instances, virtualInstances, tempInstances, awareness) => {
     if (awareness?.instanceSelector === undefined) {
       return;
     }
     const [selectedInstanceId] = awareness.instanceSelector;
     return (
       instances.get(selectedInstanceId) ??
-      virtualInstances.get(selectedInstanceId)
+      virtualInstances.get(selectedInstanceId) ??
+      tempInstances.get(selectedInstanceId)
     );
   }
 );
