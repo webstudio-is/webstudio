@@ -25,6 +25,7 @@ import {
   rootComponent,
   showAttribute,
   WsComponentMeta,
+  blockTemplateComponent,
 } from "@webstudio-is/react-sdk";
 import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import {
@@ -82,7 +83,70 @@ const $dropTarget = computed(
   (dragAndDropState) => dragAndDropState.dropTarget
 );
 
-const $flatTree = computed(
+const $contentTree = computed(
+  [$selectedPage, $instances, $propValuesByInstanceSelector],
+  (page, instances, propValuesByInstanceSelector) => {
+    const flatTree: TreeItem[] = [];
+    if (page === undefined) {
+      return flatTree;
+    }
+    const traverse = (
+      instanceId: Instance["id"],
+      selector: InstanceSelector,
+      parentComponent?: Instance["component"],
+      isParentHidden = false,
+      isLastChild = false,
+      level = 0
+    ) => {
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        // log instead of failing navigator tree
+        console.error(`Unknown instance ${instanceId}`);
+        return;
+      }
+      const propValues = propValuesByInstanceSelector.get(
+        getInstanceKey(selector)
+      );
+      const isHidden =
+        isParentHidden ||
+        false === Boolean(propValues?.get(showAttribute) ?? true);
+      const treeItem: TreeItem = {
+        level,
+        selector,
+        instance,
+        isExpanded: undefined,
+        isLastChild,
+        isHidden,
+        isReusable: false,
+      };
+      const isVisible =
+        instance.component === blockComponent ||
+        (parentComponent === blockComponent &&
+          instance.component !== blockTemplateComponent);
+      if (isVisible) {
+        flatTree.push(treeItem);
+      }
+      for (let index = 0; index < instance.children.length; index += 1) {
+        const child = instance.children[index];
+        if (child.type === "id") {
+          const isLastChild = index === instance.children.length - 1;
+          traverse(
+            child.value,
+            [child.value, ...selector],
+            instance.component,
+            isHidden,
+            isLastChild,
+            isVisible ? level + 1 : level
+          );
+        }
+      }
+    };
+    traverse(page.rootInstanceId, [page.rootInstanceId]);
+    return flatTree;
+  }
+);
+
+export const $flatTree = computed(
   [
     $selectedPage,
     $instances,
@@ -480,7 +544,8 @@ const canDrop = (
 };
 
 export const NavigatorTree = () => {
-  const flatTree = useStore($flatTree);
+  const isContentMode = useStore($isContentMode);
+  const flatTree = useStore(isContentMode ? $contentTree : $flatTree);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const selectedKey = selectedInstanceSelector?.join();
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
@@ -523,7 +588,7 @@ export const NavigatorTree = () => {
       }}
     >
       <TreeRoot>
-        {rootMeta && (
+        {rootMeta && isContentMode === false && (
           <TreeNode
             level={0}
             isSelected={selectedKey === ROOT_INSTANCE_ID}

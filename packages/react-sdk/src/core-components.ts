@@ -149,6 +149,10 @@ const blockMeta: WsComponentMeta = {
   type: "container",
   label: "Content Block",
   icon: EditIcon,
+  constraints: {
+    relation: "ancestor",
+    component: { $neq: collectionComponent },
+  },
   stylable: false,
   template: [
     {
