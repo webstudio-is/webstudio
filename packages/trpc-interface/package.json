@@ -20,7 +20,7 @@
     "@types/node": "^22.9.3",
     "@webstudio-is/postrest": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   },
   "exports": {
     "./index.server": {
