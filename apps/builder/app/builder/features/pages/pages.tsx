@@ -1,4 +1,4 @@
-import { use, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tooltip,
