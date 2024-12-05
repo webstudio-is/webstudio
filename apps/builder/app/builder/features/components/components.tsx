@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import { CrossIcon } from "@webstudio-is/icons";
 import {
   type WsComponentMeta,
+  blockComponent,
   collectionComponent,
   componentCategories,
 } from "@webstudio-is/react-sdk";
@@ -120,6 +121,13 @@ const filterAndGroupComponents = ({
       }
 
       if (component === "ContentEmbed" && isFeatureEnabled("cms") === false) {
+        return false;
+      }
+
+      if (
+        component === blockComponent &&
+        isFeatureEnabled("contentEditableMode") === false
+      ) {
         return false;
       }
 
