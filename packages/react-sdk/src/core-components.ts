@@ -162,16 +162,67 @@ const blockMeta: WsComponentMeta = {
           component: blockTemplateComponent,
           children: [],
         },
-
         {
           type: "instance",
-          label: "Initial",
-          component: "Box",
+          component: "Paragraph",
           children: [
+            {
+              type: "RichTextLink",
+              children: [
+                {
+                  type: "text",
+                  value: "In Content mode",
+                },
+              ],
+              props: {
+                type: "string",
+                name: "href",
+                value: "https://wstd.us/content-block",
+              },
+            },
             {
               type: "text",
               value:
-                "Content Block component designates regions on the page where pre-styled instances can be inserted in Content mode",
+                "Content Block component designates regions on the page where pre-styled instances can be inserted in Content mode.",
+            },
+          ],
+        },
+        {
+          type: "instance",
+          component: "List",
+          children: [
+            {
+              type: "instance",
+              component: "ListItem",
+              children: [
+                {
+                  type: "text",
+                  value:
+                    "In Content mode, you can edit any direct child instances that were pre-added to the Content Block, as well as add new instances predefined in Templates.",
+                },
+              ],
+            },
+            {
+              type: "instance",
+              component: "ListItem",
+              children: [
+                {
+                  type: "text",
+                  value:
+                    "To predefine instances for insertion in Content mode, switch to Design mode and add them to the Templates container.",
+                },
+              ],
+            },
+            {
+              type: "instance",
+              component: "ListItem",
+              children: [
+                {
+                  type: "text",
+                  value:
+                    "To insert predefined instances in Content mode, click the + button while hovering over the Content Block on the canvas and choose an instance from the list.",
+                },
+              ],
             },
           ],
         },
