@@ -160,19 +160,75 @@ const blockMeta: WsComponentMeta = {
           type: "instance",
           label: "Templates",
           component: blockTemplateComponent,
-          children: [],
+          children: [
+            {
+              type: "instance",
+              component: "Paragraph",
+              children: [
+                {
+                  type: "text",
+                  value: "Paragraph text you can edit",
+                  placeholder: true,
+                },
+              ],
+            },
+            {
+              type: "instance",
+              component: "List",
+              children: [
+                {
+                  type: "instance",
+                  component: "ListItem",
+                  children: [
+                    {
+                      type: "text",
+                      value: "List Item text you can edit",
+                      placeholder: true,
+                    },
+                  ],
+                },
+                {
+                  type: "instance",
+                  component: "ListItem",
+                  children: [
+                    {
+                      type: "text",
+                      value: "List Item text you can edit",
+                      placeholder: true,
+                    },
+                  ],
+                },
+                {
+                  type: "instance",
+                  component: "ListItem",
+                  children: [
+                    {
+                      type: "text",
+                      value: "List Item text you can edit",
+                      placeholder: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
           type: "instance",
           component: "Paragraph",
           children: [
             {
+              type: "text",
+              value:
+                "The Content Block component designates regions on the page where pre-styled instances can be inserted in ",
+            },
+            {
               type: "instance",
               component: "RichTextLink",
               children: [
                 {
                   type: "text",
-                  value: "In Content mode",
+                  value: "Content mode",
                 },
               ],
               props: [
@@ -185,8 +241,7 @@ const blockMeta: WsComponentMeta = {
             },
             {
               type: "text",
-              value:
-                " Content Block component designates regions on the page where pre-styled instances can be inserted in Content mode.",
+              value: ".",
             },
           ],
         },
