@@ -4,7 +4,7 @@
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-import { XmlNode } from "@webstudio-is/sdk-components-react";
+import { XmlNode, XmlTime } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "Fixture Site";
 
