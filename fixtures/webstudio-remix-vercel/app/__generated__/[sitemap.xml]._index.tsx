@@ -4,7 +4,7 @@
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-import { XmlNode } from "@webstudio-is/sdk-components-react";
+import { XmlNode, XmlTime } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "KittyGuardedZone";
 
@@ -66,7 +66,9 @@ const Page = ({ system: system }: { system: any }) => {
         </Heading>
         <XmlNode tag={"url"}>
           <XmlNode tag={"loc"}>{"custom-hand-made-location"}</XmlNode>
-          <XmlNode tag={"lastmod"}>{"2020-10-10"}</XmlNode>
+          <XmlNode tag={"lastmod"}>
+            <XmlTime datetime={"1733402818245"} />
+          </XmlNode>
           <XmlNode
             tag={"xhtml:link"}
             rel={"alternate"}

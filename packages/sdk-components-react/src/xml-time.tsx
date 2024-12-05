@@ -6,7 +6,7 @@ const INITIAL_DATE_STRING = "dateTime attribute is not set";
 const INVALID_DATE_STRING = "";
 
 type XmlTimeProps = {
-  dateStyle: "long" | "short";
+  dateStyle?: "long" | "short";
   datetime: string;
 };
 
