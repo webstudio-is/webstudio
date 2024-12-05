@@ -167,23 +167,26 @@ const blockMeta: WsComponentMeta = {
           component: "Paragraph",
           children: [
             {
-              type: "RichTextLink",
+              type: "instance",
+              component: "RichTextLink",
               children: [
                 {
                   type: "text",
                   value: "In Content mode",
                 },
               ],
-              props: {
-                type: "string",
-                name: "href",
-                value: "https://wstd.us/content-block",
-              },
+              props: [
+                {
+                  type: "string",
+                  name: "href",
+                  value: "https://wstd.us/content-block",
+                },
+              ],
             },
             {
               type: "text",
               value:
-                "Content Block component designates regions on the page where pre-styled instances can be inserted in Content mode.",
+                " Content Block component designates regions on the page where pre-styled instances can be inserted in Content mode.",
             },
           ],
         },
