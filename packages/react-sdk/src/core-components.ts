@@ -164,7 +164,129 @@ const blockMeta: WsComponentMeta = {
           type: "instance",
           label: "Templates",
           component: blockTemplateComponent,
-          children: [],
+          children: [
+            {
+              type: "instance",
+              component: "Paragraph",
+              children: [
+                {
+                  type: "text",
+                  value: "Paragraph text you can edit",
+                  placeholder: true,
+                },
+              ],
+            },
+            {
+              type: "instance",
+              component: "List",
+              children: [
+                {
+                  type: "instance",
+                  component: "ListItem",
+                  children: [
+                    {
+                      type: "text",
+                      value: "List Item text you can edit",
+                      placeholder: true,
+                    },
+                  ],
+                },
+                {
+                  type: "instance",
+                  component: "ListItem",
+                  children: [
+                    {
+                      type: "text",
+                      value: "List Item text you can edit",
+                      placeholder: true,
+                    },
+                  ],
+                },
+                {
+                  type: "instance",
+                  component: "ListItem",
+                  children: [
+                    {
+                      type: "text",
+                      value: "List Item text you can edit",
+                      placeholder: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "instance",
+          component: "Paragraph",
+          children: [
+            {
+              type: "text",
+              value:
+                "The Content Block component designates regions on the page where pre-styled instances can be inserted in ",
+            },
+            {
+              type: "instance",
+              component: "RichTextLink",
+              children: [
+                {
+                  type: "text",
+                  value: "Content mode",
+                },
+              ],
+              props: [
+                {
+                  type: "string",
+                  name: "href",
+                  value: "https://wstd.us/content-block",
+                },
+              ],
+            },
+            {
+              type: "text",
+              value: ".",
+            },
+          ],
+        },
+        {
+          type: "instance",
+          component: "List",
+          children: [
+            {
+              type: "instance",
+              component: "ListItem",
+              children: [
+                {
+                  type: "text",
+                  value:
+                    "In Content mode, you can edit any direct child instances that were pre-added to the Content Block, as well as add new instances predefined in Templates.",
+                },
+              ],
+            },
+            {
+              type: "instance",
+              component: "ListItem",
+              children: [
+                {
+                  type: "text",
+                  value:
+                    "To predefine instances for insertion in Content mode, switch to Design mode and add them to the Templates container.",
+                },
+              ],
+            },
+            {
+              type: "instance",
+              component: "ListItem",
+              children: [
+                {
+                  type: "text",
+                  value:
+                    "To insert predefined instances in Content mode, click the + button while hovering over the Content Block on the canvas and choose an instance from the list.",
+                },
+              ],
+            },
+          ],
         },
       ],
     },
