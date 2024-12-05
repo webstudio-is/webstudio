@@ -46,10 +46,10 @@ export const CanvasTools = () => {
     return;
   }
 
-  if (
-    dragAndDropState.isDragging &&
-    dragAndDropState.placementIndicator !== undefined
-  ) {
+  if (dragAndDropState.isDragging) {
+    if (dragAndDropState.placementIndicator === undefined) {
+      return;
+    }
     const { dropTarget, placementIndicator } = dragAndDropState;
     const dropTargetInstance =
       dropTarget === undefined

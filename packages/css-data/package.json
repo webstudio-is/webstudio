@@ -22,7 +22,7 @@
     "html-tags": "^4.0.0",
     "mdn-data": "2.8.0",
     "type-fest": "^4.28.0",
-    "vitest": "^2.1.5",
+    "vitest": "^2.1.8",
     "zod": "^3.22.4"
   },
   "peerDependencies": {

@@ -40,21 +40,6 @@ export const getBuilderData = (): BuilderData => {
   };
 };
 
-export const setBuilderData = (data: BuilderData) => {
-  $assets.set(data.assets);
-  $instances.set(data.instances);
-  $dataSources.set(data.dataSources);
-  $resources.set(data.resources);
-  // props should be after data sources to compute logic
-  $props.set(data.props);
-  $pages.set(data.pages);
-  $styleSources.set(data.styleSources);
-  $styleSourceSelections.set(data.styleSourceSelections);
-  $breakpoints.set(data.breakpoints);
-  $styles.set(data.styles);
-  $marketplaceProduct.set(data.marketplaceProduct);
-};
-
 const getPair = <Item extends { id: string }>(item: Item) =>
   [item.id, item] as const;
 

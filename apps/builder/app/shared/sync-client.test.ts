@@ -8,6 +8,7 @@ import {
   NanostoresSyncObject,
   SyncClient,
   SyncObjectPool,
+  type SyncStorage,
 } from "./sync-client";
 
 enableMapSet();
@@ -217,6 +218,18 @@ test("support pool of objects", () => {
   );
 });
 
+test("merge state in pool object to partially restore from storage", () => {
+  const store1 = atom(0);
+  const store2 = atom(1);
+  const objectPool = new SyncObjectPool([
+    new NanostoresSyncObject("store1", store1),
+    new NanostoresSyncObject("store2", store2),
+  ]);
+  objectPool.setState(new Map([["store1", 2]]));
+  expect(store1.get()).toEqual(2);
+  expect(store2.get()).toEqual(1);
+});
+
 describe("nanostores sync object", () => {
   test("sync initial state and exchange transactions", () => {
     const emitter = createNanoEvents();
@@ -288,5 +301,81 @@ describe("nanostores sync object", () => {
       payload: 2,
     });
     expect(sendTransaction).toBeCalledTimes(0);
+  });
+});
+
+describe("storages", () => {
+  class TestStorage implements SyncStorage {
+    name = "TestStorage";
+    value: undefined | number;
+    constructor(value: undefined | number) {
+      this.value = value;
+    }
+    sendTransaction = vi.fn();
+    subscribe(setState: (state: unknown) => void) {
+      setState(this.value);
+    }
+  }
+
+  test("get initial state from storage", () => {
+    const $store = atom(0);
+    const client = new SyncClient({
+      role: "leader",
+      object: new NanostoresSyncObject("nanostores", $store),
+      storages: [new TestStorage(1)],
+    });
+    client.connect({ signal: new AbortController().signal });
+    expect($store.get()).toEqual(1);
+  });
+
+  test("fallback to current state when storage is empty", () => {
+    const $store = atom(0);
+    const client = new SyncClient({
+      role: "leader",
+      object: new NanostoresSyncObject("nanostores", $store),
+      storages: [new TestStorage(undefined)],
+    });
+    client.connect({ signal: new AbortController().signal });
+    expect($store.get()).toEqual(0);
+  });
+
+  test("get state from the first non-empty storage", () => {
+    const $store = atom(0);
+    const client = new SyncClient({
+      role: "leader",
+      object: new NanostoresSyncObject("nanostores", $store),
+      storages: [
+        new TestStorage(undefined),
+        new TestStorage(1),
+        new TestStorage(2),
+      ],
+    });
+    client.connect({ signal: new AbortController().signal });
+    expect($store.get()).toEqual(1);
+  });
+
+  test("send transactions to all provided storages", () => {
+    const $store = atom(0);
+    const storage1 = new TestStorage(undefined);
+    const storage2 = new TestStorage(undefined);
+    const client = new SyncClient({
+      role: "leader",
+      object: new NanostoresSyncObject("nanostores", $store),
+      storages: [storage1, storage2],
+    });
+    client.connect({ signal: new AbortController().signal });
+    $store.set(1);
+    expect(storage1.sendTransaction).toBeCalledTimes(1);
+    expect(storage1.sendTransaction).toHaveBeenCalledWith({
+      id: expect.any(String),
+      object: "nanostores",
+      payload: 1,
+    });
+    expect(storage2.sendTransaction).toBeCalledTimes(1);
+    expect(storage2.sendTransaction).toHaveBeenCalledWith({
+      id: expect.any(String),
+      object: "nanostores",
+      payload: 1,
+    });
   });
 });

@@ -11,6 +11,7 @@ import { movementMapSpace, useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { useModifierKeys } from "../../shared/modifier-keys";
+import { theme } from "@webstudio-is/design-system";
 
 const Cell = ({
   isPopoverOpen,
@@ -44,6 +45,7 @@ const Cell = ({
       />
       <SpaceTooltip property={property} preventOpen={scrubStatus.isActive}>
         <ValueText
+          truncate
           css={{
             // We want value to have `default` cursor to indicate that it's clickable,
             // unlike the rest of the value area that has cursor that indicates scrubbing.
@@ -52,6 +54,7 @@ const Cell = ({
             // In order to have control over cursor we're setting pointerEvents to "all" here
             // because SpaceLayout sets it to "none" for cells' content.
             pointerEvents: "all",
+            maxWidth: theme.spacing[18],
           }}
           value={finalValue}
           source={styleDecl.source.name}

@@ -17,12 +17,14 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 
 const Variants = ({
   state,
+  inactive,
 }: {
   state: ComponentProps<typeof SectionTitle>["data-state"];
+  inactive?: ComponentProps<typeof SectionTitle>["inactive"];
 }) => (
   <>
     <Wrap>
-      <SectionTitle data-state={state}>
+      <SectionTitle data-state={state} inactive={inactive}>
         <SectionTitleLabel>Simplest</SectionTitleLabel>
       </SectionTitle>
     </Wrap>
@@ -30,6 +32,7 @@ const Variants = ({
       <SectionTitle
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        inactive={inactive}
       >
         <SectionTitleLabel>With button</SectionTitleLabel>
       </SectionTitle>
@@ -39,6 +42,7 @@ const Variants = ({
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        inactive={inactive}
       >
         <SectionTitleLabel>With dots</SectionTitleLabel>
       </SectionTitle>
@@ -48,6 +52,7 @@ const Variants = ({
         dots={["local"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        inactive={inactive}
       >
         <SectionTitleLabel color="local">With label</SectionTitleLabel>
       </SectionTitle>
@@ -57,6 +62,7 @@ const Variants = ({
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
+        inactive={inactive}
       >
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
@@ -64,7 +70,7 @@ const Variants = ({
       </SectionTitle>
     </Wrap>
     <Wrap>
-      <SectionTitle data-state={state}>
+      <SectionTitle data-state={state} inactive={inactive}>
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
         </SectionTitleLabel>
@@ -98,6 +104,12 @@ export const Demo = () => (
     <StorySection title="Open">
       <StoryGrid>
         <Variants state="open" />
+      </StoryGrid>
+    </StorySection>
+
+    <StorySection title="Inactive">
+      <StoryGrid>
+        <Variants inactive state="closed" />
       </StoryGrid>
     </StorySection>
   </>

@@ -75,11 +75,12 @@ const chevronStyle = css({
   transition: "transform 150ms, opacity 200ms",
   color: theme.colors.backgroundIconSubtle,
   variants: {
-    state: {
+    openState: {
       open: {
         transform: "rotate(90deg)",
       },
       closed: {},
+      inactive: {},
     },
   },
 });
@@ -100,8 +101,12 @@ const dotStyle = css({
   },
 });
 
-const context = createContext<{ state: "open" | "closed" }>({
-  state: "closed",
+const context = createContext<{
+  openState: "open" | "closed";
+  inactive: boolean;
+}>({
+  openState: "closed",
+  inactive: false,
 });
 
 export const SectionTitle = forwardRef(
@@ -112,8 +117,12 @@ export const SectionTitle = forwardRef(
       css,
       children,
       suffix,
+      inactive = false,
+      collapsible = true,
       ...props
     }: ComponentProps<"button"> & {
+      inactive?: boolean;
+      collapsible?: boolean;
       /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
       "data-state"?: "open" | "closed";
       dots?: Array<"local" | "overwritten" | "remote">;
@@ -123,34 +132,39 @@ export const SectionTitle = forwardRef(
     },
     ref: Ref<HTMLButtonElement>
   ) => {
-    const state = props["data-state"] ?? "closed";
-    const finalDots = state === "open" ? [] : (dots ?? []);
+    const openState = props["data-state"] ?? "closed";
+    const finalDots = openState === "open" ? [] : (dots ?? []);
 
     return (
-      <context.Provider value={{ state }}>
+      <context.Provider value={{ openState, inactive }}>
         <ArrowFocus
           render={({ handleKeyDown }) => (
             <Flex
               align="center"
-              className={containerStyle({ className, css })}
-              data-state={state}
+              className={containerStyle({
+                className,
+                css,
+                color: inactive ? "disabled" : "default",
+              })}
+              data-state={openState}
               onKeyDown={handleKeyDown}
             >
-              <button
-                className={titleButtonStyle()}
-                data-state={state}
-                ref={ref}
-                {...props}
-              >
-                <ChevronRightIcon className={chevronStyle({ state })} />
-              </button>
-
+              {collapsible && (
+                <button
+                  className={titleButtonStyle()}
+                  data-state={openState}
+                  ref={ref}
+                  {...props}
+                >
+                  <ChevronRightIcon className={chevronStyle({ openState })} />
+                </button>
+              )}
               {/*
                 If the label is itself a button, we don't want to nest a button inside another button.
                 Therefore, we render the label in a layer above the SectionTitle button
               */}
               <div className={labelContainerStyle()}>
-                <div className={titleButtonLayoutStyle()}>
+                <div className={titleButtonLayoutStyle({ openState })}>
                   {children}
 
                   {finalDots.length > 0 && (
@@ -187,11 +201,14 @@ export const SectionTitleLabel = forwardRef(
     }: Omit<ComponentProps<typeof Label>, "truncate" | "text">,
     ref: Ref<HTMLLabelElement>
   ) => {
-    const { state } = useContext(context);
+    const { openState, inactive } = useContext(context);
 
     const commonCss = { flex: "0 1 auto" };
-
-    const color = state === "closed" ? undefined : props.color;
+    const color = inactive
+      ? "inactive"
+      : openState === "closed"
+        ? "default"
+        : props.color;
 
     const isButton = isLabelButton(color);
 
@@ -202,9 +219,13 @@ export const SectionTitleLabel = forwardRef(
         {...props}
         color={color}
         css={{
-          color: state === "closed" ? `var(${labelTextColor})` : undefined,
+          color:
+            openState === "closed" && inactive === false
+              ? `var(${labelTextColor})`
+              : undefined,
           ...commonCss,
           ...css,
+
           // When we use a SectionTitle button, we can't directly render a label inside it.
           // Instead, we need to render the label using a div that has position:absolute and pointer-events:none
           // However, if the label itself is a button, we need to make sure that it remains clickable.

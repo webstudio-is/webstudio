@@ -548,13 +548,16 @@ export const prebuild = async (options: {
         case "xml":
           {
             // In case of xml it's the only component we are supporting
-            componentImports = `import { XmlNode } from "@webstudio-is/sdk-components-react";\n`;
+            componentImports = `import { XmlNode, XmlTime } from "@webstudio-is/sdk-components-react";\n`;
 
             xmlPresentationComponents += Array.from(componentsSet)
               .map(([shortName, component]) =>
                 scope.getName(component, shortName)
               )
-              .filter((scopedName) => scopedName !== "XmlNode")
+              .filter(
+                (scopedName) =>
+                  scopedName !== "XmlNode" && scopedName !== "XmlTime"
+              )
               .map((scopedName) =>
                 scopedName === "Body"
                   ? // Using <svg> prevents React from hoisting elements like <title>, <meta>, and <link>

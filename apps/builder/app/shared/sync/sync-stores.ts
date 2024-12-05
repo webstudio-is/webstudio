@@ -48,7 +48,7 @@ import {
   $modifierKeys,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
-import { $awareness } from "../awareness";
+import { $awareness, $temporaryInstances } from "../awareness";
 import {
   ImmerhinSyncObject,
   NanostoresSyncObject,
@@ -79,7 +79,7 @@ export const registerContainers = () => {
   serverSyncStore.register("marketplaceProduct", $marketplaceProduct);
 };
 
-const createObjectPool = () => {
+export const createObjectPool = () => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
@@ -88,6 +88,8 @@ const createObjectPool = () => {
       $selectedInstanceSelector
     ),
     new NanostoresSyncObject("awareness", $awareness),
+    new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
+
     new NanostoresSyncObject("project", $project),
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourceValues", $resourceValues),
@@ -97,15 +99,15 @@ const createObjectPool = () => {
       $selectedInstanceBrowserStyle
     ),
     new NanostoresSyncObject(
-      "$selectedInstanceIntanceToTag",
+      "selectedInstanceIntanceToTag",
       $selectedInstanceIntanceToTag
     ),
     new NanostoresSyncObject(
-      "$selectedInstanceUnitSizes",
+      "selectedInstanceUnitSizes",
       $selectedInstanceUnitSizes
     ),
     new NanostoresSyncObject(
-      "$selectedInstanceRenderState",
+      "selectedInstanceRenderState",
       $selectedInstanceRenderState
     ),
     new NanostoresSyncObject(
@@ -141,7 +143,6 @@ const createObjectPool = () => {
     new NanostoresSyncObject("hoveredInstanceOutline", $hoveredInstanceOutline),
     new NanostoresSyncObject("blockChildOutline", $blockChildOutline),
     new NanostoresSyncObject("modifierKeys", $modifierKeys),
-
     new NanostoresSyncObject(
       "collaborativeInstanceSelector",
       $collaborativeInstanceSelector
@@ -175,6 +176,9 @@ const sharedSyncEmitter =
   typeof window === "undefined"
     ? undefined
     : window.__webstudioSharedSyncEmitter__;
+if (typeof window !== "undefined") {
+  delete window.__webstudioSharedSyncEmitter__;
+}
 
 export const useCanvasStore = () => {
   useEffect(() => {
@@ -186,22 +190,6 @@ export const useCanvasStore = () => {
 
     const controller = new AbortController();
     canvasClient.connect({ signal: controller.signal });
-    return () => {
-      controller.abort();
-    };
-  }, []);
-};
-
-export const builderClient = new SyncClient({
-  role: "leader",
-  object: createObjectPool(),
-});
-
-export const useBuilderStore = () => {
-  useEffect(() => {
-    const controller = new AbortController();
-    builderClient.connect({ signal: controller.signal });
-
     return () => {
       controller.abort();
     };

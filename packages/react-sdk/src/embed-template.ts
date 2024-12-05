@@ -12,6 +12,7 @@ import type {
   Breakpoint,
   DataSource,
   WebstudioFragment,
+  Matcher,
 } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
@@ -451,6 +452,27 @@ const namespaceEmbedTemplateComponents = (
   });
 };
 
+const namespaceMatcher = (namespace: string, matcher: Matcher) => {
+  const newMatcher = structuredClone(matcher);
+  if (newMatcher.component?.$eq) {
+    newMatcher.component.$eq = `${namespace}:${newMatcher.component.$eq}`;
+  }
+  if (newMatcher.component?.$neq) {
+    newMatcher.component.$neq = `${namespace}:${newMatcher.component.$neq}`;
+  }
+  if (newMatcher.component?.$in) {
+    newMatcher.component.$in = newMatcher.component.$in.map(
+      (component) => `${namespace}:${component}`
+    );
+  }
+  if (newMatcher.component?.$nin) {
+    newMatcher.component.$nin = newMatcher.component.$nin.map(
+      (component) => `${namespace}:${component}`
+    );
+  }
+  return newMatcher;
+};
+
 export const namespaceMeta = (
   meta: WsComponentMeta,
   namespace: string,
@@ -466,6 +488,15 @@ export const namespaceMeta = (
     newMeta.invalidAncestors = newMeta.invalidAncestors.map((component) =>
       components.has(component) ? `${namespace}:${component}` : component
     );
+  }
+  if (newMeta.constraints) {
+    if (Array.isArray(newMeta.constraints)) {
+      newMeta.constraints = newMeta.constraints.map((matcher) =>
+        namespaceMatcher(namespace, matcher)
+      );
+    } else {
+      newMeta.constraints = namespaceMatcher(namespace, newMeta.constraints);
+    }
   }
   if (newMeta.indexWithinAncestor) {
     newMeta.indexWithinAncestor = components.has(newMeta.indexWithinAncestor)

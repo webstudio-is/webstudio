@@ -93,6 +93,7 @@ export const Section = () => {
     selectedOrLastStyleSourceSelector &&
     selectedOrLastStyleSourceSelector.state === undefined;
   const styles = useComputedStyles(transitionLongHandProperties);
+  const dots = getDots(styles);
 
   return (
     <CollapsibleSectionRoot
@@ -102,7 +103,9 @@ export const Section = () => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(styles)}
+          inactive={dots.length === 0}
+          collapsible={dots.length !== 0}
+          dots={dots}
           suffix={
             <Tooltip
               content={

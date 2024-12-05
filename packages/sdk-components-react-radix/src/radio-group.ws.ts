@@ -145,6 +145,10 @@ export const metaRadioGroupItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
   requiredAncestors: ["RadioGroup"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "RadioGroup" },
+  },
   icon: ItemIcon,
   states: defaultStates,
   presetStyle: {

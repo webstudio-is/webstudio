@@ -147,6 +147,10 @@ export const metaTabsList: WsComponentMeta = {
   type: "container",
   icon: HeaderIcon,
   requiredAncestors: ["Tabs"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Tabs" },
+  },
   presetStyle,
 };
 
@@ -156,6 +160,16 @@ export const metaTabsTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   requiredAncestors: ["TabsList"],
   invalidAncestors: ["TabsTrigger"],
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "TabsList" },
+    },
+    {
+      relation: "ancestor",
+      component: { $neq: "TabsTrigger" },
+    },
+  ],
   indexWithinAncestor: "Tabs",
   label: "Tab Trigger",
   states: [
@@ -177,6 +191,10 @@ export const metaTabsContent: WsComponentMeta = {
   label: "Tab Content",
   icon: ContentIcon,
   requiredAncestors: ["Tabs"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Tabs" },
+  },
   indexWithinAncestor: "Tabs",
   presetStyle,
 };

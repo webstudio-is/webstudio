@@ -63,6 +63,10 @@ import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import { $awareness, $selectedPage, selectInstance } from "./awareness";
+import {
+  findClosestContainer,
+  findClosestInstanceMatchingFragment,
+} from "./matcher";
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   serverSyncStore.createTransaction(
@@ -287,193 +291,6 @@ export const isInstanceDetachable = (
     return true;
   }
   return meta.detachable ?? true;
-};
-
-const traverseInstancesConstraints = (
-  metas: Map<string, WsComponentMeta>,
-  instances: Instances,
-  instanceId: Instance["id"],
-  requiredAncestors: Set<Instance["component"]>,
-  invalidAncestors: Set<Instance["component"]>,
-  componentSelector: string[] = []
-) => {
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return;
-  }
-  const meta = metas.get(instance.component);
-  if (meta === undefined) {
-    return;
-  }
-  if (meta.requiredAncestors) {
-    for (const requiredAncestor of meta.requiredAncestors) {
-      if (componentSelector.includes(requiredAncestor) === false) {
-        requiredAncestors.add(requiredAncestor);
-      }
-    }
-  }
-  if (meta.invalidAncestors) {
-    for (const invalidAncestor of meta.invalidAncestors) {
-      invalidAncestors.add(invalidAncestor);
-    }
-  }
-  for (const child of instance.children) {
-    if (child.type === "id") {
-      traverseInstancesConstraints(
-        metas,
-        instances,
-        child.value,
-        requiredAncestors,
-        invalidAncestors,
-        [instance.component, ...componentSelector]
-      );
-    }
-  }
-};
-
-export type InsertConstraints = {
-  requiredAncestors: Set<Instance["component"]>;
-  invalidAncestors: Set<Instance["component"]>;
-};
-
-export const computeInstancesConstraints = (
-  metas: Map<string, WsComponentMeta>,
-  instances: Instances,
-  rootInstanceIds: Instance["id"][]
-): InsertConstraints => {
-  const requiredAncestors = new Set<string>();
-  const invalidAncestors = new Set<string>();
-  for (const instanceId of rootInstanceIds) {
-    traverseInstancesConstraints(
-      metas,
-      instances,
-      instanceId,
-      requiredAncestors,
-      invalidAncestors
-    );
-  }
-  return {
-    requiredAncestors,
-    invalidAncestors,
-  };
-};
-
-export const findClosestDroppableComponentIndex = ({
-  metas,
-  constraints,
-  instances,
-  instanceSelector,
-  allowInsertIntoTextContainer = true,
-}: {
-  metas: Map<string, WsComponentMeta>;
-  constraints: InsertConstraints;
-  instances: Instances;
-  instanceSelector: InstanceSelector;
-  allowInsertIntoTextContainer?: boolean;
-}) => {
-  const { requiredAncestors, invalidAncestors } = constraints;
-  const componentSelector: string[] = [];
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      componentSelector.push("Fragment");
-      continue;
-    }
-    // Collection produce fake instances and fragment does not have constraints.
-    componentSelector.push(instance.component);
-  }
-
-  let containerIndex = -1;
-  let requiredFound = false;
-  for (let index = 0; index < componentSelector.length; index += 1) {
-    const ancestorComponent = componentSelector[index];
-    if (invalidAncestors.has(ancestorComponent) === true) {
-      containerIndex = -1;
-      requiredFound = false;
-      continue;
-    }
-    if (allowInsertIntoTextContainer === false) {
-      const instance = instances.get(instanceSelector[index]);
-      if (instance !== undefined) {
-        const hasTextChild = instance.children.some(
-          (child) => child.type === "text" || child.type === "expression"
-        );
-        if (hasTextChild) {
-          containerIndex = -1;
-          continue;
-        }
-      }
-    }
-    if (requiredAncestors.has(ancestorComponent) === true) {
-      requiredFound = true;
-    }
-    const ancestorMeta = metas.get(ancestorComponent);
-    if (containerIndex === -1 && ancestorMeta?.type === "container") {
-      containerIndex = index;
-    }
-  }
-
-  if (requiredFound || requiredAncestors.size === 0) {
-    return containerIndex;
-  }
-  return -1;
-};
-
-const findClosestDroppableTarget = (
-  metas: Map<string, WsComponentMeta>,
-  instances: Instances,
-  instanceSelector: InstanceSelector,
-  insertConstraints: InsertConstraints
-): undefined | DroppableTarget => {
-  const droppableIndex = findClosestDroppableComponentIndex({
-    metas,
-    constraints: insertConstraints,
-    instances,
-    instanceSelector,
-    // We want to always allow dropping into the root.
-    // For example when body has text content
-    // and the only viable option is to insert at the end.
-    allowInsertIntoTextContainer: instanceSelector.length === 1,
-  });
-  if (droppableIndex === -1) {
-    return;
-  }
-
-  const dropTargetParentInstance = instances.get(
-    instanceSelector[droppableIndex + 1]
-  );
-  let dropTargetInstance = instances.get(instanceSelector[droppableIndex]);
-  // skip collection item when inserting something and go straight into collection instance
-  if (
-    dropTargetInstance === undefined &&
-    dropTargetParentInstance?.component === collectionComponent
-  ) {
-    instanceSelector = instanceSelector.slice(1);
-    dropTargetInstance = dropTargetParentInstance;
-  }
-  if (dropTargetInstance === undefined) {
-    return;
-  }
-
-  if (droppableIndex === 0) {
-    return {
-      parentSelector: instanceSelector,
-      position: "end",
-    };
-  }
-
-  const dropTargetSelector = instanceSelector.slice(droppableIndex);
-  if (dropTargetInstance === undefined) {
-    return;
-  }
-  const lastChildInstanceId = instanceSelector[droppableIndex - 1];
-  const lastChildPosition = dropTargetInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === lastChildInstanceId
-  );
-  return {
-    parentSelector: dropTargetSelector,
-    position: lastChildPosition + 1,
-  };
 };
 
 export const insertInstanceChildrenMutable = (
@@ -1613,16 +1430,50 @@ export const findClosestInsertable = (
   }
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
-  const rootInstanceIds = fragment.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-  const newInstances = new Map(
-    fragment.instances.map((instance) => [instance.id, instance])
-  );
-  return findClosestDroppableTarget(
+  const closestContainerIndex = findClosestContainer({
     metas,
     instances,
     instanceSelector,
-    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
+  });
+  if (closestContainerIndex === -1) {
+    return;
+  }
+  let insertableIndex = findClosestInstanceMatchingFragment({
+    metas,
+    instances,
+    instanceSelector: instanceSelector.slice(closestContainerIndex),
+    fragment,
+  });
+  if (insertableIndex === -1) {
+    return;
+  }
+
+  // adjust with container lookup
+  insertableIndex = insertableIndex + closestContainerIndex;
+  const parentSelector = instanceSelector.slice(insertableIndex);
+  if (insertableIndex === 0) {
+    return {
+      parentSelector,
+      position: "end",
+    };
+  }
+  const instance = instances.get(instanceSelector[insertableIndex]);
+  if (instance === undefined) {
+    return;
+  }
+  // skip collection item when inserting something and go straight into collection instance
+  if (instance?.component === collectionComponent && insertableIndex === 1) {
+    return {
+      parentSelector,
+      position: "end",
+    };
+  }
+  const lastChildInstanceId = instanceSelector[insertableIndex - 1];
+  const lastChildPosition = instance.children.findIndex(
+    (child) => child.type === "id" && child.value === lastChildInstanceId
   );
+  return {
+    parentSelector,
+    position: lastChildPosition + 1,
+  };
 };

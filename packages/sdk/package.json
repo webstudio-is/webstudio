@@ -52,6 +52,6 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "strip-indent": "^4.0.0",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   }
 }

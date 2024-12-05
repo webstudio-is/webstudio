@@ -52,13 +52,21 @@ const Container = styled("button", {
 export const ValueText = ({
   value,
   source,
+  truncate = false,
   ...rest
-}: { value: StyleValue } & Omit<ComponentProps<typeof Container>, "value">) => {
+}: { value: StyleValue; truncate?: boolean } & Omit<
+  ComponentProps<typeof Container>,
+  "value"
+>) => {
   const children = useMemo(() => {
     if (value.type === "unit") {
       // we want to show "0" rather than "0px" for default values for cleaner UI
       if (source === "default" && value.unit === "px" && value.value === 0) {
-        return <Text variant="spaceSectionValueText">{value.value}</Text>;
+        return (
+          <Text truncate={truncate} variant="spaceSectionValueText">
+            {value.value}
+          </Text>
+        );
       }
 
       /**
@@ -68,7 +76,7 @@ export const ValueText = ({
 
       return (
         <>
-          <Text variant="spaceSectionValueText">
+          <Text truncate={truncate} variant="spaceSectionValueText">
             {value.value}
             <Text
               variant="spaceSectionValueText"
@@ -85,15 +93,19 @@ export const ValueText = ({
     }
 
     if (value.type === "var") {
-      return <Text variant="spaceSectionValueText">--{value.value}</Text>;
+      return (
+        <Text truncate={truncate} variant="spaceSectionValueText">
+          --{value.value}
+        </Text>
+      );
     }
 
     return (
-      <Text css={{}} variant="spaceSectionValueText">
+      <Text truncate={truncate} variant="spaceSectionValueText">
         {toValue(value)}
       </Text>
     );
-  }, [value, source]);
+  }, [value, source, truncate]);
 
   return (
     <Container source={source} {...rest} tabIndex={-1}>

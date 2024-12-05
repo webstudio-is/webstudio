@@ -29,26 +29,39 @@ const $writeUpdates = (
   node: ElementNode,
   instanceChildren: Instance["children"],
   instancesList: Instance[],
-  refs: Refs
+  refs: Refs,
+  newLinkKeyToInstanceId: Refs
 ) => {
   const children = node.getChildren();
   for (const child of children) {
     if ($isParagraphNode(child)) {
-      $writeUpdates(child, instanceChildren, instancesList, refs);
+      $writeUpdates(
+        child,
+        instanceChildren,
+        instancesList,
+        refs,
+        newLinkKeyToInstanceId
+      );
     }
     if ($isLineBreakNode(child)) {
       instanceChildren.push({ type: "text", value: "\n" });
     }
     if ($isLinkNode(child)) {
       const key = child.getKey();
-      const id = refs.get(key) ?? nanoid();
+      const id = refs.get(key) ?? newLinkKeyToInstanceId.get(key) ?? nanoid();
       refs.set(key, id);
       instanceChildren.push({
         type: "id",
         value: id,
       });
       const childChildren: Instance["children"] = [];
-      $writeUpdates(child, childChildren, instancesList, refs);
+      $writeUpdates(
+        child,
+        childChildren,
+        instancesList,
+        refs,
+        newLinkKeyToInstanceId
+      );
       instancesList.push({
         type: "instance",
         id,
@@ -99,7 +112,11 @@ const $writeUpdates = (
   }
 };
 
-export const $convertToUpdates = (treeRootInstance: Instance, refs: Refs) => {
+export const $convertToUpdates = (
+  treeRootInstance: Instance,
+  refs: Refs,
+  newLinkKeyToInstanceId: Refs
+) => {
   const treeRootInstanceChildren: Instance["children"] = [];
   const instancesList: Instance[] = [
     {
@@ -108,7 +125,13 @@ export const $convertToUpdates = (treeRootInstance: Instance, refs: Refs) => {
     },
   ];
   const root = $getRoot();
-  $writeUpdates(root, treeRootInstanceChildren, instancesList, refs);
+  $writeUpdates(
+    root,
+    treeRootInstanceChildren,
+    instancesList,
+    refs,
+    newLinkKeyToInstanceId
+  );
   return instancesList;
 };
 

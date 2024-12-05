@@ -4,6 +4,7 @@ import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   $dragAndDropState,
   $isContentMode,
+  $isDesignMode,
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { Flex } from "@webstudio-is/design-system";
@@ -173,6 +174,7 @@ type SidebarLeftProps = {
 };
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
+  const isDesignMode = useStore($isDesignMode);
   const activePanel = useStore($activeSidebarPanel);
   const dragAndDropState = useStore($dragAndDropState);
   const { Panel } = panels.find((item) => item.name === activePanel) ?? none;
@@ -262,7 +264,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 })}
             </SidebarTabsList>
           </div>
-          <AiTabTrigger />
+          {isDesignMode && <AiTabTrigger />}
+
           <HelpTabTrigger />
         </Flex>
       )}
