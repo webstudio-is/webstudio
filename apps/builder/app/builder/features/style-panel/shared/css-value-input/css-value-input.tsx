@@ -478,9 +478,16 @@ export const CssValueInput = ({
     }
 
     if (value.type !== "intermediate" && value.type !== "invalid") {
+      // variables fallback is used for preview value while autocompleting
+      // removed fallback when select variable to not pollute values
+      let newValue = value;
+      if (value.type === "var") {
+        newValue = { ...value };
+        delete newValue.fallback;
+      }
       // The value might be valid but not selected from the combo menu. Close the menu.
       closeMenu();
-      props.onChangeComplete({ ...defaultProps, ...event, value });
+      props.onChangeComplete({ ...defaultProps, ...event, value: newValue });
       return;
     }
 
