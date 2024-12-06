@@ -53,6 +53,7 @@ import {
 import { shallowEqual } from "shallow-equal";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
+import { selectInstance } from "~/shared/awareness";
 
 export const findBlockSelector = (
   anchor: InstanceSelector,
@@ -274,6 +275,8 @@ const TemplatesMenu = ({
                   { type: "id", value: newRootInstanceId },
                 ];
                 insertInstanceChildrenMutable(data, children, target);
+
+                selectInstance([newRootInstanceId, ...target.parentSelector]);
               });
             }}
           >
