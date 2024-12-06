@@ -78,8 +78,8 @@ jobs:
 
       - name: pnpm instal
         run: pnpm install --ignore-scripts
-      - run: pnpm -r build
-      - run: pnpm -r dts
+      - run: pnpm --filter="./packages/cli..." build
+      - run: pnpm --filter="./packages/cli..." dts
 
       - name: Creating .npmrc
         run: |
