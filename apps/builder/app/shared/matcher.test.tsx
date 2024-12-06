@@ -382,6 +382,187 @@ describe("is instance matching", () => {
       })
     ).toBeFalsy();
   });
+
+  test("matches a child with child matcher", () => {
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.ListItem ws:id="listitem"></$.ListItem>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "child",
+          component: { $eq: "ListItem" },
+        },
+      })
+    ).toBeTruthy();
+  });
+
+  test("matches a child with negated child matcher", () => {
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list"></$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "child",
+          component: { $neq: "ListItem" },
+        },
+      })
+    ).toBeTruthy();
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.Box ws:id="box"></$.Box>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "child",
+          component: { $neq: "ListItem" },
+        },
+      })
+    ).toBeTruthy();
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.ListItem ws:id="listitem"></$.ListItem>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "child",
+          component: { $neq: "ListItem" },
+        },
+      })
+    ).toBeFalsy();
+  });
+
+  test("not matches a parent without a child with child matcher", () => {
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list"></$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "child",
+          component: { $eq: "ListItem" },
+        },
+      })
+    ).toBeFalsy();
+  });
+
+  test("not matches a parent with different child with child matcher", () => {
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.Box ws:id="box"></$.Box>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "child",
+          component: { $eq: "ListItem" },
+        },
+      })
+    ).toBeFalsy();
+  });
+
+  test("matches a child with descendant matcher", () => {
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.ListItem ws:id="listitem"></$.ListItem>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "descendant",
+          component: { $eq: "ListItem" },
+        },
+      })
+    ).toBeTruthy();
+  });
+
+  test("matches a descendant with descendant matcher", () => {
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.Box ws:id="box">
+                <$.ListItem ws:id="listitem"></$.ListItem>
+              </$.Box>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "descendant",
+          component: { $eq: "ListItem" },
+        },
+      })
+    ).toBeTruthy();
+  });
+
+  test("matches a descendant with negated descendant matcher", () => {
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.Box ws:id="box"></$.Box>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "descendant",
+          component: { $neq: "ListItem" },
+        },
+      })
+    ).toBeTruthy();
+    expect(
+      isInstanceMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.List ws:id="list">
+              <$.Box ws:id="box">
+                <$.ListItem ws:id="listitem"></$.ListItem>
+              </$.Box>
+            </$.List>
+          </$.Body>
+        ),
+        instanceSelector: ["list", "body"],
+        query: {
+          relation: "descendant",
+          component: { $neq: "ListItem" },
+        },
+      })
+    ).toBeFalsy();
+  });
 });
 
 describe("is tree matching", () => {
@@ -394,6 +575,17 @@ describe("is tree matching", () => {
         constraints: {
           relation: "parent",
           component: { $eq: "List" },
+        },
+      },
+    ],
+    [
+      "Tabs",
+      {
+        type: "container",
+        icon: "",
+        constraints: {
+          relation: "descendant",
+          component: { $eq: "TabsTrigger" },
         },
       },
     ],
@@ -450,6 +642,37 @@ describe("is tree matching", () => {
         ),
         metas,
         instanceSelector: ["body"],
+      })
+    ).toBeFalsy();
+  });
+
+  test("match ancestors", () => {
+    expect(
+      isTreeMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.Tabs ws:id="tabs">
+              <$.Box ws:id="box">
+                <$.TabsTrigger ws:id="trigger"></$.TabsTrigger>
+              </$.Box>
+            </$.Tabs>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["trigger", "box", "tabs", "body"],
+      })
+    ).toBeTruthy();
+    expect(
+      isTreeMatching({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.Tabs ws:id="tabs">
+              <$.Box ws:id="box"></$.Box>
+            </$.Tabs>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["box", "tabs", "body"],
       })
     ).toBeFalsy();
   });

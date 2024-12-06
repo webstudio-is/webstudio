@@ -1,4 +1,5 @@
 import type {
+  Instance,
   Instances,
   Matcher,
   MatcherOperation,
@@ -31,18 +32,24 @@ const isMatching = (
   return false;
 };
 
-const isRelationMatching = (index: number, relation: MatcherRelation) => {
+const isDepthMatchingRelation = (depth: number, relation: MatcherRelation) => {
   return (
-    (relation === "self" && index === 0) ||
-    (relation === "parent" && index === 1) ||
-    (relation === "ancestor" && index >= 1)
+    (relation === "self" && depth === 0) ||
+    (relation === "parent" && depth === 1) ||
+    (relation === "ancestor" && depth >= 1)
+  );
+};
+
+const isLevelMatchingRelation = (level: number, relation: MatcherRelation) => {
+  return (
+    (relation === "self" && level === 0) ||
+    (relation === "child" && level === 1) ||
+    (relation === "descendant" && level >= 1)
   );
 };
 
 /**
  * @todo following features are missing
- * - child matcher
- * - descendant matcher
  * - tag matcher
  */
 export const isInstanceMatching = ({
@@ -60,39 +67,76 @@ export const isInstanceMatching = ({
   }
   const queries = Array.isArray(query) ? query : [query];
   const matchesByMatcher = new Map<Matcher, boolean>();
+  let aborted = false;
+  const matchInstance = (instance: Instance, matcher: Matcher) => {
+    let matches = isMatching(instance.component, matcher.component);
+    if (isNegated(matcher.component)) {
+      if (matches) {
+        aborted = true;
+        return;
+      }
+      // inverse negated match
+      matches = true;
+    }
+    matchesByMatcher.set(
+      matcher,
+      (matchesByMatcher.get(matcher) ?? false) || matches
+    );
+  };
   let index = 0;
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
     for (const matcher of queries) {
-      const { relation, component } = matcher;
-      if (isRelationMatching(index, relation)) {
-        let matches = isMatching(instance?.component, component);
-        if (isNegated(component)) {
-          if (matches) {
-            return false;
-          }
-          // inverse negated match
-          matches = true;
-        }
-        matchesByMatcher.set(
-          matcher,
-          (matchesByMatcher.get(matcher) ?? false) || matches
-        );
+      if (isDepthMatchingRelation(index, matcher.relation) && instance) {
+        matchInstance(instance, matcher);
       }
     }
     index += 1;
   }
-  return Array.from(matchesByMatcher.values()).every((matched) => matched);
+  const populateDescendants = (
+    instanceId: Instance["id"],
+    matcher: Matcher,
+    level: number
+  ) => {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    // ignore self matchers which already handled above
+    if (level > 0 && isLevelMatchingRelation(level, matcher.relation)) {
+      matchInstance(instance, matcher);
+    }
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        populateDescendants(child.value, matcher, level + 1);
+      }
+    }
+  };
+  for (const matcher of queries) {
+    // setup default in case no children found
+    matchesByMatcher.set(
+      matcher,
+      // negated operations matches by default
+      matchesByMatcher.get(matcher) ?? isNegated(matcher.component)
+    );
+    populateDescendants(instanceSelector[0], matcher, 0);
+  }
+  if (aborted) {
+    return false;
+  }
+  return queries.every((matcher) => matchesByMatcher.get(matcher));
 };
 
 export const isTreeMatching = ({
   instances,
   metas,
   instanceSelector,
+  level = 0,
 }: {
   instances: Instances;
   metas: Map<string, WsComponentMeta>;
   instanceSelector: InstanceSelector;
+  level?: number;
 }): boolean => {
   const [instanceId] = instanceSelector;
   const instance = instances.get(instanceId);
@@ -101,11 +145,31 @@ export const isTreeMatching = ({
     return true;
   }
   const meta = metas.get(instance.component);
+  // check self
   let matches = isInstanceMatching({
     instances,
     instanceSelector,
     query: meta?.constraints,
   });
+  // check ancestors only on the first run
+  if (level === 0) {
+    // skip self
+    for (let index = 1; index < instanceSelector.length; index += 1) {
+      const instance = instances.get(instanceSelector[index]);
+      if (instance === undefined) {
+        continue;
+      }
+      const meta = metas.get(instance.component);
+      const matches = isInstanceMatching({
+        instances,
+        instanceSelector: instanceSelector.slice(index),
+        query: meta?.constraints,
+      });
+      if (matches === false) {
+        return false;
+      }
+    }
+  }
   if (matches === false) {
     return false;
   }
@@ -115,6 +179,7 @@ export const isTreeMatching = ({
         instances,
         metas,
         instanceSelector: [child.value, ...instanceSelector],
+        level: level + 1,
       });
       if (matches === false) {
         return false;

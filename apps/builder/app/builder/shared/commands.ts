@@ -18,7 +18,6 @@ import {
   findAvailableDataSources,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  isInstanceDetachable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -285,13 +284,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
         const instanceSelector = $selectedInstanceSelector.get();
         if (instanceSelector === undefined) {
-          return;
-        }
-        const instances = $instances.get();
-        if (isInstanceDetachable(instances, instanceSelector) === false) {
-          builderApi.toast.error(
-            "This instance can not be moved outside of its parent component."
-          );
           return;
         }
         // @todo tell user they can't copy or cut root
