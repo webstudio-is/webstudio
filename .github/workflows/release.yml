@@ -84,8 +84,8 @@ jobs:
 
       - name: pnpm instal
         run: pnpm install --ignore-scripts
-      - run: pnpm --filter="./packages/cli..." build
-      - run: pnpm --filter="./packages/cli..." dts
+      - run: pnpm --filter="webstudio..." build
+      - run: pnpm --filter="webstudio..." dts
 
       - name: Creating .npmrc
         run: |
