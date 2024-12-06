@@ -74,7 +74,7 @@ jobs:
           cache: pnpm
 
       - id: version
-        run: echo "value=$(echo ${{ github.ref }} | sed 's/refs\/tags\///'" >> $GITHUB_OUTPUT
+        run: echo "value=$(echo ${{ github.ref }} | sed 's/refs\/tags\///')" >> $GITHUB_OUTPUT
       - name: bump version to ${{ steps.version.outputs.value }}
         run: |
           pnpx replace-in-files-cli \
