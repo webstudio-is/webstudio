@@ -125,7 +125,7 @@ const subscribeSelectedInstance = (
 
   const bbox = getAllElementsBoundingBox(visibleElements);
 
-  // To have a little bit of space above the element after scrolling
+  // Adds a small amount of space around the element after scrolling
   const topScrollMargin = 16;
 
   if (bbox.top < 0 || bbox.bottom > window.innerHeight) {
