@@ -123,10 +123,27 @@ const subscribeSelectedInstance = (
     selectedInstanceSelector
   );
 
-  visibleElements[0]?.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest",
-  });
+  const bbox = getAllElementsBoundingBox(visibleElements);
+
+  // To have a little bit of space above the element after scrolling
+  const topScrollMargin = 16;
+
+  if (bbox.top < 0 || bbox.bottom > window.innerHeight) {
+    const moveToTopDelta = bbox.top - topScrollMargin;
+    const moveToBottomDelta =
+      bbox.bottom - window.innerHeight + topScrollMargin;
+
+    // scrollTo is used because scrollIntoView does not work with elements that have display:contents, etc.
+    // Here, we can be confident that if the outline can be calculated, we can scroll to it.
+    window.scrollTo({
+      top:
+        window.scrollY +
+        (Math.abs(moveToTopDelta) < Math.abs(moveToBottomDelta)
+          ? moveToTopDelta
+          : moveToBottomDelta),
+      behavior: "smooth",
+    });
+  }
 
   const updateElements = () => {
     visibleElements = getVisibleElementsByInstanceSelector(
