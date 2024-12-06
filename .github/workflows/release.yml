@@ -78,7 +78,7 @@ jobs:
       - name: bump version to ${{ steps.version.outputs.value }}
         run: |
           pnpx replace-in-files-cli \
-            --string="0.191.0" \
+            --string="0.0.0-webstudio-version" \
             --replacement="${{ steps.version.outputs.value }}" \
             "**/package.json"
 
