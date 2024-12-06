@@ -32,6 +32,7 @@ import {
   type BuilderMode,
 } from "~/shared/nano-states";
 import { useState } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const StyledMenuItem = styled(DropdownMenuRadioItem, {
   "&:where([data-state='checked'])": {
@@ -57,7 +58,7 @@ export const BuilderModeDropDown = () => {
       description: "Modify the page content",
       title: "Content",
       shortcut: ["cmd", "shift", "c"],
-      enabled: isContentModeAllowed,
+      enabled: isContentModeAllowed && isFeatureEnabled("contentEditableMode"),
     },
     preview: {
       icon: <PlayIcon />,
