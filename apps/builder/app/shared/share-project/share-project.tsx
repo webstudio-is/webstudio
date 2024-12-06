@@ -194,14 +194,17 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               }}
             >
               <Checkbox
-                disabled={hasProPlan !== true}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
                 checked={value.canClone}
                 onCheckedChange={(canClone) => {
                   onChange({ ...value, canClone: Boolean(canClone) });
                 }}
                 id={ids.canClone}
               />
-              <Label htmlFor={ids.canClone} disabled={hasProPlan !== true}>
+              <Label
+                htmlFor={ids.canClone}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
+              >
                 Can clone
               </Label>
             </Grid>
@@ -214,14 +217,17 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               }}
             >
               <Checkbox
-                disabled={hasProPlan !== true}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
                 checked={value.canCopy}
                 onCheckedChange={(canCopy) => {
                   onChange({ ...value, canCopy: Boolean(canCopy) });
                 }}
                 id={ids.canCopy}
               />
-              <Label htmlFor={ids.canCopy} disabled={hasProPlan !== true}>
+              <Label
+                htmlFor={ids.canCopy}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
+              >
                 Can copy
               </Label>
             </Grid>
