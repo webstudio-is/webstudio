@@ -73,8 +73,14 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: bump version to ${{ github.ref }}
-        run: pnpx replace-in-files-cli --string="0.191.0" --replacement="${{ github.ref }}" "**/package.json"
+      - id: version
+        run: echo "value=$(echo ${{ github.ref }} | sed 's/refs\/tags\///'" >> $GITHUB_OUTPUT
+      - name: bump version to ${{ steps.version.outputs.value }}
+        run: |
+          pnpx replace-in-files-cli \
+            --string="0.191.0" \
+            --replacement="${{ steps.version.outputs.value }}" \
+            "**/package.json"
 
       - name: pnpm instal
         run: pnpm install --ignore-scripts
