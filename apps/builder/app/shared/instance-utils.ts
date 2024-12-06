@@ -66,6 +66,7 @@ import { $awareness, $selectedPage, selectInstance } from "./awareness";
 import {
   findClosestContainer,
   findClosestInstanceMatchingFragment,
+  isTreeMatching,
 } from "./matcher";
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
@@ -281,16 +282,31 @@ export const isInstanceDetachable = (
   instanceSelector: InstanceSelector
 ) => {
   const metas = $registeredComponentMetas.get();
-  const [instanceId] = instanceSelector;
+  const [instanceId, parentId] = instanceSelector;
+  const newInstances = new Map(instances);
+  // replace parent with the one without selected instance
+  let parentInstance = newInstances.get(parentId);
+  if (parentInstance) {
+    parentInstance = {
+      ...parentInstance,
+      children: parentInstance.children.filter(
+        (child) => child.type === "id" && child.value !== instanceId
+      ),
+    };
+    newInstances.set(parentInstance.id, parentInstance);
+  }
+  // check parent can follow constraints without selected instance
+  const matches = isTreeMatching({
+    instances: newInstances,
+    metas,
+    instanceSelector: instanceSelector.slice(1),
+  });
   const instance = instances.get(instanceId);
   if (instance === undefined) {
     return false;
   }
   const meta = metas.get(instance.component);
-  if (meta === undefined) {
-    return true;
-  }
-  return meta.detachable ?? true;
+  return (meta?.detachable ?? true) && matches;
 };
 
 export const insertInstanceChildrenMutable = (
