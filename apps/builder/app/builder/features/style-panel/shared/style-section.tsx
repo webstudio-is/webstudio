@@ -85,7 +85,7 @@ export const RepeatedStyleSection = (props: {
       trigger={
         <SectionTitle
           inactive={dots.length === 0}
-          collapsible={collapsible}
+          collapsible={collapsible ?? dots.length !== 0}
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton
