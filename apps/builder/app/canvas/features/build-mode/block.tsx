@@ -11,6 +11,7 @@ import * as React from "react";
 import {
   $instances,
   $isDesignMode,
+  $isPreviewMode,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
 
@@ -20,6 +21,7 @@ export const Block = React.forwardRef<
 >(({ children, ...props }, ref) => {
   const instances = useStore($instances);
   const isDesignMode = useStore($isDesignMode);
+  const isPreviewMode = useStore($isPreviewMode);
   const instanceId = props[idAttribute];
   const instance = instances.get(instanceId);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
@@ -81,7 +83,9 @@ export const Block = React.forwardRef<
   return (
     <div ref={ref} style={editableBlockStyle} {...props}>
       {childArray}
-      {hasContent ? null : <div>Editable block you can edit</div>}
+      {hasContent || isPreviewMode ? null : (
+        <div>Editable block you can edit</div>
+      )}
     </div>
   );
 }) as AnyComponent;
