@@ -41,6 +41,7 @@ import {
   DialogClose,
   Flex,
   rawTheme,
+  globalCss,
 } from "@webstudio-is/design-system";
 import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { solarizedLight } from "./code-highlight";
@@ -65,6 +66,12 @@ export const getMinMaxHeightVars = ({
 }) => ({
   [minHeightVar]: minHeight,
   [maxHeightVar]: maxHeight,
+});
+
+const globalStyles = globalCss({
+  "fieldset[disabled] .cm-editor": {
+    opacity: 0.3,
+  },
 });
 
 const editorContentStyle = css({
@@ -188,6 +195,8 @@ export const EditorContent = ({
   onChange,
   onBlur,
 }: EditorContentProps) => {
+  globalStyles();
+
   const editorRef = useRef<null | HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>();
 
@@ -222,9 +231,13 @@ export const EditorContent = ({
     if (view === undefined) {
       return;
     }
+    const hasDisabledFieldset =
+      editorRef.current?.closest("fieldset[disabled]");
+
     view.dispatch({
       effects: StateEffect.reconfigure.of([
         ...extensions,
+        ...(hasDisabledFieldset ? [EditorView.editable.of(false)] : []),
         autocompletionTooltipTheme,
         history(),
         drawSelection(),
