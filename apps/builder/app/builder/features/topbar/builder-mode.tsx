@@ -77,10 +77,10 @@ export const BuilderModeDropDown = () => {
     <Flex align="center">
       <Tooltip
         content={
-          <>
+          <Flex gap="1">
             <Text variant="regular">Toggle preview</Text>
             <Kbd value={["cmd", "shift", "p"]} />
-          </>
+          </Flex>
         }
       >
         <ToolbarToggleGroup
@@ -96,11 +96,11 @@ export const BuilderModeDropDown = () => {
         </ToolbarToggleGroup>
       </Tooltip>
       <DropdownMenu>
-        <Tooltip content={"Select Design or Content mode"}>
+        <Tooltip content={"Choose mode"}>
           <DropdownMenuTrigger asChild>
             <SmallIconButton
               bleed
-              aria-label="Select Design or Content mode"
+              aria-label="Choose mode"
               tabIndex={0}
               css={{
                 minWidth: "unset",
