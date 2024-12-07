@@ -110,25 +110,26 @@ export const BuilderModeDropDown = () => {
         </ToolbarToggleGroup>
       </Tooltip>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <ToolbarToggleItem
-            value="preview"
-            aria-label="Toggle Preview"
-            variant="preview"
-            tabIndex={0}
-            css={{
-              minWidth: "unset",
-              padding: 0,
-              "&:focus-visible": "unset",
-              "&:focus-visible::after": {
-                content: "unset",
-                outlineWidth: 0,
-              },
-            }}
-          >
-            <ChevronDownIcon />
-          </ToolbarToggleItem>
-        </DropdownMenuTrigger>
+        <Tooltip content={"Select Design or Content mode"}>
+          <DropdownMenuTrigger asChild>
+            <ToolbarToggleItem
+              value="-"
+              aria-label="Select Design or Content mode"
+              variant="preview"
+              tabIndex={0}
+              css={{
+                minWidth: "unset",
+                padding: 0,
+                "&:focus-visible::after": {
+                  content: "unset",
+                  outlineWidth: 0,
+                },
+              }}
+            >
+              <ChevronDownIcon />
+            </ToolbarToggleItem>
+          </DropdownMenuTrigger>
+        </Tooltip>
 
         <DropdownMenuPortal>
           <DropdownMenuContent
