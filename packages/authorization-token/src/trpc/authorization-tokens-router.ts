@@ -68,6 +68,7 @@ export const authorizationTokenRouter = router({
         relation: TokenProjectRelation,
         canClone: z.boolean(),
         canCopy: z.boolean(),
+        canPublish: z.boolean(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -77,6 +78,7 @@ export const authorizationTokenRouter = router({
           token: input.token,
           name: input.name,
           relation: input.relation,
+          canPublish: input.canPublish,
           canClone: input.canClone,
           canCopy: input.canCopy,
         },

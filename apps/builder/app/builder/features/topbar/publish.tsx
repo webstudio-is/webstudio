@@ -38,7 +38,7 @@ import stripIndent from "strip-indent";
 import { $isPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
-  $authPermit,
+  $authTokenPermissions,
   $project,
   $publishedOrigin,
   $userPlanFeatures,
@@ -837,16 +837,16 @@ type PublishProps = {
 
 export const PublishButton = ({ projectId }: PublishProps) => {
   const isPublishDialogOpen = useStore($isPublishDialogOpen);
-  const authPermit = useStore($authPermit);
+  const authTokenPermissions = useStore($authTokenPermissions);
   const [dialogContentType, setDialogContentType] = useState<
     "publish" | "export"
   >("publish");
 
-  const isPublishEnabled = authPermit === "own" || authPermit === "admin";
+  const isPublishEnabled = authTokenPermissions.canPublish;
 
   const tooltipContent = isPublishEnabled
     ? undefined
-    : "Only owner or admin can publish projects";
+    : "Only the owner, an admin, or content editors with publish permissions can publish projects";
 
   const handleExportClick = () => {
     setDialogContentType("export");

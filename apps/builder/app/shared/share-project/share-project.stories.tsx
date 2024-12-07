@@ -19,6 +19,7 @@ const initialLinks: Array<LinkOptions> = [
     relation: "viewers",
     canClone: false,
     canCopy: false,
+    canPublish: false,
   },
   {
     token: crypto.randomUUID(),
@@ -26,6 +27,7 @@ const initialLinks: Array<LinkOptions> = [
     relation: "editors",
     canClone: false,
     canCopy: false,
+    canPublish: false,
   },
   {
     token: crypto.randomUUID(),
@@ -33,6 +35,7 @@ const initialLinks: Array<LinkOptions> = [
     relation: "builders",
     canClone: false,
     canCopy: false,
+    canPublish: false,
   },
 ];
 
@@ -63,6 +66,7 @@ const useShareProject = (
         relation: "viewers",
         canClone: false,
         canCopy: false,
+        canPublish: false,
       },
     ]);
   };
