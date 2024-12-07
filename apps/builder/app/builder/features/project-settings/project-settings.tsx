@@ -18,6 +18,7 @@ import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 import type { FunctionComponent } from "react";
+import { $isDesignMode } from "~/shared/nano-states";
 
 type SectionName = "general" | "redirects" | "publish" | "marketplace";
 
@@ -37,6 +38,8 @@ export const ProjectSettingsView = ({
   onSectionChange?: (section: SectionName) => void;
   onOpenChange?: (isOpen: boolean) => void;
 }) => {
+  const isDesignMode = useStore($isDesignMode);
+
   return (
     <Dialog open={sections.has(currentSection!)} onOpenChange={onOpenChange}>
       <DialogContent
@@ -46,66 +49,68 @@ export const ProjectSettingsView = ({
           height: theme.spacing[35],
         }}
       >
-        <Flex grow>
-          <List asChild>
-            <Flex
-              direction="column"
-              shrink={false}
-              css={{
-                width: leftPanelWidth,
-                borderRight: `1px solid  ${theme.colors.borderMain}`,
-              }}
-            >
-              {Array.from(sections.keys()).map((name, index) => {
-                return (
-                  <ListItem
-                    current={currentSection === name}
-                    asChild
-                    index={index}
-                    key={name}
-                    onSelect={() => {
-                      onSectionChange?.(name);
-                    }}
-                  >
-                    <Flex
-                      css={{
-                        position: "relative",
-                        height: theme.spacing[13],
-                        paddingInline: theme.panel.paddingInline,
-                        outline: "none",
-                        "&:focus-visible, &:hover": {
-                          background: theme.colors.backgroundHover,
-                        },
-                        "&[aria-current=true]": {
-                          background: theme.colors.backgroundItemCurrent,
-                          color: theme.colors.foregroundMain,
-                        },
+        <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
+          <Flex grow>
+            <List asChild>
+              <Flex
+                direction="column"
+                shrink={false}
+                css={{
+                  width: leftPanelWidth,
+                  borderRight: `1px solid  ${theme.colors.borderMain}`,
+                }}
+              >
+                {Array.from(sections.keys()).map((name, index) => {
+                  return (
+                    <ListItem
+                      current={currentSection === name}
+                      asChild
+                      index={index}
+                      key={name}
+                      onSelect={() => {
+                        onSectionChange?.(name);
                       }}
-                      align="center"
                     >
-                      <Text variant="labelsTitleCase" truncate>
-                        {name}
-                      </Text>
-                    </Flex>
-                  </ListItem>
-                );
-              })}
-            </Flex>
-          </List>
-          <ScrollArea>
-            <Grid gap={2} css={{ py: theme.spacing[5] }}>
-              {currentSection === "general" && <SectionGeneral />}
-              {currentSection === "redirects" && <SectionRedirects />}
-              {currentSection === "publish" && <SectionPublish />}
-              {currentSection === "marketplace" && <SectionMarketplace />}
-              <div />
-            </Grid>
-          </ScrollArea>
-        </Flex>
-        {/* Title is at the end intentionally,
-         * to make the close button last in the tab order
-         */}
-        <DialogTitle>Project Settings</DialogTitle>
+                      <Flex
+                        css={{
+                          position: "relative",
+                          height: theme.spacing[13],
+                          paddingInline: theme.panel.paddingInline,
+                          outline: "none",
+                          "&:focus-visible, &:hover": {
+                            background: theme.colors.backgroundHover,
+                          },
+                          "&[aria-current=true]": {
+                            background: theme.colors.backgroundItemCurrent,
+                            color: theme.colors.foregroundMain,
+                          },
+                        }}
+                        align="center"
+                      >
+                        <Text variant="labelsTitleCase" truncate>
+                          {name}
+                        </Text>
+                      </Flex>
+                    </ListItem>
+                  );
+                })}
+              </Flex>
+            </List>
+            <ScrollArea>
+              <Grid gap={2} css={{ py: theme.spacing[5] }}>
+                {currentSection === "general" && <SectionGeneral />}
+                {currentSection === "redirects" && <SectionRedirects />}
+                {currentSection === "publish" && <SectionPublish />}
+                {currentSection === "marketplace" && <SectionMarketplace />}
+                <div />
+              </Grid>
+            </ScrollArea>
+          </Flex>
+          {/* Title is at the end intentionally,
+           * to make the close button last in the tab order
+           */}
+          <DialogTitle>Project Settings</DialogTitle>
+        </fieldset>
       </DialogContent>
     </Dialog>
   );
