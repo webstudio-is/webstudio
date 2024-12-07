@@ -1679,17 +1679,16 @@ const PageSettingsView = ({
                 />
               </Tooltip>
             )}
-            {isDesignMode && (
-              <Tooltip content="Duplicate page" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<CopyIcon />}
-                  onClick={onDuplicate}
-                  aria-label="Duplicate page"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
+
+            <Tooltip content="Duplicate page" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<CopyIcon />}
+                onClick={onDuplicate}
+                aria-label="Duplicate page"
+                tabIndex={2}
+              />
+            </Tooltip>
 
             <Tooltip content="Close page settings" side="bottom">
               <Button
