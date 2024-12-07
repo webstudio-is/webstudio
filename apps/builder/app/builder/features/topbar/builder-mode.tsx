@@ -18,6 +18,8 @@ import {
   theme,
   ToolbarToggleGroup,
   ToolbarToggleItem,
+  Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
 import {
   DropdownMenu,
@@ -90,24 +92,33 @@ export const BuilderModeDropDown = () => {
         },
       }}
     >
-      <ToolbarToggleGroup
-        type="single"
-        value={builderMode}
-        onValueChange={() => {
-          toggleBuilderMode("preview");
-        }}
+      <Tooltip
+        content={
+          <>
+            <Text variant="regular">Toggle preview</Text>
+            <Kbd value={["cmd", "shift", "p"]} />
+          </>
+        }
       >
-        <ToolbarToggleItem
-          variant="preview"
-          value="preview"
-          tabIndex={0}
-          css={{
-            paddingRight: 0,
+        <ToolbarToggleGroup
+          type="single"
+          value={builderMode}
+          onValueChange={() => {
+            toggleBuilderMode("preview");
           }}
         >
-          <PlayIcon />
-        </ToolbarToggleItem>
-      </ToolbarToggleGroup>
+          <ToolbarToggleItem
+            variant="preview"
+            value="preview"
+            tabIndex={0}
+            css={{
+              paddingRight: 0,
+            }}
+          >
+            <PlayIcon />
+          </ToolbarToggleItem>
+        </ToolbarToggleGroup>
+      </Tooltip>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <ToolbarToggleItem
