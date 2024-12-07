@@ -38,7 +38,6 @@ import stripIndent from "strip-indent";
 import { $isPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
-  $authPermit,
   $authTokenPermissions,
   $project,
   $publishedOrigin,
