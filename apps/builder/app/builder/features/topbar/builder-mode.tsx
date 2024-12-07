@@ -60,16 +60,6 @@ export const BuilderModeDropDown = () => {
     },
   } as const;
 
-  /*
-      preview: {
-      icon: <PlayIcon />,
-      description: "View the page as it will appear to users",
-      title: "Preview",
-      shortcut: ["cmd", "shift", "p"],
-      enabled: true,
-    },
-  */
-
   const [activeMode, setActiveMode] = useState<
     keyof typeof menuItems | undefined
   >();
