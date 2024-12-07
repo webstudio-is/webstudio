@@ -20,6 +20,7 @@ import {
   ToolbarToggleItem,
   Tooltip,
   Text,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import {
   DropdownMenu,
@@ -73,15 +74,7 @@ export const BuilderModeDropDown = () => {
   };
 
   return (
-    <Flex
-      css={{
-        gap: theme.spacing[2],
-
-        [`&:hover ${ToolbarToggleItem}`]: {
-          background: theme.colors.backgroundTopbarHover,
-        },
-      }}
-    >
+    <Flex align="center">
       <Tooltip
         content={
           <>
@@ -97,14 +90,7 @@ export const BuilderModeDropDown = () => {
             toggleBuilderMode("preview");
           }}
         >
-          <ToolbarToggleItem
-            variant="preview"
-            value="preview"
-            tabIndex={0}
-            css={{
-              paddingRight: 0,
-            }}
-          >
+          <ToolbarToggleItem variant="preview" value="preview" tabIndex={0}>
             <PlayIcon />
           </ToolbarToggleItem>
         </ToolbarToggleGroup>
@@ -112,25 +98,23 @@ export const BuilderModeDropDown = () => {
       <DropdownMenu>
         <Tooltip content={"Select Design or Content mode"}>
           <DropdownMenuTrigger asChild>
-            <ToolbarToggleItem
-              value="-"
+            <SmallIconButton
+              bleed
               aria-label="Select Design or Content mode"
-              variant="preview"
               tabIndex={0}
               css={{
                 minWidth: "unset",
                 padding: 0,
-                "&:focus-visible::after": {
-                  content: "unset",
-                  outlineWidth: 0,
+                color: theme.colors.foregroundContrastSubtle,
+                "&:hover, &:focus": {
+                  background: "none",
+                  color: theme.colors.foregroundContrastMain,
                 },
               }}
-            >
-              <ChevronDownIcon />
-            </ToolbarToggleItem>
+              icon={<ChevronDownIcon />}
+            />
           </DropdownMenuTrigger>
         </Tooltip>
-
         <DropdownMenuPortal>
           <DropdownMenuContent
             sideOffset={4}
