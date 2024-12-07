@@ -331,6 +331,7 @@ export const $authPermit = atom<AuthPermit>("view");
 export const $authTokenPermissions = atom<TokenPermissions>({
   canClone: true,
   canCopy: true,
+  canPublish: false,
 });
 
 export const $authToken = atom<string | undefined>(undefined);
