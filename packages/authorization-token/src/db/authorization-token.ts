@@ -13,6 +13,7 @@ const applyTokenPermissions = (
 ): AuthorizationToken => {
   let result = token;
 
+  // @todo: fix this on SQL level
   if (token.relation !== "viewers") {
     result = {
       ...result,
@@ -21,6 +22,7 @@ const applyTokenPermissions = (
     };
   }
 
+  // @todo: fix this on SQL level
   if (token.relation === "viewers") {
     result = {
       ...result,
@@ -28,10 +30,19 @@ const applyTokenPermissions = (
     };
   }
 
+  // @todo: fix this on SQL level
   if (token.relation === "builders") {
     result = {
       ...result,
       canPublish: false,
+    };
+  }
+
+  // @todo: fix this on SQL level
+  if (token.relation === "administrators") {
+    result = {
+      ...result,
+      canPublish: true,
     };
   }
 
