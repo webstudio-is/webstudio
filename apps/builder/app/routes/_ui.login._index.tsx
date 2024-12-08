@@ -1,8 +1,7 @@
 import {
   type LinksFunction,
   type LoaderFunctionArgs,
-  type TypedResponse,
-  json,
+  data,
 } from "@remix-run/server-runtime";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { findAuthenticatedUser } from "~/services/auth.server";
@@ -49,9 +48,7 @@ export const meta: MetaFunction<typeof loader> = () => {
   return metas;
 };
 
-export const loader = async ({
-  request,
-}: LoaderFunctionArgs): Promise<TypedResponse<LoginProps>> => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (false === isDashboard(request)) {
     throw new Response("Not Found", {
       status: 404,
@@ -83,14 +80,14 @@ export const loader = async ({
 
   headers.append("Set-Cookie", await returnToCookie.serialize(returnTo));
 
-  return json(
+  return data(
     {
       isSecretLoginEnabled: env.DEV_LOGIN === "true",
       isGithubEnabled: Boolean(env.GH_CLIENT_ID && env.GH_CLIENT_SECRET),
       isGoogleEnabled: Boolean(
         env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
       ),
-    },
+    } satisfies LoginProps,
     { headers }
   );
 };
