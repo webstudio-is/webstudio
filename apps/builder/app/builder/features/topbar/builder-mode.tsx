@@ -20,7 +20,6 @@ import {
   ToolbarToggleItem,
   Tooltip,
   Text,
-  SmallIconButton,
 } from "@webstudio-is/design-system";
 import {
   DropdownMenu,
@@ -102,6 +101,7 @@ export const BuilderModeDropDown = () => {
               tabIndex={0}
               aria-label="Choose mode"
               variant="chevron"
+              value="chevron"
             >
               <ChevronDownIcon />
             </ToolbarToggleItem>
