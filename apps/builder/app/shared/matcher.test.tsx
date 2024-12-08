@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { renderJsx, $, ExpressionValue } from "@webstudio-is/sdk/testing";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
@@ -563,6 +563,72 @@ describe("is instance matching", () => {
       })
     ).toBeFalsy();
   });
+
+  test("provide error message when negated matcher is failed", () => {
+    const onError = vi.fn();
+    isInstanceMatching({
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <$.Box ws:id="box"></$.Box>
+        </$.Body>
+      ),
+      instanceSelector: ["box", "body"],
+      query: {
+        relation: "self",
+        component: { $nin: ["Box", "Text"] },
+      },
+      onError,
+    });
+    expect(onError).toHaveBeenLastCalledWith("Box or Text is not acceptable");
+    isInstanceMatching({
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <$.Box ws:id="box">
+            <$.ListItem ws:id="listitem"></$.ListItem>
+          </$.Box>
+        </$.Body>
+      ),
+      instanceSelector: ["listitem", "box", "body"],
+      query: {
+        relation: "ancestor",
+        component: { $nin: ["Box", "Text"] },
+      },
+      onError,
+    });
+    expect(onError).toHaveBeenLastCalledWith("Box or Text is not acceptable");
+  });
+
+  test("provide error message when positive matcher is failed", () => {
+    const onError = vi.fn();
+    isInstanceMatching({
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <$.ListItem ws:id="listitem"></$.ListItem>
+        </$.Body>
+      ),
+      instanceSelector: ["box", "body"],
+      query: {
+        relation: "self",
+        component: { $in: ["Box", "Text"] },
+      },
+      onError,
+    });
+    expect(onError).toHaveBeenLastCalledWith("Box or Text is missing");
+    isInstanceMatching({
+      ...renderJsx(
+        <$.Body ws:id="body">
+          <$.ListItem ws:id="listitem"></$.ListItem>
+        </$.Body>
+      ),
+      instanceSelector: ["box", "body"],
+      query: {
+        relation: "ancestor",
+        component: { $in: ["Box", "Text"] },
+      },
+      onError,
+    });
+    expect(onError).toHaveBeenLastCalledWith("Box or Text is missing");
+  });
 });
 
 describe("is tree matching", () => {
@@ -780,6 +846,25 @@ describe("find closest instance matching fragment", () => {
         fragment,
       })
     ).toEqual(1);
+  });
+
+  test("report first error", () => {
+    const onError = vi.fn();
+    const { instances } = renderJsx(<$.Body ws:id="body"></$.Body>);
+    const fragment = createFragment(
+      // only children are tested
+      <>
+        <$.ListItem ws:id="listitem"></$.ListItem>
+      </>
+    );
+    findClosestInstanceMatchingFragment({
+      metas,
+      instances,
+      instanceSelector: ["body"],
+      fragment,
+      onError,
+    });
+    expect(onError).toHaveBeenLastCalledWith("List is missing");
   });
 });
 

@@ -16,8 +16,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  invalidAncestors: ["Button"],
-  requiredAncestors: ["Vimeo"],
   constraints: [
     {
       relation: "ancestor",

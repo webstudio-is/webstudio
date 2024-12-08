@@ -18,7 +18,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  invalidAncestors: ["Button", "Label"],
   constraints: {
     relation: "ancestor",
     component: { $nin: ["Button", "Link"] },

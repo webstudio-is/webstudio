@@ -29,7 +29,6 @@ export const meta: WsComponentMeta = {
   description:
     "Use a link to send your users to another page, section, or resource. Configure links in the Settings panel.",
   icon: LinkIcon,
-  invalidAncestors: ["Link", "Button"],
   constraints: {
     relation: "ancestor",
     component: { $nin: ["Button", "Link"] },

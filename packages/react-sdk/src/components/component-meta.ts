@@ -60,8 +60,6 @@ export const WsComponentMeta = z.object({
   // embed - images, videos or other embeddable components, without children
   // rich-text-child - formatted text fragment, not listed in components list
   type: z.enum(["container", "control", "embed", "rich-text-child"]),
-  requiredAncestors: z.optional(z.array(z.string())),
-  invalidAncestors: z.optional(z.array(z.string())),
   constraints: Matchers.optional(),
   // when this field is specified component receives
   // prop with index of same components withiin specified ancestor

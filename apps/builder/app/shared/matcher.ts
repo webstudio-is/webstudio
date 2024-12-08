@@ -48,6 +48,26 @@ const isLevelMatchingRelation = (level: number, relation: MatcherRelation) => {
   );
 };
 
+const formatList = (operation: MatcherOperation) => {
+  const listFormat = new Intl.ListFormat("en", {
+    type: "disjunction",
+  });
+  const list: string[] = [];
+  if (operation.$eq) {
+    list.push(operation.$eq);
+  }
+  if (operation.$in) {
+    list.push(...operation.$in);
+  }
+  if (operation.$neq) {
+    list.push(operation.$neq);
+  }
+  if (operation.$nin) {
+    list.push(...operation.$nin);
+  }
+  return listFormat.format(list);
+};
+
 /**
  * @todo following features are missing
  * - tag matcher
@@ -56,10 +76,12 @@ export const isInstanceMatching = ({
   instances,
   instanceSelector,
   query,
+  onError,
 }: {
   instances: Instances;
   instanceSelector: InstanceSelector;
   query: undefined | Matcher | Matcher[];
+  onError?: (message: string) => void;
 }): boolean => {
   // fast path to the lack of constraints
   if (query === undefined) {
@@ -73,6 +95,9 @@ export const isInstanceMatching = ({
     if (isNegated(matcher.component)) {
       if (matches) {
         aborted = true;
+        if (matcher.component) {
+          onError?.(`${formatList(matcher.component)} is not acceptable`);
+        }
         return;
       }
       // inverse negated match
@@ -124,18 +149,29 @@ export const isInstanceMatching = ({
   if (aborted) {
     return false;
   }
-  return queries.every((matcher) => matchesByMatcher.get(matcher));
+  for (const matcher of queries) {
+    const matches = matchesByMatcher.get(matcher) ?? false;
+    if (matches === false) {
+      if (matcher.component) {
+        onError?.(`${formatList(matcher.component)} is missing`);
+      }
+      return false;
+    }
+  }
+  return true;
 };
 
 export const isTreeMatching = ({
   instances,
   metas,
   instanceSelector,
+  onError,
   level = 0,
 }: {
   instances: Instances;
   metas: Map<string, WsComponentMeta>;
   instanceSelector: InstanceSelector;
+  onError?: (message: string) => void;
   level?: number;
 }): boolean => {
   const [instanceId] = instanceSelector;
@@ -150,6 +186,7 @@ export const isTreeMatching = ({
     instances,
     instanceSelector,
     query: meta?.constraints,
+    onError,
   });
   // check ancestors only on the first run
   if (level === 0) {
@@ -164,6 +201,7 @@ export const isTreeMatching = ({
         instances,
         instanceSelector: instanceSelector.slice(index),
         query: meta?.constraints,
+        onError,
       });
       if (matches === false) {
         return false;
@@ -180,6 +218,7 @@ export const isTreeMatching = ({
         metas,
         instanceSelector: [child.value, ...instanceSelector],
         level: level + 1,
+        onError,
       });
       if (matches === false) {
         return false;
@@ -194,16 +233,19 @@ export const findClosestInstanceMatchingFragment = ({
   metas,
   instanceSelector,
   fragment,
+  onError,
 }: {
   instances: Instances;
   metas: Map<string, WsComponentMeta>;
   instanceSelector: InstanceSelector;
   fragment: WebstudioFragment;
+  onError?: (message: string) => void;
 }) => {
   const mergedInstances = new Map(instances);
   for (const instance of fragment.instances) {
     mergedInstances.set(instance.id, instance);
   }
+  let firstError = "";
   for (let index = 0; index < instanceSelector.length; index += 1) {
     const instanceId = instanceSelector[index];
     const instance = instances.get(instanceId);
@@ -222,6 +264,11 @@ export const findClosestInstanceMatchingFragment = ({
           instances: mergedInstances,
           metas,
           instanceSelector: [child.value, ...instanceSelector.slice(index)],
+          onError: (message) => {
+            if (firstError === "") {
+              firstError = message;
+            }
+          },
         });
       }
     }
@@ -229,6 +276,7 @@ export const findClosestInstanceMatchingFragment = ({
       return index;
     }
   }
+  onError?.(firstError);
   return -1;
 };
 

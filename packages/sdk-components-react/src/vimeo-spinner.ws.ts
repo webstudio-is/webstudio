@@ -14,7 +14,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
-  requiredAncestors: ["Vimeo"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "Vimeo" },

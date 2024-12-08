@@ -16,7 +16,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
-  requiredAncestors: ["List"],
   constraints: {
     relation: "parent",
     component: { $eq: "List" },

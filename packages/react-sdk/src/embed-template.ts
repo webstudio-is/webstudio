@@ -479,16 +479,6 @@ export const namespaceMeta = (
   components: Set<EmbedTemplateInstance["component"]>
 ) => {
   const newMeta = { ...meta };
-  if (newMeta.requiredAncestors) {
-    newMeta.requiredAncestors = newMeta.requiredAncestors.map((component) =>
-      components.has(component) ? `${namespace}:${component}` : component
-    );
-  }
-  if (newMeta.invalidAncestors) {
-    newMeta.invalidAncestors = newMeta.invalidAncestors.map((component) =>
-      components.has(component) ? `${namespace}:${component}` : component
-    );
-  }
   if (newMeta.constraints) {
     if (Array.isArray(newMeta.constraints)) {
       newMeta.constraints = newMeta.constraints.map((matcher) =>

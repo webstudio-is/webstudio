@@ -222,7 +222,6 @@ export const metaAccordionItem: WsComponentMeta = {
   type: "container",
   label: "Item",
   icon: ItemIcon,
-  requiredAncestors: ["Accordion"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "Accordion" },
@@ -236,7 +235,6 @@ export const metaAccordionHeader: WsComponentMeta = {
   type: "container",
   label: "Item Header",
   icon: HeaderIcon,
-  requiredAncestors: ["AccordionItem"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "AccordionItem" },
@@ -252,7 +250,6 @@ export const metaAccordionTrigger: WsComponentMeta = {
   type: "container",
   label: "Item Trigger",
   icon: TriggerIcon,
-  requiredAncestors: ["AccordionHeader"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "AccordionHeader" },
@@ -276,7 +273,6 @@ export const metaAccordionContent: WsComponentMeta = {
   type: "container",
   label: "Item Content",
   icon: ContentIcon,
-  requiredAncestors: ["AccordionItem"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "AccordionItem" },
