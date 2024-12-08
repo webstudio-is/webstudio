@@ -431,7 +431,6 @@ export const metaNavigationMenuList: WsComponentMeta = {
   detachable: false,
   type: "container",
   icon: ListIcon,
-  requiredAncestors: ["NavigationMenu"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "NavigationMenu" },
@@ -444,7 +443,6 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: ListItemIcon,
-  requiredAncestors: ["NavigationMenu"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "NavigationMenu" },
@@ -459,7 +457,6 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
   stylable: false,
   type: "container",
   icon: TriggerIcon,
-  requiredAncestors: ["NavigationMenuItem"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "NavigationMenuItem" },
@@ -472,7 +469,6 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   detachable: false,
   type: "container",
   icon: ContentIcon,
-  requiredAncestors: ["NavigationMenuItem"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "NavigationMenuItem" },
@@ -488,7 +484,6 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   type: "container",
   stylable: false,
   icon: BoxIcon,
-  requiredAncestors: ["NavigationMenu"],
   constraints: [
     {
       relation: "ancestor",
@@ -508,7 +503,6 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   detachable: true,
   type: "container",
   icon: ViewportIcon,
-  requiredAncestors: ["NavigationMenu"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "NavigationMenu" },

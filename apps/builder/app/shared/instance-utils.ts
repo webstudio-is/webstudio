@@ -1459,6 +1459,7 @@ export const findClosestInsertable = (
     instances,
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
+    onError: (message) => toast.error(message),
   });
   if (insertableIndex === -1) {
     return;

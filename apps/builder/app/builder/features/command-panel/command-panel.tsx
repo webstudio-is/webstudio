@@ -35,10 +35,14 @@ import {
   $selectedBreakpoint,
   $selectedBreakpointId,
 } from "~/shared/nano-states";
-import { getInstanceLabel } from "~/shared/instance-utils";
+import {
+  findClosestInsertable,
+  getComponentTemplateData,
+  getInstanceLabel,
+  insertTemplateData,
+} from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
-import { insert as insertComponent } from "~/builder/features/components/insert";
 import { $selectedPage, selectPage } from "~/shared/awareness";
 import { mapGroupBy } from "~/shared/shim";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
@@ -146,7 +150,13 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
             value={component}
             onSelect={() => {
               closeCommandPanel();
-              insertComponent(component);
+              const fragment = getComponentTemplateData(component);
+              if (fragment) {
+                const insertable = findClosestInsertable(fragment);
+                if (insertable) {
+                  insertTemplateData(fragment, insertable);
+                }
+              }
             }}
           >
             <Flex gap={2}>

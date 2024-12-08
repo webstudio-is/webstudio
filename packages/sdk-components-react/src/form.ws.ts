@@ -20,7 +20,6 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Form",
-  invalidAncestors: ["Form", "Button", "Link"],
   constraints: {
     relation: "ancestor",
     component: { $nin: ["Form", "Button", "Link"] },

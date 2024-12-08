@@ -26,8 +26,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "hidden",
-  // @todo: requiredAncestors should be ["Select", "Optgroup", "Datalist"] but that gives unreadable error when adding Select onto Canvas
-  requiredAncestors: ["Select"],
   constraints: {
     relation: "parent",
     component: { $eq: "Select" },

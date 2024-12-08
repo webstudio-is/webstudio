@@ -278,7 +278,6 @@ export const metaSelectItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: ItemIcon,
-  requiredAncestors: ["SelectViewport"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "SelectViewport" },
@@ -292,7 +291,6 @@ export const metaSelectItemIndicator: WsComponentMeta = {
   label: "Indicator",
   icon: CheckMarkIcon,
   detachable: false,
-  requiredAncestors: ["SelectItem"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "SelectItem" },
@@ -308,7 +306,6 @@ export const metaSelectItemText: WsComponentMeta = {
   label: "Item Text",
   icon: TextIcon,
   detachable: false,
-  requiredAncestors: ["SelectItem"],
   constraints: {
     relation: "ancestor",
     component: { $eq: "SelectItem" },

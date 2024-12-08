@@ -30,7 +30,6 @@ export const meta: WsComponentMeta = {
   icon: FormTextAreaIcon,
   presetStyle,
   order: 4,
-  invalidAncestors: ["Button", "Link"],
   constraints: {
     relation: "ancestor",
     component: { $nin: ["Button", "Link"] },

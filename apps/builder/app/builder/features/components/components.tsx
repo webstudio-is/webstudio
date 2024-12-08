@@ -34,9 +34,13 @@ import {
   type MetaByCategory,
   type ComponentNamesByMeta,
 } from "./get-meta-maps";
-import { getInstanceLabel } from "~/shared/instance-utils";
+import {
+  findClosestInsertable,
+  getComponentTemplateData,
+  getInstanceLabel,
+  insertTemplateData,
+} from "~/shared/instance-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { insert } from "./insert";
 import { matchSorter } from "match-sorter";
 import { parseComponentName } from "@webstudio-is/sdk";
 import type { Publish } from "~/shared/pubsub";
@@ -183,7 +187,13 @@ export const ComponentsPanel = ({
 
   const handleInsert = (component: string) => {
     onClose();
-    insert(component);
+    const fragment = getComponentTemplateData(component);
+    if (fragment) {
+      const insertable = findClosestInsertable(fragment);
+      if (insertable) {
+        insertTemplateData(fragment, insertable);
+      }
+    }
   };
 
   const resetSelectedComponent = () => {
