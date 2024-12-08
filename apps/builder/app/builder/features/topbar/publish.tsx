@@ -65,7 +65,7 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
-  refresh: () => void;
+  refresh: () => Promise<void>;
 };
 
 const ChangeProjectDomain = ({
@@ -205,7 +205,7 @@ const Publish = ({
 
   refresh: () => Promise<void>;
 }) => {
-  const [publishError, setPublishError] = useState<string | undefined>();
+  const [publishError, setPublishError] = useState<undefined | string>();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -275,8 +275,19 @@ const Publish = ({
     if (publishResult.success === false) {
       console.error(publishResult.error);
 
-      setPublishError(publishResult.error);
-      toast.error(publishResult.error);
+      let error = publishResult.error;
+      if (publishResult.error === "NOT_IMPLEMENTED") {
+        error =
+          `Build data for publishing has been successfully created.\n\n` +
+          `Use Webstudio CLI to generate the code.\n\n` +
+          `https://docs.webstudio.is/university/self-hosting/cli`;
+      }
+      setPublishError(error);
+      if (publishResult.error === "NOT_IMPLEMENTED") {
+        toast.info(error);
+      } else {
+        toast.error(error);
+      }
 
       if (process.env.NODE_ENV === "development") {
         // Refresh locally as it's always an error
