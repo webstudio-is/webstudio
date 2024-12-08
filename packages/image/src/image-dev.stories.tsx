@@ -9,9 +9,10 @@ import { Image as ImagePrimitive, createImageLoader } from "./";
 // @ts-ignore
 import localLogoImage from "../storybook-assets/logo.webp";
 
-export default {
+const meta: Meta<typeof ImagePrimitive> = {
   title: "Components/ImageDev",
-} satisfies Meta<typeof ImagePrimitive>;
+};
+export default meta;
 
 type ImageProps = React.ComponentProps<typeof ImagePrimitive>;
 

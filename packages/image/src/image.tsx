@@ -1,4 +1,8 @@
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import {
+  forwardRef,
+  type ComponentProps,
+  type ForwardRefExoticComponent,
+} from "react";
 import { getImageAttributes, type ImageLoader } from "./image-optimize";
 
 const defaultTag = "img";
@@ -9,7 +13,7 @@ type ImageProps = ComponentProps<typeof defaultTag> & {
   loader: ImageLoader;
 };
 
-export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
+export const Image: ForwardRefExoticComponent<ImageProps> = forwardRef(
   (
     {
       quality,
@@ -46,7 +50,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
 
 Image.displayName = "Image";
 
-export const imagePlaceholderDataUrl = `data:image/svg+xml;base64,${btoa(`<svg
+export const imagePlaceholderDataUrl: string = `data:image/svg+xml;base64,${btoa(`<svg
   width="140"
   height="140"
   viewBox="0 0 600 600"

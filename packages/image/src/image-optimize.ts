@@ -104,7 +104,7 @@ export type ImageLoader = (
 const imageSizes = [16, 32, 48, 64, 96, 128, 256, 384];
 const deviceSizes = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
 
-export const allSizes = [...imageSizes, ...deviceSizes];
+export const allSizes: number[] = [...imageSizes, ...deviceSizes];
 
 /**
  * https://github.com/vercel/next.js/blob/canary/packages/next/client/image.tsx
@@ -235,7 +235,7 @@ const DEFAULT_QUALITY = 80;
 /**
  * URL.canParse(props.src)
  */
-export const UrlCanParse = (url: string) => {
+export const UrlCanParse = (url: string): boolean => {
   try {
     new URL(url);
     return true;
