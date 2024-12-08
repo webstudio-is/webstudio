@@ -496,16 +496,6 @@ export const deleteInstanceMutable = (
   data: WebstudioData,
   instanceSelector: InstanceSelector
 ) => {
-  // @todo tell user they can't delete root
-  if (instanceSelector.length === 1) {
-    return false;
-  }
-  if (isInstanceDetachable(data.instances, instanceSelector) === false) {
-    toast.error(
-      "This instance can not be moved outside of its parent component."
-    );
-    return false;
-  }
   const {
     instances,
     props,
