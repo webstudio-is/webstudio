@@ -1,6 +1,6 @@
 import { theme, type CSS } from "../stitches.config";
 
-export const focusRingStyle = (props: CSS) => ({
+export const focusRingStyle = (props?: CSS) => ({
   "&::after": {
     content: '""',
     position: "absolute",
