@@ -1,3 +1,5 @@
+import { blockTemplateComponent } from "@webstudio-is/react-sdk";
+import { toast } from "@webstudio-is/design-system";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
@@ -19,6 +21,7 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
+  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -32,7 +35,6 @@ import { selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
 import { findBlockSelector } from "../features/workspace/canvas-tools/outline/block-instance-outline";
-import { blockTemplateComponent } from "@webstudio-is/react-sdk";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -65,8 +67,13 @@ const deleteSelectedInstance = () => {
   if (selectedInstanceSelector.length === 1) {
     return;
   }
-
   const instances = $instances.get();
+  if (isInstanceDetachable(instances, selectedInstanceSelector) === false) {
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
+    return false;
+  }
 
   if ($isContentMode.get()) {
     // In content mode we are allowing to delete childen of the editable block

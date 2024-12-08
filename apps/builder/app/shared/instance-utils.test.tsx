@@ -11,6 +11,7 @@ import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/sdk/testing";
 import { parseCss } from "@webstudio-is/css-data";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
+import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
   Asset,
   Breakpoint,
@@ -844,6 +845,36 @@ describe("reparent instance", () => {
       ])
     );
   });
+
+  test("reparent required child", () => {
+    $instances.set(
+      renderJsx(
+        <$.Body ws:id="body">
+          <$.Tooltip ws:id="tooltip">
+            <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
+            <$.TooltipContent ws:id="content"></$.TooltipContent>
+          </$.Tooltip>
+        </$.Body>
+      ).instances
+    );
+    $registeredComponentMetas.set(
+      new Map(Object.entries({ ...defaultMetas, ...radixMetas }))
+    );
+    reparentInstance(["trigger", "tooltip", "body"], {
+      parentSelector: ["tooltip", "body"],
+      position: "end",
+    });
+    expect($instances.get()).toEqual(
+      renderJsx(
+        <$.Body ws:id="body">
+          <$.Tooltip ws:id="tooltip">
+            <$.TooltipContent ws:id="content"></$.TooltipContent>
+            <$.TooltipTrigger ws:id={expect.any(String)}></$.TooltipTrigger>
+          </$.Tooltip>
+        </$.Body>
+      ).instances
+    );
+  });
 });
 
 const getWebstudioDataStub = (
@@ -884,24 +915,6 @@ describe("delete instance", () => {
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
         createInstancePair("box2", "Box", []),
-      ])
-    );
-  });
-
-  test("prevent deleting root instance", () => {
-    // body
-    //   box1
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
-      createInstancePair("box1", "Box", []),
-    ]);
-    $registeredComponentMetas.set(createFakeComponentMetas({}));
-    const data = getWebstudioDataStub({ instances });
-    deleteInstanceMutable(data, ["body"]);
-    expect(data.instances).toEqual(
-      new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
-        createInstancePair("box1", "Box", []),
       ])
     );
   });

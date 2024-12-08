@@ -7,6 +7,7 @@ import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
   insertTemplateData,
+  isInstanceDetachable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import {
@@ -101,7 +102,14 @@ const deleteInstanceByOp = (
 ) => {
   const instanceSelector = computeSelectorForInstanceId(operation.wsId);
   if (instanceSelector) {
+    // @todo tell user they can't delete root
+    if (instanceSelector.length === 1) {
+      return;
+    }
     updateWebstudioData((data) => {
+      if (isInstanceDetachable(data.instances, instanceSelector) === false) {
+        return;
+      }
       deleteInstanceMutable(data, instanceSelector);
     });
   }
