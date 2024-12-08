@@ -473,6 +473,20 @@
         "width": 14,
         "height": 16
       }
+    },
+    {
+      "id": "d0974db9300c1a3b0fb8b291dd9fabd45ad136478908394280af2f7087e3aecd",
+      "name": "147-1478573_cat-icon-png-black-cat-png-icon.png_ZJ6-qJjk1RlFzuYwyCXdp.jpeg",
+      "description": null,
+      "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
+      "size": 64701,
+      "type": "image",
+      "format": "jpg",
+      "createdAt": "2024-12-06T14:36:07.046+00:00",
+      "meta": {
+        "width": 820,
+        "height": 985
+      }
     }
   ],
   "user": {
