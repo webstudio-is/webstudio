@@ -70,6 +70,16 @@ const toggleItemStyle = css(textVariants.labelsTitleCase, {
           color: theme.colors.foregroundSuccess,
         },
       },
+      chevron: {
+        minWidth: "auto",
+        paddingInline: 0,
+        color: theme.colors.foregroundContrastSubtle,
+        "&:hover, &:focus-visible": {
+          //background: "none",
+          color: theme.colors.foregroundContrastMain,
+        },
+        "&:focus-visible": focusRingStyle({ left: 0, right: 0 }),
+      },
     },
   },
 });

@@ -1,4 +1,4 @@
-import { PlayIcon } from "@webstudio-is/icons";
+import { PlayIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { theme } from "../stitches.config";
 import {
   Toolbar,
@@ -35,6 +35,9 @@ const ToolbarStory = () => {
       <ToolbarToggleGroup type="single">
         <ToolbarToggleItem value="5" focused>
           <PlayIcon size={22} />
+        </ToolbarToggleItem>
+        <ToolbarToggleItem value="5" variant="chevron">
+          <ChevronDownIcon />
         </ToolbarToggleItem>
       </ToolbarToggleGroup>
     </Toolbar>

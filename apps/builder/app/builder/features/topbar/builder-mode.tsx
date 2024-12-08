@@ -90,7 +90,7 @@ export const BuilderModeDropDown = () => {
             toggleBuilderMode("preview");
           }}
         >
-          <ToolbarToggleItem variant="preview" value="preview" tabIndex={0}>
+          <ToolbarToggleItem variant="preview" value="preview">
             <PlayIcon />
           </ToolbarToggleItem>
         </ToolbarToggleGroup>
@@ -98,21 +98,13 @@ export const BuilderModeDropDown = () => {
       <DropdownMenu>
         <Tooltip content={"Choose mode"}>
           <DropdownMenuTrigger asChild>
-            <SmallIconButton
-              bleed
-              aria-label="Choose mode"
+            <ToolbarToggleItem
               tabIndex={0}
-              css={{
-                minWidth: "unset",
-                padding: 0,
-                color: theme.colors.foregroundContrastSubtle,
-                "&:hover, &:focus": {
-                  background: "none",
-                  color: theme.colors.foregroundContrastMain,
-                },
-              }}
-              icon={<ChevronDownIcon />}
-            />
+              aria-label="Choose mode"
+              variant="chevron"
+            >
+              <ChevronDownIcon />
+            </ToolbarToggleItem>
           </DropdownMenuTrigger>
         </Tooltip>
         <DropdownMenuPortal>
