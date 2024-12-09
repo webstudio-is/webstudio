@@ -10,7 +10,7 @@ import { StyleSection } from "../../shared/style-section";
 import { movementMapSpace, useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
-import { useModifierKeys } from "../../shared/modifier-keys";
+import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
 import { theme } from "@webstudio-is/design-system";
 
 const Cell = ({
@@ -18,14 +18,14 @@ const Cell = ({
   onPopoverClose,
   onHover,
   property,
-  activeProperties,
+  getActiveProperties,
   scrubStatus,
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
-  activeProperties: SpaceStyleProperty[];
+  getActiveProperties: (modifiers?: Modifiers) => readonly SpaceStyleProperty[];
   scrubStatus: ReturnType<typeof useScrub>;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -40,7 +40,7 @@ const Cell = ({
         value={finalValue}
         isOpen={isPopoverOpen}
         property={property}
-        activeProperties={activeProperties}
+        getActiveProperties={getActiveProperties}
         onClose={onPopoverClose}
       />
       <SpaceTooltip property={property} preventOpen={scrubStatus.isActive}>
@@ -114,9 +114,15 @@ export const Section = () => {
   // by deafult highlight hovered or scrubbed properties
   // if keyboard navigation is active, highlight its active property
   // if popover is open, highlight its property and hovered properties
-  const activeProperties = [
+  const activeProperties: readonly SpaceStyleProperty[] = [
     ...(activePopoverProperties ?? scrubStatus.properties),
   ];
+
+  const getActiveProperties = (modifiers?: Modifiers) => {
+    return modifiers && openProperty
+      ? getSpaceModifiersGroup(openProperty, modifiers)
+      : activeProperties;
+  };
 
   const handleHover = (target: HoverTarget | undefined) => {
     setHoverTarget(target);
@@ -160,7 +166,7 @@ export const Section = () => {
             }}
             onHover={handleHover}
             property={property}
-            activeProperties={activeProperties}
+            getActiveProperties={getActiveProperties}
             scrubStatus={scrubStatus}
           />
         )}

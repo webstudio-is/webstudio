@@ -15,6 +15,7 @@ import { createBatchUpdate } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { $availableUnitVariables } from "../../shared/model";
+import type { Modifiers } from "../../shared/modifier-keys";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -25,12 +26,12 @@ const Input = ({
   styleSource,
   value,
   property,
-  activeProperties,
+  getActiveProperties,
   onClosePopover,
 }: {
   styleSource: StyleValueSourceColor;
   property: StyleProperty;
-  activeProperties: StyleProperty[];
+  getActiveProperties: (modifiers?: Modifiers) => readonly StyleProperty[];
   value: StyleValue;
   onClosePopover: () => void;
 }) => {
@@ -47,6 +48,7 @@ const Input = ({
       getOptions={() => $availableUnitVariables.get()}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
+        const activeProperties = getActiveProperties();
         if (styleValue === undefined) {
           const batch = createBatchUpdate();
           for (const property of activeProperties) {
@@ -66,6 +68,7 @@ const Input = ({
       onHighlight={(styleValue) => {
         if (styleValue === undefined) {
           const batch = createBatchUpdate();
+          const activeProperties = getActiveProperties();
           for (const property of activeProperties) {
             batch.deleteProperty(property);
           }
@@ -76,7 +79,14 @@ const Input = ({
         batch.setProperty(property)(styleValue);
         batch.publish({ isEphemeral: true });
       }}
-      onChangeComplete={({ value }) => {
+      onChangeComplete={({ value, altKey, shiftKey }) => {
+        const activeProperties = getActiveProperties({
+          altKey,
+          shiftKey,
+          ctrlKey: false,
+          metaKey: false,
+        });
+
         setIntermediateValue(undefined);
         const batch = createBatchUpdate();
         for (const property of activeProperties) {
@@ -93,6 +103,7 @@ const Input = ({
       onReset={() => {
         setIntermediateValue(undefined);
         const batch = createBatchUpdate();
+        const activeProperties = getActiveProperties();
         for (const property of activeProperties) {
           batch.deleteProperty(property);
         }
@@ -123,14 +134,14 @@ const PopoverContentStyled = styled(PopoverContent, {
 export const InputPopover = ({
   styleSource,
   property,
-  activeProperties,
+  getActiveProperties,
   value,
   isOpen,
   onClose,
 }: {
   styleSource: StyleValueSourceColor;
   property: StyleProperty;
-  activeProperties: StyleProperty[];
+  getActiveProperties: (modifiers?: Modifiers) => readonly StyleProperty[];
   value: StyleValue;
   isOpen: boolean;
   onClose: () => void;
@@ -157,7 +168,7 @@ export const InputPopover = ({
           styleSource={styleSource}
           value={value}
           property={property}
-          activeProperties={activeProperties}
+          getActiveProperties={getActiveProperties}
           onClosePopover={onClose}
         />
       </PopoverContentStyled>
