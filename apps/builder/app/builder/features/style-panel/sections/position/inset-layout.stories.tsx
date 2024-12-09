@@ -1,5 +1,4 @@
 import type { Meta } from "@storybook/react";
-import type * as React from "react";
 import { InsetLayout } from "./inset-layout";
 import { Grid, theme, Text } from "@webstudio-is/design-system";
 
