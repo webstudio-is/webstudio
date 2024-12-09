@@ -387,7 +387,7 @@
     },
     "background": {
       "panel": {
-        "value": "#f8f8f8",
+        "value": "#fff",
         "type": "color",
         "description": "background color for all panels, titles, columns and rows."
       },
@@ -407,7 +407,7 @@
         "description": "color for active elements"
       },
       "menu": {
-        "value": "#ededed",
+        "value": "#fff",
         "type": "color",
         "description": "background color for menu and select menu"
       },
@@ -575,7 +575,7 @@
           "description": "color for the hidden current item in the navigator item component"
         },
         "menu-item-hover": {
-          "value": "#d3d3d3",
+          "value": "#dfe3e6",
           "type": "color",
           "description": "The hover state on menu item components."
         }
@@ -665,7 +665,7 @@
         }
       },
       "canvas": {
-        "value": "#c7c7c7",
+        "value": "#eee",
         "type": "color",
         "description": "The color of the Builder UI canvas area background."
       },
@@ -697,7 +697,7 @@
         }
       },
       "menu-hint": {
-        "value": "#dedede",
+        "value": "#efefef",
         "type": "color",
         "description": "For the background of the hint menu item."
       },
@@ -819,7 +819,7 @@
     },
     "border": {
       "main": {
-        "value": "#c1c8cd",
+        "value": "#d9d9d9",
         "type": "color",
         "description": "color for separators, panel borders, preset borders, input fields, select buttons, panel buttons, text area, search field, menu, select menu, spacing controls,"
       },
