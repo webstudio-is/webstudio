@@ -10,7 +10,7 @@ export const InsetLayoutComponent = () => (
   <Grid css={{ width: theme.spacing[22], height: theme.spacing[18] }}>
     <InsetLayout
       renderCell={() => <Cell />}
-      getActiveProperties={() => ["left", "right", "top", "bottom"]}
+      getActiveProperties={() => []}
       onHover={(hoverProps) => {
         console.info(hoverProps);
       }}
