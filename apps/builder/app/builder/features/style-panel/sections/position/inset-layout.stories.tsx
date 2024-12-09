@@ -26,9 +26,9 @@ export default {
   component: InsetLayoutComponent,
 
   argTypes: {
-    activeProperties: {
+    getActiveProperties: () => ({
       options: ["left", "right", "top", "bottom"],
       control: { type: "check" },
-    },
+    }),
   },
 } as Meta<typeof InsetLayoutComponent>;
