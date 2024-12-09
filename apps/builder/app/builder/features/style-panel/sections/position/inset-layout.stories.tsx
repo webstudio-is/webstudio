@@ -7,13 +7,11 @@ const Cell = () => (
   <Text variant={"spaceSectionValueText"}>auto{/*1.275&#8203;rem*/}</Text>
 );
 
-export const InsetLayoutComponent = (
-  args: Omit<React.ComponentProps<typeof InsetLayout>, "renderCell">
-) => (
+export const InsetLayoutComponent = () => (
   <Grid css={{ width: theme.spacing[22], height: theme.spacing[18] }}>
     <InsetLayout
       renderCell={() => <Cell />}
-      getActiveProperties={args.getActiveProperties}
+      getActiveProperties={() => ["left", "right", "top", "bottom"]}
       onHover={(hoverProps) => {
         console.info(hoverProps);
       }}
@@ -24,11 +22,4 @@ export const InsetLayoutComponent = (
 export default {
   title: "Style Panel/Inset",
   component: InsetLayoutComponent,
-
-  argTypes: {
-    getActiveProperties: () => ({
-      options: ["left", "right", "top", "bottom"],
-      control: { type: "check" },
-    }),
-  },
 } as Meta<typeof InsetLayoutComponent>;
