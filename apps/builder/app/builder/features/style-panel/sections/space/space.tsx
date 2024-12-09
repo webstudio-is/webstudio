@@ -9,7 +9,7 @@ import { SpaceTooltip } from "./tooltip";
 import { StyleSection } from "../../shared/style-section";
 import { movementMapSpace, useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
-import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
+import { createBatchUpdate } from "../../shared/use-style-data";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import { theme } from "@webstudio-is/design-system";
 
