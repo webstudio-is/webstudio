@@ -35,6 +35,8 @@ import { MarketplaceApprovalStatus } from "@webstudio-is/project";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { rightPanelWidth, sectionSpacing } from "./utils";
 
+const marketplaceLinkName = "Marketplace Link";
+
 const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
   outlineWidth: 1,
@@ -72,6 +74,11 @@ const validate = (data: MarketplaceProduct) => {
 const useMarketplaceApprovalStatus = () => {
   const { send, data, state } =
     trpcClient.project.setMarketplaceApprovalStatus.useMutation();
+  const { load } = trpcClient.authorizationToken.findMany.useQuery();
+  const { send: createToken } =
+    trpcClient.authorizationToken.create.useMutation();
+  const { send: removeToken } =
+    trpcClient.authorizationToken.remove.useMutation();
   const project = useStore($project);
 
   const status =
@@ -105,6 +112,13 @@ const useMarketplaceApprovalStatus = () => {
           },
           handleSuccess
         );
+
+        // create share link by default
+        createToken({
+          projectId: project.id,
+          relation: "viewers",
+          name: marketplaceLinkName,
+        });
       }
     },
     unlist() {
@@ -116,6 +130,19 @@ const useMarketplaceApprovalStatus = () => {
           },
           handleSuccess
         );
+
+        // remove the deafult share link
+        load({ projectId: project.id }, (data) => {
+          const marketplaceLink = data.find(
+            (currentLink) => currentLink.name === marketplaceLinkName
+          );
+          if (marketplaceLink) {
+            removeToken({
+              projectId: project.id,
+              token: marketplaceLink.token,
+            });
+          }
+        });
       }
     },
   };
