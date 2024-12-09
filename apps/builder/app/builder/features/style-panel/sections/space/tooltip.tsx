@@ -1,7 +1,5 @@
 import { useState, type ReactElement } from "react";
-import { useModifierKeys } from "../../shared/modifier-keys";
-import { getSpaceModifiersGroup } from "../shared/scrub";
-import { createBatchUpdate } from "../../shared/use-style-data";
+import { deleteProperty } from "../../shared/use-style-data";
 import { Tooltip } from "@webstudio-is/design-system";
 import { PropertyInfo } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
@@ -86,10 +84,7 @@ export const SpaceTooltip = ({
   preventOpen: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const modifiers = useModifierKeys();
-
-  const properties = [...getSpaceModifiersGroup(property, modifiers)];
+  const properties = [property];
   const styles = useComputedStyles(properties);
 
   const propertyContent = propertyContents.find((propertyContent) =>
@@ -103,14 +98,6 @@ export const SpaceTooltip = ({
     setIsOpen(value);
   };
 
-  const resetProperties = () => {
-    const batch = createBatchUpdate();
-    for (const property of properties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
-  };
-
   return (
     <Tooltip
       open={isOpen}
@@ -122,7 +109,7 @@ export const SpaceTooltip = ({
         onClick: (event) => {
           if (event.altKey) {
             event.preventDefault();
-            resetProperties();
+            deleteProperty(property);
             return;
           }
         },
@@ -133,7 +120,7 @@ export const SpaceTooltip = ({
           description={propertyContent?.description}
           styles={styles}
           onReset={() => {
-            resetProperties();
+            deleteProperty(property);
             handleOpenChange(false);
           }}
         />

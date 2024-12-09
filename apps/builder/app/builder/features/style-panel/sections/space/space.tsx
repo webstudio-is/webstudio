@@ -138,7 +138,6 @@ export const Section = () => {
             // reset when the value is set and after try to edit two sides
             (styleValueSource === "local" || styleValueSource === "overwritten")
           ) {
-            deleteProperty(property);
             return;
           }
           handleOpenProperty(property);
