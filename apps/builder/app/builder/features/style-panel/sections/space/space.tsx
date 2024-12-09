@@ -138,13 +138,27 @@ export const Section = () => {
           const styleValueSource = styles.find(
             (styleDecl) => styleDecl.property === property
           )?.source.name;
+
           if (
-            event.altKey &&
             property &&
             // reset when the value is set and after try to edit two sides
             (styleValueSource === "local" || styleValueSource === "overwritten")
           ) {
-            return;
+            if (event.shiftKey && event.altKey) {
+              const properties = getSpaceModifiersGroup(property, {
+                shiftKey: true,
+                altKey: false,
+              });
+              const batch = createBatchUpdate();
+              for (const property of properties) {
+                batch.deleteProperty(property);
+              }
+              batch.publish();
+              return;
+            }
+            if (event.altKey) {
+              return;
+            }
           }
           handleOpenProperty(property);
         }}
