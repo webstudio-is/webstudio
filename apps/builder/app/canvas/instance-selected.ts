@@ -30,6 +30,7 @@ import {
 } from "~/canvas/collapsed";
 import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { shallowEqual } from "shallow-equal";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -205,7 +206,14 @@ const subscribeSelectedInstance = (
       selectedInstanceSelector
     );
 
-    $selectedInstanceIntanceToTag.set(instanceToTag);
+    if (
+      !shallowEqual(
+        [...($selectedInstanceIntanceToTag.get()?.entries() ?? [])].flat(),
+        [...(instanceToTag?.entries() ?? [])].flat()
+      )
+    ) {
+      $selectedInstanceIntanceToTag.set(instanceToTag);
+    }
 
     const unitSizes = calculateUnitSizes(element);
     $selectedInstanceUnitSizes.set(unitSizes);
@@ -229,7 +237,12 @@ const subscribeSelectedInstance = (
         activeStates.add(state);
       }
     }
-    $selectedInstanceStates.set(activeStates);
+
+    if (
+      !shallowEqual(activeStates.keys(), $selectedInstanceStates.get().keys())
+    ) {
+      $selectedInstanceStates.set(activeStates);
+    }
   };
 
   let updateStoreTimeouHandle: undefined | ReturnType<typeof setTimeout>;
