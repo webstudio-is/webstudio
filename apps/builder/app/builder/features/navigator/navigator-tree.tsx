@@ -399,11 +399,6 @@ const getBuilderDropTarget = (
   if (parentSelector === undefined) {
     return;
   }
-  const instances = $instances.get();
-  const parentInstance = instances.get(parentSelector[0]);
-  if (parentInstance === undefined) {
-    return;
-  }
   const beforeItem = item.visibleAncestors[treeDropTarget.beforeLevel ?? -1];
   const afterItem = item.visibleAncestors[treeDropTarget.afterLevel ?? -1];
   let closestChildIndex = 0;
@@ -414,6 +409,17 @@ const getBuilderDropTarget = (
   } else if (afterItem) {
     closestChildIndex = afterItem.indexWithinChildren;
     indexAdjustment = 1;
+  }
+  // first position is always reserved for templates in block component
+  const instances = $instances.get();
+  const parentInstance = instances.get(parentSelector[0]);
+  if (parentInstance?.component === blockComponent) {
+    // adjust position to show indicator before second child
+    // because templates indicator is not rendered in content mode
+    if (closestChildIndex === 0) {
+      closestChildIndex = 1;
+      indexAdjustment = 0;
+    }
   }
   const indexWithinChildren = closestChildIndex + indexAdjustment;
   return {
@@ -457,23 +463,15 @@ const canDrop = (
   dragSelector: InstanceSelector,
   dropTarget: ItemDropTarget
 ) => {
-  const instances = $instances.get();
   const dropSelector = dropTarget.itemSelector;
+  const instances = $instances.get();
 
-  // Allow dropping into the parent only
-  const isSameParent = dragSelector[1] === dropSelector[0];
-
-  const isDropTargetBlock =
-    isSameParent &&
-    instances.get(dropSelector[0])?.component === blockComponent;
-
+  // in content mode allow drop only inside of block
   if ($isContentMode.get()) {
-    return isDropTargetBlock && dropTarget.indexWithinChildren > 0;
-  }
-
-  if (isDropTargetBlock && dropTarget.indexWithinChildren === 0) {
-    // We want Templates to be the first child of the content block
-    return false;
+    const parentInstance = instances.get(dropSelector[0]);
+    if (parentInstance?.component !== blockComponent) {
+      return false;
+    }
   }
 
   return isTreeMatching({
