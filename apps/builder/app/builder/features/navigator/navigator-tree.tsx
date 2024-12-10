@@ -61,9 +61,17 @@ import {
 } from "~/shared/awareness";
 import { isTreeMatching } from "~/shared/matcher";
 
+type TreeItemAncestor =
+  | undefined
+  | {
+      selector: InstanceSelector;
+      indexWithinChildren: number;
+      component: string;
+    };
+
 type TreeItem = {
-  level: number;
   selector: InstanceSelector;
+  visibleAncestors: TreeItemAncestor[];
   instance: Instance;
   isExpanded: undefined | boolean;
   isLastChild: boolean;
@@ -79,69 +87,6 @@ const $dropTarget = computed(
   (dragAndDropState) => dragAndDropState.dropTarget
 );
 
-const $contentTree = computed(
-  [$selectedPage, $instances, $propValuesByInstanceSelector],
-  (page, instances, propValuesByInstanceSelector) => {
-    const flatTree: TreeItem[] = [];
-    if (page === undefined) {
-      return flatTree;
-    }
-    const traverse = (
-      instanceId: Instance["id"],
-      selector: InstanceSelector,
-      parentComponent?: Instance["component"],
-      isParentHidden = false,
-      isLastChild = false,
-      level = 0
-    ) => {
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
-        // log instead of failing navigator tree
-        console.error(`Unknown instance ${instanceId}`);
-        return;
-      }
-      const propValues = propValuesByInstanceSelector.get(
-        getInstanceKey(selector)
-      );
-      const isHidden =
-        isParentHidden ||
-        false === Boolean(propValues?.get(showAttribute) ?? true);
-      const treeItem: TreeItem = {
-        level,
-        selector,
-        instance,
-        isExpanded: undefined,
-        isLastChild,
-        isHidden,
-        isReusable: false,
-      };
-      const isVisible =
-        instance.component === blockComponent ||
-        (parentComponent === blockComponent &&
-          instance.component !== blockTemplateComponent);
-      if (isVisible) {
-        flatTree.push(treeItem);
-      }
-      for (let index = 0; index < instance.children.length; index += 1) {
-        const child = instance.children[index];
-        if (child.type === "id") {
-          const isLastChild = index === instance.children.length - 1;
-          traverse(
-            child.value,
-            [child.value, ...selector],
-            instance.component,
-            isHidden,
-            isLastChild,
-            isVisible ? level + 1 : level
-          );
-        }
-      }
-    };
-    traverse(page.rootInstanceId, [page.rootInstanceId]);
-    return flatTree;
-  }
-);
-
 export const $flatTree = computed(
   [
     $selectedPage,
@@ -149,13 +94,15 @@ export const $flatTree = computed(
     $expandedItems,
     $propValuesByInstanceSelector,
     $dropTarget,
+    $isContentMode,
   ],
   (
     page,
     instances,
     expandedItems,
     propValuesByInstanceSelector,
-    dropTarget
+    dropTarget,
+    isContentMode
   ) => {
     const flatTree: TreeItem[] = [];
     if (page === undefined) {
@@ -164,10 +111,10 @@ export const $flatTree = computed(
     const traverse = (
       instanceId: Instance["id"],
       selector: InstanceSelector,
+      visibleAncestors: TreeItemAncestor[] = [],
       isParentHidden = false,
       isParentReusable = false,
       isLastChild = false,
-      level = 0,
       indexWithinChildren = 0
     ) => {
       const instance = instances.get(instanceId);
@@ -183,32 +130,63 @@ export const $flatTree = computed(
         isParentHidden ||
         false === Boolean(propValues?.get(showAttribute) ?? true);
       const isReusable = isParentReusable || instance.component === "Slot";
-      let isExpanded: undefined | boolean;
-      if (level > 0 && instance.children.some((child) => child.type === "id")) {
-        isExpanded = expandedItems.has(selector.join());
-      }
-      if (instance.component === "Fragment") {
-        isExpanded = true;
-      }
-
       const treeItem: TreeItem = {
-        level,
         selector,
+        visibleAncestors,
         instance,
-        isExpanded,
+        isExpanded: undefined,
         isLastChild,
         isHidden,
         isReusable,
       };
-      let lastItem = treeItem;
+      let isVisible = true;
       // slot fragment component is not rendered in navigator tree
       // so should be always expanded
-      if (instance.component !== "Fragment") {
+      if (instance.component === "Fragment") {
+        isVisible = false;
+      }
+      const parentComponent = visibleAncestors.at(-1)?.component;
+      if (isContentMode) {
+        // hide everything except block and its children
+        if (
+          instance.component !== blockComponent &&
+          parentComponent !== blockComponent
+        ) {
+          isVisible = false;
+        }
+        // though hide block template along with all descendants
+        if (instance.component === blockTemplateComponent) {
+          return treeItem;
+        }
+      }
+      let lastItem = treeItem;
+      if (isVisible) {
+        const ancestor = {
+          selector,
+          indexWithinChildren,
+          component: instance.component,
+        };
+        visibleAncestors = [...visibleAncestors, ancestor];
+        treeItem.visibleAncestors = visibleAncestors;
         flatTree.push(treeItem);
+      }
+      const level = treeItem.visibleAncestors.length - 1;
+      // expand everything in content mode
+      if (isContentMode === false) {
+        if (
+          level > 0 &&
+          instance.children.some((child) => child.type === "id")
+        ) {
+          treeItem.isExpanded = expandedItems.has(selector.join());
+        }
+      }
+      // always expand invisible items
+      if (isVisible === false) {
+        treeItem.isExpanded = true;
       }
 
       // render same children for each collection item in data
-      if (instance.component === collectionComponent && isExpanded) {
+      if (instance.component === collectionComponent && treeItem.isExpanded) {
         const data = propValues?.get("data");
         // create items only when collection has content
         if (Array.isArray(data) && instance.children.length > 0) {
@@ -224,14 +202,11 @@ export const $flatTree = computed(
                     getIndexedInstanceId(instance.id, dataIndex),
                     ...selector,
                   ],
+                  visibleAncestors,
                   isHidden,
                   isReusable,
                   isLastChild,
-                  // virtual item instance is hidden
-                  // but level is still increased to show proper drop indicator
-                  // and address instance selector
-                  level + 2,
-                  index
+                  instance.children.length * dataIndex + index
                 );
                 if (lastDescendentItem) {
                   lastItem = lastDescendentItem;
@@ -240,7 +215,7 @@ export const $flatTree = computed(
             }
           });
         }
-      } else if (level === 0 || isExpanded) {
+      } else if (level === 0 || treeItem.isExpanded) {
         for (let index = 0; index < instance.children.length; index += 1) {
           const child = instance.children[index];
           if (child.type === "id") {
@@ -248,10 +223,10 @@ export const $flatTree = computed(
             const lastDescendentItem = traverse(
               child.value,
               [child.value, ...selector],
+              visibleAncestors,
               isHidden,
               isReusable,
               isLastChild,
-              level + 1,
               index
             );
             if (lastDescendentItem) {
@@ -261,10 +236,10 @@ export const $flatTree = computed(
         }
       }
 
-      const parentSelector = treeItem.selector.slice(1);
+      const parentSelector = treeItem.visibleAncestors.at(-2)?.selector;
       if (
         dropTarget &&
-        parentSelector.join() === dropTarget.itemSelector.join() &&
+        parentSelector?.join() === dropTarget.itemSelector.join() &&
         dropTarget.placement.closestChildIndex === indexWithinChildren
       ) {
         if (dropTarget.placement.indexAdjustment === 0) {
@@ -298,7 +273,7 @@ const handleExpand = (item: TreeItem, isExpanded: boolean, all: boolean) => {
       expandedItems.delete(key);
     }
     const instance = instances.get(instanceId);
-    // expand all descendents as well when alt is pressed
+    // expand all descendants as well when alt is pressed
     if (all && instance) {
       for (const child of instance.children) {
         traverse(child.value, [child.value, ...selector]);
@@ -413,50 +388,38 @@ const TreeNodeContent = ({
 };
 
 const getBuilderDropTarget = (
-  selector: string[],
+  item: TreeItem,
   treeDropTarget: undefined | TreeDropTarget
 ): undefined | ItemDropTarget => {
   if (treeDropTarget === undefined) {
     return;
   }
-  const instances = $instances.get();
-  const parentSelector = selector.slice(-treeDropTarget.parentLevel - 1);
-  let parentInstance = instances.get(parentSelector[0]);
-  const grandParentInstance = instances.get(parentSelector[1]);
-  // collection item fake instance
-  if (parentInstance === undefined && grandParentInstance) {
-    parentInstance = {
-      type: "instance",
-      id: parentSelector[0],
-      component: "Fragment",
-      children: grandParentInstance.children,
-    };
-  }
-  if (parentInstance === undefined) {
+  const parentSelector =
+    item.visibleAncestors[treeDropTarget.parentLevel]?.selector;
+  if (parentSelector === undefined) {
     return;
   }
-  const beforeId =
-    treeDropTarget.beforeLevel === undefined
-      ? undefined
-      : selector.at(-treeDropTarget.beforeLevel - 1);
-  const beforeIndex = parentInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === beforeId
-  );
-  const afterId =
-    treeDropTarget.afterLevel === undefined
-      ? undefined
-      : selector.at(-treeDropTarget.afterLevel - 1);
-  const afterIndex = parentInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === afterId
-  );
+  const beforeItem = item.visibleAncestors[treeDropTarget.beforeLevel ?? -1];
+  const afterItem = item.visibleAncestors[treeDropTarget.afterLevel ?? -1];
   let closestChildIndex = 0;
   let indexAdjustment = 0;
-  if (beforeIndex > -1) {
-    closestChildIndex = beforeIndex;
+  if (beforeItem) {
+    closestChildIndex = beforeItem.indexWithinChildren;
     indexAdjustment = 0;
-  } else if (afterIndex > -1) {
-    closestChildIndex = afterIndex;
+  } else if (afterItem) {
+    closestChildIndex = afterItem.indexWithinChildren;
     indexAdjustment = 1;
+  }
+  // first position is always reserved for templates in block component
+  const instances = $instances.get();
+  const parentInstance = instances.get(parentSelector[0]);
+  if (parentInstance?.component === blockComponent) {
+    // adjust position to show indicator before second child
+    // because templates indicator is not rendered in content mode
+    if (closestChildIndex === 0) {
+      closestChildIndex = 1;
+      indexAdjustment = 0;
+    }
   }
   const indexWithinChildren = closestChildIndex + indexAdjustment;
   return {
@@ -473,17 +436,10 @@ const getBuilderDropTarget = (
 const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
   if ($isContentMode.get()) {
     const parentId = instanceSelector[1];
-
-    if (parentId === undefined) {
-      return false;
-    }
-
     const parentInstance = $instances.get().get(parentId);
-
     if (parentInstance === undefined) {
       return false;
     }
-
     if (parentInstance.component !== blockComponent) {
       return false;
     }
@@ -507,23 +463,15 @@ const canDrop = (
   dragSelector: InstanceSelector,
   dropTarget: ItemDropTarget
 ) => {
-  const instances = $instances.get();
   const dropSelector = dropTarget.itemSelector;
+  const instances = $instances.get();
 
-  // Allow dropping into the parent only
-  const isSameParent = dragSelector[1] === dropSelector[0];
-
-  const isDropTargetBlock =
-    isSameParent &&
-    instances.get(dropSelector[0])?.component === blockComponent;
-
+  // in content mode allow drop only inside of block
   if ($isContentMode.get()) {
-    return isDropTargetBlock && dropTarget.indexWithinChildren > 0;
-  }
-
-  if (isDropTargetBlock && dropTarget.indexWithinChildren === 0) {
-    // We want Templates to be the first child of the content block
-    return false;
+    const parentInstance = instances.get(dropSelector[0]);
+    if (parentInstance?.component !== blockComponent) {
+      return false;
+    }
   }
 
   return isTreeMatching({
@@ -536,7 +484,7 @@ const canDrop = (
 
 export const NavigatorTree = () => {
   const isContentMode = useStore($isContentMode);
-  const flatTree = useStore(isContentMode ? $contentTree : $flatTree);
+  const flatTree = useStore($flatTree);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const selectedKey = selectedInstanceSelector?.join();
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
@@ -610,6 +558,7 @@ export const NavigatorTree = () => {
         )}
 
         {flatTree.map((item) => {
+          const level = item.visibleAncestors.length - 1;
           const key = item.selector.join();
           const propValues = propValuesByInstanceSelector.get(
             getInstanceKey(item.selector)
@@ -622,7 +571,7 @@ export const NavigatorTree = () => {
           return (
             <TreeSortableItem
               key={key}
-              level={item.level}
+              level={level}
               isExpanded={item.isExpanded}
               isLastChild={item.isLastChild}
               data={item}
@@ -630,10 +579,9 @@ export const NavigatorTree = () => {
               dropTarget={item.dropTarget}
               onDropTargetChange={(dropTarget, draggingItem) => {
                 const builderDropTarget = getBuilderDropTarget(
-                  item.selector,
+                  item,
                   dropTarget
                 );
-
                 if (
                   builderDropTarget &&
                   canDrop(draggingItem.selector, builderDropTarget)
@@ -669,7 +617,7 @@ export const NavigatorTree = () => {
               onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
             >
               <TreeNode
-                level={item.level}
+                level={level}
                 isSelected={selectedKey === key}
                 isHighlighted={hoveredKey === key || dropTargetKey === key}
                 isExpanded={item.isExpanded}
