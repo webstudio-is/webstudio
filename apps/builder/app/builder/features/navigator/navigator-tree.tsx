@@ -59,7 +59,7 @@ import {
   getInstanceKey,
   selectInstance,
 } from "~/shared/awareness";
-import { isTreeMatching } from "~/shared/matcher";
+import { findClosestContainer, isTreeMatching } from "~/shared/matcher";
 
 type TreeItemAncestor =
   | undefined
@@ -465,20 +465,35 @@ const canDrop = (
 ) => {
   const dropSelector = dropTarget.itemSelector;
   const instances = $instances.get();
-
-  // in content mode allow drop only inside of block
+  const metas = $registeredComponentMetas.get();
+  // in content mode allow drop only within same block
   if ($isContentMode.get()) {
     const parentInstance = instances.get(dropSelector[0]);
     if (parentInstance?.component !== blockComponent) {
       return false;
     }
+    // parent of dragging item should be the same as drop target
+    if (dropSelector[0] !== dragSelector[1]) {
+      return false;
+    }
   }
-
+  // prevent dropping into non-container instances
+  const closestContainerIndex = findClosestContainer({
+    metas,
+    instances,
+    instanceSelector: dropSelector,
+  });
+  if (closestContainerIndex !== 0) {
+    return false;
+  }
   return isTreeMatching({
     instances,
-    metas: $registeredComponentMetas.get(),
+    metas,
     // make sure dragging tree can be put inside of drop instance
-    instanceSelector: [dragSelector[0], ...dropSelector],
+    instanceSelector: [
+      dragSelector[0],
+      ...dropSelector.slice(closestContainerIndex),
+    ],
   });
 };
 

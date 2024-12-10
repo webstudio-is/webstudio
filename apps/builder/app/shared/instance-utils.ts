@@ -64,7 +64,7 @@ import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import { $awareness, $selectedPage, selectInstance } from "./awareness";
 import {
-  findClosestContainer,
+  findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,
   isTreeMatching,
 } from "./matcher";
@@ -1436,7 +1436,7 @@ export const findClosestInsertable = (
   }
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
-  const closestContainerIndex = findClosestContainer({
+  const closestContainerIndex = findClosestNonTextualContainer({
     metas,
     instances,
     instanceSelector,
