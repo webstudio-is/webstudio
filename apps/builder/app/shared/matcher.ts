@@ -301,10 +301,7 @@ export const findClosestContainer = ({
       continue;
     }
     const meta = metas.get(instance.component);
-    if (meta === undefined) {
-      continue;
-    }
-    if (meta.type === "container") {
+    if (meta?.type === "container") {
       return index;
     }
   }
@@ -331,10 +328,6 @@ export const findClosestNonTextualContainer = ({
     if (instance === undefined) {
       continue;
     }
-    const meta = metas.get(instance.component);
-    if (meta === undefined) {
-      continue;
-    }
     let hasText = false;
     for (const child of instance.children) {
       if (child.type === "text" || child.type === "expression") {
@@ -344,7 +337,8 @@ export const findClosestNonTextualContainer = ({
     if (hasText) {
       continue;
     }
-    if (meta.type === "container") {
+    const meta = metas.get(instance.component);
+    if (meta?.type === "container") {
       return index;
     }
   }
