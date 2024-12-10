@@ -1,4 +1,4 @@
-import { json } from "@remix-run/server-runtime";
+import { data } from "@remix-run/server-runtime";
 import { authenticator } from "~/services/auth.server";
 import { isDashboard, loginPath } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -32,7 +32,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       headers.set("Content-Type", "application/json");
 
-      return json(
+      return data(
         {
           redirectTo: error.headers.get("Location"),
         },

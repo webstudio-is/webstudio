@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, json } from "@remix-run/server-runtime";
+import { type ActionFunctionArgs, data } from "@remix-run/server-runtime";
 import { z } from "zod";
 
 import { createDebug } from "~/shared/debug";
@@ -54,7 +54,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const authorizationHeader = request.headers.get("Authorization");
 
   if (authorizationHeader === null) {
-    return json(
+    return data(
       {
         error: "invalid_request",
         error_description: "missing client credentials",
@@ -79,7 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     clientSecret !== env.AUTH_WS_CLIENT_SECRET
   ) {
     debug("client_id and client_secret do not match", clientId, clientSecret);
-    return json(
+    return data(
       {
         error: "invalid_client",
         error_description: "invalid client credentials",
@@ -97,7 +97,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (false === parsedBody.success) {
     debug(fromError(parsedBody.error).toString());
 
-    return json(
+    return data(
       {
         error: "invalid_request",
         error_description: fromError(parsedBody.error).toString(),
@@ -114,7 +114,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (codeToken === undefined) {
     debug("Code can not be read", body.code);
-    return json(
+    return data(
       {
         error: "invalid_grant",
         error_description: "invalid code",
@@ -135,7 +135,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       body.code_verifier,
       codeToken.codeChallenge
     );
-    return json(
+    return data(
       {
         error: "invalid_grant",
         error_description: "invalid code_verifier",
@@ -151,7 +151,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (false === isAuthorized) {
     debug("User does not have access to the project", userId, projectId);
-    return json(
+    return data(
       {
         error: "invalid_grant",
         error_description: "user does not have access to the project",
@@ -179,7 +179,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await readAccessToken(accessToken, env.AUTH_WS_CLIENT_SECRET)
   );
 
-  return json(
+  return data(
     {
       access_token: accessToken,
       token_type: "Bearer",

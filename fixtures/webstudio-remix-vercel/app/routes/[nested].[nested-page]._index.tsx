@@ -5,7 +5,7 @@ import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
   type HeadersFunction,
-  json,
+  data,
   redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
@@ -50,7 +50,8 @@ const customFetch: typeof fetch = (input, init) => {
   return fetch(input, init);
 };
 
-export const loader = async (arg: LoaderFunctionArgs) => {
+// have not idea how to win this error The inferred type of 'loader' cannot be named without a reference to '.pnpm/@remix-run+router@1.21.0/node_modules/@remix-run/router'. This is likely not portable. A type annotation is necessary.
+export const loader = async (arg: LoaderFunctionArgs): Promise<any> => {
   const url = new URL(arg.request.url);
   const host =
     arg.request.headers.get("x-forwarded-host") ||
@@ -77,7 +78,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
       pageMeta.status === 301 || pageMeta.status === 302
         ? pageMeta.status
         : 302;
-    return redirect(pageMeta.redirect, status);
+    throw redirect(pageMeta.redirect, status);
   }
 
   // typecheck
@@ -87,7 +88,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     pageMeta.excludePageFromSearch = arg.context.EXCLUDE_FROM_SEARCH;
   }
 
-  return json(
+  return data(
     {
       host,
       url: url.href,
