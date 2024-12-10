@@ -23,7 +23,10 @@ export const metaPopoverTrigger: WsComponentMeta = {
   type: "container",
   icon: TriggerIcon,
   stylable: false,
-  detachable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Popover" },
+  },
 };
 
 export const metaPopoverContent: WsComponentMeta = {
@@ -31,7 +34,10 @@ export const metaPopoverContent: WsComponentMeta = {
   type: "container",
   presetStyle,
   icon: ContentIcon,
-  detachable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Popover" },
+  },
 };
 
 /**
@@ -46,6 +52,16 @@ export const metaPopover: WsComponentMeta = {
   category: "radix",
   order: 6,
   type: "container",
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "PopoverTrigger" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "PopoverContent" },
+    },
+  ],
   icon: PopoverIcon,
   stylable: false,
   description: "Displays rich content in a portal, triggered by a button.",

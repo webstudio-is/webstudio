@@ -94,7 +94,10 @@ const descendantMeta: WsComponentMeta = {
   type: "control",
   label: "Descendant",
   icon: PaintBrushIcon,
-  detachable: false,
+  constraints: {
+    relation: "parent",
+    component: { $eq: "HtmlEmbed" },
+  },
 };
 
 const descendantPropsMeta: WsComponentPropsMeta = {
@@ -126,14 +129,19 @@ const descendantPropsMeta: WsComponentPropsMeta = {
   initialProps: ["selector"],
 };
 
+export const blockComponent = "ws:block";
+
 export const blockTemplateComponent = "ws:block-template";
 
 export const blockTemplateMeta: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: AddTemplateInstanceIcon,
   stylable: false,
+  constraints: {
+    relation: "parent",
+    component: { $eq: blockComponent },
+  },
 };
 
 const blockTemplatePropsMeta: WsComponentPropsMeta = {
@@ -141,18 +149,22 @@ const blockTemplatePropsMeta: WsComponentPropsMeta = {
   initialProps: [],
 };
 
-export const blockComponent = "ws:block";
-
 const blockMeta: WsComponentMeta = {
   category: "data",
   order: 2,
   type: "container",
   label: "Content Block",
   icon: EditIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: [collectionComponent, blockComponent] },
-  },
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $nin: [collectionComponent, blockComponent] },
+    },
+    {
+      relation: "child",
+      component: { $eq: blockTemplateComponent },
+    },
+  ],
   stylable: false,
   template: [
     {

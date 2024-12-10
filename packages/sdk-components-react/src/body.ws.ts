@@ -28,7 +28,6 @@ export const meta: WsComponentMeta = {
   icon: BodyIcon,
   states: defaultStates,
   presetStyle,
-  detachable: false,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
