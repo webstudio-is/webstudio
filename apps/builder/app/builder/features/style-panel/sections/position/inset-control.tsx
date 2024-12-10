@@ -9,12 +9,12 @@ import { InputPopover } from "../shared/input-popover";
 import { InsetLayout, type InsetProperty } from "./inset-layout";
 import { InsetTooltip } from "./inset-tooltip";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
-import { useModifierKeys } from "../../shared/modifier-keys";
+import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
 
 const Cell = ({
   scrubStatus,
   property,
-  activeProperties,
+  getActiveProperties,
   onHover,
   isPopoverOpen,
   onPopoverClose,
@@ -23,7 +23,7 @@ const Cell = ({
   onPopoverClose: () => void;
   scrubStatus: ReturnType<typeof useScrub>;
   property: InsetProperty;
-  activeProperties: InsetProperty[];
+  getActiveProperties: (modifiers?: Modifiers) => readonly InsetProperty[];
   onHover: (target: HoverTarget | undefined) => void;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -38,7 +38,7 @@ const Cell = ({
         value={finalValue}
         isOpen={isPopoverOpen}
         property={property}
-        activeProperties={activeProperties}
+        getActiveProperties={getActiveProperties}
         onClose={onPopoverClose}
       />
       <InsetTooltip property={property} preventOpen={scrubStatus.isActive}>
@@ -116,6 +116,11 @@ export const InsetControl = () => {
   const activeProperties = [
     ...(activePopoverProperties ?? scrubStatus.properties),
   ];
+  const getActiveProperties = (modifiers?: Modifiers) => {
+    return modifiers && openProperty
+      ? getInsetModifiersGroup(openProperty, modifiers)
+      : activeProperties;
+  };
 
   const handleHover = (target: HoverTarget | undefined) => {
     setHoverTarget(target);
@@ -162,12 +167,12 @@ export const InsetControl = () => {
       }}
     >
       <InsetLayout
-        activeProperties={activeProperties}
+        getActiveProperties={getActiveProperties}
         renderCell={(property) => (
           <Cell
             scrubStatus={scrubStatus}
             property={property}
-            activeProperties={activeProperties}
+            getActiveProperties={getActiveProperties}
             onHover={handleHover}
             isPopoverOpen={openProperty === property}
             onPopoverClose={() => {
