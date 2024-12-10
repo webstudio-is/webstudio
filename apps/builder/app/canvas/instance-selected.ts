@@ -247,11 +247,6 @@ const subscribeSelectedInstance = (
 
   let updateStoreTimeouHandle: undefined | ReturnType<typeof setTimeout>;
 
-  const updateStoresDebounced = () => {
-    clearTimeout(updateStoreTimeouHandle);
-    updateStoreTimeouHandle = setTimeout(updateStores, 100);
-  };
-
   const update = () => {
     debounceEffect(() => {
       updateElements();
@@ -264,7 +259,7 @@ const subscribeSelectedInstance = (
 
       // Cause serious performance issues, use debounced version
       // The result of stores is not needed immediately
-      updateStoresDebounced();
+      updateStores();
 
       // Having that elements can be changed (i.e. div => address tag change, observe again)
       updateObservers();
