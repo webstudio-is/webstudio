@@ -18,13 +18,13 @@
     "@webstudio-is/image": "0.0.0-webstudio-version",
     "@webstudio-is/sdk": "0.0.0-webstudio-version",
     "isbot": "^5.1.17",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@remix-run/dev": "2.15.0",
-    "@types/react": "^18.2.70",
-    "@types/react-dom": "^18.2.25",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "typescript": "5.7.2",
     "vite": "^5.4.11"
   },
