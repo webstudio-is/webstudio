@@ -313,7 +313,16 @@ export const metaNavigationMenu: WsComponentMeta = {
   description: "A collection of links for navigating websites.",
   icon: NavigationMenuIcon,
   presetStyle,
-
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "NavigationMenuList" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "NavigationMenuViewport" },
+    },
+  ],
   template: [
     {
       type: "instance",
@@ -428,13 +437,18 @@ export const metaNavigationMenu: WsComponentMeta = {
 
 export const metaNavigationMenuList: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: ListIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "NavigationMenu" },
-  },
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "NavigationMenu" },
+    },
+    {
+      relation: "child",
+      component: { $eq: "NavigationMenuItem" },
+    },
+  ],
   presetStyle,
   label: "Menu List",
 };
@@ -444,16 +458,16 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   type: "container",
   icon: ListItemIcon,
   constraints: {
-    relation: "ancestor",
-    component: { $eq: "NavigationMenu" },
+    relation: "parent",
+    component: { $eq: "NavigationMenuList" },
   },
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
   label: "Menu Item",
 };
+
 export const metaNavigationMenuTrigger: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   stylable: false,
   type: "container",
   icon: TriggerIcon,
@@ -464,9 +478,9 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
   presetStyle,
   label: "Menu Trigger",
 };
+
 export const metaNavigationMenuContent: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: ContentIcon,
   constraints: {
@@ -480,7 +494,6 @@ export const metaNavigationMenuContent: WsComponentMeta = {
 
 export const metaNavigationMenuLink: WsComponentMeta = {
   category: "hidden",
-  detachable: true,
   type: "container",
   stylable: false,
   icon: BoxIcon,
@@ -500,7 +513,6 @@ export const metaNavigationMenuLink: WsComponentMeta = {
 
 export const metaNavigationMenuViewport: WsComponentMeta = {
   category: "hidden",
-  detachable: true,
   type: "container",
   icon: ViewportIcon,
   constraints: {

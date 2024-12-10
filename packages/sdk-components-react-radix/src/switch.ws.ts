@@ -13,6 +13,10 @@ export const metaSwitch: WsComponentMeta = {
   category: "radix",
   order: 11,
   type: "container",
+  constraints: {
+    relation: "descendant",
+    component: { $eq: "SwitchThumb" },
+  },
   description:
     "A control that allows the user to toggle between checked and not checked.",
   icon: SwitchIcon,
@@ -116,7 +120,10 @@ export const metaSwitch: WsComponentMeta = {
 export const metaSwitchThumb: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  detachable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Switch" },
+  },
   icon: TriggerIcon,
   states: [
     ...defaultStates,

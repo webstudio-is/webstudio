@@ -20,18 +20,24 @@ const presetStyle = {
 // @todo add [data-state] to button and link
 export const metaTooltipTrigger: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: TriggerIcon,
   stylable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Tooltip" },
+  },
 };
 
 export const metaTooltipContent: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
-  presetStyle,
   icon: ContentIcon,
+  presetStyle,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Tooltip" },
+  },
 };
 
 /**
@@ -46,6 +52,16 @@ export const metaTooltip: WsComponentMeta = {
   category: "radix",
   order: 7,
   type: "container",
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "TooltipTrigger" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "TooltipContent" },
+    },
+  ],
   icon: TooltipIcon,
   stylable: false,
   description:

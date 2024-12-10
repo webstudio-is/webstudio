@@ -24,6 +24,16 @@ export const metaCollapsible: WsComponentMeta = {
   category: "radix",
   order: 5,
   type: "container",
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "CollapsibleTrigger" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "CollapsibleContent" },
+    },
+  ],
   presetStyle,
   icon: CollapsibleIcon,
   description:
@@ -79,7 +89,10 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
   type: "container",
   icon: TriggerIcon,
   stylable: false,
-  detachable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Collapsible" },
+  },
 };
 
 export const metaCollapsibleContent: WsComponentMeta = {
@@ -87,7 +100,10 @@ export const metaCollapsibleContent: WsComponentMeta = {
   type: "container",
   presetStyle,
   icon: ContentIcon,
-  detachable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Collapsible" },
+  },
 };
 
 export const propsMetaCollapsible: WsComponentPropsMeta = {

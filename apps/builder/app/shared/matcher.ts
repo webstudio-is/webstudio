@@ -1,10 +1,11 @@
-import type {
-  Instance,
-  Instances,
-  Matcher,
-  MatcherOperation,
-  MatcherRelation,
-  WebstudioFragment,
+import {
+  parseComponentName,
+  type Instance,
+  type Instances,
+  type Matcher,
+  type MatcherOperation,
+  type MatcherRelation,
+  type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "./tree-utils";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
@@ -65,7 +66,12 @@ const formatList = (operation: MatcherOperation) => {
   if (operation.$nin) {
     list.push(...operation.$nin);
   }
-  return listFormat.format(list);
+  return listFormat.format(
+    list.map((component) => {
+      const [_namespace, name] = parseComponentName(component);
+      return name;
+    })
+  );
 };
 
 /**

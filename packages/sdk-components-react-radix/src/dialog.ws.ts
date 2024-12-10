@@ -45,15 +45,10 @@ export const metaDialogTrigger: WsComponentMeta = {
   type: "container",
   icon: TriggerIcon,
   stylable: false,
-  detachable: false,
-};
-
-export const metaDialogContent: WsComponentMeta = {
-  category: "hidden",
-  type: "container",
-  presetStyle,
-  icon: ContentIcon,
-  detachable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Dialog" },
+  },
 };
 
 export const metaDialogOverlay: WsComponentMeta = {
@@ -61,7 +56,41 @@ export const metaDialogOverlay: WsComponentMeta = {
   type: "container",
   presetStyle,
   icon: OverlayIcon,
-  detachable: false,
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "Dialog" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "DialogContent" },
+    },
+  ],
+};
+
+export const metaDialogContent: WsComponentMeta = {
+  category: "hidden",
+  type: "container",
+  presetStyle,
+  icon: ContentIcon,
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "DialogOverlay" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "DialogTitle" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "DialogDescription" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "DialogClose" },
+    },
+  ],
 };
 
 export const metaDialogTitle: WsComponentMeta = {
@@ -69,6 +98,10 @@ export const metaDialogTitle: WsComponentMeta = {
   type: "container",
   presetStyle: titlePresetStyle,
   icon: HeadingIcon,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "DialogContent" },
+  },
 };
 
 export const metaDialogDescription: WsComponentMeta = {
@@ -76,6 +109,10 @@ export const metaDialogDescription: WsComponentMeta = {
   type: "container",
   presetStyle: descriptionPresetStyle,
   icon: TextIcon,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "DialogContent" },
+  },
 };
 
 export const metaDialogClose: WsComponentMeta = {
@@ -87,6 +124,10 @@ export const metaDialogClose: WsComponentMeta = {
   states: defaultStates,
   icon: ButtonElementIcon,
   label: "Close Button",
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "DialogContent" },
+  },
 };
 
 /**
@@ -101,6 +142,16 @@ export const metaDialog: WsComponentMeta = {
   category: "radix",
   order: 4,
   type: "container",
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "DialogTrigger" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "DialogOverlay" },
+    },
+  ],
   icon: DialogIcon,
   stylable: false,
   description:

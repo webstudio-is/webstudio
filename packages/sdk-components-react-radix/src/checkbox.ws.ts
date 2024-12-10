@@ -20,6 +20,10 @@ export const metaCheckbox: WsComponentMeta = {
   category: "radix",
   order: 101,
   type: "container",
+  constraints: {
+    relation: "descendant",
+    component: { $eq: "CheckboxIndicator" },
+  },
   icon: CheckboxCheckedIcon,
   description:
     "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
@@ -136,7 +140,10 @@ export const metaCheckbox: WsComponentMeta = {
 export const metaCheckboxIndicator: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  detachable: false,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Checkbox" },
+  },
   icon: TriggerIcon,
   states: defaultStates,
   presetStyle: {
