@@ -688,30 +688,17 @@ export const CssValueInput = ({
       </NestedIconLabel>
     ));
 
-  const keywordButtonElement = (
-    <NestedInputButton
-      {...getToggleButtonProps()}
-      data-state={isOpen ? "open" : "closed"}
-      tabIndex={-1}
-    />
-  );
+  const keywordButtonElement =
+    value.type === "keyword" && items.length !== 0 ? (
+      <NestedInputButton
+        {...getToggleButtonProps()}
+        data-state={isOpen ? "open" : "closed"}
+        tabIndex={-1}
+      />
+    ) : undefined;
 
-  const isUnitValue = unitSelectElement !== null;
-
-  const hasItems = items.length !== 0;
-  const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
-
-  const suffix =
-    showSuffix === false ? null : (
-      <Flex align="center" ref={suffixRef}>
-        {isUnitValue
-          ? unitSelectElement
-          : isKeywordValue
-            ? keywordButtonElement
-            : null}
-      </Flex>
-    );
+  const suffixElement = unitSelectElement ?? keywordButtonElement;
 
   let description;
   // When user hovers or focuses an item in the combobox list we want to show the description of the item and otherwise show the description of the current value
@@ -848,7 +835,13 @@ export const CssValueInput = ({
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
-            suffix={suffix}
+            suffix={
+              suffixElement && (
+                <Flex align="center" ref={suffixRef}>
+                  {suffixElement}
+                </Flex>
+              )
+            }
             css={{ cursor: "default", minWidth: "2em" }}
             text={text}
           />
