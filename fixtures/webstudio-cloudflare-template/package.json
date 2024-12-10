@@ -39,8 +39,8 @@
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "isbot": "^5.1.17",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "webstudio": "workspace:*",
     "worktop": "0.8.0-next.18",
     "zod": "^3.22.4"
@@ -48,8 +48,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",
     "@remix-run/dev": "2.15.0",
-    "@types/react": "^18.2.70",
-    "@types/react-dom": "^18.2.25",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "typescript": "5.7.2",
     "vite": "^5.4.11",
     "wrangler": "^3.63.2"
