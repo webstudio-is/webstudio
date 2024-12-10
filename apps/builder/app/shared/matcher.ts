@@ -301,7 +301,31 @@ export const findClosestContainer = ({
       continue;
     }
     const meta = metas.get(instance.component);
-    if (meta === undefined) {
+    if (meta?.type === "container") {
+      return index;
+    }
+  }
+  return -1;
+};
+
+export const findClosestNonTextualContainer = ({
+  metas,
+  instances,
+  instanceSelector,
+}: {
+  metas: Map<string, WsComponentMeta>;
+  instances: Instances;
+  instanceSelector: InstanceSelector;
+}) => {
+  // page root with text can be used as container
+  if (instanceSelector.length === 1) {
+    return 0;
+  }
+  for (let index = 0; index < instanceSelector.length; index += 1) {
+    const instanceId = instanceSelector[index];
+    const instance = instances.get(instanceId);
+    // collection item can be undefined
+    if (instance === undefined) {
       continue;
     }
     let hasText = false;
@@ -313,7 +337,8 @@ export const findClosestContainer = ({
     if (hasText) {
       continue;
     }
-    if (meta.type === "container") {
+    const meta = metas.get(instance.component);
+    if (meta?.type === "container") {
       return index;
     }
   }

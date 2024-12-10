@@ -151,7 +151,7 @@ const blockMeta: WsComponentMeta = {
   icon: EditIcon,
   constraints: {
     relation: "ancestor",
-    component: { $neq: collectionComponent },
+    component: { $nin: [collectionComponent, blockComponent] },
   },
   stylable: false,
   template: [
