@@ -257,8 +257,6 @@ const subscribeSelectedInstance = (
       // getBoundingClientRect is used instead.
       showOutline();
 
-      // Cause serious performance issues, use debounced version
-      // The result of stores is not needed immediately
       updateStores();
 
       // Having that elements can be changed (i.e. div => address tag change, observe again)
