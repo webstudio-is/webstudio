@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
@@ -20,7 +20,6 @@ import { Footer } from "./features/footer";
 import {
   CanvasIframe,
   CanvasToolsContainer,
-  useReadCanvasRect,
   Workspace,
 } from "./features/workspace";
 import {
@@ -300,19 +299,20 @@ export const Builder = ({
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
 
-  const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
-
   useSetWindowTitle();
 
-  const iframeRefCallback = mergeRefs((element: HTMLIFrameElement | null) => {
-    if (element?.contentWindow) {
-      // added to iframe window and stored in local variable right away to prevent
-      // overriding in emebedded scripts on canvas
-      element.contentWindow.__webstudioSharedSyncEmitter__ =
-        builderClient.emitter;
-    }
-    onRefReadCanvas(element);
-  }, publishRef);
+  const iframeRefCallback = useMemo(
+    () =>
+      mergeRefs((element: HTMLIFrameElement | null) => {
+        if (element?.contentWindow) {
+          // added to iframe window and stored in local variable right away to prevent
+          // overriding in emebedded scripts on canvas
+          element.contentWindow.__webstudioSharedSyncEmitter__ =
+            builderClient.emitter;
+        }
+      }, publishRef),
+    [publishRef]
+  );
 
   const { navigatorLayout } = useStore($settings);
   const dataLoadingState = useStore($dataLoadingState);
@@ -369,7 +369,7 @@ export const Builder = ({
         >
           <ProjectSettings />
           <Main>
-            <Workspace onTransitionEnd={onTransitionEnd}>
+            <Workspace>
               {dataLoadingState === "loaded" && (
                 <CanvasIframe
                   ref={iframeRefCallback}
