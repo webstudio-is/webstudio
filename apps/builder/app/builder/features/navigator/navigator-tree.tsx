@@ -440,13 +440,16 @@ const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
       return false;
     }
   }
+  // prevent moving block template out of first position
+  if (instance.component === blockTemplateComponent) {
+    return false;
+  }
 
   const meta = $registeredComponentMetas.get().get(instance.component);
   if (meta === undefined) {
     return true;
   }
-  const detachable =
-    meta.type !== "rich-text-child" && (meta.detachable ?? true);
+  const detachable = meta.type !== "rich-text-child";
   if (detachable === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
