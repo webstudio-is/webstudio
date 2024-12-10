@@ -1,10 +1,18 @@
-import { forwardRef } from "react";
+import { forwardRef, useMemo, useRef, type RefObject } from "react";
 import {
   css,
   canvasPointerEventsPropertyName,
 } from "@webstudio-is/design-system";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { $canvasIframeState } from "~/shared/nano-states";
+import { useCallback, useEffect, useState } from "react";
+import {
+  $scale,
+  $canvasWidth,
+  $canvasRect,
+} from "~/builder/shared/nano-states";
+import { useWindowResizeDebounced } from "~/shared/dom-hooks";
+import { mergeRefs } from "@react-aria/utils";
 
 const iframeStyle = css({
   border: "none",
@@ -16,20 +24,72 @@ const iframeStyle = css({
 
 type CanvasIframeProps = JSX.IntrinsicElements["iframe"];
 
+const CanvasRectUpdater = ({
+  iframeRef,
+}: {
+  iframeRef: RefObject<HTMLIFrameElement>;
+}) => {
+  const [updateCallback, setUpdateCallback] = useState<
+    undefined | (() => void)
+  >(undefined);
+
+  useEffect(() => {
+    updateCallback?.();
+  }, [updateCallback]);
+
+  const updateRect = useCallback(() => {
+    // create new function to trigger effect
+    const task = () => {
+      if (iframeRef.current === null) {
+        return;
+      }
+
+      const rect = iframeRef.current.getBoundingClientRect();
+      $canvasRect.set(rect);
+    };
+
+    setUpdateCallback(() => task);
+  }, [iframeRef]);
+
+  useEffect(() => {
+    updateRect();
+    const $scaleUnsubscribe = $scale.listen(updateRect);
+    const $canvasWidthUnsubscribe = $canvasWidth.listen(updateRect);
+
+    return () => {
+      $scaleUnsubscribe();
+      $canvasWidthUnsubscribe();
+    };
+  }, [updateRect]);
+
+  useWindowResizeDebounced(() => {
+    updateRect();
+  });
+
+  return null;
+};
+
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   (props, ref) => {
+    const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+    const merrgedRef = useMemo(() => mergeRefs(ref, iframeRef), [ref]);
+
     useUnmount(() => {
       // Unmount does't work inside iframe.
       $canvasIframeState.set("idle");
     });
 
     return (
-      <iframe
-        {...props}
-        ref={ref}
-        className={iframeStyle()}
-        credentialless="true"
-      />
+      <>
+        <iframe
+          {...props}
+          ref={merrgedRef}
+          className={iframeStyle()}
+          credentialless="true"
+        />
+        <CanvasRectUpdater iframeRef={iframeRef} />
+      </>
     );
   }
 );

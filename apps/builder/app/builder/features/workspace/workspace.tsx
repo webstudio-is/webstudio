@@ -92,10 +92,9 @@ const useOutlineStyle = () => {
 
 type WorkspaceProps = {
   children: ReactNode;
-  onTransitionEnd: () => void;
 };
 
-export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
+export const Workspace = ({ children }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle();
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
@@ -112,11 +111,7 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
         onClick={handleWorkspaceClick}
         ref={workspaceRef}
       >
-        <div
-          className={canvasContainerStyle()}
-          style={canvasStyle}
-          onTransitionEnd={onTransitionEnd}
-        >
+        <div className={canvasContainerStyle()} style={canvasStyle}>
           {children}
         </div>
         <div
