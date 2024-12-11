@@ -61,7 +61,10 @@ export const Dialog = forwardRef<
 
   const onOpenChangeHandler = useCallback(
     async (open: boolean) => {
+      console.info("onOpenChangeHandler", open);
       await interactionResponse();
+      console.info("onOpenChangeHandler awaited", open);
+      await new Promise((r) => setTimeout(r, 1000));
       onOpenChange(open);
     },
     [onOpenChange]
