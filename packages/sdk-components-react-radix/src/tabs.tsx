@@ -44,7 +44,10 @@ const namespace = "@webstudio-is/sdk-components-react-radix";
 export const hooksTabs: Hook = {
   onNavigatorSelect: (context, event) => {
     for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:TabsContent`) {
+      if (
+        instance.component === `${namespace}:TabsContent` ||
+        instance.component === `${namespace}:TabsTrigger`
+      ) {
         const tabs = getClosestInstance(
           event.instancePath,
           instance,
@@ -55,6 +58,26 @@ export const hooksTabs: Hook = {
           context.indexesWithinAncestors.get(instance.id)?.toString();
         if (tabs && contentValue) {
           context.setMemoryProp(tabs, "value", contentValue);
+        }
+      }
+    }
+  },
+  onNavigatorUnselect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (
+        instance.component === `${namespace}:TabsContent` ||
+        instance.component === `${namespace}:TabsTrigger`
+      ) {
+        const tabs = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Tabs`
+        );
+        const contentValue =
+          context.getPropValue(instance, "value") ??
+          context.indexesWithinAncestors.get(instance.id)?.toString();
+        if (tabs && contentValue) {
+          context.setMemoryProp(tabs, "value", undefined);
         }
       }
     }

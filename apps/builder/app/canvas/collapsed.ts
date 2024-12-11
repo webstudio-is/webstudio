@@ -129,8 +129,10 @@ const findFirstNonContentsParent = (element: Element) => {
     // Get the computed style of the parent
     const computedStyle = window.getComputedStyle(parent);
 
+    const isHidden = parent.getAttribute("hidden") !== null;
+
     // Check if the display is not 'contents'
-    if (computedStyle.display !== "contents") {
+    if (computedStyle.display !== "contents" && !isHidden) {
       return parent;
     }
 
@@ -196,14 +198,20 @@ const recalculate = () => {
       continue;
     }
 
+    const elementStyle = window.getComputedStyle(element);
+
     // Find all Leaf like elements
     // Leaf like elements are elements that have no children or all children are absolute or fixed
+    // Excluding hidden elements without size
     if (element.childElementCount === 0) {
-      elementsToRecalculate.push(element);
-    }
+      if (element.offsetParent !== null) {
+        elementsToRecalculate.push(element);
+      }
 
-    const elementStyle = window.getComputedStyle(element);
-    // const elementPosition = window.getComputedStyle(element).position;
+      if (elementStyle.position === "fixed") {
+        elementsToRecalculate.push(element);
+      }
+    }
 
     const parentElement = findFirstNonContentsParent(element);
 
