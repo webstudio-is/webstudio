@@ -2,7 +2,7 @@ import warnOnce from "warn-once";
 import { allSizes, type ImageLoader } from "./image-optimize";
 
 export type ImageLoaderOptions = {
-  imageBaseUrl: string;
+  imageBaseUrl?: string;
 };
 
 const NON_EXISTING_DOMAIN = "https://a3cbcbec-cdb1-4ea4-ad60-43c795308ddc.ddc";
@@ -39,7 +39,7 @@ export const createImageLoader =
 
     let resultUrl;
     try {
-      resultUrl = new URL(imageBaseUrl, NON_EXISTING_DOMAIN);
+      resultUrl = new URL(imageBaseUrl ?? "/cgi/image/", NON_EXISTING_DOMAIN);
     } catch {
       return src;
     }

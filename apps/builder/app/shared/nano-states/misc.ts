@@ -35,9 +35,7 @@ export const $project = atom<Project | undefined>();
 
 export const $publisherHost = atom<string>("wstd.work");
 
-export const $imageLoader = atom<ImageLoader>(
-  createImageLoader({ imageBaseUrl: "" })
-);
+export const $imageLoader = atom<ImageLoader>(createImageLoader({}));
 
 export const $publishedOrigin = computed(
   [$project, $publisherHost],

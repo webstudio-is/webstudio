@@ -118,7 +118,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     projectTemplates,
     userPlanFeatures,
     publisherHost: env.PUBLISHER_HOST,
-    imageBaseUrl: env.IMAGE_BASE_URL,
     origin: sourceOrigin,
     projectToClone,
   });

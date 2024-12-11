@@ -17,7 +17,6 @@ import {
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import type { ImageLoader } from "@webstudio-is/image";
 import { builderUrl } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
@@ -152,7 +151,6 @@ type ProjectCardProps = {
   project: DashboardProject;
   hasProPlan: boolean;
   publisherHost: string;
-  imageLoader: ImageLoader;
 };
 
 export const ProjectCard = ({
@@ -167,7 +165,6 @@ export const ProjectCard = ({
   },
   hasProPlan,
   publisherHost,
-  imageLoader,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -229,7 +226,6 @@ export const ProjectCard = ({
             to={linkPath}
             name={previewImageAsset.name}
             ref={thumbnailRef}
-            imageLoader={imageLoader}
           />
         ) : (
           <ThumbnailLinkWithAbbr
@@ -322,7 +318,6 @@ export const ProjectCard = ({
 export const ProjectTemplateCard = ({
   project,
   publisherHost,
-  imageLoader,
 }: Omit<ProjectCardProps, "hasProPlan">) => {
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
@@ -339,7 +334,6 @@ export const ProjectTemplateCard = ({
             onClick={() => {
               setIsDuplicateDialogOpen(true);
             }}
-            imageLoader={imageLoader}
           />
         ) : (
           <ThumbnailWithAbbr

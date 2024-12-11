@@ -51,7 +51,6 @@ export type DashboardProps = {
   projectTemplates: Array<DashboardProject>;
   userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
-  imageBaseUrl: string;
   projectToClone?: {
     authToken: string;
     id: string;
@@ -102,7 +101,6 @@ export const Dashboard = ({
   projectTemplates,
   userPlanFeatures,
   publisherHost,
-  imageBaseUrl,
   projectToClone,
 }: DashboardProps) => {
   globalStyles();
@@ -120,7 +118,6 @@ export const Dashboard = ({
             projectTemplates={projectTemplates}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
-            imageBaseUrl={imageBaseUrl}
           />
         </Section>
       </Main>

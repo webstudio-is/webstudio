@@ -214,7 +214,6 @@ const builderClient = new SyncClient({
 export type BuilderProps = {
   project: Project;
   publisherHost: string;
-  imageBaseUrl: string;
   build: Pick<Build, "id" | "version">;
   authToken?: string;
   authPermit: AuthPermit;
@@ -225,7 +224,6 @@ export type BuilderProps = {
 export const Builder = ({
   project,
   publisherHost,
-  imageBaseUrl,
   build,
   authToken,
   authPermit,
@@ -238,7 +236,7 @@ export const Builder = ({
     // additional data stores
     $project.set(project);
     $publisherHost.set(publisherHost);
-    $imageLoader.set(createImageLoader({ imageBaseUrl }));
+    $imageLoader.set(createImageLoader({}));
     $authPermit.set(authPermit);
     $authToken.set(authToken);
     $userPlanFeatures.set(userPlanFeatures);

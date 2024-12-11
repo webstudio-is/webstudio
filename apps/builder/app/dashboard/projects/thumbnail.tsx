@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import { Image, type ImageLoader } from "@webstudio-is/image";
+import { forwardRef, useMemo } from "react";
+import { createImageLoader, Image } from "@webstudio-is/image";
 import { css, theme, textVariants } from "@webstudio-is/design-system";
 
 const abbrStyle = css(textVariants.brandThumbnailLargeDefault, {
@@ -72,8 +72,9 @@ const imageStyle = css({
 
 export const ThumbnailLinkWithImage = forwardRef<
   HTMLAnchorElement,
-  { name: string; to: string; imageLoader: ImageLoader }
->(({ name, to, imageLoader }, ref) => {
+  { name: string; to: string }
+>(({ name, to }, ref) => {
+  const imageLoader = useMemo(() => createImageLoader({}), []);
   return (
     <a ref={ref} href={to} className={imageContainerStyle()} tabIndex={-1}>
       <Image src={name} loader={imageLoader} className={imageStyle()} />
@@ -87,9 +88,9 @@ export const ThumbnailWithImage = forwardRef<
   {
     name: string;
     onClick: React.MouseEventHandler<HTMLDivElement>;
-    imageLoader: ImageLoader;
   }
->(({ name, onClick, imageLoader }, ref) => {
+>(({ name, onClick }, ref) => {
+  const imageLoader = useMemo(() => createImageLoader({}), []);
   return (
     <div
       ref={ref}
