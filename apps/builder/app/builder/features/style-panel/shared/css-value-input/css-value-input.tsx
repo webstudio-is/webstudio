@@ -53,7 +53,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { ColorThumb } from "../color-thumb";
-import { ValueEditorDialog } from "./value-editor-dialog";
+import { cssButtonDisplay, ValueEditorDialog } from "./value-editor-dialog";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -870,7 +870,14 @@ export const CssValueInput = ({
                 </Flex>
               )
             }
-            css={{ cursor: "default", minWidth: "2em" }}
+            css={{
+              cursor: "default",
+              minWidth: "2em",
+              position: "relative",
+              "&:hover": {
+                [cssButtonDisplay]: "block",
+              },
+            }}
             text={text}
           />
         </ComboboxAnchor>

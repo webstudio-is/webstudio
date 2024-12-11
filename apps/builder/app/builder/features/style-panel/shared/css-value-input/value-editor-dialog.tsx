@@ -1,4 +1,4 @@
-import { NestedInputButton } from "@webstudio-is/design-system";
+import { NestedInputButton, theme } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { useEffect, useState } from "react";
 import { EditorDialog } from "~/builder/shared/code-editor-base";
@@ -10,6 +10,8 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
+
+export const cssButtonDisplay = "--ws-css-value-input-maximize-button-display";
 
 export const ValueEditorDialog = ({
   property,
@@ -73,7 +75,15 @@ export const ValueEditorDialog = ({
         />
       }
     >
-      <NestedInputButton tabIndex={-1}>
+      <NestedInputButton
+        tabIndex={-1}
+        css={{
+          display: `var(${cssButtonDisplay}, none)`,
+          position: "absolute",
+          right: 1,
+          background: theme.colors.backgroundControls,
+        }}
+      >
         <MaximizeIcon size={12} />
       </NestedInputButton>
     </EditorDialog>
