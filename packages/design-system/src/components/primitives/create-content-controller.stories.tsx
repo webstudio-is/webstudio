@@ -7,7 +7,7 @@ const useContentController = ({
   write,
   callback,
 }: {
-  ref: RefObject<HTMLInputElement>;
+  ref: RefObject<HTMLInputElement | null>;
   read: (value: HTMLInputElement) => string;
   write: (target: HTMLInputElement, value: string) => void;
   callback: (value: { name: string; value: string }) => void;

@@ -1,4 +1,5 @@
 import type { StoryFn } from "@storybook/react";
+import type { JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Dashboard } from "./dashboard";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";

@@ -7,6 +7,7 @@ import {
   useEffect,
   type ChangeEventHandler,
   type KeyboardEventHandler,
+  type FormEventHandler,
 } from "react";
 import {
   CrossCircledFilledIcon,
@@ -98,8 +99,8 @@ export const SearchField = forwardRef(SearchFieldBase);
 
 type UseSearchFieldKeys = {
   onMove: (event: { direction: "next" | "previous" | "current" }) => void;
-  onChange?: ComponentProps<typeof SearchFieldBase>["onChange"];
-  onCancel?: ComponentProps<typeof SearchFieldBase>["onCancel"];
+  onChange?: FormEventHandler<HTMLInputElement>;
+  onCancel?: () => void;
 };
 
 export const useSearchFieldKeys = ({

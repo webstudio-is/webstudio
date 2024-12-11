@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 import type { Instances } from "./schema/instances";
 import type { Props } from "./schema/props";
 

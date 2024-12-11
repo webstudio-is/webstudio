@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type JSX,
+} from "react";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import {
   Flex,

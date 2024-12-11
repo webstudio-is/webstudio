@@ -2,6 +2,7 @@ import {
   type ComponentProps,
   type FocusEvent,
   forwardRef,
+  type JSX,
   type KeyboardEvent,
 } from "react";
 import { Text } from "../text";

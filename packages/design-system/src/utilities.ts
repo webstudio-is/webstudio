@@ -54,7 +54,9 @@ export const disableCanvasPointerEvents = () => {
 };
 
 export const useDisableCanvasPointerEvents = () => {
-  const enableCanvasPointerEventsRef = useRef<() => void>();
+  const enableCanvasPointerEventsRef = useRef<undefined | (() => void)>(
+    undefined
+  );
 
   const enableDisable = useMemo(
     () => ({

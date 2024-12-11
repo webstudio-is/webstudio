@@ -71,7 +71,7 @@ export const AiCommandBar = () => {
 
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
-  const abortController = useRef<AbortController>();
+  const abortController = useRef<undefined | AbortController>(undefined);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
   const guardIdRef = useRef(0);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =

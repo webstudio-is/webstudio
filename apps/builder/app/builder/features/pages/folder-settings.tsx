@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback } from "react";
+import { type FocusEventHandler, useState, useCallback, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import slugify from "slugify";

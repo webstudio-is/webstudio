@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type JSX, type ReactNode } from "react";
 import {
   theme,
   Box,
