@@ -59,4 +59,18 @@ export const hooksCollapsible: Hook = {
       }
     }
   },
+  onNavigatorUnselect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:CollapsibleContent`) {
+        const collapsible = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Collapsible`
+        );
+        if (collapsible) {
+          context.setMemoryProp(collapsible, "open", undefined);
+        }
+      }
+    }
+  },
 };
