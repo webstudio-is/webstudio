@@ -17,7 +17,6 @@ import {
   Flex,
   styled,
   Text,
-  TextArea,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -36,7 +35,6 @@ import {
   useState,
   useMemo,
   type ComponentProps,
-  useId,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
@@ -55,8 +53,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { ColorThumb } from "../color-thumb";
-import { MaximizeIcon } from "@webstudio-is/icons";
-import { EditorDialog } from "~/builder/shared/code-editor-base";
+import { ValueEditorDialog } from "./value-editor-dialog";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -387,36 +384,6 @@ const getAutoScrollProps = () => {
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
-
-const ValueEditorDialog = ({
-  value,
-  onChangeComplete,
-}: {
-  value: string;
-  onChangeComplete: (value: string) => void;
-}) => {
-  const valueId = useId();
-  const [input, setInput] = useState(value);
-
-  return (
-    <EditorDialog
-      title="CSS Value"
-      content={
-        <TextArea grow={true} id={valueId} value={input} onChange={setInput} />
-      }
-      onOpenChange={(isOpen) => {
-        if (isOpen) {
-          return;
-        }
-        onChangeComplete(input);
-      }}
-    >
-      <NestedInputButton tabIndex={-1}>
-        <MaximizeIcon size={12} />
-      </NestedInputButton>
-    </EditorDialog>
-  );
-};
 
 /**
  * Common:
@@ -843,11 +810,12 @@ export const CssValueInput = ({
   const valueEditorElement =
     value.type === "keyword" ? undefined : (
       <ValueEditorDialog
+        property={property}
         value={inputProps.value}
         onChangeComplete={(value) => {
           onChangeComplete({
             type: "dialog-close",
-            value: { type: "intermediate", value },
+            value,
           });
         }}
       />
