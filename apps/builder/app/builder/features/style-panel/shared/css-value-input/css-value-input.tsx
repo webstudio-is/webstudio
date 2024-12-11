@@ -333,38 +333,19 @@ const scrollAhead = ({ target, clientX }: MouseEvent) => {
 
 const getAutoScrollProps = () => {
   let abortController = new AbortController();
-  let lastCanScroll = false;
 
   const abort = (reason: string) => {
     abortController.abort(reason);
   };
 
-  const updateCanScroll = (element: HTMLInputElement | null) => {
-    if (element === null) {
-      lastCanScroll = false;
-      return;
-    }
-    lastCanScroll = element.scrollWidth !== element.clientWidth;
-  };
-
   return {
-    canScroll() {
-      return lastCanScroll;
-    },
     abort,
-    inputRef: updateCanScroll,
-    onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-      if (event.target instanceof HTMLInputElement) {
-        updateCanScroll(event.target);
-      }
-    },
     onMouseOver(event: MouseEvent) {
       if (event.target === document.activeElement) {
         abort("focused");
         return;
       }
-      lastCanScroll = scrollAhead(event);
-      if (lastCanScroll === false) {
+      if (scrollAhead(event) === false) {
         return;
       }
 
@@ -377,7 +358,7 @@ const getAutoScrollProps = () => {
             return;
           }
           requestAnimationFrame(() => {
-            lastCanScroll = scrollAhead(event as MouseEvent);
+            scrollAhead(event as MouseEvent);
           });
         },
         {
@@ -830,7 +811,7 @@ export const CssValueInput = ({
     }
   };
 
-  const { abort, canScroll, ...autoScrollProps } = useMemo(() => {
+  const { abort, ...autoScrollProps } = useMemo(() => {
     return getAutoScrollProps();
   }, []);
 
@@ -839,17 +820,10 @@ export const CssValueInput = ({
   }, [abort]);
 
   const inputPropsHandleKeyDown = composeEventHandlers(
-    composeEventHandlers(
-      handleUpDownNumeric,
-      (event) => {
-        inputProps.onKeyDown(event);
-        autoScrollProps.onKeyDown(event);
-      },
-      {
-        // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
-        checkForDefaultPrevented: false,
-      }
-    ),
+    composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
+      // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
+      checkForDefaultPrevented: false,
+    }),
     handleMetaEnter
   );
 
@@ -879,11 +853,7 @@ export const CssValueInput = ({
             onBlur={handleOnBlur}
             onKeyDown={inputPropsHandleKeyDown}
             containerRef={disabled ? undefined : scrubRef}
-            inputRef={mergeRefs(
-              inputRef,
-              props.inputRef ?? null,
-              autoScrollProps.inputRef
-            )}
+            inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
