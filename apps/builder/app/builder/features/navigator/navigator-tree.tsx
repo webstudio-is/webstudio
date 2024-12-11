@@ -145,12 +145,14 @@ export const $flatTree = computed(
       if (instance.component === "Fragment") {
         isVisible = false;
       }
-      const parentComponent = visibleAncestors.at(-1)?.component;
       if (isContentMode) {
-        // hide everything except block and its children
+        // hide everything outside of block instances
+        const hasBlockAncestor = visibleAncestors.some(
+          (ancestor) => ancestor?.component === blockComponent
+        );
         if (
           instance.component !== blockComponent &&
-          parentComponent !== blockComponent
+          hasBlockAncestor === false
         ) {
           isVisible = false;
         }
@@ -171,14 +173,8 @@ export const $flatTree = computed(
         flatTree.push(treeItem);
       }
       const level = treeItem.visibleAncestors.length - 1;
-      // expand everything in content mode
-      if (isContentMode === false) {
-        if (
-          level > 0 &&
-          instance.children.some((child) => child.type === "id")
-        ) {
-          treeItem.isExpanded = expandedItems.has(selector.join());
-        }
+      if (level > 0 && instance.children.some((child) => child.type === "id")) {
+        treeItem.isExpanded = expandedItems.has(selector.join());
       }
       // always expand invisible items
       if (isVisible === false) {
