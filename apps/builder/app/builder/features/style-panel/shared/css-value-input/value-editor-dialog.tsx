@@ -79,8 +79,6 @@ export const ValueEditorDialog = ({
         tabIndex={-1}
         css={{
           display: `var(${cssButtonDisplay}, none)`,
-          position: "absolute",
-          right: 1,
           background: theme.colors.backgroundControls,
         }}
       >
