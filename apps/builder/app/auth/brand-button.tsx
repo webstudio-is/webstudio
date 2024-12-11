@@ -1,5 +1,5 @@
 import { css, textVariants, theme } from "@webstudio-is/design-system";
-import type { ComponentProps } from "react";
+import type { ComponentProps, JSX } from "react";
 
 export const buttonStyle = css({
   boxSizing: "border-box",

@@ -1,5 +1,5 @@
 import { useRevalidator } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import {
   Box,
   Button,

@@ -197,8 +197,8 @@ export const EditorContent = ({
 }: EditorContentProps) => {
   globalStyles();
 
-  const editorRef = useRef<null | HTMLDivElement>(null);
-  const viewRef = useRef<undefined | EditorView>();
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<undefined | EditorView>(undefined);
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;

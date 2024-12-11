@@ -590,7 +590,7 @@ const VariablePanel = forwardRef<
 VariablePanel.displayName = "VariablePanel";
 
 const VariablePopoverContext = createContext<{
-  containerRef?: RefObject<HTMLElement>;
+  containerRef?: RefObject<null | HTMLElement>;
 }>({});
 
 export const VariablePopoverProvider = VariablePopoverContext.Provider;
@@ -627,7 +627,7 @@ export const VariablePopoverTrigger = forwardRef<
   const { containerRef } = useContext(VariablePopoverContext);
   const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
   const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<undefined | PanelApi>();
+  const panelRef = useRef<undefined | PanelApi>(undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const resources = useStore($resources);
   const { allowDynamicData } = useStore($userPlanFeatures);

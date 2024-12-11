@@ -14,7 +14,7 @@ export const useMediaRecorder = (
   },
   options = DEFAULT_OPTIONS
 ) => {
-  const disposeRef = useRef<() => void>();
+  const disposeRef = useRef<undefined | (() => void)>(undefined);
 
   const cancelRef = useRef(false);
   const isActiveRef = useRef<boolean>(false);

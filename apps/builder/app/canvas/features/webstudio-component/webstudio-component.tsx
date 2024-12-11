@@ -7,6 +7,7 @@ import {
   useMemo,
   Fragment,
   type ReactNode,
+  type JSX,
 } from "react";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { computed } from "nanostores";

@@ -143,7 +143,7 @@ const Suggestions = ({
   options,
   onSelect,
 }: {
-  containerRef: RefObject<HTMLFormElement>;
+  containerRef: RefObject<null | HTMLFormElement>;
   options: string[];
   onSelect: (option: string) => void;
 }) => {

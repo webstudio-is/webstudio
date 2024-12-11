@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProjectSettingsView } from "./project-settings";
 import { $pages } from "~/shared/nano-states";

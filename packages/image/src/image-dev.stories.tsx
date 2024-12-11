@@ -35,13 +35,11 @@ const imageLoader = createImageLoader({
     : "",
 });
 
-const ImageBase: StoryFn<
-  React.ForwardRefExoticComponent<
-    Omit<ImageProps, "loader"> & {
-      style?: React.HTMLAttributes<"img">["style"];
-    }
-  >
-> = (args) => {
+const ImageBase = (
+  args: Omit<ImageProps, "loader"> & {
+    style?: React.HTMLAttributes<"img">["style"];
+  }
+) => {
   const style = {
     maxWidth: "100%",
     display: "block",

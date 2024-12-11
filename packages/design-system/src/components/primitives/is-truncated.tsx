@@ -3,7 +3,10 @@ import { type RefObject, useState, useEffect } from "react";
 /**
  * Checks whether text was truncated in an element with `text-overflow: ellipsis`
  */
-export const useIsTruncated = (ref: RefObject<HTMLElement>, text: string) => {
+export const useIsTruncated = (
+  ref: RefObject<null | HTMLElement>,
+  text: string
+) => {
   const [isTruncated, setIsTruncated] = useState(false);
 
   useEffect(() => {

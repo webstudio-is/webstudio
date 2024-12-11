@@ -1,11 +1,11 @@
 import {
-  type MutableRefObject,
   type RefObject,
   useContext,
   useRef,
   useState,
   createContext,
   useLayoutEffect,
+  type JSX,
 } from "react";
 import {
   FloatingPanelPopover,
@@ -23,9 +23,9 @@ export const useSideOffset = ({
 }: {
   side?: "left" | "right";
   isOpen: boolean;
-  containerRef?: RefObject<HTMLElement>;
-}): [MutableRefObject<HTMLButtonElement | null>, number] => {
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  containerRef?: RefObject<null | HTMLElement>;
+}): [RefObject<HTMLButtonElement>, number] => {
+  const triggerRef = useRef<null | HTMLButtonElement>(null);
   const [sideOffset, setSideOffset] = useState(0);
 
   // use layout effect to avoid popover jumping
@@ -55,7 +55,7 @@ export const useSideOffset = ({
 };
 
 const FloatingPanelContext = createContext<{
-  container: RefObject<HTMLElement>;
+  container: RefObject<null | HTMLElement>;
 }>({
   container: {
     current: null,
@@ -67,7 +67,7 @@ export const FloatingPanelProvider = ({
   container,
 }: {
   children: JSX.Element;
-  container: RefObject<HTMLElement>;
+  container: RefObject<null | HTMLElement>;
 }) => (
   <FloatingPanelContext.Provider value={{ container }}>
     {children}

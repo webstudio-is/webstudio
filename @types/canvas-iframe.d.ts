@@ -1,10 +1,5 @@
-declare namespace JSX {
-  interface IntrinsicElements {
-    iframe: React.DetailedHTMLProps<
-      React.IframeHTMLAttributes<HTMLIFrameElement> & {
-        credentialless?: "true";
-      },
-      HTMLIFrameElement
-    >;
+declare namespace React {
+  interface IframeHTMLAttributes {
+    credentialless?: "true";
   }
 }

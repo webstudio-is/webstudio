@@ -4,6 +4,7 @@ import {
   useLayoutEffect,
   useCallback,
   useRef,
+  type JSX,
 } from "react";
 import {
   KEY_ENTER_COMMAND,

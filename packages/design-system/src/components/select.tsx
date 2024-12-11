@@ -3,6 +3,7 @@ import {
   type ReactNode,
   type Ref,
   type ComponentProps,
+  type JSX,
   useMemo,
   forwardRef,
   useState,
