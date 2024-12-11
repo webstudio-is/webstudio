@@ -36,6 +36,7 @@ import {
   useState,
   useMemo,
   type ComponentProps,
+  useId,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
@@ -243,7 +244,8 @@ type ChangeCompleteEvent = {
     | "scrub-end"
     | "unit-select"
     | "keyword-select"
-    | "delta";
+    | "delta"
+    | "dialog-close";
   value: StyleValue;
 } & Modifiers;
 
@@ -386,18 +388,28 @@ const getAutoScrollProps = () => {
 
 const Description = styled(Box, { width: theme.spacing[27] });
 
-const ValueEditorDialog = () => {
+const ValueEditorDialog = ({
+  value,
+  onChangeComplete,
+}: {
+  value: string;
+  onChangeComplete: (value: string) => void;
+}) => {
+  const valueId = useId();
+  const [input, setInput] = useState(value);
+
   return (
     <EditorDialog
-      title="Variable value"
+      title="CSS Value"
       content={
-        <TextArea
-          grow={true}
-          //id={valueId}
-          //value={value}
-          //onChange={setValue}
-        />
+        <TextArea grow={true} id={valueId} value={input} onChange={setInput} />
       }
+      onOpenChange={(isOpen) => {
+        if (isOpen) {
+          return;
+        }
+        onChangeComplete(input);
+      }}
     >
       <NestedInputButton tabIndex={-1}>
         <MaximizeIcon size={12} />
@@ -829,7 +841,17 @@ export const CssValueInput = ({
 
   const suffixRef = useRef<HTMLDivElement | null>(null);
   const valueEditorElement =
-    value.type === "keyword" ? undefined : <ValueEditorDialog />;
+    value.type === "keyword" ? undefined : (
+      <ValueEditorDialog
+        value={inputProps.value}
+        onChangeComplete={(value) => {
+          onChangeComplete({
+            type: "dialog-close",
+            value: { type: "intermediate", value },
+          });
+        }}
+      />
+    );
   const suffixElement =
     unitSelectElement ?? keywordButtonElement ?? valueEditorElement;
 
