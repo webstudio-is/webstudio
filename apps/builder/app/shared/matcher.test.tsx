@@ -13,6 +13,13 @@ import {
 } from "./matcher";
 
 const metas = new Map(Object.entries({ ...coreMetas, ...baseMetas }));
+metas.set("ListItem", {
+  ...baseMetas.ListItem,
+  constraints: {
+    relation: "parent",
+    component: { $eq: "List" },
+  },
+});
 
 describe("is instance matching", () => {
   test("matches self with self matcher", () => {

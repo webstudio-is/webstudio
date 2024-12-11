@@ -17,6 +17,9 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   constraints: {
+    // cannot use parent relation here
+    // because list item can be put inside of collection or slot
+    // perhaps can be eventually fixed with tag matchers
     relation: "ancestor",
     component: { $eq: "List" },
   },
