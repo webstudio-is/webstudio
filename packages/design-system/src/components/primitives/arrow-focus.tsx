@@ -3,7 +3,7 @@ import {
   useFocusManager,
   type FocusManagerOptions,
 } from "@react-aria/focus";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, JSX } from "react";
 
 type Render = (props: {
   handleKeyDown: (

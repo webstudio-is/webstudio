@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { describe, expect, test } from "vitest";
 import type { HtmlTags } from "html-tags";
 import {

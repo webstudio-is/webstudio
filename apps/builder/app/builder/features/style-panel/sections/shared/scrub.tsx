@@ -63,7 +63,7 @@ export const useScrub = <P extends StyleProperty>(props: {
   const nonDependencies = useRef({ props, values, properties });
   nonDependencies.current = { props, values, properties };
 
-  const unitRef = useRef<UnitValue["unit"]>();
+  const unitRef = useRef<undefined | UnitValue["unit"]>(undefined);
 
   useEffect(() => {
     if (finalTarget === undefined) {

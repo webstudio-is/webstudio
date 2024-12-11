@@ -49,10 +49,13 @@ const useDraggable = ({
   minHeight,
   minWidth,
 }: UseDraggableProps) => {
-  const initialDataRef = useRef<{
-    point: { x: number; y: number };
-    rect: DOMRect;
-  }>();
+  const initialDataRef = useRef<
+    | undefined
+    | {
+        point: { x: number; y: number };
+        rect: DOMRect;
+      }
+  >(undefined);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
   const draggableRef = useRef<HTMLDivElement | null>(null);

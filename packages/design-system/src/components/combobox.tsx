@@ -273,7 +273,7 @@ export const useCombobox = <Item,>({
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
-  const selectedItemRef = useRef<Item>();
+  const selectedItemRef = useRef<undefined | Item>(undefined);
   const itemsCache = useRef<Item[]>([]);
   const [matchedItems, setMatchedItems] = useState<Item[]>([]);
 

@@ -295,7 +295,7 @@ export const TreeSortableItem = <Data,>({
   const handleDrop = useCallbackRef(onDrop);
   const handleExpand = useCallbackRef(onExpand);
   const handleCanDrag = useCallbackRef(canDrag);
-  const expandTimeout = useRef<number>();
+  const expandTimeout = useRef<undefined | number>(undefined);
 
   useEffect(() => {
     if (elementRef.current === null) {

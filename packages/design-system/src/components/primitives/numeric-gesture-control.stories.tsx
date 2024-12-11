@@ -11,7 +11,7 @@ const useNumericScrubControl = ({
   direction,
   acceleration,
 }: {
-  ref: RefObject<HTMLInputElement>;
+  ref: RefObject<null | HTMLInputElement>;
   value: NumericScrubValue;
   direction: NumericScrubDirection;
   acceleration: number;

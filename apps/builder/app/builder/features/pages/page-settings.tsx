@@ -6,6 +6,7 @@ import {
   useCallback,
   useId,
   useEffect,
+  type JSX,
 } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";

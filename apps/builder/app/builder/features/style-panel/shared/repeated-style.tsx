@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type JSX } from "react";
 import type { RgbaColor } from "colord";
 import {
   toValue,

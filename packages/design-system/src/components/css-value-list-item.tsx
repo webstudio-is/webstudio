@@ -146,7 +146,7 @@ export const CssValueListItem = forwardRef(
     }: Props,
     ref: Ref<HTMLButtonElement>
   ) => {
-    const buttonsCount = Children.count(buttons?.props.children);
+    const buttonsCount = Children.count((buttons?.props).children);
     const fakeButtons = useMemo(
       () => (
         <>

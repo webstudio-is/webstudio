@@ -1,6 +1,7 @@
 import {
   Fragment,
   type ForwardRefExoticComponent,
+  type JSX,
   type RefAttributes,
   type RefObject,
 } from "react";

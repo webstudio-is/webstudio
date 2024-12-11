@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type JSX } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import type { Unit } from "@webstudio-is/css-engine";
 import {
