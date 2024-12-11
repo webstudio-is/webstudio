@@ -17,6 +17,7 @@ import {
   Flex,
   styled,
   Text,
+  TextArea,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -53,6 +54,8 @@ import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { ColorThumb } from "../color-thumb";
+import { MaximizeIcon } from "@webstudio-is/icons";
+import { EditorDialog } from "~/builder/shared/code-editor-base";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -296,11 +299,8 @@ const itemToString = (item: CssValueInputValue | null) => {
 
 const scrollAhead = ({ target, clientX }: MouseEvent) => {
   const element = target as HTMLInputElement;
-  // Get the scrollable width of the input element
-  const scrollWidth = element.scrollWidth;
-  const visibleWidth = element.clientWidth;
 
-  if (scrollWidth === visibleWidth) {
+  if (element.scrollWidth === element.clientWidth) {
     // Nothing to scroll.
     return false;
   }
@@ -323,7 +323,8 @@ const scrollAhead = ({ target, clientX }: MouseEvent) => {
 
   // Calculate the scroll position corresponding to the adjusted percentage
   const scrollPosition =
-    (adjustedMousePercentageX / 100) * (scrollWidth - visibleWidth);
+    (adjustedMousePercentageX / 100) *
+    (element.scrollWidth - element.clientWidth);
 
   // Scroll the input element
   element.scroll({ left: scrollPosition });
@@ -332,21 +333,38 @@ const scrollAhead = ({ target, clientX }: MouseEvent) => {
 
 const getAutoScrollProps = () => {
   let abortController = new AbortController();
+  let lastCanScroll = false;
 
   const abort = (reason: string) => {
     abortController.abort(reason);
   };
 
+  const updateCanScroll = (element: HTMLInputElement | null) => {
+    if (element === null) {
+      lastCanScroll = false;
+      return;
+    }
+    lastCanScroll = element.scrollWidth !== element.clientWidth;
+  };
+
   return {
+    canScroll() {
+      return lastCanScroll;
+    },
     abort,
+    inputRef: updateCanScroll,
+    onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+      if (event.target instanceof HTMLInputElement) {
+        updateCanScroll(event.target);
+      }
+    },
     onMouseOver(event: MouseEvent) {
       if (event.target === document.activeElement) {
         abort("focused");
         return;
       }
-
-      if (scrollAhead(event) === false) {
-        // Nothing to scroll.
+      lastCanScroll = scrollAhead(event);
+      if (lastCanScroll === false) {
         return;
       }
 
@@ -359,7 +377,7 @@ const getAutoScrollProps = () => {
             return;
           }
           requestAnimationFrame(() => {
-            scrollAhead(event as MouseEvent);
+            lastCanScroll = scrollAhead(event as MouseEvent);
           });
         },
         {
@@ -386,6 +404,26 @@ const getAutoScrollProps = () => {
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
+
+const ValueEditorDialog = () => {
+  return (
+    <EditorDialog
+      title="Variable value"
+      content={
+        <TextArea
+          grow={true}
+          //id={valueId}
+          //value={value}
+          //onChange={setValue}
+        />
+      }
+    >
+      <NestedInputButton tabIndex={-1}>
+        <MaximizeIcon size={12} />
+      </NestedInputButton>
+    </EditorDialog>
+  );
+};
 
 /**
  * Common:
@@ -697,9 +735,6 @@ export const CssValueInput = ({
       />
     ) : undefined;
 
-  const suffixRef = useRef<HTMLDivElement | null>(null);
-  const suffixElement = unitSelectElement ?? keywordButtonElement;
-
   let description;
   // When user hovers or focuses an item in the combobox list we want to show the description of the item and otherwise show the description of the current value
   const valueForDescription =
@@ -795,20 +830,33 @@ export const CssValueInput = ({
     }
   };
 
-  const inputPropsHandleKeyDown = composeEventHandlers(
-    composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
-      // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
-      checkForDefaultPrevented: false,
-    }),
-    handleMetaEnter
-  );
-
-  const { abort, ...autoScrollProps } = useMemo(() => {
+  const { abort, canScroll, ...autoScrollProps } = useMemo(() => {
     return getAutoScrollProps();
   }, []);
+
   useEffect(() => {
     return () => abort("unmount");
   }, [abort]);
+
+  const inputPropsHandleKeyDown = composeEventHandlers(
+    composeEventHandlers(
+      handleUpDownNumeric,
+      (event) => {
+        inputProps.onKeyDown(event);
+        autoScrollProps.onKeyDown(event);
+      },
+      {
+        // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
+        checkForDefaultPrevented: false,
+      }
+    ),
+    handleMetaEnter
+  );
+
+  const suffixRef = useRef<HTMLDivElement | null>(null);
+  const suffixElement = unitSelectElement ?? keywordButtonElement ?? (
+    <ValueEditorDialog />
+  );
 
   return (
     <ComboboxRoot open={isOpen}>
@@ -831,7 +879,11 @@ export const CssValueInput = ({
             onBlur={handleOnBlur}
             onKeyDown={inputPropsHandleKeyDown}
             containerRef={disabled ? undefined : scrubRef}
-            inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
+            inputRef={mergeRefs(
+              inputRef,
+              props.inputRef ?? null,
+              autoScrollProps.inputRef
+            )}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
