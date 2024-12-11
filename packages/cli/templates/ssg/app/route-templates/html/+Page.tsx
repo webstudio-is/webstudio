@@ -1,6 +1,6 @@
 import type { PageContext } from "vike/types";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { assetBaseUrl, imageBaseUrl, imageLoader } from "__CONSTANTS__";
+import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import { Page } from "__CLIENT__";
 
 const PageComponent = ({ data }: { data: PageContext["data"] }) => {
@@ -10,7 +10,6 @@ const PageComponent = ({ data }: { data: PageContext["data"] }) => {
       value={{
         imageLoader,
         assetBaseUrl,
-        imageBaseUrl,
         resources,
       }}
     >

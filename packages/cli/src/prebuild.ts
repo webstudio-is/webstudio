@@ -49,7 +49,6 @@ import {
   replaceFormActionsWithResources,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
-import { createImageLoader } from "@webstudio-is/image";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -448,19 +447,16 @@ export const prebuild = async (options: {
 
     const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
-    const imageLoader = createImageLoader({
-      imageBaseUrl: assetBuildUrl,
-    });
-
     for (const asset of siteData.assets) {
       if (asset.type === "image") {
-        const imageSrc = imageLoader({
-          src: asset.name,
-          format: "raw",
-        });
-
         assetsToDownload.push(
-          limit(() => downloadAsset(imageSrc, asset.name, assetBaseUrl))
+          limit(() =>
+            downloadAsset(
+              `${assetBuildUrl}${asset.name}`,
+              asset.name,
+              assetBaseUrl
+            )
+          )
         );
       }
 

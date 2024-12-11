@@ -4,7 +4,7 @@ import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { Page } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
-import { assetBaseUrl, imageBaseUrl, imageLoader } from "__CONSTANTS__";
+import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import { sitemap } from "__SITEMAP__";
 
 const customFetch: typeof fetch = (input, init) => {
@@ -61,7 +61,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
       value={{
         imageLoader,
         assetBaseUrl,
-        imageBaseUrl,
         resources,
       }}
     >

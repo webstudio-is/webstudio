@@ -23,7 +23,7 @@ const encodePathFragment = (fragment: string) => {
  * https://developers.cloudflare.com/images/image-resizing/url-format/
  **/
 export const createImageLoader =
-  (loaderOptions: ImageLoaderOptions): ImageLoader =>
+  (_loaderOptions: ImageLoaderOptions): ImageLoader =>
   (props) => {
     const width = props.format === "raw" ? 16 : props.width;
     const quality = props.format === "raw" ? 100 : props.quality;
@@ -35,14 +35,8 @@ export const createImageLoader =
         "Width must be only from allowed values"
       );
     }
-    const { imageBaseUrl } = loaderOptions;
 
-    let resultUrl;
-    try {
-      resultUrl = new URL(imageBaseUrl ?? "/cgi/image/", NON_EXISTING_DOMAIN);
-    } catch {
-      return src;
-    }
+    const resultUrl = new URL("/cgi/image/", NON_EXISTING_DOMAIN);
 
     if (format !== "raw") {
       resultUrl.searchParams.set("width", width.toString());

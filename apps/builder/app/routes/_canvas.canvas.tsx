@@ -16,7 +16,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const params: Params = {
-    imageBaseUrl: "/cgi/image/",
     assetBaseUrl: env.ASSET_BASE_URL,
   };
 
