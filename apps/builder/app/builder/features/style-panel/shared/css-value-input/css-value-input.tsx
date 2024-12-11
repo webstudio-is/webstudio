@@ -39,7 +39,6 @@ import {
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
-import { useDebouncedCallback } from "use-debounce";
 import {
   declarationDescriptions,
   isValidDeclaration,
@@ -656,16 +655,6 @@ export const CssValueInput = ({
 
   const menuProps = getMenuProps();
 
-  /**
-   * useDebouncedCallback without wait param uses Request Animation Frame
-   * here we wait for 1 tick until the "blur" event will be completed by Downshift
-   **/
-  const callOnCompleteIfIntermediateValueExists = useDebouncedCallback(() => {
-    if (props.intermediateValue !== undefined) {
-      onChangeComplete({ value, type: "blur" });
-    }
-  });
-
   const handleOnBlur: KeyboardEventHandler = (event) => {
     inputProps.onBlur(event);
     // When unit select is open, onBlur is triggered,though we don't want a change event in this case.
@@ -678,7 +667,7 @@ export const CssValueInput = ({
     // There is situation that Downshift will not call omCompleted if nothing is selected in menu
     if (isOpen && menuProps.empty === false) {
       // There is a situation that Downshift will not call onChangeComplete if nothing is selected in the menu
-      callOnCompleteIfIntermediateValueExists();
+      // callOnCompleteIfIntermediateValueExists();
       return;
     }
 
