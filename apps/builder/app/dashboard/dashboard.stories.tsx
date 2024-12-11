@@ -45,7 +45,6 @@ export const Empty: StoryFn<typeof Dashboard> = () => {
       projectTemplates={[]}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
-      imageBaseUrl=""
     />
   );
   return <RouterProvider router={router} />;
@@ -75,7 +74,6 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
       projectTemplates={projects}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
-      imageBaseUrl=""
     />
   );
   return <RouterProvider router={router} />;

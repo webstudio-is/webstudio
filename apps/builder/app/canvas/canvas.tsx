@@ -61,7 +61,7 @@ import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeInterceptedEvents } from "./interceptor";
-import type { ImageLoader } from "@webstudio-is/image";
+import { createImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
@@ -97,12 +97,12 @@ const FallbackComponent = ({ error, resetErrorBoundary }: FallbackProps) => {
 const useElementsTree = (
   components: Components,
   instances: Instances,
-  params: Params,
-  imageLoader: ImageLoader
+  params: Params
 ) => {
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
+  const imageLoader = useMemo(() => createImageLoader({}), []);
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
@@ -119,7 +119,7 @@ const useElementsTree = (
       <ReactSdkContext.Provider
         value={{
           renderer: isPreviewMode ? "preview" : "canvas",
-          imageBaseUrl: params.imageBaseUrl,
+          imageBaseUrl: "/cgi/image/",
           assetBaseUrl: params.assetBaseUrl,
           imageLoader,
           resources: {},
@@ -223,10 +223,9 @@ const ContentEditMode = () => {
 
 type CanvasProps = {
   params: Params;
-  imageLoader: ImageLoader;
 };
 
-export const Canvas = ({ params, imageLoader }: CanvasProps) => {
+export const Canvas = ({ params }: CanvasProps) => {
   useCanvasStore();
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
@@ -306,7 +305,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
 
   const components = useStore($registeredComponents);
   const instances = useStore($instances);
-  const elements = useElementsTree(components, instances, params, imageLoader);
+  const elements = useElementsTree(components, instances, params);
 
   const [isInitialized, setInitialized] = useState(false);
   useEffect(() => {

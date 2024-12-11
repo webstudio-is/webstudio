@@ -24,14 +24,6 @@ const env = {
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
   MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
   /**
-   * Base url ir base path for images with ending slash.
-   * Possible values are
-   * /asset/image/
-   * https://image-transform.wstd.io/cdn-cgi/image/
-   * https://webstudio.is/cdn-cgi/image/
-   */
-  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/cgi/image/",
-  /**
    * Base url or base path for any asset with ending slash.
    * Possible values are
    * /s/uploads/

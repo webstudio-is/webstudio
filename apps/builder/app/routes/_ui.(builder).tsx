@@ -211,7 +211,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       {
         project,
         publisherHost,
-        imageBaseUrl: env.IMAGE_BASE_URL,
         build: {
           id: devBuild.id,
           version: devBuild.version,

@@ -72,9 +72,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   if (env.RESIZE_ORIGIN !== undefined) {
-    const imageLoader = createImageLoader({
-      imageBaseUrl: `${env.RESIZE_ORIGIN}/cgi/image/`,
-    });
+    const imageLoader = createImageLoader({});
 
     const imgHref = imageLoader({
       src: name,
@@ -82,7 +80,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       format: "auto",
     });
 
-    const imgUrl = new URL(imgHref);
+    const imgUrl = new URL(env.RESIZE_ORIGIN + imgHref);
     imgUrl.search = url.search;
 
     const response = await fetch(imgUrl.href, {
@@ -107,6 +105,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (env.FILE_UPLOAD_PATH === undefined) {
     throw Error("FILE_UPLOAD_PATH is not provided");
+  }
+  // support absolute urls locally
+  if (URL.canParse(name)) {
+    return fetch(name);
   }
   const fileUploadPath = env.FILE_UPLOAD_PATH;
   const filePath = join(process.cwd(), fileUploadPath, name);
