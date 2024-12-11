@@ -287,6 +287,7 @@ export const useCombobox = <Item,>({
     onIsOpenChange(state) {
       const { type, isOpen, inputValue } = state;
 
+      // Tab from the input with menu opened should reset the input value if nothing is selected
       if (type === comboboxStateChangeTypes.InputBlur) {
         onChange?.(undefined);
         // If the input is blurred, we want to close the menu and reset the value to the selected item.
