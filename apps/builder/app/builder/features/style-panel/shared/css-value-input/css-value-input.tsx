@@ -653,8 +653,20 @@ export const CssValueInput = ({
 
   const menuProps = getMenuProps();
 
+  const isFocused = () => document.activeElement === inputRef.current;
+
+  const getInputValue = () => {
+    // When input is not focused, we are removing var() to fit more into the small inputs.
+    return value.type === "var" && isFocused() === false
+      ? `--${value.value}`
+      : inputProps.value;
+  };
   const handleOnBlur: KeyboardEventHandler = (event) => {
     inputProps.onBlur(event);
+
+    // Restore the value without var()
+    event.target.value = getInputValue();
+
     // When unit select is open, onBlur is triggered,though we don't want a change event in this case.
     if (isUnitsOpen) {
       return;
@@ -834,9 +846,12 @@ export const CssValueInput = ({
             fieldSizing={fieldSizing}
             {...inputProps}
             {...autoScrollProps}
+            value={getInputValue()}
             onFocus={() => {
-              const isFocused = document.activeElement === inputRef.current;
-              if (isFocused) {
+              if (isFocused()) {
+                // We are setting the value on focus because we might have removed the var() from the value,
+                // but once focused, we need to show the full value
+                inputRef.current.value = itemToString(value);
                 inputRef.current?.select();
               }
             }}
