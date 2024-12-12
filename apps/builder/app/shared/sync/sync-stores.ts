@@ -56,6 +56,7 @@ import {
   SyncObjectPool,
   type SyncEmitter,
 } from "../sync-client";
+import { $canvasScrollbarSize } from "~/builder/shared/nano-states";
 
 enableMapSet();
 // safari structuredClone fix
@@ -159,6 +160,7 @@ export const createObjectPool = () => {
       "registeredComponentPropsMetas",
       $registeredComponentPropsMetas
     ),
+    new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
   ]);
 };
 
