@@ -1835,6 +1835,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      await-interaction-response:
+        specifier: ^0.0.2
+        version: 0.0.2
       colord:
         specifier: ^2.9.3
         version: 2.9.3
