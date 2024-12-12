@@ -66,6 +66,12 @@ export const ValueEditorDialog = ({
           invalid={intermediateValue?.type === "invalid"}
           onChange={handleChange}
           onBlur={handleComplete}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              handleComplete();
+              event.preventDefault();
+            }
+          }}
         />
       }
     >

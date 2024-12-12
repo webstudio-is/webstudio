@@ -820,7 +820,7 @@ export const CssValueInput = ({
 
   const suffixRef = useRef<HTMLDivElement | null>(null);
   const valueEditorButtonElement =
-    value.type === "keyword" ? undefined : (
+    value.type === "unparsed" ? (
       <ValueEditorDialog
         property={property}
         value={inputProps.value}
@@ -831,7 +831,7 @@ export const CssValueInput = ({
           });
         }}
       />
-    );
+    ) : undefined;
   const invalidValueElement = value.type === "invalid" ? <></> : undefined;
   const suffixElement =
     invalidValueElement ??
