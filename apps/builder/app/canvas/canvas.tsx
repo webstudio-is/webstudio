@@ -73,6 +73,7 @@ import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance
 import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";
 import { Body } from "./shared/body";
+import { subscribeScrollbarSize } from "./scrollbar-width";
 
 registerContainers();
 
@@ -166,6 +167,7 @@ const DesignMode = () => {
     // in both places
     initCopyPaste(options);
     manageDesignModeStyles(options);
+    subscribeScrollbarSize(options);
     updateCollaborativeInstanceRect(options);
     subscribeInstanceSelection(options);
     subscribeInstanceHovering(options);
@@ -200,6 +202,7 @@ const ContentEditMode = () => {
     const abortController = new AbortController();
     const options = { signal: abortController.signal };
     manageContentEditModeStyles(options);
+    subscribeScrollbarSize(options);
     subscribeInstanceSelection(options);
     subscribeInstanceHovering(options);
     subscribeFontLoadingDone(options);

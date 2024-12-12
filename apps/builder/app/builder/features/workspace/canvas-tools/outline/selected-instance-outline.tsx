@@ -8,7 +8,7 @@ import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { type InstanceSelector } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
-import { $scale } from "~/builder/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -26,8 +26,13 @@ export const SelectedInstanceOutline = () => {
   const outline = useStore($selectedInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const ephemeralStyles = useStore($ephemeralStyles);
+  const clampingRect = useStore($clampingRect);
 
   if (selectedInstanceSelector === undefined) {
+    return;
+  }
+
+  if (clampingRect === undefined) {
     return;
   }
 
@@ -51,5 +56,5 @@ export const SelectedInstanceOutline = () => {
     : "default";
   const rect = applyScale(outline.rect, scale);
 
-  return <Outline rect={rect} variant={variant} />;
+  return <Outline rect={rect} clampingRect={clampingRect} variant={variant} />;
 };

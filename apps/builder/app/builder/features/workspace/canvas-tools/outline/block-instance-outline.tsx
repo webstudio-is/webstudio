@@ -30,7 +30,7 @@ import {
 } from "@webstudio-is/design-system";
 import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
-import { $scale } from "~/builder/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 import { useRef, useState } from "react";
@@ -342,6 +342,7 @@ export const BlockChildHoveredInstanceOutline = () => {
   const isContentMode = useStore($isContentMode);
   const modifierKeys = useStore($modifierKeys);
   const instances = useStore($instances);
+  const clampingRect = useStore($clampingRect);
 
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
     undefined
@@ -363,6 +364,10 @@ export const BlockChildHoveredInstanceOutline = () => {
   }
 
   if (outline === undefined) {
+    return;
+  }
+
+  if (clampingRect === undefined) {
     return;
   }
 
@@ -412,7 +417,7 @@ export const BlockChildHoveredInstanceOutline = () => {
   );
 
   return (
-    <Outline rect={rect}>
+    <Outline rect={rect} clampingRect={clampingRect}>
       <div
         style={{
           width: 0,

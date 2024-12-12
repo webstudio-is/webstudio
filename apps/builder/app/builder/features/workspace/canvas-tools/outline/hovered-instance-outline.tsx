@@ -10,7 +10,7 @@ import {
 import { Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "./apply-scale";
-import { $scale } from "~/builder/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 import { shallowEqual } from "shallow-equal";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -31,8 +31,13 @@ export const HoveredInstanceOutline = () => {
   const scale = useStore($scale);
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const isContentMode = useStore($isContentMode);
+  const clampingRect = useStore($clampingRect);
 
-  if (outline === undefined || hoveredInstanceSelector === undefined) {
+  if (
+    outline === undefined ||
+    hoveredInstanceSelector === undefined ||
+    clampingRect === undefined
+  ) {
     return;
   }
 
@@ -58,7 +63,7 @@ export const HoveredInstanceOutline = () => {
   const rect = applyScale(outline.rect, scale);
 
   return (
-    <Outline rect={rect} variant={variant}>
+    <Outline rect={rect} clampingRect={clampingRect} variant={variant}>
       <Label
         variant={variant}
         instance={outline.instance}
