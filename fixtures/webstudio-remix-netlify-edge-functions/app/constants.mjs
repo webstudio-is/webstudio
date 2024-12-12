@@ -10,17 +10,17 @@ export const imageBaseUrl = "/assets/";
  */
 export const imageLoader = (props) => {
   if (process.env.NODE_ENV !== "production") {
-    return assetBaseUrl + props.src;
+    return props.src;
   }
 
   if (props.format === "raw") {
-    return assetBaseUrl + props.src;
+    return props.src;
   }
 
   // https://docs.netlify.com/image-cdn/overview/
   return (
     "/.netlify/images?url=" +
-    encodeURIComponent(assetBaseUrl + props.src) +
+    encodeURIComponent(props.src) +
     "&w=" +
     props.width +
     "&q=" +

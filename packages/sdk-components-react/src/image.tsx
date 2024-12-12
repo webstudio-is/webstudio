@@ -31,7 +31,7 @@ export const Image = forwardRef<
     // cast to string when invalid value type is provided with binding
     const src = String(props.src ?? "");
 
-    const { imageLoader, renderer, assetBaseUrl } = useContext(ReactSdkContext);
+    const { imageLoader, renderer } = useContext(ReactSdkContext);
 
     let decoding = decodingProp;
 
@@ -60,12 +60,6 @@ export const Image = forwardRef<
       }
     }
 
-    let assetName = src;
-
-    if (src.startsWith(assetBaseUrl)) {
-      assetName = src.slice(assetBaseUrl.length);
-    }
-
     return (
       <WebstudioImage
         /**
@@ -83,7 +77,7 @@ export const Image = forwardRef<
         height={height}
         {...props}
         loader={imageLoader}
-        src={assetName}
+        src={src}
         ref={ref}
       />
     );

@@ -21,7 +21,6 @@ const encodePathFragment = (fragment: string) => {
 export const wsImageLoader: ImageLoader = (props) => {
   const width = props.format === "raw" ? 16 : props.width;
   const quality = props.format === "raw" ? 100 : props.quality;
-  const { format, src } = props;
 
   if (process.env.NODE_ENV !== "production") {
     warnOnce(
@@ -30,9 +29,15 @@ export const wsImageLoader: ImageLoader = (props) => {
     );
   }
 
+  // support both "/cgi/asset/name" and "name" as inputs
+  let src = props.src;
+  if (src.startsWith("/cgi/asset")) {
+    src = src.slice("/cgi/asset".length);
+  }
+
   const resultUrl = new URL("/cgi/image/", NON_EXISTING_DOMAIN);
 
-  if (format !== "raw") {
+  if (props.format !== "raw") {
     resultUrl.searchParams.set("width", width.toString());
     resultUrl.searchParams.set("quality", quality.toString());
 
@@ -44,7 +49,7 @@ export const wsImageLoader: ImageLoader = (props) => {
       resultUrl.searchParams.set("fit", props.fit);
     }
   }
-  resultUrl.searchParams.set("format", format ?? "auto");
+  resultUrl.searchParams.set("format", props.format ?? "auto");
 
   resultUrl.pathname = joinPath(resultUrl.pathname, encodePathFragment(src));
 

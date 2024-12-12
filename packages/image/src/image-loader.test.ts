@@ -30,6 +30,16 @@ describe("Asset image transforms", () => {
       decodePathFragment(resultUrl.pathname.slice(imageBaseUrl.length))
     ).toBe(assetName);
   });
+
+  test("strip /cgi/asset from src", () => {
+    expect(
+      wsImageLoader({
+        width: 128,
+        src: "/cgi/asset/my-image.webp",
+        quality: 100,
+      })
+    ).toEqual("/cgi/image/my-image.webp?width=128&quality=100&format=auto");
+  });
 });
 
 describe("Remote src image transforms", () => {
