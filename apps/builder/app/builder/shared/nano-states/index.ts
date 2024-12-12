@@ -18,7 +18,9 @@ export const $canvasRect = atom<DOMRect | undefined>();
 
 export const $workspaceRect = atom<DOMRect | undefined>();
 
-export const $canvasScrollbarWidth = atom<number | undefined>();
+export const $canvasScrollbarSize = atom<
+  { width: number; height: number } | undefined
+>();
 
 export const $scale = computed(
   [$canvasWidth, $workspaceRect],
@@ -37,18 +39,22 @@ export const $scale = computed(
 );
 
 export const $clampingRect = computed(
-  [$workspaceRect, $canvasRect, $canvasScrollbarWidth, $scale],
-  (workspaceRect, canvasRect, canvasScrollbarWidth, scale) => {
+  [$workspaceRect, $canvasRect, $canvasScrollbarSize, $scale],
+  (workspaceRect, canvasRect, canvasScrollbarSize, scale) => {
     if (
       workspaceRect === undefined ||
       canvasRect === undefined ||
-      canvasScrollbarWidth === undefined
+      canvasScrollbarSize === undefined
     ) {
       return;
     }
 
     const scrollbarWidthScaled = Math.round(
-      (canvasScrollbarWidth * scale) / 100
+      (canvasScrollbarSize.width * scale) / 100
+    );
+
+    const scrollbarHeightScaled = Math.round(
+      (canvasScrollbarSize.height * scale) / 100
     );
 
     if (canvasRect.width >= workspaceRect.width) {
@@ -56,7 +62,7 @@ export const $clampingRect = computed(
         left: 0,
         top: 0,
         width: workspaceRect.width - scrollbarWidthScaled,
-        height: workspaceRect.height,
+        height: workspaceRect.height - scrollbarHeightScaled,
       };
     }
 
@@ -64,7 +70,7 @@ export const $clampingRect = computed(
       left: 0,
       top: 0,
       width: canvasRect.width - scrollbarWidthScaled,
-      height: canvasRect.height,
+      height: canvasRect.height - scrollbarHeightScaled,
     };
   }
 );

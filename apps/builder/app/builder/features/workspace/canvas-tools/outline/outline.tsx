@@ -51,6 +51,11 @@ const baseOutlineStyle = css({
         borderRightWidth: 0,
       },
     },
+    isBottomClamped: {
+      true: {
+        borderBottomWidth: 0,
+      },
+    },
   },
   defaultVariants: { variant: "default" },
 });
@@ -91,8 +96,10 @@ export const Outline = ({
   variant,
 }: OutlineProps) => {
   const outlineRect = {
-    top: rect.top,
-    height: rect.height,
+    top: Math.max(rect.top, clampingRect.top),
+    height:
+      Math.min(rect.top + rect.height, clampingRect.top + clampingRect.height) -
+      Math.max(rect.top, clampingRect.top),
 
     left: Math.max(rect.left, clampingRect.left),
     width:
@@ -104,15 +111,16 @@ export const Outline = ({
   const isRightClamped =
     Math.round(rect.left + rect.width) > Math.round(clampingRect.width);
 
-  const dynamicStyle = useDynamicStyle(outlineRect);
+  const isBottomClamped =
+    Math.round(rect.top + rect.height) > Math.round(clampingRect.height);
 
-  // console.log(workspaceRect);
+  const dynamicStyle = useDynamicStyle(outlineRect);
 
   return (
     <>
       {propertyStyle}
       <div
-        className={`${baseStyle()} ${baseOutlineStyle({ variant, isLeftClamped, isRightClamped })}`}
+        className={`${baseStyle()} ${baseOutlineStyle({ variant, isLeftClamped, isRightClamped, isBottomClamped })}`}
         style={dynamicStyle}
       >
         {children}

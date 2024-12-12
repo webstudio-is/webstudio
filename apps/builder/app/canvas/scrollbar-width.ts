@@ -1,22 +1,18 @@
-import { $canvasScrollbarWidth } from "~/builder/shared/nano-states";
+import { shallowEqual } from "shallow-equal";
+import { $canvasScrollbarSize } from "~/builder/shared/nano-states";
 
-export const subscribeScrollbarWidth = ({
-  signal,
-}: {
-  signal: AbortSignal;
-}) => {
-  const getScrollbarWidth = () =>
-    window.innerWidth - document.documentElement.clientWidth;
+export const subscribeScrollbarSize = ({ signal }: { signal: AbortSignal }) => {
+  const getScrollbarSize = () => ({
+    width: window.innerWidth - document.documentElement.clientWidth,
+    height: window.innerHeight - document.documentElement.clientHeight,
+  });
 
-  let lastWidth = getScrollbarWidth();
-
-  $canvasScrollbarWidth.set(lastWidth);
+  $canvasScrollbarSize.set(getScrollbarSize());
 
   const observer = new ResizeObserver(() => {
-    const newWidth = getScrollbarWidth();
-    if (newWidth !== lastWidth) {
-      $canvasScrollbarWidth.set(newWidth);
-      lastWidth = newWidth;
+    const newSize = getScrollbarSize();
+    if (!shallowEqual($canvasScrollbarSize.get(), newSize)) {
+      $canvasScrollbarSize.set(newSize);
     }
   });
 
