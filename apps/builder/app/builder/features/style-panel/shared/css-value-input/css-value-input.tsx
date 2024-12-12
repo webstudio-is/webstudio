@@ -39,7 +39,6 @@ import {
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
-import { useDebouncedCallback } from "use-debounce";
 import {
   declarationDescriptions,
   isValidDeclaration,
@@ -656,16 +655,6 @@ export const CssValueInput = ({
 
   const menuProps = getMenuProps();
 
-  /**
-   * useDebouncedCallback without wait param uses Request Animation Frame
-   * here we wait for 1 tick until the "blur" event will be completed by Downshift
-   **/
-  const callOnCompleteIfIntermediateValueExists = useDebouncedCallback(() => {
-    if (props.intermediateValue !== undefined) {
-      onChangeComplete({ value, type: "blur" });
-    }
-  });
-
   const handleOnBlur: KeyboardEventHandler = (event) => {
     inputProps.onBlur(event);
     // When unit select is open, onBlur is triggered,though we don't want a change event in this case.
@@ -675,10 +664,7 @@ export const CssValueInput = ({
 
     // If the menu is open and visible we don't want to trigger onChangeComplete
     // as it will be done by Downshift
-    // There is situation that Downshift will not call omCompleted if nothing is selected in menu
     if (isOpen && menuProps.empty === false) {
-      // There is a situation that Downshift will not call onChangeComplete if nothing is selected in the menu
-      callOnCompleteIfIntermediateValueExists();
       return;
     }
 
@@ -745,6 +731,8 @@ export const CssValueInput = ({
       valueForDescription
     )}` as keyof typeof declarationDescriptions;
     description = declarationDescriptions[key];
+  } else if (highlightedValue?.type === "var") {
+    description = "CSS custom property (variable)";
   }
 
   const descriptions = items
@@ -894,11 +882,10 @@ export const CssValueInput = ({
                   </ComboboxListboxItem>
                 ))}
               </ComboboxScrollArea>
-              {description && (
-                <ComboboxItemDescription descriptions={descriptions}>
-                  <Description>{description}</Description>
-                </ComboboxItemDescription>
-              )}
+
+              <ComboboxItemDescription descriptions={descriptions}>
+                <Description>{description}</Description>
+              </ComboboxItemDescription>
             </ComboboxListbox>
           </ComboboxContent>
         )}
