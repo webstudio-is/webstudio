@@ -35,9 +35,10 @@ import {
 } from "@webstudio-is/sdk";
 import { mapGroupBy } from "~/shared/shim";
 import {
-  CodeEditorBase,
   EditorContent,
   EditorDialog,
+  EditorDialogButton,
+  EditorDialogControl,
   type EditorApi,
 } from "./code-editor-base";
 
@@ -488,22 +489,27 @@ export const ExpressionEditor = ({
     };
   }, []);
 
+  const content = (
+    <EditorContent
+      editorApiRef={editorApiRef}
+      extensions={extensions}
+      invalid={color === "error"}
+      readOnly={readOnly}
+      autoFocus={autoFocus}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+    />
+  );
+
   return (
     <div className={wrapperStyle.toString()}>
-      <CodeEditorBase
-        content={
-          <EditorContent
-            editorApiRef={editorApiRef}
-            extensions={extensions}
-            invalid={color === "error"}
-            readOnly={readOnly}
-            autoFocus={autoFocus}
-            value={value}
-            onChange={onChange}
-            onBlur={onBlur}
-          />
-        }
-      />
+      <EditorDialogControl>
+        {content}
+        <EditorDialog content={content}>
+          <EditorDialogButton />
+        </EditorDialog>
+      </EditorDialogControl>
     </div>
   );
 };

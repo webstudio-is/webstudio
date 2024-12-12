@@ -1,4 +1,10 @@
-import { forwardRef, useMemo, type ComponentProps, useEffect } from "react";
+import {
+  forwardRef,
+  useMemo,
+  type ComponentProps,
+  useEffect,
+  type ReactNode,
+} from "react";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
@@ -17,8 +23,10 @@ import { html } from "@codemirror/lang-html";
 import { markdown } from "@codemirror/lang-markdown";
 import { css } from "@webstudio-is/design-system";
 import {
-  CodeEditorBase,
   EditorContent,
+  EditorDialog,
+  EditorDialogButton,
+  EditorDialogControl,
   getMinMaxHeightVars,
 } from "./code-editor-base";
 
@@ -73,11 +81,11 @@ const getMarkdownExtensions = () => [
 
 export const CodeEditor = forwardRef<
   HTMLDivElement,
-  Omit<ComponentProps<typeof CodeEditorBase>, "content"> &
-    Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-      lang?: "html" | "markdown";
-    }
->(({ lang, ...props }, ref) => {
+  Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
+    lang?: "html" | "markdown";
+    title?: ReactNode;
+  }
+>(({ lang, title, ...editorContentProps }, ref) => {
   const extensions = useMemo(() => {
     if (lang === "html") {
       return getHtmlExtensions();
@@ -105,12 +113,17 @@ export const CodeEditor = forwardRef<
       document.removeEventListener("pointerdown", handlePointerDown, options);
     };
   }, []);
-
+  const content = (
+    <EditorContent {...editorContentProps} extensions={extensions} />
+  );
   return (
     <div className={wrapperStyle()} ref={ref}>
-      <CodeEditorBase
-        content={<EditorContent {...props} extensions={extensions} />}
-      />
+      <EditorDialogControl>
+        {content}
+        <EditorDialog title={title} content={content}>
+          <EditorDialogButton />
+        </EditorDialog>
+      </EditorDialogControl>
     </div>
   );
 });

@@ -416,29 +416,3 @@ export const EditorDialog = ({
     </Dialog>
   );
 };
-
-export const CodeEditorBase = ({
-  title,
-  open,
-  content,
-  onOpenChange,
-}: {
-  title?: ReactNode;
-  open?: boolean;
-  content: ReactNode;
-  onOpenChange?: (newOpen: boolean) => void;
-}) => {
-  return (
-    <EditorDialogControl>
-      {content}
-      <EditorDialog
-        open={open}
-        onOpenChange={onOpenChange}
-        title={title}
-        content={content}
-      >
-        <EditorDialogButton />
-      </EditorDialog>
-    </EditorDialogControl>
-  );
-};
