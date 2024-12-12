@@ -6,7 +6,6 @@ import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, createObjectPool } from "~/shared/sync";
 import {
   ServerSyncStorage,
@@ -31,7 +30,6 @@ import {
   subscribeResources,
   $authTokenPermissions,
   $publisherHost,
-  $imageLoader,
   $isDesignMode,
   $isContentMode,
   $userPlanFeatures,
@@ -236,7 +234,6 @@ export const Builder = ({
     // additional data stores
     $project.set(project);
     $publisherHost.set(publisherHost);
-    $imageLoader.set(createImageLoader({}));
     $authPermit.set(authPermit);
     $authToken.set(authToken);
     $userPlanFeatures.set(userPlanFeatures);

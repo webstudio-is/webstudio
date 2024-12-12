@@ -17,15 +17,10 @@ import {
   TextArea,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { ImageControl } from "./image-control";
-import { Image } from "@webstudio-is/image";
+import { Image, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
-import {
-  $assets,
-  $imageLoader,
-  $pages,
-  $userPlanFeatures,
-} from "~/shared/nano-states";
+import { ImageControl } from "./image-control";
+import { $assets, $pages, $userPlanFeatures } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/builder/shared/code-editor";
@@ -96,7 +91,6 @@ export const SectionGeneral = () => {
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
-  const imageLoader = useStore($imageLoader);
 
   const handleSave = <Name extends keyof ProjectMeta>(
     name: keyof ProjectMeta
@@ -176,7 +170,7 @@ export const SectionGeneral = () => {
             height={72}
             className={imgStyle()}
             src={favIconUrl}
-            loader={imageLoader}
+            loader={wsImageLoader}
           />
 
           <Grid gap={2}>

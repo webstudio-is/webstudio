@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import type { Asset } from "@webstudio-is/sdk";
@@ -19,9 +20,7 @@ import {
   $uploadingFilesDataStore,
   type UploadingFileData,
 } from "~/shared/nano-states";
-import { computed } from "nanostores";
 import { serverSyncStore } from "~/shared/sync";
-
 import {
   getFileName,
   getMimeType,
@@ -29,9 +28,8 @@ import {
   getSha256HashOfFile,
   uploadingFileDataToAsset,
 } from "./asset-utils";
-import { Image } from "@webstudio-is/image";
+import { Image, wsImageLoader } from "@webstudio-is/image";
 import invariant from "tiny-invariant";
-import { $imageLoader } from "~/shared/nano-states";
 import { fetch } from "~/shared/fetch.client";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
@@ -251,8 +249,6 @@ const imageWidth = css({
 });
 
 const ToastImageInfo = ({ objectURL }: { objectURL: string }) => {
-  const imageLoader = useStore($imageLoader);
-
   return (
     <Box css={{ width: theme.spacing[18] }}>
       <Image
@@ -260,7 +256,7 @@ const ToastImageInfo = ({ objectURL }: { objectURL: string }) => {
         src={objectURL}
         optimize={false}
         width={64}
-        loader={imageLoader}
+        loader={wsImageLoader}
       />
     </Box>
   );

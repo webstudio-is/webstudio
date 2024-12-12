@@ -8,6 +8,7 @@ import {
   coreMetas,
   corePropsMetas,
 } from "@webstudio-is/react-sdk";
+import { wsImageLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -61,7 +62,6 @@ import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeInterceptedEvents } from "./interceptor";
-import { createImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
@@ -102,7 +102,6 @@ const useElementsTree = (
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
-  const imageLoader = useMemo(() => createImageLoader({}), []);
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
@@ -120,7 +119,7 @@ const useElementsTree = (
         value={{
           renderer: isPreviewMode ? "preview" : "canvas",
           assetBaseUrl: params.assetBaseUrl,
-          imageLoader,
+          imageLoader: wsImageLoader,
           resources: {},
         }}
       >
@@ -135,14 +134,7 @@ const useElementsTree = (
         })}
       </ReactSdkContext.Provider>
     );
-  }, [
-    params,
-    instances,
-    rootInstanceId,
-    components,
-    isPreviewMode,
-    imageLoader,
-  ]);
+  }, [params, instances, rootInstanceId, components, isPreviewMode]);
 };
 
 const DesignMode = () => {

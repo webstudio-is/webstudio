@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { getImageAttributes } from "./image-optimize";
-import { createImageLoader } from "./image-loaders";
+import { wsImageLoader } from "./image-loaders";
 
 describe("Image optimizations applied", () => {
   test("width is number, create pixel density descriptor 'x'", () => {
@@ -11,7 +11,7 @@ describe("Image optimizations applied", () => {
       srcSet: undefined,
       sizes: undefined,
       quality: 100,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -31,7 +31,7 @@ describe("Image optimizations applied", () => {
       srcSet: undefined,
       sizes: undefined,
       quality: 100,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -51,7 +51,7 @@ describe("Image optimizations applied", () => {
       srcSet: undefined,
       sizes: undefined,
       quality: 90,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -71,7 +71,7 @@ describe("Image optimizations applied", () => {
       srcSet: undefined,
       sizes: "100vw",
       quality: 70,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -91,7 +91,7 @@ describe("Image optimizations applied", () => {
       srcSet: undefined,
       sizes: "100vw",
       quality: 70,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -136,7 +136,7 @@ describe("Image optimizations not applied", () => {
       srcSet: undefined,
       sizes: undefined,
       quality: 100,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -154,7 +154,7 @@ describe("Image optimizations not applied", () => {
       srcSet: undefined,
       sizes: undefined,
       quality: 100,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -172,7 +172,7 @@ describe("Image optimizations not applied", () => {
       srcSet: "user-defined-srcset",
       sizes: undefined,
       quality: 100,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -191,7 +191,7 @@ describe("Image optimizations not applied", () => {
       srcSet: undefined,
       sizes: undefined,
       quality: 100,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`undefined`);
@@ -205,7 +205,7 @@ describe("Image optimizations not applied", () => {
       srcSet: undefined,
       sizes: undefined,
       quality: 100,
-      loader: createImageLoader({}),
+      loader: wsImageLoader,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`undefined`);

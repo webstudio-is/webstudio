@@ -2,7 +2,7 @@
 
 import type * as React from "react";
 import type { Meta, StoryFn } from "@storybook/react";
-import { Image as ImagePrimitive, createImageLoader } from "./";
+import { Image as ImagePrimitive, wsImageLoader } from "./";
 
 // to not allow include local assets everywhere, just enable it for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -29,12 +29,6 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? REMOTE_SELF_DOMAIN_IMAGE
   : localLogoImage;
 
-const imageLoader = createImageLoader({
-  imageBaseUrl: USE_CLOUDFLARE_IMAGE_TRANSFORM
-    ? "https://webstudio.is/cdn-cgi/image/"
-    : "",
-});
-
 const ImageBase: StoryFn<
   React.ForwardRefExoticComponent<
     Omit<ImageProps, "loader"> & {
@@ -52,7 +46,7 @@ const ImageBase: StoryFn<
     <ImagePrimitive
       {...args}
       optimize={true}
-      loader={imageLoader}
+      loader={wsImageLoader}
       style={style}
     />
   );
