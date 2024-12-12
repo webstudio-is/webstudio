@@ -731,6 +731,8 @@ export const CssValueInput = ({
       valueForDescription
     )}` as keyof typeof declarationDescriptions;
     description = declarationDescriptions[key];
+  } else if (highlightedValue?.type === "var") {
+    description = "CSS custom property (variable)";
   }
 
   const descriptions = items
@@ -880,11 +882,10 @@ export const CssValueInput = ({
                   </ComboboxListboxItem>
                 ))}
               </ComboboxScrollArea>
-              {description && (
-                <ComboboxItemDescription descriptions={descriptions}>
-                  <Description>{description}</Description>
-                </ComboboxItemDescription>
-              )}
+
+              <ComboboxItemDescription descriptions={descriptions}>
+                <Description>{description}</Description>
+              </ComboboxItemDescription>
             </ComboboxListbox>
           </ComboboxContent>
         )}
