@@ -40,6 +40,17 @@ const baseOutlineStyle = css({
         borderColor: theme.colors.foregroundReusable,
       },
     },
+
+    isLeftClamped: {
+      true: {
+        borderLeftWidth: 0,
+      },
+    },
+    isRightClamped: {
+      true: {
+        borderRightWidth: 0,
+      },
+    },
   },
   defaultVariants: { variant: "default" },
 });
@@ -68,18 +79,39 @@ const useDynamicStyle = (rect?: Rect) => {
 
 type OutlineProps = {
   children?: ReactNode;
-  rect?: Rect;
+  rect: Rect;
+  workspaceRect: Rect;
   variant?: "default" | "collaboration" | "slot";
 };
 
-export const Outline = ({ children, rect, variant }: OutlineProps) => {
-  const dynamicStyle = useDynamicStyle(rect);
+export const Outline = ({
+  children,
+  rect,
+  workspaceRect,
+  variant,
+}: OutlineProps) => {
+  const outlineRect = {
+    top: rect.top,
+    height: rect.height,
+
+    left: Math.max(rect.left, workspaceRect.left),
+    width:
+      Math.min(
+        rect.left + rect.width,
+        workspaceRect.left + workspaceRect.width
+      ) - Math.max(rect.left, workspaceRect.left),
+  };
+
+  const isLeftClamped = rect.left !== outlineRect.left;
+  const isRightClamped = rect.left + rect.width > workspaceRect.width;
+
+  const dynamicStyle = useDynamicStyle(outlineRect);
 
   return (
     <>
       {propertyStyle}
       <div
-        className={`${baseStyle()} ${baseOutlineStyle({ variant })}`}
+        className={`${baseStyle()} ${baseOutlineStyle({ variant, isLeftClamped, isRightClamped })}`}
         style={dynamicStyle}
       >
         {children}
