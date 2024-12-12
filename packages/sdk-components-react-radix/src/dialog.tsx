@@ -55,7 +55,8 @@ export const Dialog = forwardRef<
   const { renderer } = useContext(ReactSdkContext);
 
   const [open, onOpenChange] = useControllableState({
-    prop: props.open,
+    prop: props.open ?? false,
+    defaultProp: false,
     onChange: props.onOpenChange,
   });
 
