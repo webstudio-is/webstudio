@@ -34,6 +34,26 @@ export const $scale = computed(
   }
 );
 
+export const $clipRect = computed(
+  [$workspaceRect, $canvasRect],
+  (workspaceRect, canvasRect) => {
+    if (workspaceRect === undefined || canvasRect === undefined) {
+      return;
+    }
+
+    if (canvasRect.width >= workspaceRect.width) {
+      return workspaceRect;
+    }
+
+    return {
+      left: 0,
+      top: 0,
+      width: canvasRect.width,
+      height: canvasRect.height,
+    };
+  }
+);
+
 export const $activeInspectorPanel = atom<"style" | "settings">("style");
 
 export const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");

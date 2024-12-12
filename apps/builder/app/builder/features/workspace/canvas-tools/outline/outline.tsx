@@ -80,32 +80,33 @@ const useDynamicStyle = (rect?: Rect) => {
 type OutlineProps = {
   children?: ReactNode;
   rect: Rect;
-  workspaceRect: Rect;
+  clipRect: Rect;
   variant?: "default" | "collaboration" | "slot";
 };
 
 export const Outline = ({
   children,
   rect,
-  workspaceRect,
+  clipRect,
   variant,
 }: OutlineProps) => {
   const outlineRect = {
     top: rect.top,
     height: rect.height,
 
-    left: Math.max(rect.left, workspaceRect.left),
+    left: Math.max(rect.left, clipRect.left),
     width:
-      Math.min(
-        rect.left + rect.width,
-        workspaceRect.left + workspaceRect.width
-      ) - Math.max(rect.left, workspaceRect.left),
+      Math.min(rect.left + rect.width, clipRect.left + clipRect.width) -
+      Math.max(rect.left, clipRect.left),
   };
 
   const isLeftClamped = rect.left !== outlineRect.left;
-  const isRightClamped = rect.left + rect.width > workspaceRect.width;
+  const isRightClamped =
+    Math.round(rect.left + rect.width) > Math.round(clipRect.width);
 
   const dynamicStyle = useDynamicStyle(outlineRect);
+
+  // console.log(workspaceRect);
 
   return (
     <>

@@ -17,7 +17,7 @@ import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
 import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
 import { applyScale } from "./outline";
-import { $scale, $workspaceRect } from "~/builder/shared/nano-states";
+import { $clipRect, $scale } from "~/builder/shared/nano-states";
 import { BlockChildHoveredInstanceOutline } from "./outline/block-instance-outline";
 
 const containerStyle = css({
@@ -41,13 +41,13 @@ export const CanvasTools = () => {
   const dragAndDropState = useStore($dragAndDropState);
   const instances = useStore($instances);
   const scale = useStore($scale);
-  const workspaceRect = useStore($workspaceRect);
+  const clipRect = useStore($clipRect);
 
   if (!canvasToolsVisible) {
     return;
   }
 
-  if (workspaceRect === undefined) {
+  if (clipRect === undefined) {
     return;
   }
 
@@ -64,7 +64,7 @@ export const CanvasTools = () => {
 
     return dropTargetInstance ? (
       <div className={containerStyle({ overflow: "hidden" })}>
-        <Outline rect={rect} workspaceRect={workspaceRect}>
+        <Outline rect={rect} clipRect={clipRect}>
           <Label instance={dropTargetInstance} instanceRect={rect} />
         </Outline>
         {placementIndicator !== undefined && (

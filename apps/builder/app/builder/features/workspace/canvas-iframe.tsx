@@ -45,7 +45,15 @@ const CanvasRectUpdater = ({
       }
 
       const rect = iframeRef.current.getBoundingClientRect();
-      $canvasRect.set(rect);
+
+      $canvasRect.set(
+        new DOMRect(
+          Math.round(rect.x),
+          Math.round(rect.y),
+          Math.round(rect.width),
+          Math.round(rect.height)
+        )
+      );
     };
 
     setUpdateCallback(() => task);

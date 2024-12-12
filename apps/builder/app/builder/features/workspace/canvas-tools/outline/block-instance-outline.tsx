@@ -30,7 +30,7 @@ import {
 } from "@webstudio-is/design-system";
 import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
-import { $scale, $workspaceRect } from "~/builder/shared/nano-states";
+import { $clipRect, $scale } from "~/builder/shared/nano-states";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 import { useRef, useState } from "react";
@@ -342,7 +342,7 @@ export const BlockChildHoveredInstanceOutline = () => {
   const isContentMode = useStore($isContentMode);
   const modifierKeys = useStore($modifierKeys);
   const instances = useStore($instances);
-  const workspaceRect = useStore($workspaceRect);
+  const clipRect = useStore($clipRect);
 
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
     undefined
@@ -367,7 +367,7 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
-  if (workspaceRect === undefined) {
+  if (clipRect === undefined) {
     return;
   }
 
@@ -417,7 +417,7 @@ export const BlockChildHoveredInstanceOutline = () => {
   );
 
   return (
-    <Outline rect={rect} workspaceRect={workspaceRect}>
+    <Outline rect={rect} clipRect={clipRect}>
       <div
         style={{
           width: 0,
