@@ -190,6 +190,17 @@ export const useDrag = <DragItemData>(
     };
   }, []);
 
+  useEffect(
+    () => () => {
+      // A component can be disposed of during dragging
+      // (e.g., by pressing Escape or closing the components panel while dragging).
+      if (state.current.status === "dragging") {
+        end(true);
+      }
+    },
+    [end]
+  );
+
   useEffect(() => {
     if (rootElement !== null) {
       rootElement.addEventListener("pointerdown", handlePointerDown);
