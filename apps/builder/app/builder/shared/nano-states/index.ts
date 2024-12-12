@@ -34,7 +34,7 @@ export const $scale = computed(
   }
 );
 
-export const $clipRect = computed(
+export const $clampingRect = computed(
   [$workspaceRect, $canvasRect],
   (workspaceRect, canvasRect) => {
     if (workspaceRect === undefined || canvasRect === undefined) {
