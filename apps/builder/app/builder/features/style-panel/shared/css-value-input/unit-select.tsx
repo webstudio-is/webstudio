@@ -47,7 +47,8 @@ export const useUnitSelect = ({
   if (
     options.length === 0 ||
     value.type === "var" ||
-    value.type === "unparsed"
+    value.type === "unparsed" ||
+    value.type === "invalid"
   ) {
     return [isOpen, undefined];
   }

@@ -819,7 +819,7 @@ export const CssValueInput = ({
   );
 
   const suffixRef = useRef<HTMLDivElement | null>(null);
-  const valueEditorElement =
+  const valueEditorButtonElement =
     value.type === "keyword" ? undefined : (
       <ValueEditorDialog
         property={property}
@@ -832,8 +832,12 @@ export const CssValueInput = ({
         }}
       />
     );
+  const invalidValueElement = value.type === "invalid" ? <></> : undefined;
   const suffixElement =
-    unitSelectElement ?? keywordButtonElement ?? valueEditorElement;
+    invalidValueElement ??
+    unitSelectElement ??
+    keywordButtonElement ??
+    valueEditorButtonElement;
 
   return (
     <ComboboxRoot open={isOpen}>
