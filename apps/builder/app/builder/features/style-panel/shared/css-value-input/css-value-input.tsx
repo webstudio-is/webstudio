@@ -873,7 +873,6 @@ export const CssValueInput = ({
             css={{
               cursor: "default",
               minWidth: "2em",
-              position: "relative",
               "&:hover": {
                 [cssButtonDisplay]: "block",
               },
