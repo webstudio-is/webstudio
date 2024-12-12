@@ -15,7 +15,6 @@ import {
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
-  findClosestDetachableInstanceSelector,
   getComponentTemplateData,
   insertTemplateData,
   reparentInstance,
@@ -28,6 +27,7 @@ import {
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
+  getAncestorInstanceSelector,
 } from "~/shared/tree-utils";
 import {
   findClosestInstanceMatchingFragment,
@@ -112,6 +112,26 @@ const sharedDropOptions = {
       (child) => getInstanceIdFromElement(child) !== undefined
     );
   },
+};
+
+const findClosestDraggable = (instanceSelector: InstanceSelector) => {
+  // cannot drag root
+  if (instanceSelector.length === 1) {
+    return;
+  }
+  const instances = $instances.get();
+  const metas = $registeredComponentMetas.get();
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    const meta = metas.get(instance.component);
+    if (meta?.type === "rich-text-child") {
+      continue;
+    }
+    return getAncestorInstanceSelector(instanceSelector, instanceId);
+  }
 };
 
 export const useDragAndDrop = () => {
@@ -201,22 +221,12 @@ export const useDragAndDrop = () => {
       if (instanceSelector === undefined) {
         return false;
       }
-      // cannot drag root
-      if (instanceSelector.length === 1) {
-        return false;
-      }
       // cannot drag while editing text
       if (element.closest("[contenteditable=true]")) {
         return false;
       }
       // When trying to drag an instance inside editor, drag the editor instead
-      return (
-        findClosestDetachableInstanceSelector(
-          instanceSelector,
-          $instances.get(),
-          $registeredComponentMetas.get()
-        ) ?? false
-      );
+      return findClosestDraggable(instanceSelector) ?? false;
     },
 
     onStart({ data: dragInstanceSelector }) {

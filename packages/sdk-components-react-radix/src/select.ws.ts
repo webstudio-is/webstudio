@@ -106,6 +106,16 @@ export const metaSelect: WsComponentMeta = {
   category: "radix",
   order: 10,
   type: "container",
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "SelectTrigger" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "SelectContent" },
+    },
+  ],
   icon: SelectIcon,
   stylable: false,
   description:
@@ -241,10 +251,19 @@ export const metaSelectTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: TriggerIcon,
-  detachable: false,
   presetStyle: {
     button,
   },
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "Select" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "SelectValue" },
+    },
+  ],
 };
 
 export const metaSelectValue: WsComponentMeta = {
@@ -252,9 +271,12 @@ export const metaSelectValue: WsComponentMeta = {
   type: "container",
   label: "Value",
   icon: FormTextFieldIcon,
-  detachable: false,
   presetStyle: {
     span,
+  },
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "SelectTrigger" },
   },
 };
 
@@ -262,26 +284,54 @@ export const metaSelectContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: ContentIcon,
-  detachable: false,
   presetStyle,
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "Select" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "SelectViewport" },
+    },
+  ],
 };
 
 export const metaSelectViewport: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: ViewportIcon,
-  detachable: false,
   presetStyle,
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "SelectContent" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "SelectItem" },
+    },
+  ],
 };
 
 export const metaSelectItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: ItemIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "SelectViewport" },
-  },
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "SelectViewport" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "SelectItemIndicator" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "SelectItemText" },
+    },
+  ],
   presetStyle,
 };
 
@@ -290,7 +340,6 @@ export const metaSelectItemIndicator: WsComponentMeta = {
   type: "container",
   label: "Indicator",
   icon: CheckMarkIcon,
-  detachable: false,
   constraints: {
     relation: "ancestor",
     component: { $eq: "SelectItem" },
@@ -305,7 +354,6 @@ export const metaSelectItemText: WsComponentMeta = {
   type: "container",
   label: "Item Text",
   icon: TextIcon,
-  detachable: false,
   constraints: {
     relation: "ancestor",
     component: { $eq: "SelectItem" },

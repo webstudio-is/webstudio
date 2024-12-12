@@ -255,28 +255,6 @@ export const findClosestEditableInstanceSelector = (
   }
 };
 
-export const findClosestDetachableInstanceSelector = (
-  instanceSelector: InstanceSelector,
-  instances: Instances,
-  metas: Map<string, WsComponentMeta>
-) => {
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      return;
-    }
-    const meta = metas.get(instance.component);
-    if (meta === undefined) {
-      return;
-    }
-    const detachable = meta.detachable ?? true;
-    if (meta.type === "rich-text-child" || detachable === false) {
-      continue;
-    }
-    return getAncestorInstanceSelector(instanceSelector, instanceId);
-  }
-};
-
 export const isInstanceDetachable = (
   instances: Instances,
   instanceSelector: InstanceSelector
@@ -296,17 +274,11 @@ export const isInstanceDetachable = (
     newInstances.set(parentInstance.id, parentInstance);
   }
   // check parent can follow constraints without selected instance
-  const matches = isTreeMatching({
+  return isTreeMatching({
     instances: newInstances,
     metas,
     instanceSelector: instanceSelector.slice(1),
   });
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return false;
-  }
-  const meta = metas.get(instance.component);
-  return (meta?.detachable ?? true) && matches;
 };
 
 export const insertInstanceChildrenMutable = (

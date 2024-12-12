@@ -127,6 +127,12 @@ export const metaAccordion: WsComponentMeta = {
   presetStyle,
   description:
     "A vertically stacked set of interactive headings that each reveal an associated section of content. Clicking on the heading will open the item and close other items.",
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "AccordionItem" },
+    },
+  ],
   template: [
     {
       type: "instance",
@@ -222,10 +228,20 @@ export const metaAccordionItem: WsComponentMeta = {
   type: "container",
   label: "Item",
   icon: ItemIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Accordion" },
-  },
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "Accordion" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "AccordionHeader" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "AccordionContent" },
+    },
+  ],
   indexWithinAncestor: "Accordion",
   presetStyle,
 };
@@ -235,11 +251,16 @@ export const metaAccordionHeader: WsComponentMeta = {
   type: "container",
   label: "Item Header",
   icon: HeaderIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "AccordionItem" },
-  },
-  detachable: false,
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "AccordionItem" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "AccordionTrigger" },
+    },
+  ],
   presetStyle: {
     h3: [h3, tc.my(0)].flat(),
   },
@@ -254,7 +275,6 @@ export const metaAccordionTrigger: WsComponentMeta = {
     relation: "ancestor",
     component: { $eq: "AccordionHeader" },
   },
-  detachable: false,
   states: [
     ...defaultStates,
     {
@@ -277,7 +297,6 @@ export const metaAccordionContent: WsComponentMeta = {
     relation: "ancestor",
     component: { $eq: "AccordionItem" },
   },
-  detachable: false,
   presetStyle,
 };
 
