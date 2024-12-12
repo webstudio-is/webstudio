@@ -1,8 +1,4 @@
-import { useStore } from "@nanostores/react";
-
-import { Image as WebstudioImage } from "@webstudio-is/image";
-
-import { $imageLoader } from "~/shared/nano-states";
+import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
 
 type ImageProps = {
   assetId: string;
@@ -22,7 +18,6 @@ export const Image = ({
   width,
 }: ImageProps) => {
   const optimize = objectURL === undefined;
-  const imageLoader = useStore($imageLoader);
 
   // Avoid image flickering on switching from preview to asset (during upload)
   // Possible optimisation, we can set it to "sync" only if asset.path has changed or add isNew prop to UploadedAssetContainer
@@ -43,7 +38,7 @@ export const Image = ({
         maxWidth: "100%",
       }}
       key={assetId}
-      loader={imageLoader}
+      loader={wsImageLoader}
       decoding={decoding}
       src={src}
       width={width}

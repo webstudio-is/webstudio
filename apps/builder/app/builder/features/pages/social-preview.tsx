@@ -1,8 +1,6 @@
 import { Box, Grid, Label, css, theme } from "@webstudio-is/design-system";
-import { Image } from "@webstudio-is/image";
+import { Image, wsImageLoader } from "@webstudio-is/image";
 import { truncateByWords, truncate } from "./social-utils";
-import { useStore } from "@nanostores/react";
-import { $imageLoader } from "~/shared/nano-states";
 
 type SocialPreviewProps = {
   ogImageUrl?: string;
@@ -33,8 +31,6 @@ export const SocialPreview = ({
   ogTitle,
   ogUrl,
 }: SocialPreviewProps) => {
-  const imageLoader = useStore($imageLoader);
-
   return (
     <Grid gap={1}>
       <Label>Social Sharing Preview</Label>
@@ -49,7 +45,7 @@ export const SocialPreview = ({
       >
         <Image
           src={ogImageUrl}
-          loader={imageLoader}
+          loader={wsImageLoader}
           className={imgStyle({
             hasImage:
               ogImageUrl === undefined || ogImageUrl === "" ? false : true,

@@ -19,7 +19,6 @@ import type { Style } from "@webstudio-is/css-engine";
 import type { Project } from "@webstudio-is/project";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
-import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { HtmlTags } from "html-tags";
@@ -34,8 +33,6 @@ import type { UserPlanFeatures } from "../db/user-plan-features.server";
 export const $project = atom<Project | undefined>();
 
 export const $publisherHost = atom<string>("wstd.work");
-
-export const $imageLoader = atom<ImageLoader>(createImageLoader({}));
 
 export const $publishedOrigin = computed(
   [$project, $publisherHost],

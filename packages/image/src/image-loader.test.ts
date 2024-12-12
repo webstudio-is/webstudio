@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { createImageLoader } from "./image-loaders";
+import { wsImageLoader } from "./image-loaders";
 
 const decodePathFragment = (fragment: string) => {
   return decodeURIComponent(fragment);
@@ -12,10 +12,9 @@ const encodePathFragment = (fragment: string) => {
 describe("Asset image transforms", () => {
   test("width is number", () => {
     const imageBaseUrl = "/cgi/image/";
-    const loader = createImageLoader({});
 
     const assetName = "Привет_Мир__2F__BQNEuP8O9N79eVwPfbBJg.webp";
-    const result = loader({
+    const result = wsImageLoader({
       width: 128,
       src: assetName,
       quality: 100,
@@ -36,11 +35,10 @@ describe("Asset image transforms", () => {
 describe("Remote src image transforms", () => {
   test("width is number", () => {
     const imageBaseUrl = "/cgi/image/";
-    const loader = createImageLoader({});
 
     const remoteSrc = "https://example.com/lo%3Fgo.webp?a=1";
 
-    const result = loader({
+    const result = wsImageLoader({
       width: 128,
       src: remoteSrc,
       quality: 100,
@@ -61,13 +59,12 @@ describe("Remote src image transforms", () => {
 
   test("Double encoded fragment", () => {
     const imageBaseUrl = "/cgi/image/";
-    const loader = createImageLoader({});
 
     const remoteSrc = encodePathFragment(
       "https://ex%2Fample.com/lo%3Fgo.webp?a=1"
     );
 
-    const result = loader({
+    const result = wsImageLoader({
       width: 128,
       src: remoteSrc,
       quality: 100,

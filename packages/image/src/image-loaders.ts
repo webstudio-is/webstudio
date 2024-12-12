@@ -1,10 +1,6 @@
 import warnOnce from "warn-once";
 import { allSizes, type ImageLoader } from "./image-optimize";
 
-export type ImageLoaderOptions = {
-  imageBaseUrl?: string;
-};
-
 const NON_EXISTING_DOMAIN = "https://a3cbcbec-cdb1-4ea4-ad60-43c795308ddc.ddc";
 
 const joinPath = (...segments: string[]) => {
@@ -22,42 +18,48 @@ const encodePathFragment = (fragment: string) => {
  * Default image loader in case of no loader provided
  * https://developers.cloudflare.com/images/image-resizing/url-format/
  **/
-export const createImageLoader =
-  (_loaderOptions: ImageLoaderOptions): ImageLoader =>
-  (props) => {
-    const width = props.format === "raw" ? 16 : props.width;
-    const quality = props.format === "raw" ? 100 : props.quality;
-    const { format, src } = props;
+export const wsImageLoader: ImageLoader = (props) => {
+  const width = props.format === "raw" ? 16 : props.width;
+  const quality = props.format === "raw" ? 100 : props.quality;
+  const { format, src } = props;
 
-    if (process.env.NODE_ENV !== "production") {
-      warnOnce(
-        allSizes.includes(width) === false,
-        "Width must be only from allowed values"
-      );
+  if (process.env.NODE_ENV !== "production") {
+    warnOnce(
+      allSizes.includes(width) === false,
+      "Width must be only from allowed values"
+    );
+  }
+
+  const resultUrl = new URL("/cgi/image/", NON_EXISTING_DOMAIN);
+
+  if (format !== "raw") {
+    resultUrl.searchParams.set("width", width.toString());
+    resultUrl.searchParams.set("quality", quality.toString());
+
+    if (props.height != null) {
+      resultUrl.searchParams.set("height", props.height.toString());
     }
 
-    const resultUrl = new URL("/cgi/image/", NON_EXISTING_DOMAIN);
-
-    if (format !== "raw") {
-      resultUrl.searchParams.set("width", width.toString());
-      resultUrl.searchParams.set("quality", quality.toString());
-
-      if (props.height != null) {
-        resultUrl.searchParams.set("height", props.height.toString());
-      }
-
-      if (props.fit != null) {
-        resultUrl.searchParams.set("fit", props.fit);
-      }
+    if (props.fit != null) {
+      resultUrl.searchParams.set("fit", props.fit);
     }
-    resultUrl.searchParams.set("format", format ?? "auto");
+  }
+  resultUrl.searchParams.set("format", format ?? "auto");
 
-    resultUrl.pathname = joinPath(resultUrl.pathname, encodePathFragment(src));
+  resultUrl.pathname = joinPath(resultUrl.pathname, encodePathFragment(src));
 
-    if (resultUrl.href.startsWith(NON_EXISTING_DOMAIN)) {
-      return `${resultUrl.pathname}?${resultUrl.searchParams.toString()}`;
-    }
+  if (resultUrl.href.startsWith(NON_EXISTING_DOMAIN)) {
+    return `${resultUrl.pathname}?${resultUrl.searchParams.toString()}`;
+  }
 
-    // Cloudflare docs say that we don't need to urlencode the path params
-    return resultUrl.href;
-  };
+  // Cloudflare docs say that we don't need to urlencode the path params
+  return resultUrl.href;
+};
+
+type ImageLoaderOptions = {
+  imageBaseUrl?: string;
+};
+
+export const createImageLoader = (
+  _loaderOptions: ImageLoaderOptions
+): ImageLoader => wsImageLoader;

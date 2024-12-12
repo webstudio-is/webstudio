@@ -1,7 +1,5 @@
-import { useStore } from "@nanostores/react";
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
-import { Image } from "@webstudio-is/image";
-import { $imageLoader } from "~/shared/nano-states";
+import { Image, wsImageLoader } from "@webstudio-is/image";
 import { formatUrl, truncateByWords, truncate } from "./social-utils";
 
 /**
@@ -67,8 +65,6 @@ const VerticalThreePointIcon = () => (
 );
 
 export const SearchPreview = (props: SearchPreviewProps) => {
-  const imageLoader = useStore($imageLoader);
-
   return (
     <Grid
       gap={1}
@@ -99,7 +95,7 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           <Image
             width={18}
             height={18}
-            loader={imageLoader}
+            loader={wsImageLoader}
             src={props.faviconUrl}
           />
         </Flex>
