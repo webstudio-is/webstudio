@@ -1835,6 +1835,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      await-interaction-response:
+        specifier: ^0.0.2
+        version: 0.0.2
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -1905,6 +1908,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.1.4
         version: 1.1.4(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@radix-ui/react-use-controllable-state':
+        specifier: ^1.1.0
+        version: 1.1.0(@types/react@18.2.79)(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -1917,6 +1923,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      await-interaction-response:
+        specifier: ^0.0.2
+        version: 0.0.2
     devDependencies:
       '@types/node':
         specifier: ^22.9.3
@@ -5125,6 +5134,9 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  await-interaction-response@0.0.2:
+    resolution: {integrity: sha512-gvURjcDvPxilee07zlraNIN6EXEXT1sxYI5Rsnwe8co9+syFAqDtJefYMxml6Z3Xg3Yp6zrrMCM1WqoxYUPH1A==}
 
   axios@0.26.1:
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
@@ -12014,6 +12026,8 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.0.0
+
+  await-interaction-response@0.0.2: {}
 
   axios@0.26.1:
     dependencies:
