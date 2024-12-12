@@ -31,7 +31,7 @@ import {
   projectId,
   contactEmail,
 } from "__SERVER__";
-import { assetBaseUrl, imageBaseUrl, imageLoader } from "__CONSTANTS__";
+import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 
@@ -329,7 +329,6 @@ const Outlet = () => {
       value={{
         imageLoader,
         assetBaseUrl,
-        imageBaseUrl,
         resources,
       }}
     >

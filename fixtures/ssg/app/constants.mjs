@@ -15,5 +15,5 @@ export const imageLoader = ({ src }) => {
     return src;
   }
 
-  return imageBaseUrl + src;
+  return assetBaseUrl + src;
 };

@@ -243,7 +243,6 @@ test("resolve asset prop values when params is provided", () => {
 
   $params.set({
     assetBaseUrl: "/asset/",
-    imageBaseUrl: "/image/",
   });
   expect(
     $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
@@ -279,7 +278,6 @@ test("resolve page prop values when params is provided", () => {
 
   $params.set({
     assetBaseUrl: "/asset/",
-    imageBaseUrl: "/image/",
   });
   expect(
     $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))

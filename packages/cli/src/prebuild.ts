@@ -446,21 +446,23 @@ export const prebuild = async (options: {
       throw new Error(`Project domain is missing from the project data`);
     }
 
-    const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
-
-    const imageLoader = createImageLoader({
-      imageBaseUrl: assetBuildUrl,
-    });
+    const assetOrigin = `https://${domain}.${appDomain}`;
+    const imageLoader = createImageLoader({});
 
     for (const asset of siteData.assets) {
       if (asset.type === "image") {
-        const imageSrc = imageLoader({
+        const imagePath = imageLoader({
           src: asset.name,
           format: "raw",
         });
-
         assetsToDownload.push(
-          limit(() => downloadAsset(imageSrc, asset.name, assetBaseUrl))
+          limit(() =>
+            downloadAsset(
+              `${assetOrigin}${imagePath}`,
+              asset.name,
+              assetBaseUrl
+            )
+          )
         );
       }
 
@@ -468,7 +470,7 @@ export const prebuild = async (options: {
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              `${assetBuildUrl}${asset.name}`,
+              `${assetOrigin}/cgi/asset/${asset.name}`,
               asset.name,
               assetBaseUrl
             )

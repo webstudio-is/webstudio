@@ -119,7 +119,6 @@ const useElementsTree = (
       <ReactSdkContext.Provider
         value={{
           renderer: isPreviewMode ? "preview" : "canvas",
-          imageBaseUrl: "/cgi/image/",
           assetBaseUrl: params.assetBaseUrl,
           imageLoader,
           resources: {},
