@@ -19,7 +19,6 @@ export const VimeoPlayButton = forwardRef<ElementRef<typeof defaultTag>, Props>(
 
     const handleClick = useCallback(async () => {
       await interactionResponse();
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       vimeoContext.onInitPlayer();
     }, [vimeoContext]);
 
