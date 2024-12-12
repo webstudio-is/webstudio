@@ -172,6 +172,7 @@ const autocompletionTooltipTheme = EditorView.theme({
 
 export type EditorApi = {
   replaceSelection: (string: string) => void;
+  focus: () => void;
 };
 
 type EditorContentProps = {
@@ -216,7 +217,9 @@ export const EditorContent = ({
       parent: editorRef.current,
     });
     if (autoFocus) {
-      view.focus();
+      requestAnimationFrame(() => {
+        view.focus();
+      });
     }
     viewRef.current = view;
     return () => {
@@ -300,6 +303,9 @@ export const EditorContent = ({
       }
       view.dispatch(view.state.replaceSelection(string));
       view.focus();
+    },
+    focus() {
+      viewRef.current?.focus();
     },
   }));
 

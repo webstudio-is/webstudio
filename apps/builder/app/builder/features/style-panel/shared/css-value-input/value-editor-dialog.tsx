@@ -1,7 +1,10 @@
 import { NestedInputButton, theme } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
-import { useEffect, useState } from "react";
-import { EditorDialog } from "~/builder/shared/code-editor-base";
+import { useEffect, useRef, useState } from "react";
+import {
+  EditorDialog,
+  type EditorApi,
+} from "~/builder/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
 import type { IntermediateStyleValue } from "./css-value-input";
 import {
@@ -25,6 +28,7 @@ export const ValueEditorDialog = ({
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >({ type: "intermediate", value });
+  const editorDialogOpenStateRef = useRef(false);
 
   useEffect(() => {
     setIntermediateValue({ type: "intermediate", value });
@@ -56,12 +60,23 @@ export const ValueEditorDialog = ({
     onChangeComplete(parsedValue);
   };
 
+  const editorApiRef = useRef<EditorApi>();
+
   return (
     <EditorDialog
       title="CSS Value"
+      onOpenChange={(isOpen) => {
+        if (isOpen) {
+          // Workaround, we need to wait a frame before we can get the focus,
+          // otherwise we will loose it again to CssValueInput popover
+          requestAnimationFrame(() => {
+            editorApiRef.current?.focus();
+          });
+        }
+      }}
       content={
         <CssFragmentEditorContent
-          autoFocus
+          editorApiRef={editorApiRef}
           value={intermediateValue?.value ?? value ?? ""}
           invalid={intermediateValue?.type === "invalid"}
           onChange={handleChange}
