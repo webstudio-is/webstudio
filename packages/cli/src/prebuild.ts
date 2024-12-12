@@ -49,6 +49,7 @@ import {
   replaceFormActionsWithResources,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
+import { createImageLoader } from "@webstudio-is/image";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -445,14 +446,19 @@ export const prebuild = async (options: {
       throw new Error(`Project domain is missing from the project data`);
     }
 
-    const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
+    const assetOrigin = `https://${domain}.${appDomain}`;
+    const imageLoader = createImageLoader({});
 
     for (const asset of siteData.assets) {
       if (asset.type === "image") {
+        const imagePath = imageLoader({
+          src: asset.name,
+          format: "raw",
+        });
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              `${assetBuildUrl}${asset.name}`,
+              `${assetOrigin}${imagePath}`,
               asset.name,
               assetBaseUrl
             )
@@ -464,7 +470,7 @@ export const prebuild = async (options: {
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              `${assetBuildUrl}${asset.name}`,
+              `${assetOrigin}/cgi/asset/${asset.name}`,
               asset.name,
               assetBaseUrl
             )
