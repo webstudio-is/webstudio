@@ -16,7 +16,11 @@ import {
 import { html } from "@codemirror/lang-html";
 import { markdown } from "@codemirror/lang-markdown";
 import { css } from "@webstudio-is/design-system";
-import { CodeEditorBase, getMinMaxHeightVars } from "./code-editor-base";
+import {
+  CodeEditorBase,
+  EditorContent,
+  getMinMaxHeightVars,
+} from "./code-editor-base";
 
 const wrapperStyle = css({
   position: "relative",
@@ -69,9 +73,10 @@ const getMarkdownExtensions = () => [
 
 export const CodeEditor = forwardRef<
   HTMLDivElement,
-  Omit<ComponentProps<typeof CodeEditorBase>, "extensions"> & {
-    lang?: "html" | "markdown";
-  }
+  Omit<ComponentProps<typeof CodeEditorBase>, "content"> &
+    Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
+      lang?: "html" | "markdown";
+    }
 >(({ lang, ...props }, ref) => {
   const extensions = useMemo(() => {
     if (lang === "html") {
@@ -103,7 +108,9 @@ export const CodeEditor = forwardRef<
 
   return (
     <div className={wrapperStyle()} ref={ref}>
-      <CodeEditorBase {...props} extensions={extensions} />
+      <CodeEditorBase
+        content={<EditorContent {...props} extensions={extensions} />}
+      />
     </div>
   );
 });

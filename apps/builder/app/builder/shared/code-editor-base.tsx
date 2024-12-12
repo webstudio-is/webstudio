@@ -420,14 +420,14 @@ export const EditorDialog = ({
 export const CodeEditorBase = ({
   title,
   open,
+  content,
   onOpenChange,
-  ...editorContentProps
-}: EditorContentProps & {
+}: {
   title?: ReactNode;
   open?: boolean;
+  content: ReactNode;
   onOpenChange?: (newOpen: boolean) => void;
 }) => {
-  const content = <EditorContent {...editorContentProps} />;
   return (
     <EditorDialogControl>
       {content}

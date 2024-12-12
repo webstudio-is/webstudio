@@ -491,14 +491,18 @@ export const ExpressionEditor = ({
   return (
     <div className={wrapperStyle.toString()}>
       <CodeEditorBase
-        editorApiRef={editorApiRef}
-        extensions={extensions}
-        invalid={color === "error"}
-        readOnly={readOnly}
-        autoFocus={autoFocus}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
+        content={
+          <EditorContent
+            editorApiRef={editorApiRef}
+            extensions={extensions}
+            invalid={color === "error"}
+            readOnly={readOnly}
+            autoFocus={autoFocus}
+            value={value}
+            onChange={onChange}
+            onBlur={onBlur}
+          />
+        }
       />
     </div>
   );

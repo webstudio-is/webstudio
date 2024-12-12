@@ -2,7 +2,7 @@ import { NestedInputButton, theme } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { useEffect, useState } from "react";
 import { EditorDialog } from "~/builder/shared/code-editor-base";
-import { CssFragmentEditor } from "../css-fragment";
+import { CssFragmentEditorContent } from "../css-fragment";
 import type { IntermediateStyleValue } from "./css-value-input";
 import {
   type InvalidValue,
@@ -60,18 +60,12 @@ export const ValueEditorDialog = ({
     <EditorDialog
       title="CSS Value"
       content={
-        <CssFragmentEditor
-          invalid={intermediateValue?.type === "invalid"}
+        <CssFragmentEditorContent
           autoFocus
           value={intermediateValue?.value ?? value ?? ""}
+          invalid={intermediateValue?.type === "invalid"}
           onChange={handleChange}
           onBlur={handleComplete}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              handleComplete();
-              event.preventDefault();
-            }
-          }}
         />
       }
     >
