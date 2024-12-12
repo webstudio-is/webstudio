@@ -868,11 +868,9 @@ export const CssValueInput = ({
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
             suffix={
-              suffixElement && (
-                <Flex align="center" ref={suffixRef}>
-                  {suffixElement}
-                </Flex>
-              )
+              <Flex align="center" ref={suffixRef}>
+                {suffixElement}
+              </Flex>
             }
             css={{
               cursor: "default",

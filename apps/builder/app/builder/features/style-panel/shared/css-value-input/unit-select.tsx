@@ -44,26 +44,23 @@ export const useUnitSelect = ({
     [property, value]
   );
 
-  if (
-    options.length === 0 ||
-    value.type === "var" ||
-    value.type === "unparsed" ||
-    value.type === "invalid"
-  ) {
-    return [isOpen, undefined];
-  }
-
-  const unitOrKeywordValue: string | undefined =
-    value.type === "unit"
-      ? value.unit
-      : value.type === "keyword"
-        ? value.value
-        : undefined;
-
   const unit =
     value.type === "unit" || value.type === "intermediate"
       ? value.unit
       : undefined;
+
+  const unitOrKeywordValue: string | undefined =
+    unit ?? (value.type === "keyword" ? value.value : undefined);
+
+  if (
+    options.length === 0 ||
+    value.type === "var" ||
+    value.type === "unparsed" ||
+    value.type === "invalid" ||
+    unitOrKeywordValue === undefined
+  ) {
+    return [isOpen, undefined];
+  }
 
   const select = (
     <UnitSelect
