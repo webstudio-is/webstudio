@@ -1,20 +1,43 @@
-import {
-  type ComponentPropsWithoutRef,
-  type ForwardRefExoticComponent,
-  forwardRef,
-  type ComponentProps,
-  type RefAttributes,
-} from "react";
+import { type ComponentPropsWithoutRef, forwardRef, useCallback } from "react";
 import { Root, List, Trigger, Content } from "@radix-ui/react-tabs";
 import {
   getClosestInstance,
   getIndexWithinAncestorFromComponentProps,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
+import interactionResponse from "await-interaction-response";
 
-export const Tabs: ForwardRefExoticComponent<
-  Omit<ComponentProps<typeof Root>, "asChild"> & RefAttributes<HTMLDivElement>
-> = Root;
+export const Tabs = forwardRef<
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof Root>, "value" | "onValueChange"> & {
+    value?: string;
+    onValueChange?: (value: string) => void;
+  }
+>(({ defaultValue, ...props }, ref) => {
+  const [value, onValueChange] = useControllableState({
+    prop: props.value,
+    defaultProp: defaultValue,
+    onChange: props.onValueChange,
+  });
+
+  const handleValueChange = useCallback(
+    async (value: string) => {
+      await interactionResponse();
+      onValueChange(value);
+    },
+    [onValueChange]
+  );
+
+  return (
+    <Root
+      ref={ref}
+      {...props}
+      value={value}
+      onValueChange={handleValueChange}
+    />
+  );
+});
 
 export const TabsList = List;
 
