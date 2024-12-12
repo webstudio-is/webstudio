@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
   useContext,
+  useCallback,
 } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
@@ -14,6 +15,8 @@ import {
   getClosestInstance,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
+import interactionResponse from "await-interaction-response";
 
 /**
  * Naive heuristic to determine if a click event will cause navigate
@@ -49,8 +52,21 @@ export const Dialog = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof DialogPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
-  const { open, onOpenChange } = props;
   const { renderer } = useContext(ReactSdkContext);
+
+  const [open, onOpenChange] = useControllableState({
+    prop: props.open,
+    defaultProp: false,
+    onChange: props.onOpenChange,
+  });
+
+  const onOpenChangeHandler = useCallback(
+    async (open: boolean) => {
+      await interactionResponse();
+      onOpenChange(open);
+    },
+    [onOpenChange]
+  );
 
   /**
    * Close the dialog when a navigable link within it is clicked.
@@ -76,15 +92,21 @@ export const Dialog = forwardRef<
       }
 
       if (target.closest('[role="dialog"]')) {
-        onOpenChange?.(false);
+        onOpenChangeHandler?.(false);
       }
     };
 
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
-  }, [open, onOpenChange, renderer]);
+  }, [open, onOpenChangeHandler, renderer]);
 
-  return <DialogPrimitive.Root {...props} />;
+  return (
+    <DialogPrimitive.Root
+      {...props}
+      onOpenChange={onOpenChangeHandler}
+      open={open}
+    />
+  );
 });
 
 /**

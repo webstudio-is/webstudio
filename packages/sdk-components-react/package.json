@@ -52,7 +52,8 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "colord": "^2.9.3",
-    "micromark": "^4.0.0"
+    "micromark": "^4.0.0",
+    "await-interaction-response": "^0.0.2"
   },
   "devDependencies": {
     "@testing-library/react": "^14.2.2",
