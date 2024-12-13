@@ -14,7 +14,6 @@ import {
   addGlobalRules,
   createImageValueTransformer,
   descendantComponent,
-  type Params,
   rootComponent,
 } from "@webstudio-is/react-sdk";
 import {
@@ -33,9 +32,10 @@ import {
   $selectedStyleState,
   $styleSourceSelections,
   $styles,
+  assetBaseUrl,
 } from "~/shared/nano-states";
 import { setDifference } from "~/shared/shim";
-import { $ephemeralStyles, $params } from "../stores";
+import { $ephemeralStyles } from "../stores";
 import { canvasApi } from "~/shared/canvas-api";
 import { $selectedInstance, $selectedPage } from "~/shared/awareness";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
@@ -225,9 +225,9 @@ const subscribeContentEditModeHelperStyles = () => {
 
 // keep stable transformValue in store
 // to preserve cache in css engine
-const $transformValue = computed([$assets, $params], (assets, params) =>
+const $transformValue = computed($assets, (assets) =>
   createImageValueTransformer(assets, {
-    assetBaseUrl: params?.assetBaseUrl ?? "",
+    assetBaseUrl,
   })
 );
 
@@ -428,7 +428,7 @@ export const manageDesignModeStyles = ({ signal }: { signal: AbortSignal }) => {
   });
 };
 
-export const GlobalStyles = ({ params }: { params: Params }) => {
+export const GlobalStyles = () => {
   const assets = useStore($assets);
   const metas = useStore($registeredComponentMetas);
 
@@ -436,10 +436,10 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
     fontsAndDefaultsSheet.clear();
     addGlobalRules(fontsAndDefaultsSheet, {
       assets,
-      assetBaseUrl: params.assetBaseUrl,
+      assetBaseUrl,
     });
     fontsAndDefaultsSheet.render();
-  }, [assets, params.assetBaseUrl]);
+  }, [assets]);
 
   useLayoutEffect(() => {
     presetSheet.clear();

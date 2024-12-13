@@ -6,6 +6,8 @@ import {
 } from "@webstudio-is/asset-uploader/index.server";
 import env from "~/env/env.server";
 
+export const fileUploadPath = "public/cgi/asset";
+
 export const createAssetClient = () => {
   const maxUploadSize = MaxSize.parse(env.MAX_UPLOAD_SIZE);
   if (
@@ -25,7 +27,6 @@ export const createAssetClient = () => {
       maxUploadSize,
     });
   } else {
-    const fileUploadPath = env.FILE_UPLOAD_PATH ?? "public/s/uploads";
     return createFsClient({
       maxUploadSize,
       fileDirectory: path.join(process.cwd(), fileUploadPath),

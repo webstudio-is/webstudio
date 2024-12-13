@@ -3,7 +3,6 @@ import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import type { Instances } from "@webstudio-is/sdk";
 import {
-  type Params,
   type Components,
   coreMetas,
   corePropsMetas,
@@ -49,6 +48,7 @@ import {
   $isDesignMode,
   $isContentMode,
   subscribeModifierKeys,
+  assetBaseUrl,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
@@ -64,7 +64,6 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeInterceptedEvents } from "./interceptor";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
-import { $params } from "./stores";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
@@ -95,11 +94,7 @@ const FallbackComponent = ({ error, resetErrorBoundary }: FallbackProps) => {
   );
 };
 
-const useElementsTree = (
-  components: Components,
-  instances: Instances,
-  params: Params
-) => {
+const useElementsTree = (components: Components, instances: Instances) => {
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
@@ -119,7 +114,7 @@ const useElementsTree = (
       <ReactSdkContext.Provider
         value={{
           renderer: isPreviewMode ? "preview" : "canvas",
-          assetBaseUrl: params.assetBaseUrl,
+          assetBaseUrl,
           imageLoader: wsImageLoader,
           resources: {},
         }}
@@ -135,7 +130,7 @@ const useElementsTree = (
         })}
       </ReactSdkContext.Provider>
     );
-  }, [params, instances, rootInstanceId, components, isPreviewMode]);
+  }, [instances, rootInstanceId, components, isPreviewMode]);
 };
 
 const DesignMode = () => {
@@ -215,11 +210,7 @@ const ContentEditMode = () => {
   return null;
 };
 
-type CanvasProps = {
-  params: Params;
-};
-
-export const Canvas = ({ params }: CanvasProps) => {
+export const Canvas = () => {
   useCanvasStore();
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
@@ -252,11 +243,6 @@ export const Canvas = ({ params }: CanvasProps) => {
       propsMetas: radixComponentPropsMetas,
       hooks: radixComponentHooks,
     });
-  });
-
-  useMount(() => {
-    // required to compute asset and page props for rendering
-    $params.set(params);
   });
 
   useMount(initCanvasApi);
@@ -299,7 +285,7 @@ export const Canvas = ({ params }: CanvasProps) => {
 
   const components = useStore($registeredComponents);
   const instances = useStore($instances);
-  const elements = useElementsTree(components, instances, params);
+  const elements = useElementsTree(components, instances);
 
   const [isInitialized, setInitialized] = useState(false);
   useEffect(() => {
@@ -312,7 +298,7 @@ export const Canvas = ({ params }: CanvasProps) => {
 
   return (
     <>
-      <GlobalStyles params={params} />
+      <GlobalStyles />
       {/* catch all errors in rendered components */}
       <ErrorBoundary FallbackComponent={FallbackComponent}>
         {elements}
