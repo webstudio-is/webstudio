@@ -42,6 +42,8 @@ import {
   Flex,
   rawTheme,
   globalCss,
+  Kbd,
+  Text,
 } from "@webstudio-is/design-system";
 import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { solarizedLight } from "./code-highlight";
@@ -56,6 +58,8 @@ const ExternalChange = Annotation.define<boolean>();
 
 const minHeightVar = "--ws-code-editor-min-height";
 const maxHeightVar = "--ws-code-editor-max-height";
+const maximizeIconVisibilityVar = "--ws-code-editor-maximize-icon-visibility";
+const keyboardShortcutDisplayVar = "--ws-code-editor-keyboard-shortcut-display";
 
 export const getMinMaxHeightVars = ({
   minHeight,
@@ -78,6 +82,7 @@ const editorContentStyle = css({
   ...textVariants.mono,
   // fit editor into parent if stretched
   display: "flex",
+  position: "relative",
   minHeight: 0,
   boxSizing: "border-box",
   color: theme.colors.foregroundMain,
@@ -90,6 +95,9 @@ const editorContentStyle = css({
   paddingLeft: theme.spacing[3],
   // required to support copying selected text
   userSelect: "text",
+  "&:hover": {
+    [keyboardShortcutDisplayVar]: "flex",
+  },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
   },
@@ -123,6 +131,18 @@ const editorContentStyle = css({
     textDecoration: "underline wavy red",
     backgroundColor: "rgba(255, 0, 0, 0.1)",
   },
+});
+
+const shortcutStyle = css({
+  position: "absolute",
+  left: 0,
+  bottom: 0,
+  width: "100%",
+  paddingInline: theme.spacing[3],
+  display: `var(${keyboardShortcutDisplayVar}, none)`,
+  background: "oklch(100% 0 0 / 50%)",
+  zIndex: 1,
+  pointerEvents: "none",
 });
 
 const autocompletionTooltipTheme = EditorView.theme({
@@ -337,14 +357,19 @@ export const EditorContent = ({
       className={editorContentStyle()}
       data-invalid={invalid}
       ref={editorRef}
-    />
+    >
+      <Flex justify="end" gap="1" className={shortcutStyle()}>
+        <Text variant="labelsSentenceCase">Save</Text>
+        <Kbd value={["cmd", "enter"]} />
+      </Flex>
+    </div>
   );
 };
 
 const editorDialogControlStyle = css({
   position: "relative",
   "&:hover": {
-    "--ws-code-editor-maximize-icon-visibility": "visible",
+    [maximizeIconVisibilityVar]: "visible",
   },
 });
 
@@ -363,9 +388,10 @@ export const EditorDialogButton = forwardRef<
       icon={<MaximizeIcon />}
       css={{
         position: "absolute",
-        top: 6,
+        top: 4,
         right: 4,
-        visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
+        visibility: `var(${maximizeIconVisibilityVar}, hidden)`,
+        background: "oklch(100% 0 0 / 50%)",
       }}
     />
   );
