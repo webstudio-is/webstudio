@@ -1,4 +1,8 @@
-import { NestedInputButton, theme } from "@webstudio-is/design-system";
+import {
+  NestedInputButton,
+  rawTheme,
+  theme,
+} from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -15,6 +19,8 @@ import {
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 
 export const cssButtonDisplay = "--ws-css-value-input-maximize-button-display";
+
+const width = parseFloat(rawTheme.spacing[30]);
 
 export const ValueEditorDialog = ({
   property,
@@ -62,19 +68,26 @@ export const ValueEditorDialog = ({
   const editorApiRef = useRef<EditorApi>();
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const rectRef = useRef({
-    height: 300,
-    width: 240,
-    x: window.innerWidth - 240,
+  const [rect, setRect] = useState(() => ({
+    height: 200,
+    width,
+    x: window.innerWidth - width,
     y: 0,
-  });
-  const [isOpen, setIsOpen] = useState(false);
+  }));
 
   return (
     <EditorDialog
       title="CSS Value"
-      open={isOpen}
-      {...rectRef.current}
+      onOpenChange={(isOpen) => {
+        if (isOpen && triggerRef.current) {
+          const triggerRect = triggerRef.current.getBoundingClientRect();
+          setRect({
+            ...rect,
+            y: triggerRect.y - rect.width / 2,
+          });
+        }
+      }}
+      {...rect}
       content={
         <CssFragmentEditorContent
           autoFocus
@@ -97,14 +110,6 @@ export const ValueEditorDialog = ({
           },
         }}
         ref={triggerRef}
-        onClick={(event) => {
-          if (event.currentTarget instanceof HTMLButtonElement === false) {
-            return;
-          }
-          const triggerRect = event.currentTarget.getBoundingClientRect();
-          rectRef.current.y = triggerRect.y - rectRef.current.width / 2;
-          setIsOpen(true);
-        }}
       >
         <MaximizeIcon size={12} />
       </NestedInputButton>
