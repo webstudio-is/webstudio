@@ -45,6 +45,16 @@ export const ValueEditorDialog = ({
     y: 0,
   }));
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && triggerRef.current) {
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      setRect({
+        ...rect,
+        y: triggerRect.y - rect.width / 2,
+      });
+    }
+  };
+
   const handleChange = (value: string) => {
     setIntermediateValue({
       type: "intermediate",
@@ -74,15 +84,7 @@ export const ValueEditorDialog = ({
   return (
     <EditorDialog
       title="CSS Value"
-      onOpenChange={(isOpen) => {
-        if (isOpen && triggerRef.current) {
-          const triggerRect = triggerRef.current.getBoundingClientRect();
-          setRect({
-            ...rect,
-            y: triggerRect.y - rect.width / 2,
-          });
-        }
-      }}
+      onOpenChange={handleOpenChange}
       {...rect}
       content={
         <CssFragmentEditorContent
