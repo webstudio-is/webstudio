@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import { Flex, Button, Collapsible } from "@webstudio-is/design-system";
 import {
   ChevronFilledDownIcon,

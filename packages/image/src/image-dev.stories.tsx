@@ -29,13 +29,11 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? REMOTE_SELF_DOMAIN_IMAGE
   : localLogoImage;
 
-const ImageBase: StoryFn<
-  React.ForwardRefExoticComponent<
-    Omit<ImageProps, "loader"> & {
-      style?: React.HTMLAttributes<"img">["style"];
-    }
-  >
-> = (args) => {
+const ImageBase = (
+  args: Omit<ImageProps, "loader"> & {
+    style?: React.HTMLAttributes<"img">["style"];
+  }
+) => {
   const style = {
     maxWidth: "100%",
     display: "block",

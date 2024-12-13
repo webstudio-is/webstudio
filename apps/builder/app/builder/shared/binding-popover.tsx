@@ -82,7 +82,7 @@ const BindingPanel = ({
   onChange: () => void;
   onSave: (value: string, invalid: boolean) => void;
 }) => {
-  const editorApiRef = useRef<undefined | EditorApi>();
+  const editorApiRef = useRef<undefined | EditorApi>(undefined);
   const [expression, setExpression] = useState(value);
   const usedIdentifiers = useMemo(
     () => getExpressionIdentifiers(value),
@@ -335,7 +335,7 @@ const BindingButton = forwardRef<
 BindingButton.displayName = "BindingButton";
 
 const BindingPopoverContext = createContext<{
-  containerRef?: RefObject<HTMLElement>;
+  containerRef?: RefObject<null | HTMLElement>;
   side?: "left" | "right";
 }>({});
 

@@ -125,7 +125,9 @@ export const createPubsub = <PublishMap>() => {
      * To publish a postMessage event on the iframe and parent window from the parent window.
      */
     usePublish() {
-      const postMessageRef = useRef<typeof window.postMessage>();
+      const postMessageRef = useRef<undefined | typeof window.postMessage>(
+        undefined
+      );
 
       const iframeRefCallback = useCallback(
         (element: HTMLIFrameElement | null) => {

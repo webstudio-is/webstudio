@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { test, expect, describe, beforeEach } from "vitest";
 import { nanoid } from "nanoid";
 import {

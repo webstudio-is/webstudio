@@ -140,7 +140,7 @@ const useElementsTree = (
 
 const DesignMode = () => {
   const debounceEffect = useDebounceEffect();
-  const ref = useRef<Instances>();
+  const ref = useRef<undefined | Instances>(undefined);
 
   useDragAndDrop();
 
@@ -182,7 +182,7 @@ const DesignMode = () => {
 
 const ContentEditMode = () => {
   const debounceEffect = useDebounceEffect();
-  const ref = useRef<Instances>();
+  const ref = useRef<undefined | Instances>(undefined);
 
   useEffect(() => {
     const abortController = new AbortController();
