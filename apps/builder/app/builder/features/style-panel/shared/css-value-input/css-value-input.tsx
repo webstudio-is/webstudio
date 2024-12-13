@@ -733,7 +733,12 @@ export const CssValueInput = ({
     description = declarationDescriptions[key];
   } else if (highlightedValue?.type === "var") {
     description = "CSS custom property (variable)";
+  } else if (highlightedValue === undefined) {
+    description = "Select item";
   }
+
+  // Init with non breaking space to avoid jumping when description is empty
+  description = description ?? "\u00A0";
 
   const descriptions = items
     .map((item) =>
