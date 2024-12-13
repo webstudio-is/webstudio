@@ -242,8 +242,9 @@ type ChangeCompleteEvent = {
     | "unit-select"
     | "keyword-select"
     | "delta"
-    | "dialog-close";
+    | "dialog-change-complete";
   value: StyleValue;
+  close?: boolean;
 } & Modifiers;
 
 type CssValueInputProps = Pick<
@@ -462,6 +463,7 @@ export const CssValueInput = ({
     event: {
       type: ChangeCompleteEvent["type"];
       value: CssValueInputValue;
+      close?: boolean;
     } & Partial<Modifiers>
   ) => {
     const { value } = event;
@@ -684,6 +686,7 @@ export const CssValueInput = ({
       onAbort();
       return;
     }
+
     onChangeComplete({ value, type: "blur" });
   };
 
@@ -826,8 +829,9 @@ export const CssValueInput = ({
         value={inputProps.value}
         onChangeComplete={(value) => {
           onChangeComplete({
-            type: "dialog-close",
+            type: "dialog-change-complete",
             value,
+            close: false,
           });
         }}
       />

@@ -28,7 +28,6 @@ export const ValueEditorDialog = ({
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >({ type: "intermediate", value });
-  const editorDialogOpenStateRef = useRef(false);
 
   useEffect(() => {
     setIntermediateValue({ type: "intermediate", value });
@@ -80,13 +79,7 @@ export const ValueEditorDialog = ({
           value={intermediateValue?.value ?? value ?? ""}
           invalid={intermediateValue?.type === "invalid"}
           onChange={handleChange}
-          onBlur={handleComplete}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              handleComplete();
-              event.preventDefault();
-            }
-          }}
+          onChangeComplete={handleComplete}
         />
       }
     >
@@ -95,6 +88,9 @@ export const ValueEditorDialog = ({
         css={{
           display: `var(${cssButtonDisplay}, none)`,
           background: theme.colors.backgroundControls,
+          '&[data-state="open"]': {
+            display: "block",
+          },
         }}
       >
         <MaximizeIcon size={12} />

@@ -431,7 +431,7 @@ export const ExpressionEditor = ({
   readOnly = false,
   value,
   onChange,
-  onBlur,
+  onChangeComplete,
 }: {
   editorApiRef?: RefObject<undefined | EditorApi>;
   /**
@@ -446,8 +446,8 @@ export const ExpressionEditor = ({
   autoFocus?: boolean;
   readOnly?: boolean;
   value: string;
-  onChange: (newValue: string) => void;
-  onBlur?: () => void;
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
 }) => {
   const extensions = useMemo(
     () => [
@@ -498,7 +498,7 @@ export const ExpressionEditor = ({
       autoFocus={autoFocus}
       value={value}
       onChange={onChange}
-      onBlur={onBlur}
+      onChangeComplete={onChangeComplete}
     />
   );
 
@@ -525,6 +525,7 @@ const ValuePreviewEditor = ({ value }: { value: unknown }) => {
       extensions={extensions}
       value={JSON.stringify(value, null, 2)}
       onChange={() => {}}
+      onChangeComplete={() => {}}
     />
   );
 };

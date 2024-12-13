@@ -79,7 +79,7 @@ const Input = ({
         batch.setProperty(property)(styleValue);
         batch.publish({ isEphemeral: true });
       }}
-      onChangeComplete={({ value, altKey, shiftKey }) => {
+      onChangeComplete={({ value, close = true, altKey, shiftKey }) => {
         const activeProperties = getActiveProperties({
           altKey,
           shiftKey,
@@ -93,7 +93,9 @@ const Input = ({
           batch.setProperty(property)(value);
         }
         batch.publish();
-        onClosePopover();
+        if (close) {
+          onClosePopover();
+        }
       }}
       onAbort={() => {
         const batch = createBatchUpdate();

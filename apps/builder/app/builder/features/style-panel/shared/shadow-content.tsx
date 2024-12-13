@@ -417,13 +417,7 @@ export const ShadowContent = ({
                   autoFocus={layer.type === "var"}
                   value={intermediateValue?.value ?? propertyValue ?? ""}
                   onChange={handleChange}
-                  onBlur={handleComplete}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      handleComplete();
-                      event.preventDefault();
-                    }
-                  }}
+                  onChangeComplete={handleComplete}
                 />
               }
             />

@@ -182,7 +182,8 @@ type EditorContentProps = {
   autoFocus?: boolean;
   invalid?: boolean;
   value: string;
-  onChange: (newValue: string) => void;
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
   onBlur?: (event: FocusEvent) => void;
 };
 
@@ -195,6 +196,7 @@ export const EditorContent = ({
   value,
   onChange,
   onBlur,
+  onChangeComplete,
 }: EditorContentProps) => {
   globalStyles();
 
@@ -203,6 +205,8 @@ export const EditorContent = ({
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onChangeCompleteRef = useRef(onChangeComplete);
+  onChangeCompleteRef.current = onChangeComplete;
   const onBlurRef = useRef(onBlur);
   onBlurRef.current = onBlur;
 
@@ -266,11 +270,18 @@ export const EditorContent = ({
         EditorView.domEventHandlers({
           blur(event) {
             onBlurRef.current?.(event);
+            onChangeCompleteRef.current(view.state.doc.toString());
           },
           cut(event) {
             // prevent catching cut by global copy paste
             // with target outside of contenteditable
             event.stopPropagation();
+          },
+          keydown(event) {
+            if (event.key === "s" && (event.ctrlKey || event.metaKey)) {
+              event.preventDefault();
+              onChangeCompleteRef.current(view.state.doc.toString());
+            }
           },
         }),
       ]),

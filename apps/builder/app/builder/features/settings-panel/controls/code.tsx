@@ -173,7 +173,7 @@ export const CodeControl = ({
             setError(undefined);
             localValue.set(value);
           }}
-          onBlur={localValue.save}
+          onChangeComplete={localValue.save}
         />
         <BindingPopover
           scope={scope}

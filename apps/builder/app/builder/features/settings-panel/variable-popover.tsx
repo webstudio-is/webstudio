@@ -470,7 +470,7 @@ const JsonForm = forwardRef<
           color={valueError ? "error" : undefined}
           value={value}
           onChange={setValue}
-          onBlur={() => valueRef.current?.checkValidity()}
+          onChangeComplete={() => valueRef.current?.checkValidity()}
         />
       </Flex>
     </>

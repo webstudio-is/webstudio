@@ -147,13 +147,7 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
             autoFocus={styleValue.type === "var"}
             value={textAreaValue ?? ""}
             onChange={handleChange}
-            onBlur={handleOnComplete}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                handleOnComplete();
-                event.preventDefault();
-              }
-            }}
+            onChangeComplete={handleOnComplete}
           />
         }
       />
