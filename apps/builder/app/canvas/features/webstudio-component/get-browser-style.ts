@@ -1,4 +1,3 @@
-import { detectFont } from "detect-font";
 import type { Style, StyleValue, Unit } from "@webstudio-is/css-engine";
 import { keywordValues } from "@webstudio-is/css-data";
 import { properties, units } from "@webstudio-is/css-data";
@@ -68,10 +67,5 @@ export const getBrowserStyle = (element?: Element): Style => {
     const computedValue = computedStyle[knownProperty as unknown as number];
     browserStyle[knownProperty] = parseValue(knownProperty, computedValue);
   }
-  // We need a single font-family that is actually rendered. Computed style will return a list of potential fonts.
-  browserStyle.fontFamily = {
-    type: "fontFamily",
-    value: [detectFont(element)],
-  };
   return browserStyle;
 };

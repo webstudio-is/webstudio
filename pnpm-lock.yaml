@@ -316,9 +316,6 @@ importers:
       debug:
         specifier: ^4.3.7
         version: 4.3.7
-      detect-font:
-        specifier: ^0.1.5
-        version: 0.1.5
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.3.0-canary-14898b6a9-20240318)
@@ -5604,9 +5601,6 @@ packages:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
 
-  detect-font@0.1.5:
-    resolution: {integrity: sha512-Ir0jJlsJ7hkpbqzpr8TB5grZTbhZ2Lk90Z0Yt1LpUd1xTZEl/bLhKypDyLc7jEeuuI8ZA0kmDwxARB4n0/jPTA==}
-
   detect-node-es@1.1.0:
     resolution: {integrity: sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==}
 
@@ -6345,9 +6339,6 @@ packages:
     resolution: {integrity: sha512-F+i2BKsFrH66iaUFc0woD8sLy8getkwTwtOBjvs56Cx4CgJDeKQeqfz8wAYiSb8JOprWhHH5p77PbmYCvvUuXQ==}
     engines: {node: '>=8'}
     hasBin: true
-
-  is-element@0.1.0:
-    resolution: {integrity: sha512-qtlzvwm4bPrI6hBRHBhLWgp/fUeDaeCBRcT8eHhI7yP1C2g45AilloSAmbPgeAMm3InTgMy6z3ZImq9byMlYXg==}
 
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
@@ -12506,10 +12497,6 @@ snapshots:
 
   destroy@1.2.0: {}
 
-  detect-font@0.1.5:
-    dependencies:
-      is-element: 0.1.0
-
   detect-node-es@1.1.0: {}
 
   devlop@1.1.0:
@@ -13475,8 +13462,6 @@ snapshots:
   is-deflate@1.0.0: {}
 
   is-docker@2.2.1: {}
-
-  is-element@0.1.0: {}
 
   is-extglob@2.1.1: {}
 
