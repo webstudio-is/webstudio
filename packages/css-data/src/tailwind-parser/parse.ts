@@ -1,5 +1,6 @@
 import { UnoGenerator, createGenerator } from "@unocss/core";
 import { type Theme, presetUno } from "@unocss/preset-uno";
+import { presetLegacyCompat } from "@unocss/preset-legacy-compat";
 import warnOnce from "warn-once";
 import { substituteVariables } from "./substitute";
 import { parseCss, type ParsedStyleDecl } from "../parse-css";
@@ -8,9 +9,13 @@ type Warn = (condition: boolean, message: string) => void;
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
 
-const uno = () => {
-  unoLazy = createGenerator({
-    presets: [presetUno()],
+const createUnoGenerator = async () => {
+  unoLazy = await createGenerator({
+    presets: [
+      presetUno(),
+      // until we support oklch natively
+      presetLegacyCompat({ legacyColorSpace: true }),
+    ],
   });
   return unoLazy;
 };
@@ -22,7 +27,8 @@ export const parseTailwindToCss = async (
   classes: string,
   warn: Warn = warnOnce
 ): Promise<string> => {
-  const generated = await uno().generate(classes, {
+  const generator = unoLazy ?? (await createUnoGenerator());
+  const generated = await generator.generate(classes, {
     preflights: true,
   });
 

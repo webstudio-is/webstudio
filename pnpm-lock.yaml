@@ -1139,11 +1139,14 @@ importers:
   packages/css-data:
     dependencies:
       '@unocss/core':
-        specifier: ^0.61.2
-        version: 0.61.2
+        specifier: ^0.65.1
+        version: 0.65.1
+      '@unocss/preset-legacy-compat':
+        specifier: ^0.65.1
+        version: 0.65.1
       '@unocss/preset-uno':
-        specifier: ^0.61.2
-        version: 0.61.2
+        specifier: ^0.65.1
+        version: 0.65.1
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -4862,23 +4865,26 @@ packages:
     resolution: {integrity: sha512-1Hm7THLpO6ww5QU6H/Qp+AusUUl+z/CAm3cNZZ0jQvon9yicgO7Rwd+/WWRpMKLYV6p2UvdbR27c86rzCPpreg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@unocss/core@0.61.2':
-    resolution: {integrity: sha512-CbETiw3vPs9xlKumBhwjSA3I7fkQjx/nTEN2UjFZSxBrlh+7MrTOCKwbEdGB7AjM3Ef6vO30sredq4t1usWoNA==}
+  '@unocss/core@0.65.1':
+    resolution: {integrity: sha512-Ke0WNZjfSCE6pniJb8PjiwhO6/McxVb1EQYrkkz8aJuR83xu+AEcTog9D4N9EUkRfHS5tZYXQtTj4Uh90T6CEg==}
 
-  '@unocss/extractor-arbitrary-variants@0.61.2':
-    resolution: {integrity: sha512-M2cvrhd8qiiULCxtfcOyG1dcPV0J143n8ECYD4KzVSCuCTU2zRS2EXa9LQrilagpXXFyy12/6+K7uBduvGQ06A==}
+  '@unocss/extractor-arbitrary-variants@0.65.1':
+    resolution: {integrity: sha512-VpF7j29TlmVjNolkIjhQ/cwYkuPUoXLv+ko62YRMibE5632QepbNob69pNYGOZustrZt3LvgHD/GcriKwJO4BA==}
 
-  '@unocss/preset-mini@0.61.2':
-    resolution: {integrity: sha512-69NJhqe77C8jeRyweIqeNWP83wNzio3dOPliCF1FOHkVU1vw9NQaHMAOBe5/eGLgR9YcegQCLSJkcx0k25B5qw==}
+  '@unocss/preset-legacy-compat@0.65.1':
+    resolution: {integrity: sha512-NKprPzVeZnwLs89APm4foJ01jz3KywwHIJo5n2RqmURdjVg71iW+H/YW3169i8s/0KlKUHO9qWKyOMNvqTZoqw==}
 
-  '@unocss/preset-uno@0.61.2':
-    resolution: {integrity: sha512-iS/CEB7fiyrP/kIaP5whgaa5JpQLuknk26Uy4d8Ea4Q/nHuBtUlhfzTBJstXBW9kMTcLfO1O6QY+JI4M3CQzpg==}
+  '@unocss/preset-mini@0.65.1':
+    resolution: {integrity: sha512-dKIxi+ChWSZvXG8I7yVBjw4FLHdAvKrrCN9bjKpR4/4epKD6jRtEcR6S1wL6XSBWabh7V7D/VbVk+XZ6WsGuXA==}
 
-  '@unocss/preset-wind@0.61.2':
-    resolution: {integrity: sha512-2BpU5RZfsG+TpjQ6UyhUsz8I/fUoTBXhTu1oaPUqUxGT6Swu2Y/FRQul3TUn8NPbtJ//Qm3etNp6S1PZBT0+aw==}
+  '@unocss/preset-uno@0.65.1':
+    resolution: {integrity: sha512-OSEkphrlR9/RM5un9t9AqVQXOGBLJgjcEweZSm2ng9AK7BsxBXuVP1FelmRqeXVYT5uFtBoD4dfgCgBjGFIW9Q==}
 
-  '@unocss/rule-utils@0.61.2':
-    resolution: {integrity: sha512-E0FbNzIk8TkVUF+kZGscDEmfYHps8/9qjvwJK6BjbbnxTaBPoSY9DQjsGWcCiD9pUKJt2tquNwADPiYzzkiKtA==}
+  '@unocss/preset-wind@0.65.1':
+    resolution: {integrity: sha512-7rw3hAWOkWMSjoprWKcQidqJRFQm8qM0IdLjFLQa2ROSzPSnIlNisXGEwAphf4/VYdP7+URUnu5eySQsIRWRzg==}
+
+  '@unocss/rule-utils@0.65.1':
+    resolution: {integrity: sha512-XGXdXsRmIuMDQk/3Fd3g5JMhsyDGWsTfs6aN4vFQ1rfdSgY4UwbslqUNbIH9xxoTfmzUOJ2lhNrFw78RygCNSA==}
     engines: {node: '>=14'}
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
@@ -6629,11 +6635,11 @@ packages:
     resolution: {integrity: sha512-8UnnX2PeRAPZuN12svgR9j7M1uWMovg/CEnIwIG0LFkXSJJe4PdfUGiTGl8V9bsBHFUtfVINcSyYxd7q+kx9fA==}
     engines: {node: '>=12'}
 
-  magic-string@0.30.10:
-    resolution: {integrity: sha512-iIRwTIf0QKV3UAnYK4PU8uiEc4SRh5jX0mwpIwETPpHdhVM4f53RSwS/vXvN1JhGX+Cs7B8qIq3d6AH49O5fAQ==}
-
   magic-string@0.30.12:
     resolution: {integrity: sha512-Ea8I3sQMVXr8JhN4z+H/d8zwo+tYDgHE9+5G4Wnrwhs0gaK9fXTKx0Tw5Xwsd/bCPTTZNRAdpyzvoeORe9LYpw==}
+
+  magic-string@0.30.15:
+    resolution: {integrity: sha512-zXeaYRgZ6ldS1RJJUrMrYgNJ4fdwnyI6tVqoiIhyCyv5IVTK9BU8Ic2l253GGETQHxI4HNUwhJ3fjDhKqEoaAw==}
 
   map-or-similar@1.5.0:
     resolution: {integrity: sha512-0aF7ZmVon1igznGI4VS30yugpduQW3y3GkcgGJOp7d8x8QrizhigUxjI/m2UojsXXto+jLAH3KSz+xOJTiORjg==}
@@ -11658,35 +11664,39 @@ snapshots:
       '@typescript-eslint/types': 8.17.0
       eslint-visitor-keys: 4.2.0
 
-  '@unocss/core@0.61.2': {}
+  '@unocss/core@0.65.1': {}
 
-  '@unocss/extractor-arbitrary-variants@0.61.2':
+  '@unocss/extractor-arbitrary-variants@0.65.1':
     dependencies:
-      '@unocss/core': 0.61.2
+      '@unocss/core': 0.65.1
 
-  '@unocss/preset-mini@0.61.2':
+  '@unocss/preset-legacy-compat@0.65.1':
     dependencies:
-      '@unocss/core': 0.61.2
-      '@unocss/extractor-arbitrary-variants': 0.61.2
-      '@unocss/rule-utils': 0.61.2
+      '@unocss/core': 0.65.1
 
-  '@unocss/preset-uno@0.61.2':
+  '@unocss/preset-mini@0.65.1':
     dependencies:
-      '@unocss/core': 0.61.2
-      '@unocss/preset-mini': 0.61.2
-      '@unocss/preset-wind': 0.61.2
-      '@unocss/rule-utils': 0.61.2
+      '@unocss/core': 0.65.1
+      '@unocss/extractor-arbitrary-variants': 0.65.1
+      '@unocss/rule-utils': 0.65.1
 
-  '@unocss/preset-wind@0.61.2':
+  '@unocss/preset-uno@0.65.1':
     dependencies:
-      '@unocss/core': 0.61.2
-      '@unocss/preset-mini': 0.61.2
-      '@unocss/rule-utils': 0.61.2
+      '@unocss/core': 0.65.1
+      '@unocss/preset-mini': 0.65.1
+      '@unocss/preset-wind': 0.65.1
+      '@unocss/rule-utils': 0.65.1
 
-  '@unocss/rule-utils@0.61.2':
+  '@unocss/preset-wind@0.65.1':
     dependencies:
-      '@unocss/core': 0.61.2
-      magic-string: 0.30.10
+      '@unocss/core': 0.65.1
+      '@unocss/preset-mini': 0.65.1
+      '@unocss/rule-utils': 0.65.1
+
+  '@unocss/rule-utils@0.65.1':
+    dependencies:
+      '@unocss/core': 0.65.1
+      magic-string: 0.30.15
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
     dependencies:
@@ -11828,7 +11838,7 @@ snapshots:
       '@vue/reactivity-transform': 3.3.4
       '@vue/shared': 3.3.4
       estree-walker: 2.0.2
-      magic-string: 0.30.12
+      magic-string: 0.30.15
       postcss: 8.4.47
       source-map-js: 1.2.1
 
@@ -11843,7 +11853,7 @@ snapshots:
       '@vue/compiler-core': 3.3.4
       '@vue/shared': 3.3.4
       estree-walker: 2.0.2
-      magic-string: 0.30.12
+      magic-string: 0.30.15
 
   '@vue/reactivity@3.3.4':
     dependencies:
@@ -13724,11 +13734,11 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  magic-string@0.30.10:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.4.15
-
   magic-string@0.30.12:
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.0
+
+  magic-string@0.30.15:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
@@ -15654,7 +15664,7 @@ snapshots:
       estree-walker: 3.0.3
       is-reference: 3.0.1
       locate-character: 3.0.0
-      magic-string: 0.30.12
+      magic-string: 0.30.15
       periscopic: 3.1.0
 
   svgo@3.0.2:
