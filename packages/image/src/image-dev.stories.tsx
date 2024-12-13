@@ -29,7 +29,6 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? REMOTE_SELF_DOMAIN_IMAGE
   : localLogoImage;
 
-
 const ImageBase = (
   args: Omit<ImageProps, "loader"> & {
     style?: React.HTMLAttributes<"img">["style"];
