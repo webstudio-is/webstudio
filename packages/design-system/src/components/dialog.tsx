@@ -34,9 +34,9 @@ if (placeholderImage) {
     "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 }
 
-type Position = { x: number; y: number };
+type Point = { x: number; y: number };
 type Size = { width: number; height: number };
-export type Rect = Position & Size;
+type Rect = Point & Size;
 
 type UseDraggableProps = {
   isMaximized?: boolean;
@@ -56,7 +56,7 @@ const useDraggable = ({
   const initialDataRef = useRef<
     | undefined
     | {
-        point: Position;
+        point: Point;
         rect: Rect;
       }
   >(undefined);
