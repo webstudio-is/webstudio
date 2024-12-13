@@ -240,7 +240,7 @@ test("resolve asset prop values", () => {
   ).toEqual(
     new Map<string, unknown>([
       ["$webstudio$canvasOnly$assetId", "assetId"],
-      ["myAsset", "/asset/my-file.jpg"],
+      ["myAsset", "/cgi/asset/my-file.jpg"],
     ])
   );
 
