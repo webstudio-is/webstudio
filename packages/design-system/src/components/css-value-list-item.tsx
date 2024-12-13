@@ -95,7 +95,7 @@ type Props = ComponentProps<typeof ItemButton> & {
   draggable?: boolean;
   label: React.ReactElement;
   thumbnail?: React.ReactElement;
-  buttons?: React.ReactElement;
+  buttons?: React.ReactElement<{ children: ReactNode }>;
   // to support Radix trigger asChild
   "data-state"?: "open";
   // for Storybook purposes
