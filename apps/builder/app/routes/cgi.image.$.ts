@@ -108,7 +108,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
   const filePath = join(process.cwd(), fileUploadPath, name);
 
-  console.log(filePath);
   if (existsSync(filePath) === false) {
     throw new Response("Not found", {
       status: 404,
