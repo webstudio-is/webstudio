@@ -5,10 +5,7 @@ import {
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { useEffect, useRef, useState } from "react";
-import {
-  EditorDialog,
-  type EditorApi,
-} from "~/builder/shared/code-editor-base";
+import { EditorDialog } from "~/builder/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
 import type { IntermediateStyleValue } from "./css-value-input";
 import {
@@ -39,6 +36,15 @@ export const ValueEditorDialog = ({
     setIntermediateValue({ type: "intermediate", value });
   }, [value]);
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const [rect, setRect] = useState(() => ({
+    height: 200,
+    width,
+    x: window.innerWidth - width,
+    y: 0,
+  }));
+
   const handleChange = (value: string) => {
     setIntermediateValue({
       type: "intermediate",
@@ -65,16 +71,6 @@ export const ValueEditorDialog = ({
     onChangeComplete(parsedValue);
   };
 
-  const editorApiRef = useRef<EditorApi>();
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  const [rect, setRect] = useState(() => ({
-    height: 200,
-    width,
-    x: window.innerWidth - width,
-    y: 0,
-  }));
-
   return (
     <EditorDialog
       title="CSS Value"
@@ -91,7 +87,6 @@ export const ValueEditorDialog = ({
       content={
         <CssFragmentEditorContent
           autoFocus
-          editorApiRef={editorApiRef}
           value={intermediateValue?.value ?? value ?? ""}
           invalid={intermediateValue?.type === "invalid"}
           showShortcuts

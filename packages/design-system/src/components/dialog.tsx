@@ -125,13 +125,15 @@ const useDraggable = ({
   if (minHeight !== undefined) {
     style.minHeight = minHeight;
   }
-  if (x !== undefined) {
-    style.left = x;
-    delete style.transform;
-  }
-  if (y !== undefined) {
-    style.top = y;
-    delete style.transform;
+  if (isMaximized === false) {
+    if (x !== undefined) {
+      style.left = x;
+      delete style.transform;
+    }
+    if (y !== undefined) {
+      style.top = y;
+      delete style.transform;
+    }
   }
   return {
     onDragStart: handleDragStart,
