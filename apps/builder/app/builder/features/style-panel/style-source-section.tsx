@@ -27,7 +27,6 @@ import {
   type StyleSourceError,
 } from "./style-source";
 import {
-  $breakpoints,
   $registeredComponentMetas,
   $selectedInstanceStatesByStyleSourceId,
   $selectedInstanceStyleSources,
@@ -40,9 +39,6 @@ import {
 } from "~/shared/nano-states";
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
-import { humanizeString } from "~/shared/string-utils";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
-import { shallowComputed } from "~/shared/store-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
 
@@ -88,59 +84,6 @@ const getOrCreateStyleSourceSelectionMutable = (
   return styleSourceSelection;
 };
 
-const $baseBreakpointId = computed($breakpoints, (breakpoints) => {
-  const breakpointValues = Array.from(breakpoints.values());
-  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
-  return baseBreakpoint?.id;
-});
-
-// metas are rarely change so keep preset token styles computing
-// in separate store
-export const $presetTokens = computed(
-  [$registeredComponentMetas, $baseBreakpointId],
-  (metas, baseBreakpointId) => {
-    const presetTokens = new Map<
-      StyleSource["id"],
-      {
-        component: Instance["component"];
-        styleSource: StyleSourceToken;
-        styles: StyleDecl[];
-      }
-    >();
-    if (baseBreakpointId === undefined) {
-      return presetTokens;
-    }
-    for (const [component, meta] of metas) {
-      if (meta.presetTokens === undefined) {
-        continue;
-      }
-      for (const [name, tokenValue] of Object.entries(meta.presetTokens)) {
-        const styleSourceId = `${component}:${name}`;
-        const styles: StyleDecl[] = [];
-        for (const styleDecl of tokenValue.styles) {
-          styles.push({
-            breakpointId: baseBreakpointId,
-            styleSourceId,
-            state: styleDecl.state,
-            property: styleDecl.property,
-            value: styleDecl.value,
-          });
-        }
-        presetTokens.set(styleSourceId, {
-          component,
-          styleSource: {
-            type: "token",
-            id: styleSourceId,
-            name: humanizeString(name),
-          },
-          styles,
-        });
-      }
-    }
-    return presetTokens;
-  }
-);
-
 const addStyleSourceToInstaceMutable = (
   styleSourceSelections: StyleSourceSelections,
   styleSources: StyleSources,
@@ -176,10 +119,9 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
     id,
     name,
   };
-  const presetTokens = $presetTokens.get();
   serverSyncStore.createTransaction(
-    [$styleSources, $styles, $styleSourceSelections],
-    (styleSources, styles, styleSourceSelections) => {
+    [$styleSources, $styleSourceSelections],
+    (styleSources, styleSourceSelections) => {
       styleSources.set(newStyleSource.id, newStyleSource);
       addStyleSourceToInstaceMutable(
         styleSourceSelections,
@@ -187,13 +129,6 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
         instanceId,
         newStyleSource.id
       );
-      // populate preset token styles
-      const presetToken = presetTokens.get(id);
-      if (presetToken) {
-        for (const styleDecl of presetToken.styles) {
-          styles.set(getStyleDeclKey(styleDecl), styleDecl);
-        }
-      }
     }
   );
   selectStyleSource(newStyleSource.id);
@@ -420,51 +355,19 @@ const convertToInputItem = (
   };
 };
 
-const $selectedInstancePresetTokens = shallowComputed(
-  [$selectedInstance, $presetTokens],
-  (selectedInstance, presetTokens) => {
-    const selectedInstancePresetTokens: StyleSourceToken[] = [];
-    if (selectedInstance === undefined) {
-      return selectedInstancePresetTokens;
-    }
-    for (const presetToken of presetTokens.values()) {
-      if (presetToken.component === selectedInstance.component) {
-        selectedInstancePresetTokens.push(presetToken.styleSource);
-      }
-    }
-    return selectedInstancePresetTokens;
-  }
-);
-
 /**
  * find all non-local and component style sources
  */
-const $availableStyleSources = computed(
-  [$styleSources, $selectedInstancePresetTokens],
-  (styleSources, presetTokens) => {
-    const availableStylesSources: StyleSourceInputItem[] = [];
-    for (const styleSource of styleSources.values()) {
-      if (styleSource.type === "local") {
-        continue;
-      }
-      availableStylesSources.push(convertToInputItem(styleSource, []));
+const $availableStyleSources = computed([$styleSources], (styleSources) => {
+  const availableStylesSources: StyleSourceInputItem[] = [];
+  for (const styleSource of styleSources.values()) {
+    if (styleSource.type === "local") {
+      continue;
     }
-    for (const styleSource of presetTokens) {
-      // skip if already present in global tokens
-      if (styleSources.has(styleSource.id)) {
-        continue;
-      }
-      availableStylesSources.push({
-        id: styleSource.id,
-        label: styleSource.name,
-        disabled: false,
-        source: "componentToken",
-        states: [],
-      });
-    }
-    return availableStylesSources;
+    availableStylesSources.push(convertToInputItem(styleSource, []));
   }
-);
+  return availableStylesSources;
+});
 
 export const StyleSourcesSection = () => {
   const componentStates = useStore($componentStates);

@@ -273,7 +273,7 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-  const order: ItemSource[] = ["token", "componentToken"];
+  const order: ItemSource[] = ["token"];
   matched.sort((leftItem, rightItem) => {
     return order.indexOf(leftItem.source) - order.indexOf(rightItem.source);
   });
@@ -470,8 +470,6 @@ export const StyleSourceInput = (
       setLabel("");
       if (item.id === newItemId) {
         props.onCreateItem?.(nanoid(), item.label);
-      } else if (item.source === "componentToken") {
-        props.onCreateItem?.(item.id, item.label);
       } else {
         props.onSelectAutocompleteItem?.(item);
       }
@@ -498,7 +496,6 @@ export const StyleSourceInput = (
 
   let hasNewTokenItem = false;
   let hasGlobalTokenItem = false;
-  let hasComponentTokenItem = false;
 
   const states = props.componentStates ?? [];
 
@@ -580,20 +577,6 @@ export const StyleSourceInput = (
                     );
                   }
 
-                  if (
-                    item.source === "componentToken" &&
-                    hasComponentTokenItem === false
-                  ) {
-                    hasComponentTokenItem = true;
-                    label = (
-                      <>
-                        {(hasNewTokenItem || hasGlobalTokenItem) && (
-                          <ComboboxSeparator />
-                        )}
-                        <ComboboxLabel>Component Tokens</ComboboxLabel>
-                      </>
-                    );
-                  }
                   const { key, ...itemProps } = getItemProps({ item, index });
                   return (
                     <Fragment key={index}>
