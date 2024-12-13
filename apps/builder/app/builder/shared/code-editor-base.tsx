@@ -170,6 +170,15 @@ const autocompletionTooltipTheme = EditorView.theme({
   },
 });
 
+const keyBindings = [
+  ...defaultKeymap.filter((binding) => {
+    // We are redefining it later and CodeMirror won't take an override
+    return binding.key !== "Mod-Enter";
+  }),
+  ...historyKeymap,
+  indentWithTab,
+];
+
 export type EditorApi = {
   replaceSelection: (string: string) => void;
   focus: () => void;
@@ -184,7 +193,6 @@ type EditorContentProps = {
   value: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
-  onBlur?: (event: FocusEvent) => void;
 };
 
 export const EditorContent = ({
@@ -195,7 +203,6 @@ export const EditorContent = ({
   invalid = false,
   value,
   onChange,
-  onBlur,
   onChangeComplete,
 }: EditorContentProps) => {
   globalStyles();
@@ -207,8 +214,6 @@ export const EditorContent = ({
   onChangeRef.current = onChange;
   const onChangeCompleteRef = useRef(onChangeComplete);
   onChangeCompleteRef.current = onChangeComplete;
-  const onBlurRef = useRef(onBlur);
-  onBlurRef.current = onBlur;
 
   // setup editor
 
@@ -221,9 +226,7 @@ export const EditorContent = ({
       parent: editorRef.current,
     });
     if (autoFocus) {
-      requestAnimationFrame(() => {
-        view.focus();
-      });
+      view.focus();
     }
     viewRef.current = view;
     return () => {
@@ -250,7 +253,23 @@ export const EditorContent = ({
         drawSelection(),
         dropCursor(),
         syntaxHighlighting(solarizedLight, { fallback: true }),
-        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        keymap.of([
+          ...keyBindings,
+          {
+            key: "Mod-Enter",
+            run(view) {
+              onChangeCompleteRef.current(view.state.doc.toString());
+              return true;
+            },
+          },
+          {
+            key: "Mod-s",
+            run(view) {
+              onChangeCompleteRef.current(view.state.doc.toString());
+              return true;
+            },
+          },
+        ]),
         EditorView.lineWrapping,
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
@@ -268,20 +287,13 @@ export const EditorContent = ({
           }
         }),
         EditorView.domEventHandlers({
-          blur(event) {
-            onBlurRef.current?.(event);
+          blur() {
             onChangeCompleteRef.current(view.state.doc.toString());
           },
           cut(event) {
             // prevent catching cut by global copy paste
             // with target outside of contenteditable
             event.stopPropagation();
-          },
-          keydown(event) {
-            if (event.key === "s" && (event.ctrlKey || event.metaKey)) {
-              event.preventDefault();
-              onChangeCompleteRef.current(view.state.doc.toString());
-            }
           },
         }),
       ]),
