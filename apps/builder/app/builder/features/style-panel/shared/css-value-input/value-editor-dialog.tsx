@@ -60,24 +60,28 @@ export const ValueEditorDialog = ({
   };
 
   const editorApiRef = useRef<EditorApi>();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const rectRef = useRef({
+    height: 300,
+    width: 240,
+    x: window.innerWidth - 240,
+    y: 0,
+  });
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <EditorDialog
       title="CSS Value"
-      onOpenChange={(isOpen) => {
-        if (isOpen) {
-          // Workaround, we need to wait a frame before we can get the focus,
-          // otherwise we will loose it again to CssValueInput popover
-          requestAnimationFrame(() => {
-            editorApiRef.current?.focus();
-          });
-        }
-      }}
+      open={isOpen}
+      {...rectRef.current}
       content={
         <CssFragmentEditorContent
+          autoFocus
           editorApiRef={editorApiRef}
           value={intermediateValue?.value ?? value ?? ""}
           invalid={intermediateValue?.type === "invalid"}
+          showShortcuts
           onChange={handleChange}
           onChangeComplete={handleComplete}
         />
@@ -91,6 +95,15 @@ export const ValueEditorDialog = ({
           '&[data-state="open"]': {
             display: "block",
           },
+        }}
+        ref={triggerRef}
+        onClick={(event) => {
+          if (event.currentTarget instanceof HTMLButtonElement === false) {
+            return;
+          }
+          const triggerRect = event.currentTarget.getBoundingClientRect();
+          rectRef.current.y = triggerRect.y - rectRef.current.width / 2;
+          setIsOpen(true);
         }}
       >
         <MaximizeIcon size={12} />

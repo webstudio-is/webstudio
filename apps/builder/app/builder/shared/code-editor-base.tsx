@@ -59,7 +59,6 @@ const ExternalChange = Annotation.define<boolean>();
 const minHeightVar = "--ws-code-editor-min-height";
 const maxHeightVar = "--ws-code-editor-max-height";
 const maximizeIconVisibilityVar = "--ws-code-editor-maximize-icon-visibility";
-const keyboardShortcutDisplayVar = "--ws-code-editor-keyboard-shortcut-display";
 
 export const getMinMaxHeightVars = ({
   minHeight,
@@ -89,15 +88,12 @@ const editorContentStyle = css({
   borderRadius: theme.borderRadius[4],
   border: `1px solid ${theme.colors.borderMain}`,
   background: theme.colors.backgroundControls,
-  paddingTop: 6,
-  paddingBottom: 4,
+  paddingTop: 4,
+  paddingBottom: 2,
   paddingRight: theme.spacing[2],
   paddingLeft: theme.spacing[3],
   // required to support copying selected text
   userSelect: "text",
-  "&:hover": {
-    [keyboardShortcutDisplayVar]: "flex",
-  },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
   },
@@ -139,7 +135,6 @@ const shortcutStyle = css({
   bottom: 0,
   width: "100%",
   paddingInline: theme.spacing[3],
-  display: `var(${keyboardShortcutDisplayVar}, none)`,
   background: "oklch(100% 0 0 / 50%)",
   zIndex: 1,
   pointerEvents: "none",
@@ -210,6 +205,7 @@ type EditorContentProps = {
   readOnly?: boolean;
   autoFocus?: boolean;
   invalid?: boolean;
+  showShortcuts?: boolean;
   value: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
@@ -221,6 +217,7 @@ export const EditorContent = ({
   readOnly = false,
   autoFocus = false,
   invalid = false,
+  showShortcuts = false,
   value,
   onChange,
   onChangeComplete,
@@ -358,10 +355,12 @@ export const EditorContent = ({
       data-invalid={invalid}
       ref={editorRef}
     >
-      <Flex justify="end" gap="1" className={shortcutStyle()}>
-        <Text variant="labelsSentenceCase">Save</Text>
-        <Kbd value={["cmd", "enter"]} />
-      </Flex>
+      {showShortcuts && (
+        <Flex align="center" justify="end" gap="1" className={shortcutStyle()}>
+          <Text variant="small">Submit</Text>
+          <Kbd value={["cmd", "enter"]} />
+        </Flex>
+      )}
     </div>
   );
 };
@@ -404,12 +403,20 @@ export const EditorDialog = ({
   title,
   content,
   children,
+  width = 640,
+  height = 480,
+  x,
+  y,
 }: {
   open?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
   title?: ReactNode;
   content: ReactNode;
   children: ReactNode;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   return (
@@ -417,8 +424,10 @@ export const EditorDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         resize="auto"
-        width={640}
-        height={480}
+        width={width}
+        height={height}
+        x={x}
+        y={y}
         minHeight={240}
         isMaximized={isMaximized}
         onInteractOutside={(event) => {
