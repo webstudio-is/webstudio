@@ -56,29 +56,34 @@ export const ValueEditorDialog = ({
   };
 
   const handleChange = (value: string) => {
-    setIntermediateValue({
+    const parsedValue = parseIntermediateOrInvalidValue(property, {
       type: "intermediate",
       value,
     });
-  };
 
-  const handleComplete = () => {
-    if (intermediateValue === undefined) {
-      return;
-    }
-    const parsedValue = parseIntermediateOrInvalidValue(
-      property,
-      intermediateValue
-    );
-
-    if (parsedValue?.type === "invalid") {
+    if (parsedValue.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
-        value: intermediateValue.value,
+        value,
       });
       return;
     }
-    onChangeComplete(parsedValue);
+
+    if (parsedValue) {
+      setIntermediateValue({
+        type: "intermediate",
+        value,
+      });
+    }
+
+    return parsedValue;
+  };
+
+  const handleChangeComplete = (value: string) => {
+    const parsedValue = handleChange(value);
+    if (parsedValue) {
+      onChangeComplete(parsedValue);
+    }
   };
 
   return (
@@ -93,7 +98,7 @@ export const ValueEditorDialog = ({
           invalid={intermediateValue?.type === "invalid"}
           showShortcuts
           onChange={handleChange}
-          onChangeComplete={handleComplete}
+          onChangeComplete={handleChangeComplete}
         />
       }
     >
