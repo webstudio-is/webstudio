@@ -677,7 +677,7 @@ const MarketplaceSection = ({
             justifySelf: "start",
           }}
         >
-          <Grid gap={1} css={{ width: theme.spacing[30] }}>
+          <Grid gap={1} css={{ width: theme.sizes.sidebarWidth }}>
             {category && <Label text="title">{category}</Label>}
             <Card
               title={values.name}

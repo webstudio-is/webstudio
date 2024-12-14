@@ -89,7 +89,7 @@ type FloatingPanelProps = {
 };
 
 const contentStyle = css({
-  width: theme.spacing[30],
+  width: theme.sizes.sidebarWidth,
 });
 
 export const FloatingPanel = ({

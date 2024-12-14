@@ -231,7 +231,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
         css={{
           padding: theme.panel.padding,
           gap: theme.spacing[3],
-          minWidth: theme.spacing[30],
+          minWidth: theme.sizes.sidebarWidth,
         }}
       >
         <Label>

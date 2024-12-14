@@ -41,7 +41,7 @@ const Thumbnail = styled("div", {
 });
 
 const Panel = styled("div", {
-  width: theme.spacing[30],
+  width: theme.sizes.sidebarWidth,
 });
 
 const ListItem = (props: {

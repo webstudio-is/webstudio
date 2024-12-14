@@ -157,7 +157,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "undocked" && activeSidebarPanel !== "none") {
     return {
-      gridTemplateColumns: `auto ${theme.spacing[30]} 1fr ${theme.spacing[30]}`,
+      gridTemplateColumns: `auto ${theme.sizes.sidebarWidth} 1fr ${theme.sizes.sidebarWidth}`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -167,7 +167,7 @@ const getChromeLayout = ({
   }
 
   return {
-    gridTemplateColumns: `auto 1fr ${theme.spacing[30]}`,
+    gridTemplateColumns: `auto 1fr ${theme.sizes.sidebarWidth}`,
     gridTemplateAreas: `
           "header header header"
           "sidebar main inspector"

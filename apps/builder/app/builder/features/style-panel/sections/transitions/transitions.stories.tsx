@@ -12,7 +12,7 @@ import { Section } from "./transitions";
 import { $awareness } from "~/shared/awareness";
 
 const Panel = styled("div", {
-  width: theme.spacing[30],
+  width: theme.sizes.sidebarWidth,
   boxShadow: theme.shadows.panelSectionDropShadow,
 });
 
