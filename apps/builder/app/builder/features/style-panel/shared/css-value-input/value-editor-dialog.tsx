@@ -17,7 +17,7 @@ import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid
 
 export const cssButtonDisplay = "--ws-css-value-input-maximize-button-display";
 
-const width = parseFloat(rawTheme.spacing[30]);
+const width = parseFloat(rawTheme.sizes.sidebarWidth);
 
 export const ValueEditorDialog = ({
   property,
