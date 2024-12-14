@@ -250,7 +250,7 @@ const centeredContent: CSSProperties = {
 const contentStyle = css(floatingPanelStyle, {
   position: "fixed",
   width: "min-content",
-  minWidth: theme.sizes.sidebarWidth,
+  minWidth: theme.spacing[30],
   maxWidth: "calc(100vw - 40px)",
   maxHeight: "calc(100vh - 40px)",
   userSelect: "none",

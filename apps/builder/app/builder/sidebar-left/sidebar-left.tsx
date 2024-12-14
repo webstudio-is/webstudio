@@ -278,7 +278,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
           }
         }}
         css={{
-          width: theme.sizes.sidebarWidth,
+          width: theme.spacing[30],
           // We need the node to be rendered but hidden
           // to keep receiving the drag events.
           visibility:
