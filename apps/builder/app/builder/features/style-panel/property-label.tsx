@@ -263,6 +263,10 @@ export const PropertyLabel = ({
           onClick: (event) => {
             if (event.altKey) {
               event.preventDefault();
+              // If not, when mixed with ToogleGroupControl.
+              // The will trigger the reset of the toggle group.
+              // And resets all of the properties in the toggle group.
+              event.stopPropagation();
               resetProperty();
               return;
             }
