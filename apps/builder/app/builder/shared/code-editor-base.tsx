@@ -206,6 +206,8 @@ export const EditorContent = ({
   onBlurRef.current = onBlur;
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     document.addEventListener(
       // https://github.com/radix-ui/primitives/blob/dac4fd8ab0c1974020e316c865db258ab10d2279/packages/react/dismissable-layer/src/DismissableLayer.tsx#L14
       "dismissableLayer.pointerDownOutside",
@@ -220,8 +222,12 @@ export const EditorContent = ({
       },
       {
         capture: true,
+        signal: abortController.signal,
       }
     );
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   // setup editor
