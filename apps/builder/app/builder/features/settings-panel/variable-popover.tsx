@@ -470,7 +470,7 @@ const JsonForm = forwardRef<
           color={valueError ? "error" : undefined}
           value={value}
           onChange={setValue}
-          onBlur={() => valueRef.current?.checkValidity()}
+          onChangeComplete={() => valueRef.current?.checkValidity()}
         />
       </Flex>
     </>
@@ -667,7 +667,7 @@ export const VariablePopoverTrigger = forwardRef<
             // flex fixes content overflowing artificial scroll area
             display: "flex",
             flexDirection: "column",
-            width: theme.sizes.sidebarWidth,
+            width: theme.spacing[30],
           }}
         >
           <Flex

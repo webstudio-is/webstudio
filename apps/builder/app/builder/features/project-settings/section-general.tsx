@@ -196,6 +196,7 @@ export const SectionGeneral = () => {
           lang="html"
           value={meta.code ?? ""}
           onChange={handleSave("code")}
+          onChangeComplete={handleSave("code")}
         />
       </Grid>
     </Grid>

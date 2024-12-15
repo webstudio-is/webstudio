@@ -515,7 +515,7 @@ const BodyField = ({
                       ) ?? "")
                 }
                 onChange={onChange}
-                onBlur={() => bodyRef.current?.checkValidity()}
+                onChangeComplete={() => bodyRef.current?.checkValidity()}
               />
             </div>
           ) : (
@@ -943,7 +943,7 @@ export const GraphqlResourceForm = forwardRef<
                       ) ?? "")
                 }
                 onChange={setVariables}
-                onBlur={() => variablesRef.current?.checkValidity()}
+                onChangeComplete={() => variablesRef.current?.checkValidity()}
               />
             </div>
           </InputErrorsTooltip>

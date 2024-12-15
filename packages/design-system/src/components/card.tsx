@@ -35,7 +35,7 @@ export const Card = styled("div", {
   variants: {
     size: {
       1: {
-        width: theme.sizes.sidebarWidth,
+        width: theme.spacing[30],
         padding: theme.spacing[11],
       },
     },

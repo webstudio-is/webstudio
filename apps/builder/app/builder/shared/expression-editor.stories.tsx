@@ -46,6 +46,7 @@ const ExpressionStory = () => {
       aliases={aliases}
       value={value}
       onChange={setValue}
+      onChangeComplete={setValue}
     />
   );
 };

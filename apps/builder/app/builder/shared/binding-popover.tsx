@@ -111,7 +111,7 @@ const BindingPanel = ({
       css={{
         display: "flex",
         flexDirection: "column",
-        width: theme.sizes.sidebarWidth,
+        width: theme.spacing[30],
       }}
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>
@@ -196,7 +196,7 @@ const BindingPanel = ({
             updateExpression(value);
             setTouched(false);
           }}
-          onBlur={() => {
+          onChangeComplete={() => {
             onSave(expression, errorsCount > 0);
             setTouched(true);
           }}

@@ -53,6 +53,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { ColorThumb } from "../color-thumb";
+import { cssButtonDisplay, ValueEditorDialog } from "./value-editor-dialog";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -240,8 +241,10 @@ type ChangeCompleteEvent = {
     | "scrub-end"
     | "unit-select"
     | "keyword-select"
-    | "delta";
+    | "delta"
+    | "dialog-change-complete";
   value: StyleValue;
+  close?: boolean;
 } & Modifiers;
 
 type CssValueInputProps = Pick<
@@ -296,11 +299,8 @@ const itemToString = (item: CssValueInputValue | null) => {
 
 const scrollAhead = ({ target, clientX }: MouseEvent) => {
   const element = target as HTMLInputElement;
-  // Get the scrollable width of the input element
-  const scrollWidth = element.scrollWidth;
-  const visibleWidth = element.clientWidth;
 
-  if (scrollWidth === visibleWidth) {
+  if (element.scrollWidth === element.clientWidth) {
     // Nothing to scroll.
     return false;
   }
@@ -323,7 +323,8 @@ const scrollAhead = ({ target, clientX }: MouseEvent) => {
 
   // Calculate the scroll position corresponding to the adjusted percentage
   const scrollPosition =
-    (adjustedMousePercentageX / 100) * (scrollWidth - visibleWidth);
+    (adjustedMousePercentageX / 100) *
+    (element.scrollWidth - element.clientWidth);
 
   // Scroll the input element
   element.scroll({ left: scrollPosition });
@@ -344,9 +345,7 @@ const getAutoScrollProps = () => {
         abort("focused");
         return;
       }
-
       if (scrollAhead(event) === false) {
-        // Nothing to scroll.
         return;
       }
 
@@ -464,6 +463,7 @@ export const CssValueInput = ({
     event: {
       type: ChangeCompleteEvent["type"];
       value: CssValueInputValue;
+      close?: boolean;
     } & Partial<Modifiers>
   ) => {
     const { value } = event;
@@ -655,8 +655,20 @@ export const CssValueInput = ({
 
   const menuProps = getMenuProps();
 
+  const getInputValue = () => {
+    const isFocused = document.activeElement === inputRef.current;
+    // When input is not focused, we are removing var() to fit more into the small inputs.
+    return value.type === "var" && isFocused === false
+      ? `--${value.value}`
+      : inputProps.value;
+  };
   const handleOnBlur: KeyboardEventHandler = (event) => {
     inputProps.onBlur(event);
+
+    // Restore the value without var()
+    if (event.target instanceof HTMLInputElement) {
+      event.target.value = getInputValue();
+    }
     // When unit select is open, onBlur is triggered,though we don't want a change event in this case.
     if (isUnitsOpen) {
       return;
@@ -674,6 +686,7 @@ export const CssValueInput = ({
       onAbort();
       return;
     }
+
     onChangeComplete({ value, type: "blur" });
   };
 
@@ -688,30 +701,14 @@ export const CssValueInput = ({
       </NestedIconLabel>
     ));
 
-  const keywordButtonElement = (
-    <NestedInputButton
-      {...getToggleButtonProps()}
-      data-state={isOpen ? "open" : "closed"}
-      tabIndex={-1}
-    />
-  );
-
-  const isUnitValue = unitSelectElement !== null;
-
-  const hasItems = items.length !== 0;
-  const isKeywordValue = value.type === "keyword" && hasItems;
-  const suffixRef = useRef<HTMLDivElement | null>(null);
-
-  const suffix =
-    showSuffix === false ? null : (
-      <Flex align="center" ref={suffixRef}>
-        {isUnitValue
-          ? unitSelectElement
-          : isKeywordValue
-            ? keywordButtonElement
-            : null}
-      </Flex>
-    );
+  const keywordButtonElement =
+    value.type === "keyword" && items.length !== 0 ? (
+      <NestedInputButton
+        {...getToggleButtonProps()}
+        data-state={isOpen ? "open" : "closed"}
+        tabIndex={-1}
+      />
+    ) : undefined;
 
   let description;
   // When user hovers or focuses an item in the combobox list we want to show the description of the item and otherwise show the description of the current value
@@ -808,6 +805,14 @@ export const CssValueInput = ({
     }
   };
 
+  const { abort, ...autoScrollProps } = useMemo(() => {
+    return getAutoScrollProps();
+  }, []);
+
+  useEffect(() => {
+    return () => abort("unmount");
+  }, [abort]);
+
   const inputPropsHandleKeyDown = composeEventHandlers(
     composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
@@ -816,12 +821,27 @@ export const CssValueInput = ({
     handleMetaEnter
   );
 
-  const { abort, ...autoScrollProps } = useMemo(() => {
-    return getAutoScrollProps();
-  }, []);
-  useEffect(() => {
-    return () => abort("unmount");
-  }, [abort]);
+  const suffixRef = useRef<HTMLDivElement | null>(null);
+  const valueEditorButtonElement =
+    value.type === "unparsed" ? (
+      <ValueEditorDialog
+        property={property}
+        value={inputProps.value}
+        onChangeComplete={(value) => {
+          onChangeComplete({
+            type: "dialog-change-complete",
+            value,
+            close: false,
+          });
+        }}
+      />
+    ) : undefined;
+  const invalidValueElement = value.type === "invalid" ? <></> : undefined;
+  const suffixElement =
+    invalidValueElement ??
+    unitSelectElement ??
+    keywordButtonElement ??
+    valueEditorButtonElement;
 
   return (
     <ComboboxRoot open={isOpen}>
@@ -834,10 +854,13 @@ export const CssValueInput = ({
             fieldSizing={fieldSizing}
             {...inputProps}
             {...autoScrollProps}
-            onFocus={() => {
-              const isFocused = document.activeElement === inputRef.current;
-              if (isFocused) {
-                inputRef.current?.select();
+            value={getInputValue()}
+            onFocus={(event) => {
+              if (event.target instanceof HTMLInputElement) {
+                // We are setting the value on focus because we might have removed the var() from the value,
+                // but once focused, we need to show the full value
+                event.target.value = itemToString(value);
+                event.target.select();
               }
             }}
             autoFocus={autoFocus}
@@ -848,8 +871,18 @@ export const CssValueInput = ({
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
-            suffix={suffix}
-            css={{ cursor: "default", minWidth: "2em" }}
+            suffix={
+              <Flex align="center" ref={suffixRef}>
+                {suffixElement}
+              </Flex>
+            }
+            css={{
+              cursor: "default",
+              minWidth: "2em",
+              "&:hover": {
+                [cssButtonDisplay]: "block",
+              },
+            }}
             text={text}
           />
         </ComboboxAnchor>

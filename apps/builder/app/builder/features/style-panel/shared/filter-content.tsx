@@ -240,7 +240,7 @@ export const FilterSectionContent = ({
         css={{
           padding: theme.panel.padding,
           gap: theme.spacing[3],
-          minWidth: theme.sizes.sidebarWidth,
+          minWidth: theme.spacing[30],
         }}
       >
         <Label>

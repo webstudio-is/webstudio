@@ -74,7 +74,7 @@ export const JsonControl = ({
           readOnly={overwritable === false}
           value={localValue.value}
           onChange={localValue.set}
-          onBlur={localValue.save}
+          onChangeComplete={localValue.save}
         />
         <BindingPopover
           scope={scope}

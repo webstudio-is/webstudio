@@ -158,7 +158,7 @@ export const WithUnits = () => {
   );
 };
 
-export const AutoScroll = () => {
+export const Oversized = () => {
   const [value, setValue] = React.useState<StyleValue>({
     type: "var",
     value: "start-test-test-test-test-test-test-test-end",

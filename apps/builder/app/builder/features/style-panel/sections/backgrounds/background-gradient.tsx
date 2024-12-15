@@ -13,7 +13,11 @@ import {
   editRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
-import { parseCssFragment, CssFragmentEditor } from "../../shared/css-fragment";
+import {
+  parseCssFragment,
+  CssFragmentEditor,
+  CssFragmentEditorContent,
+} from "../../shared/css-fragment";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -137,17 +141,15 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
         </Flex>
       </Label>
       <CssFragmentEditor
-        invalid={intermediateValue?.type === "invalid"}
-        autoFocus={styleValue.type === "var"}
-        value={textAreaValue ?? ""}
-        onChange={handleChange}
-        onBlur={handleOnComplete}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            handleOnComplete();
-            event.preventDefault();
-          }
-        }}
+        content={
+          <CssFragmentEditorContent
+            invalid={intermediateValue?.type === "invalid"}
+            autoFocus={styleValue.type === "var"}
+            value={textAreaValue ?? ""}
+            onChange={handleChange}
+            onChangeComplete={handleOnComplete}
+          />
+        }
       />
     </Flex>
   );

@@ -52,7 +52,7 @@ $awareness.set({
 });
 
 const Panel = styled("div", {
-  width: theme.sizes.sidebarWidth,
+  width: theme.spacing[30],
 });
 
 export const Backgrounds = () => {
