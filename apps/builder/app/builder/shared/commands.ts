@@ -185,7 +185,7 @@ export const wrapIn = (component: string) => {
         instanceSelector: newInstanceSelector,
       });
       if (matches === false) {
-        toast.error(`Cannot wrap in \"${component}\"`);
+        toast.error(`Cannot wrap in "${component}"`);
         throw Error("Abort transaction");
       }
     });
