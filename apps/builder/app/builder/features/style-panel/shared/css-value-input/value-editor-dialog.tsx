@@ -50,7 +50,7 @@ export const ValueEditorDialog = ({
       const triggerRect = triggerRef.current.getBoundingClientRect();
       setRect({
         ...rect,
-        y: triggerRect.y - rect.width / 2,
+        y: triggerRect.y,
       });
     }
   };
