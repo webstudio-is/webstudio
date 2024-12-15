@@ -56,7 +56,9 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         1: "0.4",
       },
       spacing,
-
+      sizes: {
+        sidebarWidth: spacing[30],
+      },
       /**
        * Use instead: textVariants / textStyles / <Text />
        */
