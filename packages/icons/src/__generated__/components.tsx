@@ -2,14 +2,17 @@ import { forwardRef } from "react";
 import type { IconComponent } from "../types";
 
 export const ACCenterIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -31,14 +34,17 @@ export const ACCenterIcon: IconComponent = forwardRef(
 ACCenterIcon.displayName = "ACCenterIcon";
 
 export const ACEndIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -60,14 +66,17 @@ export const ACEndIcon: IconComponent = forwardRef(
 ACEndIcon.displayName = "ACEndIcon";
 
 export const ACSpaceAroundIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -89,14 +98,17 @@ export const ACSpaceAroundIcon: IconComponent = forwardRef(
 ACSpaceAroundIcon.displayName = "ACSpaceAroundIcon";
 
 export const ACSpaceBetweenIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -118,14 +130,17 @@ export const ACSpaceBetweenIcon: IconComponent = forwardRef(
 ACSpaceBetweenIcon.displayName = "ACSpaceBetweenIcon";
 
 export const ACStartIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -147,14 +162,17 @@ export const ACStartIcon: IconComponent = forwardRef(
 ACStartIcon.displayName = "ACStartIcon";
 
 export const ACStretchIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -176,14 +194,17 @@ export const ACStretchIcon: IconComponent = forwardRef(
 ACStretchIcon.displayName = "ACStretchIcon";
 
 export const AIBaselineIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -204,14 +225,17 @@ export const AIBaselineIcon: IconComponent = forwardRef(
 AIBaselineIcon.displayName = "AIBaselineIcon";
 
 export const AICenterIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -228,14 +252,17 @@ export const AICenterIcon: IconComponent = forwardRef(
 AICenterIcon.displayName = "AICenterIcon";
 
 export const AIEndIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -247,14 +274,17 @@ export const AIEndIcon: IconComponent = forwardRef(
 AIEndIcon.displayName = "AIEndIcon";
 
 export const AIStartIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -271,14 +301,17 @@ export const AIStartIcon: IconComponent = forwardRef(
 AIStartIcon.displayName = "AIStartIcon";
 
 export const AIStretchIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -300,14 +333,17 @@ export const AIStretchIcon: IconComponent = forwardRef(
 AIStretchIcon.displayName = "AIStretchIcon";
 
 export const ASBaselineIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -328,14 +364,17 @@ export const ASBaselineIcon: IconComponent = forwardRef(
 ASBaselineIcon.displayName = "ASBaselineIcon";
 
 export const ASCenterIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -352,14 +391,17 @@ export const ASCenterIcon: IconComponent = forwardRef(
 ASCenterIcon.displayName = "ASCenterIcon";
 
 export const ASEndIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -376,14 +418,17 @@ export const ASEndIcon: IconComponent = forwardRef(
 ASEndIcon.displayName = "ASEndIcon";
 
 export const ASStartIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -400,14 +445,17 @@ export const ASStartIcon: IconComponent = forwardRef(
 ASStartIcon.displayName = "ASStartIcon";
 
 export const ASStretchIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -429,14 +477,17 @@ export const ASStretchIcon: IconComponent = forwardRef(
 ASStretchIcon.displayName = "ASStretchIcon";
 
 export const AccordionContentIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -453,14 +504,17 @@ export const AccordionContentIcon: IconComponent = forwardRef(
 AccordionContentIcon.displayName = "AccordionContentIcon";
 
 export const AccordionTriggerIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -477,14 +531,17 @@ export const AccordionTriggerIcon: IconComponent = forwardRef(
 AccordionTriggerIcon.displayName = "AccordionTriggerIcon";
 
 export const AccordionIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -501,14 +558,17 @@ export const AccordionIcon: IconComponent = forwardRef(
 AccordionIcon.displayName = "AccordionIcon";
 
 export const AddTemplateInstanceIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -536,7 +596,10 @@ export const AddTemplateInstanceIcon: IconComponent = forwardRef(
 AddTemplateInstanceIcon.displayName = "AddTemplateInstanceIcon";
 
 export const AiLoadingIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -546,7 +609,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
         viewBox="0 0 17 17"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -630,14 +693,17 @@ export const AiLoadingIcon: IconComponent = forwardRef(
 AiLoadingIcon.displayName = "AiLoadingIcon";
 
 export const AiIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -653,14 +719,17 @@ export const AiIcon: IconComponent = forwardRef(
 AiIcon.displayName = "AiIcon";
 
 export const AlertCircleIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -675,14 +744,17 @@ export const AlertCircleIcon: IconComponent = forwardRef(
 AlertCircleIcon.displayName = "AlertCircleIcon";
 
 export const AlertIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -703,14 +775,17 @@ export const AlertIcon: IconComponent = forwardRef(
 AlertIcon.displayName = "AlertIcon";
 
 export const ArrowDownIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -726,14 +801,17 @@ export const ArrowDownIcon: IconComponent = forwardRef(
 ArrowDownIcon.displayName = "ArrowDownIcon";
 
 export const ArrowLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -749,14 +827,17 @@ export const ArrowLeftIcon: IconComponent = forwardRef(
 ArrowLeftIcon.displayName = "ArrowLeftIcon";
 
 export const ArrowRightIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -772,14 +853,17 @@ export const ArrowRightIcon: IconComponent = forwardRef(
 ArrowRightIcon.displayName = "ArrowRightIcon";
 
 export const ArrowUpIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -795,14 +879,17 @@ export const ArrowUpIcon: IconComponent = forwardRef(
 ArrowUpIcon.displayName = "ArrowUpIcon";
 
 export const AspectRatioIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 17"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -818,14 +905,17 @@ export const AspectRatioIcon: IconComponent = forwardRef(
 AspectRatioIcon.displayName = "AspectRatioIcon";
 
 export const AttachmentIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -841,14 +931,17 @@ export const AttachmentIcon: IconComponent = forwardRef(
 AttachmentIcon.displayName = "AttachmentIcon";
 
 export const AutoScrollIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -865,14 +958,17 @@ export const AutoScrollIcon: IconComponent = forwardRef(
 AutoScrollIcon.displayName = "AutoScrollIcon";
 
 export const BagIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -888,14 +984,17 @@ export const BagIcon: IconComponent = forwardRef(
 BagIcon.displayName = "BagIcon";
 
 export const BlockquoteIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -907,14 +1006,17 @@ export const BlockquoteIcon: IconComponent = forwardRef(
 BlockquoteIcon.displayName = "BlockquoteIcon";
 
 export const BodyIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -930,14 +1032,17 @@ export const BodyIcon: IconComponent = forwardRef(
 BodyIcon.displayName = "BodyIcon";
 
 export const BoldIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 15 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -952,14 +1057,17 @@ export const BoldIcon: IconComponent = forwardRef(
 BoldIcon.displayName = "BoldIcon";
 
 export const BorderRadiusBottomLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -981,14 +1089,17 @@ export const BorderRadiusBottomLeftIcon: IconComponent = forwardRef(
 BorderRadiusBottomLeftIcon.displayName = "BorderRadiusBottomLeftIcon";
 
 export const BorderRadiusBottomRightIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1010,14 +1121,17 @@ export const BorderRadiusBottomRightIcon: IconComponent = forwardRef(
 BorderRadiusBottomRightIcon.displayName = "BorderRadiusBottomRightIcon";
 
 export const BorderRadiusIndividualIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1033,14 +1147,17 @@ export const BorderRadiusIndividualIcon: IconComponent = forwardRef(
 BorderRadiusIndividualIcon.displayName = "BorderRadiusIndividualIcon";
 
 export const BorderRadiusTopLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1062,14 +1179,17 @@ export const BorderRadiusTopLeftIcon: IconComponent = forwardRef(
 BorderRadiusTopLeftIcon.displayName = "BorderRadiusTopLeftIcon";
 
 export const BorderRadiusTopRightIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1091,14 +1211,17 @@ export const BorderRadiusTopRightIcon: IconComponent = forwardRef(
 BorderRadiusTopRightIcon.displayName = "BorderRadiusTopRightIcon";
 
 export const BorderRadiusIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1114,14 +1237,17 @@ export const BorderRadiusIcon: IconComponent = forwardRef(
 BorderRadiusIcon.displayName = "BorderRadiusIcon";
 
 export const BorderWidthBottomIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1143,14 +1269,17 @@ export const BorderWidthBottomIcon: IconComponent = forwardRef(
 BorderWidthBottomIcon.displayName = "BorderWidthBottomIcon";
 
 export const BorderWidthIndividualIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1166,14 +1295,17 @@ export const BorderWidthIndividualIcon: IconComponent = forwardRef(
 BorderWidthIndividualIcon.displayName = "BorderWidthIndividualIcon";
 
 export const BorderWidthLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1195,14 +1327,17 @@ export const BorderWidthLeftIcon: IconComponent = forwardRef(
 BorderWidthLeftIcon.displayName = "BorderWidthLeftIcon";
 
 export const BorderWidthRightIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1224,14 +1359,17 @@ export const BorderWidthRightIcon: IconComponent = forwardRef(
 BorderWidthRightIcon.displayName = "BorderWidthRightIcon";
 
 export const BorderWidthTopIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1253,14 +1391,17 @@ export const BorderWidthTopIcon: IconComponent = forwardRef(
 BorderWidthTopIcon.displayName = "BorderWidthTopIcon";
 
 export const BoxIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1276,14 +1417,17 @@ export const BoxIcon: IconComponent = forwardRef(
 BoxIcon.displayName = "BoxIcon";
 
 export const BpStarOffIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 22 22"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1304,14 +1448,17 @@ export const BpStarOffIcon: IconComponent = forwardRef(
 BpStarOffIcon.displayName = "BpStarOffIcon";
 
 export const BpStarOnIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 22 22"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1332,22 +1479,37 @@ export const BpStarOnIcon: IconComponent = forwardRef(
 BpStarOnIcon.displayName = "BpStarOnIcon";
 
 export const BugIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 22 22"
+        viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
-        <path d="M13.294 9.416H8.703a.75.75 0 0 0 0 1.5h4.592a.75.75 0 0 0 0-1.5ZM8.702 12.934h4.592a.75.75 0 0 1 0 1.5H8.703a.75.75 0 0 1 0-1.5Z" />
         <path
-          fillRule="evenodd"
-          d="M16.768 7.678a6.274 6.274 0 0 0-2.964-3.174l1.39-1.39a.75.75 0 1 0-1.06-1.061l-1.909 1.909a6.28 6.28 0 0 0-2.453.001l-1.91-1.91a.75.75 0 0 0-1.06 1.06l1.392 1.394a6.274 6.274 0 0 0-2.959 3.17H2.564a.75.75 0 0 0 0 1.5h2.254a6.302 6.302 0 0 0-.066.915v1.082H2.564a.75.75 0 0 0 0 1.5h2.188v1.084c0 .312.023.62.067.92H2.564a.75.75 0 0 0 0 1.5h2.674a6.252 6.252 0 0 0 11.528 0h2.67a.75.75 0 0 0 0-1.5h-2.251c.044-.3.067-.608.067-.92v-1.084h2.184a.75.75 0 0 0 0-1.5h-2.184v-1.082c0-.31-.023-.616-.066-.914h2.25a.75.75 0 0 0 0-1.5h-2.668Zm-5.766-2.336a4.75 4.75 0 0 0-4.75 4.75v3.666a4.75 4.75 0 1 0 9.5 0v-3.666a4.75 4.75 0 0 0-4.75-4.75Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m5.333 1.333 1.254 1.254M9.413 2.587l1.254-1.254M6 4.753v-.666a2.002 2.002 0 1 1 4 0v.666"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 13.333c-2.2 0-4-1.8-4-4v-2a2.667 2.667 0 0 1 2.667-2.666h2.666A2.667 2.667 0 0 1 12 7.333v2c0 2.2-1.8 4-4 4ZM8 13.333v-6"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.353 6C3.067 5.867 2 4.733 2 3.333M4 8.667H1.333M2 14c0-1.4 1.133-2.6 2.533-2.667M13.98 3.333c0 1.4-1.067 2.534-2.333 2.667M14.667 8.667H12M11.467 11.333C12.867 11.4 14 12.6 14 14"
         />
       </svg>
     );
@@ -1356,14 +1518,17 @@ export const BugIcon: IconComponent = forwardRef(
 BugIcon.displayName = "BugIcon";
 
 export const ButtonElementIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1379,14 +1544,17 @@ export const ButtonElementIcon: IconComponent = forwardRef(
 ButtonElementIcon.displayName = "ButtonElementIcon";
 
 export const CalendarIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 14 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1402,14 +1570,17 @@ export const CalendarIcon: IconComponent = forwardRef(
 CalendarIcon.displayName = "CalendarIcon";
 
 export const CheckCircleIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1430,14 +1601,17 @@ export const CheckCircleIcon: IconComponent = forwardRef(
 CheckCircleIcon.displayName = "CheckCircleIcon";
 
 export const CheckMarkIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1453,14 +1627,17 @@ export const CheckMarkIcon: IconComponent = forwardRef(
 CheckMarkIcon.displayName = "CheckMarkIcon";
 
 export const CheckboxCheckedFilledIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1476,14 +1653,17 @@ export const CheckboxCheckedFilledIcon: IconComponent = forwardRef(
 CheckboxCheckedFilledIcon.displayName = "CheckboxCheckedFilledIcon";
 
 export const CheckboxCheckedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1504,14 +1684,17 @@ export const CheckboxCheckedIcon: IconComponent = forwardRef(
 CheckboxCheckedIcon.displayName = "CheckboxCheckedIcon";
 
 export const CheckboxEmptyIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1527,14 +1710,17 @@ export const CheckboxEmptyIcon: IconComponent = forwardRef(
 CheckboxEmptyIcon.displayName = "CheckboxEmptyIcon";
 
 export const CheckboxMixedFilledIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1550,14 +1736,17 @@ export const CheckboxMixedFilledIcon: IconComponent = forwardRef(
 CheckboxMixedFilledIcon.displayName = "CheckboxMixedFilledIcon";
 
 export const ChevronBigDownIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1569,14 +1758,17 @@ export const ChevronBigDownIcon: IconComponent = forwardRef(
 ChevronBigDownIcon.displayName = "ChevronBigDownIcon";
 
 export const ChevronBigLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1588,14 +1780,17 @@ export const ChevronBigLeftIcon: IconComponent = forwardRef(
 ChevronBigLeftIcon.displayName = "ChevronBigLeftIcon";
 
 export const ChevronBigRightIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1607,14 +1802,17 @@ export const ChevronBigRightIcon: IconComponent = forwardRef(
 ChevronBigRightIcon.displayName = "ChevronBigRightIcon";
 
 export const ChevronBigUpIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1626,14 +1824,17 @@ export const ChevronBigUpIcon: IconComponent = forwardRef(
 ChevronBigUpIcon.displayName = "ChevronBigUpIcon";
 
 export const ChevronDownIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1645,14 +1846,17 @@ export const ChevronDownIcon: IconComponent = forwardRef(
 ChevronDownIcon.displayName = "ChevronDownIcon";
 
 export const ChevronFilledDownIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1664,14 +1868,17 @@ export const ChevronFilledDownIcon: IconComponent = forwardRef(
 ChevronFilledDownIcon.displayName = "ChevronFilledDownIcon";
 
 export const ChevronFilledLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1683,14 +1890,17 @@ export const ChevronFilledLeftIcon: IconComponent = forwardRef(
 ChevronFilledLeftIcon.displayName = "ChevronFilledLeftIcon";
 
 export const ChevronFilledRightIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1702,14 +1912,17 @@ export const ChevronFilledRightIcon: IconComponent = forwardRef(
 ChevronFilledRightIcon.displayName = "ChevronFilledRightIcon";
 
 export const ChevronFilledUpIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1721,14 +1934,17 @@ export const ChevronFilledUpIcon: IconComponent = forwardRef(
 ChevronFilledUpIcon.displayName = "ChevronFilledUpIcon";
 
 export const ChevronLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1747,14 +1963,17 @@ export const ChevronLeftIcon: IconComponent = forwardRef(
 ChevronLeftIcon.displayName = "ChevronLeftIcon";
 
 export const ChevronRightIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1773,14 +1992,17 @@ export const ChevronRightIcon: IconComponent = forwardRef(
 ChevronRightIcon.displayName = "ChevronRightIcon";
 
 export const ChevronUpIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1799,14 +2021,17 @@ export const ChevronUpIcon: IconComponent = forwardRef(
 ChevronUpIcon.displayName = "ChevronUpIcon";
 
 export const CloudIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1821,14 +2046,17 @@ export const CloudIcon: IconComponent = forwardRef(
 CloudIcon.displayName = "CloudIcon";
 
 export const CodeTextIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1844,14 +2072,17 @@ export const CodeTextIcon: IconComponent = forwardRef(
 CodeTextIcon.displayName = "CodeTextIcon";
 
 export const CollapsibleIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1867,14 +2098,17 @@ export const CollapsibleIcon: IconComponent = forwardRef(
 CollapsibleIcon.displayName = "CollapsibleIcon";
 
 export const CommitIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 22 22"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1890,14 +2124,17 @@ export const CommitIcon: IconComponent = forwardRef(
 CommitIcon.displayName = "CommitIcon";
 
 export const ContentEmbedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1915,14 +2152,17 @@ export const ContentEmbedIcon: IconComponent = forwardRef(
 ContentEmbedIcon.displayName = "ContentEmbedIcon";
 
 export const ContentIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1938,14 +2178,17 @@ export const ContentIcon: IconComponent = forwardRef(
 ContentIcon.displayName = "ContentIcon";
 
 export const CopyIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1961,14 +2204,17 @@ export const CopyIcon: IconComponent = forwardRef(
 CopyIcon.displayName = "CopyIcon";
 
 export const CustomCodeIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 17 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -1989,14 +2235,17 @@ export const CustomCodeIcon: IconComponent = forwardRef(
 CustomCodeIcon.displayName = "CustomCodeIcon";
 
 export const DashBorderIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2012,14 +2261,17 @@ export const DashBorderIcon: IconComponent = forwardRef(
 DashBorderIcon.displayName = "DashBorderIcon";
 
 export const DashIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2035,14 +2287,17 @@ export const DashIcon: IconComponent = forwardRef(
 DashIcon.displayName = "DashIcon";
 
 export const DashedBorderIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2058,14 +2313,17 @@ export const DashedBorderIcon: IconComponent = forwardRef(
 DashedBorderIcon.displayName = "DashedBorderIcon";
 
 export const DeleteIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2078,14 +2336,17 @@ export const DeleteIcon: IconComponent = forwardRef(
 DeleteIcon.displayName = "DeleteIcon";
 
 export const DescriptionIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2112,14 +2373,17 @@ export const DescriptionIcon: IconComponent = forwardRef(
 DescriptionIcon.displayName = "DescriptionIcon";
 
 export const DialogIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2142,14 +2406,17 @@ export const DialogIcon: IconComponent = forwardRef(
 DialogIcon.displayName = "DialogIcon";
 
 export const DimensionsIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 17"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2165,14 +2432,17 @@ export const DimensionsIcon: IconComponent = forwardRef(
 DimensionsIcon.displayName = "DimensionsIcon";
 
 export const DiscordIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2185,14 +2455,17 @@ export const DiscordIcon: IconComponent = forwardRef(
 DiscordIcon.displayName = "DiscordIcon";
 
 export const DivIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2208,14 +2481,17 @@ export const DivIcon: IconComponent = forwardRef(
 DivIcon.displayName = "DivIcon";
 
 export const DotIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2227,14 +2503,17 @@ export const DotIcon: IconComponent = forwardRef(
 DotIcon.displayName = "DotIcon";
 
 export const DottedBorderIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2250,14 +2529,17 @@ export const DottedBorderIcon: IconComponent = forwardRef(
 DottedBorderIcon.displayName = "DottedBorderIcon";
 
 export const DragHandleIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2272,14 +2554,17 @@ export const DragHandleIcon: IconComponent = forwardRef(
 DragHandleIcon.displayName = "DragHandleIcon";
 
 export const DynamicPageIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2300,14 +2585,17 @@ export const DynamicPageIcon: IconComponent = forwardRef(
 DynamicPageIcon.displayName = "DynamicPageIcon";
 
 export const EditIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2324,14 +2612,17 @@ export const EditIcon: IconComponent = forwardRef(
 EditIcon.displayName = "EditIcon";
 
 export const EllipsesIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2343,14 +2634,17 @@ export const EllipsesIcon: IconComponent = forwardRef(
 EllipsesIcon.displayName = "EllipsesIcon";
 
 export const EmailIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2366,14 +2660,17 @@ export const EmailIcon: IconComponent = forwardRef(
 EmailIcon.displayName = "EmailIcon";
 
 export const EmbedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2389,28 +2686,30 @@ export const EmbedIcon: IconComponent = forwardRef(
 EmbedIcon.displayName = "EmbedIcon";
 
 export const ExtensionIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
         <path
-          fill="currentColor"
-          fillRule="evenodd"
-          d="m4.284 3.598 1.493.007 1.493.007c0 .333-.31-.025 0 0 0 .234-.276-.14 0 0v5.14h5.153c.05 4.113 0-.462 0 0v2.986c0 .461 0 .841-.025 1.15-.026.321-.082.615-.223.89a2.277 2.277 0 0 1-.994.995c-.276.14-.57.197-.89.223-.31.025-.69.025-1.151.025H4.284c-.462 0-.842 0-1.151-.025-.32-.026-.615-.082-.89-.223a2.277 2.277 0 0 1-.995-.994c-.14-.276-.197-.57-.223-.89C1 12.578 1 12.198 1 11.737V6.882c0-.462 0-.842.025-1.15.026-.322.083-.616.223-.891.218-.428.566-.777.995-.995.275-.14.57-.196.89-.223.31-.025.69-.025 1.15-.025Zm-2.167 6.27v1.847c0 .49 0 .824.021 1.082.02.252.058.383.105.475.111.218.288.395.507.506.092.047.222.085.474.105.258.021.593.022 1.083.022h1.846V9.868H2.117ZM6.153 8.75H2.117V6.905c0-.49 0-.825.021-1.083.02-.252.058-.382.105-.474a1.16 1.16 0 0 1 .507-.507c.092-.047.222-.084.474-.105a14.81 14.81 0 0 1 1.083-.021h1.846V8.75ZM7.27 9.868v4.037h1.847c.49 0 .824 0 1.082-.022.252-.02.383-.058.475-.105a1.16 1.16 0 0 0 .506-.506c.047-.092.085-.223.105-.475.021-.258.022-.592.022-1.082V9.868H7.27Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M7.142 9.286h5.143m-5.143 0H2m5.142 0v4.713M12.285 9.286v4c0 .63-.512 1.142-1.143 1.142h-8A1.143 1.143 0 0 1 2 13.285v-8c0-.63.512-1.142 1.143-1.142h4v5.143"
         />
         <path
-          fill="currentColor"
-          fillRule="evenodd"
-          d="M13.757 1.227c-.275-.14-.57-.197-.89-.223a17.79 17.79 0 0 0-1.15-.025H8.73v6.27h6.245L15 6.69V4.262c0-.461 0-.841-.025-1.15-.027-.321-.083-.615-.223-.89a2.276 2.276 0 0 0-.995-.995Zm-3.91 4.905h4.036V4.285c0-.49 0-.824-.021-1.082-.02-.252-.058-.383-.105-.475a1.16 1.16 0 0 0-.507-.506c-.092-.047-.222-.085-.474-.105a14.814 14.814 0 0 0-1.083-.022H9.847v4.037Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinejoin="round"
+          d="M9.714 1.572v5.142h5.142V3.035a1.463 1.463 0 0 0-1.463-1.463h-3.68Z"
         />
       </svg>
     );
@@ -2419,14 +2718,17 @@ export const ExtensionIcon: IconComponent = forwardRef(
 ExtensionIcon.displayName = "ExtensionIcon";
 
 export const ExternalLinkIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2442,14 +2744,17 @@ export const ExternalLinkIcon: IconComponent = forwardRef(
 ExternalLinkIcon.displayName = "ExternalLinkIcon";
 
 export const EyeconClosedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2461,14 +2766,17 @@ export const EyeconClosedIcon: IconComponent = forwardRef(
 EyeconClosedIcon.displayName = "EyeconClosedIcon";
 
 export const EyeconOpenIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2485,14 +2793,17 @@ export const EyeconOpenIcon: IconComponent = forwardRef(
 EyeconOpenIcon.displayName = "EyeconOpenIcon";
 
 export const EyedropperIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2507,14 +2818,17 @@ export const EyedropperIcon: IconComponent = forwardRef(
 EyedropperIcon.displayName = "EyedropperIcon";
 
 export const FolderIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2531,14 +2845,17 @@ export const FolderIcon: IconComponent = forwardRef(
 FolderIcon.displayName = "FolderIcon";
 
 export const FooterIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2554,14 +2871,17 @@ export const FooterIcon: IconComponent = forwardRef(
 FooterIcon.displayName = "FooterIcon";
 
 export const FormTextAreaIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2577,14 +2897,17 @@ export const FormTextAreaIcon: IconComponent = forwardRef(
 FormTextAreaIcon.displayName = "FormTextAreaIcon";
 
 export const FormTextFieldIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2600,14 +2923,17 @@ export const FormTextFieldIcon: IconComponent = forwardRef(
 FormTextFieldIcon.displayName = "FormTextFieldIcon";
 
 export const FormIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2623,14 +2949,17 @@ export const FormIcon: IconComponent = forwardRef(
 FormIcon.displayName = "FormIcon";
 
 export const GapHorizontalIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2642,14 +2971,17 @@ export const GapHorizontalIcon: IconComponent = forwardRef(
 GapHorizontalIcon.displayName = "GapHorizontalIcon";
 
 export const GapVerticalIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2661,14 +2993,17 @@ export const GapVerticalIcon: IconComponent = forwardRef(
 GapVerticalIcon.displayName = "GapVerticalIcon";
 
 export const GithubIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 22 22"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2684,14 +3019,17 @@ export const GithubIcon: IconComponent = forwardRef(
 GithubIcon.displayName = "GithubIcon";
 
 export const GoogleIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 22 22"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2718,14 +3056,17 @@ export const GoogleIcon: IconComponent = forwardRef(
 GoogleIcon.displayName = "GoogleIcon";
 
 export const GrowIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2741,14 +3082,17 @@ export const GrowIcon: IconComponent = forwardRef(
 GrowIcon.displayName = "GrowIcon";
 
 export const HamburgerMenuIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 22 22"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2764,14 +3108,17 @@ export const HamburgerMenuIcon: IconComponent = forwardRef(
 HamburgerMenuIcon.displayName = "HamburgerMenuIcon";
 
 export const HeaderIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2787,14 +3134,17 @@ export const HeaderIcon: IconComponent = forwardRef(
 HeaderIcon.displayName = "HeaderIcon";
 
 export const HeadingIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2810,19 +3160,34 @@ export const HeadingIcon: IconComponent = forwardRef(
 HeadingIcon.displayName = "HeadingIcon";
 
 export const HelpIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
-        <path d="M8 14.65c-3.67 0-6.65-2.98-6.65-6.65 0-3.67 2.98-6.65 6.65-6.65 3.67 0 6.65 2.98 6.65 6.65 0 3.67-2.98 6.65-6.65 6.65Zm0-12c-2.95 0-5.35 2.4-5.35 5.35 0 2.95 2.4 5.35 5.35 5.35 2.95 0 5.35-2.4 5.35-5.35 0-2.95-2.4-5.35-5.35-5.35Z" />
-        <path d="M8.01 11.89c-.44 0-.8-.36-.8-.8 0-.44.35-.8.8-.8.44 0 .8.36.8.8 0 .44-.36.8-.8.8ZM7.95 9.17c-.27 0-.52-.17-.62-.44a.65.65 0 0 1 .41-.82c.44-.15 1.36-.64 1.36-1.18 0-.27-.09-.54-.27-.74-.17-.21-.42-.35-.69-.39-.27-.05-.54 0-.78.14s-.41.35-.5.61a.65.65 0 1 1-1.23-.43c.19-.55.57-1.01 1.07-1.3.5-.29 1.09-.4 1.65-.3.57.1 1.09.39 1.46.84.37.44.58 1.01.58 1.58 0 1.62-2.01 2.34-2.24 2.42-.07.02-.14.03-.21.03l.01-.02Z" />
+        <g
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          clipPath="url(#a)"
+        >
+          <path d="M8 14.667A6.667 6.667 0 1 0 8 1.333a6.667 6.667 0 0 0 0 13.334Z" />
+          <path d="M6.06 6a2 2 0 0 1 3.887.667c0 1.333-2 2-2 2M8 11.333h.007" />
+        </g>
+        <defs>
+          <clipPath id="a">
+            <path fill="#fff" d="M0 0h16v16H0z" />
+          </clipPath>
+        </defs>
       </svg>
     );
   }
@@ -2830,14 +3195,17 @@ export const HelpIcon: IconComponent = forwardRef(
 HelpIcon.displayName = "HelpIcon";
 
 export const HomeIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2853,21 +3221,31 @@ export const HomeIcon: IconComponent = forwardRef(
 HomeIcon.displayName = "HomeIcon";
 
 export const ImageIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M10.827 1.35H5.173c-.537 0-.98 0-1.34.03-.373.03-.715.095-1.036.259a2.65 2.65 0 0 0-1.158 1.158c-.164.32-.229.663-.26 1.037-.029.36-.029.802-.029 1.34v5.653c0 .537 0 .98.03 1.34.03.373.095.715.259 1.036.254.499.66.904 1.158 1.158.32.164.663.23 1.036.26.36.03.803.03 1.34.03h6.231c.18 0 .357 0 .498-.013l.018-.002a6.86 6.86 0 0 0 .247-.015c.373-.03.715-.096 1.036-.26a2.65 2.65 0 0 0 1.158-1.158c.164-.32.23-.663.26-1.036.029-.36.029-.803.029-1.34V5.173c0-.537 0-.98-.03-1.34-.03-.373-.095-.715-.259-1.036a2.65 2.65 0 0 0-1.158-1.158c-.32-.164-.663-.229-1.036-.26-.36-.029-.803-.029-1.34-.029Zm.27 12H5.2c-.57 0-.96 0-1.26-.025-.294-.024-.446-.067-.553-.122a1.35 1.35 0 0 1-.59-.59c-.054-.107-.098-.259-.122-.552-.024-.301-.025-.69-.025-1.26v-.532l2.389-2.388a5.471 5.471 0 0 1 .294-.282l.018.014c.06.051.137.128.277.268l5.47 5.469ZM2.65 8.43l1.484-1.483c.12-.12.235-.235.34-.325.116-.098.262-.203.452-.265.265-.086.55-.086.814 0 .19.062.336.167.452.265.106.09.221.205.34.325l5.701 5.7c.128.128.253.253.344.362.03.036.072.087.113.151.219-.13.397-.32.513-.547.054-.107.098-.259.122-.552.025-.301.025-.69.025-1.26V5.2c0-.572 0-.96-.025-1.262-.024-.293-.068-.445-.122-.552a1.35 1.35 0 0 0-.59-.59c-.107-.054-.259-.098-.552-.122-.301-.024-.69-.025-1.261-.025H5.2c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.26-.122.552-.024.301-.025.69-.025 1.261v3.23Zm7.683-3.447a.683.683 0 1 1 0 1.367.683.683 0 0 1 0-1.367Zm1.984.684a1.983 1.983 0 1 0-3.967 0 1.983 1.983 0 0 0 3.967 0Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6 7.333a1.333 1.333 0 1 0 0-2.666 1.333 1.333 0 0 0 0 2.666ZM14 10l-2.057-2.057a1.333 1.333 0 0 0-1.886 0L4 14"
         />
       </svg>
     );
@@ -2876,14 +3254,17 @@ export const ImageIcon: IconComponent = forwardRef(
 ImageIcon.displayName = "ImageIcon";
 
 export const InfoCircleIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2902,14 +3283,17 @@ export const InfoCircleIcon: IconComponent = forwardRef(
 InfoCircleIcon.displayName = "InfoCircleIcon";
 
 export const ItemIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2926,14 +3310,17 @@ export const ItemIcon: IconComponent = forwardRef(
 ItemIcon.displayName = "ItemIcon";
 
 export const JCCenterIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2951,14 +3338,17 @@ export const JCCenterIcon: IconComponent = forwardRef(
 JCCenterIcon.displayName = "JCCenterIcon";
 
 export const JCEndIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -2975,14 +3365,17 @@ export const JCEndIcon: IconComponent = forwardRef(
 JCEndIcon.displayName = "JCEndIcon";
 
 export const JCSpaceAroundIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3004,14 +3397,17 @@ export const JCSpaceAroundIcon: IconComponent = forwardRef(
 JCSpaceAroundIcon.displayName = "JCSpaceAroundIcon";
 
 export const JCSpaceBetweenIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3033,14 +3429,17 @@ export const JCSpaceBetweenIcon: IconComponent = forwardRef(
 JCSpaceBetweenIcon.displayName = "JCSpaceBetweenIcon";
 
 export const JCStartIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3057,14 +3456,17 @@ export const JCStartIcon: IconComponent = forwardRef(
 JCStartIcon.displayName = "JCStartIcon";
 
 export const LabelIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3080,14 +3482,17 @@ export const LabelIcon: IconComponent = forwardRef(
 LabelIcon.displayName = "LabelIcon";
 
 export const LargeXIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3103,14 +3508,17 @@ export const LargeXIcon: IconComponent = forwardRef(
 LargeXIcon.displayName = "LargeXIcon";
 
 export const Link2UnlinkedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3126,14 +3534,17 @@ export const Link2UnlinkedIcon: IconComponent = forwardRef(
 Link2UnlinkedIcon.displayName = "Link2UnlinkedIcon";
 
 export const Link2Icon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3149,14 +3560,17 @@ export const Link2Icon: IconComponent = forwardRef(
 Link2Icon.displayName = "Link2Icon";
 
 export const LinkIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3172,14 +3586,17 @@ export const LinkIcon: IconComponent = forwardRef(
 LinkIcon.displayName = "LinkIcon";
 
 export const ListItemIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3196,14 +3613,17 @@ export const ListItemIcon: IconComponent = forwardRef(
 ListItemIcon.displayName = "ListItemIcon";
 
 export const ListViewIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3219,14 +3639,17 @@ export const ListViewIcon: IconComponent = forwardRef(
 ListViewIcon.displayName = "ListViewIcon";
 
 export const ListIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3255,7 +3678,10 @@ export const ListIcon: IconComponent = forwardRef(
 ListIcon.displayName = "ListIcon";
 
 export const LoadingDotsIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3265,7 +3691,7 @@ export const LoadingDotsIcon: IconComponent = forwardRef(
         viewBox="0 0 300 300"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3299,14 +3725,17 @@ export const LoadingDotsIcon: IconComponent = forwardRef(
 LoadingDotsIcon.displayName = "LoadingDotsIcon";
 
 export const LocalStyleIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3329,14 +3758,17 @@ export const LocalStyleIcon: IconComponent = forwardRef(
 LocalStyleIcon.displayName = "LocalStyleIcon";
 
 export const MarkdownEmbedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3353,14 +3785,17 @@ export const MarkdownEmbedIcon: IconComponent = forwardRef(
 MarkdownEmbedIcon.displayName = "MarkdownEmbedIcon";
 
 export const MaximizeIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3375,14 +3810,17 @@ export const MaximizeIcon: IconComponent = forwardRef(
 MaximizeIcon.displayName = "MaximizeIcon";
 
 export const MicOffIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3398,14 +3836,17 @@ export const MicOffIcon: IconComponent = forwardRef(
 MicOffIcon.displayName = "MicOffIcon";
 
 export const MicIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3421,14 +3862,17 @@ export const MicIcon: IconComponent = forwardRef(
 MicIcon.displayName = "MicIcon";
 
 export const MinimizeIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3443,14 +3887,17 @@ export const MinimizeIcon: IconComponent = forwardRef(
 MinimizeIcon.displayName = "MinimizeIcon";
 
 export const MinusIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3466,14 +3913,17 @@ export const MinusIcon: IconComponent = forwardRef(
 MinusIcon.displayName = "MinusIcon";
 
 export const NavigationMenuIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3485,20 +3935,25 @@ export const NavigationMenuIcon: IconComponent = forwardRef(
 NavigationMenuIcon.displayName = "NavigationMenuIcon";
 
 export const NavigatorIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
         <path
-          d="M4 11.35a.65.65 0 0 1 .65-.65h9.367a.65.65 0 1 1 0 1.3H4.65a.65.65 0 0 1-.65-.65ZM4 7.896a.65.65 0 0 1 .65-.65h9.367a.65.65 0 1 1 0 1.3H4.65a.65.65 0 0 1-.65-.65ZM1.334 4.441a.65.65 0 0 1 .65-.65h9.367a.65.65 0 1 1 0 1.3H1.983a.65.65 0 0 1-.65-.65Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.5 8H15M1 4.5h10.5M4.5 11.5H15"
         />
       </svg>
     );
@@ -3507,14 +3962,17 @@ export const NavigatorIcon: IconComponent = forwardRef(
 NavigatorIcon.displayName = "NavigatorIcon";
 
 export const NoWrapIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3526,14 +3984,17 @@ export const NoWrapIcon: IconComponent = forwardRef(
 NoWrapIcon.displayName = "NoWrapIcon";
 
 export const NotebookAndPenIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3550,14 +4011,17 @@ export const NotebookAndPenIcon: IconComponent = forwardRef(
 NotebookAndPenIcon.displayName = "NotebookAndPenIcon";
 
 export const OfflineIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3572,14 +4036,17 @@ export const OfflineIcon: IconComponent = forwardRef(
 OfflineIcon.displayName = "OfflineIcon";
 
 export const OrderFirstIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3596,14 +4063,17 @@ export const OrderFirstIcon: IconComponent = forwardRef(
 OrderFirstIcon.displayName = "OrderFirstIcon";
 
 export const OrderLastIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3620,14 +4090,17 @@ export const OrderLastIcon: IconComponent = forwardRef(
 OrderLastIcon.displayName = "OrderLastIcon";
 
 export const OverlayIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3642,21 +4115,31 @@ export const OverlayIcon: IconComponent = forwardRef(
 OverlayIcon.displayName = "OverlayIcon";
 
 export const PageIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M8.55 2.658a9.96 9.96 0 0 0-.543-.008H6.08c-.515 0-.862 0-1.13.022-.26.022-.386.06-.472.103a1.15 1.15 0 0 0-.503.503c-.043.086-.081.213-.103.473-.022.267-.022.614-.022 1.129v6.24c0 .515 0 .862.022 1.13.022.26.06.386.103.472.11.216.287.392.503.503.086.043.213.081.473.103.267.022.614.022 1.129.022h3.84c.515 0 .862 0 1.13-.022.26-.022.386-.06.472-.103a1.15 1.15 0 0 0 .503-.503c.043-.085.081-.213.103-.473.021-.267.022-.614.022-1.129V6.793c0-.277-.002-.436-.008-.543H10.14c-.15 0-.3 0-.427-.01a1.263 1.263 0 0 1-.48-.126 1.25 1.25 0 0 1-.547-.547 1.263 1.263 0 0 1-.126-.48c-.01-.127-.01-.276-.01-.427V2.658Zm.903-1.095a2.451 2.451 0 0 0-.427-.145c-.283-.068-.577-.068-.955-.068H6.053c-.481 0-.881 0-1.208.027-.34.028-.658.087-.957.24a2.45 2.45 0 0 0-1.071 1.07c-.153.3-.213.617-.24.958-.027.327-.027.727-.027 1.208v6.293c0 .482 0 .882.027 1.21.027.34.087.657.24.956.235.461.61.836 1.07 1.071.3.153.617.213.958.24.327.027.727.027 1.208.027h3.894c.481 0 .881 0 1.208-.027.34-.027.658-.087.957-.24a2.45 2.45 0 0 0 1.071-1.07c.152-.3.213-.618.24-.958.027-.327.027-.727.027-1.209V6.73c0-.378 0-.672-.068-.955a2.445 2.445 0 0 0-.293-.709c-.152-.248-.36-.456-.628-.723l-.045-.045-1.913-1.913-.045-.045c-.267-.268-.475-.476-.723-.628a2.452 2.452 0 0 0-.281-.148Zm.397 2.006V4.64c0 .15 0 .241.004.306.065.004.156.004.306.004h1.07L9.85 3.57Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9.833 2h-5.5A1.333 1.333 0 0 0 3 3.333v10a1.333 1.333 0 0 0 1.333 1.334h7.5a1.333 1.333 0 0 0 1.334-1.334v-8L9.833 2Z"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9.167 2.5v1.667A1.333 1.333 0 0 0 10.5 5.5h2.667"
         />
       </svg>
     );
@@ -3665,14 +4148,17 @@ export const PageIcon: IconComponent = forwardRef(
 PageIcon.displayName = "PageIcon";
 
 export const PaintBrushIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3687,14 +4173,17 @@ export const PaintBrushIcon: IconComponent = forwardRef(
 PaintBrushIcon.displayName = "PaintBrushIcon";
 
 export const PhoneIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3710,14 +4199,17 @@ export const PhoneIcon: IconComponent = forwardRef(
 PhoneIcon.displayName = "PhoneIcon";
 
 export const PlayIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3734,14 +4226,17 @@ export const PlayIcon: IconComponent = forwardRef(
 PlayIcon.displayName = "PlayIcon";
 
 export const PluginIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3757,26 +4252,25 @@ export const PluginIcon: IconComponent = forwardRef(
 PluginIcon.displayName = "PluginIcon";
 
 export const PlusIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M8 14a.75.75 0 0 1-.75-.75V2.75a.75.75 0 0 1 1.5 0v10.5A.75.75 0 0 1 8 14Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M14 8a.75.75 0 0 1-.75.75H2.75a.75.75 0 0 1 0-1.5h10.5A.75.75 0 0 1 14 8Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2 8h12M8 2v12"
         />
       </svg>
     );
@@ -3785,14 +4279,17 @@ export const PlusIcon: IconComponent = forwardRef(
 PlusIcon.displayName = "PlusIcon";
 
 export const PopoverIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3808,14 +4305,17 @@ export const PopoverIcon: IconComponent = forwardRef(
 PopoverIcon.displayName = "PopoverIcon";
 
 export const RadioCheckedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3832,14 +4332,17 @@ export const RadioCheckedIcon: IconComponent = forwardRef(
 RadioCheckedIcon.displayName = "RadioCheckedIcon";
 
 export const RadioDotIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3851,14 +4354,17 @@ export const RadioDotIcon: IconComponent = forwardRef(
 RadioDotIcon.displayName = "RadioDotIcon";
 
 export const RadioUncheckedIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3874,14 +4380,17 @@ export const RadioUncheckedIcon: IconComponent = forwardRef(
 RadioUncheckedIcon.displayName = "RadioUncheckedIcon";
 
 export const RefreshIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3897,14 +4406,17 @@ export const RefreshIcon: IconComponent = forwardRef(
 RefreshIcon.displayName = "RefreshIcon";
 
 export const RepeatColumnIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3916,14 +4428,17 @@ export const RepeatColumnIcon: IconComponent = forwardRef(
 RepeatColumnIcon.displayName = "RepeatColumnIcon";
 
 export const RepeatGridIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3935,14 +4450,17 @@ export const RepeatGridIcon: IconComponent = forwardRef(
 RepeatGridIcon.displayName = "RepeatGridIcon";
 
 export const RepeatRowIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3954,14 +4472,17 @@ export const RepeatRowIcon: IconComponent = forwardRef(
 RepeatRowIcon.displayName = "RepeatRowIcon";
 
 export const ResetIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -3977,14 +4498,17 @@ export const ResetIcon: IconComponent = forwardRef(
 ResetIcon.displayName = "ResetIcon";
 
 export const ScrollIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4001,14 +4525,17 @@ export const ScrollIcon: IconComponent = forwardRef(
 ScrollIcon.displayName = "ScrollIcon";
 
 export const SectionLinkIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4024,14 +4551,17 @@ export const SectionLinkIcon: IconComponent = forwardRef(
 SectionLinkIcon.displayName = "SectionLinkIcon";
 
 export const SelectIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4048,14 +4578,17 @@ export const SelectIcon: IconComponent = forwardRef(
 SelectIcon.displayName = "SelectIcon";
 
 export const SettingsIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4073,14 +4606,17 @@ export const SettingsIcon: IconComponent = forwardRef(
 SettingsIcon.displayName = "SettingsIcon";
 
 export const ShadowInsetIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 14 14"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4097,14 +4633,17 @@ export const ShadowInsetIcon: IconComponent = forwardRef(
 ShadowInsetIcon.displayName = "ShadowInsetIcon";
 
 export const ShadowNormalIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 12 14"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4121,14 +4660,17 @@ export const ShadowNormalIcon: IconComponent = forwardRef(
 ShadowNormalIcon.displayName = "ShadowNormalIcon";
 
 export const ShrinkIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4144,14 +4686,17 @@ export const ShrinkIcon: IconComponent = forwardRef(
 ShrinkIcon.displayName = "ShrinkIcon";
 
 export const SliderIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4167,14 +4712,17 @@ export const SliderIcon: IconComponent = forwardRef(
 SliderIcon.displayName = "SliderIcon";
 
 export const SlotComponentIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4186,14 +4734,17 @@ export const SlotComponentIcon: IconComponent = forwardRef(
 SlotComponentIcon.displayName = "SlotComponentIcon";
 
 export const SmallXIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4209,7 +4760,10 @@ export const SmallXIcon: IconComponent = forwardRef(
 SmallXIcon.displayName = "SmallXIcon";
 
 export const SpinnerIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4219,7 +4773,7 @@ export const SpinnerIcon: IconComponent = forwardRef(
         viewBox="0 0 128 128"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4248,14 +4802,17 @@ export const SpinnerIcon: IconComponent = forwardRef(
 SpinnerIcon.displayName = "SpinnerIcon";
 
 export const StopIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4267,14 +4824,17 @@ export const StopIcon: IconComponent = forwardRef(
 StopIcon.displayName = "StopIcon";
 
 export const SubscriptIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4291,14 +4851,17 @@ export const SubscriptIcon: IconComponent = forwardRef(
 SubscriptIcon.displayName = "SubscriptIcon";
 
 export const SubtractIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4314,14 +4877,17 @@ export const SubtractIcon: IconComponent = forwardRef(
 SubtractIcon.displayName = "SubtractIcon";
 
 export const SuperscriptIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4338,14 +4904,17 @@ export const SuperscriptIcon: IconComponent = forwardRef(
 SuperscriptIcon.displayName = "SuperscriptIcon";
 
 export const SwitchIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4361,14 +4930,17 @@ export const SwitchIcon: IconComponent = forwardRef(
 SwitchIcon.displayName = "SwitchIcon";
 
 export const TabsIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4384,14 +4956,17 @@ export const TabsIcon: IconComponent = forwardRef(
 TabsIcon.displayName = "TabsIcon";
 
 export const TextAlignLeftIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4407,14 +4982,17 @@ export const TextAlignLeftIcon: IconComponent = forwardRef(
 TextAlignLeftIcon.displayName = "TextAlignLeftIcon";
 
 export const TextItalicIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4429,14 +5007,17 @@ export const TextItalicIcon: IconComponent = forwardRef(
 TextItalicIcon.displayName = "TextItalicIcon";
 
 export const TextIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4452,14 +5033,17 @@ export const TextIcon: IconComponent = forwardRef(
 TextIcon.displayName = "TextIcon";
 
 export const TooltipIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4475,14 +5059,17 @@ export const TooltipIcon: IconComponent = forwardRef(
 TooltipIcon.displayName = "TooltipIcon";
 
 export const TriggerIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4498,14 +5085,17 @@ export const TriggerIcon: IconComponent = forwardRef(
 TriggerIcon.displayName = "TriggerIcon";
 
 export const UpgradeIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4526,14 +5116,17 @@ export const UpgradeIcon: IconComponent = forwardRef(
 UpgradeIcon.displayName = "UpgradeIcon";
 
 export const UploadIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4550,14 +5143,17 @@ export const UploadIcon: IconComponent = forwardRef(
 UploadIcon.displayName = "UploadIcon";
 
 export const VideoIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4574,14 +5170,17 @@ export const VideoIcon: IconComponent = forwardRef(
 VideoIcon.displayName = "VideoIcon";
 
 export const ViewportIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4597,14 +5196,17 @@ export const ViewportIcon: IconComponent = forwardRef(
 ViewportIcon.displayName = "ViewportIcon";
 
 export const VimeoIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 22 22"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4616,14 +5218,17 @@ export const VimeoIcon: IconComponent = forwardRef(
 VimeoIcon.displayName = "VimeoIcon";
 
 export const WebhookFormIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4638,14 +5243,17 @@ export const WebhookFormIcon: IconComponent = forwardRef(
 WebhookFormIcon.displayName = "WebhookFormIcon";
 
 export const Webstudio1cIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -4671,14 +5279,17 @@ export const Webstudio1cIcon: IconComponent = forwardRef(
 Webstudio1cIcon.displayName = "Webstudio1cIcon";
 
 export const WebstudioIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5022,14 +5633,17 @@ export const WebstudioIcon: IconComponent = forwardRef(
 WebstudioIcon.displayName = "WebstudioIcon";
 
 export const WrapIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5042,14 +5656,17 @@ export const WrapIcon: IconComponent = forwardRef(
 WrapIcon.displayName = "WrapIcon";
 
 export const XAxisRotateIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5064,14 +5681,17 @@ export const XAxisRotateIcon: IconComponent = forwardRef(
 XAxisRotateIcon.displayName = "XAxisRotateIcon";
 
 export const XAxisIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5086,14 +5706,17 @@ export const XAxisIcon: IconComponent = forwardRef(
 XAxisIcon.displayName = "XAxisIcon";
 
 export const XIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5105,14 +5728,17 @@ export const XIcon: IconComponent = forwardRef(
 XIcon.displayName = "XIcon";
 
 export const XmlIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5130,14 +5756,17 @@ export const XmlIcon: IconComponent = forwardRef(
 XmlIcon.displayName = "XmlIcon";
 
 export const YAxisRotateIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5152,14 +5781,17 @@ export const YAxisRotateIcon: IconComponent = forwardRef(
 YAxisRotateIcon.displayName = "YAxisRotateIcon";
 
 export const YAxisIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5174,14 +5806,17 @@ export const YAxisIcon: IconComponent = forwardRef(
 YAxisIcon.displayName = "YAxisIcon";
 
 export const Youtube1cIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5197,14 +5832,17 @@ export const Youtube1cIcon: IconComponent = forwardRef(
 Youtube1cIcon.displayName = "Youtube1cIcon";
 
 export const ZAxisRotateIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
@@ -5219,14 +5857,17 @@ export const ZAxisRotateIcon: IconComponent = forwardRef(
 ZAxisRotateIcon.displayName = "ZAxisRotateIcon";
 
 export const ZAxisIcon: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 16 16"
         width={size}
         height={size}
-        fill={color}
+        fill={fill}
         {...props}
         ref={forwardedRef}
       >
