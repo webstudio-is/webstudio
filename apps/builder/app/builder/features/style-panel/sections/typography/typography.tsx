@@ -283,7 +283,7 @@ const TypographySectionAdvancedPopover = () => {
           css={{
             padding: theme.panel.padding,
             gap: theme.spacing[9],
-            width: theme.spacing[30],
+            width: theme.sizes.sidebarWidth,
           }}
         >
           <Grid css={{ gridTemplateColumns: "5fr 5fr" }} gap={2}>

@@ -111,7 +111,7 @@ const BindingPanel = ({
       css={{
         display: "flex",
         flexDirection: "column",
-        width: theme.spacing[30],
+        width: theme.sizes.sidebarWidth,
       }}
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>

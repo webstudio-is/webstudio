@@ -667,7 +667,7 @@ export const VariablePopoverTrigger = forwardRef<
             // flex fixes content overflowing artificial scroll area
             display: "flex",
             flexDirection: "column",
-            width: theme.spacing[30],
+            width: theme.sizes.sidebarWidth,
           }}
         >
           <Flex
