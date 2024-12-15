@@ -79,6 +79,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "formatBold",
+      hidden: true,
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
@@ -89,6 +90,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "formatItalic",
+      hidden: true,
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
@@ -97,6 +99,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "formatSuperscript",
+      hidden: true,
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
@@ -109,6 +112,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "formatSubscript",
+      hidden: true,
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
@@ -121,6 +125,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "formatLink",
+      hidden: true,
       handler: () => {
         const editor = getActiveEditor();
         if (hasSelectionFormat("link")) {
@@ -133,6 +138,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "formatSpan",
+      hidden: true,
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(TOGGLE_SPAN_COMMAND, undefined);
@@ -141,6 +147,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "formatClear",
+      hidden: true,
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(CLEAR_FORMAT_COMMAND, undefined);

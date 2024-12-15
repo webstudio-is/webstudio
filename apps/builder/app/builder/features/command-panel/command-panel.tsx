@@ -317,16 +317,16 @@ type ShortcutOption = {
   type: "shortcut";
   name: string;
   label: string;
-  keys: string[];
+  keys?: string[];
 };
 
 const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
   const shortcutOptions: ShortcutOption[] = [];
   for (const [name, meta] of commandMetas) {
-    if (meta.defaultHotkeys && !meta.hidden) {
+    if (!meta.hidden) {
       const label = humanizeString(name);
-      const keys = meta.defaultHotkeys[0]
-        .split("+")
+      const keys = meta.defaultHotkeys?.[0]
+        ?.split("+")
         .map((key) => (key === "meta" ? "cmd" : key));
       shortcutOptions.push({
         tokens: ["shortcuts", "commands", label],
@@ -337,6 +337,9 @@ const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
       });
     }
   }
+  shortcutOptions.sort(
+    (left, right) => (left.keys ? 0 : 1) - (right.keys ? 0 : 1)
+  );
   return shortcutOptions;
 });
 
@@ -358,7 +361,7 @@ const ShortcutOptionsGroup = ({ options }: { options: ShortcutOption[] }) => {
           }}
         >
           <Text variant="labelsTitleCase">{label}</Text>
-          <Kbd value={keys} />
+          {keys && <Kbd value={keys} />}
         </CommandItem>
       ))}
     </CommandGroup>
