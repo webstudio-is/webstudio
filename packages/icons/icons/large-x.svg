@@ -6,7 +6,13 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M4 6L8 10L12 6"
+    d="M12.5 3L3 12.5"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M3 3L12.5 12.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
