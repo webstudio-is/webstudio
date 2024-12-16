@@ -2647,7 +2647,7 @@ export const ExtensionIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
+        viewBox="0 0 15 14"
         width={size}
         height={size}
         fill={fill}
@@ -2655,15 +2655,10 @@ export const ExtensionIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M7.142 9.286h5.143m-5.143 0H2m5.142 0v4.713M12.285 9.286v4c0 .63-.512 1.142-1.143 1.142h-8A1.143 1.143 0 0 1 2 13.285v-8c0-.63.512-1.142 1.143-1.142h4v5.143"
-        />
-        <path
-          stroke="currentColor"
-          strokeLinejoin="round"
-          d="M9.714 1.572v5.142h5.142V3.035a1.463 1.463 0 0 0-1.463-1.463h-3.68Z"
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M8.714.072a.5.5 0 0 0-.5.5v5.142a.5.5 0 0 0 .5.5h5.142a.5.5 0 0 0 .5-.5V2.035A1.963 1.963 0 0 0 12.393.072h-3.68Zm.5 5.142V1.072h3.179a.963.963 0 0 1 .963.963v3.18H9.214Zm-7.071-1.57a.643.643 0 0 0-.643.642v3.5h4.142V3.643h-3.5Zm3.5 5.142H1.5v3.5c0 .354.288.642.643.642h3.5V8.786Zm4.5 4.142h-3.5V8.786h4.142v3.5a.643.643 0 0 1-.643.642Zm1.632-4.743a.5.5 0 0 0-.49-.4H6.642V3.144a.5.5 0 0 0-.5-.5h-4C1.236 2.643.5 3.38.5 4.286v8c0 .907.735 1.642 1.643 1.642h8c.906 0 1.642-.736 1.642-1.643v-4a.507.507 0 0 0-.01-.1Z"
+          clipRule="evenodd"
         />
       </svg>
     );
@@ -4127,16 +4122,10 @@ export const PageIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9.833 2h-5.5A1.333 1.333 0 0 0 3 3.333v10a1.333 1.333 0 0 0 1.333 1.334h7.5a1.333 1.333 0 0 0 1.334-1.334v-8L9.833 2Z"
-        />
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9.167 2.5v1.667A1.333 1.333 0 0 0 10.5 5.5h2.667"
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M4.333 1.5A1.833 1.833 0 0 0 2.5 3.333v10a1.833 1.833 0 0 0 1.833 1.834h7.5a1.833 1.833 0 0 0 1.834-1.834V5.333a.5.5 0 0 0-.147-.353l-3.333-3.334a.5.5 0 0 0-.354-.146h-5.5ZM12.126 5l-2.46-2.46v1.627A.833.833 0 0 0 10.5 5h1.626Zm-3.46-2.5H4.334a.833.833 0 0 0-.833.833v10a.833.833 0 0 0 .833.834h7.5a.833.833 0 0 0 .834-.834V6H10.5a1.833 1.833 0 0 1-1.833-1.833V2.5Z"
+          clipRule="evenodd"
         />
       </svg>
     );
