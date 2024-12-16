@@ -1,5 +1,5 @@
 import { forwardRef, type ComponentPropsWithoutRef, useContext } from "react";
-import { NavLink as RemixLink } from "@remix-run/react";
+import { NavLink as RemixLink } from "react-router";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import type { Link } from "@webstudio-is/sdk-components-react";
 
