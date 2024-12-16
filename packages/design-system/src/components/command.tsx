@@ -149,6 +149,7 @@ const CommandInputField = styled(CommandPrimitive.Input, {
   paddingRight: theme.spacing[2],
   color: theme.colors.foregroundMain,
   ...textVariants.regular,
+  lineHeight: 1,
   "&::placeholder": {
     color: theme.colors.foregroundSubtle,
   },
