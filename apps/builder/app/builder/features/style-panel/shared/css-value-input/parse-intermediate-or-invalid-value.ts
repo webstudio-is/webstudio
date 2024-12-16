@@ -141,6 +141,6 @@ export const parseIntermediateOrInvalidValue = (
   // or value is invalid
   return {
     type: "invalid",
-    value: value,
+    value: originalValue ?? value,
   };
 };
