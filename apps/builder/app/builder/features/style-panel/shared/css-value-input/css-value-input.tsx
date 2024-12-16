@@ -920,10 +920,11 @@ export const CssValueInput = ({
                   </ComboboxListboxItem>
                 ))}
               </ComboboxScrollArea>
-
-              <ComboboxItemDescription descriptions={descriptions}>
-                <Description>{description}</Description>
-              </ComboboxItemDescription>
+              {descriptions.length > 0 && (
+                <ComboboxItemDescription descriptions={descriptions}>
+                  <Description>{description}</Description>
+                </ComboboxItemDescription>
+              )}
             </ComboboxListbox>
           </ComboboxContent>
         )}
