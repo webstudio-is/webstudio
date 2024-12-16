@@ -515,7 +515,7 @@ export const UrlControl = ({
         >
           {Object.entries(modes).map(([key, { icon, label }]) => (
             <Tooltip key={key} content={label}>
-              <ToggleGroupButton value={key}>{icon}</ToggleGroupButton>
+              <ToggleGroupButton value={key} icon={icon} />
             </Tooltip>
           ))}
         </ToggleGroup>

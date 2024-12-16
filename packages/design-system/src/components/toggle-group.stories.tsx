@@ -15,32 +15,39 @@ const toggleGroupColors = [
 const ToggleGroupButtons = () => {
   return (
     <>
-      <ToggleGroupButton value="one">
-        <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleGroupButton>
-      <ToggleGroupButton value="two" data-focused={true}>
-        <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleGroupButton>
-      <ToggleGroupButton value="three" data-hovered={true}>
-        <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleGroupButton>
-      <ToggleGroupButton value="four">
-        <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleGroupButton>
+      <ToggleGroupButton
+        value="one"
+        icon={<BorderRadiusIndividualIcon fill="currentColor" />}
+      />
+      <ToggleGroupButton
+        value="two"
+        data-focused={true}
+        icon={<BorderRadiusIndividualIcon fill="currentColor" />}
+      />
+      <ToggleGroupButton
+        value="three"
+        data-hovered={true}
+        icon={<BorderRadiusIndividualIcon fill="currentColor" />}
+      />
+      <ToggleGroupButton
+        value="four"
+        icon={<BorderRadiusIndividualIcon fill="currentColor" />}
+      />
       <ToggleGroupButton
         value="five"
         data-hovered={true}
         data-focused={true}
         aria-checked={true}
-      >
-        <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleGroupButton>
-      <ToggleGroupButton value="six">
-        <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleGroupButton>
-      <ToggleGroupButton value="seven">
-        <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleGroupButton>
+        icon={<BorderRadiusIndividualIcon fill="currentColor" />}
+      />
+      <ToggleGroupButton
+        value="six"
+        icon={<BorderRadiusIndividualIcon fill="currentColor" />}
+      />
+      <ToggleGroupButton
+        value="seven"
+        icon={<BorderRadiusIndividualIcon fill="currentColor" />}
+      />
     </>
   );
 };

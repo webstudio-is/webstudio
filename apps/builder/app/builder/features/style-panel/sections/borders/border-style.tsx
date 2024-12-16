@@ -35,22 +35,22 @@ export const BorderStyle = () => {
           properties={properties}
           items={[
             {
-              child: <SmallXIcon />,
+              icon: <SmallXIcon />,
               description: declarationDescriptions["borderBlockStyle:none"],
               value: "none",
             },
             {
-              child: <DashBorderIcon />,
+              icon: <DashBorderIcon />,
               description: declarationDescriptions["borderBlockStyle:solid"],
               value: "solid",
             },
             {
-              child: <DashedBorderIcon />,
+              icon: <DashedBorderIcon />,
               description: declarationDescriptions["borderBlockStyle:dashed"],
               value: "dashed",
             },
             {
-              child: <DottedBorderIcon />,
+              icon: <DottedBorderIcon />,
               description: declarationDescriptions["borderBlockStyle:dotted"],
               value: "dotted",
             },

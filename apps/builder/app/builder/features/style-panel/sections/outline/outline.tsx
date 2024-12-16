@@ -41,10 +41,10 @@ export const Section = () => {
           label="Style"
           properties={["outlineStyle"]}
           items={[
-            { child: <SmallXIcon />, value: "none" },
-            { child: <DashBorderIcon />, value: "solid" },
-            { child: <DashedBorderIcon />, value: "dashed" },
-            { child: <DottedBorderIcon />, value: "dotted" },
+            { icon: <SmallXIcon />, value: "none" },
+            { icon: <DashBorderIcon />, value: "solid" },
+            { icon: <DashedBorderIcon />, value: "dashed" },
+            { icon: <DottedBorderIcon />, value: "dotted" },
           ]}
         />
 

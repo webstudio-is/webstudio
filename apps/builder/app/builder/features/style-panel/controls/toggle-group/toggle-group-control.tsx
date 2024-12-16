@@ -101,7 +101,7 @@ export const ToggleGroupControl = ({
   label?: string;
   properties: [StyleProperty, ...StyleProperty[]];
   items: Array<{
-    child: JSX.Element;
+    icon: JSX.Element;
     value: string;
     description?: string;
   }>;
@@ -166,9 +166,8 @@ export const ToggleGroupControl = ({
                 prevValue === item.value ? prevValue : undefined
               )
             }
-          >
-            {item.child}
-          </ToggleGroupButton>
+            icon={item.icon}
+          />
         </ToggleGroupTooltip>
       ))}
     </ToggleGroup>

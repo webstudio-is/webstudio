@@ -369,9 +369,7 @@ export const ShadowContent = ({
             >
               {boxShadowInsetValues.map(({ value, Icon }) => (
                 <Tooltip key={value} content={toPascalCase(value)}>
-                  <ToggleGroupButton value={value}>
-                    <Icon />
-                  </ToggleGroupButton>
+                  <ToggleGroupButton value={value} icon={<Icon />} />
                 </Tooltip>
               ))}
             </ToggleGroup>

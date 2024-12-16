@@ -6,6 +6,7 @@
 import {
   type ComponentProps,
   type ElementRef,
+  type ReactNode,
   createContext,
   useContext,
   forwardRef,
@@ -75,7 +76,7 @@ const IconButtonStyled = styled(IconButton, {
 const BaseToggleGroupButton = forwardRef<
   ElementRef<"button">,
   ComponentProps<typeof IconButton>
->((props, ref) => {
+>(({ css, ...props }, ref) => {
   const { color } = useContext(ToggleGroupContext);
   return (
     <IconButtonStyled
@@ -92,10 +93,10 @@ const BaseToggleGroupButton = forwardRef<
       }
       css={{
         height: theme.spacing[10],
-        width: "auto",
         minWidth: "fit-content",
         borderRadius: theme.borderRadius[2],
         ...textVariants.labelsTitleCase,
+        css,
       }}
     />
   );
@@ -103,15 +104,19 @@ const BaseToggleGroupButton = forwardRef<
 
 BaseToggleGroupButton.displayName = "BaseToggleGroupButton";
 
-type ToggleGroupButtonProps = ComponentProps<typeof ToggleGroupPrimitive.Item>;
+type ToggleGroupButtonProps = ComponentProps<
+  typeof ToggleGroupPrimitive.Item
+> & { icon?: ReactNode };
 
 export const ToggleGroupButton = forwardRef<
   ElementRef<"button">,
   ToggleGroupButtonProps
->(({ children, ...props }, ref) => {
+>(({ children, icon, ...props }, ref) => {
   return (
     <ToggleGroupPrimitive.Item ref={ref} {...props} asChild>
-      <BaseToggleGroupButton>{children}</BaseToggleGroupButton>
+      <BaseToggleGroupButton css={icon ? undefined : { width: "auto" }}>
+        {icon ?? children}
+      </BaseToggleGroupButton>
     </ToggleGroupPrimitive.Item>
   );
 });
