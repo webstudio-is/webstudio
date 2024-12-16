@@ -232,6 +232,31 @@ export const EditorContent = ({
   const onChangeCompleteRef = useRef(onChangeComplete);
   onChangeCompleteRef.current = onChangeComplete;
 
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    document.addEventListener(
+      // https://github.com/radix-ui/primitives/blob/dac4fd8ab0c1974020e316c865db258ab10d2279/packages/react/dismissable-layer/src/DismissableLayer.tsx#L14
+      "dismissableLayer.pointerDownOutside",
+      (event) => {
+        if (
+          event.target instanceof Element &&
+          // Prevent radix dialogs and popups from closing when clicking on the editor's autocomplete items
+          event.target.closest(".cm-tooltip.cm-tooltip-autocomplete")
+        ) {
+          event.preventDefault();
+        }
+      },
+      {
+        capture: true,
+        signal: abortController.signal,
+      }
+    );
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
   // setup editor
 
   useEffect(() => {
