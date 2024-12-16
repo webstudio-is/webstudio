@@ -1,10 +1,9 @@
-import { parse } from "css-tree";
 import type {
   StyleProperty,
   StyleValue,
   InvalidValue,
 } from "@webstudio-is/css-engine";
-import { units, parseCssValue } from "@webstudio-is/css-data";
+import { units, parseCssValue, cssTryParseValue } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
 import { toKebabCase } from "../keyword-utils";
@@ -13,7 +12,8 @@ const unitsList = Object.values(units).flat();
 
 export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
-  styleValue: IntermediateStyleValue | InvalidValue
+  styleValue: IntermediateStyleValue | InvalidValue,
+  originalValue?: string
 ): StyleValue => {
   let value = styleValue.value.trim();
   if (value.endsWith(";")) {
@@ -22,7 +22,15 @@ export const parseIntermediateOrInvalidValue = (
 
   // When user enters a number, we don't know if its a valid unit value,
   // so we are going to parse it with a unit and if its not invalid - we take it.
-  const ast = parse(value, { context: "value" });
+  const ast = cssTryParseValue(value);
+
+  if (ast === undefined) {
+    return {
+      type: "invalid",
+      value: originalValue ?? value,
+    };
+  }
+
   const node =
     "children" in ast && ast.children?.size === 1
       ? ast.children.first
@@ -119,16 +127,20 @@ export const parseIntermediateOrInvalidValue = (
   // Users often mistype comma instead of dot and we want to be tolerant to that.
   // We need to try replace comma with dot and then try all parsing options again.
   if (value.includes(",")) {
-    return parseIntermediateOrInvalidValue(property, {
-      ...styleValue,
-      value: value.replace(/,/g, "."),
-    });
+    return parseIntermediateOrInvalidValue(
+      property,
+      {
+        ...styleValue,
+        value: value.replace(/,/g, "."),
+      },
+      originalValue ?? value
+    );
   }
 
   // If we are here it means that value can be Valid but our parseCssValue can't handle it
   // or value is invalid
   return {
     type: "invalid",
-    value: value,
+    value: originalValue ?? value,
   };
 };
