@@ -1,7 +1,5 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { titleCase } from "title-case";
-import { noCase } from "change-case";
 import type { Simplify } from "type-fest";
 import type {
   Instance,
@@ -117,7 +115,6 @@ export type EmbedTemplateInstance = {
   label?: string;
   variables?: Record<string, EmbedTemplateVariable>;
   props?: EmbedTemplateProp[];
-  tokens?: string[];
   styles?: EmbedTemplateStyleDecl[];
   children: Array<
     EmbedTemplateInstance | EmbedTemplateText | EmbedTemplateExpression
@@ -132,7 +129,6 @@ export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
       label: z.optional(z.string()),
       variables: z.optional(z.record(z.string(), EmbedTemplateVariable)),
       props: z.optional(z.array(EmbedTemplateProp)),
-      tokens: z.optional(z.array(z.string())),
       styles: z.optional(z.array(EmbedTemplateStyleDecl)),
       children: WsEmbedTemplate,
     })
@@ -274,34 +270,6 @@ const createInstancesFromTemplate = (
       }
 
       const styleSourceIds: string[] = [];
-
-      // convert tokens into style sources and styles
-      if (item.tokens) {
-        const meta = metas.get(item.component);
-        if (meta?.presetTokens) {
-          for (const name of item.tokens) {
-            const tokenValue = meta.presetTokens[name];
-            if (tokenValue) {
-              const styleSourceId = `${item.component}:${name}`;
-              styleSourceIds.push(styleSourceId);
-              styleSources.push({
-                type: "token",
-                id: styleSourceId,
-                name: titleCase(noCase(name)),
-              });
-              for (const styleDecl of tokenValue.styles) {
-                styles.push({
-                  breakpointId: defaultBreakpointId,
-                  styleSourceId,
-                  state: styleDecl.state,
-                  property: styleDecl.property,
-                  value: styleDecl.value,
-                });
-              }
-            }
-          }
-        }
-      }
 
       // populate styles
       if (item.styles) {

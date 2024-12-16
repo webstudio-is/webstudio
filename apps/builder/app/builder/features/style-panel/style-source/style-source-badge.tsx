@@ -21,9 +21,6 @@ export const StyleSourceBadge = styled(Text, {
       token: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
       },
-      componentToken: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
-      },
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,
       },

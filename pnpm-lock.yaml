@@ -1724,9 +1724,6 @@ importers:
       nanoid:
         specifier: ^5.0.8
         version: 5.0.8
-      title-case:
-        specifier: ^4.3.2
-        version: 4.3.2
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
