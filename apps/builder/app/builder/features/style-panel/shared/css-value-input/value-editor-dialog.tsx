@@ -7,7 +7,10 @@ import { MaximizeIcon } from "@webstudio-is/icons";
 import { useEffect, useRef, useState } from "react";
 import { EditorDialog } from "~/builder/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
-import type { IntermediateStyleValue } from "./css-value-input";
+import type {
+  CssValueInputValue,
+  IntermediateStyleValue,
+} from "./css-value-input";
 import {
   type InvalidValue,
   type StyleProperty,
@@ -16,6 +19,25 @@ import {
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 
 export const cssButtonDisplay = "--ws-css-value-input-maximize-button-display";
+
+// Hand-picking values that are considered complex and should get a maximize button for the dialog.
+// Not showing the maximize everywhere because most values don't need that and it takes space.
+export const isComplexValue = (value: CssValueInputValue) => {
+  if (value.type === "unparsed" || value.type === "function") {
+    return true;
+  }
+
+  if (value.type === "tuple" || value.type === "layers") {
+    for (const nestedValue of value.value) {
+      const nestedValueIsComplex = isComplexValue(nestedValue);
+      if (nestedValueIsComplex) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
 
 const width = parseFloat(rawTheme.sizes.sidebarWidth);
 

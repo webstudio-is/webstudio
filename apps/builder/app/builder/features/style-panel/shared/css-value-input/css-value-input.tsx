@@ -53,7 +53,11 @@ import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { ColorThumb } from "../color-thumb";
-import { cssButtonDisplay, ValueEditorDialog } from "./value-editor-dialog";
+import {
+  cssButtonDisplay,
+  isComplexValue,
+  ValueEditorDialog,
+} from "./value-editor-dialog";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -822,20 +826,19 @@ export const CssValueInput = ({
   );
 
   const suffixRef = useRef<HTMLDivElement | null>(null);
-  const valueEditorButtonElement =
-    value.type === "unparsed" ? (
-      <ValueEditorDialog
-        property={property}
-        value={inputProps.value}
-        onChangeComplete={(value) => {
-          onChangeComplete({
-            type: "dialog-change-complete",
-            value,
-            close: false,
-          });
-        }}
-      />
-    ) : undefined;
+  const valueEditorButtonElement = isComplexValue(value) ? (
+    <ValueEditorDialog
+      property={property}
+      value={inputProps.value}
+      onChangeComplete={(value) => {
+        onChangeComplete({
+          type: "dialog-change-complete",
+          value,
+          close: false,
+        });
+      }}
+    />
+  ) : undefined;
   const invalidValueElement = value.type === "invalid" ? <></> : undefined;
   const suffixElement =
     invalidValueElement ??
