@@ -1,0 +1,6 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "compilerOptions": {
+    "types": ["react/canary", "@types/node"]
+  }
+}

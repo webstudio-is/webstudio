@@ -1,5 +1,5 @@
 import { type ElementRef, type ComponentProps, forwardRef } from "react";
-import { Form, type FormProps } from "@remix-run/react";
+import { Form, type FormProps } from "react-router";
 
 export const defaultTag = "form";
 
