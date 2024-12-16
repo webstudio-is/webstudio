@@ -16,7 +16,7 @@ export { Superscript } from "./superscript";
 export { Subscript } from "./subscript";
 export { Button } from "./button";
 export { Input } from "./input";
-export { Form } from "./form";
+export { WebhookForm as Form } from "./webhook-form";
 export { Form as RemixForm } from "./form";
 export { Image } from "./image";
 export { Blockquote } from "./blockquote";
