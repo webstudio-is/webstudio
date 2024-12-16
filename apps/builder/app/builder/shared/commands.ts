@@ -1,4 +1,6 @@
+import { nanoid } from "nanoid";
 import { blockTemplateComponent } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
@@ -10,6 +12,7 @@ import {
   toggleBuilderMode,
   $isPreviewMode,
   $isContentMode,
+  $registeredComponentMetas,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -31,10 +34,18 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { selectInstance } from "~/shared/awareness";
+import {
+  $parentInstance,
+  $selectedInstance,
+  selectInstance,
+} from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
 import { findBlockSelector } from "../features/workspace/canvas-tools/outline/block-instance-outline";
+import {
+  findClosestNonTextualContainer,
+  isTreeMatching,
+} from "~/shared/matcher";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -50,7 +61,7 @@ const makeBreakpointCommand = <CommandName extends string>(
   },
 });
 
-const deleteSelectedInstance = () => {
+export const deleteSelectedInstance = () => {
   if ($isPreviewMode.get()) {
     builderApi.toast.info("Deleting is not allowed in preview mode.");
     return;
@@ -131,6 +142,107 @@ const deleteSelectedInstance = () => {
   });
 };
 
+export const wrapIn = (component: string) => {
+  const selectedInstance = $selectedInstance.get();
+  const parentInstanceId = $parentInstance.get()?.id;
+  // global root or body are selected
+  if (selectedInstance === undefined || parentInstanceId === undefined) {
+    return;
+  }
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  const newInstanceId = nanoid();
+  const parentInstanceSelector = selectedInstanceSelector.slice(1);
+  const newInstanceSelector = [newInstanceId, ...parentInstanceSelector];
+  const metas = $registeredComponentMetas.get();
+  try {
+    updateWebstudioData((data) => {
+      const meta = metas.get(selectedInstance.component);
+      if (meta?.type === "rich-text-child") {
+        toast.error(`Cannot wrap textual content`);
+        throw Error("Abort transaction");
+      }
+      const newInstance: Instance = {
+        type: "instance",
+        id: newInstanceId,
+        component,
+        children: [{ type: "id", value: selectedInstance.id }],
+      };
+      const parentInstance = data.instances.get(parentInstanceId);
+      data.instances.set(newInstanceId, newInstance);
+      if (parentInstance) {
+        for (const child of parentInstance.children) {
+          if (child.type === "id" && child.value === selectedInstance.id) {
+            child.value = newInstanceId;
+          }
+        }
+      }
+      const matches = isTreeMatching({
+        metas,
+        instances: data.instances,
+        instanceSelector: newInstanceSelector,
+      });
+      if (matches === false) {
+        toast.error(`Cannot wrap in "${component}"`);
+        throw Error("Abort transaction");
+      }
+    });
+    selectInstance(newInstanceSelector);
+  } catch {
+    // do nothing
+  }
+};
+
+export const unwrap = () => {
+  const selectedInstanceId = $selectedInstance.get()?.id;
+  const parentInstanceId = $parentInstance.get()?.id;
+  // global root or body are selected
+  if (selectedInstanceId === undefined || parentInstanceId === undefined) {
+    return;
+  }
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  const parentInstanceSelector = selectedInstanceSelector.slice(1);
+  try {
+    updateWebstudioData((data) => {
+      const nonTextualIndex = findClosestNonTextualContainer({
+        metas: $registeredComponentMetas.get(),
+        instances: data.instances,
+        instanceSelector: selectedInstanceSelector,
+      });
+      if (nonTextualIndex !== 0) {
+        toast.error(`Cannot unwrap textual instance`);
+        throw Error("Abort transaction");
+      }
+      const parentInstance = data.instances.get(parentInstanceId);
+      const selectedInstance = data.instances.get(selectedInstanceId);
+      data.instances.delete(selectedInstanceId);
+      if (parentInstance && selectedInstance) {
+        const index = parentInstance.children.findIndex(
+          (child) => child.type === "id" && child.value === selectedInstanceId
+        );
+        parentInstance.children.splice(index, 1, ...selectedInstance.children);
+      }
+      const matches = isTreeMatching({
+        metas: $registeredComponentMetas.get(),
+        instances: data.instances,
+        instanceSelector: parentInstanceSelector,
+      });
+      if (matches === false) {
+        toast.error(`Cannot unwrap instance`);
+        throw Error("Abort transaction");
+      }
+    });
+    selectInstance(parentInstanceSelector);
+  } catch {
+    // do nothing
+  }
+};
+
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: [
@@ -159,6 +271,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "clickCanvas",
+      hidden: true,
       handler: () => {
         $breakpointsMenuView.set(undefined);
         setActiveSidebarPanel("auto");
@@ -344,6 +457,18 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         $editingItemSelector.set(selectedInstanceSelector);
       },
+    },
+    {
+      name: "wrapInBox",
+      handler: () => wrapIn("Box"),
+    },
+    {
+      name: "wrapInLink",
+      handler: () => wrapIn("Link"),
+    },
+    {
+      name: "unwrap",
+      handler: () => unwrap(),
     },
 
     // history
