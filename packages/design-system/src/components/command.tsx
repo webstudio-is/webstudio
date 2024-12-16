@@ -44,9 +44,9 @@ const StyledCommand = styled(CommandPrimitive, {
   // clip selected item background
   overflow: "clip",
   // remove input border bottom when no command matches
-  [inputBorderBottomSize]: 0,
+  [inputBorderBottomSize]: "0px",
   "&:has([cmdk-group]:not([hidden]))": {
-    [inputBorderBottomSize]: 1,
+    [inputBorderBottomSize]: "1px",
   },
 });
 
