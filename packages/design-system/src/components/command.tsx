@@ -129,7 +129,7 @@ export const CommandDialog = ({
 const CommandInputContainer = styled("div", {
   display: "grid",
   gridTemplateColumns: `${itemHeight}px 1fr max-content`,
-  height: itemHeight,
+  height: theme.spacing[15],
   borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
 });
 
