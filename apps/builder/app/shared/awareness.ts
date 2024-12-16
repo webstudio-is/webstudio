@@ -65,6 +65,19 @@ export const $selectedInstance = computed(
   }
 );
 
+export const $parentInstance = computed(
+  [$instances, $virtualInstances, $awareness],
+  (instances, virtualInstances, awareness) => {
+    if (awareness?.instanceSelector === undefined) {
+      return;
+    }
+    const [_, parentInstanceId] = awareness.instanceSelector;
+    return (
+      instances.get(parentInstanceId) ?? virtualInstances.get(parentInstanceId)
+    );
+  }
+);
+
 export const getInstanceKey = <
   InstanceSelector extends undefined | Instance["id"][],
 >(

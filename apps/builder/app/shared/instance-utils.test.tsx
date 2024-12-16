@@ -3069,7 +3069,7 @@ describe("find closest insertable", () => {
     $instances.set(instances);
     selectInstance(["boldId", "paragraphId", "bodyId"]);
     expect(findClosestInsertable(newBoxFragment)).toEqual({
-      parentSelector: ["paragraphId", "bodyId"],
+      parentSelector: ["bodyId"],
       position: 1,
     });
   });

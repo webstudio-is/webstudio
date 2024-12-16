@@ -339,6 +339,13 @@ export const findClosestNonTextualContainer = ({
       if (child.type === "text" || child.type === "expression") {
         hasText = true;
       }
+      if (child.type === "id") {
+        const childInstance = instances.get(child.value);
+        const meta = metas.get(childInstance?.component ?? "");
+        if (meta?.type === "rich-text-child") {
+          hasText = true;
+        }
+      }
     }
     if (hasText) {
       continue;

@@ -990,6 +990,24 @@ describe("find closest non textual container", () => {
     ).toEqual(1);
   });
 
+  test("skips containers with rich text children", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.Box ws:id="box">
+              <$.Box ws:id="box-with-bold">
+                <$.Bold ws:id="bold"></$.Bold>
+              </$.Box>
+            </$.Box>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["box-with-bold", "box", "body"],
+      })
+    ).toEqual(1);
+  });
+
   test("allow root with text", () => {
     expect(
       findClosestNonTextualContainer({
