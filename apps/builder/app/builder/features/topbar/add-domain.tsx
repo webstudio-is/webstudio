@@ -12,7 +12,7 @@ import {
 import { validateDomain } from "@webstudio-is/domain";
 import type { Project } from "@webstudio-is/project";
 import { useId, useOptimistic, useRef, useState } from "react";
-import { CustomCodeIcon } from "@webstudio-is/icons";
+import { TerminalIcon } from "@webstudio-is/icons";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 
 type DomainsAddProps = {
@@ -128,7 +128,7 @@ export const AddDomain = ({
 
           <Button
             color={"dark"}
-            prefix={<CustomCodeIcon />}
+            prefix={<TerminalIcon />}
             type="button"
             onClick={onExportClick}
           >
