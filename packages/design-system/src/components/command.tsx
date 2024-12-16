@@ -30,8 +30,8 @@ import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Kbd } from "./kbd";
 
-const panelWidth = 400;
-const itemHeight = 32;
+const panelWidth = "400px";
+const itemHeight = "32px";
 const inputBorderBottomSize = "--command-input-border-bottom-width";
 
 const StyledCommand = styled(CommandPrimitive, {
@@ -102,7 +102,7 @@ export const Command = (props: CommandProps) => {
 const CommandDialogContent = styled(DialogContent, {
   position: "absolute",
   top: "20%",
-  left: `calc(50% - ${panelWidth / 2}px)`,
+  left: `calc(50% - ${panelWidth} / 2)`,
   width: panelWidth,
 });
 
@@ -128,7 +128,7 @@ export const CommandDialog = ({
 
 const CommandInputContainer = styled("div", {
   display: "grid",
-  gridTemplateColumns: `${itemHeight}px 1fr max-content`,
+  gridTemplateColumns: `${itemHeight} 1fr max-content`,
   height: theme.spacing[15],
   borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
 });
