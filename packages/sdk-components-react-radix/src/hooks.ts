@@ -3,7 +3,6 @@ import { hooksCollapsible } from "./collapsible";
 import { hooksTabs } from "./tabs";
 import { hooksDialog } from "./dialog";
 import { hooksPopover } from "./popover";
-import { hooksSheet } from "./sheet";
 import { hooksTooltip } from "./tooltip";
 import { hooksAccordion } from "./accordion";
 import { hooksNavigationMenu } from "./navigation-menu";
@@ -14,7 +13,6 @@ export const hooks: Hook[] = [
   hooksTabs,
   hooksDialog,
   hooksPopover,
-  hooksSheet,
   hooksTooltip,
   hooksAccordion,
   hooksNavigationMenu,
