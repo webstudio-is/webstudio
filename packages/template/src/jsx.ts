@@ -59,7 +59,7 @@ const traverseJsx = (
     : element.props?.children
       ? [element.props?.children]
       : [];
-  let result: Instance["children"] = [];
+  const result: Instance["children"] = [];
   if (element.type === Fragment) {
     for (const child of children) {
       if (typeof child === "string") {
