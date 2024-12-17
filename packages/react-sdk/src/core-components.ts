@@ -96,7 +96,7 @@ const descendantMeta: WsComponentMeta = {
   icon: PaintBrushIcon,
   constraints: {
     relation: "parent",
-    component: { $eq: "HtmlEmbed" },
+    component: { $in: ["HtmlEmbed", "MarkdownEmbed"] },
   },
 };
 
