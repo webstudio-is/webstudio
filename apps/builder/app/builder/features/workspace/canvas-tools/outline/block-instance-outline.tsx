@@ -432,7 +432,7 @@ export const BlockChildHoveredInstanceOutline = () => {
             width: `calc(${theme.sizes.controlHeight} + ${distanceToButton} + ${graceAreaOverlap})`,
             marginRight: `-${graceAreaOverlap}`,
             pointerEvents: isMenuOpen ? "none" : "all",
-            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${graceAreaOverlap}) 100%, 0% ${iconButtonSize})`,
+            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${graceAreaOverlap}) 100%, 0% ${theme.sizes.controlHeight})`,
           }}
           onMouseEnter={() => {
             clearTimeout(timeoutRef.current);
