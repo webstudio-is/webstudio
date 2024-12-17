@@ -117,6 +117,7 @@ export const FlexGrid = () => {
               css={{
                 width: "90%",
                 height: "90%",
+                minWidth: "auto",
                 color: theme.colors.foregroundFlexUiMain,
                 "&:hover": {
                   // @todo not clear which token to use here
@@ -160,7 +161,7 @@ export const FlexGrid = () => {
           height: "100%",
           gridArea: "-1 / -1 / 1 / 1", // fill whole grid
           p: 2,
-          gap: 2,
+          gap: 2.5,
           pointerEvents: "none",
         }}
         style={{
