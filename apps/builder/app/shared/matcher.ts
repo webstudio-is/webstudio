@@ -244,7 +244,8 @@ export const findClosestInstanceMatchingFragment = ({
   instances: Instances;
   metas: Map<string, WsComponentMeta>;
   instanceSelector: InstanceSelector;
-  fragment: WebstudioFragment;
+  // require only subset of fragment
+  fragment: Pick<WebstudioFragment, "children" | "instances">;
   onError?: (message: string) => void;
 }) => {
   const mergedInstances = new Map(instances);
