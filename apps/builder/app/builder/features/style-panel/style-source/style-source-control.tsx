@@ -75,7 +75,7 @@ const MenuTriggerGradient = styled(Box, {
   position: "absolute",
   top: 0,
   right: 0,
-  width: theme.spacing[11],
+  width: theme.sizes.controlHeight,
   height: "100%",
   visibility,
   background: `var(${menuTriggerGradientVar})`,

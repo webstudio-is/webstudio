@@ -110,7 +110,7 @@ const containerStyle = css({
         height: theme.spacing[9],
       },
       2: {
-        height: theme.spacing[11],
+        height: theme.sizes.controlHeight,
       },
     },
   },

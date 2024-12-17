@@ -23,7 +23,6 @@ import {
   Tooltip,
   Kbd,
   Text,
-  iconButtonSize,
   Grid,
   DropdownMenuSeparator,
   menuItemCss,
@@ -430,10 +429,10 @@ export const BlockChildHoveredInstanceOutline = () => {
         <Flex
           css={{
             // Define grace area for the button
-            width: `calc(${iconButtonSize} + ${distanceToButton} + ${graceAreaOverlap})`,
+            width: `calc(${theme.sizes.controlHeight} + ${distanceToButton} + ${graceAreaOverlap})`,
             marginRight: `-${graceAreaOverlap}`,
             pointerEvents: isMenuOpen ? "none" : "all",
-            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${graceAreaOverlap}) 100%, 0% ${iconButtonSize})`,
+            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${graceAreaOverlap}) 100%, 0% ${theme.sizes.controlHeight})`,
           }}
           onMouseEnter={() => {
             clearTimeout(timeoutRef.current);
