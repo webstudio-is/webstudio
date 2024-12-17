@@ -2016,9 +2016,6 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
     devDependencies:
-      '@types/react':
-        specifier: ^18.2.70
-        version: 18.2.79
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
