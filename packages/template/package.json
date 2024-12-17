@@ -1,7 +1,7 @@
 {
   "name": "@webstudio-is/template",
   "version": "0.0.0-webstudio-version",
-  "description": "Webstudio project data schema",
+  "description": "Webstudio templates based on React",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "license": "AGPL-3.0-or-later",
