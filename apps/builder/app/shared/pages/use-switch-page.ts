@@ -12,6 +12,7 @@ import {
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 import { $selectedPage, selectPage } from "../awareness";
+import { findPageByIdOrPath } from "@webstudio-is/sdk";
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -19,7 +20,6 @@ const setPageStateFromUrl = () => {
   if (pages === undefined) {
     return;
   }
-  const pageId = searchParams.get("pageId") ?? pages.homePage.id;
 
   let mode = searchParams.get("mode");
 
@@ -29,6 +29,12 @@ const setPageStateFromUrl = () => {
   }
 
   setBuilderMode(mode);
+
+  // check the page actually exists
+  // to avoid confusing the user with broken state
+  const pageId =
+    findPageByIdOrPath(searchParams.get("pageId") ?? "", pages)?.id ??
+    pages.homePage.id;
 
   $selectedPageHash.set(searchParams.get("pageHash") ?? "");
   selectPage(pageId);
