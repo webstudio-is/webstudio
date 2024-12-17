@@ -13,7 +13,7 @@ import {
   createProxy,
   renderJsx,
   ws,
-} from "@webstudio-is/sdk/testing";
+} from "@webstudio-is/template";
 import {
   generateJsxChildren,
   generateWebstudioComponent,

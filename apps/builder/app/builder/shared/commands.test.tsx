@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { renderJsx, $ } from "@webstudio-is/template";
 import {
   $instances,
   $pages,
@@ -9,7 +10,6 @@ import {
 import { registerContainers } from "~/shared/sync";
 import { $awareness, selectInstance } from "~/shared/awareness";
 import { deleteSelectedInstance, unwrap, wrapIn } from "./commands";
-import { renderJsx, $ } from "@webstudio-is/sdk/testing";
 
 registerContainers();
 

@@ -33,6 +33,7 @@
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/template": "workspace:*",
     "change-case": "^5.4.4",
     "html-tags": "^4.0.0",
     "nanoid": "^5.0.8"

@@ -1,0 +1,26 @@
+{
+  "name": "@webstudio-is/template",
+  "version": "0.0.0-webstudio-version",
+  "description": "Webstudio templates based on React",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "webstudio": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@webstudio-is/sdk": "workspace:*",
+    "react": "18.3.0-canary-14898b6a9-20240318"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "vitest": "^2.1.8"
+  }
+}

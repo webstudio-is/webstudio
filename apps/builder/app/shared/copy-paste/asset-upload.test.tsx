@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { $, renderJsx, AssetValue } from "@webstudio-is/sdk/testing";
+import { $, renderJsx, AssetValue } from "@webstudio-is/template";
 import { denormalizeSrcProps } from "./asset-upload";
 import type { StyleDecl, WebstudioFragment } from "@webstudio-is/sdk";
 

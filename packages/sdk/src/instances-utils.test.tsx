@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { $, renderJsx } from "./jsx";
+import { $, renderJsx } from "@webstudio-is/template";
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,

@@ -21,9 +21,6 @@
       "webstudio": "./src/__generated__/normalize.css.ts",
       "types": "./lib/types/__generated__/normalize.css.d.ts",
       "import": "./lib/__generated__/normalize.css.js"
-    },
-    "./testing": {
-      "webstudio": "./src/testing.ts"
     }
   },
   "files": [
@@ -49,6 +46,7 @@
   },
   "devDependencies": {
     "@webstudio-is/css-data": "workspace:*",
+    "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "strip-indent": "^4.0.0",
