@@ -78,6 +78,9 @@ export const metaDialogContent: WsComponentMeta = {
       relation: "ancestor",
       component: { $eq: "DialogOverlay" },
     },
+    // often deleted by users
+    // though radix starts throwing warnings in console
+    /*
     {
       relation: "descendant",
       component: { $eq: "DialogTitle" },
@@ -86,6 +89,7 @@ export const metaDialogContent: WsComponentMeta = {
       relation: "descendant",
       component: { $eq: "DialogDescription" },
     },
+    */
     {
       relation: "descendant",
       component: { $eq: "DialogClose" },
