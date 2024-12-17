@@ -35,7 +35,7 @@ import {
   RadioGroup,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
-import { $isPublishDialogOpen } from "../../shared/nano-states";
+import { $publishDialog } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
   $authTokenPermissions,
@@ -836,12 +836,8 @@ type PublishProps = {
 };
 
 export const PublishButton = ({ projectId }: PublishProps) => {
-  const isPublishDialogOpen = useStore($isPublishDialogOpen);
+  const publishDialog = useStore($publishDialog);
   const authTokenPermissions = useStore($authTokenPermissions);
-  const [dialogContentType, setDialogContentType] = useState<
-    "publish" | "export"
-  >("publish");
-
   const isPublishEnabled = authTokenPermissions.canPublish;
 
   const tooltipContent = isPublishEnabled
@@ -849,20 +845,17 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     : "Only the owner, an admin, or content editors with publish permissions can publish projects";
 
   const handleExportClick = () => {
-    setDialogContentType("export");
+    $publishDialog.set("export");
   };
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen === false) {
-      setDialogContentType("publish");
-    }
-    $isPublishDialogOpen.set(isOpen);
+    $publishDialog.set(isOpen ? "publish" : "none");
   };
 
   return (
     <FloatingPanelPopover
       modal
-      open={isPublishDialogOpen}
+      open={publishDialog !== "none"}
       onOpenChange={handleOpenChange}
     >
       <FloatingPanelAnchor>
@@ -891,14 +884,14 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           marginRight: theme.spacing[3],
         }}
       >
-        {dialogContentType === "export" && (
+        {publishDialog === "export" && (
           <>
             <FloatingPanelPopoverTitle>Export</FloatingPanelPopoverTitle>
             <ExportContent projectId={projectId} />
           </>
         )}
 
-        {dialogContentType === "publish" && (
+        {publishDialog === "publish" && (
           <>
             <FloatingPanelPopoverTitle
               actions={

@@ -31,6 +31,7 @@ import { serverSyncStore } from "~/shared/sync";
 import { $publisher } from "~/shared/pubsub";
 import {
   $activeInspectorPanel,
+  $publishDialog,
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
@@ -308,6 +309,20 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "openBreakpointsMenu",
       handler: () => {
         $breakpointsMenuView.set("initial");
+      },
+    },
+    {
+      name: "openPublishDialog",
+      defaultHotkeys: ["shift+P"],
+      handler: () => {
+        $publishDialog.set("publish");
+      },
+    },
+    {
+      name: "openExportDialog",
+      defaultHotkeys: ["shift+E"],
+      handler: () => {
+        $publishDialog.set("export");
       },
     },
     {
