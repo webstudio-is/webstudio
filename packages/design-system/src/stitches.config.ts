@@ -58,6 +58,7 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
       spacing,
       sizes: {
         sidebarWidth: spacing[30],
+        controlHeight: spacing[11],
       },
       /**
        * Use instead: textVariants / textStyles / <Text />

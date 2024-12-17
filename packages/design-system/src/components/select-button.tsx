@@ -22,7 +22,7 @@ const chevronStyle = css({ color: `var(${chevronColor})` });
 const style = css({
   all: "unset", // reset <button>
   minWidth: 0,
-  height: theme.spacing[11],
+  height: theme.sizes.controlHeight,
   boxSizing: "border-box",
   display: "flex",
   alignItems: "center",

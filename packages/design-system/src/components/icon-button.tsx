@@ -20,8 +20,6 @@ const disabledVariantStyles = {
   },
 };
 
-export const iconButtonSize = theme.spacing[11];
-
 export const IconButton = styled("button", {
   // reset styles
   boxSizing: "border-box",
@@ -35,9 +33,9 @@ export const IconButton = styled("button", {
   alignItems: "center",
   // prevent shrinking inside flex box
   flexShrink: 0,
-  minWidth: iconButtonSize,
+  minWidth: theme.sizes.controlHeight,
   width: "max-content",
-  height: iconButtonSize,
+  height: theme.sizes.controlHeight,
   borderRadius: theme.borderRadius[3],
   outline: "none",
 
