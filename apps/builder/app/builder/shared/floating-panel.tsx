@@ -6,15 +6,20 @@ import {
   createContext,
   useLayoutEffect,
   type JSX,
+  type ComponentProps,
 } from "react";
 import {
-  FloatingPanelPopover,
   theme,
   css,
-  FloatingPanelPopoverTrigger,
-  FloatingPanelPopoverContent,
-  FloatingPanelPopoverTitle,
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  Flex,
+  Button,
+  DialogClose,
 } from "@webstudio-is/design-system";
+import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
 export const useSideOffset = ({
   side = "left",
@@ -81,11 +86,9 @@ type FloatingPanelProps = {
   children: JSX.Element;
   isOpen?: boolean;
   onIsOpenChange?: (isOpen: boolean) => void;
-  // collisionPadding is the distance in pixels from the boundary edges where collision detection should occur.
-  collisionPadding?:
-    | number
-    | Partial<Record<"top" | "right" | "bottom" | "left", number>>;
   align?: "start" | "center" | "end";
+  maximizable?: boolean;
+  resize?: ComponentProps<typeof DialogContent>["resize"];
 };
 
 const contentStyle = css({
@@ -98,30 +101,65 @@ export const FloatingPanel = ({
   children,
   isOpen: externalIsOpen,
   align,
+  resize,
+  maximizable,
   onIsOpenChange: setExternalIsOpen,
-  collisionPadding,
 }: FloatingPanelProps) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen ?? internalIsOpen;
   const setIsOpen = setExternalIsOpen ?? setInternalIsOpen;
   const { container: containerRef } = useContext(FloatingPanelContext);
   const [triggerRef, sideOffset] = useSideOffset({ isOpen, containerRef });
+  const [isMaximized, setIsMaximized] = useState(false);
 
   return (
-    <FloatingPanelPopover open={isOpen} onOpenChange={setIsOpen} modal>
-      <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen} modal>
+      <DialogTrigger asChild ref={triggerRef}>
         {children}
-      </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent
-        sideOffset={sideOffset}
-        side="left"
-        align={align ?? "start"}
+      </DialogTrigger>
+      <DialogContent
+        resize={resize}
         className={contentStyle()}
-        collisionPadding={collisionPadding}
+        isMaximized={false}
+        //width={width}
+        //height={height}
+        //x={x}
+        //y={y}
+        onInteractOutside={(event) => {
+          event.preventDefault();
+        }}
       >
         {content}
-        <FloatingPanelPopoverTitle>{title}</FloatingPanelPopoverTitle>
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+        <DialogTitle
+          suffix={
+            <Flex
+              gap="1"
+              onMouseDown={(event) => {
+                // Prevent dragging dialog
+                event.preventDefault();
+              }}
+            >
+              {maximizable && (
+                <Button
+                  color="ghost"
+                  prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
+                  aria-label="Expand"
+                  onClick={() => setIsMaximized(isMaximized ? false : true)}
+                />
+              )}
+              <DialogClose asChild>
+                <Button
+                  color="ghost"
+                  prefix={<CrossIcon />}
+                  aria-label="Close"
+                />
+              </DialogClose>
+            </Flex>
+          }
+        >
+          {title}
+        </DialogTitle>
+      </DialogContent>
+    </Dialog>
   );
 };

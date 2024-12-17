@@ -150,7 +150,7 @@ export const DialogContent = forwardRef(
       children,
       className,
       css,
-      resize,
+      resize = "none",
       isMaximized,
       width,
       height,
@@ -162,7 +162,7 @@ export const DialogContent = forwardRef(
     }: ComponentProps<typeof Primitive.Content> &
       UseDraggableProps & {
         css?: CSS;
-        resize?: "auto";
+        resize?: "auto" | "none";
       },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
