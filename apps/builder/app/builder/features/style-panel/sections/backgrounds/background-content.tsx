@@ -181,10 +181,10 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           https://github.com/radix-ui/primitives/issues/1910
           */}
             <ToggleGroupButton value={"image"} autoFocus={true}>
-              <Flex css={{ px: theme.spacing[2] }}>Image</Flex>
+              <Flex css={{ px: theme.spacing[3] }}>Image</Flex>
             </ToggleGroupButton>
             <ToggleGroupButton value={"gradient"}>
-              <Flex css={{ px: theme.spacing[2] }}>Gradient</Flex>
+              <Flex css={{ px: theme.spacing[3] }}>Gradient</Flex>
             </ToggleGroupButton>
           </ToggleGroup>
         </Flex>
