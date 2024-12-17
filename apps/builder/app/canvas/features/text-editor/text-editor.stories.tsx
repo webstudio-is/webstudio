@@ -15,7 +15,7 @@ import {
 } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
-import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { $, renderJsx } from "@webstudio-is/template";
 import { $awareness } from "~/shared/awareness";
 
 export default {

@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/sdk/testing";
+import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/template";
 import { parseCss } from "@webstudio-is/css-data";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";

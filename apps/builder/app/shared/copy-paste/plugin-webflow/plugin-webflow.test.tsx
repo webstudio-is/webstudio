@@ -10,7 +10,7 @@ import {
   type WebstudioFragment,
   type Instance,
 } from "@webstudio-is/sdk";
-import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { $, renderJsx } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import { __testing__ } from "./plugin-webflow";
 import {

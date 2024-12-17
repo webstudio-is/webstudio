@@ -1,6 +1,5 @@
 import type { JSX, ReactNode } from "react";
-import type { Instances } from "./schema/instances";
-import type { Props } from "./schema/props";
+import type { Instances, Props } from "@webstudio-is/sdk";
 
 export class ExpressionValue {
   value;

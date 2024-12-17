@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import type { JSX } from "react";
-import { renderJsx, $, ExpressionValue } from "@webstudio-is/sdk/testing";
+import { renderJsx, $, ExpressionValue } from "@webstudio-is/template";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
