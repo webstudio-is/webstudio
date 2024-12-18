@@ -37,6 +37,8 @@ import {
   KEY_DOWN_COMMAND,
   COMMAND_PRIORITY_NORMAL,
   type NodeKey,
+  $getNodeByKey,
+  SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -67,6 +69,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
+  $textEditorContextMenu,
 } from "~/shared/nano-states";
 import {
   getElementByInstanceSelector,
@@ -170,6 +173,7 @@ const OnChangeOnBlurPlugin = ({
 
   useEffect(() => {
     const handleBlur = () => {
+      console.log("handleBlur");
       handleChange(editor.getEditorState());
     };
 
@@ -904,6 +908,176 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
   return null;
 };
 
+type ContextMenuParams = {
+  cursorRect: DOMRect;
+};
+
+type ContextMenuPluginProps = {
+  onOpen: (
+    editorState: EditorState,
+    params: undefined | ContextMenuParams
+  ) => void;
+};
+
+const ContextMenuPlugin = ({ onOpen }: ContextMenuPluginProps) => {
+  const [editor] = useLexicalComposerContext();
+
+  const handleOpen = useEffectEvent(onOpen);
+
+  useEffect(() => {
+    if (!editor.isEditable()) {
+      return;
+    }
+
+    let menuState: "closed" | "opening" | "opened" = "closed";
+
+    let slashNodeKey: NodeKey | undefined = undefined;
+
+    const closeMenu = () => {
+      if (menuState === "closed") {
+        return;
+      }
+
+      menuState = "closed";
+
+      handleOpen(editor.getEditorState(), undefined);
+
+      if (slashNodeKey === undefined) {
+        return;
+      }
+
+      const node = $getNodeByKey(slashNodeKey);
+      if ($isTextNode(node)) {
+        node.setStyle("");
+      }
+
+      const selection = $getSelection();
+
+      if (!$isRangeSelection(selection)) {
+        return;
+      }
+
+      selection.setStyle("");
+    };
+
+    const unsubscibeSelectionChange = editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        if (menuState !== "opened") {
+          return false;
+        }
+
+        if (!isSingleCursorSelection()) {
+          closeMenu();
+          return false;
+        }
+
+        const selection = $getSelection();
+
+        if (!$isRangeSelection(selection)) {
+          closeMenu();
+          return false;
+        }
+
+        if (selection.anchor.key !== slashNodeKey) {
+          closeMenu();
+          return false;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+
+    const unsubscibeKeyDown = editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event) => {
+        if (!isSingleCursorSelection()) {
+          return false;
+        }
+
+        const selection = $getSelection();
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        if (menuState === "opened") {
+          if (event.key === "Escape" || event.key === " ") {
+            closeMenu();
+            event.preventDefault();
+            return true;
+          }
+
+          if (event.key === "ArrowUp") {
+            // @todo
+            event.preventDefault();
+            return true;
+          }
+
+          if (event.key === "ArrowDown") {
+            // @todo
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        if (event.key !== "/") {
+          return false;
+        }
+
+        const slashNode = $createTextNode("/");
+        slashNodeKey = slashNode.getKey();
+        menuState = "opening";
+
+        slashNode.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+        selection.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+        selection.insertNodes([slashNode]);
+
+        event.preventDefault();
+
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+
+    const unsubscribeUpdateListener = editor.registerUpdateListener(
+      ({ editorState }) => {
+        if (menuState !== "opening") {
+          return;
+        }
+
+        editorState.read(() => {
+          if (slashNodeKey === undefined) {
+            // handleOpen(editor.getEditorState(), undefined);
+            return;
+          }
+          const slashNode = editor.getElementByKey(slashNodeKey);
+
+          if (slashNode === null) {
+            return;
+          }
+
+          const rect = slashNode.getBoundingClientRect();
+
+          menuState = "opened";
+          handleOpen(editor.getEditorState(), {
+            cursorRect: rect,
+          });
+        });
+      }
+    );
+
+    return () => {
+      unsubscibeKeyDown();
+      unsubscribeUpdateListener();
+      unsubscibeSelectionChange();
+    };
+  }, [editor, handleOpen]);
+
+  return null;
+};
+
 const onError = (error: Error) => {
   throw error;
 };
@@ -1004,6 +1178,11 @@ export const TextEditor = ({
 
   const handleChange = useEffectEvent((editorState: EditorState) => {
     editorState.read(() => {
+      // Otherwise editorState.read captures focus
+      if ($textEditorContextMenu.get() !== undefined) {
+        //return;
+      }
+
       const treeRootInstance = instances.get(rootInstanceSelector[0]);
       if (treeRootInstance) {
         const jsonState = editorState.toJSON();
@@ -1180,6 +1359,14 @@ export const TextEditor = ({
     [newLinkKeyToInstanceId]
   );
 
+  const handleContextMenuOpen = useCallback(
+    (_editorState: EditorState, params: undefined | ContextMenuParams) => {
+      console.log("CLOSE");
+      $textEditorContextMenu.set(params);
+    },
+    []
+  );
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <RemoveParagaphsPlugin />
@@ -1207,6 +1394,7 @@ export const TextEditor = ({
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
+      <ContextMenuPlugin onOpen={handleContextMenuOpen} />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
       <LinkSelectionPlugin

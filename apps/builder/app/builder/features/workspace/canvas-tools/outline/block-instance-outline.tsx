@@ -32,7 +32,7 @@ import { applyScale } from "./apply-scale";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
 import type { Instance, Instances } from "@webstudio-is/sdk";
@@ -173,22 +173,25 @@ const getInsertionIndex = (
   return insertBefore ? index : index + 1;
 };
 
-const TemplatesMenu = ({
+export const TemplatesMenu = ({
   onOpenChange,
   open,
   children,
   anchor,
+  triggerTooltipContent,
 }: {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   anchor: InstanceSelector;
+  triggerTooltipContent: JSX.Element;
 }) => {
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
   const modifierKeys = useStore($modifierKeys);
 
   const blockInstanceSelector = findBlockSelector(anchor, instances);
+  useEffect(() => {}, []);
 
   if (blockInstanceSelector === undefined) {
     return;
@@ -214,7 +217,13 @@ const TemplatesMenu = ({
 
   return (
     <DropdownMenu onOpenChange={onOpenChange} open={open} modal>
-      {children}
+      <Tooltip
+        content={triggerTooltipContent}
+        side="top"
+        disableHoverableContent
+      >
+        <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      </Tooltip>
       <DropdownMenuPortal>
         <DropdownMenuContent
           align="start"
@@ -222,6 +231,8 @@ const TemplatesMenu = ({
           collisionPadding={16}
           side="bottom"
           loop
+          // @todo remove inert after creation
+          {...{ inert: "" }}
         >
           <DropdownMenuRadioGroup
             onValueChange={(value) => {
@@ -284,7 +295,6 @@ const TemplatesMenu = ({
                 key={id}
                 value={JSON.stringify(value)}
                 {...{ [skipInertHandlersAttribute]: true }}
-                data-yyy
               >
                 <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
                   {icon}
@@ -465,40 +475,33 @@ export const BlockChildHoveredInstanceOutline = () => {
               }
             }}
             anchor={outline.selector}
+            triggerTooltipContent={tooltipContent}
           >
-            <Tooltip
-              content={tooltipContent}
-              side="top"
-              disableHoverableContent
+            <IconButton
+              variant={isAddMode ? "local" : "overwritten"}
+              onClick={() => {
+                if (isAddMode) {
+                  return;
+                }
+
+                updateWebstudioData((data) => {
+                  deleteInstanceMutable(data, outline.selector);
+                });
+
+                setButtonOutline(undefined);
+                $blockChildOutline.set(undefined);
+                $hoveredInstanceSelector.set(undefined);
+                $hoveredInstanceOutline.set(undefined);
+              }}
+              css={{
+                borderStyle: "solid",
+                borderColor: isAddMode
+                  ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
+                  : undefined,
+              }}
             >
-              <DropdownMenuTrigger asChild>
-                <IconButton
-                  variant={isAddMode ? "local" : "overwritten"}
-                  onClick={() => {
-                    if (isAddMode) {
-                      return;
-                    }
-
-                    updateWebstudioData((data) => {
-                      deleteInstanceMutable(data, outline.selector);
-                    });
-
-                    setButtonOutline(undefined);
-                    $blockChildOutline.set(undefined);
-                    $hoveredInstanceSelector.set(undefined);
-                    $hoveredInstanceOutline.set(undefined);
-                  }}
-                  css={{
-                    borderStyle: "solid",
-                    borderColor: isAddMode
-                      ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
-                      : undefined,
-                  }}
-                >
-                  {isAddMode ? <PlusIcon /> : <TrashIcon />}
-                </IconButton>
-              </DropdownMenuTrigger>
-            </Tooltip>
+              {isAddMode ? <PlusIcon /> : <TrashIcon />}
+            </IconButton>
           </TemplatesMenu>
         </Flex>
       </div>

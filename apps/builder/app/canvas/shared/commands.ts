@@ -8,6 +8,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
+  $textToolbar,
 } from "~/shared/nano-states";
 import {
   CLEAR_FORMAT_COMMAND,
@@ -64,16 +65,25 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         const selectedInstanceSelector = $selectedInstanceSelector.get();
         const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+        const textToolbar = $textToolbar.get();
+
         if (selectedInstanceSelector === undefined) {
           return;
         }
+
+        // close text toolbar first without exiting text editing mode
+        if (textToolbar) {
+          $textToolbar.set(undefined);
+          return;
+        }
+
         // exit text editing mode first without unselecting instance
         if (textEditingInstanceSelector) {
-          $textEditingInstanceSelector.set(undefined);
+          // $textEditingInstanceSelector.set(undefined);
           return;
         }
         // unselect both instance and style source
-        selectInstance(undefined);
+        // selectInstance(undefined);
       },
     },
 

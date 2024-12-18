@@ -31,4 +31,11 @@ export const $textEditingInstanceSelector = atom<
     }
 >();
 
+export const $textEditorContextMenu = atom<
+  | {
+      cursorRect: DOMRect;
+    }
+  | undefined
+>(undefined);
+
 export const $instances = atom<Instances>(new Map());
