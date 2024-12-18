@@ -209,8 +209,6 @@ export type VimeoOptions = Omit<
   doNotTrack?: VimeoPlayerOptions["dnt"];
   /** Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive. */
   interactiveParams?: VimeoPlayerOptions["interactive_params"];
-  /** Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video. */
-  backgroundMode?: VimeoPlayerOptions["background"];
   /** Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK. */
   showControls?: VimeoPlayerOptions["controls"];
   // @todo use color type to use color control
