@@ -33,6 +33,7 @@ import {
   Text,
   Tooltip,
   theme,
+  useSideOffset,
 } from "@webstudio-is/design-system";
 import {
   decodeDataSourceVariable,
@@ -44,7 +45,6 @@ import {
   formatValuePreview,
   type EditorApi,
 } from "./expression-editor";
-import { useSideOffset } from "./floating-panel";
 import {
   $dataSourceVariables,
   $isDesignMode,

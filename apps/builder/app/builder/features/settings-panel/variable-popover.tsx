@@ -38,6 +38,7 @@ import {
   TextArea,
   Tooltip,
   theme,
+  useSideOffset,
 } from "@webstudio-is/design-system";
 import {
   type DataSource,
@@ -59,7 +60,6 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
-import { useSideOffset } from "~/builder/shared/floating-panel";
 import {
   EditorDialog,
   EditorDialogButton,
