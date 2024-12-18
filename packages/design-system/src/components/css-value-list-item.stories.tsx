@@ -13,11 +13,7 @@ import {
   SubtractIcon,
 } from "@webstudio-is/icons";
 import { SmallIconButton } from "./small-icon-button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "./floating-panel-popover";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
