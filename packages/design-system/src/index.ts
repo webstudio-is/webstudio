@@ -16,6 +16,8 @@ export * from "./components/dropdown-menu";
 export * from "./components/icon-button"; // mostly aligned, but needs a demo and to use tokens
 export * from "./components/toggle-button";
 export * from "./components/dialog";
+export * from "./components/floating-panel";
+// TODO migrate everything to FloatingPanel
 export * from "./components/floating-panel-popover";
 export * from "./components/popover";
 export {

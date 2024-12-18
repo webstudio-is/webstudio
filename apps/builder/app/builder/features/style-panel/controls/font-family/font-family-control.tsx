@@ -3,9 +3,9 @@ import {
   EnhancedTooltip,
   Flex,
   NestedInputButton,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { FontsManager } from "~/builder/shared/fonts-manager";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import { toValue } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";

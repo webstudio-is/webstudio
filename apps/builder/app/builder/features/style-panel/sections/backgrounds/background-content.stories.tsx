@@ -3,7 +3,7 @@ import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   FloatingPanel,
   FloatingPanelProvider,
-} from "~/builder/shared/floating-panel";
+} from "@webstudio-is/design-system";
 import {
   $breakpoints,
   $selectedBreakpointId,

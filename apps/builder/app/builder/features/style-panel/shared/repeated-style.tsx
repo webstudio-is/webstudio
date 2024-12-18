@@ -22,8 +22,8 @@ import {
   SmallToggleButton,
   toast,
   useSortable,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";

@@ -37,10 +37,10 @@ import {
   globalCss,
   Kbd,
   Text,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { solarizedLight } from "./code-highlight";
-import { FloatingPanel } from "./floating-panel";
 
 // This undocumented flag is required to keep contenteditable fields editable after the first activation of EditorView.
 // To reproduce the issue, open any Binding dialog and then try to edit a Navigation Item in the Navigation menu.

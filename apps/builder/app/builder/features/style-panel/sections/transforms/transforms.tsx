@@ -24,6 +24,7 @@ import {
   SmallToggleButton,
   theme,
   Tooltip,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import {
   EyeconClosedIcon,
@@ -42,7 +43,6 @@ import {
   transformPanels,
   type TransformPanel,
 } from "./transform-utils";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TranslatePanelContent } from "./transform-translate";
 import { ScalePanelContent } from "./transform-scale";
 import { RotatePanelContent } from "./transform-rotate";
