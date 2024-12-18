@@ -7,8 +7,8 @@ import {
   useLayoutEffect,
   type JSX,
   type ComponentProps,
-  useEffect,
   type ReactNode,
+  type MutableRefObject,
 } from "react";
 import {
   theme,
@@ -118,12 +118,8 @@ export const FloatingPanel = ({
 }: FloatingPanelProps) => {
   const { container: containerRef } = useContext(FloatingPanelContext);
   const [isMaximized, setIsMaximized] = useState(false);
-
+  const contentRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [contentElement, setContentElement] = useState<null | HTMLDivElement>(
-    null
-  );
-
   const [rect, setRect] = useState<{
     x?: number;
     y?: number;
@@ -136,14 +132,11 @@ export const FloatingPanel = ({
     height,
   });
 
-  const rectRef = useRef(rect);
-  rectRef.current = rect;
-
-  useEffect(() => {
+  const calcRect = () => {
     if (
-      !triggerRef.current ||
-      !containerRef.current ||
-      !contentElement ||
+      triggerRef.current === null ||
+      containerRef.current === null ||
+      contentRef.current === null ||
       // When centering the dialog, we don't need to calculate the position
       align === "center"
     ) {
@@ -151,7 +144,7 @@ export const FloatingPanel = ({
     }
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
-    const contentRect = contentElement.getBoundingClientRect();
+    const contentRect = contentRef.current.getBoundingClientRect();
     const x =
       align === "leftAside"
         ? // Position it on the left side relative to the container
@@ -165,11 +158,11 @@ export const FloatingPanel = ({
 
     if (align === "inline") {
       const width = containerRect.width;
-      setRect({ ...rectRef.current, x, y, width });
+      setRect({ ...rect, x, y, width });
       return;
     }
-    setRect({ ...rectRef.current, x, y });
-  }, [contentElement, containerRef, align, rectRef]);
+    setRect({ ...rect, x, y });
+  };
 
   return (
     <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
@@ -185,7 +178,12 @@ export const FloatingPanel = ({
         onInteractOutside={(event) => {
           event.preventDefault();
         }}
-        ref={setContentElement}
+        ref={(element) => {
+          if (element !== null && contentRef.current !== element) {
+            contentRef.current = element;
+            calcRect();
+          }
+        }}
       >
         {content}
         <DialogTitle
