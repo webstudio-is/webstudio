@@ -24,7 +24,7 @@ export const useSideOffset = ({
   side?: "left" | "right";
   isOpen: boolean;
   containerRef?: RefObject<null | HTMLElement>;
-}): [RefObject<HTMLButtonElement>, number] => {
+}): [RefObject<null | HTMLButtonElement>, number] => {
   const triggerRef = useRef<null | HTMLButtonElement>(null);
   const [sideOffset, setSideOffset] = useState(0);
 

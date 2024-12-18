@@ -14,6 +14,7 @@ import {
   $isPreviewMode,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 export const Block = React.forwardRef<
   HTMLDivElement,
@@ -61,8 +62,9 @@ export const Block = React.forwardRef<
         return (
           <div style={{ display: "contents" }} ref={ref} {...props}>
             {childArray.filter((child) => {
-              const { instanceSelector } = child.props;
-
+              const { instanceSelector } = child.props as {
+                instanceSelector: InstanceSelector;
+              };
               return instanceSelector[0] === templateInstanceId;
             })}
           </div>
