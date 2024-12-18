@@ -25,7 +25,6 @@ import {
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedInstanceIntanceToTag,
-  $selectedInstanceSelector,
   $selectedInstanceStates,
   $selectedOrLastStyleSourceSelector,
   $styles,
@@ -38,6 +37,7 @@ import {
   type StyleObjectModel,
 } from "~/shared/style-object-model";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { $selectedInstancePath } from "~/shared/awareness";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -57,26 +57,20 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   return presetStyles;
 });
 
-const $instanceComponents = computed(
-  [$selectedInstanceSelector, $instances],
-  (instanceSelector, instances) => {
-    const instanceComponents = new Map<Instance["id"], Instance["component"]>([
-      [ROOT_INSTANCE_ID, rootComponent],
-    ]);
-    if (instanceSelector === undefined) {
-      return instanceComponents;
-    }
-    // store only component for selected instance and ancestors
-    // to avoid iterating over all instances in the project
-    for (const instanceId of instanceSelector) {
-      const instance = instances.get(instanceId);
-      if (instance) {
-        instanceComponents.set(instance.id, instance.component);
-      }
-    }
+const $instanceComponents = computed($selectedInstancePath, (instancePath) => {
+  const instanceComponents = new Map<Instance["id"], Instance["component"]>([
+    [ROOT_INSTANCE_ID, rootComponent],
+  ]);
+  if (instancePath === undefined) {
     return instanceComponents;
   }
-);
+  // store only component for selected instance and ancestors
+  // to avoid iterating over all instances in the project
+  for (const { instance } of instancePath) {
+    instanceComponents.set(instance.id, instance.component);
+  }
+  return instanceComponents;
+});
 
 export const $matchingBreakpoints = computed(
   [$breakpoints, $selectedBreakpoint],
@@ -161,15 +155,16 @@ export const getDefinedStyles = ({
 };
 
 const $instanceAndRootSelector = computed(
-  $selectedInstanceSelector,
-  (instanceSelector) => {
-    if (instanceSelector === undefined) {
+  $selectedInstancePath,
+  (instancePath) => {
+    if (instancePath === undefined) {
       return;
     }
-    if (instanceSelector[0] === ROOT_INSTANCE_ID) {
-      return instanceSelector;
+    const [selectedItem] = instancePath;
+    if (selectedItem.instance.id === ROOT_INSTANCE_ID) {
+      return selectedItem.instanceSelector;
     }
-    return [...instanceSelector, ROOT_INSTANCE_ID];
+    return [...selectedItem.instanceSelector, ROOT_INSTANCE_ID];
   }
 );
 
