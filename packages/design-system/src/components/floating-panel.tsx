@@ -7,6 +7,8 @@ import {
   useState,
   useRef,
   useLayoutEffect,
+  useEffect,
+  useCallback,
 } from "react";
 import { MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { css, theme } from "../stitches.config";
@@ -19,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./dialog";
-import { offset } from "@floating-ui/dom";
+import { clamp } from "@react-aria/utils";
 
 const FloatingPanelContext = createContext<{
   container: RefObject<null | HTMLElement>;
@@ -84,15 +86,10 @@ export const FloatingPanel = ({
     null
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [rect, setRect] = useState<{
-    x?: number;
-    y?: number;
-  }>({
-    x: undefined,
-    y: undefined,
-  });
+  const [x, setX] = useState<number>(0);
+  const [y, setY] = useState<number>(0);
 
-  useLayoutEffect(() => {
+  const calcPosition = useCallback(() => {
     if (
       triggerRef.current === null ||
       containerRef.current === null ||
@@ -105,19 +102,53 @@ export const FloatingPanel = ({
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
     const contentRect = contentElement.getBoundingClientRect();
-    const x =
-      position === "left"
-        ? // Position it on the left side relative to the container
-          window.innerWidth - containerRect.width - contentRect.width
-        : // Positions it above the container
-          window.innerWidth - containerRect.width;
-    const y =
-      triggerRect.bottom + contentRect.height > window.innerHeight
-        ? window.innerHeight - contentRect.height
-        : triggerRect.bottom + (offset.y ?? 0);
+    const windowHeight = window.innerHeight;
 
-    setRect({ x, y });
-  }, [contentElement, triggerRef, containerRef, position]);
+    let newX = 0;
+    switch (position) {
+      case "left":
+        // Position it on the left side relative to the container
+        newX = window.innerWidth - containerRect.width - contentRect.width;
+        break;
+      case "inline":
+        // Positions it above the container
+        newX = triggerRect.left - contentRect.width + (offset.x ?? 0);
+        break;
+      // @todo add right once needed
+    }
+    const maxX = window.innerWidth - contentRect.width;
+    setX(clamp(newX, 0, maxX));
+
+    const newY = triggerRect.bottom + (offset.y ?? 0);
+    const maxY = windowHeight - contentRect.height;
+    setY(clamp(newY, 0, maxY));
+  }, [contentElement, triggerRef, containerRef, position, offset.y, offset.x]);
+
+  const adjustPositionForCollision = useCallback(() => {
+    if (contentElement === null) {
+      return;
+    }
+    const contentRect = contentElement.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const maxY = windowHeight - contentRect.height;
+    setY(clamp(y, 0, maxY));
+    // @todo add this for x when needed
+  }, [contentElement, y]);
+
+  useLayoutEffect(calcPosition, [calcPosition]);
+
+  // When content changes in height, it can get cut off by the viewport size.
+  // In this case we adjust the position.
+  useEffect(() => {
+    if (contentElement === null) {
+      return;
+    }
+    const observer = new ResizeObserver(adjustPositionForCollision);
+    observer.observe(contentElement);
+    return () => {
+      observer.disconnect();
+    };
+  }, [contentElement, adjustPositionForCollision]);
 
   return (
     <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
@@ -130,7 +161,8 @@ export const FloatingPanel = ({
         className={contentStyle()}
         width={width}
         height={height}
-        {...rect}
+        x={x}
+        y={y}
         isMaximized={isMaximized}
         onInteractOutside={(event) => {
           event.preventDefault();
