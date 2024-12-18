@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   type JSX,
   type ComponentProps,
+  useEffect,
 } from "react";
 import {
   theme,
@@ -79,16 +80,13 @@ export const FloatingPanelProvider = ({
   </FloatingPanelContext.Provider>
 );
 
-// @todo add support for positioning next to the left panel
 type FloatingPanelProps = {
   title: string;
   content: JSX.Element;
   children: JSX.Element;
-  isOpen?: boolean;
-  onIsOpenChange?: (isOpen: boolean) => void;
-  align?: "start" | "center" | "end";
   maximizable?: boolean;
   resize?: ComponentProps<typeof DialogContent>["resize"];
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 const contentStyle = css({
@@ -99,35 +97,53 @@ export const FloatingPanel = ({
   title,
   content,
   children,
-  isOpen: externalIsOpen,
-  align,
   resize,
   maximizable,
-  onIsOpenChange: setExternalIsOpen,
+  onOpenChange,
 }: FloatingPanelProps) => {
-  const [internalIsOpen, setInternalIsOpen] = useState(false);
-  const isOpen = externalIsOpen ?? internalIsOpen;
-  const setIsOpen = setExternalIsOpen ?? setInternalIsOpen;
   const { container: containerRef } = useContext(FloatingPanelContext);
-  const [triggerRef, sideOffset] = useSideOffset({ isOpen, containerRef });
   const [isMaximized, setIsMaximized] = useState(false);
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [contentElement, setContentElement] = useState<null | HTMLDivElement>(
+    null
+  );
+
+  const [rect, setRect] = useState(() => ({
+    x: 0,
+    y: 0,
+  }));
+
+  useEffect(() => {
+    if (!triggerRef.current || !containerRef.current || !contentElement) {
+      return;
+    }
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const contentRect = contentElement.getBoundingClientRect();
+    const x = window.innerWidth - containerRect.width - contentRect.width;
+    const y =
+      triggerRect.y + contentRect.height > window.innerHeight
+        ? window.innerHeight - contentRect.height
+        : triggerRect.y;
+    setRect({ x, y });
+  }, [contentElement, containerRef]);
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen} modal>
+    <Dialog modal={false} onOpenChange={onOpenChange}>
       <DialogTrigger asChild ref={triggerRef}>
         {children}
       </DialogTrigger>
       <DialogContent
+        draggable
         resize={resize}
         className={contentStyle()}
-        isMaximized={false}
-        //width={width}
-        //height={height}
-        //x={x}
-        //y={y}
+        x={rect.x}
+        y={rect.y}
         onInteractOutside={(event) => {
           event.preventDefault();
         }}
+        ref={setContentElement}
       >
         {content}
         <DialogTitle

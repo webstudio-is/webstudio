@@ -261,6 +261,9 @@ const contentStyle = css(floatingPanelStyle, {
       auto: {
         resize: "auto",
       },
+      none: {
+        resize: "none",
+      },
     },
   },
 });

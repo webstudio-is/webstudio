@@ -382,14 +382,6 @@ export const RepeatedStyle = (props: {
             <FloatingPanel
               key={index}
               title={label}
-              // Background Panel is big, and the size differs when the tabs are changed.
-              // This results in the panel moving around when the tabs are changed.
-              // And sometimes, the tab moves away from the cursor,
-              // when the content change happens on the top.
-              // This is a workaround to prevent the panel from moving around
-              // too much when the tabs are changed from the popover trigger.
-              align="center"
-              collisionPadding={{ bottom: 200, top: 200 }}
               content={renderItemContent(index, primaryItem)}
             >
               <CssValueListItem
