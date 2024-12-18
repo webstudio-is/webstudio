@@ -19,7 +19,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./dialog";
-import { Flex } from "./flex";
 
 const FloatingPanelContext = createContext<{
   container: RefObject<null | HTMLElement>;
