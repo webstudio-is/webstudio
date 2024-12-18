@@ -93,9 +93,9 @@ type FloatingPanelProps = {
   width?: number;
   height?: number;
   // - inline - aligns the dialog above the container like left or right sidebar
-  // - leftAside - aligns the dialog on the left side of the container
+  // - left - aligns the dialog on the left side of the container
   // - center - aligns the dialog in the center of the screen
-  align?: "leftAside" | "center" | "inline";
+  position?: "left" | "center" | "inline";
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 };
@@ -112,7 +112,7 @@ export const FloatingPanel = ({
   maximizable,
   width,
   height,
-  align = "leftAside",
+  position = "left",
   open,
   onOpenChange,
 }: FloatingPanelProps) => {
@@ -138,7 +138,7 @@ export const FloatingPanel = ({
       containerRef.current === null ||
       contentRef.current === null ||
       // When centering the dialog, we don't need to calculate the position
-      align === "center"
+      position === "center"
     ) {
       return;
     }
@@ -146,7 +146,7 @@ export const FloatingPanel = ({
     const containerRect = containerRef.current.getBoundingClientRect();
     const contentRect = contentRef.current.getBoundingClientRect();
     const x =
-      align === "leftAside"
+      position === "left"
         ? // Position it on the left side relative to the container
           window.innerWidth - containerRect.width - contentRect.width
         : // Positions it above the container
@@ -156,7 +156,7 @@ export const FloatingPanel = ({
         ? window.innerHeight - contentRect.height
         : triggerRect.y;
 
-    if (align === "inline") {
+    if (position === "inline") {
       const width = containerRect.width;
       setRect({ ...rect, x, y, width });
       return;

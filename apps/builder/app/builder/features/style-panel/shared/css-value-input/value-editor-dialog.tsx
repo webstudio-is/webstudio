@@ -86,7 +86,7 @@ export const ValueEditorDialog = ({
   return (
     <EditorDialog
       title="CSS Value"
-      align="inline"
+      position="inline"
       height={200}
       content={
         <CssFragmentEditorContent
