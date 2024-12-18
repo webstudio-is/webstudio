@@ -1,4 +1,8 @@
-import { NestedInputButton, theme } from "@webstudio-is/design-system";
+import {
+  NestedInputButton,
+  rawTheme,
+  theme,
+} from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { useEffect, useState } from "react";
 import { EditorDialog } from "~/builder/shared/code-editor-base";
@@ -88,6 +92,7 @@ export const ValueEditorDialog = ({
       title="CSS Value"
       position="inline"
       height={200}
+      width={Number(rawTheme.sizes.sidebarWidth)}
       content={
         <CssFragmentEditorContent
           autoFocus

@@ -5,8 +5,8 @@ import {
   type RefObject,
   useContext,
   useState,
-  type MutableRefObject,
   useRef,
+  useLayoutEffect,
 } from "react";
 import { MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { css, theme } from "../stitches.config";
@@ -74,25 +74,23 @@ export const FloatingPanel = ({
 }: FloatingPanelProps) => {
   const { container: containerRef } = useContext(FloatingPanelContext);
   const [isMaximized, setIsMaximized] = useState(false);
-  const contentRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
+  const [contentElement, setContentElement] = useState<HTMLDivElement | null>(
+    null
+  );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [rect, setRect] = useState<{
     x?: number;
     y?: number;
-    width?: number;
-    height?: number;
   }>({
     x: undefined,
     y: undefined,
-    width,
-    height,
   });
 
-  const calcRect = () => {
+  useLayoutEffect(() => {
     if (
       triggerRef.current === null ||
       containerRef.current === null ||
-      contentRef.current === null ||
+      contentElement === null ||
       // When centering the dialog, we don't need to calculate the position
       position === "center"
     ) {
@@ -100,7 +98,7 @@ export const FloatingPanel = ({
     }
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
-    const contentRect = contentRef.current.getBoundingClientRect();
+    const contentRect = contentElement.getBoundingClientRect();
     const x =
       position === "left"
         ? // Position it on the left side relative to the container
@@ -112,13 +110,8 @@ export const FloatingPanel = ({
         ? window.innerHeight - contentRect.height
         : triggerRect.y;
 
-    if (position === "inline") {
-      const width = containerRect.width;
-      setRect({ ...rect, x, y, width });
-      return;
-    }
-    setRect({ ...rect, x, y });
-  };
+    setRect({ x, y });
+  }, [contentElement, triggerRef, containerRef, position]);
 
   return (
     <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
@@ -129,17 +122,14 @@ export const FloatingPanel = ({
         draggable
         resize={resize}
         className={contentStyle()}
+        width={width}
+        height={height}
         {...rect}
         isMaximized={isMaximized}
         onInteractOutside={(event) => {
           event.preventDefault();
         }}
-        ref={(element) => {
-          if (element !== null && contentRef.current !== element) {
-            contentRef.current = element;
-            calcRect();
-          }
-        }}
+        ref={setContentElement}
       >
         {content}
         {typeof title === "string" ? (
