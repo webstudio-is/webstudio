@@ -86,8 +86,8 @@ export const FloatingPanel = ({
     null
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [x, setX] = useState<number>(0);
-  const [y, setY] = useState<number>(0);
+  const [x, setX] = useState<number>();
+  const [y, setY] = useState<number>();
 
   const calcPosition = useCallback(() => {
     if (
@@ -103,20 +103,25 @@ export const FloatingPanel = ({
     const containerRect = containerRef.current.getBoundingClientRect();
     const contentRect = contentElement.getBoundingClientRect();
     const windowHeight = window.innerHeight;
+    const windowWidth = window.innerWidth;
 
     let newX = 0;
     switch (position) {
       case "left":
         // Position it on the left side relative to the container
-        newX = window.innerWidth - containerRect.width - contentRect.width;
+        newX =
+          windowWidth -
+          containerRect.width -
+          contentRect.width +
+          (offset.x ?? 0);
         break;
       case "inline":
         // Positions it above the container
-        newX = triggerRect.left - contentRect.width + (offset.x ?? 0);
+        newX = windowWidth - contentRect.width + (offset.x ?? 0);
         break;
       // @todo add right once needed
     }
-    const maxX = window.innerWidth - contentRect.width;
+    const maxX = windowWidth - contentRect.width;
     setX(clamp(newX, 0, maxX));
 
     const newY = triggerRect.bottom + (offset.y ?? 0);
@@ -125,15 +130,15 @@ export const FloatingPanel = ({
   }, [contentElement, triggerRef, containerRef, position, offset.y, offset.x]);
 
   const adjustPositionForCollision = useCallback(() => {
-    if (contentElement === null) {
+    if (contentElement === null || position === "center") {
       return;
     }
     const contentRect = contentElement.getBoundingClientRect();
     const windowHeight = window.innerHeight;
     const maxY = windowHeight - contentRect.height;
-    setY(clamp(y, 0, maxY));
+    setY(clamp(y ?? 0, 0, maxY));
     // @todo add this for x when needed
-  }, [contentElement, y]);
+  }, [contentElement, y, position]);
 
   useLayoutEffect(calcPosition, [calcPosition]);
 
