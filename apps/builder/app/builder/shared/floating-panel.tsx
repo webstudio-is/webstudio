@@ -89,7 +89,10 @@ type FloatingPanelProps = {
   resize?: ComponentProps<typeof DialogContent>["resize"];
   width?: number;
   height?: number;
-  align?: "left" | "center";
+  // - container - aligns the dialog above the container like left or right sidebar
+  // - left - aligns the dialog on the left side of the container
+  // - center - aligns the dialog in the center of the screen
+  align?: "left" | "center" | "container";
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 };
@@ -106,7 +109,7 @@ export const FloatingPanel = ({
   maximizable,
   width,
   height,
-  align,
+  align = "left",
   open,
   onOpenChange,
 }: FloatingPanelProps) => {
@@ -118,16 +121,27 @@ export const FloatingPanel = ({
     null
   );
 
-  const [rect, setRect] = useState(() => ({
-    x: 0,
-    y: 0,
-  }));
+  const [rect, setRect] = useState<{
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  }>({
+    x: undefined,
+    y: undefined,
+    width,
+    height,
+  });
+
+  const rectRef = useRef(rect);
+  rectRef.current = rect;
 
   useEffect(() => {
     if (
       !triggerRef.current ||
       !containerRef.current ||
       !contentElement ||
+      // When centering the dialog, we don't need to calculate the position
       align === "center"
     ) {
       return;
@@ -135,13 +149,24 @@ export const FloatingPanel = ({
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
     const contentRect = contentElement.getBoundingClientRect();
-    const x = window.innerWidth - containerRect.width - contentRect.width;
+    const x =
+      align === "left"
+        ? // Position it on the left side relative to the container
+          window.innerWidth - containerRect.width - contentRect.width
+        : // Positions it above the container
+          window.innerWidth - containerRect.width;
     const y =
       triggerRect.y + contentRect.height > window.innerHeight
         ? window.innerHeight - contentRect.height
         : triggerRect.y;
-    setRect({ x, y });
-  }, [contentElement, containerRef, align]);
+
+    if (align === "container") {
+      const width = containerRect.width;
+      setRect({ ...rectRef.current, x, y, width });
+      return;
+    }
+    setRect({ ...rectRef.current, x, y });
+  }, [contentElement, containerRef, align, rectRef]);
 
   return (
     <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
@@ -152,9 +177,7 @@ export const FloatingPanel = ({
         draggable
         resize={resize}
         className={contentStyle()}
-        {...(align === "center" ? {} : rect)}
-        width={width}
-        height={height}
+        {...rect}
         isMaximized={isMaximized}
         onInteractOutside={(event) => {
           event.preventDefault();

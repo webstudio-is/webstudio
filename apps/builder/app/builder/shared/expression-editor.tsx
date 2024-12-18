@@ -506,7 +506,7 @@ export const ExpressionEditor = ({
     <div className={wrapperStyle.toString()}>
       <EditorDialogControl>
         {content}
-        <EditorDialog content={content}>
+        <EditorDialog title="Expression Editor" content={content}>
           <EditorDialogButton />
         </EditorDialog>
       </EditorDialogControl>
@@ -549,6 +549,7 @@ export const ValuePreviewDialog = ({
       onOpenChange={onOpenChange}
       title={title}
       content={<ValuePreviewEditor value={value} />}
+      resize="auto"
     >
       {children}
     </EditorDialog>

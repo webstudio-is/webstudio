@@ -417,27 +417,31 @@ export const EditorDialogButton = forwardRef<
 EditorDialogButton.displayName = "EditorDialogButton";
 
 export const EditorDialog = ({
-  title,
   content,
   children,
-  open,
-  onOpenChange,
+  align = "center",
+  width = 640,
+  height = 480,
+  ...panelProps
 }: {
-  title?: ReactNode;
+  title: ReactNode;
   content: ReactNode;
   children: ReactNode;
+  width?: number;
+  height?: number;
+  align?: ComponentProps<typeof FloatingPanel>["align"];
+  resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
 }) => {
   return (
     <FloatingPanel
-      title={title}
-      onOpenChange={onOpenChange}
-      width={640}
-      height={480}
-      align="center"
+      {...panelProps}
+      width={width}
+      height={height}
+      align={align}
       maximizable
-      open={open}
+      resize="auto"
       content={
         <Grid
           align="stretch"

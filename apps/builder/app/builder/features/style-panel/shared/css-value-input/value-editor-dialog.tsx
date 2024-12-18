@@ -86,6 +86,8 @@ export const ValueEditorDialog = ({
   return (
     <EditorDialog
       title="CSS Value"
+      align="container"
+      height={200}
       content={
         <CssFragmentEditorContent
           autoFocus
