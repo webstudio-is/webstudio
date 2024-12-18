@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./dialog";
+import { offset } from "@floating-ui/dom";
 
 const FloatingPanelContext = createContext<{
   container: RefObject<null | HTMLElement>;
@@ -48,6 +49,10 @@ type FloatingPanelProps = {
   resize?: ComponentProps<typeof DialogContent>["resize"];
   width?: number;
   height?: number;
+  offset?: {
+    x?: number;
+    y?: number;
+  };
   // - inline - aligns the dialog above the container like left or right sidebar
   // - left - aligns the dialog on the left side of the container
   // - center - aligns the dialog in the center of the screen
@@ -69,6 +74,7 @@ export const FloatingPanel = ({
   width,
   height,
   position = "left",
+  offset = { x: 0, y: 10 },
   open,
   onOpenChange,
 }: FloatingPanelProps) => {
@@ -106,9 +112,9 @@ export const FloatingPanel = ({
         : // Positions it above the container
           window.innerWidth - containerRect.width;
     const y =
-      triggerRect.y + contentRect.height > window.innerHeight
+      triggerRect.bottom + contentRect.height > window.innerHeight
         ? window.innerHeight - contentRect.height
-        : triggerRect.y;
+        : triggerRect.bottom + (offset.y ?? 0);
 
     setRect({ x, y });
   }, [contentElement, triggerRef, containerRef, position]);
