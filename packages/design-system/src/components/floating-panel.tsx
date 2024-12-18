@@ -4,8 +4,6 @@
  */
 
 import {
-  forwardRef,
-  type Ref,
   type ReactNode,
   type ComponentProps,
   createContext,
@@ -15,7 +13,7 @@ import {
   type MutableRefObject,
   useRef,
 } from "react";
-import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
+import { MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { css, theme } from "../stitches.config";
 import { Button } from "./button";
 import { Separator } from "./separator";
@@ -53,13 +51,6 @@ export const TitleSlot = ({ children }: { children: ReactNode }) => (
     <Separator />
   </div>
 );
-
-export const CloseButton = forwardRef(
-  (props: ComponentProps<typeof Button>, ref: Ref<HTMLButtonElement>) => (
-    <Button color="ghost" prefix={<CrossIcon />} {...props} ref={ref} />
-  )
-);
-CloseButton.displayName = "CloseButton";
 
 const FloatingPanelContext = createContext<{
   container: RefObject<null | HTMLElement>;
@@ -200,13 +191,7 @@ export const FloatingPanel = ({
                   onClick={() => setIsMaximized(isMaximized ? false : true)}
                 />
               )}
-              <DialogClose asChild>
-                <Button
-                  color="ghost"
-                  prefix={<CrossIcon />}
-                  aria-label="Close"
-                />
-              </DialogClose>
+              <DialogClose />
             </Flex>
           }
         >

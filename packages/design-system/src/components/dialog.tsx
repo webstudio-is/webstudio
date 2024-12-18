@@ -9,18 +9,16 @@ import {
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
-import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
+import { floatingPanelStyle, TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
 import { mergeRefs } from "@react-aria/utils";
+import { Button } from "./button";
+import { CrossIcon } from "@webstudio-is/icons";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
-
-// Wrap a close button with this
-// https://www.radix-ui.com/docs/primitives/components/dialog#close
-export const DialogClose = Primitive.Close;
 
 // An optional accessible description to be announced when the dialog is opened
 // https://www.radix-ui.com/docs/primitives/components/dialog#description
@@ -33,6 +31,26 @@ if (placeholderImage) {
   placeholderImage.src =
     "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 }
+
+export const DialogClose = forwardRef(
+  (
+    { children, ...props }: ComponentProps<typeof Button>,
+    ref: Ref<HTMLButtonElement>
+  ) => (
+    <Primitive.Close asChild>
+      {children ?? (
+        <Button
+          color="ghost"
+          prefix={<CrossIcon />}
+          aria-label="Close"
+          {...props}
+          ref={ref}
+        />
+      )}
+    </Primitive.Close>
+  )
+);
+DialogClose.displayName = "DialogClose";
 
 type Point = { x: number; y: number };
 type Size = { width: number; height: number };
@@ -195,7 +213,6 @@ DialogContent.displayName = "DialogContent";
 
 export const DialogTitle = ({
   children,
-  closeLabel = "Close dialog",
   suffix,
   ...rest
 }: ComponentProps<typeof PanelTitle> & {
@@ -203,16 +220,7 @@ export const DialogTitle = ({
   closeLabel?: string;
 }) => (
   <TitleSlot>
-    <PanelTitle
-      {...rest}
-      suffix={
-        suffix ?? (
-          <DialogClose asChild>
-            <CloseButton aria-label={closeLabel} />
-          </DialogClose>
-        )
-      }
-    >
+    <PanelTitle {...rest} suffix={suffix ?? <DialogClose />}>
       <Primitive.Title className={titleStyle()}>{children}</Primitive.Title>
     </PanelTitle>
   </TitleSlot>
