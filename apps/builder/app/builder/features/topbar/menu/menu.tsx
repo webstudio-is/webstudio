@@ -18,7 +18,7 @@ import {
 import {
   $isCloneDialogOpen,
   $isShareDialogOpen,
-  $isPublishDialogOpen,
+  $publishDialog,
 } from "~/builder/shared/nano-states";
 import { cloneProjectUrl, dashboardUrl } from "~/shared/router-utils";
 import {
@@ -174,11 +174,32 @@ export const Menu = () => {
           >
             <DropdownMenuItem
               onSelect={() => {
-                $isPublishDialogOpen.set(true);
+                $publishDialog.set("publish");
               }}
               disabled={isPublishEnabled === false}
             >
               Publish
+              <DropdownMenuItemRightSlot>
+                <Kbd value={["shift", "P"]} />
+              </DropdownMenuItemRightSlot>
+            </DropdownMenuItem>
+          </Tooltip>
+
+          <Tooltip
+            side="right"
+            sideOffset={10}
+            content={disabledPublishTooltipContent}
+          >
+            <DropdownMenuItem
+              onSelect={() => {
+                $publishDialog.set("export");
+              }}
+              disabled={isPublishEnabled === false}
+            >
+              Export
+              <DropdownMenuItemRightSlot>
+                <Kbd value={["shift", "E"]} />
+              </DropdownMenuItemRightSlot>
             </DropdownMenuItem>
           </Tooltip>
 

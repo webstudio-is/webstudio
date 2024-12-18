@@ -8,7 +8,7 @@ import { $settings, getSetting } from "../client-settings";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
-export const $isPublishDialogOpen = atom<boolean>(false);
+export const $publishDialog = atom<"none" | "publish" | "export">("none");
 
 export const $canvasWidth = atom<number | undefined>();
 
