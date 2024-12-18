@@ -10,9 +10,7 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { css, theme } from "../stitches.config";
-import { Button } from "./button";
 import {
   Dialog,
   DialogTitleActions,
@@ -20,6 +18,7 @@ import {
   DialogContent,
   DialogTitle,
   DialogTrigger,
+  DialogMaximize,
 } from "./dialog";
 import { clamp } from "@react-aria/utils";
 
@@ -81,7 +80,6 @@ export const FloatingPanel = ({
   onOpenChange,
 }: FloatingPanelProps) => {
   const { container: containerRef } = useContext(FloatingPanelContext);
-  const [isMaximized, setIsMaximized] = useState(false);
   const [contentElement, setContentElement] = useState<HTMLDivElement | null>(
     null
   );
@@ -168,7 +166,6 @@ export const FloatingPanel = ({
         height={height}
         x={x}
         y={y}
-        isMaximized={isMaximized}
         onInteractOutside={(event) => {
           event.preventDefault();
         }}
@@ -179,14 +176,7 @@ export const FloatingPanel = ({
           <DialogTitle
             suffix={
               <DialogTitleActions>
-                {maximizable && (
-                  <Button
-                    color="ghost"
-                    prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
-                    aria-label="Expand"
-                    onClick={() => setIsMaximized(isMaximized ? false : true)}
-                  />
-                )}
+                {maximizable && <DialogMaximize />}
                 <DialogClose />
               </DialogTitleActions>
             }

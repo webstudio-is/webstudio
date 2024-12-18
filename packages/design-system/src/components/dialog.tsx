@@ -5,6 +5,9 @@ import {
   forwardRef,
   useRef,
   type DragEventHandler,
+  createContext,
+  useContext,
+  useState,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
@@ -14,10 +17,9 @@ import { useDisableCanvasPointerEvents } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
 import { mergeRefs } from "@react-aria/utils";
 import { Button } from "./button";
-import { CrossIcon } from "@webstudio-is/icons";
+import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { Separator } from "./separator";
 
-export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
 
 // An optional accessible description to be announced when the dialog is opened
@@ -46,6 +48,23 @@ const panelStyle = css({
   },
 });
 
+const DialogContext = createContext<{
+  isMaximized: boolean;
+  setIsMaximized: (isMaximized: boolean) => void;
+}>({
+  isMaximized: false,
+  setIsMaximized: () => {},
+});
+
+export const Dialog = (props: ComponentProps<typeof Primitive.Dialog>) => {
+  const [isMaximized, setIsMaximized] = useState(false);
+  return (
+    <DialogContext.Provider value={{ isMaximized, setIsMaximized }}>
+      <Primitive.Dialog {...props} />
+    </DialogContext.Provider>
+  );
+};
+
 export const DialogClose = forwardRef(
   (
     { children, ...props }: ComponentProps<typeof Button>,
@@ -66,6 +85,23 @@ export const DialogClose = forwardRef(
 );
 DialogClose.displayName = "DialogClose";
 
+export const DialogMaximize = forwardRef(
+  (props: ComponentProps<typeof Button>, ref: Ref<HTMLButtonElement>) => {
+    const { isMaximized, setIsMaximized } = useContext(DialogContext);
+    return (
+      <Button
+        color="ghost"
+        prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
+        aria-label="Expand"
+        onClick={() => setIsMaximized(isMaximized ? false : true)}
+        {...props}
+        ref={ref}
+      />
+    );
+  }
+);
+DialogMaximize.displayName = "DialogMaximize";
+
 type Point = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rect = Point & Size;
@@ -77,7 +113,6 @@ type UseDraggableProps = {
 } & Partial<Rect>;
 
 const useDraggable = ({
-  isMaximized = false,
   x,
   y,
   width,
@@ -85,6 +120,7 @@ const useDraggable = ({
   minHeight,
   minWidth,
 }: UseDraggableProps) => {
+  const { isMaximized } = useContext(DialogContext);
   const initialDataRef = useRef<
     | undefined
     | {
@@ -183,7 +219,6 @@ export const DialogContent = forwardRef(
       className,
       css,
       resize = "none",
-      isMaximized,
       width,
       height,
       x,
@@ -205,7 +240,6 @@ export const DialogContent = forwardRef(
       y,
       minWidth,
       minHeight,
-      isMaximized,
     });
 
     return (
