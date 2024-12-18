@@ -13,6 +13,7 @@ import { css, theme } from "../stitches.config";
 import { Button } from "./button";
 import {
   Dialog,
+  DialogTitleActions,
   DialogClose,
   DialogContent,
   DialogTitle,
@@ -142,29 +143,27 @@ export const FloatingPanel = ({
         }}
       >
         {content}
-        <DialogTitle
-          suffix={
-            <Flex
-              gap="1"
-              onMouseDown={(event) => {
-                // Prevent dragging dialog
-                event.preventDefault();
-              }}
-            >
-              {maximizable && (
-                <Button
-                  color="ghost"
-                  prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
-                  aria-label="Expand"
-                  onClick={() => setIsMaximized(isMaximized ? false : true)}
-                />
-              )}
-              <DialogClose />
-            </Flex>
-          }
-        >
-          {title}
-        </DialogTitle>
+        {typeof title === "string" ? (
+          <DialogTitle
+            suffix={
+              <DialogTitleActions>
+                {maximizable && (
+                  <Button
+                    color="ghost"
+                    prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
+                    aria-label="Expand"
+                    onClick={() => setIsMaximized(isMaximized ? false : true)}
+                  />
+                )}
+                <DialogClose />
+              </DialogTitleActions>
+            }
+          >
+            {title}
+          </DialogTitle>
+        ) : (
+          title
+        )}
       </DialogContent>
     </Dialog>
   );

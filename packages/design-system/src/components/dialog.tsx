@@ -247,6 +247,20 @@ export const DialogTitle = ({
   </div>
 );
 
+export const DialogTitleActions = ({ children }: { children: ReactNode }) => {
+  return (
+    <Flex
+      gap="1"
+      onMouseDown={(event) => {
+        // Prevent dragging dialog
+        event.preventDefault();
+      }}
+    >
+      {children}
+    </Flex>
+  );
+};
+
 export const DialogActions = ({ children }: { children: ReactNode }) => {
   return (
     <Flex
