@@ -65,19 +65,6 @@ export const $selectedInstance = computed(
   }
 );
 
-export const $parentInstance = computed(
-  [$instances, $virtualInstances, $awareness],
-  (instances, virtualInstances, awareness) => {
-    if (awareness?.instanceSelector === undefined) {
-      return;
-    }
-    const [_, parentInstanceId] = awareness.instanceSelector;
-    return (
-      instances.get(parentInstanceId) ?? virtualInstances.get(parentInstanceId)
-    );
-  }
-);
-
 export const getInstanceKey = <
   InstanceSelector extends undefined | Instance["id"][],
 >(
@@ -87,6 +74,52 @@ export const getInstanceKey = <
 
 export const $selectedInstanceKey = computed($awareness, (awareness) =>
   getInstanceKey(awareness?.instanceSelector)
+);
+
+type InstancePath = Array<{
+  instance: Instance;
+  instanceSelector: string[];
+}>;
+
+const getInstancePath = (
+  instances: Instances,
+  virtualInstances: Instances,
+  temporaryInstances: Instances,
+  instanceSelector: string[]
+): InstancePath => {
+  const instancePath: InstancePath = [];
+  for (let index = 0; index < instanceSelector.length; index += 1) {
+    const instanceId = instanceSelector[index];
+    const instance =
+      instances.get(instanceId) ??
+      virtualInstances.get(instanceId) ??
+      temporaryInstances.get(instanceId);
+    // collection item can be undefined
+    if (instance === undefined) {
+      continue;
+    }
+    instancePath.push({
+      instance,
+      instanceSelector: instanceSelector.slice(index),
+    });
+  }
+  return instancePath;
+};
+
+export const $selectedInstancePath = computed(
+  [$instances, $virtualInstances, $temporaryInstances, $awareness],
+  (instances, virtualInstances, temporaryInstances, awareness) => {
+    const instanceSelector = awareness?.instanceSelector;
+    if (instanceSelector === undefined) {
+      return;
+    }
+    return getInstancePath(
+      instances,
+      virtualInstances,
+      temporaryInstances,
+      instanceSelector
+    );
+  }
 );
 
 export const selectPage = (pageId: Page["id"]) => {

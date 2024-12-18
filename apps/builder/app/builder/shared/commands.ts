@@ -6,7 +6,6 @@ import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
   $instances,
-  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $isDesignMode,
   toggleBuilderMode,
@@ -34,11 +33,7 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import {
-  $parentInstance,
-  $selectedInstance,
-  selectInstance,
-} from "~/shared/awareness";
+import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
 import { findBlockSelector } from "../features/workspace/canvas-tools/outline/block-instance-outline";
@@ -67,17 +62,16 @@ export const deleteSelectedInstance = () => {
     return;
   }
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
-  const selectedInstanceSelector = $selectedInstanceSelector.get();
+  const instancePath = $selectedInstancePath.get();
   // cannot delete instance while editing
   if (textEditingInstanceSelector) {
     return;
   }
-  if (selectedInstanceSelector === undefined) {
+  if (instancePath === undefined || instancePath.length === 1) {
     return;
   }
-  if (selectedInstanceSelector.length === 1) {
-    return;
-  }
+  const [selectedItem, parentItem] = instancePath;
+  const selectedInstanceSelector = selectedItem.instanceSelector;
   const instances = $instances.get();
   if (isInstanceDetachable(instances, selectedInstanceSelector) === false) {
     toast.error(
@@ -115,25 +109,20 @@ export const deleteSelectedInstance = () => {
     }
   }
 
+  // find next selected instance
   let newSelectedInstanceSelector: undefined | InstanceSelector;
-  const [selectedInstanceId, parentInstanceId] = selectedInstanceSelector;
-  const parentInstance = instances.get(parentInstanceId);
-  if (parentInstance) {
-    const siblingIds = parentInstance.children
-      .filter((child) => child.type === "id")
-      .map((child) => child.value);
-    const position = siblingIds.indexOf(selectedInstanceId);
-    const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
-    if (siblingId) {
-      // select next or previous sibling if possible
-      newSelectedInstanceSelector = [
-        siblingId,
-        ...selectedInstanceSelector.slice(1),
-      ];
-    } else {
-      // fallback to parent
-      newSelectedInstanceSelector = selectedInstanceSelector.slice(1);
-    }
+  const parentInstanceSelector = parentItem.instanceSelector;
+  const siblingIds = parentItem.instance.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+  const position = siblingIds.indexOf(selectedItem.instance.id);
+  const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
+  if (siblingId) {
+    // select next or previous sibling if possible
+    newSelectedInstanceSelector = [siblingId, ...parentInstanceSelector];
+  } else {
+    // fallback to parent
+    newSelectedInstanceSelector = parentInstanceSelector;
   }
   updateWebstudioData((data) => {
     if (deleteInstanceMutable(data, selectedInstanceSelector)) {
@@ -143,19 +132,15 @@ export const deleteSelectedInstance = () => {
 };
 
 export const wrapIn = (component: string) => {
-  const selectedInstance = $selectedInstance.get();
-  const parentInstanceId = $parentInstance.get()?.id;
+  const instancePath = $selectedInstancePath.get();
   // global root or body are selected
-  if (selectedInstance === undefined || parentInstanceId === undefined) {
+  if (instancePath === undefined || instancePath.length === 1) {
     return;
   }
-  const selectedInstanceSelector = $selectedInstanceSelector.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
+  const [selectedItem, parentItem] = instancePath;
+  const selectedInstance = selectedItem.instance;
   const newInstanceId = nanoid();
-  const parentInstanceSelector = selectedInstanceSelector.slice(1);
-  const newInstanceSelector = [newInstanceId, ...parentInstanceSelector];
+  const newInstanceSelector = [newInstanceId, ...parentItem.instanceSelector];
   const metas = $registeredComponentMetas.get();
   try {
     updateWebstudioData((data) => {
@@ -170,7 +155,7 @@ export const wrapIn = (component: string) => {
         component,
         children: [{ type: "id", value: selectedInstance.id }],
       };
-      const parentInstance = data.instances.get(parentInstanceId);
+      const parentInstance = data.instances.get(parentItem.instance.id);
       data.instances.set(newInstanceId, newInstance);
       if (parentInstance) {
         for (const child of parentInstance.children) {
@@ -196,48 +181,44 @@ export const wrapIn = (component: string) => {
 };
 
 export const unwrap = () => {
-  const selectedInstanceId = $selectedInstance.get()?.id;
-  const parentInstanceId = $parentInstance.get()?.id;
+  const instancePath = $selectedInstancePath.get();
   // global root or body are selected
-  if (selectedInstanceId === undefined || parentInstanceId === undefined) {
+  if (instancePath === undefined || instancePath.length === 1) {
     return;
   }
-  const selectedInstanceSelector = $selectedInstanceSelector.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  const parentInstanceSelector = selectedInstanceSelector.slice(1);
+  const [selectedItem, parentItem] = instancePath;
   try {
     updateWebstudioData((data) => {
       const nonTextualIndex = findClosestNonTextualContainer({
         metas: $registeredComponentMetas.get(),
         instances: data.instances,
-        instanceSelector: selectedInstanceSelector,
+        instanceSelector: selectedItem.instanceSelector,
       });
       if (nonTextualIndex !== 0) {
         toast.error(`Cannot unwrap textual instance`);
         throw Error("Abort transaction");
       }
-      const parentInstance = data.instances.get(parentInstanceId);
-      const selectedInstance = data.instances.get(selectedInstanceId);
-      data.instances.delete(selectedInstanceId);
+      const parentInstance = data.instances.get(parentItem.instance.id);
+      const selectedInstance = data.instances.get(selectedItem.instance.id);
+      data.instances.delete(selectedItem.instance.id);
       if (parentInstance && selectedInstance) {
         const index = parentInstance.children.findIndex(
-          (child) => child.type === "id" && child.value === selectedInstanceId
+          (child) =>
+            child.type === "id" && child.value === selectedItem.instance.id
         );
         parentInstance.children.splice(index, 1, ...selectedInstance.children);
       }
       const matches = isTreeMatching({
         metas: $registeredComponentMetas.get(),
         instances: data.instances,
-        instanceSelector: parentInstanceSelector,
+        instanceSelector: parentItem.instanceSelector,
       });
       if (matches === false) {
         toast.error(`Cannot unwrap instance`);
         throw Error("Abort transaction");
       }
     });
-    selectInstance(parentInstanceSelector);
+    selectInstance(parentItem.instanceSelector);
   } catch {
     // do nothing
   }
@@ -401,41 +382,41 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           builderApi.toast.info("Duplicating is only allowed in design mode.");
           return;
         }
+        const instancePath = $selectedInstancePath.get();
+        // global root or body are selected
+        if (instancePath === undefined || instancePath.length === 1) {
+          return;
+        }
+        const [selectedItem, parentItem] = instancePath;
 
-        const instanceSelector = $selectedInstanceSelector.get();
-        if (instanceSelector === undefined) {
-          return;
-        }
-        // @todo tell user they can't copy or cut root
-        if (instanceSelector.length === 1) {
-          return;
-        }
-        // body is not allowed to copy
-        // so clipboard always have at least two level instance selector
-        const [targetInstanceId, parentInstanceId] = instanceSelector;
-        const parentInstanceSelector = instanceSelector.slice(1);
         updateWebstudioData((data) => {
-          const fragment = extractWebstudioFragment(data, targetInstanceId);
+          const fragment = extractWebstudioFragment(
+            data,
+            selectedItem.instance.id
+          );
           const { newInstanceIds } = insertWebstudioFragmentCopy({
             data,
             fragment,
             availableDataSources: findAvailableDataSources(
               data.dataSources,
               data.instances,
-              parentInstanceSelector
+              parentItem.instanceSelector
             ),
           });
-          const newRootInstanceId = newInstanceIds.get(targetInstanceId);
+          const newRootInstanceId = newInstanceIds.get(
+            selectedItem.instance.id
+          );
           if (newRootInstanceId === undefined) {
             return;
           }
-          const parentInstance = data.instances.get(parentInstanceId);
+          const parentInstance = data.instances.get(parentItem.instance.id);
           if (parentInstance === undefined) {
             return;
           }
           // put after current instance
           const indexWithinChildren = parentInstance.children.findIndex(
-            (child) => child.type === "id" && child.value === targetInstanceId
+            (child) =>
+              child.type === "id" && child.value === selectedItem.instance.id
           );
           const position = indexWithinChildren + 1;
           parentInstance.children.splice(position, 0, {
@@ -443,7 +424,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             value: newRootInstanceId,
           });
           // select new instance
-          selectInstance([newRootInstanceId, ...parentInstanceSelector]);
+          selectInstance([newRootInstanceId, ...parentItem.instanceSelector]);
         });
       },
     },
@@ -451,11 +432,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "editInstanceLabel",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
-        const selectedInstanceSelector = $selectedInstanceSelector.get();
-        if (selectedInstanceSelector === undefined) {
+        const instancePath = $selectedInstancePath.get();
+        if (instancePath === undefined) {
           return;
         }
-        $editingItemSelector.set(selectedInstanceSelector);
+        const [selectedItem] = instancePath;
+        $editingItemSelector.set(selectedItem.instanceSelector);
       },
     },
     {
