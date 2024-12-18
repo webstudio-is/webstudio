@@ -7,13 +7,13 @@ import {
 import * as Primitive from "@radix-ui/react-popover";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
-import { floatingPanelStyle, TitleSlot } from "./floating-panel";
+import { TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
 import { DialogClose } from "./dialog";
 
 export const FloatingPanelPopover = Primitive.Root;
 
-const contentStyle = css(floatingPanelStyle, {
+const contentStyle = css({
   minWidth: theme.spacing[28],
   maxWidth: "max-content",
   maxHeight: "80vh",

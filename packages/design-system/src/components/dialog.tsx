@@ -9,7 +9,7 @@ import {
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
-import { floatingPanelStyle, TitleSlot } from "./floating-panel";
+import { TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
@@ -31,6 +31,20 @@ if (placeholderImage) {
   placeholderImage.src =
     "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 }
+
+const panelStyle = css({
+  border: `1px solid ${theme.colors.borderMain}`,
+  boxShadow: theme.shadows.menuDropShadow,
+  background: theme.colors.backgroundPanel,
+  borderRadius: theme.borderRadius[7],
+  display: "flex",
+  flexDirection: "column",
+
+  "&:focus": {
+    // override browser default
+    outline: "none",
+  },
+});
 
 export const DialogClose = forwardRef(
   (
@@ -255,7 +269,7 @@ const centeredContent: CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const contentStyle = css(floatingPanelStyle, {
+const contentStyle = css(panelStyle, {
   position: "fixed",
   width: "min-content",
   minWidth: theme.sizes.sidebarWidth,

@@ -26,20 +26,6 @@ import {
 } from "./dialog";
 import { Flex } from "./flex";
 
-export const floatingPanelStyle = css({
-  border: `1px solid ${theme.colors.borderMain}`,
-  boxShadow: theme.shadows.menuDropShadow,
-  background: theme.colors.backgroundPanel,
-  borderRadius: theme.borderRadius[7],
-  display: "flex",
-  flexDirection: "column",
-
-  "&:focus": {
-    // override browser default
-    outline: "none",
-  },
-});
-
 const titleSlotStyle = css({
   // We put title at the bottom in DOM to make the close button last in the TAB order
   // But visually we want it to be first
