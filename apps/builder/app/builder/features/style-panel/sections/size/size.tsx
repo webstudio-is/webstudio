@@ -43,6 +43,7 @@ const ObjectPosition = () => {
     <Flex justify="end">
       <FloatingPanel
         title="Object Position"
+        position="inline"
         content={
           <Flex css={{ padding: theme.panel.padding }}>
             <PositionControl property="objectPosition" styleDecl={styleDecl} />

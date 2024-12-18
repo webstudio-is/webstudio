@@ -34,7 +34,7 @@ if (placeholderImage) {
 
 const panelStyle = css({
   border: `1px solid ${theme.colors.borderMain}`,
-  boxShadow: theme.shadows.menuDropShadow,
+  boxShadow: theme.shadows.panelSectionDropShadow,
   background: theme.colors.backgroundPanel,
   borderRadius: theme.borderRadius[7],
   display: "flex",
