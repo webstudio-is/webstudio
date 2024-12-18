@@ -33,10 +33,10 @@ export const deploymentRouter = router({
   publish: procedure
     .input(PublishInput)
     .output(Output)
-    .mutation(async ({ input }) => {
+    .mutation(() => {
       return {
         success: false,
-        error: `Not implemented, use buildId=${input.buildId}`,
+        error: "NOT_IMPLEMENTED",
       };
     }),
 });
