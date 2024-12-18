@@ -16,7 +16,6 @@ import {
 import { MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { css, theme } from "../stitches.config";
 import { Button } from "./button";
-import { Separator } from "./separator";
 import {
   Dialog,
   DialogClose,
@@ -25,18 +24,6 @@ import {
   DialogTrigger,
 } from "./dialog";
 import { Flex } from "./flex";
-
-const titleSlotStyle = css({
-  // We put title at the bottom in DOM to make the close button last in the TAB order
-  // But visually we want it to be first
-  order: -1,
-});
-export const TitleSlot = ({ children }: { children: ReactNode }) => (
-  <div className={titleSlotStyle()}>
-    {children}
-    <Separator />
-  </div>
-);
 
 const FloatingPanelContext = createContext<{
   container: RefObject<null | HTMLElement>;

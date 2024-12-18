@@ -9,13 +9,13 @@ import {
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
-import { TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
 import { mergeRefs } from "@react-aria/utils";
 import { Button } from "./button";
 import { CrossIcon } from "@webstudio-is/icons";
+import { Separator } from "./separator";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -225,6 +225,12 @@ export const DialogContent = forwardRef(
 );
 DialogContent.displayName = "DialogContent";
 
+const titleSlotStyle = css({
+  // We put title at the bottom in DOM to make the close button last in the TAB order
+  // But visually we want it to be first
+  order: -1,
+});
+
 export const DialogTitle = ({
   children,
   suffix,
@@ -233,11 +239,12 @@ export const DialogTitle = ({
   suffix?: ReactNode;
   closeLabel?: string;
 }) => (
-  <TitleSlot>
+  <div className={titleSlotStyle()}>
     <PanelTitle {...rest} suffix={suffix ?? <DialogClose />}>
       <Primitive.Title className={titleStyle()}>{children}</Primitive.Title>
     </PanelTitle>
-  </TitleSlot>
+    <Separator />
+  </div>
 );
 
 export const DialogActions = ({ children }: { children: ReactNode }) => {
