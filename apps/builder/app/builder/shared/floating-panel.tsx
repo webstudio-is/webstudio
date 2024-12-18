@@ -8,6 +8,7 @@ import {
   type JSX,
   type ComponentProps,
   useEffect,
+  type ReactNode,
 } from "react";
 import {
   theme,
@@ -81,11 +82,15 @@ export const FloatingPanelProvider = ({
 );
 
 type FloatingPanelProps = {
-  title: string;
-  content: JSX.Element;
-  children: JSX.Element;
+  title: ReactNode;
+  content: ReactNode;
+  children: ReactNode;
   maximizable?: boolean;
   resize?: ComponentProps<typeof DialogContent>["resize"];
+  width?: number;
+  height?: number;
+  align?: "left" | "center";
+  open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 };
 
@@ -99,6 +104,10 @@ export const FloatingPanel = ({
   children,
   resize,
   maximizable,
+  width,
+  height,
+  align,
+  open,
   onOpenChange,
 }: FloatingPanelProps) => {
   const { container: containerRef } = useContext(FloatingPanelContext);
@@ -115,7 +124,12 @@ export const FloatingPanel = ({
   }));
 
   useEffect(() => {
-    if (!triggerRef.current || !containerRef.current || !contentElement) {
+    if (
+      !triggerRef.current ||
+      !containerRef.current ||
+      !contentElement ||
+      align === "center"
+    ) {
       return;
     }
     const triggerRect = triggerRef.current.getBoundingClientRect();
@@ -127,10 +141,10 @@ export const FloatingPanel = ({
         ? window.innerHeight - contentRect.height
         : triggerRect.y;
     setRect({ x, y });
-  }, [contentElement, containerRef]);
+  }, [contentElement, containerRef, align]);
 
   return (
-    <Dialog modal={false} onOpenChange={onOpenChange}>
+    <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
       <DialogTrigger asChild ref={triggerRef}>
         {children}
       </DialogTrigger>
@@ -138,8 +152,10 @@ export const FloatingPanel = ({
         draggable
         resize={resize}
         className={contentStyle()}
-        x={rect.x}
-        y={rect.y}
+        {...(align === "center" ? {} : rect)}
+        width={width}
+        height={height}
+        isMaximized={isMaximized}
         onInteractOutside={(event) => {
           event.preventDefault();
         }}

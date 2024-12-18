@@ -1,10 +1,6 @@
-import {
-  NestedInputButton,
-  rawTheme,
-  theme,
-} from "@webstudio-is/design-system";
+import { NestedInputButton, theme } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { EditorDialog } from "~/builder/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
 import type {
@@ -39,8 +35,6 @@ export const isComplexValue = (value: CssValueInputValue) => {
   return false;
 };
 
-const width = parseFloat(rawTheme.sizes.sidebarWidth);
-
 export const ValueEditorDialog = ({
   property,
   value,
@@ -57,25 +51,6 @@ export const ValueEditorDialog = ({
   useEffect(() => {
     setIntermediateValue({ type: "intermediate", value });
   }, [value]);
-
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  const [rect, setRect] = useState(() => ({
-    height: 200,
-    width,
-    x: window.innerWidth - width,
-    y: 0,
-  }));
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && triggerRef.current) {
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      setRect({
-        ...rect,
-        y: triggerRect.y,
-      });
-    }
-  };
 
   const handleChange = (value: string) => {
     const parsedValue = parseIntermediateOrInvalidValue(property, {
@@ -111,8 +86,6 @@ export const ValueEditorDialog = ({
   return (
     <EditorDialog
       title="CSS Value"
-      onOpenChange={handleOpenChange}
-      {...rect}
       content={
         <CssFragmentEditorContent
           autoFocus
@@ -133,7 +106,6 @@ export const ValueEditorDialog = ({
             display: "block",
           },
         }}
-        ref={triggerRef}
       >
         <MaximizeIcon size={12} />
       </NestedInputButton>
