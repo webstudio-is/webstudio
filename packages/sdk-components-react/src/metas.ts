@@ -17,7 +17,7 @@ export { meta as Superscript } from "./superscript.ws";
 export { meta as Subscript } from "./subscript.ws";
 export { meta as Button } from "./button.ws";
 export { meta as Input } from "./input.ws";
-export { meta as Form } from "./form.ws";
+export { meta as Form } from "./webhook-form.ws";
 export { meta as RemixForm } from "./form.ws";
 export { meta as Image } from "./image.ws";
 export { meta as Blockquote } from "./blockquote.ws";

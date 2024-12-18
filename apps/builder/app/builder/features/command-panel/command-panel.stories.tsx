@@ -4,7 +4,6 @@ import { initialBreakpoints } from "@webstudio-is/sdk";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import {
   $breakpoints,
   $pages,
@@ -29,7 +28,6 @@ $registeredComponentMetas.set(
     Object.entries({
       ...coreMetas,
       ...baseComponentMetas,
-      ...remixComponentMetas,
     })
   )
 );

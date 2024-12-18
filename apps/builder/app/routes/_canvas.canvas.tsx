@@ -1,8 +1,9 @@
 import { lazy } from "react";
 import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
-import { Body } from "@webstudio-is/sdk-components-react-remix";
 import { isCanvas } from "~/shared/router-utils";
 import { ClientOnly } from "~/shared/client-only";
+import { Body } from "~/canvas/shared/body";
+
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

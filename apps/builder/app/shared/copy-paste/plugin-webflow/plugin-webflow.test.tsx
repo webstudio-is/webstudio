@@ -11,7 +11,7 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import { $, renderJsx } from "@webstudio-is/template";
-import * as defaultMetas from "@webstudio-is/sdk-components-react-remix/metas";
+import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__ } from "./plugin-webflow";
 import {
   $breakpoints,
