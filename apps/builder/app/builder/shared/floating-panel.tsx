@@ -23,6 +23,9 @@ import {
 } from "@webstudio-is/design-system";
 import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
+/**
+ * @deprecated migrating to FloatingPanel
+ */
 export const useSideOffset = ({
   side = "left",
   isOpen,
