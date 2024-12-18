@@ -421,6 +421,14 @@ export const props: Record<string, PropMeta> = {
     defaultValue: false,
   },
   autoSave: { required: false, control: "text", type: "string" },
+  backgroundMode: {
+    description:
+      "Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
   className: { required: false, control: "text", type: "string" },
   color: {
     required: false,
