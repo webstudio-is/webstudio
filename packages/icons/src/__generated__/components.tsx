@@ -476,60 +476,6 @@ export const ASStretchIcon: IconComponent = forwardRef(
 );
 ASStretchIcon.displayName = "ASStretchIcon";
 
-export const AccordionContentIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="M11.098 4.08a.5.5 0 0 0-.866 0L9.077 6.082a.5.5 0 0 0 .433.75h2.311a.5.5 0 0 0 .433-.75L11.098 4.08Z" />
-        <path
-          fillRule="evenodd"
-          d="M10.827 1.35H5.173c-.537 0-.98 0-1.34.03-.373.03-.715.095-1.036.259a2.65 2.65 0 0 0-1.158 1.158c-.164.32-.23.663-.26 1.037-.029.36-.029.802-.029 1.34v5.653c0 .537 0 .98.03 1.34.03.373.095.715.259 1.036.254.499.66.904 1.158 1.158.32.164.663.23 1.036.26.36.03.803.03 1.34.03h5.654c.537 0 .98 0 1.34-.03.373-.03.715-.096 1.036-.26a2.65 2.65 0 0 0 1.158-1.158c.164-.32.229-.663.26-1.036.029-.36.029-.803.029-1.34V5.173c0-.537 0-.98-.03-1.34-.03-.373-.095-.715-.259-1.036a2.65 2.65 0 0 0-1.158-1.158c-.32-.164-.663-.229-1.037-.26-.36-.029-.802-.029-1.34-.029Zm2.523 6.67V5.2c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.107-.054-.26-.098-.552-.122-.301-.024-.69-.025-1.261-.025H5.2c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.26-.122.552-.025.301-.025.69-.025 1.261v2.82h10.7Zm-10.7 1.3h10.7v1.48c0 .57 0 .96-.025 1.26-.024.294-.068.446-.122.553a1.35 1.35 0 0 1-.59.59c-.107.055-.26.098-.552.122-.301.025-.69.025-1.261.025H5.2c-.57 0-.96 0-1.26-.025-.294-.024-.446-.067-.553-.122a1.35 1.35 0 0 1-.59-.59c-.054-.107-.098-.259-.122-.552-.025-.301-.025-.69-.025-1.26V9.32Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-AccordionContentIcon.displayName = "AccordionContentIcon";
-
-export const AccordionTriggerIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M4.862 3.346h6.276c.6 0 1.088 0 1.486.033.41.033.78.105 1.124.28.54.276.98.715 1.256 1.255.175.345.247.714.28 1.125.033.397.033.886.033 1.485v.948c0 .599 0 1.088-.033 1.485-.033.41-.105.78-.28 1.125-.276.54-.715.98-1.256 1.255-.344.175-.714.247-1.124.28-.398.033-.886.033-1.486.033H4.862c-.6 0-1.088 0-1.486-.032-.41-.034-.78-.106-1.124-.281a2.873 2.873 0 0 1-1.256-1.255c-.175-.345-.247-.714-.28-1.125C.683 9.56.683 9.071.683 8.472v-.948c0-.599 0-1.088.033-1.485.033-.41.105-.78.28-1.125.276-.54.715-.98 1.256-1.255.344-.175.714-.247 1.124-.28.398-.033.886-.033 1.486-.033Zm-1.38 1.328c-.33.027-.51.077-.64.143-.296.151-.537.392-.687.688-.067.13-.117.31-.144.64-.027.338-.028.774-.028 1.407v.892c0 .633 0 1.07.028 1.407.027.33.077.51.144.64.15.296.391.537.687.688.13.066.31.116.64.143.338.028.774.028 1.407.028h6.222c.633 0 1.069 0 1.407-.028.33-.027.51-.077.64-.143.296-.151.537-.392.687-.687.067-.131.116-.31.143-.64.028-.339.029-.775.029-1.408v-.892c0-.633 0-1.069-.028-1.407-.028-.33-.077-.51-.144-.64a1.572 1.572 0 0 0-.687-.688c-.13-.066-.31-.116-.64-.143-.338-.027-.774-.028-1.407-.028H4.89c-.633 0-1.069 0-1.407.028Z"
-          clipRule="evenodd"
-        />
-        <path d="M10.562 9.249a.5.5 0 0 0 .866 0l1.156-2.002a.5.5 0 0 0-.433-.75H9.84a.5.5 0 0 0-.433.75l1.155 2.002Z" />
-      </svg>
-    );
-  }
-);
-AccordionTriggerIcon.displayName = "AccordionTriggerIcon";
-
 export const AccordionIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -983,32 +929,6 @@ export const AutoScrollIcon: IconComponent = forwardRef(
   }
 );
 AutoScrollIcon.displayName = "AutoScrollIcon";
-
-export const BagIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M4.73 4.73v1.305a.65.65 0 0 0 1.3 0V4.721h3.94v1.314a.65.65 0 0 0 1.3 0V4.73c.088.004.168.008.243.014.263.02.401.058.5.105.236.112.433.291.566.515.057.095.107.229.152.49.047.267.08.615.128 1.128l.393 4.191c.057.607.095 1.022.098 1.344.003.314-.03.475-.079.587-.116.27-.32.494-.578.635-.106.058-.264.106-.577.133-.32.027-.737.027-1.347.027H5.231c-.61 0-1.027 0-1.347-.027-.313-.027-.47-.075-.577-.133a1.315 1.315 0 0 1-.579-.635c-.047-.112-.08-.273-.078-.587.003-.322.041-.736.098-1.344l.393-4.19c.048-.514.081-.862.128-1.13.045-.26.095-.394.151-.489.134-.224.33-.403.566-.515.1-.047.238-.085.501-.105.075-.006.155-.01.244-.014Zm6.476-1.303c.147.004.283.01.408.02.342.026.656.084.957.227.469.222.86.579 1.126 1.025.17.286.256.593.315.931.056.325.094.723.139 1.205l.398 4.244c.053.572.097 1.042.1 1.425.004.396-.033.763-.183 1.112a2.615 2.615 0 0 1-1.15 1.263c-.334.182-.696.254-1.09.287-.382.032-.854.032-1.428.032H5.202c-.574 0-1.046 0-1.428-.032-.394-.033-.756-.105-1.09-.287a2.614 2.614 0 0 1-1.15-1.263c-.15-.349-.187-.716-.184-1.112.004-.383.048-.853.101-1.425l.398-4.244c.045-.482.083-.88.139-1.205.059-.338.145-.645.315-.931A2.615 2.615 0 0 1 3.43 3.674c.3-.143.615-.2.957-.227.125-.01.261-.016.408-.02a3.27 3.27 0 0 1 6.412 0ZM9.86 3.421a1.97 1.97 0 0 0-3.72 0h3.72Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-BagIcon.displayName = "BagIcon";
 
 export const BlockquoteIcon: IconComponent = forwardRef(
   (
@@ -1706,94 +1626,6 @@ export const CheckboxMixedFilledIcon: IconComponent = forwardRef(
 );
 CheckboxMixedFilledIcon.displayName = "CheckboxMixedFilledIcon";
 
-export const ChevronBigDownIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="m8.46 10.947 4.553-5.463a.6.6 0 0 0-.46-.984H3.447a.6.6 0 0 0-.461.984l4.552 5.463a.6.6 0 0 0 .922 0Z" />
-      </svg>
-    );
-  }
-);
-ChevronBigDownIcon.displayName = "ChevronBigDownIcon";
-
-export const ChevronBigLeftIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="m5.053 8.46 5.463 4.553a.6.6 0 0 0 .984-.46V3.447a.6.6 0 0 0-.984-.461L5.053 7.539a.6.6 0 0 0 0 .922Z" />
-      </svg>
-    );
-  }
-);
-ChevronBigLeftIcon.displayName = "ChevronBigLeftIcon";
-
-export const ChevronBigRightIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="M10.947 7.54 5.484 2.986a.6.6 0 0 0-.984.46v9.105a.6.6 0 0 0 .984.461l5.463-4.552a.6.6 0 0 0 0-.922Z" />
-      </svg>
-    );
-  }
-);
-ChevronBigRightIcon.displayName = "ChevronBigRightIcon";
-
-export const ChevronBigUpIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="m7.54 5.053-4.553 5.463a.6.6 0 0 0 .46.984h9.105a.6.6 0 0 0 .461-.984L8.461 5.053a.6.6 0 0 0-.922 0Z" />
-      </svg>
-    );
-  }
-);
-ChevronBigUpIcon.displayName = "ChevronBigUpIcon";
-
 export const ChevronDownIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -1843,28 +1675,6 @@ export const ChevronFilledDownIcon: IconComponent = forwardRef(
 );
 ChevronFilledDownIcon.displayName = "ChevronFilledDownIcon";
 
-export const ChevronFilledLeftIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="m5.749 8.5 4.318 2.878a.6.6 0 0 0 .933-.5V5.122a.6.6 0 0 0-.933-.5L5.75 7.502a.6.6 0 0 0 0 .998Z" />
-      </svg>
-    );
-  }
-);
-ChevronFilledLeftIcon.displayName = "ChevronFilledLeftIcon";
-
 export const ChevronFilledRightIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -1886,28 +1696,6 @@ export const ChevronFilledRightIcon: IconComponent = forwardRef(
   }
 );
 ChevronFilledRightIcon.displayName = "ChevronFilledRightIcon";
-
-export const ChevronFilledUpIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="M7.5 5.508 4.623 9.826a.6.6 0 0 0 .5.933h5.757a.6.6 0 0 0 .5-.933l-2.88-4.318a.6.6 0 0 0-.998 0Z" />
-      </svg>
-    );
-  }
-);
-ChevronFilledUpIcon.displayName = "ChevronFilledUpIcon";
 
 export const ChevronLeftIcon: IconComponent = forwardRef(
   (
@@ -2407,32 +2195,6 @@ export const DiscordIcon: IconComponent = forwardRef(
   }
 );
 DiscordIcon.displayName = "DiscordIcon";
-
-export const DivIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M5.173 1.35h5.654c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.164.32.229.663.26 1.037.029.36.029.802.029 1.34v5.653c0 .537 0 .98-.03 1.34-.03.373-.095.715-.259 1.036a2.65 2.65 0 0 1-1.158 1.158c-.32.164-.663.23-1.037.26-.36.03-.802.03-1.34.03H5.174c-.537 0-.98 0-1.34-.03-.373-.03-.715-.096-1.036-.26a2.65 2.65 0 0 1-1.158-1.158c-.164-.32-.23-.663-.26-1.036-.029-.36-.029-.803-.029-1.34V5.173c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.229 1.036-.26.36-.029.803-.029 1.34-.029ZM3.939 2.675c-.293.024-.445.068-.552.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.26-.122.552-.025.301-.025.69-.025 1.261v5.6c0 .57 0 .96.025 1.26.024.294.068.446.122.553.13.254.336.46.59.59.107.055.259.098.552.122.301.025.69.025 1.261.025h5.6c.57 0 .96 0 1.26-.025.294-.024.446-.067.553-.122.254-.13.46-.336.59-.59.054-.107.098-.259.122-.552.025-.301.025-.69.025-1.26V5.2c0-.572 0-.96-.025-1.262-.024-.293-.068-.445-.122-.552a1.35 1.35 0 0 0-.59-.59c-.107-.054-.26-.098-.552-.122-.301-.024-.69-.025-1.261-.025H5.2c-.57 0-.96 0-1.26.025Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-DivIcon.displayName = "DivIcon";
 
 export const DotIcon: IconComponent = forwardRef(
   (
