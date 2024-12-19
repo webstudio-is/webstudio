@@ -20,7 +20,7 @@ import {
   hasSelectionFormat,
 } from "../features/text-editor/toolbar-connector";
 import { selectInstance } from "~/shared/awareness";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
@@ -29,12 +29,22 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "editInstanceText",
       hidden: true,
-      defaultHotkeys: ["enter"],
+      defaultHotkeys: ["enter", "alt+enter"],
       // builder invokes command with custom hotkey setup
       disableHotkeyOutsideApp: true,
       handler: () => {
         const selectedInstanceSelector = $selectedInstanceSelector.get();
         if (selectedInstanceSelector === undefined) {
+          return;
+        }
+
+        if (
+          isDescendantOrSelf(
+            $textEditingInstanceSelector.get()?.selector ?? [],
+            selectedInstanceSelector
+          )
+        ) {
+          // already in text editing mode
           return;
         }
 
