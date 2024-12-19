@@ -31,4 +31,30 @@ export const $textEditingInstanceSelector = atom<
     }
 >();
 
+export const $textEditorContextMenu = atom<
+  | {
+      cursorRect: DOMRect;
+    }
+  | undefined
+>(undefined);
+
+type ContextMenuCommand =
+  | {
+      type: "filter";
+      value: string;
+    }
+  | { type: "selectNext" }
+  | { type: "selectPrevious" }
+  | { type: "enter" };
+
+export const $textEditorContextMenuCommand = atom<
+  undefined | ContextMenuCommand
+>(undefined);
+
+export const execTextEditorContextMenuCommand = (
+  command: ContextMenuCommand
+) => {
+  $textEditorContextMenuCommand.set(command);
+};
+
 export const $instances = atom<Instances>(new Map());

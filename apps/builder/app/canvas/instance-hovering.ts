@@ -14,16 +14,9 @@ import {
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "./shared/scroll-state";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
-
-const isDescendantOrSelf = (
-  descendant: InstanceSelector,
-  self: InstanceSelector
-) => {
-  return descendant.join(",").endsWith(self.join(","));
-};
 
 export const subscribeInstanceHovering = ({
   signal,

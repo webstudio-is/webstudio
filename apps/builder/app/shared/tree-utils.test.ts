@@ -14,6 +14,7 @@ import {
   findLocalStyleSourcesWithinInstances,
   getAncestorInstanceSelector,
   insertPropsCopyMutable,
+  isDescendantOrSelf,
 } from "./tree-utils";
 
 const expectString = expect.any(String) as unknown as string;
@@ -172,4 +173,10 @@ test("find local style sources within instances", () => {
       instanceIds
     )
   ).toEqual(new Set(["local2", "local4"]));
+});
+
+test("is descendant or self", () => {
+  expect(isDescendantOrSelf(["1", "2", "3"], ["1", "2", "3"])).toBe(true);
+  expect(isDescendantOrSelf(["0", "1", "2", "3"], ["1", "2", "3"])).toBe(true);
+  expect(isDescendantOrSelf(["1", "2", "3"], ["0", "1", "2", "3"])).toBe(false);
 });

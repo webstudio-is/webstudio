@@ -13,15 +13,8 @@ import { applyScale } from "./apply-scale";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 import { shallowEqual } from "shallow-equal";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { isDescendantOrSelf } from "~/shared/tree-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-
-const isDescendantOrSelf = (
-  descendant: InstanceSelector,
-  self: InstanceSelector
-) => {
-  return descendant.join(",").endsWith(self.join(","));
-};
 
 export const HoveredInstanceOutline = () => {
   const instances = useStore($instances);
@@ -51,7 +44,7 @@ export const HoveredInstanceOutline = () => {
     textEditingInstanceSelector?.selector &&
     isDescendantOrSelf(
       hoveredInstanceSelector,
-      textEditingInstanceSelector?.selector
+      textEditingInstanceSelector.selector
     )
   ) {
     return;
