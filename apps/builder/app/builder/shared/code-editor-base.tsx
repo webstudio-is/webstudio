@@ -419,7 +419,7 @@ EditorDialogButton.displayName = "EditorDialogButton";
 export const EditorDialog = ({
   content,
   children,
-  position = "center",
+  placement = "center",
   width = 640,
   height = 480,
   ...panelProps
@@ -429,7 +429,7 @@ export const EditorDialog = ({
   children: ReactNode;
   width?: number;
   height?: number;
-  position?: ComponentProps<typeof FloatingPanel>["position"];
+  placement?: ComponentProps<typeof FloatingPanel>["placement"];
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
@@ -439,7 +439,7 @@ export const EditorDialog = ({
       {...panelProps}
       width={width}
       height={height}
-      position={position}
+      placement={placement}
       maximizable
       resize="auto"
       content={

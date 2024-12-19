@@ -7,7 +7,6 @@ import {
   useState,
   useRef,
   useLayoutEffect,
-  useEffect,
   useCallback,
 } from "react";
 import { css, theme } from "../stitches.config";
@@ -20,7 +19,13 @@ import {
   DialogTrigger,
   DialogMaximize,
 } from "./dialog";
-import { clamp } from "@react-aria/utils";
+import {
+  computePosition,
+  flip,
+  offset,
+  shift,
+  type OffsetOptions,
+} from "@floating-ui/dom";
 
 const FloatingPanelContext = createContext<{
   container: RefObject<null | HTMLElement>;
@@ -50,14 +55,11 @@ type FloatingPanelProps = {
   resize?: ComponentProps<typeof DialogContent>["resize"];
   width?: number;
   height?: number;
-  offset?: {
-    x?: number;
-    y?: number;
-  };
-  // - inline - aligns the dialog above the container like left or right sidebar
-  // - left - aligns the dialog on the left side of the container
-  // - center - aligns the dialog in the center of the screen
-  position?: "left" | "center" | "inline";
+  // - bottom - below the trigger button
+  // - left-start - on the left side relative to the container, aligned with the top of the trigger button
+  // - center - center of the screen
+  placement?: "left-start" | "center" | "bottom";
+  offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 };
@@ -74,8 +76,8 @@ export const FloatingPanel = ({
   maximizable,
   width,
   height,
-  position = "left",
-  offset = { x: 0, y: 10 },
+  placement = "left-start",
+  offset: offsetProp = { mainAxis: 10 },
   open,
   onOpenChange,
 }: FloatingPanelProps) => {
@@ -93,65 +95,43 @@ export const FloatingPanel = ({
       containerRef.current === null ||
       contentElement === null ||
       // When centering the dialog, we don't need to calculate the position
-      position === "center"
+      placement === "center"
     ) {
       return;
     }
+
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
-    const contentRect = contentElement.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    const windowWidth = window.innerWidth;
 
-    let newX = 0;
-    switch (position) {
-      case "left":
-        // Position it on the left side relative to the container
-        newX =
-          windowWidth -
-          containerRect.width -
-          contentRect.width +
-          (offset.x ?? 0);
-        break;
-      case "inline":
-        // Positions it above the container
-        newX = windowWidth - contentRect.width + (offset.x ?? 0);
-        break;
-      // @todo add right once needed
-    }
-    const maxX = windowWidth - contentRect.width;
-    setX(clamp(newX, 0, maxX));
+    const anchor = {
+      getBoundingClientRect() {
+        return {
+          width: containerRect.width,
+          height: triggerRect.height,
+          x: containerRect.x,
+          y: triggerRect.y,
+          left: containerRect.left,
+          right: containerRect.right,
+          top: triggerRect.top,
+          bottom: triggerRect.bottom,
+        };
+      },
+    };
 
-    const newY = triggerRect.bottom + (offset.y ?? 0);
-    const maxY = windowHeight - contentRect.height;
-    setY(clamp(newY, 0, maxY));
-  }, [contentElement, triggerRef, containerRef, position, offset.y, offset.x]);
-
-  const adjustPositionForCollision = useCallback(() => {
-    if (contentElement === null || position === "center") {
-      return;
-    }
-    const contentRect = contentElement.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    const maxY = windowHeight - contentRect.height;
-    setY(clamp(y ?? 0, 0, maxY));
-    // @todo add this for x when needed
-  }, [contentElement, y, position]);
+    computePosition(anchor, contentElement, {
+      placement,
+      middleware: [
+        shift(),
+        placement === "bottom" && flip(),
+        offset(offsetProp),
+      ],
+    }).then(({ x, y }) => {
+      setX(x);
+      setY(y);
+    });
+  }, [contentElement, triggerRef, containerRef, placement, offsetProp]);
 
   useLayoutEffect(calcPosition, [calcPosition]);
-
-  // When content changes in height, it can get cut off by the viewport size.
-  // In this case we adjust the position.
-  useEffect(() => {
-    if (contentElement === null) {
-      return;
-    }
-    const observer = new ResizeObserver(adjustPositionForCollision);
-    observer.observe(contentElement);
-    return () => {
-      observer.disconnect();
-    };
-  }, [contentElement, adjustPositionForCollision]);
 
   return (
     <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
@@ -170,7 +150,7 @@ export const FloatingPanel = ({
           // When a dialog is centered, we don't want to close it when clicking outside
           // This allows having inline and left positioned dialogs open at the same time as a centered dialog,
           // while not allowing having multiple non-center positioned dialogs open at the same time.
-          if (position === "center") {
+          if (placement === "center") {
             event.preventDefault();
           }
         }}

@@ -1,4 +1,4 @@
-import { useMemo, type JSX } from "react";
+import { useMemo, type ComponentProps, type JSX } from "react";
 import type { RgbaColor } from "colord";
 import {
   toValue,
@@ -329,11 +329,18 @@ export const RepeatedStyle = (props: {
     index: number,
     primaryValue: StyleValue
   ) => { label: string; color?: RgbaColor };
+  floatingPanelOffset?: ComponentProps<typeof FloatingPanel>["offset"];
   renderThumbnail?: (index: number, primaryItem: StyleValue) => JSX.Element;
   renderItemContent: (index: number, primaryItem: StyleValue) => JSX.Element;
 }) => {
-  const { label, styles, getItemProps, renderThumbnail, renderItemContent } =
-    props;
+  const {
+    label,
+    styles,
+    getItemProps,
+    renderThumbnail,
+    renderItemContent,
+    floatingPanelOffset,
+  } = props;
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
   let primaryItems: StyleValue[] = [];
@@ -383,6 +390,7 @@ export const RepeatedStyle = (props: {
               key={index}
               title={label}
               content={renderItemContent(index, primaryItem)}
+              offset={floatingPanelOffset}
             >
               <CssValueListItem
                 id={id}

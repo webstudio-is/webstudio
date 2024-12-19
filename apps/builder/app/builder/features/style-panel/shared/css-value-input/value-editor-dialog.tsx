@@ -90,7 +90,7 @@ export const ValueEditorDialog = ({
   return (
     <EditorDialog
       title="CSS Value"
-      position="inline"
+      placement="bottom"
       height={200}
       width={Number(rawTheme.sizes.sidebarWidth)}
       content={
