@@ -58,7 +58,7 @@ type FloatingPanelProps = {
   // - bottom - below the trigger button
   // - left-start - on the left side relative to the container, aligned with the top of the trigger button
   // - center - center of the screen
-  placement?: "left-start" | "center" | "bottom";
+  placement?: "left-start" | "right-start" | "center" | "bottom";
   offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;

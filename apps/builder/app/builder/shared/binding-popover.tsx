@@ -367,6 +367,7 @@ export const BindingPopover = ({
   const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
   return (
     <FloatingPanel
+      placement="right-start"
       open={isOpen}
       onOpenChange={(newOpen) => {
         // handle special case for popover close
