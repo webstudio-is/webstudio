@@ -1,10 +1,14 @@
 import { describe, expect, test, vi } from "vitest";
-import type { JSX } from "react";
-import { renderJsx, $, ExpressionValue } from "@webstudio-is/template";
+import {
+  renderJsx,
+  $,
+  ExpressionValue,
+  renderTemplate,
+} from "@webstudio-is/template";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
-import type { Matcher, WebstudioFragment } from "@webstudio-is/sdk";
+import type { Matcher } from "@webstudio-is/sdk";
 import {
   findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,
@@ -754,23 +758,6 @@ describe("is tree matching", () => {
 });
 
 describe("find closest instance matching fragment", () => {
-  const createFragment = (element: JSX.Element): WebstudioFragment => {
-    const { instances } = renderJsx(element);
-    const instancesArray = Array.from(instances.values());
-    return {
-      children: instancesArray[0].children,
-      instances: instancesArray,
-      styleSourceSelections: [],
-      styleSources: [],
-      breakpoints: [],
-      styles: [],
-      dataSources: [],
-      resources: [],
-      props: [],
-      assets: [],
-    };
-  };
-
   test("finds closest list with list item fragment", () => {
     const { instances } = renderJsx(
       <$.Body ws:id="body">
@@ -779,12 +766,7 @@ describe("find closest instance matching fragment", () => {
         </$.List>
       </$.Body>
     );
-    const fragment = createFragment(
-      // only children are tested
-      <>
-        <$.ListItem ws:id="new"></$.ListItem>
-      </>
-    );
+    const fragment = renderTemplate(<$.ListItem ws:id="new"></$.ListItem>);
     expect(
       findClosestInstanceMatchingFragment({
         metas,
@@ -818,12 +800,7 @@ describe("find closest instance matching fragment", () => {
         <$.Button ws:id="button"></$.Button>
       </$.Body>
     );
-    const fragment = createFragment(
-      // only children are tested
-      <>
-        <$.Button ws:id="new"></$.Button>
-      </>
-    );
+    const fragment = renderTemplate(<$.Button ws:id="new"></$.Button>);
     expect(
       findClosestInstanceMatchingFragment({
         metas,
@@ -840,8 +817,7 @@ describe("find closest instance matching fragment", () => {
         <$.Button ws:id="button"></$.Button>
       </$.Body>
     );
-    const fragment = createFragment(
-      // only children are tested
+    const fragment = renderTemplate(
       <>
         <$.Button ws:id="new-button"></$.Button>
         <$.Text ws:id="new-text"></$.Text>
@@ -860,12 +836,7 @@ describe("find closest instance matching fragment", () => {
   test("report first error", () => {
     const onError = vi.fn();
     const { instances } = renderJsx(<$.Body ws:id="body"></$.Body>);
-    const fragment = createFragment(
-      // only children are tested
-      <>
-        <$.ListItem ws:id="listitem"></$.ListItem>
-      </>
-    );
+    const fragment = renderTemplate(<$.ListItem ws:id="listitem"></$.ListItem>);
     findClosestInstanceMatchingFragment({
       metas,
       instances,
