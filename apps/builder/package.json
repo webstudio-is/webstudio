@@ -42,6 +42,7 @@
     "@lezer/highlight": "^1.2.1",
     "@nanostores/react": "^0.8.0",
     "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-slider": "^1.2.1",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@react-aria/interactions": "^3.22.4",
     "@react-aria/utils": "^3.25.3",
