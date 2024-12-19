@@ -193,6 +193,7 @@ export const SectionGeneral = () => {
           tag to every page across the published project.
         </Text>
         <CodeEditor
+          title="Custom code"
           lang="html"
           value={meta.code ?? ""}
           onChange={handleSave("code")}
