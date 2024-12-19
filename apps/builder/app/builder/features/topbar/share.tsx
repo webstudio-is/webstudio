@@ -50,6 +50,7 @@ export const ShareButton = ({
         sideOffset={Number.parseFloat(rawTheme.spacing[8])}
         css={{
           marginRight: theme.spacing[3],
+          overflow: "clip",
         }}
       >
         <ShareProjectContainer projectId={projectId} hasProPlan={hasProPlan} />
