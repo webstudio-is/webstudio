@@ -26,7 +26,7 @@ const PopoverDemo = () => (
       </Flex>
       <PopoverSeparator />
       <Flex css={{ padding: theme.spacing[3] }}>
-        <PopoverClose asChild>
+        <PopoverClose>
           <MenuItemButton>Close</MenuItemButton>
         </PopoverClose>
       </Flex>

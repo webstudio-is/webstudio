@@ -6,11 +6,11 @@ import {
   Flex,
   SmallIconButton,
   Text,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { TrashIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/nano-states";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";

@@ -13,11 +13,7 @@ import {
   SubtractIcon,
 } from "@webstudio-is/icons";
 import { SmallIconButton } from "./small-icon-button";
-import {
-  FloatingPanelPopover,
-  FloatingPanelPopoverContent,
-  FloatingPanelPopoverTrigger,
-} from "./floating-panel-popover";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -102,8 +98,8 @@ export const Declarative = (props: {
   return (
     <Panel>
       <StorySection title="Configurable">
-        <FloatingPanelPopover>
-          <FloatingPanelPopoverTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
             <CssValueListItem
               id="0"
               index={0}
@@ -133,11 +129,11 @@ export const Declarative = (props: {
                 </>
               }
             />
-          </FloatingPanelPopoverTrigger>
-          <FloatingPanelPopoverContent>
+          </PopoverTrigger>
+          <PopoverContent>
             <div className={css({ p: theme.spacing[10] })()}>Content</div>
-          </FloatingPanelPopoverContent>
-        </FloatingPanelPopover>
+          </PopoverContent>
+        </Popover>
       </StorySection>
 
       <StorySection title="Overflows">

@@ -1,4 +1,4 @@
-import { useMemo, type JSX } from "react";
+import { useMemo, type ComponentProps, type JSX } from "react";
 import type { RgbaColor } from "colord";
 import {
   toValue,
@@ -22,8 +22,8 @@ import {
   SmallToggleButton,
   toast,
   useSortable,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
@@ -329,11 +329,18 @@ export const RepeatedStyle = (props: {
     index: number,
     primaryValue: StyleValue
   ) => { label: string; color?: RgbaColor };
+  floatingPanelOffset?: ComponentProps<typeof FloatingPanel>["offset"];
   renderThumbnail?: (index: number, primaryItem: StyleValue) => JSX.Element;
   renderItemContent: (index: number, primaryItem: StyleValue) => JSX.Element;
 }) => {
-  const { label, styles, getItemProps, renderThumbnail, renderItemContent } =
-    props;
+  const {
+    label,
+    styles,
+    getItemProps,
+    renderThumbnail,
+    renderItemContent,
+    floatingPanelOffset,
+  } = props;
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
   let primaryItems: StyleValue[] = [];
@@ -382,15 +389,8 @@ export const RepeatedStyle = (props: {
             <FloatingPanel
               key={index}
               title={label}
-              // Background Panel is big, and the size differs when the tabs are changed.
-              // This results in the panel moving around when the tabs are changed.
-              // And sometimes, the tab moves away from the cursor,
-              // when the content change happens on the top.
-              // This is a workaround to prevent the panel from moving around
-              // too much when the tabs are changed from the popover trigger.
-              align="center"
-              collisionPadding={{ bottom: 200, top: 200 }}
               content={renderItemContent(index, primaryItem)}
+              offset={floatingPanelOffset}
             >
               <CssValueListItem
                 id={id}

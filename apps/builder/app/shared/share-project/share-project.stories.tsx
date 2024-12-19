@@ -1,9 +1,9 @@
 import type { StoryFn } from "@storybook/react";
 import {
   Button,
-  FloatingPanelPopover,
-  FloatingPanelPopoverContent,
-  FloatingPanelPopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { type LinkOptions, ShareProject } from "./share-project";
@@ -88,12 +88,12 @@ const useShareProject = (
 export const Empty: StoryFn<typeof ShareProject> = () => {
   const props = useShareProject();
   return (
-    <FloatingPanelPopover modal open>
-      <FloatingPanelPopoverTrigger asChild>
+    <Popover modal open>
+      <PopoverTrigger asChild>
         <Button>Share</Button>
-      </FloatingPanelPopoverTrigger>
+      </PopoverTrigger>
 
-      <FloatingPanelPopoverContent>
+      <PopoverContent>
         <ShareProject
           {...props}
           hasProPlan={false}
@@ -102,20 +102,20 @@ export const Empty: StoryFn<typeof ShareProject> = () => {
             `https://blabla.com/${authToken}/${mode}`
           }
         ></ShareProject>
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+      </PopoverContent>
+    </Popover>
   );
 };
 
 export const WithLinks: StoryFn<typeof ShareProject> = () => {
   const props = useShareProject(initialLinks);
   return (
-    <FloatingPanelPopover modal open>
-      <FloatingPanelPopoverTrigger asChild>
+    <Popover modal open>
+      <PopoverTrigger asChild>
         <Button>Share</Button>
-      </FloatingPanelPopoverTrigger>
+      </PopoverTrigger>
 
-      <FloatingPanelPopoverContent>
+      <PopoverContent>
         <ShareProject
           {...props}
           hasProPlan={false}
@@ -124,20 +124,20 @@ export const WithLinks: StoryFn<typeof ShareProject> = () => {
             `https://blabla.com/${authToken}/${mode}`
           }
         ></ShareProject>
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+      </PopoverContent>
+    </Popover>
   );
 };
 
 export const WithAsyncLinks: StoryFn<typeof ShareProject> = () => {
   const props = useShareProject(initialLinks, true);
   return (
-    <FloatingPanelPopover modal open>
-      <FloatingPanelPopoverTrigger asChild>
+    <Popover modal open>
+      <PopoverTrigger asChild>
         <Button>Share</Button>
-      </FloatingPanelPopoverTrigger>
+      </PopoverTrigger>
 
-      <FloatingPanelPopoverContent>
+      <PopoverContent>
         <ShareProject
           {...props}
           hasProPlan={false}
@@ -146,7 +146,7 @@ export const WithAsyncLinks: StoryFn<typeof ShareProject> = () => {
             `https://blabla.com/${authToken}/${mode}`
           }
         ></ShareProject>
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+      </PopoverContent>
+    </Popover>
   );
 };
