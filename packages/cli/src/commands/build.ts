@@ -19,7 +19,7 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
     .option("preview", {
       type: "boolean",
       default: false,
-      describe: "[Experimental] Use preview version of the project",
+      describe: "[Experimental] Build from development version of builder",
     })
     .option("template", {
       type: "array",
