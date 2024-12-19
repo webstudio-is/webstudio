@@ -205,12 +205,17 @@ const isTextEditingInstance = (
 };
 
 export const findAllEditableInstanceSelector = (
-  instanceId: string,
   currentPath: InstanceSelector,
   instances: Map<string, Instance>,
   metas: Map<string, WsComponentMeta>,
   results: InstanceSelector[]
 ) => {
+  const instanceId = currentPath[0];
+
+  if (instanceId === undefined) {
+    return;
+  }
+
   const instance = instances.get(instanceId);
   if (instance === undefined) {
     return;
@@ -218,7 +223,7 @@ export const findAllEditableInstanceSelector = (
 
   // Check if current instance is text editing instance
   if (isTextEditingInstance(instance, instances, metas)) {
-    results.push([instanceId, ...currentPath]);
+    results.push(currentPath);
     return;
   }
 
@@ -226,8 +231,7 @@ export const findAllEditableInstanceSelector = (
   for (const child of instance.children) {
     if (child.type === "id") {
       findAllEditableInstanceSelector(
-        child.value,
-        [instanceId, ...currentPath],
+        [child.value, ...currentPath],
         instances,
         metas,
         results
