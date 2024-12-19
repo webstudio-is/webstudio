@@ -235,6 +235,7 @@ const subscribeSelectedInstance = (
     const activeStates = new Set<string>();
     for (const state of availableStates) {
       try {
+        // pseudo classes like :open or :current are not supported in .matches method
         if (element.matches(state)) {
           activeStates.add(state);
         }
