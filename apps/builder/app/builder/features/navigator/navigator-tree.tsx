@@ -655,7 +655,6 @@ export const NavigatorTree = () => {
                   onClick: () => selectInstance(item.selector),
                   onFocus: () => selectInstance(item.selector),
                   onKeyDown: (event) => {
-                    console.info("onKeyDown", event.key);
                     if (event.key === "Enter") {
                       emitCommand("editInstanceText");
                     }
