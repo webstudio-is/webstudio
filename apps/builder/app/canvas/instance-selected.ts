@@ -31,6 +31,7 @@ import {
 import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { shallowEqual } from "shallow-equal";
+import warnOnce from "warn-once";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -233,8 +234,13 @@ const subscribeSelectedInstance = (
     }
     const activeStates = new Set<string>();
     for (const state of availableStates) {
-      if (element.matches(state)) {
-        activeStates.add(state);
+      try {
+        // pseudo classes like :open or :current are not supported in .matches method
+        if (element.matches(state)) {
+          activeStates.add(state);
+        }
+      } catch {
+        warnOnce(true, `state selector "${state}" is invalid`);
       }
     }
 
