@@ -56,7 +56,7 @@ import {
   idAttribute,
   selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { colord } from "colord";
@@ -200,17 +200,6 @@ const getNodeKeyFromDOMNode = (
   return (dom as Node & Record<typeof prop, NodeKey | undefined>)[prop];
 };
 
-const isDescendantOrSelf = (
-  descendant: InstanceSelector | undefined,
-  self: InstanceSelector | undefined
-) => {
-  if (descendant === undefined || self === undefined) {
-    return false;
-  }
-
-  return descendant.join(",").endsWith(self.join(","));
-};
-
 const LinkSelectionPlugin = ({
   rootInstanceSelector,
   registerNewLink,
@@ -229,11 +218,14 @@ const LinkSelectionPlugin = ({
     const removeUpdateListener = editor.registerUpdateListener(
       ({ editorState }) => {
         editorState.read(() => {
+          const selectedInstanceSelector = $selectedInstanceSelector.get();
+
+          if (selectedInstanceSelector === undefined) {
+            return;
+          }
+
           if (
-            !isDescendantOrSelf(
-              $selectedInstanceSelector.get(),
-              preservedSelection
-            )
+            !isDescendantOrSelf(selectedInstanceSelector, preservedSelection)
           ) {
             return;
           }
@@ -1002,10 +994,11 @@ const ContextMenuPluginInternal = ({
         node.setStyle("");
       }
 
-      const isSelectionInSameComponent = isDescendantOrSelf(
-        $selectedInstanceSelector.get(),
-        preservedSelection
-      );
+      const selectedInstanceSelector = $selectedInstanceSelector.get();
+
+      const isSelectionInSameComponent = selectedInstanceSelector
+        ? isDescendantOrSelf(selectedInstanceSelector, preservedSelection)
+        : false;
 
       if (!isSelectionInSameComponent) {
         node?.remove();

@@ -14,6 +14,7 @@ import {
   collectionComponent,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
+import { shallowEqual } from "shallow-equal";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -42,6 +43,23 @@ export const areInstanceSelectorsEqual = (
     return false;
   }
   return left.join(",") === right.join(",");
+};
+
+export const isDescendantOrSelf = (
+  descendant: InstanceSelector,
+  self: InstanceSelector
+) => {
+  if (self.length === 0) {
+    return true;
+  }
+
+  if (descendant.length < self.length) {
+    return false;
+  }
+
+  const endSlice = descendant.slice(-self.length);
+
+  return shallowEqual(endSlice, self);
 };
 
 export type DroppableTarget = {
