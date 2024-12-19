@@ -89,10 +89,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         const textEditingInstanceSelector = $textEditingInstanceSelector.get();
         const textToolbar = $textToolbar.get();
 
-        if (selectedInstanceSelector === undefined) {
-          return;
-        }
-
         // close text toolbar first without exiting text editing mode
         if (textToolbar) {
           $textToolbar.set(undefined);
@@ -101,11 +97,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
         // exit text editing mode first without unselecting instance
         if (textEditingInstanceSelector) {
-          // $textEditingInstanceSelector.set(undefined);
+          $textEditingInstanceSelector.set(undefined);
           return;
         }
-        // unselect both instance and style source
-        // selectInstance(undefined);
+
+        if (selectedInstanceSelector) {
+          // unselect both instance and style source
+          selectInstance(undefined);
+          return;
+        }
       },
     },
 
