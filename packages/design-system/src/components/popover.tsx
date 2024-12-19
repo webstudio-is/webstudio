@@ -24,6 +24,7 @@ const contentStyle = css({
   display: "flex",
   flexDirection: "column",
   maxWidth: "max-content",
+  overflow: "clip",
   "&:focus": {
     // override browser default
     outline: "none",

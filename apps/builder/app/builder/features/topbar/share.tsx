@@ -48,10 +48,7 @@ export const ShareButton = ({
       </Tooltip>
       <PopoverContent
         sideOffset={Number.parseFloat(rawTheme.spacing[8])}
-        css={{
-          marginRight: theme.spacing[3],
-          overflow: "clip",
-        }}
+        css={{ marginRight: theme.spacing[3] }}
       >
         <ShareProjectContainer projectId={projectId} hasProPlan={hasProPlan} />
         <PopoverTitle>Share</PopoverTitle>
