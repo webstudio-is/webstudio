@@ -27,6 +27,9 @@ export const ColorControl = ({ property }: { property: StyleProperty }) => {
       onChange={(styleValue) => setValue(styleValue, { isEphemeral: true })}
       onChangeComplete={setValue}
       onAbort={() => deleteProperty(property, { isEphemeral: true })}
+      onReset={() => {
+        deleteProperty(property);
+      }}
     />
   );
 };

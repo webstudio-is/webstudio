@@ -21,9 +21,11 @@ import {
 } from "@webstudio-is/design-system";
 import {
   collectionComponent,
+  blockComponent,
   rootComponent,
   showAttribute,
   WsComponentMeta,
+  blockTemplateComponent,
 } from "@webstudio-is/react-sdk";
 import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import {
@@ -33,6 +35,7 @@ import {
 } from "@webstudio-is/icons";
 import {
   $dragAndDropState,
+  $blockChildOutline,
   $editingItemSelector,
   $hoveredInstanceSelector,
   $instances,
@@ -48,19 +51,27 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import {
-  computeInstancesConstraints,
-  findClosestDroppableComponentIndex,
-  getInstanceLabel,
-  reparentInstance,
-} from "~/shared/instance-utils";
+import { getInstanceLabel, reparentInstance } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import { $selectedPage, selectInstance } from "~/shared/awareness";
+import {
+  $selectedPage,
+  getInstanceKey,
+  selectInstance,
+} from "~/shared/awareness";
+import { findClosestContainer, isTreeMatching } from "~/shared/matcher";
+
+type TreeItemAncestor =
+  | undefined
+  | {
+      selector: InstanceSelector;
+      indexWithinChildren: number;
+      component: string;
+    };
 
 type TreeItem = {
-  level: number;
   selector: InstanceSelector;
+  visibleAncestors: TreeItemAncestor[];
   instance: Instance;
   isExpanded: undefined | boolean;
   isLastChild: boolean;
@@ -76,20 +87,22 @@ const $dropTarget = computed(
   (dragAndDropState) => dragAndDropState.dropTarget
 );
 
-const $flatTree = computed(
+export const $flatTree = computed(
   [
     $selectedPage,
     $instances,
     $expandedItems,
     $propValuesByInstanceSelector,
     $dropTarget,
+    $isContentMode,
   ],
   (
     page,
     instances,
     expandedItems,
     propValuesByInstanceSelector,
-    dropTarget
+    dropTarget,
+    isContentMode
   ) => {
     const flatTree: TreeItem[] = [];
     if (page === undefined) {
@@ -98,10 +111,10 @@ const $flatTree = computed(
     const traverse = (
       instanceId: Instance["id"],
       selector: InstanceSelector,
+      visibleAncestors: TreeItemAncestor[] = [],
       isParentHidden = false,
       isParentReusable = false,
       isLastChild = false,
-      level = 0,
       indexWithinChildren = 0
     ) => {
       const instance = instances.get(instanceId);
@@ -111,38 +124,65 @@ const $flatTree = computed(
         return;
       }
       const propValues = propValuesByInstanceSelector.get(
-        JSON.stringify(selector)
+        getInstanceKey(selector)
       );
       const isHidden =
         isParentHidden ||
         false === Boolean(propValues?.get(showAttribute) ?? true);
       const isReusable = isParentReusable || instance.component === "Slot";
-      let isExpanded: undefined | boolean;
-      if (level > 0 && instance.children.some((child) => child.type === "id")) {
-        isExpanded = expandedItems.has(selector.join());
-      }
-      if (instance.component === "Fragment") {
-        isExpanded = true;
-      }
-
       const treeItem: TreeItem = {
-        level,
         selector,
+        visibleAncestors,
         instance,
-        isExpanded,
+        isExpanded: undefined,
         isLastChild,
         isHidden,
         isReusable,
       };
-      let lastItem = treeItem;
+      let isVisible = true;
       // slot fragment component is not rendered in navigator tree
       // so should be always expanded
-      if (instance.component !== "Fragment") {
+      if (instance.component === "Fragment") {
+        isVisible = false;
+      }
+      if (isContentMode) {
+        // hide everything outside of block instances
+        const hasBlockAncestor = visibleAncestors.some(
+          (ancestor) => ancestor?.component === blockComponent
+        );
+        if (
+          instance.component !== blockComponent &&
+          hasBlockAncestor === false
+        ) {
+          isVisible = false;
+        }
+        // though hide block template along with all descendants
+        if (instance.component === blockTemplateComponent) {
+          return treeItem;
+        }
+      }
+      let lastItem = treeItem;
+      if (isVisible) {
+        const ancestor = {
+          selector,
+          indexWithinChildren,
+          component: instance.component,
+        };
+        visibleAncestors = [...visibleAncestors, ancestor];
+        treeItem.visibleAncestors = visibleAncestors;
         flatTree.push(treeItem);
+      }
+      const level = treeItem.visibleAncestors.length - 1;
+      if (level > 0 && instance.children.some((child) => child.type === "id")) {
+        treeItem.isExpanded = expandedItems.has(selector.join());
+      }
+      // always expand invisible items
+      if (isVisible === false) {
+        treeItem.isExpanded = true;
       }
 
       // render same children for each collection item in data
-      if (instance.component === collectionComponent && isExpanded) {
+      if (instance.component === collectionComponent && treeItem.isExpanded) {
         const data = propValues?.get("data");
         // create items only when collection has content
         if (Array.isArray(data) && instance.children.length > 0) {
@@ -158,14 +198,11 @@ const $flatTree = computed(
                     getIndexedInstanceId(instance.id, dataIndex),
                     ...selector,
                   ],
+                  visibleAncestors,
                   isHidden,
                   isReusable,
                   isLastChild,
-                  // virtual item instance is hidden
-                  // but level is still increased to show proper drop indicator
-                  // and address instance selector
-                  level + 2,
-                  index
+                  instance.children.length * dataIndex + index
                 );
                 if (lastDescendentItem) {
                   lastItem = lastDescendentItem;
@@ -174,7 +211,7 @@ const $flatTree = computed(
             }
           });
         }
-      } else if (level === 0 || isExpanded) {
+      } else if (level === 0 || treeItem.isExpanded) {
         for (let index = 0; index < instance.children.length; index += 1) {
           const child = instance.children[index];
           if (child.type === "id") {
@@ -182,10 +219,10 @@ const $flatTree = computed(
             const lastDescendentItem = traverse(
               child.value,
               [child.value, ...selector],
+              visibleAncestors,
               isHidden,
               isReusable,
               isLastChild,
-              level + 1,
               index
             );
             if (lastDescendentItem) {
@@ -195,10 +232,10 @@ const $flatTree = computed(
         }
       }
 
-      const parentSelector = treeItem.selector.slice(1);
+      const parentSelector = treeItem.visibleAncestors.at(-2)?.selector;
       if (
         dropTarget &&
-        parentSelector.join() === dropTarget.itemSelector.join() &&
+        parentSelector?.join() === dropTarget.itemSelector.join() &&
         dropTarget.placement.closestChildIndex === indexWithinChildren
       ) {
         if (dropTarget.placement.indexAdjustment === 0) {
@@ -232,7 +269,7 @@ const handleExpand = (item: TreeItem, isExpanded: boolean, all: boolean) => {
       expandedItems.delete(key);
     }
     const instance = instances.get(instanceId);
-    // expand all descendents as well when alt is pressed
+    // expand all descendants as well when alt is pressed
     if (all && instance) {
       for (const child of instance.children) {
         traverse(child.value, [child.value, ...selector]);
@@ -347,50 +384,38 @@ const TreeNodeContent = ({
 };
 
 const getBuilderDropTarget = (
-  selector: string[],
+  item: TreeItem,
   treeDropTarget: undefined | TreeDropTarget
 ): undefined | ItemDropTarget => {
   if (treeDropTarget === undefined) {
     return;
   }
-  const instances = $instances.get();
-  const parentSelector = selector.slice(-treeDropTarget.parentLevel - 1);
-  let parentInstance = instances.get(parentSelector[0]);
-  const grandParentInstance = instances.get(parentSelector[1]);
-  // collection item fake instance
-  if (parentInstance === undefined && grandParentInstance) {
-    parentInstance = {
-      type: "instance",
-      id: parentSelector[0],
-      component: "Fragment",
-      children: grandParentInstance.children,
-    };
-  }
-  if (parentInstance === undefined) {
+  const parentSelector =
+    item.visibleAncestors[treeDropTarget.parentLevel]?.selector;
+  if (parentSelector === undefined) {
     return;
   }
-  const beforeId =
-    treeDropTarget.beforeLevel === undefined
-      ? undefined
-      : selector.at(-treeDropTarget.beforeLevel - 1);
-  const beforeIndex = parentInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === beforeId
-  );
-  const afterId =
-    treeDropTarget.afterLevel === undefined
-      ? undefined
-      : selector.at(-treeDropTarget.afterLevel - 1);
-  const afterIndex = parentInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === afterId
-  );
+  const beforeItem = item.visibleAncestors[treeDropTarget.beforeLevel ?? -1];
+  const afterItem = item.visibleAncestors[treeDropTarget.afterLevel ?? -1];
   let closestChildIndex = 0;
   let indexAdjustment = 0;
-  if (beforeIndex > -1) {
-    closestChildIndex = beforeIndex;
+  if (beforeItem) {
+    closestChildIndex = beforeItem.indexWithinChildren;
     indexAdjustment = 0;
-  } else if (afterIndex > -1) {
-    closestChildIndex = afterIndex;
+  } else if (afterItem) {
+    closestChildIndex = afterItem.indexWithinChildren;
     indexAdjustment = 1;
+  }
+  // first position is always reserved for templates in block component
+  const instances = $instances.get();
+  const parentInstance = instances.get(parentSelector[0]);
+  if (parentInstance?.component === blockComponent) {
+    // adjust position to show indicator before second child
+    // because templates indicator is not rendered in content mode
+    if (closestChildIndex === 0) {
+      closestChildIndex = 1;
+      indexAdjustment = 0;
+    }
   }
   const indexWithinChildren = closestChildIndex + indexAdjustment;
   return {
@@ -404,8 +429,19 @@ const getBuilderDropTarget = (
   };
 };
 
-const canDrag = (instance: Instance) => {
+const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
   if ($isContentMode.get()) {
+    const parentId = instanceSelector[1];
+    const parentInstance = $instances.get().get(parentId);
+    if (parentInstance === undefined) {
+      return false;
+    }
+    if (parentInstance.component !== blockComponent) {
+      return false;
+    }
+  }
+  // prevent moving block template out of first position
+  if (instance.component === blockTemplateComponent) {
     return false;
   }
 
@@ -413,8 +449,7 @@ const canDrag = (instance: Instance) => {
   if (meta === undefined) {
     return true;
   }
-  const detachable =
-    meta.type !== "rich-text-child" && (meta.detachable ?? true);
+  const detachable = meta.type !== "rich-text-child";
   if (detachable === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
@@ -425,23 +460,44 @@ const canDrag = (instance: Instance) => {
 
 const canDrop = (
   dragSelector: InstanceSelector,
-  dropSelector: InstanceSelector
+  dropTarget: ItemDropTarget
 ) => {
-  const metas = $registeredComponentMetas.get();
+  const dropSelector = dropTarget.itemSelector;
   const instances = $instances.get();
-  const insertConstraints = computeInstancesConstraints(metas, instances, [
-    dragSelector[0],
-  ]);
-  const ancestorIndex = findClosestDroppableComponentIndex({
+  const metas = $registeredComponentMetas.get();
+  // in content mode allow drop only within same block
+  if ($isContentMode.get()) {
+    const parentInstance = instances.get(dropSelector[0]);
+    if (parentInstance?.component !== blockComponent) {
+      return false;
+    }
+    // parent of dragging item should be the same as drop target
+    if (dropSelector[0] !== dragSelector[1]) {
+      return false;
+    }
+  }
+  // prevent dropping into non-container instances
+  const closestContainerIndex = findClosestContainer({
     metas,
-    constraints: insertConstraints,
     instances,
     instanceSelector: dropSelector,
   });
-  return ancestorIndex === 0;
+  if (closestContainerIndex !== 0) {
+    return false;
+  }
+  return isTreeMatching({
+    instances,
+    metas,
+    // make sure dragging tree can be put inside of drop instance
+    instanceSelector: [
+      dragSelector[0],
+      ...dropSelector.slice(closestContainerIndex),
+    ],
+  });
 };
 
 export const NavigatorTree = () => {
+  const isContentMode = useStore($isContentMode);
   const flatTree = useStore($flatTree);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const selectedKey = selectedInstanceSelector?.join();
@@ -485,7 +541,7 @@ export const NavigatorTree = () => {
       }}
     >
       <TreeRoot>
-        {rootMeta && (
+        {rootMeta && isContentMode === false && (
           <TreeNode
             level={0}
             isSelected={selectedKey === ROOT_INSTANCE_ID}
@@ -516,9 +572,10 @@ export const NavigatorTree = () => {
         )}
 
         {flatTree.map((item) => {
+          const level = item.visibleAncestors.length - 1;
           const key = item.selector.join();
           const propValues = propValuesByInstanceSelector.get(
-            JSON.stringify(item.selector)
+            getInstanceKey(item.selector)
           );
           const show = Boolean(propValues?.get(showAttribute) ?? true);
           const meta = metas.get(item.instance.component);
@@ -528,20 +585,20 @@ export const NavigatorTree = () => {
           return (
             <TreeSortableItem
               key={key}
-              level={item.level}
+              level={level}
               isExpanded={item.isExpanded}
               isLastChild={item.isLastChild}
               data={item}
-              canDrag={() => canDrag(item.instance)}
+              canDrag={() => canDrag(item.instance, item.selector)}
               dropTarget={item.dropTarget}
               onDropTargetChange={(dropTarget, draggingItem) => {
                 const builderDropTarget = getBuilderDropTarget(
-                  item.selector,
+                  item,
                   dropTarget
                 );
                 if (
                   builderDropTarget &&
-                  canDrop(draggingItem.selector, builderDropTarget.itemSelector)
+                  canDrop(draggingItem.selector, builderDropTarget)
                 ) {
                   $dragAndDropState.set({
                     ...$dragAndDropState.get(),
@@ -574,7 +631,7 @@ export const NavigatorTree = () => {
               onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
             >
               <TreeNode
-                level={item.level}
+                level={level}
                 isSelected={selectedKey === key}
                 isHighlighted={hoveredKey === key || dropTargetKey === key}
                 isExpanded={item.isExpanded}
@@ -590,8 +647,10 @@ export const NavigatorTree = () => {
                   },
                 }}
                 buttonProps={{
-                  onMouseEnter: () =>
-                    $hoveredInstanceSelector.set(item.selector),
+                  onMouseEnter: () => {
+                    $hoveredInstanceSelector.set(item.selector);
+                    $blockChildOutline.set(undefined);
+                  },
                   onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
                   onClick: () => selectInstance(item.selector),
                   onFocus: () => selectInstance(item.selector),

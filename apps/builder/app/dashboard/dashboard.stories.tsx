@@ -1,4 +1,5 @@
 import type { StoryFn } from "@storybook/react";
+import type { JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Dashboard } from "./dashboard";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
@@ -45,7 +46,6 @@ export const Empty: StoryFn<typeof Dashboard> = () => {
       projectTemplates={[]}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
-      imageBaseUrl=""
     />
   );
   return <RouterProvider router={router} />;
@@ -75,7 +75,6 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
       projectTemplates={projects}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
-      imageBaseUrl=""
     />
   );
   return <RouterProvider router={router} />;

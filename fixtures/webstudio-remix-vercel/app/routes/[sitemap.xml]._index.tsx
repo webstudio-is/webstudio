@@ -8,7 +8,7 @@ import {
   getRemixParams,
   getResources,
 } from "../__generated__/[sitemap.xml]._index.server";
-import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
+import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 
 const customFetch: typeof fetch = (input, init) => {
@@ -65,7 +65,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
       value={{
         imageLoader,
         assetBaseUrl,
-        imageBaseUrl,
         resources,
       }}
     >

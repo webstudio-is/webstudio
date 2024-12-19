@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-engine",
-  "version": "0.189.0",
+  "version": "0.0.0-webstudio-version",
   "description": "CSS Renderer for Webstudio",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -23,8 +23,7 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "typescript": "5.6.3",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   },
   "exports": {
     "webstudio": "./src/index.ts",

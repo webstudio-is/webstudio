@@ -1,7 +1,9 @@
 import {
   Fragment,
   type ForwardRefExoticComponent,
+  type JSX,
   type RefAttributes,
+  type RefObject,
 } from "react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
@@ -19,6 +21,7 @@ export const createInstanceElement = ({
   instanceSelector,
   Component,
   components,
+  ref,
 }: {
   instances: Instances;
   instanceId: Instance["id"];
@@ -27,6 +30,7 @@ export const createInstanceElement = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  ref?: RefObject<HTMLElement>;
 }) => {
   const instance = instances.get(instanceId);
   if (instance === undefined) {
@@ -34,6 +38,7 @@ export const createInstanceElement = ({
   }
   return (
     <Component
+      ref={ref}
       key={instance.id}
       instance={instance}
       instanceSelector={instanceSelector}
@@ -61,7 +66,7 @@ export const createInstanceChildrenElements = ({
 }: {
   instances: Instances;
   instanceSelector: InstanceSelector;
-  children: Instance["children"];
+  children: Instance["children"][0][];
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
@@ -83,6 +88,7 @@ export const createInstanceChildrenElements = ({
         components,
       });
     }
+
     child satisfies never;
   });
   // let empty children be coalesced with fallback

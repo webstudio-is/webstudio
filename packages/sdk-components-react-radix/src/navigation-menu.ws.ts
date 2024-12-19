@@ -313,7 +313,16 @@ export const metaNavigationMenu: WsComponentMeta = {
   description: "A collection of links for navigating websites.",
   icon: NavigationMenuIcon,
   presetStyle,
-
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "NavigationMenuList" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "NavigationMenuViewport" },
+    },
+  ],
   template: [
     {
       type: "instance",
@@ -428,10 +437,18 @@ export const metaNavigationMenu: WsComponentMeta = {
 
 export const metaNavigationMenuList: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: ListIcon,
-  requiredAncestors: ["NavigationMenu"],
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "NavigationMenu" },
+    },
+    {
+      relation: "child",
+      component: { $eq: "NavigationMenuItem" },
+    },
+  ],
   presetStyle,
   label: "Menu List",
 };
@@ -440,27 +457,36 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: ListItemIcon,
-  requiredAncestors: ["NavigationMenu"],
+  constraints: {
+    relation: "parent",
+    component: { $eq: "NavigationMenuList" },
+  },
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
   label: "Menu Item",
 };
+
 export const metaNavigationMenuTrigger: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   stylable: false,
   type: "container",
   icon: TriggerIcon,
-  requiredAncestors: ["NavigationMenuItem"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenuItem" },
+  },
   presetStyle,
   label: "Menu Trigger",
 };
+
 export const metaNavigationMenuContent: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: ContentIcon,
-  requiredAncestors: ["NavigationMenuItem"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenuItem" },
+  },
   indexWithinAncestor: "NavigationMenu",
   presetStyle,
   label: "Menu Content",
@@ -468,24 +494,31 @@ export const metaNavigationMenuContent: WsComponentMeta = {
 
 export const metaNavigationMenuLink: WsComponentMeta = {
   category: "hidden",
-  detachable: true,
   type: "container",
   stylable: false,
   icon: BoxIcon,
-  // https://github.com/webstudio-is/webstudio/issues/2193
-  // requiredAncestors: ["NavigationMenuContent", "NavigationMenuItem"],
-  // Temporary restrict to NavigationMenu
-  requiredAncestors: ["NavigationMenu"],
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "NavigationMenu" },
+    },
+    {
+      relation: "ancestor",
+      component: { $in: ["NavigationMenuContent", "NavigationMenuItem"] },
+    },
+  ],
   presetStyle,
   label: "Accessible Link Wrapper",
 };
 
 export const metaNavigationMenuViewport: WsComponentMeta = {
   category: "hidden",
-  detachable: true,
   type: "container",
   icon: ViewportIcon,
-  requiredAncestors: ["NavigationMenu"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "NavigationMenu" },
+  },
   presetStyle,
   label: "Menu Viewport",
 };

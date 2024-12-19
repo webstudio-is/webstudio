@@ -7,9 +7,11 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/sdk/testing";
+import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/template";
 import { parseCss } from "@webstudio-is/css-data";
+import { coreMetas } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
+import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
   Asset,
   Breakpoint,
@@ -30,11 +32,8 @@ import type {
 import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
-  computeInstancesConstraints,
-  findClosestDroppableComponentIndex,
   findClosestEditableInstanceSelector,
   insertTemplateData,
-  type InsertConstraints,
   deleteInstanceMutable,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
@@ -66,7 +65,9 @@ registerContainers();
 
 $pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
 
-const defaultMetasMap = new Map(Object.entries(defaultMetas));
+const defaultMetasMap = new Map(
+  Object.entries({ ...defaultMetas, ...coreMetas })
+);
 $registeredComponentMetas.set(defaultMetasMap);
 
 const createFragment = (
@@ -186,11 +187,6 @@ const createFontAsset = (id: string, family: string): Asset => {
   };
 };
 
-const emptyInsertConstraints: InsertConstraints = {
-  requiredAncestors: new Set(),
-  invalidAncestors: new Set(),
-};
-
 describe("find closest editable instance selector", () => {
   test("searches closest container", () => {
     const instances: Instances = toMap([
@@ -262,173 +258,6 @@ describe("find closest editable instance selector", () => {
         createFakeComponentMetas({})
       )
     ).toEqual(undefined);
-  });
-});
-
-describe("compute instances constraints", () => {
-  const base = {
-    type: "container",
-    label: "",
-    icon: "",
-  } as const;
-
-  test("combine required ancestors excluding already resolved ones", () => {
-    const metas = new Map<string, WsComponentMeta>([
-      ["Button", { ...base, requiredAncestors: ["Form"] }],
-      ["Checkbox", { ...base, requiredAncestors: ["Form", "Label"] }],
-      ["Label", { ...base, requiredAncestors: ["Body"] }],
-    ]);
-    // button
-    // label
-    //   checkbox
-    const instances = new Map<Instance["id"], Instance>([
-      createInstancePair("button", "Button", []),
-      createInstancePair("label", "Label", [{ type: "id", value: "checkbox" }]),
-      createInstancePair("checkbox", "Checkbox", []),
-    ]);
-    expect(
-      computeInstancesConstraints(metas, instances, ["button", "label"])
-    ).toEqual({
-      requiredAncestors: new Set(["Body", "Form"]),
-      invalidAncestors: new Set(),
-    });
-  });
-
-  test("combine invalid ancestors of all instances", () => {
-    const metas = new Map<string, WsComponentMeta>([
-      ["Button", { ...base, invalidAncestors: ["Button"] }],
-      ["Form", { ...base, invalidAncestors: ["Button", "Form"] }],
-    ]);
-    // form
-    //   button
-    const instances = new Map<Instance["id"], Instance>([
-      createInstancePair("form", "Form", [{ type: "id", value: "button" }]),
-      createInstancePair("button", "Button", []),
-    ]);
-    expect(computeInstancesConstraints(metas, instances, ["form"])).toEqual({
-      requiredAncestors: new Set(),
-      invalidAncestors: new Set(["Button", "Form"]),
-    });
-  });
-});
-
-describe("find closest droppable component index", () => {
-  test("finds container", () => {
-    expect(
-      findClosestDroppableComponentIndex({
-        metas: createFakeComponentMetas({}),
-        constraints: emptyInsertConstraints,
-        instances: new Map<Instance["id"], Instance>([
-          createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-          createInstancePair("box", "Box", []),
-        ]),
-        instanceSelector: ["box", "body"],
-      })
-    ).toEqual(0);
-  });
-
-  test("skips non containers", () => {
-    expect(
-      findClosestDroppableComponentIndex({
-        metas: createFakeComponentMetas({}),
-        constraints: emptyInsertConstraints,
-        instances: new Map<Instance["id"], Instance>([
-          createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-          createInstancePair("box", "Box", [{ type: "id", value: "text" }]),
-          createInstancePair("text", "Text", [{ type: "id", value: "italic" }]),
-          createInstancePair("italic", "Italic", [
-            { type: "id", value: "bold" },
-          ]),
-          createInstancePair("bold", "Bold", []),
-        ]),
-        instanceSelector: ["bold", "italic", "text", "box", "body"],
-      })
-    ).toEqual(2);
-  });
-
-  test("considers invalid ancestors", () => {
-    expect(
-      findClosestDroppableComponentIndex({
-        metas: createFakeComponentMetas({}),
-        constraints: {
-          requiredAncestors: new Set(),
-          invalidAncestors: new Set(["Item"]),
-        },
-        instances: new Map<Instance["id"], Instance>([
-          createInstancePair("body", "Body", [{ type: "id", value: "item" }]),
-          createInstancePair("item", "Item", [{ type: "id", value: "box" }]),
-          createInstancePair("box", "Box", []),
-        ]),
-        instanceSelector: ["box", "item", "body"],
-      })
-    ).toEqual(2);
-  });
-
-  test("requires some ancestor", () => {
-    expect(
-      findClosestDroppableComponentIndex({
-        metas: createFakeComponentMetas({}),
-        constraints: {
-          requiredAncestors: new Set(["Form"]),
-          invalidAncestors: new Set(),
-        },
-        instances: new Map<Instance["id"], Instance>([
-          createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-          createInstancePair("box", "Box", []),
-        ]),
-        instanceSelector: ["box", "body"],
-      })
-    ).toEqual(-1);
-    expect(
-      findClosestDroppableComponentIndex({
-        metas: createFakeComponentMetas({}),
-        constraints: {
-          requiredAncestors: new Set(["Form"]),
-          invalidAncestors: new Set(),
-        },
-        instances: new Map<Instance["id"], Instance>([
-          createInstancePair("body", "Body", [{ type: "id", value: "form" }]),
-          createInstancePair("form", "Form", [{ type: "id", value: "box" }]),
-          createInstancePair("box", "Box", []),
-        ]),
-        instanceSelector: ["box", "form", "body"],
-      })
-    ).toEqual(0);
-  });
-
-  test("considers both required and invalid ancestors", () => {
-    expect(
-      findClosestDroppableComponentIndex({
-        metas: createFakeComponentMetas({}),
-        constraints: {
-          requiredAncestors: new Set(["Form"]),
-          invalidAncestors: new Set(["Box"]),
-        },
-        instances: new Map<Instance["id"], Instance>([
-          createInstancePair("body", "Body", [{ type: "id", value: "form" }]),
-          createInstancePair("form", "Form", [{ type: "id", value: "box" }]),
-          createInstancePair("box", "Box", [{ type: "id", value: "div" }]),
-          createInstancePair("div", "Div", []),
-        ]),
-        instanceSelector: ["div", "box", "form", "body"],
-      })
-    ).toEqual(2);
-    expect(
-      findClosestDroppableComponentIndex({
-        metas: createFakeComponentMetas({}),
-        constraints: {
-          requiredAncestors: new Set(["Form"]),
-          invalidAncestors: new Set(["Box"]),
-        },
-        instances: new Map<Instance["id"], Instance>([
-          createInstancePair("body", "Body", [{ type: "id", value: "form" }]),
-          createInstancePair("form", "Form", [{ type: "id", value: "box" }]),
-          createInstancePair("box", "Box", [{ type: "id", value: "div" }]),
-          createInstancePair("div", "Div", []),
-        ]),
-        instanceSelector: ["div", "form", "box", "body"],
-      })
-    ).toEqual(-1);
   });
 });
 
@@ -1016,6 +845,36 @@ describe("reparent instance", () => {
       ])
     );
   });
+
+  test("reparent required child", () => {
+    $instances.set(
+      renderJsx(
+        <$.Body ws:id="body">
+          <$.Tooltip ws:id="tooltip">
+            <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
+            <$.TooltipContent ws:id="content"></$.TooltipContent>
+          </$.Tooltip>
+        </$.Body>
+      ).instances
+    );
+    $registeredComponentMetas.set(
+      new Map(Object.entries({ ...defaultMetas, ...radixMetas }))
+    );
+    reparentInstance(["trigger", "tooltip", "body"], {
+      parentSelector: ["tooltip", "body"],
+      position: "end",
+    });
+    expect($instances.get()).toEqual(
+      renderJsx(
+        <$.Body ws:id="body">
+          <$.Tooltip ws:id="tooltip">
+            <$.TooltipContent ws:id="content"></$.TooltipContent>
+            <$.TooltipTrigger ws:id={expect.any(String)}></$.TooltipTrigger>
+          </$.Tooltip>
+        </$.Body>
+      ).instances
+    );
+  });
 });
 
 const getWebstudioDataStub = (
@@ -1056,24 +915,6 @@ describe("delete instance", () => {
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
         createInstancePair("box2", "Box", []),
-      ])
-    );
-  });
-
-  test("prevent deleting root instance", () => {
-    // body
-    //   box1
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
-      createInstancePair("box1", "Box", []),
-    ]);
-    $registeredComponentMetas.set(createFakeComponentMetas({}));
-    const data = getWebstudioDataStub({ instances });
-    deleteInstanceMutable(data, ["body"]);
-    expect(data.instances).toEqual(
-      new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
-        createInstancePair("box1", "Box", []),
       ])
     );
   });
@@ -3228,7 +3069,7 @@ describe("find closest insertable", () => {
     $instances.set(instances);
     selectInstance(["boldId", "paragraphId", "bodyId"]);
     expect(findClosestInsertable(newBoxFragment)).toEqual({
-      parentSelector: ["paragraphId", "bodyId"],
+      parentSelector: ["bodyId"],
       position: 1,
     });
   });

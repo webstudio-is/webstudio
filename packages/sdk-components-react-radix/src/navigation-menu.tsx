@@ -2,7 +2,6 @@ import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import {
   getClosestInstance,
   getIndexWithinAncestorFromComponentProps,
-  getInstanceSelectorById,
   ReactSdkContext,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
@@ -90,14 +89,8 @@ export const hooksNavigationMenu: Hook = {
           instance,
           `${namespace}:NavigationMenu`
         );
-
         if (menu) {
-          const menuSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            menu.id
-          );
-
-          context.setMemoryProp(menuSelector, "value", undefined);
+          context.setMemoryProp(menu, "value", undefined);
         }
       }
     }
@@ -110,28 +103,19 @@ export const hooksNavigationMenu: Hook = {
           instance,
           `${namespace}:NavigationMenu`
         );
-
         const menuItem = getClosestInstance(
           event.instancePath,
           instance,
           `${namespace}:NavigationMenuItem`
         );
-
         if (menuItem === undefined || menu === undefined) {
           return;
         }
-
         const contentValue =
-          context.getPropValue(menuItem.id, "value") ??
+          context.getPropValue(menuItem, "value") ??
           context.indexesWithinAncestors.get(menuItem.id)?.toString();
-
         if (contentValue) {
-          const menuSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            menu.id
-          );
-
-          context.setMemoryProp(menuSelector, "value", contentValue);
+          context.setMemoryProp(menu, "value", contentValue);
         }
       }
     }

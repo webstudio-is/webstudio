@@ -58,3 +58,40 @@ jobs:
             name: tag_name,
             body: changelog,
           })
+
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }} # tag name
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - id: version
+        run: echo "value=$(echo ${{ github.ref }} | sed 's/refs\/tags\///')" >> $GITHUB_OUTPUT
+      - name: bump version to ${{ steps.version.outputs.value }}
+        run: |
+          pnpx replace-in-files-cli \
+            --string="0.0.0-webstudio-version" \
+            --replacement="${{ steps.version.outputs.value }}" \
+            "**/package.json"
+
+      - name: pnpm instal
+        run: pnpm install --ignore-scripts
+      - run: pnpm --filter="webstudio..." build
+      - run: pnpm --filter="webstudio..." dts
+
+      - name: Creating .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: pnpm -r publish --access public --no-git-checks

@@ -86,6 +86,10 @@ export const metaRadioGroup: WsComponentMeta = {
   category: "radix",
   order: 100,
   type: "container",
+  constraints: {
+    relation: "descendant",
+    component: { $eq: "RadioGroupItem" },
+  },
   description:
     "A set of checkable buttons—known as radio buttons—where no more than one of the buttons can be checked at a time.",
   icon: RadioCheckedIcon,
@@ -144,7 +148,16 @@ export const metaRadioGroup: WsComponentMeta = {
 export const metaRadioGroupItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  requiredAncestors: ["RadioGroup"],
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "RadioGroup" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "RadioGroupIndicator" },
+    },
+  ],
   icon: ItemIcon,
   states: defaultStates,
   presetStyle: {
@@ -155,8 +168,11 @@ export const metaRadioGroupItem: WsComponentMeta = {
 export const metaRadioGroupIndicator: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  detachable: false,
   icon: TriggerIcon,
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "RadioGroupItem" },
+  },
   states: defaultStates,
   presetStyle: {
     span,

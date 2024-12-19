@@ -6,6 +6,10 @@ type Props = Omit<ComponentProps<"a">, "target" | "download"> & {
   // override (string & {}) in target to generate keywords
   target?: "_self" | "_blank" | "_parent" | "_top";
   download?: boolean;
+  prefetch?: "none" | "intent" | "render" | "viewport";
+  preventScrollReset?: boolean;
+  reloadDocument?: boolean;
+  replace?: boolean;
 };
 
 export const Link = forwardRef<

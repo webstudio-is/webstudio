@@ -1,6 +1,6 @@
 import { arrayBuffer } from "node:stream/consumers";
 import type { SignatureV4 } from "@smithy/signature-v4";
-import { getAssetData } from "../../utils/get-asset-data";
+import { type AssetData, getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
 import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
 
@@ -22,7 +22,7 @@ export const uploadToS3 = async ({
   endpoint: string;
   bucket: string;
   acl?: string;
-}) => {
+}): Promise<AssetData> => {
   const limitSize = createSizeLimiter(maxSize, name);
 
   // @todo this is going to put the entire file in memory

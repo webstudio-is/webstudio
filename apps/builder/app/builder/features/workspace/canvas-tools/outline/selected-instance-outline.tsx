@@ -5,12 +5,19 @@ import {
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
-import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
+import { type InstanceSelector } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
-import { $scale } from "~/builder/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 import { $ephemeralStyles } from "~/canvas/stores";
+
+const isDescendantOrSelf = (
+  descendant: InstanceSelector,
+  self: InstanceSelector
+) => {
+  return descendant.join(",").endsWith(self.join(","));
+};
 
 export const SelectedInstanceOutline = () => {
   const instances = useStore($instances);
@@ -19,18 +26,26 @@ export const SelectedInstanceOutline = () => {
   const outline = useStore($selectedInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const ephemeralStyles = useStore($ephemeralStyles);
+  const clampingRect = useStore($clampingRect);
+
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+
+  if (clampingRect === undefined) {
+    return;
+  }
 
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
-    areInstanceSelectorsEqual(
-      textEditingInstanceSelector.selector,
-      selectedInstanceSelector
+    isDescendantOrSelf(
+      selectedInstanceSelector,
+      textEditingInstanceSelector.selector
     );
 
   if (
     isEditingCurrentInstance ||
     outline === undefined ||
-    selectedInstanceSelector === undefined ||
     ephemeralStyles.length !== 0
   ) {
     return;
@@ -41,5 +56,5 @@ export const SelectedInstanceOutline = () => {
     : "default";
   const rect = applyScale(outline.rect, scale);
 
-  return <Outline rect={rect} variant={variant} />;
+  return <Outline rect={rect} clampingRect={clampingRect} variant={variant} />;
 };

@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { shallowEqual } from "shallow-equal";
 
+export type Modifiers = {
+  altKey: boolean;
+  shiftKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+};
+
 // Used for combined mouse and keyboard interactions, like scrubbing while holding ALT.
 // If it's just a keyboard interaction, you should already have a keyboard event at hand.
 export const useModifierKeys = () => {

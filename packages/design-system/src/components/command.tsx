@@ -37,10 +37,10 @@ const inputBorderBottomSize = "--command-input-border-bottom-width";
 const StyledCommand = styled(CommandPrimitive, {
   boxSizing: "border-box",
   width: panelWidth,
-  borderRadius: theme.borderRadius[4],
   boxShadow: theme.shadows.menuDropShadow,
   backgroundColor: theme.colors.backgroundControls,
   border: `1px solid ${theme.colors.borderMain}`,
+  borderRadius: theme.borderRadius[7],
   // clip selected item background
   overflow: "clip",
   // remove input border bottom when no command matches
@@ -101,7 +101,7 @@ export const Command = (props: CommandProps) => {
 
 const CommandDialogContent = styled(DialogContent, {
   position: "absolute",
-  top: 140,
+  top: "20%",
   left: `calc(50% - ${panelWidth} / 2)`,
   width: panelWidth,
 });
@@ -129,7 +129,7 @@ export const CommandDialog = ({
 const CommandInputContainer = styled("div", {
   display: "grid",
   gridTemplateColumns: `${itemHeight} 1fr max-content`,
-  height: itemHeight,
+  height: theme.spacing[15],
   borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
 });
 
@@ -149,6 +149,7 @@ const CommandInputField = styled(CommandPrimitive.Input, {
   paddingRight: theme.spacing[2],
   color: theme.colors.foregroundMain,
   ...textVariants.regular,
+  lineHeight: 1,
   "&::placeholder": {
     color: theme.colors.foregroundSubtle,
   },
@@ -157,19 +158,31 @@ const CommandInputField = styled(CommandPrimitive.Input, {
 export const CommandInput = (
   props: ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 ) => {
+  const inputRef = useRef<HTMLInputElement>(null);
   const action = useSelectedAction();
   return (
     <CommandInputContainer>
       <CommandInputIcon />
       <CommandInputField
+        ref={inputRef}
         autoFocus={true}
         placeholder="Type a command or search..."
         {...props}
+        onValueChange={(value) => {
+          // reset scroll whenever search is changed
+          requestAnimationFrame(() => {
+            inputRef.current
+              ?.closest("[cmdk-root]")
+              ?.querySelector("[data-radix-scroll-area-viewport]")
+              ?.scrollTo(0, 0);
+          });
+          props.onValueChange?.(value);
+        }}
       />
       <Text
         variant="labelsTitleCase"
         color="moreSubtle"
-        css={{ alignSelf: "center", paddingInline: 8 }}
+        css={{ alignSelf: "center", paddingInline: theme.spacing[5] }}
       >
         {action} <Kbd value={["enter"]} color="moreSubtle" />
       </Text>
@@ -242,7 +255,7 @@ export const CommandFooter = () => {
     <Flex
       justify="end"
       align="center"
-      css={{ height: itemHeight, paddingInline: 4 }}
+      css={{ height: itemHeight, paddingInline: theme.spacing[3] }}
       ref={actionsRef}
     >
       <Popover open={isActionOpen} onOpenChange={setIsActionOpen}>
@@ -325,9 +338,9 @@ export const CommandGroupHeading = styled("div", {
   ...textVariants.titles,
   color: theme.colors.foregroundMoreSubtle,
   display: "flex",
-  gap: 8,
+  gap: theme.spacing[5],
   alignItems: "center",
-  paddingInline: 8,
+  paddingInline: theme.spacing[5],
   height: itemHeight,
 });
 
@@ -336,15 +349,15 @@ export const CommandItem = styled(CommandPrimitive.Item, {
   gridTemplateColumns: `1fr max-content`,
   alignItems: "center",
   minHeight: itemHeight,
-  paddingInline: 16,
+  paddingInline: theme.spacing[9],
   "&[aria-selected=true]": {
     backgroundColor: theme.colors.backgroundHover,
   },
 });
 
 export const CommandIcon = styled("div", {
-  width: 16,
-  height: 16,
+  width: theme.spacing[9],
+  height: theme.spacing[9],
   placeSelf: "center",
   color: theme.colors.foregroundSubtle,
 });

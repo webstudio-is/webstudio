@@ -75,7 +75,7 @@ const MenuTriggerGradient = styled(Box, {
   position: "absolute",
   top: 0,
   right: 0,
-  width: theme.spacing[11],
+  width: theme.sizes.controlHeight,
   height: "100%",
   visibility,
   background: `var(${menuTriggerGradientVar})`,
@@ -109,7 +109,7 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-export type ItemSource = "token" | "componentToken" | "tag" | "local";
+export type ItemSource = "token" | "tag" | "local";
 
 type EditableTextProps = {
   value: string;
@@ -173,11 +173,6 @@ const StyleSourceContainer = styled(Box, {
         [menuTriggerGradientVar]:
           theme.colors.backgroundStyleSourceGradientToken,
       },
-      componentToken: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
-        [menuTriggerGradientVar]:
-          theme.colors.backgroundStyleSourceGradientToken,
-      },
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,
         [menuTriggerGradientVar]: theme.colors.backgroundStyleSourceGradientTag,
@@ -237,9 +232,6 @@ const StyleSourceState = styled(Text, {
         backgroundColor: theme.colors.backgroundStyleSourceLocal,
       },
       token: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
-      },
-      componentToken: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
       },
       tag: {

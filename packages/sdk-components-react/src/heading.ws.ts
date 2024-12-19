@@ -27,7 +27,10 @@ export const meta: WsComponentMeta = {
   description:
     "Use HTML headings to structure and organize content. Use the Tag property in settings to change the heading level (h1-h6).",
   icon: HeadingIcon,
-  invalidAncestors: ["Heading"],
+  constraints: {
+    relation: "ancestor",
+    component: { $neq: "Heading" },
+  },
   states: defaultStates,
   presetStyle,
   order: 1,

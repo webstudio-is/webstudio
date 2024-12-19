@@ -32,7 +32,6 @@ const App = (props: {
     <ReactSdkContext.Provider
       value={{
         assetBaseUrl: "",
-        imageBaseUrl: "",
         imageLoader: () => "",
         renderer: props.renderer,
         resources: {},
@@ -279,7 +278,6 @@ describe("Builder renderer= canvas | preview", () => {
         <ReactSdkContext.Provider
           value={{
             assetBaseUrl: "",
-            imageBaseUrl: "",
             imageLoader: () => "",
             renderer: "canvas",
             resources: {},

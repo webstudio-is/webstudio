@@ -45,7 +45,10 @@ export const meta: WsComponentMeta = {
   description:
     "Use this component when you want to display code as text on the page.",
   icon: CodeTextIcon,
-  invalidAncestors: ["CodeText"],
+  constraints: {
+    relation: "ancestor",
+    component: { $neq: "CodeText" },
+  },
   states: defaultStates,
   presetStyle,
   order: 9,

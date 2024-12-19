@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { test, expect, describe, beforeEach } from "vitest";
 import { nanoid } from "nanoid";
 import {
@@ -9,8 +10,8 @@ import {
   type WebstudioFragment,
   type Instance,
 } from "@webstudio-is/sdk";
-import { $, renderJsx } from "@webstudio-is/sdk/testing";
-import * as defaultMetas from "@webstudio-is/sdk-components-react-remix/metas";
+import { $, renderJsx } from "@webstudio-is/template";
+import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__ } from "./plugin-webflow";
 import {
   $breakpoints,

@@ -10,13 +10,16 @@ import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useSetCanvasWidth } from "../breakpoints";
 import { selectInstance } from "~/shared/awareness";
+import { ResizeHandles } from "./canvas-tools/resize-handles";
+import { MediaBadge } from "./canvas-tools/media-badge";
 
 const workspaceStyle = css({
   flexGrow: 1,
   background: theme.colors.backgroundCanvas,
   position: "relative",
   // Prevent scrollIntoView from scrolling the whole page
-  overflow: "clip",
+  // Commented to see what it will break
+  // overflow: "clip",
 });
 
 const canvasContainerStyle = css({
@@ -82,7 +85,6 @@ const useOutlineStyle = () => {
 
   return {
     ...style,
-    pointerEvents: "none",
     width:
       canvasWidth === undefined ? "100%" : (canvasWidth ?? 0) * (scale / 100),
   } as const;
@@ -90,36 +92,54 @@ const useOutlineStyle = () => {
 
 type WorkspaceProps = {
   children: ReactNode;
-  onTransitionEnd: () => void;
 };
 
-export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
+export const Workspace = ({ children }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle();
-  const outlineStyle = useOutlineStyle();
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
     selectInstance(undefined);
     $textEditingInstanceSelector.set(undefined);
   };
+  const outlineStyle = useOutlineStyle();
 
   return (
-    <div
-      className={workspaceStyle()}
-      onClick={handleWorkspaceClick}
-      ref={workspaceRef}
-    >
+    <>
       <div
-        className={canvasContainerStyle()}
-        style={canvasStyle}
-        onTransitionEnd={onTransitionEnd}
+        className={workspaceStyle()}
+        onClick={handleWorkspaceClick}
+        ref={workspaceRef}
       >
-        {children}
+        <div className={canvasContainerStyle()} style={canvasStyle}>
+          {children}
+        </div>
+        <div
+          data-name="canvas-tools-wrapper"
+          className={canvasContainerStyle({ css: { pointerEvents: "none" } })}
+          style={outlineStyle}
+        >
+          <MediaBadge />
+          <ResizeHandles />
+        </div>
       </div>
-      <div className={canvasContainerStyle()} style={outlineStyle}>
+    </>
+  );
+};
+
+export const CanvasToolsContainer = () => {
+  const outlineStyle = useOutlineStyle();
+
+  return (
+    <>
+      <div
+        data-name="canvas-tools-wrapper"
+        className={canvasContainerStyle()}
+        style={outlineStyle}
+      >
         <CanvasTools />
       </div>
       <Toaster />
-    </div>
+    </>
   );
 };

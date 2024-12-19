@@ -35,7 +35,11 @@ import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
 import { toPascalCase } from "../shared/keyword-utils";
 import type { StyleUpdateOptions } from "../shared/use-style-data";
-import { CssFragmentEditor, parseCssFragment } from "./css-fragment";
+import {
+  CssFragmentEditor,
+  CssFragmentEditorContent,
+  parseCssFragment,
+} from "./css-fragment";
 import { PropertyInlineLabel } from "../property-label";
 import { styleConfigByName } from "./configs";
 import { ColorPicker } from "./color-picker";
@@ -336,6 +340,9 @@ export const ShadowContent = ({
               handlePropertyChange({ color: styleValue })
             }
             onAbort={() => handlePropertyChange({ color: colorControlProp })}
+            onReset={() => {
+              handlePropertyChange({ color: undefined });
+            }}
           />
         </Flex>
 
@@ -404,17 +411,15 @@ export const ShadowContent = ({
               </Flex>
             </Label>
             <CssFragmentEditor
-              invalid={intermediateValue?.type === "invalid"}
-              autoFocus={layer.type === "var"}
-              value={intermediateValue?.value ?? propertyValue ?? ""}
-              onChange={handleChange}
-              onBlur={handleComplete}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  handleComplete();
-                  event.preventDefault();
-                }
-              }}
+              content={
+                <CssFragmentEditorContent
+                  invalid={intermediateValue?.type === "invalid"}
+                  autoFocus={layer.type === "var"}
+                  value={intermediateValue?.value ?? propertyValue ?? ""}
+                  onChange={handleChange}
+                  onChangeComplete={handleComplete}
+                />
+              }
             />
           </Flex>
         </>

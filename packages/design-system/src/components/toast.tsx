@@ -128,6 +128,7 @@ const InternalToast = ({
         css={{
           display: "grid",
           gridTemplateColumns: "8px 1fr",
+          pointerEvents: "all",
         }}
       >
         <Box

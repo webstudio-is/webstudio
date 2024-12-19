@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { renderJsx, $ } from "./jsx";
+import { renderJsx, $ } from "@webstudio-is/template";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
 import {

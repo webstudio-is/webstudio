@@ -18,7 +18,10 @@ export const meta: WsComponentMeta = {
   type: "container",
   description: "A container for multi-line text.",
   icon: TextAlignLeftIcon,
-  invalidAncestors: ["Paragraph"],
+  constraints: {
+    relation: "ancestor",
+    component: { $neq: "Paragraph" },
+  },
   states: defaultStates,
   presetStyle,
   order: 2,

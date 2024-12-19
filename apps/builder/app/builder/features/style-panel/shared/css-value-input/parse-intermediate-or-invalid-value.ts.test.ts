@@ -638,3 +638,16 @@ test("parse z-index", () => {
     unit: "number",
   });
 });
+
+test("parse color", () => {
+  expect(
+    parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "linear-gradient(red, blue)",
+      unit: undefined,
+    })
+  ).toEqual({
+    type: "invalid",
+    value: "linear-gradient(red, blue)",
+  });
+});

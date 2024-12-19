@@ -4,6 +4,7 @@ import {
   useLayoutEffect,
   useCallback,
   useRef,
+  type JSX,
 } from "react";
 import {
   KEY_ENTER_COMMAND,
@@ -33,6 +34,9 @@ import {
   type LexicalEditor,
   type SerializedEditorState,
   $createTextNode,
+  KEY_DOWN_COMMAND,
+  COMMAND_PRIORITY_NORMAL,
+  type NodeKey,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -41,10 +45,15 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+
 import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
+import {
+  collapsedAttribute,
+  idAttribute,
+  selectorIdAttribute,
+} from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
@@ -52,7 +61,11 @@ import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
+  $blockChildOutline,
+  $hoveredInstanceOutline,
+  $hoveredInstanceSelector,
   $registeredComponentMetas,
+  $selectedInstanceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -61,11 +74,22 @@ import {
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
 import { setDataCollapsed } from "~/canvas/collapsed";
-import { $selectedPage, selectInstance } from "~/shared/awareness";
-// import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+import {
+  $selectedPage,
+  addTemporaryInstance,
+  selectInstance,
+} from "~/shared/awareness";
+import { shallowEqual } from "shallow-equal";
 
-const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
+const BindInstanceToNodePlugin = ({
+  refs,
+  rootInstanceSelector,
+}: {
+  refs: Refs;
+  rootInstanceSelector: InstanceSelector;
+}) => {
   const [editor] = useLexicalComposerContext();
+
   useEffect(() => {
     for (const [nodeKey, instanceId] of refs) {
       // extract key from stored key:style format
@@ -73,9 +97,16 @@ const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
       const element = editor.getElementByKey(key);
       if (element) {
         element.setAttribute(idAttribute, instanceId);
+        // We set id + root selector here, for simplicity
+        // This solves hover behavior during mouseMove for editable child outline
+        // @todo: A normal selector must be used, but it would require significantly more code to detect the tree structure.
+        element.setAttribute(
+          selectorIdAttribute,
+          [instanceId, ...rootInstanceSelector].join(",")
+        );
       }
     }
-  }, [editor, refs]);
+  }, [editor, refs, rootInstanceSelector]);
   return null;
 };
 
@@ -148,6 +179,110 @@ const OnChangeOnBlurPlugin = ({
       prevRootElement?.removeEventListener("blur", handleBlur);
     });
   }, [editor, handleChange]);
+
+  return null;
+};
+
+const getNodeKeyFromDOMNode = (
+  dom: Node,
+  editor: LexicalEditor
+): NodeKey | undefined => {
+  const prop = `__lexicalKey_${editor._key}`;
+  return (dom as Node & Record<typeof prop, NodeKey | undefined>)[prop];
+};
+
+const LinkSelectionPlugin = ({
+  rootInstanceSelector,
+  registerNewLink,
+}: {
+  rootInstanceSelector: InstanceSelector;
+  registerNewLink: (key: NodeKey, instanceId: string) => void;
+}) => {
+  const [editor] = useLexicalComposerContext();
+  const [preservedSelection] = useState($selectedInstanceSelector.get());
+
+  useEffect(() => {
+    if (!editor.isEditable()) {
+      return;
+    }
+
+    const removeUpdateListener = editor.registerUpdateListener(
+      ({ editorState }) => {
+        editorState.read(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return false;
+          }
+          const key = selection.anchor.getNode().getKey();
+
+          const elt = editor.getElementByKey(key);
+          let link = elt?.closest(`a[${selectorIdAttribute}]`);
+          const newLink = elt?.closest(`a`);
+
+          while (newLink != null && link == null) {
+            // new link detected
+
+            // https://github.com/facebook/lexical/blob/b7fa4cf673869dac0c2e0c1fe667e71e72ff6adb/packages/lexical/src/LexicalUtils.ts#L465
+            const key = getNodeKeyFromDOMNode(newLink, editor);
+            if (key === undefined) {
+              console.error("Key not found for node", newLink);
+              break;
+            }
+
+            // Register new link
+            const instanceId = nanoid();
+
+            newLink.setAttribute(idAttribute, instanceId);
+            // We set id + root selector here, for simplicity
+            // This solves hover behavior during mouseMove for editable child outline
+            // @todo: A normal selector must be used, but it would require significantly more code to detect the tree structure.
+            newLink.setAttribute(
+              selectorIdAttribute,
+              [instanceId, ...rootInstanceSelector].join(",")
+            );
+
+            registerNewLink(key, instanceId);
+
+            link = newLink;
+
+            break;
+          }
+
+          if (link == null) {
+            if (
+              shallowEqual(preservedSelection, $selectedInstanceSelector.get())
+            ) {
+              return false;
+            }
+
+            selectInstance(preservedSelection);
+
+            return false;
+          }
+
+          const selectorAttribute = link
+            .getAttribute(selectorIdAttribute)
+            ?.split(",");
+
+          if (selectorAttribute === undefined) {
+            return false;
+          }
+
+          if (
+            shallowEqual(selectorAttribute, $selectedInstanceSelector.get())
+          ) {
+            return false;
+          }
+
+          selectInstance(selectorAttribute);
+        });
+      }
+    );
+
+    return () => {
+      removeUpdateListener();
+    };
+  }, [editor, preservedSelection, registerNewLink, rootInstanceSelector]);
 
   return null;
 };
@@ -314,9 +449,7 @@ const caretFromPoint = (
       node: range.startContainer,
       offset: range.startOffset,
     };
-    // @ts-expect-error no types
-  } else if (document.caretPositionFromPoint !== "undefined") {
-    // @ts-expect-error no types
+  } else if (typeof document.caretPositionFromPoint !== "undefined") {
     const range = document.caretPositionFromPoint(x, y);
     if (range === null) {
       return null;
@@ -414,6 +547,7 @@ const InitCursorPlugin = () => {
             }
             const normalizedSelection =
               $normalizeSelection__EXPERIMENTAL(selection);
+
             $setSelection(normalizedSelection);
             return;
           }
@@ -828,6 +962,32 @@ const LinkSanitizePlugin = (): null => {
   return null;
 };
 
+const AnyKeyDownPlugin = ({
+  onKeyDown,
+}: {
+  onKeyDown: (event: KeyboardEvent) => void;
+}) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        onKeyDown(event);
+        return false;
+      },
+      COMMAND_PRIORITY_NORMAL
+    );
+  }, [editor, onKeyDown]);
+
+  return null;
+};
+
 export const TextEditor = ({
   rootInstanceSelector,
   instances,
@@ -840,6 +1000,7 @@ export const TextEditor = ({
   const [paragraphClassName] = useState(() => `a${nanoid()}`);
   const [italicClassName] = useState(() => `a${nanoid()}`);
   const lastSavedStateJsonRef = useRef<SerializedEditorState | null>(null);
+  const [newLinkKeyToInstanceId] = useState(() => new Map());
 
   const handleChange = useEffectEvent((editorState: EditorState) => {
     editorState.read(() => {
@@ -851,7 +1012,10 @@ export const TextEditor = ({
           return;
         }
 
-        onChange($convertToUpdates(treeRootInstance, refs));
+        onChange(
+          $convertToUpdates(treeRootInstance, refs, newLinkKeyToInstanceId)
+        );
+        newLinkKeyToInstanceId.clear();
         lastSavedStateJsonRef.current = jsonState;
       }
 
@@ -980,16 +1144,40 @@ export const TextEditor = ({
         handleChange(state);
 
         $textEditingInstanceSelector.set({
-          selector: editableInstanceSelectors[nextIndex],
+          selector: nextSelector,
           ...args,
         });
 
-        selectInstance(editableInstanceSelectors[nextIndex]);
+        selectInstance(nextSelector);
 
         break;
       }
     },
     [handleChange, instances, rootInstanceSelector]
+  );
+
+  const handleAnyKeydown = useCallback((event: KeyboardEvent) => {
+    // Skip alt as Block outline depends on Alt key press
+    if (event.key === "Alt") {
+      return;
+    }
+
+    $blockChildOutline.set(undefined);
+    $hoveredInstanceOutline.set(undefined);
+    $hoveredInstanceSelector.set(undefined);
+  }, []);
+
+  const registerNewLink = useCallback(
+    (key: NodeKey, instanceId: string) => {
+      newLinkKeyToInstanceId.set(key, instanceId);
+      addTemporaryInstance({
+        id: instanceId,
+        component: "RichTextLink",
+        type: "instance",
+        children: [],
+      });
+    },
+    [newLinkKeyToInstanceId]
   );
 
   return (
@@ -1004,19 +1192,28 @@ export const TextEditor = ({
           }
         }}
       />
-      <BindInstanceToNodePlugin refs={refs} />
+      <BindInstanceToNodePlugin
+        refs={refs}
+        rootInstanceSelector={rootInstanceSelector}
+      />
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
         placeholder={<></>}
       />
       <LinkPlugin />
+
       <LinkSanitizePlugin />
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
+      <LinkSelectionPlugin
+        rootInstanceSelector={rootInstanceSelector}
+        registerNewLink={registerNewLink}
+      />
+      <AnyKeyDownPlugin onKeyDown={handleAnyKeydown} />
       <InitialJSONStatePlugin
         onInitialState={(json) => {
           lastSavedStateJsonRef.current = json;

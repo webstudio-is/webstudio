@@ -6,7 +6,7 @@ type CommandButtonProps = ComponentProps<typeof Button>;
 
 const RoundedButton = styled(Button, {
   borderRadius: theme.borderRadius["pill"],
-  width: "min-content",
+  aspectRatio: "1",
 });
 
 export const CommandBarButton = forwardRef(

@@ -19,7 +19,6 @@ import type { Style } from "@webstudio-is/css-engine";
 import type { Project } from "@webstudio-is/project";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
-import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { HtmlTags } from "html-tags";
@@ -34,10 +33,6 @@ import type { UserPlanFeatures } from "../db/user-plan-features.server";
 export const $project = atom<Project | undefined>();
 
 export const $publisherHost = atom<string>("wstd.work");
-
-export const $imageLoader = atom<ImageLoader>(
-  createImageLoader({ imageBaseUrl: "" })
-);
 
 export const $publishedOrigin = computed(
   [$project, $publisherHost],
@@ -331,6 +326,7 @@ export const $authPermit = atom<AuthPermit>("view");
 export const $authTokenPermissions = atom<TokenPermissions>({
   canClone: true,
   canCopy: true,
+  canPublish: false,
 });
 
 export const $authToken = atom<string | undefined>(undefined);
@@ -352,43 +348,50 @@ export const $isDesignModeAllowed = computed([$authPermit], (authPermit) => {
   return authPermit !== "edit";
 });
 
-let previousBuilderMode: BuilderMode | undefined = undefined;
+let lastEditableBuilderMode: Exclude<BuilderMode, "preview"> | undefined =
+  undefined;
 
+const getNextEditableMode = (): "design" | "content" => {
+  if (lastEditableBuilderMode === undefined) {
+    if ($isDesignModeAllowed.get()) {
+      return "design";
+    }
+
+    return "content";
+  }
+  return lastEditableBuilderMode;
+};
+
+/**
+ * - preview, preview -> 'last known editable mode i.e. design or content' ?? 'default editable mode'
+ * - preview, design -> design
+ * - preview, content -> content
+ *
+ * - design, design -> preview
+ * - design, preview -> preview
+ * - design, content -> content
+ *
+ * - content, content -> preview
+ * - content, preview -> preview
+ * - content, design -> design
+ */
 export const toggleBuilderMode = (mode: BuilderMode) => {
   const currentMode = $builderMode.get();
 
   if (currentMode === mode) {
-    if (previousBuilderMode !== undefined) {
-      setBuilderMode(previousBuilderMode);
-      previousBuilderMode = currentMode;
+    if (mode === "preview") {
+      setBuilderMode(getNextEditableMode());
       return;
     }
 
-    // Switch back
-    const availableModes: BuilderMode[] = [];
-    if ($isDesignModeAllowed.get() && currentMode !== "design") {
-      availableModes.push("design");
-    }
-    if ($isContentModeAllowed.get() && currentMode !== "content") {
-      availableModes.push("content");
-    }
-    if (currentMode !== "preview") {
-      availableModes.push("preview");
-    }
-
-    setBuilderMode(availableModes[0] ?? "preview");
-
-    previousBuilderMode = currentMode;
+    setBuilderMode("preview");
     return;
   }
 
-  previousBuilderMode = currentMode;
   setBuilderMode(mode);
 };
 
 export const setBuilderMode = (mode: BuilderMode | null) => {
-  const authPermit = $authPermit.get();
-
   if (mode === "content" && !$isContentModeAllowed.get()) {
     // This is content link from a non pro user, we don't allow content mode for such links
     toast.info(
@@ -403,11 +406,7 @@ export const setBuilderMode = (mode: BuilderMode | null) => {
     toast.info("Design mode is not available for content edit links.");
 
     $builderMode.set("content");
-    return;
-  }
-
-  if (authPermit === "view") {
-    $builderMode.set(mode ?? "preview");
+    lastEditableBuilderMode = "content";
     return;
   }
 
@@ -417,10 +416,37 @@ export const setBuilderMode = (mode: BuilderMode | null) => {
       ? "content"
       : "preview";
 
-  $builderMode.set(mode ?? defaultMode);
+  const nextMode = mode ?? defaultMode;
+
+  $builderMode.set(nextMode);
+  if (nextMode !== "preview") {
+    lastEditableBuilderMode = nextMode;
+  }
 };
 
 export const $toastErrors = atom<string[]>([]);
+
+export const $modifierKeys = atom<{ altKey: boolean }>({ altKey: false });
+
+export const subscribeModifierKeys = (options: AddEventListenerOptions) => {
+  const handleKeyEvent = (event: MouseEvent | KeyboardEvent) => {
+    const altKey = event.altKey;
+    if ($modifierKeys.get().altKey !== altKey) {
+      $modifierKeys.set({ altKey });
+    }
+  };
+
+  const eventOptions: AddEventListenerOptions = {
+    ...options,
+    capture: true,
+
+    passive: true,
+  };
+
+  document.addEventListener("keydown", handleKeyEvent, eventOptions);
+  document.addEventListener("keyup", handleKeyEvent, eventOptions);
+  document.addEventListener("mousemove", handleKeyEvent, eventOptions);
+};
 
 export type ItemDropTarget = {
   itemSelector: InstanceSelector;
@@ -444,3 +470,5 @@ export const $dragAndDropState = atom<DragAndDropState>({
 });
 
 export const $marketplaceProduct = atom<undefined | MarketplaceProduct>();
+
+export const $canvasToolsVisible = atom<boolean>(true);

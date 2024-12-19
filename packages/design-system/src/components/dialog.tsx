@@ -7,7 +7,7 @@ import {
   type DragEventHandler,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
-import { css, theme, keyframes, type CSS } from "../stitches.config";
+import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
 import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
@@ -34,25 +34,32 @@ if (placeholderImage) {
     "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 }
 
+type Point = { x: number; y: number };
+type Size = { width: number; height: number };
+type Rect = Point & Size;
+
 type UseDraggableProps = {
   isMaximized?: boolean;
-  width?: number;
-  height?: number;
   minWidth?: number;
   minHeight?: number;
-};
+} & Partial<Rect>;
 
 const useDraggable = ({
   isMaximized = false,
+  x,
+  y,
   width,
   height,
   minHeight,
   minWidth,
 }: UseDraggableProps) => {
-  const initialDataRef = useRef<{
-    point: { x: number; y: number };
-    rect: DOMRect;
-  }>();
+  const initialDataRef = useRef<
+    | undefined
+    | {
+        point: Point;
+        rect: Rect;
+      }
+  >(undefined);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
   const draggableRef = useRef<HTMLDivElement | null>(null);
@@ -66,9 +73,10 @@ const useDraggable = ({
     if (placeholderImage) {
       event.dataTransfer.setDragImage(placeholderImage, 0, 0);
     }
+
     const rect = target.getBoundingClientRect();
-    target.style.left = `${rect.left}px`;
-    target.style.top = `${rect.top}px`;
+    target.style.left = `${rect.x}px`;
+    target.style.top = `${rect.y}px`;
     target.style.transform = "none";
     initialDataRef.current = {
       point: { x: event.pageX, y: event.pageY },
@@ -106,6 +114,7 @@ const useDraggable = ({
         height: "100vh",
       }
     : {
+        ...centeredContent,
         width,
         height,
       };
@@ -116,7 +125,16 @@ const useDraggable = ({
   if (minHeight !== undefined) {
     style.minHeight = minHeight;
   }
-
+  if (isMaximized === false) {
+    if (x !== undefined) {
+      style.left = x;
+      delete style.transform;
+    }
+    if (y !== undefined) {
+      style.top = y;
+      delete style.transform;
+    }
+  }
   return {
     onDragStart: handleDragStart,
     onDrag: handleDrag,
@@ -136,6 +154,8 @@ export const DialogContent = forwardRef(
       isMaximized,
       width,
       height,
+      x,
+      y,
       minWidth,
       minHeight,
       ...props
@@ -149,10 +169,13 @@ export const DialogContent = forwardRef(
     const { draggableRef, ...draggableProps } = useDraggable({
       width,
       height,
+      x,
+      y,
       minWidth,
       minHeight,
       isMaximized,
     });
+
     return (
       <Primitive.Portal>
         <Primitive.Overlay className={overlayStyle()} />
@@ -212,21 +235,10 @@ export const DialogActions = ({ children }: { children: ReactNode }) => {
 
 // Styles specific to dialog
 // (as opposed to be common for all floating panels)
-
-const overlayShow = keyframes({
-  from: { opacity: 0 },
-  to: { opacity: 1 },
-});
 const overlayStyle = css({
   backgroundColor: "rgba(17, 24, 28, 0.66)",
   position: "fixed",
   inset: 0,
-  animation: `${overlayShow} 150ms ${theme.easing.easeOut}`,
-});
-
-const contentShow = keyframes({
-  from: { opacity: 0, transform: "translate(-50%, -48%) scale(0.96)" },
-  to: { opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
 });
 
 const centeredContent: CSSProperties = {
@@ -236,14 +248,12 @@ const centeredContent: CSSProperties = {
 };
 
 const contentStyle = css(floatingPanelStyle, {
-  ...centeredContent,
   position: "fixed",
   width: "min-content",
-  minWidth: theme.spacing[33],
+  minWidth: theme.sizes.sidebarWidth,
   maxWidth: "calc(100vw - 40px)",
   maxHeight: "calc(100vh - 40px)",
   userSelect: "none",
-  animation: `${contentShow} 150ms ${theme.easing.easeOut}`,
 
   overflow: "hidden",
   variants: {

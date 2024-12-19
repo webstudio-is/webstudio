@@ -21,7 +21,10 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  invalidAncestors: ["Button", "Link"],
+  constraints: {
+    relation: "ancestor",
+    component: { $nin: ["Button", "Link"] },
+  },
   type: "container",
   description:
     "A drop-down menu for users to select a single option from a predefined list.",

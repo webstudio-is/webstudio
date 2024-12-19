@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { Image, type ImageLoader } from "@webstudio-is/image";
+import { Image, wsImageLoader } from "@webstudio-is/image";
 import { css, theme, textVariants } from "@webstudio-is/design-system";
 
 const abbrStyle = css(textVariants.brandThumbnailLargeDefault, {
@@ -72,11 +72,11 @@ const imageStyle = css({
 
 export const ThumbnailLinkWithImage = forwardRef<
   HTMLAnchorElement,
-  { name: string; to: string; imageLoader: ImageLoader }
->(({ name, to, imageLoader }, ref) => {
+  { name: string; to: string }
+>(({ name, to }, ref) => {
   return (
     <a ref={ref} href={to} className={imageContainerStyle()} tabIndex={-1}>
-      <Image src={name} loader={imageLoader} className={imageStyle()} />
+      <Image src={name} loader={wsImageLoader} className={imageStyle()} />
     </a>
   );
 });
@@ -87,9 +87,8 @@ export const ThumbnailWithImage = forwardRef<
   {
     name: string;
     onClick: React.MouseEventHandler<HTMLDivElement>;
-    imageLoader: ImageLoader;
   }
->(({ name, onClick, imageLoader }, ref) => {
+>(({ name, onClick }, ref) => {
   return (
     <div
       ref={ref}
@@ -97,7 +96,7 @@ export const ThumbnailWithImage = forwardRef<
       className={imageContainerStyle()}
       tabIndex={-1}
     >
-      <Image src={name} loader={imageLoader} className={imageStyle()} />
+      <Image src={name} loader={wsImageLoader} className={imageStyle()} />
     </div>
   );
 });

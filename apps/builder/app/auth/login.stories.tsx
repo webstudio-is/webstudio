@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import type { StoryFn } from "@storybook/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Login } from "./login";

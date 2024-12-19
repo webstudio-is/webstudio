@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type ComponentProps, type ReactNode } from "react";
 import { matchSorter, type RankingInfo } from "match-sorter";
 import { EditorView, keymap, tooltips } from "@codemirror/view";
 import { css } from "@codemirror/lang-css";
@@ -10,7 +10,10 @@ import {
 import { parseCss } from "@webstudio-is/css-data";
 import { css as style } from "@webstudio-is/design-system";
 import {
-  CodeEditorBase,
+  EditorContent,
+  EditorDialog,
+  EditorDialogButton,
+  EditorDialogControl,
   getMinMaxHeightVars,
 } from "~/builder/shared/code-editor-base";
 import { $availableVariables } from "./model";
@@ -65,15 +68,10 @@ const wrapperStyle = style({
   ...getMinMaxHeightVars({ minHeight: "40px", maxHeight: "80px" }),
 });
 
-export const CssFragmentEditor = ({
+export const CssFragmentEditorContent = ({
   onKeyDown,
   ...props
-}: {
-  invalid?: boolean;
-  autoFocus?: boolean;
-  value: string;
-  onChange: (newValue: string) => void;
-  onBlur?: (event: FocusEvent) => void;
+}: ComponentProps<typeof EditorContent> & {
   onKeyDown?: (event: KeyboardEvent) => void;
 }) => {
   const onKeyDownRef = useRef(onKeyDown);
@@ -96,10 +94,33 @@ export const CssFragmentEditor = ({
       }),
     ];
   }, []);
+  return <EditorContent extensions={extensions} {...props} />;
+};
 
+export const CssFragmentEditor = ({
+  title,
+  open,
+  content,
+  onOpenChange,
+}: {
+  title?: ReactNode;
+  open?: boolean;
+  content: ReactNode;
+  onOpenChange?: (newOpen: boolean) => void;
+}) => {
   return (
     <div className={wrapperStyle()}>
-      <CodeEditorBase {...props} extensions={extensions} />
+      <EditorDialogControl>
+        {content}
+        <EditorDialog
+          open={open}
+          onOpenChange={onOpenChange}
+          title={title}
+          content={content}
+        >
+          <EditorDialogButton />
+        </EditorDialog>
+      </EditorDialogControl>
     </div>
   );
 };

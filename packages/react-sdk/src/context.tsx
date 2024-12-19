@@ -13,17 +13,6 @@ export type Params = {
    */
   renderer?: "canvas" | "preview";
   /**
-   * Base url ir base path for images with ending slash.
-   * Used for configuring image with different sizes.
-   * Concatinated with "name?width=&quality=&format=".
-   *
-   * For example
-   * /asset/image/ used by default in builder
-   * https://image-transform.wstd.io/cdn-cgi/image/
-   * https://webstudio.is/cdn-cgi/image/
-   */
-  imageBaseUrl: string;
-  /**
    * Base url or base path for any asset with ending slash.
    * Used to load assets like fonts or images in styles
    * Concatinated with "name".
@@ -46,7 +35,6 @@ export const ReactSdkContext = createContext<
   }
 >({
   assetBaseUrl: "/",
-  imageBaseUrl: "/",
   imageLoader: ({ src }) => src,
   resources: {},
 });

@@ -4,8 +4,6 @@
 import warnOnce from "warn-once";
 import type { Asset } from "@webstudio-is/sdk";
 
-type SetType<T> = T extends Set<infer U> ? U : never;
-
 const mimeCategories = [
   "image",
   "audio",
@@ -18,7 +16,7 @@ const mimeCategories = [
 type MimeCategory = (typeof mimeCategories)[number];
 
 const extensionToMime = new Map([
-  [".avif" as string, "image/avif"],
+  [".avif", "image/avif"],
   [".bmp", "image/bmp"],
   [".gif", "image/gif"],
   [".ico", "image/vnd.microsoft.icon"],
@@ -33,21 +31,16 @@ const extensionToMime = new Map([
   [".woff2", "font/woff2"],
   [".ttf", "font/ttf"],
   [".otf", "font/otf"],
-] as const);
+]);
 
 const mimeTypes = new Set(extensionToMime.values());
-type Mime = SetType<typeof mimeTypes>;
-const isMime = (value: string): value is Mime => mimeTypes.has(value as Mime);
 
 const mimePatterns = new Set([
   ...mimeTypes.values(),
   ...mimeCategories.map((category): `${MimeCategory}/*` => `${category}/*`),
 ]);
-type MimePattern = SetType<typeof mimePatterns>;
-const isMimePattern = (value: string): value is MimePattern =>
-  mimePatterns.has(value as MimePattern);
 
-const getCategory = (pattern: MimePattern): MimeCategory => {
+const getCategory = (pattern: string): MimeCategory => {
   const categoryAsString = pattern.split("/")[0];
   const category = mimeCategories.find(
     (category) => category === categoryAsString
@@ -59,10 +52,8 @@ const getCategory = (pattern: MimePattern): MimeCategory => {
 };
 
 /** `".svg,font/otf,text/*"` -> `"image/svg+xml", "font/otf", "text/*"` */
-export const acceptToMimePatterns = (
-  accept: string
-): Set<MimePattern> | "*" => {
-  const result = new Set<MimePattern>();
+export const acceptToMimePatterns = (accept: string): Set<string> | "*" => {
+  const result = new Set<string>();
 
   if (accept === "") {
     return "*";
@@ -73,7 +64,7 @@ export const acceptToMimePatterns = (
     if (trimmed === "*" || trimmed === "*/*") {
       return "*";
     }
-    if (isMimePattern(trimmed)) {
+    if (mimePatterns.has(trimmed)) {
       result.add(trimmed);
       continue;
     }
@@ -94,9 +85,7 @@ export const acceptToMimePatterns = (
 };
 
 /** `".svg,font/otf,text/*"` -> `"image", "font", "text"` */
-export const acceptToMimeCategories = (
-  accept: string
-): Set<MimeCategory> | "*" => {
+export const acceptToMimeCategories = (accept: string): Set<string> | "*" => {
   const patterns = acceptToMimePatterns(accept);
   if (patterns === "*") {
     return "*";
@@ -105,11 +94,14 @@ export const acceptToMimeCategories = (
 };
 
 export const getAssetMime = ({
-  format,
   type,
-}: Pick<Asset, "format" | "type">): Mime | undefined => {
+  format,
+}: {
+  type: "image" | "font";
+  format: string;
+}): string | undefined => {
   const mime = `${type}/${format}`;
-  if (isMime(mime)) {
+  if (mimeTypes.has(mime)) {
     return mime;
   }
   const mime2 = extensionToMime.get(`.${format}`);
@@ -124,7 +116,7 @@ export const getAssetMime = ({
 
 export const doesAssetMatchMimePatterns = (
   asset: Pick<Asset, "format" | "type">,
-  patterns: Set<MimePattern> | "*"
+  patterns: Set<string> | "*"
 ): boolean => {
   if (patterns === "*") {
     return true;

@@ -6,6 +6,7 @@ import {
   useCallback,
   useId,
   useEffect,
+  type JSX,
 } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
@@ -76,6 +77,7 @@ import {
   $publishedOrigin,
   $project,
   $userPlanFeatures,
+  $isDesignMode,
 } from "~/shared/nano-states";
 import {
   BindingControl,
@@ -1661,12 +1663,13 @@ const PageSettingsView = ({
   onClose: () => void;
   children: JSX.Element;
 }) => {
+  const isDesignMode = useStore($isDesignMode);
   return (
     <>
       <PanelTitle
         suffix={
           <>
-            {onDelete && (
+            {isDesignMode && onDelete && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
                   color="ghost"
@@ -1677,6 +1680,7 @@ const PageSettingsView = ({
                 />
               </Tooltip>
             )}
+
             <Tooltip content="Duplicate page" side="bottom">
               <Button
                 color="ghost"
@@ -1686,6 +1690,7 @@ const PageSettingsView = ({
                 tabIndex={2}
               />
             </Tooltip>
+
             <Tooltip content="Close page settings" side="bottom">
               <Button
                 color="ghost"
@@ -1701,7 +1706,11 @@ const PageSettingsView = ({
         Page Settings
       </PanelTitle>
       <Separator />
-      <Form onSubmit={onClose}>{children}</Form>
+      <Form onSubmit={onClose}>
+        <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
+          {children}
+        </fieldset>
+      </Form>
     </>
   );
 };

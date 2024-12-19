@@ -16,8 +16,16 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  invalidAncestors: ["Button"],
-  requiredAncestors: ["Vimeo"],
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "Vimeo" },
+    },
+    {
+      relation: "ancestor",
+      component: { $neq: "Button" },
+    },
+  ],
   label: "Play Button",
   icon: ButtonElementIcon,
   presetStyle,

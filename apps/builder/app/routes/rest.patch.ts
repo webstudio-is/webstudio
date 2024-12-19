@@ -1,6 +1,6 @@
 import { applyPatches, enableMapSet, enablePatches } from "immer";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
-import type { SyncItem } from "immerhin";
+import type { Change } from "immerhin";
 import {
   Breakpoints,
   Breakpoint,
@@ -49,9 +49,10 @@ import type { Database } from "@webstudio-is/postrest/index.server";
 import { publicStaticEnv } from "~/env/env.static";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
+import type { Transaction } from "~/shared/sync-client";
 
 type PatchData = {
-  transactions: Array<SyncItem>;
+  transactions: Transaction<Change[]>[];
   buildId: Build["id"];
   projectId: Project["id"];
   version: number;
@@ -96,7 +97,7 @@ export const action = async ({
       return { status: "error", errors: "Project id required" };
     }
 
-    const lastTransactionId = transactions.at(-1)?.transactionId;
+    const lastTransactionId = transactions.at(-1)?.id;
 
     if (lastTransactionId === undefined) {
       return {
@@ -175,7 +176,7 @@ export const action = async ({
     const patchedStyleDeclKeysSet = new Set<string>();
 
     for await (const transaction of transactions) {
-      for await (const change of transaction.changes) {
+      for await (const change of transaction.payload) {
         const { namespace, patches } = change;
         if (patches.length === 0) {
           continue;

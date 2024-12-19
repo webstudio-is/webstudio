@@ -1,4 +1,4 @@
-import { componentAttribute, idAttribute } from "../props";
+import { componentAttribute, idAttribute, selectorIdAttribute } from "../props";
 
 export type AnyComponent = React.ForwardRefExoticComponent<
   Omit<
@@ -14,4 +14,5 @@ export type Components = Map<string, AnyComponent>;
 export type WebstudioComponentSystemProps = {
   [componentAttribute]: string;
   [idAttribute]: string;
+  [selectorIdAttribute]: string;
 };

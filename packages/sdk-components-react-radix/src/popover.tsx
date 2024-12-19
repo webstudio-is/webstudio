@@ -5,11 +5,7 @@ import {
   Children,
 } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import {
-  getClosestInstance,
-  getInstanceSelectorById,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
 
 // wrap in forwardRef because Root is functional component without ref
 export const Popover = forwardRef<
@@ -75,11 +71,7 @@ export const hooksPopover: Hook = {
           `${namespace}:Popover`
         );
         if (popover) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            popover.id
-          );
-          context.setMemoryProp(instanceSelector, "open", undefined);
+          context.setMemoryProp(popover, "open", undefined);
         }
       }
     }
@@ -93,11 +85,7 @@ export const hooksPopover: Hook = {
           `${namespace}:Popover`
         );
         if (popover) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            popover.id
-          );
-          context.setMemoryProp(instanceSelector, "open", true);
+          context.setMemoryProp(popover, "open", true);
         }
       }
     }

@@ -1,13 +1,13 @@
 import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/sdk";
-import { Image as WebstudioImage } from "@webstudio-is/image";
+import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
 import {
   StyleValue,
   toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
-import { $assets, $imageLoader } from "~/shared/nano-states";
+import { $assets } from "~/shared/nano-states";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { useComputedStyles } from "../../shared/model";
@@ -115,7 +115,6 @@ type RepeatedProperty = (typeof repeatedProperties)[number];
 
 export const BackgroundThumbnail = ({ index }: { index: number }) => {
   const assets = useStore($assets);
-  const imageLoader = useStore($imageLoader);
   const styles = useComputedStyles(repeatedProperties);
   const [backgroundImage] = styles;
   const backgroundImageValue = getComputedRepeatedItem(backgroundImage, index);
@@ -131,7 +130,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
     return (
       <StyledWebstudioImage
         key={asset.id}
-        loader={imageLoader}
+        loader={wsImageLoader}
         src={asset.name}
         width={thumbSize}
         optimize={true}
@@ -146,7 +145,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
     return (
       <StyledWebstudioImage
         key={backgroundImageValue.value.url}
-        loader={imageLoader}
+        loader={wsImageLoader}
         src={backgroundImageValue.value.url}
         width={thumbSize}
         optimize={true}

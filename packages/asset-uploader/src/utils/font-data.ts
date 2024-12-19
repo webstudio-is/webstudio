@@ -18,7 +18,9 @@ declare module "fontkit" {
 // same default fontkit uses internally
 const defaultLanguage = "en";
 
-export const parseSubfamily = (subfamily: string) => {
+export const parseSubfamily = (
+  subfamily: string
+): { style: FontStyle; weight: number } => {
   const subfamilyLow = subfamily.toLowerCase();
   let style: FontStyle = "normal";
   for (const possibleStyle of FONT_STYLES) {
@@ -105,4 +107,10 @@ export const getFontData = (data: Uint8Array, fileName: string): FontData => {
   };
 };
 
-export const __testing__ = { normalizeFamily };
+export const __testing__: {
+  normalizeFamily: (
+    family: string,
+    subfamily: string,
+    fileName: string
+  ) => string;
+} = { normalizeFamily };

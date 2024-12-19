@@ -84,6 +84,13 @@ export const BorderColor = () => {
                 }
                 batch.publish({ isEphemeral: true });
               }}
+              onReset={() => {
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.deleteProperty(property);
+                }
+                batch.publish();
+              }}
             />
           </div>
         </PropertyValueTooltip>

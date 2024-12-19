@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useState, type JSX, type ReactNode } from "react";
 import { declarationDescriptions } from "@webstudio-is/css-data";
+import { AlertIcon } from "@webstudio-is/icons";
 import {
   Flex,
   rawTheme,
@@ -19,7 +20,6 @@ import {
   getPriorityStyleValueSource,
   PropertyInfo,
 } from "../../property-label";
-import { AlertIcon } from "@webstudio-is/icons";
 
 export const ToggleGroupTooltip = ({
   isOpen,

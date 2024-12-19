@@ -16,22 +16,17 @@ import {
   Select,
   Box,
 } from "@webstudio-is/design-system";
-import { ImageControl } from "./image-control";
-import {
-  $assets,
-  $imageLoader,
-  $marketplaceProduct,
-  $project,
-} from "~/shared/nano-states";
-import { Image } from "@webstudio-is/image";
-import { useIds } from "~/shared/form-utils";
+import { Image, wsImageLoader } from "@webstudio-is/image";
 import { useState } from "react";
 import {
   MarketplaceProduct,
   marketplaceCategories,
 } from "@webstudio-is/project-build";
-import { serverSyncStore } from "~/shared/sync";
+import { ImageControl } from "./image-control";
+import { $assets, $marketplaceProduct, $project } from "~/shared/nano-states";
+import { useIds } from "~/shared/form-utils";
 import { MarketplaceApprovalStatus } from "@webstudio-is/project";
+import { serverSyncStore } from "~/shared/sync";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { rightPanelWidth, sectionSpacing } from "./utils";
 
@@ -123,7 +118,6 @@ const useMarketplaceApprovalStatus = () => {
 
 export const SectionMarketplace = () => {
   const project = useStore($project);
-  const imageLoader = useStore($imageLoader);
   const approval = useMarketplaceApprovalStatus();
   const [data, setData] = useState(() => $marketplaceProduct.get());
   const ids = useIds([
@@ -221,7 +215,7 @@ export const SectionMarketplace = () => {
                   hasAsset: asset !== undefined,
                 })}
                 src={asset ? `${asset.name}` : undefined}
-                loader={imageLoader}
+                loader={wsImageLoader}
               />
             </Box>
 

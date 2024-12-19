@@ -5,20 +5,20 @@ import {
   $instances,
   $isPreviewMode,
   $dragAndDropState,
+  $canvasToolsVisible,
 } from "~/shared/nano-states";
 import {
   CollaborativeInstanceOutline,
   HoveredInstanceOutline,
   SelectedInstanceOutline,
 } from "./outline";
-import { TextToolbar } from "./text-toolbar";
+
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
 import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
-import { ResizeHandles } from "./resize-handles";
-import { MediaBadge } from "./media-badge";
 import { applyScale } from "./outline";
-import { $scale } from "~/builder/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
+import { BlockChildHoveredInstanceOutline } from "./outline/block-instance-outline";
 
 const containerStyle = css({
   position: "absolute",
@@ -36,15 +36,25 @@ const containerStyle = css({
 export const CanvasTools = () => {
   // @todo try to setup cross-frame atoms to avoid this
   useSubscribeDragAndDropState();
-
+  const canvasToolsVisible = useStore($canvasToolsVisible);
   const isPreviewMode = useStore($isPreviewMode);
   const dragAndDropState = useStore($dragAndDropState);
   const instances = useStore($instances);
   const scale = useStore($scale);
-  if (
-    dragAndDropState.isDragging &&
-    dragAndDropState.placementIndicator !== undefined
-  ) {
+  const clampingRect = useStore($clampingRect);
+
+  if (!canvasToolsVisible) {
+    return;
+  }
+
+  if (clampingRect === undefined) {
+    return;
+  }
+
+  if (dragAndDropState.isDragging) {
+    if (dragAndDropState.placementIndicator === undefined) {
+      return;
+    }
     const { dropTarget, placementIndicator } = dragAndDropState;
     const dropTargetInstance =
       dropTarget === undefined
@@ -54,7 +64,7 @@ export const CanvasTools = () => {
 
     return dropTargetInstance ? (
       <div className={containerStyle({ overflow: "hidden" })}>
-        <Outline rect={rect}>
+        <Outline rect={rect} clampingRect={clampingRect}>
           <Label instance={dropTargetInstance} instanceRect={rect} />
         </Outline>
         {placementIndicator !== undefined && (
@@ -65,19 +75,15 @@ export const CanvasTools = () => {
   }
 
   return (
-    <div className={containerStyle()}>
-      <MediaBadge />
-      <ResizeHandles />
+    <>
       {isPreviewMode === false && (
         <>
-          <div className={containerStyle({ overflow: "hidden" })}>
-            <SelectedInstanceOutline />
-            <HoveredInstanceOutline />
-            <CollaborativeInstanceOutline />
-          </div>
-          <TextToolbar />
+          <SelectedInstanceOutline />
+          <HoveredInstanceOutline />
+          <CollaborativeInstanceOutline />
+          <BlockChildHoveredInstanceOutline />
         </>
       )}
-    </div>
+    </>
   );
 };

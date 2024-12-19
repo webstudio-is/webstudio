@@ -94,7 +94,7 @@ type Selector = {
   state?: string;
 };
 
-export const parseCss = (css: string) => {
+export const parseCss = (css: string): ParsedStyleDecl[] => {
   const ast = cssTreeTryParse(css);
   const styles = new Map<string, ParsedStyleDecl>();
 

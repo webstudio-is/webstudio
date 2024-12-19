@@ -1,7 +1,5 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { titleCase } from "title-case";
-import { noCase } from "change-case";
 import type { Simplify } from "type-fest";
 import type {
   Instance,
@@ -12,6 +10,7 @@ import type {
   Breakpoint,
   DataSource,
   WebstudioFragment,
+  Matcher,
 } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
@@ -116,7 +115,6 @@ export type EmbedTemplateInstance = {
   label?: string;
   variables?: Record<string, EmbedTemplateVariable>;
   props?: EmbedTemplateProp[];
-  tokens?: string[];
   styles?: EmbedTemplateStyleDecl[];
   children: Array<
     EmbedTemplateInstance | EmbedTemplateText | EmbedTemplateExpression
@@ -131,7 +129,6 @@ export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
       label: z.optional(z.string()),
       variables: z.optional(z.record(z.string(), EmbedTemplateVariable)),
       props: z.optional(z.array(EmbedTemplateProp)),
-      tokens: z.optional(z.array(z.string())),
       styles: z.optional(z.array(EmbedTemplateStyleDecl)),
       children: WsEmbedTemplate,
     })
@@ -273,34 +270,6 @@ const createInstancesFromTemplate = (
       }
 
       const styleSourceIds: string[] = [];
-
-      // convert tokens into style sources and styles
-      if (item.tokens) {
-        const meta = metas.get(item.component);
-        if (meta?.presetTokens) {
-          for (const name of item.tokens) {
-            const tokenValue = meta.presetTokens[name];
-            if (tokenValue) {
-              const styleSourceId = `${item.component}:${name}`;
-              styleSourceIds.push(styleSourceId);
-              styleSources.push({
-                type: "token",
-                id: styleSourceId,
-                name: titleCase(noCase(name)),
-              });
-              for (const styleDecl of tokenValue.styles) {
-                styles.push({
-                  breakpointId: defaultBreakpointId,
-                  styleSourceId,
-                  state: styleDecl.state,
-                  property: styleDecl.property,
-                  value: styleDecl.value,
-                });
-              }
-            }
-          }
-        }
-      }
 
       // populate styles
       if (item.styles) {
@@ -451,21 +420,41 @@ const namespaceEmbedTemplateComponents = (
   });
 };
 
+const namespaceMatcher = (namespace: string, matcher: Matcher) => {
+  const newMatcher = structuredClone(matcher);
+  if (newMatcher.component?.$eq) {
+    newMatcher.component.$eq = `${namespace}:${newMatcher.component.$eq}`;
+  }
+  if (newMatcher.component?.$neq) {
+    newMatcher.component.$neq = `${namespace}:${newMatcher.component.$neq}`;
+  }
+  if (newMatcher.component?.$in) {
+    newMatcher.component.$in = newMatcher.component.$in.map(
+      (component) => `${namespace}:${component}`
+    );
+  }
+  if (newMatcher.component?.$nin) {
+    newMatcher.component.$nin = newMatcher.component.$nin.map(
+      (component) => `${namespace}:${component}`
+    );
+  }
+  return newMatcher;
+};
+
 export const namespaceMeta = (
   meta: WsComponentMeta,
   namespace: string,
   components: Set<EmbedTemplateInstance["component"]>
 ) => {
   const newMeta = { ...meta };
-  if (newMeta.requiredAncestors) {
-    newMeta.requiredAncestors = newMeta.requiredAncestors.map((component) =>
-      components.has(component) ? `${namespace}:${component}` : component
-    );
-  }
-  if (newMeta.invalidAncestors) {
-    newMeta.invalidAncestors = newMeta.invalidAncestors.map((component) =>
-      components.has(component) ? `${namespace}:${component}` : component
-    );
+  if (newMeta.constraints) {
+    if (Array.isArray(newMeta.constraints)) {
+      newMeta.constraints = newMeta.constraints.map((matcher) =>
+        namespaceMatcher(namespace, matcher)
+      );
+    } else {
+      newMeta.constraints = namespaceMatcher(namespace, newMeta.constraints);
+    }
   }
   if (newMeta.indexWithinAncestor) {
     newMeta.indexWithinAncestor = components.has(newMeta.indexWithinAncestor)

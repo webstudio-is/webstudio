@@ -1,4 +1,4 @@
-import { Form as baseMeta } from "@webstudio-is/sdk-components-react/metas";
+import { meta as baseMeta } from "./form.ws";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,

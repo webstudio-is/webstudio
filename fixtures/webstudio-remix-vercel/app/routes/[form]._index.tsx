@@ -31,7 +31,7 @@ import {
   projectId,
   contactEmail,
 } from "../__generated__/[form]._index.server";
-import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
+import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 
@@ -329,7 +329,6 @@ const Outlet = () => {
       value={{
         imageLoader,
         assetBaseUrl,
-        imageBaseUrl,
         resources,
       }}
     >

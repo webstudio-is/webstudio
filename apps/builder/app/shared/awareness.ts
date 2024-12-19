@@ -31,6 +31,12 @@ export const $selectedPage = computed(
   }
 );
 
+export const $temporaryInstances = atom<Instances>(new Map());
+export const addTemporaryInstance = (instance: Instance) => {
+  $temporaryInstances.get().set(instance.id, instance);
+  $temporaryInstances.set($temporaryInstances.get());
+};
+
 export const $virtualInstances = computed($selectedPage, (selectedPage) => {
   const virtualInstances: Instances = new Map();
   if (selectedPage) {
@@ -45,25 +51,76 @@ export const $virtualInstances = computed($selectedPage, (selectedPage) => {
 });
 
 export const $selectedInstance = computed(
-  [$instances, $virtualInstances, $awareness],
-  (instances, virtualInstances, awareness) => {
+  [$instances, $virtualInstances, $temporaryInstances, $awareness],
+  (instances, virtualInstances, tempInstances, awareness) => {
     if (awareness?.instanceSelector === undefined) {
       return;
     }
     const [selectedInstanceId] = awareness.instanceSelector;
     return (
       instances.get(selectedInstanceId) ??
-      virtualInstances.get(selectedInstanceId)
+      virtualInstances.get(selectedInstanceId) ??
+      tempInstances.get(selectedInstanceId)
     );
   }
 );
 
-export const $selectedInstanceKey = computed($awareness, (awareness) => {
-  if (awareness === undefined) {
-    return;
+export const getInstanceKey = <
+  InstanceSelector extends undefined | Instance["id"][],
+>(
+  instanceSelector: InstanceSelector
+): (InstanceSelector extends undefined ? undefined : never) | string =>
+  JSON.stringify(instanceSelector);
+
+export const $selectedInstanceKey = computed($awareness, (awareness) =>
+  getInstanceKey(awareness?.instanceSelector)
+);
+
+type InstancePath = Array<{
+  instance: Instance;
+  instanceSelector: string[];
+}>;
+
+const getInstancePath = (
+  instances: Instances,
+  virtualInstances: Instances,
+  temporaryInstances: Instances,
+  instanceSelector: string[]
+): InstancePath => {
+  const instancePath: InstancePath = [];
+  for (let index = 0; index < instanceSelector.length; index += 1) {
+    const instanceId = instanceSelector[index];
+    const instance =
+      instances.get(instanceId) ??
+      virtualInstances.get(instanceId) ??
+      temporaryInstances.get(instanceId);
+    // collection item can be undefined
+    if (instance === undefined) {
+      continue;
+    }
+    instancePath.push({
+      instance,
+      instanceSelector: instanceSelector.slice(index),
+    });
   }
-  return JSON.stringify(awareness.instanceSelector);
-});
+  return instancePath;
+};
+
+export const $selectedInstancePath = computed(
+  [$instances, $virtualInstances, $temporaryInstances, $awareness],
+  (instances, virtualInstances, temporaryInstances, awareness) => {
+    const instanceSelector = awareness?.instanceSelector;
+    if (instanceSelector === undefined) {
+      return;
+    }
+    return getInstancePath(
+      instances,
+      virtualInstances,
+      temporaryInstances,
+      instanceSelector
+    );
+  }
+);
 
 export const selectPage = (pageId: Page["id"]) => {
   const pages = $pages.get();

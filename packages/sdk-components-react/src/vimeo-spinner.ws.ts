@@ -14,12 +14,15 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Vimeo" },
+  },
   icon: BoxIcon,
   states: defaultStates,
   presetStyle,
   category: "hidden",
   label: "Spinner",
-  requiredAncestors: ["Vimeo"],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

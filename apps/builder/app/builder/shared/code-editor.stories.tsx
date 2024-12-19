@@ -18,10 +18,23 @@ const initialHtml = `
 
 export const BaseEditor = () => {
   const [value, setValue] = useState(initialHtml);
-  return <CodeEditorComponent value={value} onChange={setValue} />;
+  return (
+    <CodeEditorComponent
+      value={value}
+      onChange={setValue}
+      onChangeComplete={setValue}
+    />
+  );
 };
 
 export const HtmlEditor = () => {
   const [value, setValue] = useState(initialHtml);
-  return <CodeEditorComponent value={value} onChange={setValue} lang="html" />;
+  return (
+    <CodeEditorComponent
+      value={value}
+      onChange={setValue}
+      onChangeComplete={setValue}
+      lang="html"
+    />
+  );
 };

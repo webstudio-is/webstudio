@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react-radix",
-  "version": "0.189.0",
+  "version": "0.0.0-webstudio-version",
   "description": "Webstudio wrapper for radix library",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -59,13 +59,15 @@
     "@radix-ui/react-switch": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.4",
+    "@radix-ui/react-use-controllable-state": "^1.1.0",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
-    "@webstudio-is/sdk": "workspace:*"
+    "@webstudio-is/sdk": "workspace:*",
+    "await-interaction-response": "^0.0.2"
   },
   "devDependencies": {
-    "@types/node": "^22.9.1",
+    "@types/node": "^22.9.3",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/css-data": "workspace:*",
@@ -75,7 +77,6 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "tailwindcss": "^3.3.3",
-    "typescript": "^5.6.3"
+    "tailwindcss": "^3.3.3"
   }
 }

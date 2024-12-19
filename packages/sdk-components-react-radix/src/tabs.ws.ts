@@ -72,6 +72,20 @@ export const metaTabs: WsComponentMeta = {
   order: 2,
   type: "container",
   icon: TabsIcon,
+  constraints: [
+    {
+      relation: "descendant",
+      component: { $eq: "TabsTrigger" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "TabsList" },
+    },
+    {
+      relation: "descendant",
+      component: { $eq: "TabsContent" },
+    },
+  ],
   presetStyle,
   description:
     "A set of panels with content that are displayed one at a time. Duplicate both a tab trigger and tab content to add more tabs. Triggers and content are connected according to their order in the Navigator.",
@@ -143,10 +157,12 @@ export const metaTabs: WsComponentMeta = {
 
 export const metaTabsList: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: HeaderIcon,
-  requiredAncestors: ["Tabs"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Tabs" },
+  },
   presetStyle,
 };
 
@@ -154,8 +170,16 @@ export const metaTabsTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
   icon: TriggerIcon,
-  requiredAncestors: ["TabsList"],
-  invalidAncestors: ["TabsTrigger"],
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $eq: "TabsList" },
+    },
+    {
+      relation: "ancestor",
+      component: { $neq: "TabsTrigger" },
+    },
+  ],
   indexWithinAncestor: "Tabs",
   label: "Tab Trigger",
   states: [
@@ -176,7 +200,10 @@ export const metaTabsContent: WsComponentMeta = {
   type: "container",
   label: "Tab Content",
   icon: ContentIcon,
-  requiredAncestors: ["Tabs"],
+  constraints: {
+    relation: "ancestor",
+    component: { $eq: "Tabs" },
+  },
   indexWithinAncestor: "Tabs",
   presetStyle,
 };

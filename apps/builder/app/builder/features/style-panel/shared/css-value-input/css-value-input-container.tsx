@@ -11,6 +11,7 @@ type CssValueInputContainerProps = {
   | "onChange"
   | "onHighlight"
   | "onChangeComplete"
+  | "onReset"
   | "onAbort"
   | "intermediateValue"
 >;
@@ -55,6 +56,9 @@ export const CssValueInputContainer = ({
       }}
       onAbort={() => {
         deleteProperty(property, { isEphemeral: true });
+      }}
+      onReset={() => {
+        deleteProperty(property);
       }}
     />
   );

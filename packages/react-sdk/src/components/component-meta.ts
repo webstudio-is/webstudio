@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { PropMeta } from "../prop-meta";
 import type { HtmlTags } from "html-tags";
+import { Matchers } from "@webstudio-is/sdk";
+import { PropMeta } from "../prop-meta";
 import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "../embed-template";
 
 export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<
@@ -39,11 +40,6 @@ export const ComponentState = z.object({
 
 export type ComponentState = z.infer<typeof ComponentState>;
 
-const ComponentToken = z.object({
-  variant: z.optional(z.string()),
-  styles: z.array(EmbedTemplateStyleDecl),
-});
-
 export const defaultStates: ComponentState[] = [
   { selector: ":hover", label: "Hover" },
   { selector: ":active", label: "Active" },
@@ -59,25 +55,19 @@ export const WsComponentMeta = z.object({
   // embed - images, videos or other embeddable components, without children
   // rich-text-child - formatted text fragment, not listed in components list
   type: z.enum(["container", "control", "embed", "rich-text-child"]),
-  requiredAncestors: z.optional(z.array(z.string())),
-  invalidAncestors: z.optional(z.array(z.string())),
+  constraints: Matchers.optional(),
   // when this field is specified component receives
   // prop with index of same components withiin specified ancestor
   // important to automatically enumerate collections without
   // naming every item manually
   indexWithinAncestor: z.optional(z.string()),
   stylable: z.optional(z.boolean()),
-  // specifies whether the instance can be deleted,
-  // copied or dragged out of its parent instance
-  // true by default
-  detachable: z.optional(z.boolean()),
   label: z.optional(z.string()),
   description: z.string().optional(),
   icon: z.string(),
   presetStyle: z.optional(
     z.record(z.string(), z.array(EmbedTemplateStyleDecl))
   ),
-  presetTokens: z.optional(z.record(z.string(), ComponentToken)),
   states: z.optional(z.array(ComponentState)),
   template: z.optional(WsEmbedTemplate),
   order: z.number().optional(),

@@ -1,3 +1,5 @@
+import type { JSX } from "react";
+
 export const Form = ({
   onSubmit,
   children,

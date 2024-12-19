@@ -35,9 +35,10 @@ import {
 } from "@webstudio-is/sdk";
 import { mapGroupBy } from "~/shared/shim";
 import {
-  CodeEditorBase,
   EditorContent,
   EditorDialog,
+  EditorDialogButton,
+  EditorDialogControl,
   type EditorApi,
 } from "./code-editor-base";
 
@@ -430,7 +431,7 @@ export const ExpressionEditor = ({
   readOnly = false,
   value,
   onChange,
-  onBlur,
+  onChangeComplete,
 }: {
   editorApiRef?: RefObject<undefined | EditorApi>;
   /**
@@ -445,8 +446,8 @@ export const ExpressionEditor = ({
   autoFocus?: boolean;
   readOnly?: boolean;
   value: string;
-  onChange: (newValue: string) => void;
-  onBlur?: () => void;
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
 }) => {
   const extensions = useMemo(
     () => [
@@ -488,18 +489,27 @@ export const ExpressionEditor = ({
     };
   }, []);
 
+  const content = (
+    <EditorContent
+      editorApiRef={editorApiRef}
+      extensions={extensions}
+      invalid={color === "error"}
+      readOnly={readOnly}
+      autoFocus={autoFocus}
+      value={value}
+      onChange={onChange}
+      onChangeComplete={onChangeComplete}
+    />
+  );
+
   return (
     <div className={wrapperStyle.toString()}>
-      <CodeEditorBase
-        editorApiRef={editorApiRef}
-        extensions={extensions}
-        invalid={color === "error"}
-        readOnly={readOnly}
-        autoFocus={autoFocus}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-      />
+      <EditorDialogControl>
+        {content}
+        <EditorDialog content={content}>
+          <EditorDialogButton />
+        </EditorDialog>
+      </EditorDialogControl>
     </div>
   );
 };
@@ -515,6 +525,7 @@ const ValuePreviewEditor = ({ value }: { value: unknown }) => {
       extensions={extensions}
       value={JSON.stringify(value, null, 2)}
       onChange={() => {}}
+      onChangeComplete={() => {}}
     />
   );
 };

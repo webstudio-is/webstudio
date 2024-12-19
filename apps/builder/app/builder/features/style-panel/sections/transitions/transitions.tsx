@@ -6,11 +6,12 @@ import {
   SectionTitleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
+import { properties } from "@webstudio-is/css-data";
 import {
-  properties,
-  transitionLongHandProperties,
-} from "@webstudio-is/css-data";
-import { toValue, type LayerValueItem } from "@webstudio-is/css-engine";
+  toValue,
+  type LayerValueItem,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
@@ -25,6 +26,14 @@ import { PropertySectionLabel } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
 import { TransitionContent } from "./transition-content";
 import { parseCssFragment } from "../../shared/css-fragment";
+
+const transitionLongHandProperties = [
+  "transitionProperty",
+  "transitionTimingFunction",
+  "transitionDelay",
+  "transitionDuration",
+  "transitionBehavior",
+] as const satisfies StyleProperty[];
 
 export { transitionLongHandProperties as properties };
 
@@ -84,6 +93,7 @@ export const Section = () => {
     selectedOrLastStyleSourceSelector &&
     selectedOrLastStyleSourceSelector.state === undefined;
   const styles = useComputedStyles(transitionLongHandProperties);
+  const dots = getDots(styles);
 
   return (
     <CollapsibleSectionRoot
@@ -93,7 +103,9 @@ export const Section = () => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(styles)}
+          inactive={dots.length === 0}
+          collapsible={dots.length !== 0}
+          dots={dots}
           suffix={
             <Tooltip
               content={

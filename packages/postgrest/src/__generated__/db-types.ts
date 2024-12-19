@@ -7,6 +7,31 @@ export type Json =
   | Json[];
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+          extensions?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       _prisma_migrations: {
@@ -72,6 +97,7 @@ export type Database = {
         Row: {
           canClone: boolean;
           canCopy: boolean;
+          canPublish: boolean;
           createdAt: string;
           name: string;
           projectId: string;
@@ -81,6 +107,7 @@ export type Database = {
         Insert: {
           canClone?: boolean;
           canCopy?: boolean;
+          canPublish?: boolean;
           createdAt?: string;
           name?: string;
           projectId: string;
@@ -90,6 +117,7 @@ export type Database = {
         Update: {
           canClone?: boolean;
           canCopy?: boolean;
+          canPublish?: boolean;
           createdAt?: string;
           name?: string;
           projectId?: string;
@@ -121,6 +149,7 @@ export type Database = {
           deployment: string | null;
           id: string;
           instances: string;
+          isCleaned: boolean | null;
           lastTransactionId: string | null;
           marketplaceProduct: string;
           pages: string;
@@ -141,6 +170,7 @@ export type Database = {
           deployment?: string | null;
           id: string;
           instances?: string;
+          isCleaned?: boolean | null;
           lastTransactionId?: string | null;
           marketplaceProduct?: string;
           pages: string;
@@ -161,6 +191,7 @@ export type Database = {
           deployment?: string | null;
           id?: string;
           instances?: string;
+          isCleaned?: boolean | null;
           lastTransactionId?: string | null;
           marketplaceProduct?: string;
           pages?: string;
@@ -681,14 +712,14 @@ export type Database = {
             foreignKeyName: "Build_projectId_fkey";
             columns: ["projectId"];
             isOneToOne: false;
-            referencedRelation: "Project";
+            referencedRelation: "DashboardProject";
             referencedColumns: ["id"];
           },
           {
             foreignKeyName: "Build_projectId_fkey";
             columns: ["projectId"];
             isOneToOne: false;
-            referencedRelation: "DashboardProject";
+            referencedRelation: "Project";
             referencedColumns: ["id"];
           },
         ];
@@ -762,14 +793,14 @@ export type Database = {
             foreignKeyName: "Build_projectId_fkey";
             columns: ["projectId"];
             isOneToOne: false;
-            referencedRelation: "Project";
+            referencedRelation: "DashboardProject";
             referencedColumns: ["id"];
           },
           {
             foreignKeyName: "Build_projectId_fkey";
             columns: ["projectId"];
             isOneToOne: false;
-            referencedRelation: "DashboardProject";
+            referencedRelation: "Project";
             referencedColumns: ["id"];
           },
         ];
@@ -810,6 +841,13 @@ export type Database = {
           deployment: string;
         };
         Returns: string;
+      };
+      database_cleanup: {
+        Args: {
+          from_date?: string;
+          to_date?: string;
+        };
+        Returns: undefined;
       };
       domainsVirtual: {
         Args: {
@@ -863,6 +901,19 @@ export type Database = {
               publishStatus: Database["public"]["Enums"]["PublishStatus"];
             }[];
           };
+      latestProjectDomainBuildVirtual: {
+        Args: {
+          "": unknown;
+        };
+        Returns: {
+          buildId: string;
+          createdAt: string;
+          domain: string;
+          domainsVirtualId: string;
+          projectId: string;
+          publishStatus: Database["public"]["Enums"]["PublishStatus"];
+        }[];
+      };
       uuid_generate_v4: {
         Args: Record<PropertyKey, never>;
         Returns: string;
@@ -969,4 +1020,19 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database;
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never;

@@ -1,11 +1,17 @@
+import { nanoid } from "nanoid";
+import { blockTemplateComponent } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/sdk";
+import { toast } from "@webstudio-is/design-system";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
   $instances,
-  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $isDesignMode,
   toggleBuilderMode,
+  $isPreviewMode,
+  $isContentMode,
+  $registeredComponentMetas,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -16,26 +22,33 @@ import {
   findAvailableDataSources,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  isInstanceDetachable,
   updateWebstudioData,
+  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $publisher } from "~/shared/pubsub";
 import {
   $activeInspectorPanel,
+  $publishDialog,
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { selectInstance } from "~/shared/awareness";
+import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
+import { findBlockSelector } from "../features/workspace/canvas-tools/outline/block-instance-outline";
+import {
+  findClosestNonTextualContainer,
+  isTreeMatching,
+} from "~/shared/matcher";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
   number: number
 ): Command<CommandName> => ({
   name,
+  hidden: true,
   defaultHotkeys: [`${number}`],
   disableHotkeyOnFormTags: true,
   disableHotkeyOnContentEditable: true,
@@ -44,50 +57,172 @@ const makeBreakpointCommand = <CommandName extends string>(
   },
 });
 
-const deleteSelectedInstance = () => {
-  if ($isDesignMode.get() === false) {
-    builderApi.toast.info("Deleting is only allowed in design mode.");
+export const deleteSelectedInstance = () => {
+  if ($isPreviewMode.get()) {
+    builderApi.toast.info("Deleting is not allowed in preview mode.");
     return;
   }
-
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
-  const selectedInstanceSelector = $selectedInstanceSelector.get();
+  const instancePath = $selectedInstancePath.get();
   // cannot delete instance while editing
   if (textEditingInstanceSelector) {
     return;
   }
-  if (selectedInstanceSelector === undefined) {
+  if (instancePath === undefined || instancePath.length === 1) {
     return;
   }
-  if (selectedInstanceSelector.length === 1) {
-    return;
-  }
-  let newSelectedInstanceSelector: undefined | InstanceSelector;
+  const [selectedItem, parentItem] = instancePath;
+  const selectedInstanceSelector = selectedItem.instanceSelector;
   const instances = $instances.get();
-  const [selectedInstanceId, parentInstanceId] = selectedInstanceSelector;
-  const parentInstance = instances.get(parentInstanceId);
-  if (parentInstance) {
-    const siblingIds = parentInstance.children
-      .filter((child) => child.type === "id")
-      .map((child) => child.value);
-    const position = siblingIds.indexOf(selectedInstanceId);
-    const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
-    if (siblingId) {
-      // select next or previous sibling if possible
-      newSelectedInstanceSelector = [
-        siblingId,
-        ...selectedInstanceSelector.slice(1),
-      ];
-    } else {
-      // fallback to parent
-      newSelectedInstanceSelector = selectedInstanceSelector.slice(1);
+  if (isInstanceDetachable(instances, selectedInstanceSelector) === false) {
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
+    return false;
+  }
+
+  if ($isContentMode.get()) {
+    // In content mode we are allowing to delete childen of the editable block
+    const editableInstanceSelector = findBlockSelector(
+      selectedInstanceSelector,
+      instances
+    );
+    if (editableInstanceSelector === undefined) {
+      builderApi.toast.info("You can't delete this instance in conent mode.");
+      return;
     }
+
+    const isChildOfBlock =
+      selectedInstanceSelector.length - editableInstanceSelector.length === 1;
+
+    const isTemplateInstance =
+      instances.get(selectedInstanceSelector[0])?.component ===
+      blockTemplateComponent;
+
+    if (isTemplateInstance) {
+      builderApi.toast.info("You can't delete this instance in conent mode.");
+      return;
+    }
+
+    if (!isChildOfBlock) {
+      builderApi.toast.info("You can't delete this instance in conent mode.");
+      return;
+    }
+  }
+
+  // find next selected instance
+  let newSelectedInstanceSelector: undefined | InstanceSelector;
+  const parentInstanceSelector = parentItem.instanceSelector;
+  const siblingIds = parentItem.instance.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+  const position = siblingIds.indexOf(selectedItem.instance.id);
+  const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
+  if (siblingId) {
+    // select next or previous sibling if possible
+    newSelectedInstanceSelector = [siblingId, ...parentInstanceSelector];
+  } else {
+    // fallback to parent
+    newSelectedInstanceSelector = parentInstanceSelector;
   }
   updateWebstudioData((data) => {
     if (deleteInstanceMutable(data, selectedInstanceSelector)) {
       selectInstance(newSelectedInstanceSelector);
     }
   });
+};
+
+export const wrapIn = (component: string) => {
+  const instancePath = $selectedInstancePath.get();
+  // global root or body are selected
+  if (instancePath === undefined || instancePath.length === 1) {
+    return;
+  }
+  const [selectedItem, parentItem] = instancePath;
+  const selectedInstance = selectedItem.instance;
+  const newInstanceId = nanoid();
+  const newInstanceSelector = [newInstanceId, ...parentItem.instanceSelector];
+  const metas = $registeredComponentMetas.get();
+  try {
+    updateWebstudioData((data) => {
+      const meta = metas.get(selectedInstance.component);
+      if (meta?.type === "rich-text-child") {
+        toast.error(`Cannot wrap textual content`);
+        throw Error("Abort transaction");
+      }
+      const newInstance: Instance = {
+        type: "instance",
+        id: newInstanceId,
+        component,
+        children: [{ type: "id", value: selectedInstance.id }],
+      };
+      const parentInstance = data.instances.get(parentItem.instance.id);
+      data.instances.set(newInstanceId, newInstance);
+      if (parentInstance) {
+        for (const child of parentInstance.children) {
+          if (child.type === "id" && child.value === selectedInstance.id) {
+            child.value = newInstanceId;
+          }
+        }
+      }
+      const matches = isTreeMatching({
+        metas,
+        instances: data.instances,
+        instanceSelector: newInstanceSelector,
+      });
+      if (matches === false) {
+        toast.error(`Cannot wrap in "${component}"`);
+        throw Error("Abort transaction");
+      }
+    });
+    selectInstance(newInstanceSelector);
+  } catch {
+    // do nothing
+  }
+};
+
+export const unwrap = () => {
+  const instancePath = $selectedInstancePath.get();
+  // global root or body are selected
+  if (instancePath === undefined || instancePath.length === 1) {
+    return;
+  }
+  const [selectedItem, parentItem] = instancePath;
+  try {
+    updateWebstudioData((data) => {
+      const nonTextualIndex = findClosestNonTextualContainer({
+        metas: $registeredComponentMetas.get(),
+        instances: data.instances,
+        instanceSelector: selectedItem.instanceSelector,
+      });
+      if (nonTextualIndex !== 0) {
+        toast.error(`Cannot unwrap textual instance`);
+        throw Error("Abort transaction");
+      }
+      const parentInstance = data.instances.get(parentItem.instance.id);
+      const selectedInstance = data.instances.get(selectedItem.instance.id);
+      data.instances.delete(selectedItem.instance.id);
+      if (parentInstance && selectedInstance) {
+        const index = parentInstance.children.findIndex(
+          (child) =>
+            child.type === "id" && child.value === selectedItem.instance.id
+        );
+        parentInstance.children.splice(index, 1, ...selectedInstance.children);
+      }
+      const matches = isTreeMatching({
+        metas: $registeredComponentMetas.get(),
+        instances: data.instances,
+        instanceSelector: parentItem.instanceSelector,
+      });
+      if (matches === false) {
+        toast.error(`Cannot unwrap instance`);
+        throw Error("Abort transaction");
+      }
+    });
+    selectInstance(parentItem.instanceSelector);
+  } catch {
+    // do nothing
+  }
 };
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
@@ -107,6 +242,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "cancelCurrentDrag",
+      hidden: true,
       defaultHotkeys: ["escape"],
       // radix check event.defaultPrevented before invoking callbacks
       preventDefault: false,
@@ -117,6 +253,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "clickCanvas",
+      hidden: true,
       handler: () => {
         $breakpointsMenuView.set(undefined);
         setActiveSidebarPanel("auto");
@@ -142,8 +279,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
     },
     {
-      name: "toggleBuildMode",
-      defaultHotkeys: ["meta+shift+b", "ctrl+shift+b"],
+      name: "toggleContentMode",
+      defaultHotkeys: ["meta+shift+c", "ctrl+shift+c"],
       handler: () => {
         setActiveSidebarPanel("auto");
         toggleBuilderMode("content");
@@ -153,6 +290,20 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "openBreakpointsMenu",
       handler: () => {
         $breakpointsMenuView.set("initial");
+      },
+    },
+    {
+      name: "openPublishDialog",
+      defaultHotkeys: ["shift+P"],
+      handler: () => {
+        $publishDialog.set("publish");
+      },
+    },
+    {
+      name: "openExportDialog",
+      defaultHotkeys: ["shift+E"],
+      handler: () => {
+        $publishDialog.set("export");
       },
     },
     {
@@ -246,48 +397,41 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           builderApi.toast.info("Duplicating is only allowed in design mode.");
           return;
         }
+        const instancePath = $selectedInstancePath.get();
+        // global root or body are selected
+        if (instancePath === undefined || instancePath.length === 1) {
+          return;
+        }
+        const [selectedItem, parentItem] = instancePath;
 
-        const instanceSelector = $selectedInstanceSelector.get();
-        if (instanceSelector === undefined) {
-          return;
-        }
-        const instances = $instances.get();
-        if (isInstanceDetachable(instances, instanceSelector) === false) {
-          builderApi.toast.error(
-            "This instance can not be moved outside of its parent component."
-          );
-          return;
-        }
-        // @todo tell user they can't copy or cut root
-        if (instanceSelector.length === 1) {
-          return;
-        }
-        // body is not allowed to copy
-        // so clipboard always have at least two level instance selector
-        const [targetInstanceId, parentInstanceId] = instanceSelector;
-        const parentInstanceSelector = instanceSelector.slice(1);
         updateWebstudioData((data) => {
-          const fragment = extractWebstudioFragment(data, targetInstanceId);
+          const fragment = extractWebstudioFragment(
+            data,
+            selectedItem.instance.id
+          );
           const { newInstanceIds } = insertWebstudioFragmentCopy({
             data,
             fragment,
             availableDataSources: findAvailableDataSources(
               data.dataSources,
               data.instances,
-              parentInstanceSelector
+              parentItem.instanceSelector
             ),
           });
-          const newRootInstanceId = newInstanceIds.get(targetInstanceId);
+          const newRootInstanceId = newInstanceIds.get(
+            selectedItem.instance.id
+          );
           if (newRootInstanceId === undefined) {
             return;
           }
-          const parentInstance = data.instances.get(parentInstanceId);
+          const parentInstance = data.instances.get(parentItem.instance.id);
           if (parentInstance === undefined) {
             return;
           }
           // put after current instance
           const indexWithinChildren = parentInstance.children.findIndex(
-            (child) => child.type === "id" && child.value === targetInstanceId
+            (child) =>
+              child.type === "id" && child.value === selectedItem.instance.id
           );
           const position = indexWithinChildren + 1;
           parentInstance.children.splice(position, 0, {
@@ -295,7 +439,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             value: newRootInstanceId,
           });
           // select new instance
-          selectInstance([newRootInstanceId, ...parentInstanceSelector]);
+          selectInstance([newRootInstanceId, ...parentItem.instanceSelector]);
         });
       },
     },
@@ -303,12 +447,25 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "editInstanceLabel",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
-        const selectedInstanceSelector = $selectedInstanceSelector.get();
-        if (selectedInstanceSelector === undefined) {
+        const instancePath = $selectedInstancePath.get();
+        if (instancePath === undefined) {
           return;
         }
-        $editingItemSelector.set(selectedInstanceSelector);
+        const [selectedItem] = instancePath;
+        $editingItemSelector.set(selectedItem.instanceSelector);
       },
+    },
+    {
+      name: "wrapInBox",
+      handler: () => wrapIn("Box"),
+    },
+    {
+      name: "wrapInLink",
+      handler: () => wrapIn("Link"),
+    },
+    {
+      name: "unwrap",
+      handler: () => unwrap(),
     },
 
     // history
@@ -336,8 +493,11 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "openCommandPanel",
+      hidden: true,
       defaultHotkeys: ["meta+k", "ctrl+k"],
-      handler: openCommandPanel,
+      handler: () => {
+        openCommandPanel();
+      },
     },
   ],
 });

@@ -45,7 +45,7 @@ const style = css({
     hasChildren: {
       true: {
         "&:where(:has(svg))": {
-          width: theme.spacing[11],
+          paddingInline: theme.spacing[2],
         },
       },
     },

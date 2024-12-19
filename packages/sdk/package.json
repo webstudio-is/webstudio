@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk",
-  "version": "0.189.0",
+  "version": "0.0.0-webstudio-version",
   "description": "Webstudio project data schema",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -21,9 +21,6 @@
       "webstudio": "./src/__generated__/normalize.css.ts",
       "types": "./lib/types/__generated__/normalize.css.d.ts",
       "import": "./lib/__generated__/normalize.css.js"
-    },
-    "./testing": {
-      "webstudio": "./src/testing.ts"
     }
   },
   "files": [
@@ -44,14 +41,15 @@
     "acorn": "^8.12.1",
     "acorn-walk": "^8.3.4",
     "reserved-identifiers": "^1.0.0",
-    "type-fest": "^4.27.0",
+    "type-fest": "^4.28.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@webstudio-is/css-data": "workspace:*",
+    "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "strip-indent": "^4.0.0",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   }
 }

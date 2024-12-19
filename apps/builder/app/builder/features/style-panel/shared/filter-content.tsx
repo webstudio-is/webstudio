@@ -15,7 +15,7 @@ import {
   Select,
   Grid,
 } from "@webstudio-is/design-system";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import {
   CssValueInputContainer,
   type IntermediateStyleValue,

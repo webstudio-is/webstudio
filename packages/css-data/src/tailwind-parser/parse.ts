@@ -1,15 +1,21 @@
 import { UnoGenerator, createGenerator } from "@unocss/core";
 import { type Theme, presetUno } from "@unocss/preset-uno";
+import { presetLegacyCompat } from "@unocss/preset-legacy-compat";
 import warnOnce from "warn-once";
-import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { substituteVariables } from "./substitute";
-import { parseCss } from "../parse-css";
+import { parseCss, type ParsedStyleDecl } from "../parse-css";
+
+type Warn = (condition: boolean, message: string) => void;
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
 
-const uno = () => {
-  unoLazy = createGenerator({
-    presets: [presetUno()],
+const createUnoGenerator = async () => {
+  unoLazy = await createGenerator({
+    presets: [
+      presetUno(),
+      // until we support oklch natively
+      presetLegacyCompat({ legacyColorSpace: true }),
+    ],
   });
   return unoLazy;
 };
@@ -17,8 +23,12 @@ const uno = () => {
 /**
  * Parses Tailwind classes to CSS by expanding shorthands and substituting variables.
  */
-export const parseTailwindToCss = async (classes: string, warn = warnOnce) => {
-  const generated = await uno().generate(classes, {
+export const parseTailwindToCss = async (
+  classes: string,
+  warn: Warn = warnOnce
+): Promise<string> => {
+  const generator = unoLazy ?? (await createUnoGenerator());
+  const generated = await generator.generate(classes, {
     preflights: true,
   });
 
@@ -30,7 +40,7 @@ export const parseTailwindToCss = async (classes: string, warn = warnOnce) => {
  * Tailwind by default has border-style: solid, but WebStudio doesn't.
  * Provide border-style: solid if border-width is provided.
  **/
-const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
+const postprocessBorder = (styles: Omit<ParsedStyleDecl, "selector">[]) => {
   const borderPairs = [
     ["borderTopWidth", "borderTopStyle"],
     ["borderRightWidth", "borderRightStyle"],
@@ -65,8 +75,8 @@ const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
  */
 export const parseTailwindToWebstudio = async (
   classes: string,
-  warn = warnOnce
-) => {
+  warn: Warn = warnOnce
+): Promise<Omit<ParsedStyleDecl, "selector">[]> => {
   const css = await parseTailwindToCss(classes, warn);
   // remove properties from parsed declaration to align with embed template
   let styles = parseCss(css).map(({ selector, ...styleDecl }) => styleDecl);

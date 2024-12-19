@@ -273,7 +273,7 @@ export const useCombobox = <Item,>({
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
-  const selectedItemRef = useRef<Item>();
+  const selectedItemRef = useRef<undefined | Item>(undefined);
   const itemsCache = useRef<Item[]>([]);
   const [matchedItems, setMatchedItems] = useState<Item[]>([]);
 
@@ -286,6 +286,15 @@ export const useCombobox = <Item,>({
 
     onIsOpenChange(state) {
       const { type, isOpen, inputValue } = state;
+
+      // Tab from the input with menu opened should reset the input value if nothing is selected
+      if (type === comboboxStateChangeTypes.InputBlur) {
+        onChange?.(undefined);
+        // If the input is blurred, we want to close the menu and reset the value to the selected item.
+        setIsOpen(false);
+        setMatchedItems([]);
+        return;
+      }
 
       // Don't open the combobox if the input is a number and the user is using the arrow keys.
       // This prevents the combobox from opening when the user is trying to increment or decrement a number.

@@ -1,5 +1,6 @@
 import { Grid, Box, theme, styled } from "@webstudio-is/design-system";
 import type { MouseEvent } from "react";
+import type { Modifiers } from "../../shared/modifier-keys";
 
 const RECT_HEIGHT = 6;
 const RECT_WIDTH = 42;
@@ -41,7 +42,7 @@ type InsetLayoutProps = {
   onHover: (
     args: { element: HTMLElement; property: InsetProperty } | undefined
   ) => void;
-  activeProperties: readonly InsetProperty[];
+  getActiveProperties: (modifiers?: Modifiers) => readonly InsetProperty[];
 };
 /**
  *  Grid schema for graphical layout
@@ -59,7 +60,7 @@ type InsetLayoutProps = {
 export const InsetLayout = ({
   renderCell,
   onHover,
-  activeProperties,
+  getActiveProperties,
 }: InsetLayoutProps) => {
   const createHandleHover = (property: InsetProperty) => ({
     onMouseEnter: (e: MouseEvent<HTMLDivElement>) => {
@@ -72,6 +73,7 @@ export const InsetLayout = ({
       onHover(undefined);
     },
   });
+  const activeProperties = getActiveProperties();
 
   return (
     <Grid

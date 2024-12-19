@@ -11,15 +11,42 @@ type AuthorizationToken =
 const applyTokenPermissions = (
   token: AuthorizationToken
 ): AuthorizationToken => {
+  let result = token;
+
+  // @todo: fix this on SQL level
   if (token.relation !== "viewers") {
-    return {
-      ...token,
+    result = {
+      ...result,
       canClone: true,
       canCopy: true,
     };
   }
 
-  return token;
+  // @todo: fix this on SQL level
+  if (token.relation === "viewers") {
+    result = {
+      ...result,
+      canPublish: false,
+    };
+  }
+
+  // @todo: fix this on SQL level
+  if (token.relation === "builders") {
+    result = {
+      ...result,
+      canPublish: false,
+    };
+  }
+
+  // @todo: fix this on SQL level
+  if (token.relation === "administrators") {
+    result = {
+      ...result,
+      canPublish: true,
+    };
+  }
+
+  return result;
 };
 
 export const findMany = async (
@@ -55,6 +82,7 @@ export const findMany = async (
 export const tokenDefaultPermissions = {
   canClone: true,
   canCopy: true,
+  canPublish: true,
 };
 
 export type TokenPermissions = typeof tokenDefaultPermissions;
@@ -89,6 +117,7 @@ export const getTokenPermissions = async (
   return {
     canClone: dbToken.canClone,
     canCopy: dbToken.canCopy,
+    canPublish: dbToken.canPublish,
   };
 };
 
@@ -168,6 +197,7 @@ export const update = async (
       relation: props.relation,
       canClone: props.canClone,
       canCopy: props.canCopy,
+      canPublish: props.canPublish,
     })
     .eq("projectId", projectId)
     .eq("token", props.token)

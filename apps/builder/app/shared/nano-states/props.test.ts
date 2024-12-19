@@ -15,7 +15,6 @@ import {
 } from "./props";
 import { $pages } from "./pages";
 import { $assets, $dataSources, $props, $resources } from "./misc";
-import { $params } from "~/canvas/stores";
 import { $dataSourceVariables, $resourceValues } from "./variables";
 import { $awareness } from "../awareness";
 
@@ -206,11 +205,10 @@ test("generate action prop callbacks", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
-test("resolve asset prop values when params is provided", () => {
+test("resolve asset prop values", () => {
   setBoxInstance("box");
   selectPageRoot("box");
   $dataSources.set(new Map());
-  $params.set(undefined);
   $assets.set(
     toMap([
       {
@@ -239,28 +237,19 @@ test("resolve asset prop values when params is provided", () => {
   );
   expect(
     $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
-  ).toEqual(new Map());
-
-  $params.set({
-    assetBaseUrl: "/asset/",
-    imageBaseUrl: "/image/",
-  });
-  expect(
-    $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
   ).toEqual(
     new Map<string, unknown>([
       ["$webstudio$canvasOnly$assetId", "assetId"],
-      ["myAsset", "/asset/my-file.jpg"],
+      ["myAsset", "/cgi/asset/my-file.jpg"],
     ])
   );
 
   cleanStores($propValuesByInstanceSelector);
 });
 
-test("resolve page prop values when params is provided", () => {
+test("resolve page prop values", () => {
   setBoxInstance("box");
   selectPageRoot("box");
-  $params.set(undefined);
   $dataSources.set(new Map());
   $props.set(
     toMap([
@@ -273,14 +262,6 @@ test("resolve page prop values when params is provided", () => {
       },
     ])
   );
-  expect(
-    $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
-  ).toEqual(new Map());
-
-  $params.set({
-    assetBaseUrl: "/asset/",
-    imageBaseUrl: "/image/",
-  });
   expect(
     $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
   ).toEqual(new Map<string, unknown>([["myPage", "/"]]));

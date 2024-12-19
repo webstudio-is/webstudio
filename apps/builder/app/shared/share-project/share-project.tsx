@@ -94,7 +94,7 @@ type MenuProps = {
 };
 
 const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
-  const ids = useIds(["name", "canClone", "canCopy"]);
+  const ids = useIds(["name", "canClone", "canCopy", "canPublish"]);
   const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
 
@@ -194,14 +194,17 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               }}
             >
               <Checkbox
-                disabled={hasProPlan !== true}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
                 checked={value.canClone}
                 onCheckedChange={(canClone) => {
                   onChange({ ...value, canClone: Boolean(canClone) });
                 }}
                 id={ids.canClone}
               />
-              <Label htmlFor={ids.canClone} disabled={hasProPlan !== true}>
+              <Label
+                htmlFor={ids.canClone}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
+              >
                 Can clone
               </Label>
             </Grid>
@@ -214,50 +217,88 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               }}
             >
               <Checkbox
-                disabled={hasProPlan !== true}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
                 checked={value.canCopy}
                 onCheckedChange={(canCopy) => {
                   onChange({ ...value, canCopy: Boolean(canCopy) });
                 }}
                 id={ids.canCopy}
               />
-              <Label htmlFor={ids.canCopy} disabled={hasProPlan !== true}>
+              <Label
+                htmlFor={ids.canCopy}
+                disabled={hasProPlan !== true || value.relation !== "viewers"}
+              >
                 Can copy
               </Label>
             </Grid>
           </Grid>
 
           {isFeatureEnabled("contentEditableMode") && (
-            <Permission
-              disabled={hasProPlan !== true}
-              onCheckedChange={handleCheckedChange("editors")}
-              checked={value.relation === "editors"}
-              title="Content"
-              info={
-                <Flex direction="column">
-                  Recipients can edit content only, such as text, images, and
-                  predefined components.
-                  {hasProPlan !== true && (
-                    <>
-                      <br />
-                      <br />
-                      Upgrade to a Pro account to share with Content Edit
-                      permissions.
-                      <br /> <br />
-                      <Link
-                        className={buttonStyle({ color: "gradient" })}
-                        color="contrast"
-                        underline="none"
-                        href="https://webstudio.is/pricing"
-                        target="_blank"
-                      >
-                        Upgrade
-                      </Link>
-                    </>
-                  )}
-                </Flex>
-              }
-            />
+            <>
+              <Permission
+                disabled={hasProPlan !== true}
+                onCheckedChange={handleCheckedChange("editors")}
+                checked={value.relation === "editors"}
+                title="Content"
+                info={
+                  <Flex direction="column">
+                    Recipients can edit content only, such as text, images, and
+                    predefined components.
+                    {hasProPlan !== true && (
+                      <>
+                        <br />
+                        <br />
+                        Upgrade to a Pro account to share with Content Edit
+                        permissions.
+                        <br /> <br />
+                        <Link
+                          className={buttonStyle({ color: "gradient" })}
+                          color="contrast"
+                          underline="none"
+                          href="https://webstudio.is/pricing"
+                          target="_blank"
+                        >
+                          Upgrade
+                        </Link>
+                      </>
+                    )}
+                  </Flex>
+                }
+              />
+              <Grid
+                css={{
+                  ml: theme.spacing[6],
+                }}
+              >
+                <Grid
+                  gap={1}
+                  flow={"column"}
+                  css={{
+                    alignItems: "center",
+                    justifyContent: "start",
+                  }}
+                >
+                  <Checkbox
+                    disabled={
+                      hasProPlan !== true || value.relation !== "editors"
+                    }
+                    checked={value.canPublish}
+                    onCheckedChange={(canPublish) => {
+                      onChange({ ...value, canPublish: Boolean(canPublish) });
+                    }}
+                    id={ids.canPublish}
+                  />
+                  <Label
+                    htmlFor={ids.canPublish}
+                    disabled={
+                      hasProPlan !== true || value.relation !== "editors"
+                    }
+                  >
+                    Can publish
+                  </Label>
+                </Grid>
+              </Grid>
+            </>
           )}
 
           <Permission
@@ -330,6 +371,7 @@ export type LinkOptions = {
   relation: Relation;
   canCopy: boolean;
   canClone: boolean;
+  canPublish: boolean;
 };
 
 type SharedLinkItemType = {

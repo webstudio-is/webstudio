@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { describe, expect, test } from "vitest";
 import type { HtmlTags } from "html-tags";
 import {
@@ -8,7 +9,7 @@ import {
   type StyleDecl,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
-import { $, renderJsx } from "@webstudio-is/sdk/testing";
+import { $, renderJsx } from "@webstudio-is/template";
 import { parseCss } from "@webstudio-is/css-data";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import {

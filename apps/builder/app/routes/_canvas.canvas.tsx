@@ -1,12 +1,9 @@
 import { lazy } from "react";
 import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
-import { useLoaderData } from "@remix-run/react";
-import type { Params } from "@webstudio-is/react-sdk";
-import { Body } from "@webstudio-is/sdk-components-react-remix";
-import { createImageLoader } from "@webstudio-is/image";
-import env from "~/env/env.server";
 import { isCanvas } from "~/shared/router-utils";
 import { ClientOnly } from "~/shared/client-only";
+import { Body } from "~/canvas/shared/body";
+
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -15,13 +12,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       status: 404,
     });
   }
-
-  const params: Params = {
-    imageBaseUrl: env.IMAGE_BASE_URL,
-    assetBaseUrl: env.ASSET_BASE_URL,
-  };
-
-  return { params };
+  return {};
 };
 
 const Canvas = lazy(async () => {
@@ -30,13 +21,9 @@ const Canvas = lazy(async () => {
 });
 
 const CanvasRoute = () => {
-  const { params } = useLoaderData<typeof loader>();
-  const imageLoader = createImageLoader({
-    imageBaseUrl: params.imageBaseUrl,
-  });
   return (
     <ClientOnly fallback={<Body />}>
-      <Canvas params={params} imageLoader={imageLoader} />
+      <Canvas />
     </ClientOnly>
   );
 };

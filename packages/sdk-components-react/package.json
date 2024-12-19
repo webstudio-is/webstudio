@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react",
-  "version": "0.189.0",
+  "version": "0.0.0-webstudio-version",
   "description": "Webstudio default library for react",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -52,7 +52,8 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "colord": "^2.9.3",
-    "micromark": "^4.0.0"
+    "micromark": "^4.0.0",
+    "await-interaction-response": "^0.0.2"
   },
   "devDependencies": {
     "@testing-library/react": "^14.2.2",
@@ -62,7 +63,6 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "typescript": "5.6.3",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   }
 }

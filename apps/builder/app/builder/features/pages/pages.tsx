@@ -27,7 +27,12 @@ import {
 } from "@webstudio-is/icons";
 import { ExtendedPanel } from "../../shared/extended-sidebar-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
-import { $editingPageId, $isContentMode, $pages } from "~/shared/nano-states";
+import {
+  $editingPageId,
+  $isContentMode,
+  $isDesignMode,
+  $pages,
+} from "~/shared/nano-states";
 import {
   getAllChildrenAndSelf,
   reparentOrphansMutable,
@@ -511,6 +516,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const currentPage = useStore($selectedPage);
   const editingItemId = useStore($editingPageId);
   const pages = useStore($pages);
+  const isDesignMode = useStore($isDesignMode);
 
   if (currentPage === undefined || pages === undefined) {
     return;
@@ -521,30 +527,34 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       <PanelTitle
         suffix={
           <>
-            <Tooltip content="New folder" side="bottom">
-              <Button
-                onClick={() => {
-                  $editingPageId.set(
-                    editingItemId === newFolderId ? undefined : newFolderId
-                  );
-                }}
-                aria-label="New folder"
-                prefix={<NewFolderIcon />}
-                color="ghost"
-              />
-            </Tooltip>
-            <Tooltip content="New page" side="bottom">
-              <Button
-                onClick={() => {
-                  $editingPageId.set(
-                    editingItemId === newPageId ? undefined : newPageId
-                  );
-                }}
-                aria-label="New page"
-                prefix={<NewPageIcon />}
-                color="ghost"
-              />
-            </Tooltip>
+            {isDesignMode && (
+              <>
+                <Tooltip content="New folder" side="bottom">
+                  <Button
+                    onClick={() => {
+                      $editingPageId.set(
+                        editingItemId === newFolderId ? undefined : newFolderId
+                      );
+                    }}
+                    aria-label="New folder"
+                    prefix={<NewFolderIcon />}
+                    color="ghost"
+                  />
+                </Tooltip>
+                <Tooltip content="New page" side="bottom">
+                  <Button
+                    onClick={() => {
+                      $editingPageId.set(
+                        editingItemId === newPageId ? undefined : newPageId
+                      );
+                    }}
+                    aria-label="New page"
+                    prefix={<NewPageIcon />}
+                    color="ghost"
+                  />
+                </Tooltip>
+              </>
+            )}
             <Tooltip content="Close panel" side="bottom">
               <Button
                 color="ghost"
@@ -575,9 +585,8 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           $editingPageId.set(itemId);
         }}
       />
-
-      <ExtendedPanel isOpen={editingItemId !== undefined}>
-        {editingItemId !== undefined && (
+      {editingItemId !== undefined && (
+        <ExtendedPanel>
           <>
             {isFolder(editingItemId, pages.folders) ? (
               <FolderEditor
@@ -591,8 +600,8 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
               />
             )}
           </>
-        )}
-      </ExtendedPanel>
+        </ExtendedPanel>
+      )}
     </>
   );
 };

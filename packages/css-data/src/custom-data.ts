@@ -12,7 +12,7 @@ const numericTypes = [
   "y",
 ] as const;
 
-export const valueTypes = [
+export const valueTypes: string[] = [
   ...numericTypes,
   "hex-color",
   "url",
@@ -28,13 +28,11 @@ export const valueTypes = [
   "anchor-element",
   "try-tactic",
   "try-size",
-] as const;
-
-export type UnitGroup = (typeof numericTypes)[number];
+];
 
 // Data type used before we generate a the constants.
 export type RawPropertyData = {
-  unitGroups: Array<UnitGroup>;
+  unitGroups: Array<string>;
   inherited: boolean;
   initial: StyleValue;
   mdnUrl?: string;

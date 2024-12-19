@@ -15,7 +15,7 @@ export const patchAssets = async (
   { projectId }: { projectId: string },
   patches: Array<Patch>,
   context: AppContext
-) => {
+): Promise<void> => {
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context

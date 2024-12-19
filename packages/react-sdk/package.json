@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.189.0",
+  "version": "0.0.0-webstudio-version",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -18,9 +18,8 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "strip-indent": "^4.0.0",
-    "type-fest": "^4.27.0",
-    "typescript": "5.6.3",
-    "vitest": "^2.1.5",
+    "type-fest": "^4.28.0",
+    "vitest": "^2.1.8",
     "zod": "^3.22.4"
   },
   "peerDependencies": {
@@ -34,10 +33,10 @@
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/template": "workspace:*",
     "change-case": "^5.4.4",
     "html-tags": "^4.0.0",
-    "nanoid": "^5.0.8",
-    "title-case": "^4.3.2"
+    "nanoid": "^5.0.8"
   },
   "exports": {
     ".": {

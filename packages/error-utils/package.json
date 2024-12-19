@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/error-utils",
-  "version": "0.189.0",
+  "version": "0.0.0-webstudio-version",
   "description": "Error utils for all Webstudio packages",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -11,7 +11,7 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "devDependencies": {
-    "@types/node": "^22.9.1",
+    "@types/node": "^22.9.3",
     "@webstudio-is/tsconfig": "workspace:*"
   },
   "exports": {

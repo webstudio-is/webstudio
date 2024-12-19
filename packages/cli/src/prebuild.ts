@@ -49,7 +49,7 @@ import {
   replaceFormActionsWithResources,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
-import { createImageLoader } from "@webstudio-is/image";
+import { wsImageLoader } from "@webstudio-is/image";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -446,21 +446,22 @@ export const prebuild = async (options: {
       throw new Error(`Project domain is missing from the project data`);
     }
 
-    const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
-
-    const imageLoader = createImageLoader({
-      imageBaseUrl: assetBuildUrl,
-    });
+    const assetOrigin = `https://${domain}.${appDomain}`;
 
     for (const asset of siteData.assets) {
       if (asset.type === "image") {
-        const imageSrc = imageLoader({
+        const imagePath = wsImageLoader({
           src: asset.name,
           format: "raw",
         });
-
         assetsToDownload.push(
-          limit(() => downloadAsset(imageSrc, asset.name, assetBaseUrl))
+          limit(() =>
+            downloadAsset(
+              `${assetOrigin}${imagePath}`,
+              asset.name,
+              assetBaseUrl
+            )
+          )
         );
       }
 
@@ -468,7 +469,7 @@ export const prebuild = async (options: {
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              `${assetBuildUrl}${asset.name}`,
+              `${assetOrigin}/cgi/asset/${asset.name}`,
               asset.name,
               assetBaseUrl
             )
@@ -548,13 +549,16 @@ export const prebuild = async (options: {
         case "xml":
           {
             // In case of xml it's the only component we are supporting
-            componentImports = `import { XmlNode } from "@webstudio-is/sdk-components-react";\n`;
+            componentImports = `import { XmlNode, XmlTime } from "@webstudio-is/sdk-components-react";\n`;
 
             xmlPresentationComponents += Array.from(componentsSet)
               .map(([shortName, component]) =>
                 scope.getName(component, shortName)
               )
-              .filter((scopedName) => scopedName !== "XmlNode")
+              .filter(
+                (scopedName) =>
+                  scopedName !== "XmlNode" && scopedName !== "XmlTime"
+              )
               .map((scopedName) =>
                 scopedName === "Body"
                   ? // Using <svg> prevents React from hoisting elements like <title>, <meta>, and <link>

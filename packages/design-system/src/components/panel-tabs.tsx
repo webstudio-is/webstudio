@@ -15,15 +15,14 @@ export const PanelTabs = styled(Primitive.Root, {
 
 export const PanelTabsList = styled(Primitive.List, {
   display: "flex",
-  px: theme.spacing[5],
-  py: theme.spacing[3],
+  padding: theme.spacing[5],
 });
 
 export const PanelTabsTrigger = styled(Primitive.Trigger, {
   all: "unset", // reset <button>
   ...textVariants.titles,
   color: theme.colors.foregroundTextMoreSubtle,
-  padding: theme.spacing[5],
+  padding: theme.spacing[3],
   borderRadius: theme.borderRadius[4],
 
   "&:hover": {

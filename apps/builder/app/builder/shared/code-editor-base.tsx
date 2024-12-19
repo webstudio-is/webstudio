@@ -41,6 +41,9 @@ import {
   DialogClose,
   Flex,
   rawTheme,
+  globalCss,
+  Kbd,
+  Text,
 } from "@webstudio-is/design-system";
 import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { solarizedLight } from "./code-highlight";
@@ -55,6 +58,7 @@ const ExternalChange = Annotation.define<boolean>();
 
 const minHeightVar = "--ws-code-editor-min-height";
 const maxHeightVar = "--ws-code-editor-max-height";
+const maximizeIconVisibilityVar = "--ws-code-editor-maximize-icon-visibility";
 
 export const getMinMaxHeightVars = ({
   minHeight,
@@ -67,18 +71,25 @@ export const getMinMaxHeightVars = ({
   [maxHeightVar]: maxHeight,
 });
 
+const globalStyles = globalCss({
+  "fieldset[disabled] .cm-editor": {
+    opacity: 0.3,
+  },
+});
+
 const editorContentStyle = css({
   ...textVariants.mono,
   // fit editor into parent if stretched
   display: "flex",
+  position: "relative",
   minHeight: 0,
   boxSizing: "border-box",
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
   border: `1px solid ${theme.colors.borderMain}`,
   background: theme.colors.backgroundControls,
-  paddingTop: 6,
-  paddingBottom: 4,
+  paddingTop: 4,
+  paddingBottom: 2,
   paddingRight: theme.spacing[2],
   paddingLeft: theme.spacing[3],
   // required to support copying selected text
@@ -116,6 +127,17 @@ const editorContentStyle = css({
     textDecoration: "underline wavy red",
     backgroundColor: "rgba(255, 0, 0, 0.1)",
   },
+});
+
+const shortcutStyle = css({
+  position: "absolute",
+  left: 0,
+  bottom: 0,
+  width: "100%",
+  paddingInline: theme.spacing[3],
+  background: "oklch(100% 0 0 / 50%)",
+  zIndex: 1,
+  pointerEvents: "none",
 });
 
 const autocompletionTooltipTheme = EditorView.theme({
@@ -163,8 +185,18 @@ const autocompletionTooltipTheme = EditorView.theme({
   },
 });
 
+const keyBindings = [
+  ...defaultKeymap.filter((binding) => {
+    // We are redefining it later and CodeMirror won't take an override
+    return binding.key !== "Mod-Enter";
+  }),
+  ...historyKeymap,
+  indentWithTab,
+];
+
 export type EditorApi = {
   replaceSelection: (string: string) => void;
+  focus: () => void;
 };
 
 type EditorContentProps = {
@@ -173,9 +205,10 @@ type EditorContentProps = {
   readOnly?: boolean;
   autoFocus?: boolean;
   invalid?: boolean;
+  showShortcuts?: boolean;
   value: string;
-  onChange: (newValue: string) => void;
-  onBlur?: (event: FocusEvent) => void;
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
 };
 
 export const EditorContent = ({
@@ -184,17 +217,45 @@ export const EditorContent = ({
   readOnly = false,
   autoFocus = false,
   invalid = false,
+  showShortcuts = false,
   value,
   onChange,
-  onBlur,
+  onChangeComplete,
 }: EditorContentProps) => {
-  const editorRef = useRef<null | HTMLDivElement>(null);
-  const viewRef = useRef<undefined | EditorView>();
+  globalStyles();
+
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<undefined | EditorView>(undefined);
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-  const onBlurRef = useRef(onBlur);
-  onBlurRef.current = onBlur;
+  const onChangeCompleteRef = useRef(onChangeComplete);
+  onChangeCompleteRef.current = onChangeComplete;
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    document.addEventListener(
+      // https://github.com/radix-ui/primitives/blob/dac4fd8ab0c1974020e316c865db258ab10d2279/packages/react/dismissable-layer/src/DismissableLayer.tsx#L14
+      "dismissableLayer.pointerDownOutside",
+      (event) => {
+        if (
+          event.target instanceof Element &&
+          // Prevent radix dialogs and popups from closing when clicking on the editor's autocomplete items
+          event.target.closest(".cm-tooltip.cm-tooltip-autocomplete")
+        ) {
+          event.preventDefault();
+        }
+      },
+      {
+        capture: true,
+        signal: abortController.signal,
+      }
+    );
+    return () => {
+      abortController.abort();
+    };
+  }, []);
 
   // setup editor
 
@@ -222,15 +283,35 @@ export const EditorContent = ({
     if (view === undefined) {
       return;
     }
+    const hasDisabledFieldset =
+      editorRef.current?.closest("fieldset[disabled]");
+
     view.dispatch({
       effects: StateEffect.reconfigure.of([
         ...extensions,
+        ...(hasDisabledFieldset ? [EditorView.editable.of(false)] : []),
         autocompletionTooltipTheme,
         history(),
         drawSelection(),
         dropCursor(),
         syntaxHighlighting(solarizedLight, { fallback: true }),
-        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        keymap.of([
+          ...keyBindings,
+          {
+            key: "Mod-Enter",
+            run(view) {
+              onChangeCompleteRef.current(view.state.doc.toString());
+              return true;
+            },
+          },
+          {
+            key: "Mod-s",
+            run(view) {
+              onChangeCompleteRef.current(view.state.doc.toString());
+              return true;
+            },
+          },
+        ]),
         EditorView.lineWrapping,
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
@@ -248,8 +329,8 @@ export const EditorContent = ({
           }
         }),
         EditorView.domEventHandlers({
-          blur(event) {
-            onBlurRef.current?.(event);
+          blur() {
+            onChangeCompleteRef.current(view.state.doc.toString());
           },
           cut(event) {
             // prevent catching cut by global copy paste
@@ -288,6 +369,9 @@ export const EditorContent = ({
       view.dispatch(view.state.replaceSelection(string));
       view.focus();
     },
+    focus() {
+      viewRef.current?.focus();
+    },
   }));
 
   return (
@@ -295,14 +379,21 @@ export const EditorContent = ({
       className={editorContentStyle()}
       data-invalid={invalid}
       ref={editorRef}
-    />
+    >
+      {showShortcuts && (
+        <Flex align="center" justify="end" gap="1" className={shortcutStyle()}>
+          <Text variant="small">Submit</Text>
+          <Kbd value={["cmd", "enter"]} />
+        </Flex>
+      )}
+    </div>
   );
 };
 
 const editorDialogControlStyle = css({
   position: "relative",
   "&:hover": {
-    "--ws-code-editor-maximize-icon-visibility": "visible",
+    [maximizeIconVisibilityVar]: "visible",
   },
 });
 
@@ -321,9 +412,10 @@ export const EditorDialogButton = forwardRef<
       icon={<MaximizeIcon />}
       css={{
         position: "absolute",
-        top: 6,
+        top: 4,
         right: 4,
-        visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
+        visibility: `var(${maximizeIconVisibilityVar}, hidden)`,
+        background: "oklch(100% 0 0 / 50%)",
       }}
     />
   );
@@ -336,12 +428,20 @@ export const EditorDialog = ({
   title,
   content,
   children,
+  width = 640,
+  height = 480,
+  x,
+  y,
 }: {
   open?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
   title?: ReactNode;
   content: ReactNode;
   children: ReactNode;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   return (
@@ -349,8 +449,10 @@ export const EditorDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         resize="auto"
-        width={640}
-        height={480}
+        width={width}
+        height={height}
+        x={x}
+        y={y}
         minHeight={240}
         isMaximized={isMaximized}
         onInteractOutside={(event) => {
@@ -401,31 +503,5 @@ export const EditorDialog = ({
         </DialogTitle>
       </DialogContent>
     </Dialog>
-  );
-};
-
-export const CodeEditorBase = ({
-  title,
-  open,
-  onOpenChange,
-  ...editorContentProps
-}: EditorContentProps & {
-  title?: ReactNode;
-  open?: boolean;
-  onOpenChange?: (newOpen: boolean) => void;
-}) => {
-  const content = <EditorContent {...editorContentProps} />;
-  return (
-    <EditorDialogControl>
-      {content}
-      <EditorDialog
-        open={open}
-        onOpenChange={onOpenChange}
-        title={title}
-        content={content}
-      >
-        <EditorDialogButton />
-      </EditorDialog>
-    </EditorDialogControl>
   );
 };

@@ -8,7 +8,7 @@ import { $settings, getSetting } from "../client-settings";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
-export const $isPublishDialogOpen = atom<boolean>(false);
+export const $publishDialog = atom<"none" | "publish" | "export">("none");
 
 export const $canvasWidth = atom<number | undefined>();
 
@@ -17,6 +17,10 @@ export const $isCloneDialogOpen = atom<boolean>(false);
 export const $canvasRect = atom<DOMRect | undefined>();
 
 export const $workspaceRect = atom<DOMRect | undefined>();
+
+export const $canvasScrollbarSize = atom<
+  { width: number; height: number } | undefined
+>();
 
 export const $scale = computed(
   [$canvasWidth, $workspaceRect],
@@ -31,6 +35,43 @@ export const $scale = computed(
     return Number.parseFloat(
       ((workspaceRect.width / canvasWidth) * 100).toFixed(2)
     );
+  }
+);
+
+export const $clampingRect = computed(
+  [$workspaceRect, $canvasRect, $canvasScrollbarSize, $scale],
+  (workspaceRect, canvasRect, canvasScrollbarSize, scale) => {
+    if (
+      workspaceRect === undefined ||
+      canvasRect === undefined ||
+      canvasScrollbarSize === undefined
+    ) {
+      return;
+    }
+
+    const scrollbarWidthScaled = Math.round(
+      (canvasScrollbarSize.width * scale) / 100
+    );
+
+    const scrollbarHeightScaled = Math.round(
+      (canvasScrollbarSize.height * scale) / 100
+    );
+
+    if (canvasRect.width >= workspaceRect.width) {
+      return {
+        left: 0,
+        top: 0,
+        width: workspaceRect.width - scrollbarWidthScaled,
+        height: workspaceRect.height - scrollbarHeightScaled,
+      };
+    }
+
+    return {
+      left: 0,
+      top: 0,
+      width: canvasRect.width - scrollbarWidthScaled,
+      height: canvasRect.height - scrollbarHeightScaled,
+    };
   }
 );
 

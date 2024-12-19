@@ -21,33 +21,57 @@ const angleKeyframes = keyframes({
   },
 });
 
-const baseStyle = css({
-  boxSizing: "border-box",
-  position: "absolute",
-  pointerEvents: "none",
-  top: 0,
-  left: 0,
+const baseOutlineStyle = css({
   borderWidth: 1,
   variants: {
     variant: {
       default: {
-        // Semi-transparent color allows user to see the carret when outlining content editable
-        outline: `1px solid oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7) `,
-        outlineOffset: -1,
+        borderStyle: "solid",
+        borderColor: `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`,
       },
       collaboration: {
         [angleVar]: `0deg`,
-        border: `1px solid`,
+        borderStyle: "solid",
         borderImage: `conic-gradient(from var(${angleVar}), #39FBBB 0%, #4A4EFA 12.5%, #E63CFE 25%, #FFAE3C 37.5%, #39FBBB 50%, #4A4EFA 62.5%, #E63CFE 75%, #FFAE3C 87.5%) 1`,
         animation: `2s ${angleKeyframes} linear infinite`,
       },
       slot: {
-        outline: `1px solid ${theme.colors.foregroundReusable}`,
-        outlineOffset: -1,
+        borderStyle: "solid",
+        borderColor: theme.colors.foregroundReusable,
+      },
+    },
+
+    isLeftClamped: {
+      true: {
+        borderLeftWidth: 0,
+      },
+    },
+    isRightClamped: {
+      true: {
+        borderRightWidth: 0,
+      },
+    },
+    isBottomClamped: {
+      true: {
+        borderBottomWidth: 0,
+      },
+    },
+    isTopClamped: {
+      true: {
+        borderTopWidth: 0,
       },
     },
   },
   defaultVariants: { variant: "default" },
+});
+
+const baseStyle = css({
+  boxSizing: "border-box",
+  position: "absolute",
+  display: "grid",
+  pointerEvents: "none",
+  top: 0,
+  left: 0,
 });
 
 const useDynamicStyle = (rect?: Rect) => {
@@ -65,16 +89,47 @@ const useDynamicStyle = (rect?: Rect) => {
 
 type OutlineProps = {
   children?: ReactNode;
-  rect?: Rect;
+  rect: Rect;
+  clampingRect: Rect;
   variant?: "default" | "collaboration" | "slot";
 };
 
-export const Outline = ({ children, rect, variant }: OutlineProps) => {
-  const dynamicStyle = useDynamicStyle(rect);
+export const Outline = ({
+  children,
+  rect,
+  clampingRect,
+  variant,
+}: OutlineProps) => {
+  const outlineRect = {
+    top: Math.max(rect.top, clampingRect.top),
+    height:
+      Math.min(rect.top + rect.height, clampingRect.top + clampingRect.height) -
+      Math.max(rect.top, clampingRect.top),
+
+    left: Math.max(rect.left, clampingRect.left),
+    width:
+      Math.min(rect.left + rect.width, clampingRect.left + clampingRect.width) -
+      Math.max(rect.left, clampingRect.left),
+  };
+
+  const isLeftClamped = rect.left < outlineRect.left;
+  const isTopClamped = rect.top < outlineRect.top;
+
+  const isRightClamped =
+    Math.round(rect.left + rect.width) > Math.round(clampingRect.width);
+
+  const isBottomClamped =
+    Math.round(rect.top + rect.height) > Math.round(clampingRect.height);
+
+  const dynamicStyle = useDynamicStyle(outlineRect);
+
   return (
     <>
       {propertyStyle}
-      <div className={baseStyle({ variant })} style={dynamicStyle}>
+      <div
+        className={`${baseStyle()} ${baseOutlineStyle({ variant, isLeftClamped, isRightClamped, isBottomClamped, isTopClamped })}`}
+        style={dynamicStyle}
+      >
         {children}
       </div>
     </>

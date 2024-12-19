@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type JSX, type ReactNode } from "react";
 import {
   theme,
   Box,
@@ -182,6 +182,10 @@ const GapInput = ({
         }}
         onAbort={() => {
           onPreviewChange();
+        }}
+        onReset={() => {
+          onIntermediateChange(undefined);
+          onReset();
         }}
       />
     </Box>

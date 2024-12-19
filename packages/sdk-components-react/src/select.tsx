@@ -1,8 +1,4 @@
-import {
-  getClosestInstance,
-  getInstanceSelectorById,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
+import { type Hook } from "@webstudio-is/react-sdk/runtime";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 export const defaultTag = "select";
@@ -23,36 +19,14 @@ export const hooksSelect: Hook = {
   onNavigatorUnselect: (context, event) => {
     for (const instance of event.instancePath) {
       if (instance.component === `Option`) {
-        const option = getClosestInstance(
-          event.instancePath,
-          instance,
-          `Option`
-        );
-        if (option) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            option.id
-          );
-          context.setMemoryProp(instanceSelector, "selected", undefined);
-        }
+        context.setMemoryProp(instance, "selected", undefined);
       }
     }
   },
   onNavigatorSelect: (context, event) => {
     for (const instance of event.instancePath) {
       if (instance.component === `Option`) {
-        const option = getClosestInstance(
-          event.instancePath,
-          instance,
-          `Option`
-        );
-        if (option) {
-          const instanceSelector = getInstanceSelectorById(
-            event.instanceSelector,
-            option.id
-          );
-          context.setMemoryProp(instanceSelector, "selected", true);
-        }
+        context.setMemoryProp(instance, "selected", true);
       }
     }
   },

@@ -18,7 +18,7 @@ export const floatingPanelStyle = css({
   border: `1px solid ${theme.colors.borderMain}`,
   boxShadow: theme.shadows.menuDropShadow,
   background: theme.colors.backgroundPanel,
-  borderRadius: theme.borderRadius[4],
+  borderRadius: theme.borderRadius[7],
   display: "flex",
   flexDirection: "column",
 

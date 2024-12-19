@@ -184,7 +184,7 @@ export const InputErrorsTooltip = ({
     <Text key={index}>{error}</Text>
   ));
 
-  const ref = useRef<HTMLDivElement>();
+  const ref = useRef<HTMLDivElement>(null);
   // Use collision boundary to hide tooltips if original element out of visible area in the scroll viewport
   const [collisionBoundary, setCollisionBoundary] = useState<
     | {

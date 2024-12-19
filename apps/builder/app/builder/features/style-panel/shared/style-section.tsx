@@ -23,7 +23,7 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
       styleDecl.usedValue.type === "unparsed" ||
       styleDecl.usedValue.type === "guaranteedInvalid"
     ) {
-      return;
+      return [];
     }
 
     const source = styleDecl.source.name;
@@ -66,12 +66,16 @@ export const RepeatedStyleSection = (props: {
   label: string;
   description: string;
   properties: [StyleProperty, ...StyleProperty[]];
+  collapsible?: boolean;
   onAdd: () => void;
   children: ReactNode;
 }) => {
-  const { label, description, children, properties, onAdd } = props;
+  const { label, description, children, properties, onAdd, collapsible } =
+    props;
   const [isOpen, setIsOpen] = useOpenState(props);
   const styles = useComputedStyles(properties);
+  const dots = getDots(styles);
+
   return (
     <CollapsibleSectionRoot
       fullWidth
@@ -80,6 +84,8 @@ export const RepeatedStyleSection = (props: {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
+          inactive={dots.length === 0}
+          collapsible={collapsible ?? dots.length !== 0}
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton

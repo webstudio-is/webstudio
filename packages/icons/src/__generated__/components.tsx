@@ -500,6 +500,41 @@ export const AccordionIcon: IconComponent = forwardRef(
 );
 AccordionIcon.displayName = "AccordionIcon";
 
+export const AddTemplateInstanceIcon: IconComponent = forwardRef(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          d="M4.33 1.356a8.53 8.53 0 0 0-.497.024c-.375.03-.717.097-1.039.261A2.63 2.63 0 0 0 1.64 2.797c-.164.32-.23.662-.26 1.036a8.54 8.54 0 0 0-.024.497h1.3c.004-.146.01-.275.02-.39.023-.293.067-.446.123-.554l.002-.005c.125-.249.33-.452.585-.582.109-.056.261-.1.554-.124.115-.01.243-.015.39-.019v-1.3ZM11.67 13.344c.147-.004.275-.01.39-.02.293-.023.445-.067.554-.122.254-.131.46-.334.585-.583l.002-.005c.056-.108.1-.26.124-.554.01-.115.015-.243.019-.39h1.3c-.004.18-.011.346-.024.497-.03.374-.096.715-.26 1.036-.256.51-.669.907-1.153 1.155-.322.165-.665.231-1.04.262-.15.013-.316.02-.497.024v-1.3ZM6.33 13.35h3.34v1.3H6.33v-1.3ZM2.656 11.67c.004.147.01.275.02.39.023.293.067.446.123.554.13.254.333.46.582.585l.005.002c.108.056.26.1.554.124.115.01.243.015.39.019v1.3a8.573 8.573 0 0 1-.497-.024c-.374-.03-.715-.096-1.036-.26a2.628 2.628 0 0 1-1.155-1.153c-.165-.322-.231-.665-.262-1.04a8.54 8.54 0 0 1-.024-.497h1.3ZM2.65 6.33v3.34h-1.3V6.33h1.3Z"
+        />
+        <path fill="currentColor" d="M2.65 6.33v3.34h-1.3V6.33h1.3Z" />
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M10 1.35a.65.65 0 0 1 .65.65v8a.65.65 0 1 1-1.3 0V2a.65.65 0 0 1 .65-.65Z"
+          clipRule="evenodd"
+        />
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M14.65 6a.65.65 0 0 1-.65.65H6a.65.65 0 0 1 0-1.3h8a.65.65 0 0 1 .65.65Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+AddTemplateInstanceIcon.displayName = "AddTemplateInstanceIcon";
+
 export const AiLoadingIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -3490,6 +3525,30 @@ export const NoWrapIcon: IconComponent = forwardRef(
 );
 NoWrapIcon.displayName = "NoWrapIcon";
 
+export const NotebookAndPenIcon: IconComponent = forwardRef(
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={color}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M2.5 2.15a.35.35 0 0 0-.35.35v11a.35.35 0 0 0 .35.35h1.35V2.15H2.5Zm0-1.3A1.65 1.65 0 0 0 .85 2.5v11a1.65 1.65 0 0 0 1.65 1.65H9a.65.65 0 1 0 0-1.3H5.15V2.15H10a.65.65 0 1 0 0-1.3H2.5Zm10.5 0a.65.65 0 0 1 .581.36l1.5 3a.65.65 0 0 1 .069.29V13a2.15 2.15 0 1 1-4.3 0V4.5c0-.1.024-.2.069-.29l1.5-3A.65.65 0 0 1 13 .85Zm-.85 10.3V13a.85.85 0 1 0 1.7 0v-1.85h-1.7Zm1.7-1.3h-1.7V4.653l.85-1.7.85 1.7V9.85ZM6.35 5A.65.65 0 0 1 7 4.35h2a.65.65 0 0 1 0 1.3H7A.65.65 0 0 1 6.35 5Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+NotebookAndPenIcon.displayName = "NotebookAndPenIcon";
+
 export const OfflineIcon: IconComponent = forwardRef(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
@@ -3655,14 +3714,19 @@ export const PlayIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 22 22"
+        viewBox="0 0 16 16"
         width={size}
         height={size}
         fill={color}
         {...props}
         ref={forwardedRef}
       >
-        <path d="M4.766 5.765c0-.725 0-1.088.178-1.288a.93.93 0 0 1 .648-.294c.294-.015.65.186 1.359.588l9.234 5.235c.586.332.88.498.982.708.09.183.09.389 0 .572-.102.21-.396.376-.982.708l-9.234 5.235c-.71.402-1.065.603-1.359.588a.93.93 0 0 1-.648-.294c-.178-.2-.178-.563-.178-1.288V5.765Z" />
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="m5.327 1.783.026.018 7.033 4.688c.202.135.394.263.542.382.156.126.35.308.462.58.146.351.146.747 0 1.099a1.48 1.48 0 0 1-.462.579c-.148.12-.34.248-.542.382l-7.06 4.706c-.246.164-.473.316-.667.42-.194.106-.476.235-.81.215a1.435 1.435 0 0 1-1.058-.566c-.202-.267-.25-.573-.27-.793-.021-.22-.021-.493-.021-.789V3.296c0-.296 0-.57.02-.789.02-.22.069-.526.27-.792.254-.335.64-.542 1.06-.567.333-.02.615.109.81.214.193.105.42.257.667.42Zm-1.284.999c-.005.13-.005.302-.005.546v9.344c0 .244 0 .416.005.546.11-.068.254-.163.457-.298l7.009-4.672c.165-.11.28-.188.364-.248-.084-.06-.198-.137-.364-.248L4.5 3.08a15.74 15.74 0 0 0-.457-.298Z"
+          clipRule="evenodd"
+        />
       </svg>
     );
   }

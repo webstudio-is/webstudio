@@ -102,17 +102,19 @@ export const MenuControl = ({
                     setDescriptionValue(undefined);
                   }}
                 >
-                  <Flex
-                    css={{
-                      width: theme.spacing[11],
-                      height: theme.spacing[11],
-                    }}
-                    align="center"
-                    justify="center"
-                  >
-                    <Icon />
+                  <Flex gap="1">
+                    <Flex
+                      css={{
+                        width: theme.spacing[9],
+                        height: theme.spacing[9],
+                      }}
+                      align="center"
+                      justify="center"
+                    >
+                      <Icon />
+                    </Flex>
+                    {label}
                   </Flex>
-                  {label}
                 </DropdownMenuRadioItem>
               );
             })}

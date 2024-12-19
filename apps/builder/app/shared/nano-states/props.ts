@@ -37,7 +37,6 @@ import {
 } from "./misc";
 import { $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
-import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
 import {
   $dataSourceVariables,
@@ -47,7 +46,9 @@ import {
 } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { fetch } from "~/shared/fetch.client";
-import { $selectedPage } from "../awareness";
+import { $selectedPage, getInstanceKey } from "../awareness";
+
+export const assetBaseUrl = "/cgi/asset/";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
@@ -291,7 +292,6 @@ export const $propValuesByInstanceSelector = computed(
     $props,
     $selectedPage,
     $unscopedVariableValues,
-    $params,
     $pages,
     $assets,
     $uploadingFilesDataStore,
@@ -301,7 +301,6 @@ export const $propValuesByInstanceSelector = computed(
     props,
     page,
     unscopedVariableValues,
-    params,
     pages,
     assets,
     uploadingFilesDataStore
@@ -311,7 +310,7 @@ export const $propValuesByInstanceSelector = computed(
     let propsList = Array.from(props.values());
 
     // ignore asset and page props when params is not provided
-    if (params && pages) {
+    if (pages) {
       const uploadingImageAssets = uploadingFilesDataStore
         .map(uploadingFileDataToAsset)
         .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
@@ -320,7 +319,7 @@ export const $propValuesByInstanceSelector = computed(
       // use whole props list to let access hash props from other pages and instances
       propsList = normalizeProps({
         props: propsList,
-        assetBaseUrl: params.assetBaseUrl,
+        assetBaseUrl,
         assets,
         uploadingImageAssets,
         pages,
@@ -393,7 +392,7 @@ export const $propValuesByInstanceSelector = computed(
       }
 
       propValuesByInstanceSelector.set(
-        JSON.stringify(instanceSelector),
+        getInstanceKey(instanceSelector),
         propValues
       );
 
@@ -503,7 +502,7 @@ export const $variableValuesByInstanceSelector = computed(
 
       let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
-        JSON.stringify(instanceSelector),
+        getInstanceKey(instanceSelector),
         variableValues
       );
       const variables = variablesByInstanceId.get(instanceId);
