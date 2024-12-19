@@ -87,6 +87,7 @@ const Menu = ({
     (templateSelector: InstanceSelector) => {
       const insertBefore = modifierKeys.altKey;
       insertTemplateAt(templateSelector, anchor, insertBefore);
+      emitCommand("newInstanceText");
     },
     [anchor, modifierKeys.altKey]
   );
@@ -174,10 +175,7 @@ const Menu = ({
         triggerTooltipContent={triggerTooltipContent}
         templates={filtered.templates}
         value={currentValue}
-        onValueChangeComplete={(value) => {
-          handleValueChangeComplete(value);
-          emitCommand("editInstanceText");
-        }}
+        onValueChangeComplete={handleValueChangeComplete}
         onValueChange={setIntermediateValue}
         modal={false}
         inert={inert}
