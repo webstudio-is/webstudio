@@ -13,11 +13,12 @@ import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
 import { TemplatesMenu } from "./outline/block-instance-outline";
 import { insertTemplateAt } from "./outline/block-utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { Instance } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
+import { emitCommand } from "~/builder/shared/commands";
 
 const TriggerButton = styled("button", {
   position: "absolute",
@@ -82,6 +83,14 @@ const Menu = ({
     InstanceSelector | undefined
   >();
 
+  const handleValueChangeComplete = useCallback(
+    (templateSelector: InstanceSelector) => {
+      const insertBefore = modifierKeys.altKey;
+      insertTemplateAt(templateSelector, anchor, insertBefore);
+    },
+    [anchor, modifierKeys.altKey]
+  );
+
   const currentValue = intermediateValue ?? value;
 
   useEffect(() => {
@@ -134,13 +143,22 @@ const Menu = ({
 
           break;
 
+        case "enter":
+          {
+            if (currentValue !== undefined) {
+              handleValueChangeComplete(currentValue);
+            }
+          }
+
+          break;
+
         default:
           (type) satisfies never;
       }
     });
-  }, [filtered.templates, templates, currentValue]);
+  }, [filtered.templates, templates, currentValue, handleValueChangeComplete]);
 
-  //
+  // @todo repeat and close
 
   return (
     <>
@@ -156,9 +174,9 @@ const Menu = ({
         triggerTooltipContent={triggerTooltipContent}
         templates={filtered.templates}
         value={currentValue}
-        onValueChangeComplete={(templateSelector) => {
-          const insertBefore = modifierKeys.altKey;
-          insertTemplateAt(templateSelector, anchor, insertBefore);
+        onValueChangeComplete={(value) => {
+          handleValueChangeComplete(value);
+          emitCommand("editInstanceText");
         }}
         onValueChange={setIntermediateValue}
         modal={false}

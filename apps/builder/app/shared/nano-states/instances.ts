@@ -44,7 +44,8 @@ type ContextMenuCommand =
       value: string;
     }
   | { type: "selectNext" }
-  | { type: "selectPrevious" };
+  | { type: "selectPrevious" }
+  | { type: "enter" };
 
 export const $textEditorContextMenuCommand = atom<
   undefined | ContextMenuCommand

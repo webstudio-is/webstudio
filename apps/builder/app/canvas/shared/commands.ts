@@ -2,7 +2,10 @@ import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
-import { findClosestEditableInstanceSelector } from "~/shared/instance-utils";
+import {
+  findClosestEditableInstanceSelector,
+  findAllEditableInstanceSelector,
+} from "~/shared/instance-utils";
 import {
   $instances,
   $registeredComponentMetas,
@@ -17,6 +20,7 @@ import {
   hasSelectionFormat,
 } from "../features/text-editor/toolbar-connector";
 import { selectInstance } from "~/shared/awareness";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
@@ -33,14 +37,30 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (selectedInstanceSelector === undefined) {
           return;
         }
-        const editableInstanceSelector = findClosestEditableInstanceSelector(
+
+        let editableInstanceSelector = findClosestEditableInstanceSelector(
           selectedInstanceSelector,
           $instances.get(),
           $registeredComponentMetas.get()
         );
+
         if (editableInstanceSelector === undefined) {
-          return;
+          const selectors: InstanceSelector[] = [];
+
+          findAllEditableInstanceSelector(
+            selectedInstanceSelector,
+            $instances.get(),
+            $registeredComponentMetas.get(),
+            selectors
+          );
+
+          if (selectors.length === 0) {
+            return;
+          }
+
+          editableInstanceSelector = selectors[0];
         }
+
         const element = getElementByInstanceSelector(editableInstanceSelector);
         if (element === undefined) {
           return;
@@ -49,6 +69,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // the canvas element may be unfocused, so it's important to focus the element on the canvas.
         element.focus();
         selectInstance(editableInstanceSelector);
+
         $textEditingInstanceSelector.set({
           selector: editableInstanceSelector,
           reason: "enter",

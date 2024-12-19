@@ -159,6 +159,13 @@ export const TemplatesMenu = ({
                           }
                         : undefined
                     }
+                    onPointerDown={
+                      preventFocusOnHover
+                        ? (event) => {
+                            event.preventDefault();
+                          }
+                        : undefined
+                    }
                     key={id}
                     value={JSON.stringify(value)}
                     {...{ [skipInertHandlersAttribute]: true }}

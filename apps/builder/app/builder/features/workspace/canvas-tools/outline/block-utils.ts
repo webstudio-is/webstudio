@@ -10,7 +10,11 @@ import {
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-import { $instances, findBlockSelector } from "~/shared/nano-states";
+import {
+  $instances,
+  findBlockChildSelector,
+  findBlockSelector,
+} from "~/shared/nano-states";
 import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
 
 const getInsertionIndex = (
@@ -31,6 +35,12 @@ const getInsertionIndex = (
     return;
   }
 
+  const childBlockSelector = findBlockChildSelector(anchor);
+
+  if (childBlockSelector === undefined) {
+    return;
+  }
+
   const index = blockInstance.children.findIndex((child) => {
     if (child.type !== "id") {
       return false;
@@ -40,7 +50,7 @@ const getInsertionIndex = (
       return instances.get(child.value)?.component === blockTemplateComponent;
     }
 
-    return child.value === anchor[0];
+    return child.value === childBlockSelector[0];
   });
 
   if (index === -1) {

@@ -174,7 +174,6 @@ const OnChangeOnBlurPlugin = ({
 
   useEffect(() => {
     const handleBlur = () => {
-      console.log("handleBlur");
       handleChange(editor.getEditorState());
     };
 
@@ -196,6 +195,17 @@ const getNodeKeyFromDOMNode = (
   return (dom as Node & Record<typeof prop, NodeKey | undefined>)[prop];
 };
 
+const isDescendantOrSelf = (
+  descendant: InstanceSelector | undefined,
+  self: InstanceSelector | undefined
+) => {
+  if (descendant === undefined || self === undefined) {
+    return false;
+  }
+
+  return descendant.join(",").endsWith(self.join(","));
+};
+
 const LinkSelectionPlugin = ({
   rootInstanceSelector,
   registerNewLink,
@@ -204,7 +214,7 @@ const LinkSelectionPlugin = ({
   registerNewLink: (key: NodeKey, instanceId: string) => void;
 }) => {
   const [editor] = useLexicalComposerContext();
-  const [preservedSelection] = useState($selectedInstanceSelector.get());
+  const [preservedSelection] = useState(rootInstanceSelector);
 
   useEffect(() => {
     if (!editor.isEditable()) {
@@ -214,6 +224,15 @@ const LinkSelectionPlugin = ({
     const removeUpdateListener = editor.registerUpdateListener(
       ({ editorState }) => {
         editorState.read(() => {
+          if (
+            !isDescendantOrSelf(
+              $selectedInstanceSelector.get(),
+              preservedSelection
+            )
+          ) {
+            return;
+          }
+
           const selection = $getSelection();
           if (!$isRangeSelection(selection)) {
             return false;
@@ -914,14 +933,19 @@ type ContextMenuParams = {
 };
 
 type ContextMenuPluginProps = {
+  rootInstanceSelector: InstanceSelector;
   onOpen: (
     editorState: EditorState,
     params: undefined | ContextMenuParams
   ) => void;
 };
 
-const ContextMenuPlugin = ({ onOpen }: ContextMenuPluginProps) => {
+const ContextMenuPlugin = ({
+  rootInstanceSelector,
+  onOpen,
+}: ContextMenuPluginProps) => {
   const [editor] = useLexicalComposerContext();
+  const [preservedSelection] = useState(rootInstanceSelector);
 
   const handleOpen = useEffectEvent(onOpen);
 
@@ -948,9 +972,20 @@ const ContextMenuPlugin = ({ onOpen }: ContextMenuPluginProps) => {
       }
 
       const node = $getNodeByKey(slashNodeKey);
+
       if ($isTextNode(node)) {
         node.setStyle("");
       }
+
+      const isSelectionInSameComponent = isDescendantOrSelf(
+        $selectedInstanceSelector.get(),
+        preservedSelection
+      );
+      if (!isSelectionInSameComponent) {
+        node?.remove();
+      }
+
+      // if selection changed, remove the slash node
 
       const selection = $getSelection();
 
@@ -1019,7 +1054,10 @@ const ContextMenuPlugin = ({ onOpen }: ContextMenuPluginProps) => {
           }
 
           if (event.key === "Enter") {
-            // @todo ArrowUp in menu
+            execTextEditorContextMenuCommand({
+              type: "enter",
+            });
+
             event.preventDefault();
             return true;
           }
@@ -1135,7 +1173,7 @@ const ContextMenuPlugin = ({ onOpen }: ContextMenuPluginProps) => {
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
     };
-  }, [editor, handleOpen]);
+  }, [editor, handleOpen, preservedSelection]);
 
   return null;
 };
@@ -1321,8 +1359,7 @@ export const TextEditor = ({
 
       const editableInstanceSelectors: InstanceSelector[] = [];
       findAllEditableInstanceSelector(
-        rootInstanceId,
-        [],
+        [rootInstanceId],
         instances,
         $registeredComponentMetas.get(),
         editableInstanceSelectors
@@ -1455,7 +1492,10 @@ export const TextEditor = ({
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
-      <ContextMenuPlugin onOpen={handleContextMenuOpen} />
+      <ContextMenuPlugin
+        onOpen={handleContextMenuOpen}
+        rootInstanceSelector={rootInstanceSelector}
+      />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
       <LinkSelectionPlugin
