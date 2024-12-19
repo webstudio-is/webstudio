@@ -66,11 +66,13 @@ import {
   $blockChildOutline,
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
+  $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
+  findTemplates,
 } from "~/shared/nano-states";
 import {
   getElementByInstanceSelector,
@@ -943,7 +945,27 @@ type ContextMenuPluginProps = {
   ) => void;
 };
 
-const ContextMenuPlugin = ({
+const ContextMenuPlugin = (props: ContextMenuPluginProps) => {
+  const [hasTemplates] = useState(() => {
+    const templates = findTemplates(
+      props.rootInstanceSelector,
+      $instances.get()
+    );
+    if (templates === undefined) {
+      return false;
+    }
+
+    return templates.length > 0;
+  });
+
+  if (!hasTemplates) {
+    return null;
+  }
+
+  return <ContextMenuPluginInternal {...props} />;
+};
+
+const ContextMenuPluginInternal = ({
   rootInstanceSelector,
   onOpen,
 }: ContextMenuPluginProps) => {
