@@ -14,12 +14,12 @@
   "devDependencies": {
     "@svgo/jsx": "^0.4.2",
     "@types/node": "^22.9.3",
-    "@types/react": "^18.2.70",
-    "@types/react-dom": "^18.2.25",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "@webstudio-is/tsconfig": "workspace:*",
     "change-case": "^5.4.4",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "svgo": "^3.0.2"
   },
   "peerDependencies": {

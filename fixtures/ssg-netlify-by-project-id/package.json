@@ -22,8 +22,8 @@
   "private": true,
   "sideEffects": false,
   "devDependencies": {
-    "@types/react": "^18.2.70",
-    "@types/react-dom": "^18.2.25",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "prettier": "3.4.2",
     "typescript": "5.7.2",
@@ -37,8 +37,8 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "vike": "^0.4.206"
   }
 }

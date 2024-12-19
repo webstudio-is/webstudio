@@ -68,15 +68,15 @@
   },
   "devDependencies": {
     "@types/node": "^22.9.3",
-    "@types/react": "^18.2.70",
-    "@types/react-dom": "^18.2.25",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "tailwindcss": "^3.3.3"
   }
 }

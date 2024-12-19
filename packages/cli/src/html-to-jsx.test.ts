@@ -130,7 +130,7 @@ test("Should not fail", async () => {
   const result = await convertHtmlToJsxAndRenderToHtml(htmlCode);
   expect(result).toMatchInlineSnapshot(`
 "
-   <p><a><script src><scri pt>
+   <p><a><script><scri pt>
   </script></a></p>"
 `);
 });
