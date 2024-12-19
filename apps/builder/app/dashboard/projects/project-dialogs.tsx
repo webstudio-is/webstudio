@@ -108,7 +108,7 @@ const DialogContent = ({
       </Flex>
       <DialogActions>
         {primaryButton}
-        <DialogClose asChild>
+        <DialogClose>
           <Button color="ghost">Cancel</Button>
         </DialogClose>
       </DialogActions>

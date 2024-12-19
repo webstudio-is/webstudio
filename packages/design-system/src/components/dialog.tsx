@@ -5,22 +5,22 @@ import {
   forwardRef,
   useRef,
   type DragEventHandler,
+  createContext,
+  useContext,
+  useState,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
-import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
 import { mergeRefs } from "@react-aria/utils";
+import { Button } from "./button";
+import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
+import { Separator } from "./separator";
 
-export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
-
-// Wrap a close button with this
-// https://www.radix-ui.com/docs/primitives/components/dialog#close
-export const DialogClose = Primitive.Close;
 
 // An optional accessible description to be announced when the dialog is opened
 // https://www.radix-ui.com/docs/primitives/components/dialog#description
@@ -34,6 +34,74 @@ if (placeholderImage) {
     "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 }
 
+const panelStyle = css({
+  border: `1px solid ${theme.colors.borderMain}`,
+  boxShadow: theme.shadows.panelSectionDropShadow,
+  background: theme.colors.backgroundPanel,
+  borderRadius: theme.borderRadius[7],
+  display: "flex",
+  flexDirection: "column",
+
+  "&:focus": {
+    // override browser default
+    outline: "none",
+  },
+});
+
+const DialogContext = createContext<{
+  isMaximized: boolean;
+  setIsMaximized: (isMaximized: boolean) => void;
+}>({
+  isMaximized: false,
+  setIsMaximized: () => {},
+});
+
+export const Dialog = (props: ComponentProps<typeof Primitive.Dialog>) => {
+  const [isMaximized, setIsMaximized] = useState(false);
+  return (
+    <DialogContext.Provider value={{ isMaximized, setIsMaximized }}>
+      <Primitive.Dialog {...props} />
+    </DialogContext.Provider>
+  );
+};
+
+export const DialogClose = forwardRef(
+  (
+    { children, ...props }: ComponentProps<typeof Button>,
+    ref: Ref<HTMLButtonElement>
+  ) => (
+    <Primitive.Close asChild>
+      {children ?? (
+        <Button
+          color="ghost"
+          prefix={<CrossIcon />}
+          aria-label="Close"
+          {...props}
+          ref={ref}
+        />
+      )}
+    </Primitive.Close>
+  )
+);
+DialogClose.displayName = "DialogClose";
+
+export const DialogMaximize = forwardRef(
+  (props: ComponentProps<typeof Button>, ref: Ref<HTMLButtonElement>) => {
+    const { isMaximized, setIsMaximized } = useContext(DialogContext);
+    return (
+      <Button
+        color="ghost"
+        prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
+        aria-label="Expand"
+        onClick={() => setIsMaximized(isMaximized ? false : true)}
+        {...props}
+        ref={ref}
+      />
+    );
+  }
+);
+DialogMaximize.displayName = "DialogMaximize";
+
 type Point = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rect = Point & Size;
@@ -45,7 +113,6 @@ type UseDraggableProps = {
 } & Partial<Rect>;
 
 const useDraggable = ({
-  isMaximized = false,
   x,
   y,
   width,
@@ -53,6 +120,7 @@ const useDraggable = ({
   minHeight,
   minWidth,
 }: UseDraggableProps) => {
+  const { isMaximized } = useContext(DialogContext);
   const initialDataRef = useRef<
     | undefined
     | {
@@ -150,8 +218,7 @@ export const DialogContent = forwardRef(
       children,
       className,
       css,
-      resize,
-      isMaximized,
+      resize = "none",
       width,
       height,
       x,
@@ -162,7 +229,7 @@ export const DialogContent = forwardRef(
     }: ComponentProps<typeof Primitive.Content> &
       UseDraggableProps & {
         css?: CSS;
-        resize?: "auto";
+        resize?: "auto" | "none";
       },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
@@ -173,7 +240,6 @@ export const DialogContent = forwardRef(
       y,
       minWidth,
       minHeight,
-      isMaximized,
     });
 
     return (
@@ -193,30 +259,41 @@ export const DialogContent = forwardRef(
 );
 DialogContent.displayName = "DialogContent";
 
+const titleSlotStyle = css({
+  // We put title at the bottom in DOM to make the close button last in the TAB order
+  // But visually we want it to be first
+  order: -1,
+});
+
 export const DialogTitle = ({
   children,
-  closeLabel = "Close dialog",
   suffix,
   ...rest
 }: ComponentProps<typeof PanelTitle> & {
   suffix?: ReactNode;
   closeLabel?: string;
 }) => (
-  <TitleSlot>
-    <PanelTitle
-      {...rest}
-      suffix={
-        suffix ?? (
-          <DialogClose asChild>
-            <CloseButton aria-label={closeLabel} />
-          </DialogClose>
-        )
-      }
-    >
+  <div className={titleSlotStyle()}>
+    <PanelTitle {...rest} suffix={suffix ?? <DialogClose />}>
       <Primitive.Title className={titleStyle()}>{children}</Primitive.Title>
     </PanelTitle>
-  </TitleSlot>
+    <Separator />
+  </div>
 );
+
+export const DialogTitleActions = ({ children }: { children: ReactNode }) => {
+  return (
+    <Flex
+      gap="1"
+      onMouseDown={(event) => {
+        // Prevent dragging dialog
+        event.preventDefault();
+      }}
+    >
+      {children}
+    </Flex>
+  );
+};
 
 export const DialogActions = ({ children }: { children: ReactNode }) => {
   return (
@@ -247,12 +324,13 @@ const centeredContent: CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const contentStyle = css(floatingPanelStyle, {
+const contentStyle = css(panelStyle, {
   position: "fixed",
   width: "min-content",
   minWidth: theme.sizes.sidebarWidth,
-  maxWidth: "calc(100vw - 40px)",
-  maxHeight: "calc(100vh - 40px)",
+  minHeight: theme.spacing[22],
+  maxWidth: `calc(100vw - ${theme.spacing[15]})`,
+  maxHeight: `calc(100vh - ${theme.spacing[15]})`,
   userSelect: "none",
 
   overflow: "hidden",
@@ -260,6 +338,9 @@ const contentStyle = css(floatingPanelStyle, {
     resize: {
       auto: {
         resize: "auto",
+      },
+      none: {
+        resize: "none",
       },
     },
   },

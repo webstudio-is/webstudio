@@ -24,6 +24,7 @@ import {
   SmallToggleButton,
   theme,
   Tooltip,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import {
   EyeconClosedIcon,
@@ -42,7 +43,6 @@ import {
   transformPanels,
   type TransformPanel,
 } from "./transform-utils";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TranslatePanelContent } from "./transform-translate";
 import { ScalePanelContent } from "./transform-scale";
 import { RotatePanelContent } from "./transform-rotate";
@@ -109,6 +109,7 @@ const TransformAdvancedPopover = () => {
   return (
     <FloatingPanel
       title="Advanced Transform"
+      placement="bottom"
       content={
         <Grid gap="2" css={{ padding: theme.panel.padding }}>
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>

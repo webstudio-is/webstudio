@@ -11,11 +11,6 @@ import {
   Button,
   useId,
   Tooltip,
-  FloatingPanelPopover,
-  FloatingPanelAnchor,
-  FloatingPanelPopoverTrigger,
-  FloatingPanelPopoverContent,
-  FloatingPanelPopoverTitle,
   IconButton,
   Grid,
   Flex,
@@ -33,6 +28,12 @@ import {
   buttonStyle,
   toast,
   RadioGroup,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverTitle,
+  PopoverClose,
+  PopoverTitleActions,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
 import { $publishDialog } from "../../shared/nano-states";
@@ -853,30 +854,28 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   };
 
   return (
-    <FloatingPanelPopover
+    <Popover
       modal
       open={publishDialog !== "none"}
       onOpenChange={handleOpenChange}
     >
-      <FloatingPanelAnchor>
-        <Tooltip
-          side="bottom"
-          content={tooltipContent ?? "Publish to Webstudio Cloud"}
-          sideOffset={Number.parseFloat(rawTheme.spacing[5])}
-        >
-          <FloatingPanelPopoverTrigger asChild>
-            <Button
-              type="button"
-              disabled={isPublishEnabled === false}
-              color="positive"
-            >
-              Publish
-            </Button>
-          </FloatingPanelPopoverTrigger>
-        </Tooltip>
-      </FloatingPanelAnchor>
+      <Tooltip
+        side="bottom"
+        content={tooltipContent ?? "Publish to Webstudio Cloud"}
+        sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            disabled={isPublishEnabled === false}
+            color="positive"
+          >
+            Publish
+          </Button>
+        </PopoverTrigger>
+      </Tooltip>
 
-      <FloatingPanelPopoverContent
+      <PopoverContent
         sideOffset={Number.parseFloat(rawTheme.spacing[8])}
         css={{
           width: theme.spacing[33],
@@ -886,30 +885,33 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       >
         {publishDialog === "export" && (
           <>
-            <FloatingPanelPopoverTitle>Export</FloatingPanelPopoverTitle>
+            <PopoverTitle>Export</PopoverTitle>
             <ExportContent projectId={projectId} />
           </>
         )}
 
         {publishDialog === "publish" && (
           <>
-            <FloatingPanelPopoverTitle
-              actions={
-                <IconButton
-                  onClick={() => {
-                    $openProjectSettings.set("publish");
-                  }}
-                >
-                  <GearIcon />
-                </IconButton>
+            <PopoverTitle
+              suffix={
+                <PopoverTitleActions>
+                  <IconButton
+                    onClick={() => {
+                      $openProjectSettings.set("publish");
+                    }}
+                  >
+                    <GearIcon />
+                  </IconButton>
+                  <PopoverClose />
+                </PopoverTitleActions>
               }
             >
               Publish
-            </FloatingPanelPopoverTitle>
+            </PopoverTitle>
             <Content projectId={projectId} onExportClick={handleExportClick} />
           </>
         )}
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+      </PopoverContent>
+    </Popover>
   );
 };

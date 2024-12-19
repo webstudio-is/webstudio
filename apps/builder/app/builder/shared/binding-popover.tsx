@@ -6,7 +6,6 @@ import {
   useRef,
   useState,
   createContext,
-  useContext,
   type ReactNode,
 } from "react";
 import {
@@ -21,12 +20,11 @@ import {
   Button,
   CssValueListArrowFocus,
   CssValueListItem,
+  DialogTitleActions,
+  DialogClose,
+  DialogTitle,
   Flex,
-  FloatingPanelPopover,
-  FloatingPanelPopoverClose,
-  FloatingPanelPopoverContent,
-  FloatingPanelPopoverTitle,
-  FloatingPanelPopoverTrigger,
+  FloatingPanel,
   Label,
   ScrollArea,
   SmallIconButton,
@@ -44,7 +42,6 @@ import {
   formatValuePreview,
   type EditorApi,
 } from "./expression-editor";
-import { useSideOffset } from "./floating-panel";
 import {
   $dataSourceVariables,
   $isDesignMode,
@@ -358,13 +355,7 @@ export const BindingPopover = ({
   onChange: (newValue: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
 }) => {
-  const { side = "left", containerRef } = useContext(BindingPopoverContext);
   const [isOpen, onOpenChange] = useState(false);
-  const [triggerRef, sideOffset] = useSideOffset({
-    side,
-    isOpen,
-    containerRef,
-  });
   const hasUnsavedChange = useRef<boolean>(false);
   const preventedClosing = useRef<boolean>(false);
   const isDesignMode = useStore($isDesignMode);
@@ -375,8 +366,8 @@ export const BindingPopover = ({
 
   const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
   return (
-    <FloatingPanelPopover
-      modal
+    <FloatingPanel
+      placement="right-start"
       open={isOpen}
       onOpenChange={(newOpen) => {
         // handle special case for popover close
@@ -391,15 +382,42 @@ export const BindingPopover = ({
         }
         onOpenChange(newOpen);
       }}
-    >
-      <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
-        <BindingButton variant={variant} error={valueError} value={value} />
-      </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent
-        sideOffset={sideOffset}
-        side={side}
-        align="start"
-      >
+      title={
+        <DialogTitle
+          suffix={
+            <DialogTitleActions>
+              <Tooltip content="Reset binding" side="bottom">
+                {/* automatically close popover when remove expression */}
+                <DialogClose>
+                  <Button
+                    aria-label="Reset binding"
+                    prefix={<TrashIcon />}
+                    color="ghost"
+                    disabled={variant === "default"}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      // inline variables and close dialog
+                      const evaluatedValue = evaluateExpressionWithinScope(
+                        value,
+                        scope
+                      );
+
+                      onRemove(evaluatedValue);
+                      preventedClosing.current = false;
+                      hasUnsavedChange.current = false;
+                      onOpenChange(false);
+                    }}
+                  />
+                </DialogClose>
+              </Tooltip>
+              <DialogClose />
+            </DialogTitleActions>
+          }
+        >
+          Binding
+        </DialogTitle>
+      }
+      content={
         <BindingPanel
           scope={scope}
           aliases={aliases}
@@ -426,38 +444,9 @@ export const BindingPopover = ({
             }
           }}
         />
-        {/* put after content to avoid auto focusing heading buttons */}
-        <FloatingPanelPopoverTitle
-          actions={
-            <Tooltip content="Reset binding" side="bottom">
-              {/* automatically close popover when remove expression */}
-              <FloatingPanelPopoverClose asChild>
-                <Button
-                  aria-label="Reset binding"
-                  prefix={<TrashIcon />}
-                  color="ghost"
-                  disabled={variant === "default"}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    // inline variables and close dialog
-                    const evaluatedValue = evaluateExpressionWithinScope(
-                      value,
-                      scope
-                    );
-
-                    onRemove(evaluatedValue);
-                    preventedClosing.current = false;
-                    hasUnsavedChange.current = false;
-                    onOpenChange(false);
-                  }}
-                />
-              </FloatingPanelPopoverClose>
-            </Tooltip>
-          }
-        >
-          Binding
-        </FloatingPanelPopoverTitle>
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+      }
+    >
+      <BindingButton variant={variant} error={valueError} value={value} />
+    </FloatingPanel>
   );
 };

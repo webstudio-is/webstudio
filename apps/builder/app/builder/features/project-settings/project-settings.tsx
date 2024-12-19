@@ -43,6 +43,7 @@ export const ProjectSettingsView = ({
   return (
     <Dialog open={sections.has(currentSection!)} onOpenChange={onOpenChange}>
       <DialogContent
+        draggable
         css={{
           width: `calc(${leftPanelWidth} + ${rightPanelWidth})`,
           maxWidth: "none",

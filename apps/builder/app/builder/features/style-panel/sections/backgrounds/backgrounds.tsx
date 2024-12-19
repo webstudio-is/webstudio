@@ -42,6 +42,7 @@ export const Section = () => {
         <RepeatedStyle
           label="Backgrounds"
           styles={styles}
+          floatingPanelOffset={{ alignmentAxis: -100 }}
           getItemProps={(_index, primaryValue) => ({
             label: getBackgroundLabel(primaryValue, assets),
           })}

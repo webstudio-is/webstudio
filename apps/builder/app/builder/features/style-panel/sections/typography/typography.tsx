@@ -6,6 +6,7 @@ import {
   theme,
   IconButton,
   Box,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
@@ -35,7 +36,6 @@ import {
   SelectControl,
   TextControl,
 } from "../../controls";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { StyleSection } from "../../shared/style-section";
 import {
   getPriorityStyleValueSource,
@@ -278,6 +278,7 @@ const TypographySectionAdvancedPopover = () => {
   return (
     <FloatingPanel
       title="Advanced Typography"
+      placement="bottom"
       content={
         <Grid
           css={{

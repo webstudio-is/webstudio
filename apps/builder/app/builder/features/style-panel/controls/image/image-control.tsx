@@ -1,7 +1,11 @@
 import { useStore } from "@nanostores/react";
-import { Button, InputField, Flex } from "@webstudio-is/design-system";
+import {
+  Button,
+  InputField,
+  Flex,
+  FloatingPanel,
+} from "@webstudio-is/design-system";
 import { $assets } from "~/shared/nano-states";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { useEffect, useState } from "react";
 import type { InvalidValue, StyleProperty } from "@webstudio-is/css-engine";

@@ -20,9 +20,9 @@ import {
   ToggleGroupButton,
   Separator,
   styled,
+  FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import { ImageControl, SelectControl } from "../../controls";
-import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { BackgroundSize } from "./background-size";
 import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";
