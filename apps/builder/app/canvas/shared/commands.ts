@@ -55,6 +55,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           );
 
           if (selectors.length === 0) {
+            $textEditingInstanceSelector.set(undefined);
             return;
           }
 

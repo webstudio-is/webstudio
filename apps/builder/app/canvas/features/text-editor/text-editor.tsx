@@ -174,7 +174,10 @@ const OnChangeOnBlurPlugin = ({
 
   useEffect(() => {
     const handleBlur = () => {
-      handleChange(editor.getEditorState());
+      // force read to get the latest state
+      editor.read(() => {
+        handleChange(editor.getEditorState());
+      });
     };
 
     // https://github.com/facebook/lexical/blob/867d449b2a6497ff9b1fbdbd70724c74a1044d8b/packages/lexical-react/src/LexicalNodeEventPlugin.ts#L59C12-L67C8
@@ -981,6 +984,7 @@ const ContextMenuPlugin = ({
         $selectedInstanceSelector.get(),
         preservedSelection
       );
+
       if (!isSelectionInSameComponent) {
         node?.remove();
       }
