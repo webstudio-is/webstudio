@@ -44,6 +44,7 @@ export const BackgroundContentStory = () => {
 
       <FloatingPanelProvider container={elementRef}>
         <FloatingPanel
+          open
           title="Background"
           content={<BackgroundContent index={0} />}
         >
