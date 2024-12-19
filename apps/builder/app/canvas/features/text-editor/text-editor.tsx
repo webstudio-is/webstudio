@@ -70,6 +70,7 @@ import {
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
+  execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
 import {
   getElementByInstanceSelector,
@@ -1003,68 +1004,128 @@ const ContextMenuPlugin = ({ onOpen }: ContextMenuPluginProps) => {
         }
 
         if (menuState === "opened") {
-          if (event.key === "Escape" || event.key === " ") {
+          if (event.key === "Escape") {
             closeMenu();
             event.preventDefault();
             return true;
           }
 
+          if (event.key === " ") {
+            closeMenu();
+          }
+
+          if (event.key === "/") {
+            closeMenu();
+          }
+
+          if (event.key === "Enter") {
+            // @todo ArrowUp in menu
+            event.preventDefault();
+            return true;
+          }
+
           if (event.key === "ArrowUp") {
-            // @todo
+            execTextEditorContextMenuCommand({
+              type: "selectPrevious",
+            });
+
             event.preventDefault();
             return true;
           }
 
           if (event.key === "ArrowDown") {
-            // @todo
+            execTextEditorContextMenuCommand({
+              type: "selectNext",
+            });
+
             event.preventDefault();
             return true;
           }
         }
 
-        if (event.key !== "/") {
-          return false;
+        if (menuState === "closed") {
+          if (event.key !== "/") {
+            return false;
+          }
+
+          const slashNode = $createTextNode("/");
+          slashNodeKey = slashNode.getKey();
+          menuState = "opening";
+
+          slashNode.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+          selection.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+          selection.insertNodes([slashNode]);
+
+          event.preventDefault();
+          return true;
         }
 
-        const slashNode = $createTextNode("/");
-        slashNodeKey = slashNode.getKey();
-        menuState = "opening";
-
-        slashNode.setStyle("background-color: rgba(127, 127, 127, 0.2);");
-        selection.setStyle("background-color: rgba(127, 127, 127, 0.2);");
-        selection.insertNodes([slashNode]);
-
-        event.preventDefault();
-
-        return true;
+        return false;
       },
       COMMAND_PRIORITY_EDITOR
     );
 
+    const closeMenuWithUpdate = () => {
+      editor.update(() => {
+        closeMenu();
+      });
+    };
+
     const unsubscribeUpdateListener = editor.registerUpdateListener(
       ({ editorState }) => {
-        if (menuState !== "opening") {
-          return;
+        if (menuState === "opened") {
+          editorState.read(() => {
+            if (slashNodeKey === undefined) {
+              closeMenu();
+              return;
+            }
+            const node = $getNodeByKey(slashNodeKey);
+
+            if (node === null) {
+              closeMenuWithUpdate();
+              return;
+            }
+            const content = node.getTextContent();
+
+            const filter = content.slice(1);
+
+            execTextEditorContextMenuCommand({
+              type: "filter",
+              value: filter,
+            });
+          });
         }
 
-        editorState.read(() => {
-          if (slashNodeKey === undefined) {
-            // handleOpen(editor.getEditorState(), undefined);
-            return;
-          }
-          const slashNode = editor.getElementByKey(slashNodeKey);
+        if (menuState === "opening") {
+          editorState.read(() => {
+            if (slashNodeKey === undefined) {
+              closeMenu();
+              return;
+            }
 
-          if (slashNode === null) {
-            return;
-          }
+            const slashNode = editor.getElementByKey(slashNodeKey);
 
-          const rect = slashNode.getBoundingClientRect();
+            if (slashNode === null) {
+              closeMenu();
+              return;
+            }
 
-          menuState = "opened";
-          handleOpen(editor.getEditorState(), {
-            cursorRect: rect,
+            const rect = slashNode.getBoundingClientRect();
+
+            menuState = "opened";
+
+            handleOpen(editor.getEditorState(), {
+              cursorRect: rect,
+            });
           });
-        });
+        }
+      }
+    );
+
+    const unsubscribeBlurListener = editor.registerRootListener(
+      (rootElement, prevRootElement) => {
+        rootElement?.addEventListener("blur", closeMenuWithUpdate);
+        prevRootElement?.removeEventListener("blur", closeMenuWithUpdate);
       }
     );
 
@@ -1072,6 +1133,7 @@ const ContextMenuPlugin = ({ onOpen }: ContextMenuPluginProps) => {
       unsubscibeKeyDown();
       unsubscribeUpdateListener();
       unsubscibeSelectionChange();
+      unsubscribeBlurListener();
     };
   }, [editor, handleOpen]);
 
@@ -1361,7 +1423,6 @@ export const TextEditor = ({
 
   const handleContextMenuOpen = useCallback(
     (_editorState: EditorState, params: undefined | ContextMenuParams) => {
-      console.log("CLOSE");
       $textEditorContextMenu.set(params);
     },
     []

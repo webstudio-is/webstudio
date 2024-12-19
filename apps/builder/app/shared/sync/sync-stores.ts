@@ -37,6 +37,7 @@ import {
   $selectedBreakpointId,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
+  $textEditorContextMenuCommand,
   $isResizingCanvas,
   $collaborativeInstanceRect,
   $collaborativeInstanceSelector,
@@ -137,6 +138,10 @@ export const createObjectPool = () => {
       $textEditingInstanceSelector
     ),
     new NanostoresSyncObject("textEditorContextMenu", $textEditorContextMenu),
+    new NanostoresSyncObject(
+      "textEditorContextMenuCommand",
+      $textEditorContextMenuCommand
+    ),
     new NanostoresSyncObject("isResizingCanvas", $isResizingCanvas),
     new NanostoresSyncObject("textToolbar", $textToolbar),
     new NanostoresSyncObject(

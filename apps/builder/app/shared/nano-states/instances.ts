@@ -38,4 +38,22 @@ export const $textEditorContextMenu = atom<
   | undefined
 >(undefined);
 
+type ContextMenuCommand =
+  | {
+      type: "filter";
+      value: string;
+    }
+  | { type: "selectNext" }
+  | { type: "selectPrevious" };
+
+export const $textEditorContextMenuCommand = atom<
+  undefined | ContextMenuCommand
+>(undefined);
+
+export const execTextEditorContextMenuCommand = (
+  command: ContextMenuCommand
+) => {
+  $textEditorContextMenuCommand.set(command);
+};
+
 export const $instances = atom<Instances>(new Map());
