@@ -1,48 +1,177 @@
-/**
- * Implementations of the "Floating Panel" component from:
- * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A2679&t=6Q0l4j0CBvXkuKYp-0
- */
-
 import {
-  forwardRef,
-  type Ref,
   type ReactNode,
   type ComponentProps,
+  createContext,
+  type RefObject,
+  useContext,
+  useState,
+  useRef,
+  useLayoutEffect,
+  useCallback,
 } from "react";
-import { CrossIcon } from "@webstudio-is/icons";
 import { css, theme } from "../stitches.config";
-import { Button } from "./button";
-import { Separator } from "./separator";
+import {
+  Dialog,
+  DialogTitleActions,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+  DialogMaximize,
+} from "./dialog";
+import {
+  computePosition,
+  flip,
+  offset,
+  shift,
+  type OffsetOptions,
+} from "@floating-ui/dom";
 
-export const floatingPanelStyle = css({
-  border: `1px solid ${theme.colors.borderMain}`,
-  boxShadow: theme.shadows.menuDropShadow,
-  background: theme.colors.backgroundPanel,
-  borderRadius: theme.borderRadius[7],
-  display: "flex",
-  flexDirection: "column",
-
-  "&:focus": {
-    // override browser default
-    outline: "none",
+const FloatingPanelContext = createContext<{
+  container: RefObject<null | HTMLElement>;
+}>({
+  container: {
+    current: null,
   },
 });
 
-const titleSlotStyle = css({
-  // We put title at the bottom in DOM to make the close button last in the TAB order
-  // But visually we want it to be first
-  order: -1,
-});
-export const TitleSlot = ({ children }: { children: ReactNode }) => (
-  <div className={titleSlotStyle()}>
+export const FloatingPanelProvider = ({
+  children,
+  container,
+}: {
+  children: JSX.Element;
+  container: RefObject<null | HTMLElement>;
+}) => (
+  <FloatingPanelContext.Provider value={{ container }}>
     {children}
-    <Separator />
-  </div>
+  </FloatingPanelContext.Provider>
 );
 
-export const CloseButton = forwardRef(
-  (props: ComponentProps<typeof Button>, ref: Ref<HTMLButtonElement>) => (
-    <Button color="ghost" prefix={<CrossIcon />} {...props} ref={ref} />
-  )
-);
-CloseButton.displayName = "CloseButton";
+type FloatingPanelProps = {
+  title: ReactNode;
+  content: ReactNode;
+  children: ReactNode;
+  maximizable?: boolean;
+  resize?: ComponentProps<typeof DialogContent>["resize"];
+  width?: number;
+  height?: number;
+  // - bottom - below the trigger button
+  // - left-start - on the left side relative to the container, aligned with the top of the trigger button
+  // - center - center of the screen
+  placement?: "left-start" | "right-start" | "center" | "bottom";
+  offset?: OffsetOptions;
+  open?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+};
+
+const contentStyle = css({
+  width: theme.sizes.sidebarWidth,
+});
+
+export const FloatingPanel = ({
+  title,
+  content,
+  children,
+  resize,
+  maximizable,
+  width,
+  height,
+  placement = "left-start",
+  offset: offsetProp = { mainAxis: 10 },
+  open,
+  onOpenChange,
+}: FloatingPanelProps) => {
+  const { container: containerRef } = useContext(FloatingPanelContext);
+  const [contentElement, setContentElement] = useState<HTMLDivElement | null>(
+    null
+  );
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [x, setX] = useState<number>();
+  const [y, setY] = useState<number>();
+
+  const calcPosition = useCallback(() => {
+    if (
+      triggerRef.current === null ||
+      containerRef.current === null ||
+      contentElement === null ||
+      // When centering the dialog, we don't need to calculate the position
+      placement === "center"
+    ) {
+      return;
+    }
+
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+
+    const anchor = {
+      getBoundingClientRect() {
+        return {
+          width: containerRect.width,
+          height: triggerRect.height,
+          x: containerRect.x,
+          y: triggerRect.y,
+          left: containerRect.left,
+          right: containerRect.right,
+          top: triggerRect.top,
+          bottom: triggerRect.bottom,
+        };
+      },
+    };
+
+    computePosition(anchor, contentElement, {
+      placement,
+      middleware: [
+        shift(),
+        placement === "bottom" && flip(),
+        offset(offsetProp),
+      ],
+    }).then(({ x, y }) => {
+      setX(x);
+      setY(y);
+    });
+  }, [contentElement, triggerRef, containerRef, placement, offsetProp]);
+
+  useLayoutEffect(calcPosition, [calcPosition]);
+
+  return (
+    <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild ref={triggerRef}>
+        {children}
+      </DialogTrigger>
+      <DialogContent
+        draggable
+        resize={resize}
+        className={contentStyle()}
+        width={width}
+        height={height}
+        x={x}
+        y={y}
+        onInteractOutside={(event) => {
+          // When a dialog is centered, we don't want to close it when clicking outside
+          // This allows having inline and left positioned dialogs open at the same time as a centered dialog,
+          // while not allowing having multiple non-center positioned dialogs open at the same time.
+          if (placement === "center") {
+            event.preventDefault();
+          }
+        }}
+        ref={setContentElement}
+      >
+        {content}
+        {typeof title === "string" ? (
+          <DialogTitle
+            suffix={
+              <DialogTitleActions>
+                {maximizable && <DialogMaximize />}
+                <DialogClose />
+              </DialogTitleActions>
+            }
+          >
+            {title}
+          </DialogTitle>
+        ) : (
+          title
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};

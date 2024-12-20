@@ -119,7 +119,7 @@ const CloneProjectView = ({
             >
               Clone
             </Button>
-            <DialogClose asChild>
+            <DialogClose>
               <Button color="ghost">Cancel</Button>
             </DialogClose>
           </DialogActions>

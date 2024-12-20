@@ -17,6 +17,10 @@ import {
 import { useState } from "react";
 import {
   Button,
+  DialogClose,
+  DialogMaximize,
+  DialogTitle,
+  DialogTitleActions,
   Flex,
   SmallIconButton,
   Text,
@@ -161,10 +165,19 @@ export const CodeControl = ({
         <CodeEditor
           lang={lang}
           title={
-            <Flex gap="1" align="center">
-              <Text variant="labelsTitleCase">Code Editor</Text>
-              {errorInfo}
-            </Flex>
+            <DialogTitle
+              suffix={
+                <DialogTitleActions>
+                  <DialogMaximize />
+                  <DialogClose />
+                </DialogTitleActions>
+              }
+            >
+              <Flex gap="1" align="center">
+                <Text variant="labelsTitleCase">Code Editor</Text>
+                {errorInfo}
+              </Flex>
+            </DialogTitle>
           }
           readOnly={overwritable === false}
           invalid={error !== undefined}

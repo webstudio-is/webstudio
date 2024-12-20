@@ -4,6 +4,7 @@ import {
   theme,
   ToggleGroup,
   ToggleGroupButton,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
@@ -25,7 +26,6 @@ import {
   OrderLastIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { StyleSection } from "../../shared/style-section";
 import {
   getPriorityStyleValueSource,
@@ -252,6 +252,7 @@ const FlexChildSectionSizingPopover = () => {
   return (
     <FloatingPanel
       title="Sizing"
+      placement="bottom"
       content={
         <Grid
           gap="3"
@@ -399,6 +400,7 @@ const FlexChildSectionOrderPopover = () => {
   return (
     <FloatingPanel
       title="Order"
+      placement="bottom"
       content={
         <Grid css={{ padding: theme.panel.padding }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
