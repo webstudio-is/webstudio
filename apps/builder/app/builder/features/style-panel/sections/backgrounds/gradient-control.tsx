@@ -1,24 +1,15 @@
 import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
 import { Root as Slider, Range, Thumb, Track } from "@radix-ui/react-slider";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import {
   reconstructLinearGradient,
   type GradientStop,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
-import {
-  styled,
-  theme,
-  Flex,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Box,
-} from "@webstudio-is/design-system";
+import { styled, theme, Flex, Box } from "@webstudio-is/design-system";
 import { ChevronBigUpIcon } from "@webstudio-is/icons";
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
-import { RgbaColorPicker, type RgbColor } from "react-colorful";
 
 extend([mixPlugin]);
 
@@ -126,8 +117,8 @@ export const GradientControl = (props: GradientControlProps) => {
         return;
       }
 
-      event.preventDefault();
       // Adding a new stop when user clicks on the slider.
+      event.preventDefault();
       const newStopIndex = positions.findIndex(
         (position) => position > newPosition
       );
@@ -176,20 +167,6 @@ export const GradientControl = (props: GradientControlProps) => {
     [props]
   );
 
-  const handleStopColorChange = useCallback(
-    (color: RgbValue, stopIndex: number) => {
-      const newStops = stops;
-      newStops[stopIndex].color = color;
-      setStops(newStops);
-      props.onChange({
-        angle: props.gradient.angle,
-        stops: newStops,
-        sideOrCorner: props.gradient.sideOrCorner,
-      });
-    },
-    [stops, props]
-  );
-
   const handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>) => {
     const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(event);
     setIsHoveredOnStop(isStopExistingAtPosition);
@@ -229,13 +206,15 @@ export const GradientControl = (props: GradientControlProps) => {
           }
 
           return (
-            <SliderThumbComponent
+            <SliderThumb
               key={index}
-              index={index}
-              stop={stop}
-              onSelected={handleStopSelected}
-              onColorChange={handleStopColorChange}
-            />
+              style={{
+                background: toValue(stop.color),
+              }}
+              onClick={() => handleStopSelected(index, stop)}
+            >
+              <SliderThumbTrigger />
+            </SliderThumb>
           );
         })}
 
@@ -267,71 +246,6 @@ export const GradientControl = (props: GradientControlProps) => {
         })}
       </SliderRoot>
     </Flex>
-  );
-};
-
-const SliderThumbComponent = (props: {
-  index: number;
-  stop: GradientStop;
-  onSelected: (index: number, stop: GradientStop) => void;
-  onColorChange: (color: RgbValue, index: number) => void;
-}) => {
-  const { index, stop, onSelected } = props;
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const value = useMemo(
-    () => colord(toValue(stop.color)).toRgb(),
-    [stop.color]
-  );
-
-  const handleClick = useCallback(
-    (event: React.MouseEvent<HTMLSpanElement>) => {
-      if (event.detail === 1) {
-        onSelected(index, stop);
-      }
-
-      if (event.detail === 2) {
-        setIsPopoverOpen(!isPopoverOpen);
-      }
-    },
-    [index, stop, onSelected, isPopoverOpen]
-  );
-
-  const handleOnColorChange = (color: RgbColor) => {
-    const colordInstance = colord(color).toRgb();
-    props.onColorChange(
-      {
-        type: "rgb",
-        alpha: colordInstance.a,
-        r: color.r,
-        g: color.g,
-        b: color.b,
-      },
-      index
-    );
-  };
-
-  return (
-    <SliderThumb
-      style={{
-        background: toValue(stop.color),
-      }}
-      onClick={handleClick}
-    >
-      <Popover modal open={isPopoverOpen}>
-        <PopoverTrigger asChild>
-          <SliderThumbTrigger />
-        </PopoverTrigger>
-        <PopoverContent css={{ zIndex: theme.zIndices.max }}>
-          <RgbaColorPicker
-            color={value}
-            onPointerDown={(event) => event.stopPropagation()}
-            onMouseLeave={() => setIsPopoverOpen(false)}
-            onClick={(event) => event.stopPropagation()}
-            onChange={handleOnColorChange}
-          />
-        </PopoverContent>
-      </Popover>
-    </SliderThumb>
   );
 };
 
