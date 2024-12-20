@@ -1,5 +1,5 @@
 import {
-  json,
+  data,
   type LoaderFunctionArgs,
   type TypedResponse,
 } from "@remix-run/server-runtime";
@@ -39,7 +39,7 @@ export const loader = async ({
     const buildId = params.buildId;
 
     if (buildId === undefined) {
-      throw json("Required build id", { status: 400 });
+      throw data("Required build id", { status: 400 });
     }
 
     const context = await createContext(request);
@@ -72,7 +72,7 @@ export const loader = async ({
     console.error(error);
 
     // We have no idea what happened, so we'll return a 500 error.
-    throw json(parseError(error), {
+    throw data(parseError(error), {
       status: 500,
     });
   }

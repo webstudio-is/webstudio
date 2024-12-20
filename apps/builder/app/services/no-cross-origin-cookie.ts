@@ -1,4 +1,4 @@
-import { json } from "@remix-run/server-runtime";
+import { data } from "@remix-run/server-runtime";
 
 /**
  * https://kevincox.ca/2024/08/24/cors/
@@ -46,7 +46,7 @@ export const preventCrossOriginCookie = (
     ]);
 
     // allow service calls
-    throw json(
+    throw data(
       {
         message: `Cross-origin request to ${request.url}`,
       },
