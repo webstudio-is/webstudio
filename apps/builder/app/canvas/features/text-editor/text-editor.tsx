@@ -1262,7 +1262,7 @@ const ContextMenuPluginInternal = ({
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
     };
-  }, [editor, handleOpen, preservedSelection]);
+  }, [editor, handleOpen, preservedSelection, rootInstanceSelector, templates]);
 
   return null;
 };
