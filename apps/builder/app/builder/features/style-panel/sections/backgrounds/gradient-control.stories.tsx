@@ -22,7 +22,7 @@ export const GradientWithoutAngle = () => {
         onChange={(value) => {
           setGradient(reconstructLinearGradient(value));
         }}
-        onThumbSelected={(index, stop) => {}}
+        onThumbSelected={() => {}}
       />
       <Text>{gradient}</Text>
     </Flex>
