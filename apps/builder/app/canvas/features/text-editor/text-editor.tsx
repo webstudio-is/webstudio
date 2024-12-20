@@ -93,7 +93,6 @@ import {
 } from "~/shared/awareness";
 import { shallowEqual } from "shallow-equal";
 import { insertTemplateAt } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
-import { emitCommand } from "~/canvas/shared/commands";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -1127,7 +1126,6 @@ const ContextMenuPluginInternal = ({
               */
 
               insertTemplateAt(templateSelector, rootInstanceSelector, false);
-              emitCommand("newInstanceText");
 
               event.preventDefault();
               return true;

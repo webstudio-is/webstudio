@@ -27,58 +27,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   externalCommands: ["clickCanvas"],
   commands: [
     {
-      name: "newInstanceText",
-      hidden: true,
-      disableHotkeyOutsideApp: true,
-      handler: () => {
-        const selectedInstanceSelector = $selectedInstanceSelector.get();
-        if (selectedInstanceSelector === undefined) {
-          return;
-        }
-
-        if (
-          isDescendantOrSelf(
-            $textEditingInstanceSelector.get()?.selector ?? [],
-            selectedInstanceSelector
-          )
-        ) {
-          // already in text editing mode
-          return;
-        }
-
-        const selectors: InstanceSelector[] = [];
-
-        findAllEditableInstanceSelector(
-          selectedInstanceSelector,
-          $instances.get(),
-          $registeredComponentMetas.get(),
-          selectors
-        );
-
-        if (selectors.length === 0) {
-          $textEditingInstanceSelector.set(undefined);
-          return;
-        }
-
-        const editableInstanceSelector = selectors[0];
-
-        const element = getElementByInstanceSelector(editableInstanceSelector);
-        if (element === undefined) {
-          return;
-        }
-        // When an event is triggered from the Builder,
-        // the canvas element may be unfocused, so it's important to focus the element on the canvas.
-        element.focus();
-        selectInstance(editableInstanceSelector);
-
-        $textEditingInstanceSelector.set({
-          selector: editableInstanceSelector,
-          reason: "new",
-        });
-      },
-    },
-
-    {
       name: "editInstanceText",
       hidden: true,
       defaultHotkeys: ["enter"],

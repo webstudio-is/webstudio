@@ -230,7 +230,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: [
     "editInstanceText",
-    "newInstanceText",
     "formatBold",
     "formatItalic",
     "formatSuperscript",

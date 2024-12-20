@@ -4,6 +4,7 @@ import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/awareness";
 import {
   extractWebstudioFragment,
+  findAllEditableInstanceSelector,
   findAvailableDataSources,
   getWebstudioData,
   insertInstanceChildrenMutable,
@@ -12,6 +13,8 @@ import {
 } from "~/shared/instance-utils";
 import {
   $instances,
+  $registeredComponentMetas,
+  $textEditingInstanceSelector,
   findBlockChildSelector,
   findBlockSelector,
 } from "~/shared/nano-states";
@@ -111,7 +114,31 @@ export const insertTemplateAt = (
     const children: Instance["children"] = [
       { type: "id", value: newRootInstanceId },
     ];
+
     insertInstanceChildrenMutable(data, children, target);
+
+    const selectedInstanceSelector = [
+      newRootInstanceId,
+      ...target.parentSelector,
+    ];
+
+    const selectors: InstanceSelector[] = [];
+
+    findAllEditableInstanceSelector(
+      selectedInstanceSelector,
+      data.instances,
+      $registeredComponentMetas.get(),
+      selectors
+    );
+
+    const editableInstanceSelector = selectors[0];
+
+    if (editableInstanceSelector) {
+      $textEditingInstanceSelector.set({
+        selector: editableInstanceSelector,
+        reason: "new",
+      });
+    }
 
     selectInstance([newRootInstanceId, ...target.parentSelector]);
   });
