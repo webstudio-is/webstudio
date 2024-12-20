@@ -947,6 +947,7 @@ const ContextMenuPlugin = (props: ContextMenuPluginProps) => {
   const [templates] = useState(() =>
     findTemplates(props.rootInstanceSelector, $instances.get())
   );
+
   if (templates === undefined) {
     return;
   }
@@ -1352,13 +1353,14 @@ const AnyKeyDownPlugin = ({
 };
 
 export const TextEditor = ({
-  rootInstanceSelector,
+  rootInstanceSelector: rootInstanceSelectorUnstable,
   instances,
   contentEditable,
   editable,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
+  const [rootInstanceSelector] = useState(() => rootInstanceSelectorUnstable);
   // class names must be started with letter so we add a prefix
   const [paragraphClassName] = useState(() => `a${nanoid()}`);
   const [italicClassName] = useState(() => `a${nanoid()}`);
