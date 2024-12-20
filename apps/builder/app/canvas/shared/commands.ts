@@ -73,7 +73,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
         $textEditingInstanceSelector.set({
           selector: editableInstanceSelector,
-          reason: "enter",
+          reason: "new",
         });
       },
     },

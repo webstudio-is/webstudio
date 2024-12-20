@@ -39,6 +39,7 @@ import {
   type NodeKey,
   $getNodeByKey,
   SELECTION_CHANGE_COMMAND,
+  $selectAll,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -714,6 +715,10 @@ const InitCursorPlugin = () => {
           }
         }
 
+        return;
+      }
+      if (reason === "new") {
+        $selectAll();
         return;
       }
 

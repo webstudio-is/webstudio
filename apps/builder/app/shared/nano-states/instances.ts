@@ -20,6 +20,10 @@ export const $textEditingInstanceSelector = atom<
     }
   | {
       selector: InstanceSelector;
+      reason: "new";
+    }
+  | {
+      selector: InstanceSelector;
       reason: "click";
       mouseX: number;
       mouseY: number;
