@@ -18,7 +18,6 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { Instance } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
-import { emitCommand } from "~/builder/shared/commands";
 
 const TriggerButton = styled("button", {
   position: "absolute",
@@ -84,7 +83,6 @@ const Menu = ({
     (templateSelector: InstanceSelector) => {
       const insertBefore = modifierKeys.altKey;
       insertTemplateAt(templateSelector, anchor, insertBefore);
-      emitCommand("newInstanceText");
     },
     [anchor, modifierKeys.altKey]
   );
