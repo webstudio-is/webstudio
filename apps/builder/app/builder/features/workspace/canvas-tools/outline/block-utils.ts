@@ -138,6 +138,8 @@ export const insertTemplateAt = (
         selector: editableInstanceSelector,
         reason: "new",
       });
+    } else {
+      $textEditingInstanceSelector.set(undefined);
     }
 
     selectInstance([newRootInstanceId, ...target.parentSelector]);
