@@ -1,5 +1,5 @@
 import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
-import { Root as Slider, Range, Thumb, Track } from "@radix-ui/react-slider";
+import { Slider, Range, Thumb, Track } from "@radix-ui/react-slider";
 import { useState, useCallback } from "react";
 import {
   reconstructLinearGradient,
