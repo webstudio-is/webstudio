@@ -1297,11 +1297,6 @@ export const TextEditor = ({
 
   const handleChange = useEffectEvent((editorState: EditorState) => {
     editorState.read(() => {
-      // Otherwise editorState.read captures focus
-      if ($textEditorContextMenu.get() !== undefined) {
-        //return;
-      }
-
       const treeRootInstance = instances.get(rootInstanceSelector[0]);
       if (treeRootInstance) {
         const jsonState = editorState.toJSON();

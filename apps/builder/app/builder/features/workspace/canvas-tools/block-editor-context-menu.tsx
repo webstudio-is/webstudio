@@ -32,10 +32,8 @@ const TriggerButton = styled("button", {
 });
 
 const InertController = ({
-  // value,
   onChange,
 }: {
-  // value: boolean;
   onChange: (inert: boolean) => void;
 }) => {
   const handleChange = useEffectEvent(onChange);
@@ -71,7 +69,6 @@ const Menu = ({
   const [inert, setInert] = useState(true);
   const modifierKeys = useStore($modifierKeys);
   const scale = useStore($scale);
-  // const textEditorContextMenuCommand = useStore($textEditorContextMenuCommand);
   const rect = applyScale(cursorRect, scale);
 
   const [filtered, setFiltered] = useState({ repeat: 0, templates });
@@ -102,56 +99,50 @@ const Menu = ({
       const type = command.type;
 
       switch (type) {
-        case "filter":
-          {
-            const filter = command.value.toLowerCase();
-            const filteredTemplates = templates.filter(([template]) => {
-              const title = template.label ?? template.component;
-              return title.toLowerCase().includes(filter);
-            });
+        case "filter": {
+          const filter = command.value.toLowerCase();
+          const filteredTemplates = templates.filter(([template]) => {
+            const title = template.label ?? template.component;
+            return title.toLowerCase().includes(filter);
+          });
 
-            setFiltered((prev) => {
-              if (filteredTemplates.length === 0) {
-                return { repeat: prev.repeat + 1, templates: [] };
-              }
-
-              return { repeat: 0, templates: filteredTemplates };
-            });
-
-            setValue(filteredTemplates[0]?.[1] ?? undefined);
-          }
-
-          break;
-        case "selectNext":
-          {
-            const index = filtered.templates.findIndex(([_, selector]) =>
-              shallowEqual(selector, currentValue)
-            );
-            const nextIndex = mod(index + 1, filtered.templates.length);
-            setValue(filtered.templates[nextIndex]?.[1] ?? undefined);
-            setIntermediateValue(undefined);
-          }
-          break;
-        case "selectPrevious":
-          {
-            const index = filtered.templates.findIndex(([_, selector]) =>
-              shallowEqual(selector, currentValue)
-            );
-            const prevIndex = mod(index - 1, filtered.templates.length);
-            setValue(filtered.templates[prevIndex]?.[1] ?? undefined);
-            setIntermediateValue(undefined);
-          }
-
-          break;
-
-        case "enter":
-          {
-            if (currentValue !== undefined) {
-              handleValueChangeComplete(currentValue);
+          setFiltered((prev) => {
+            if (filteredTemplates.length === 0) {
+              return { repeat: prev.repeat + 1, templates: [] };
             }
-          }
 
+            return { repeat: 0, templates: filteredTemplates };
+          });
+
+          setValue(filteredTemplates[0]?.[1] ?? undefined);
           break;
+        }
+
+        case "selectNext": {
+          const index = filtered.templates.findIndex(([_, selector]) =>
+            shallowEqual(selector, currentValue)
+          );
+          const nextIndex = mod(index + 1, filtered.templates.length);
+          setValue(filtered.templates[nextIndex]?.[1] ?? undefined);
+          setIntermediateValue(undefined);
+          break;
+        }
+        case "selectPrevious": {
+          const index = filtered.templates.findIndex(([_, selector]) =>
+            shallowEqual(selector, currentValue)
+          );
+          const prevIndex = mod(index - 1, filtered.templates.length);
+          setValue(filtered.templates[prevIndex]?.[1] ?? undefined);
+          setIntermediateValue(undefined);
+          break;
+        }
+
+        case "enter": {
+          if (currentValue !== undefined) {
+            handleValueChangeComplete(currentValue);
+          }
+          break;
+        }
 
         default:
           (type) satisfies never;
