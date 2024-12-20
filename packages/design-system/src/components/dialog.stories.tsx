@@ -40,10 +40,10 @@ const DialogDemo = () => (
           <p className={descriptionStyle()}>This is a description</p>
         </DialogDescription>
         <div className={buttonsStyle()}>
-          <DialogClose asChild>
+          <DialogClose>
             <Button color="ghost">Cancel</Button>
           </DialogClose>
-          <DialogClose asChild>
+          <DialogClose>
             <Button color="positive">Save</Button>
           </DialogClose>
         </div>

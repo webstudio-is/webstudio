@@ -17,10 +17,10 @@ import {
   Separator,
   Tooltip,
   Kbd,
+  FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
-import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
   $registeredComponentMetas,
   $dragAndDropState,

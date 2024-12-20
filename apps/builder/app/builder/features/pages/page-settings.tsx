@@ -7,6 +7,7 @@ import {
   useId,
   useEffect,
   type JSX,
+  useRef,
 } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
@@ -56,6 +57,7 @@ import {
   Switch,
   PanelTitle,
   TitleSuffixSpacer,
+  FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -1664,6 +1666,7 @@ const PageSettingsView = ({
   children: JSX.Element;
 }) => {
   const isDesignMode = useStore($isDesignMode);
+  const containerRef = useRef<HTMLFormElement>(null);
   return (
     <>
       <PanelTitle
@@ -1706,11 +1709,13 @@ const PageSettingsView = ({
         Page Settings
       </PanelTitle>
       <Separator />
-      <Form onSubmit={onClose}>
-        <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
-          {children}
-        </fieldset>
-      </Form>
+      <FloatingPanelProvider container={containerRef}>
+        <Form onSubmit={onClose} ref={containerRef}>
+          <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
+            {children}
+          </fieldset>
+        </Form>
+      </FloatingPanelProvider>
     </>
   );
 };

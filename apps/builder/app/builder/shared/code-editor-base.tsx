@@ -2,7 +2,6 @@ import {
   useEffect,
   useRef,
   type ReactNode,
-  useState,
   forwardRef,
   type ComponentProps,
   type RefObject,
@@ -32,20 +31,15 @@ import {
   textVariants,
   css,
   SmallIconButton,
-  Dialog,
-  DialogTrigger,
-  DialogContent,
   Grid,
-  DialogTitle,
-  Button,
-  DialogClose,
   Flex,
   rawTheme,
   globalCss,
   Kbd,
   Text,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
-import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
+import { MaximizeIcon } from "@webstudio-is/icons";
 import { solarizedLight } from "./code-highlight";
 
 // This undocumented flag is required to keep contenteditable fields editable after the first activation of EditorView.
@@ -423,42 +417,32 @@ export const EditorDialogButton = forwardRef<
 EditorDialogButton.displayName = "EditorDialogButton";
 
 export const EditorDialog = ({
-  open,
-  onOpenChange,
-  title,
   content,
   children,
+  placement = "center",
   width = 640,
   height = 480,
-  x,
-  y,
+  ...panelProps
 }: {
-  open?: boolean;
-  onOpenChange?: (newOpen: boolean) => void;
-  title?: ReactNode;
+  title: ReactNode;
   content: ReactNode;
   children: ReactNode;
-  x?: number;
-  y?: number;
   width?: number;
   height?: number;
+  placement?: ComponentProps<typeof FloatingPanel>["placement"];
+  resize?: ComponentProps<typeof FloatingPanel>["resize"];
+  open?: boolean;
+  onOpenChange?: (newOpen: boolean) => void;
 }) => {
-  const [isMaximized, setIsMaximized] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        resize="auto"
-        width={width}
-        height={height}
-        x={x}
-        y={y}
-        minHeight={240}
-        isMaximized={isMaximized}
-        onInteractOutside={(event) => {
-          event.preventDefault();
-        }}
-      >
+    <FloatingPanel
+      {...panelProps}
+      width={width}
+      height={height}
+      placement={placement}
+      maximizable
+      resize="auto"
+      content={
         <Grid
           align="stretch"
           css={{
@@ -470,38 +454,9 @@ export const EditorDialog = ({
         >
           {content}
         </Grid>
-        {/* Title is at the end intentionally,
-         * to make the close button last in the tab order
-         */}
-        <DialogTitle
-          draggable
-          suffix={
-            <Flex
-              gap="1"
-              onMouseDown={(event) => {
-                // Prevent dragging dialog
-                event.preventDefault();
-              }}
-            >
-              <Button
-                color="ghost"
-                prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
-                aria-label="Expand"
-                onClick={() => setIsMaximized(isMaximized ? false : true)}
-              />
-              <DialogClose asChild>
-                <Button
-                  color="ghost"
-                  prefix={<CrossIcon />}
-                  aria-label="Close"
-                />
-              </DialogClose>
-            </Flex>
-          }
-        >
-          {title}
-        </DialogTitle>
-      </DialogContent>
-    </Dialog>
+      }
+    >
+      {children}
+    </FloatingPanel>
   );
 };

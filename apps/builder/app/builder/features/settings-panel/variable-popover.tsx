@@ -11,19 +11,17 @@ import {
   useImperativeHandle,
   useRef,
   createContext,
-  useContext,
   useEffect,
 } from "react";
-import { mergeRefs } from "@react-aria/utils";
 import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
+  DialogClose,
+  DialogTitle,
+  DialogTitleActions,
   Flex,
-  FloatingPanelPopover,
-  FloatingPanelPopoverContent,
-  FloatingPanelPopoverTitle,
-  FloatingPanelPopoverTrigger,
+  FloatingPanel,
   Grid,
   InputErrorsTooltip,
   InputField,
@@ -59,7 +57,6 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
-import { useSideOffset } from "~/builder/shared/floating-panel";
 import {
   EditorDialog,
   EditorDialogButton,
@@ -618,14 +615,15 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
   return true;
 };
 
-export const VariablePopoverTrigger = forwardRef<
-  HTMLButtonElement,
-  { variable?: DataSource; children: ReactNode }
->(({ variable, children }, ref) => {
+export const VariablePopoverTrigger = ({
+  variable,
+  children,
+}: {
+  variable?: DataSource;
+  children: ReactNode;
+}) => {
   const areResourcesLoading = useStore($areResourcesLoading);
   const [isOpen, setOpen] = useState(false);
-  const { containerRef } = useContext(VariablePopoverContext);
-  const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
   const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const formRef = useRef<HTMLFormElement>(null);
@@ -635,8 +633,7 @@ export const VariablePopoverTrigger = forwardRef<
   const requiresUpgrade = allowDynamicData === false && isResource;
 
   return (
-    <FloatingPanelPopover
-      modal
+    <FloatingPanel
       open={isOpen}
       onOpenChange={(newOpen) => {
         if (newOpen) {
@@ -652,16 +649,64 @@ export const VariablePopoverTrigger = forwardRef<
           // prevent closing when not all errors are shown to user
         }
       }}
-    >
-      <FloatingPanelPopoverTrigger ref={mergeRefs(ref, triggerRef)} asChild>
-        {children}
-      </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent
-        ref={bindingPopoverContainerRef}
-        sideOffset={sideOffsset}
-        side="left"
-        align="start"
-      >
+      title={
+        variable === undefined ? (
+          <DialogTitle>New Variable</DialogTitle>
+        ) : (
+          <DialogTitle
+            suffix={
+              <DialogTitleActions>
+                {variable?.type === "resource" && (
+                  <>
+                    {/* allow to copy curl only for default and graphql resource controls */}
+                    {resources.get(variable.resourceId)?.control !==
+                      "system" && (
+                      <Tooltip
+                        content="Copy resource as cURL command"
+                        side="bottom"
+                      >
+                        <Button
+                          aria-label="Copy resource as cURL command"
+                          prefix={<CopyIcon />}
+                          color="ghost"
+                          onClick={() => {
+                            const resourceRequest = getComputedResource(
+                              variable.resourceId
+                            );
+                            if (resourceRequest) {
+                              navigator.clipboard.writeText(
+                                generateCurl(resourceRequest)
+                              );
+                            }
+                          }}
+                        />
+                      </Tooltip>
+                    )}
+                    <Tooltip content="Refresh resource data" side="bottom">
+                      <Button
+                        aria-label="Refresh resource data"
+                        prefix={<RefreshIcon />}
+                        color="ghost"
+                        disabled={areResourcesLoading}
+                        onClick={() => {
+                          formRef.current?.requestSubmit();
+                          if (formRef.current?.checkValidity()) {
+                            invalidateResource(variable.resourceId);
+                          }
+                        }}
+                      />
+                    </Tooltip>
+                  </>
+                )}
+                <DialogClose />
+              </DialogTitleActions>
+            }
+          >
+            Edit Variable
+          </DialogTitle>
+        )
+      }
+      content={
         <ScrollArea
           css={{
             // flex fixes content overflowing artificial scroll area
@@ -731,61 +776,11 @@ export const VariablePopoverTrigger = forwardRef<
             </form>
           </Flex>
         </ScrollArea>
-        {/* put after content to avoid auto focusing "Close" button */}
-        {variable === undefined ? (
-          <FloatingPanelPopoverTitle>New Variable</FloatingPanelPopoverTitle>
-        ) : (
-          <FloatingPanelPopoverTitle
-            actions={
-              variable?.type === "resource" && (
-                <>
-                  {/* allow to copy curl only for default and graphql resource controls */}
-                  {resources.get(variable.resourceId)?.control !== "system" && (
-                    <Tooltip
-                      content="Copy resource as cURL command"
-                      side="bottom"
-                    >
-                      <Button
-                        aria-label="Copy resource as cURL command"
-                        prefix={<CopyIcon />}
-                        color="ghost"
-                        onClick={() => {
-                          const resourceRequest = getComputedResource(
-                            variable.resourceId
-                          );
-                          if (resourceRequest) {
-                            navigator.clipboard.writeText(
-                              generateCurl(resourceRequest)
-                            );
-                          }
-                        }}
-                      />
-                    </Tooltip>
-                  )}
-                  <Tooltip content="Refresh resource data" side="bottom">
-                    <Button
-                      aria-label="Refresh resource data"
-                      prefix={<RefreshIcon />}
-                      color="ghost"
-                      disabled={areResourcesLoading}
-                      onClick={() => {
-                        formRef.current?.requestSubmit();
-                        if (formRef.current?.checkValidity()) {
-                          invalidateResource(variable.resourceId);
-                        }
-                      }}
-                    />
-                  </Tooltip>
-                </>
-              )
-            }
-          >
-            Edit Variable
-          </FloatingPanelPopoverTitle>
-        )}
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+      }
+    >
+      {children}
+    </FloatingPanel>
   );
-});
+};
 
 VariablePopoverTrigger.displayName = "VariablePopoverTrigger";

@@ -99,12 +99,10 @@ export const CssFragmentEditorContent = ({
 
 export const CssFragmentEditor = ({
   title,
-  open,
   content,
   onOpenChange,
 }: {
   title?: ReactNode;
-  open?: boolean;
   content: ReactNode;
   onOpenChange?: (newOpen: boolean) => void;
 }) => {
@@ -113,7 +111,6 @@ export const CssFragmentEditor = ({
       <EditorDialogControl>
         {content}
         <EditorDialog
-          open={open}
           onOpenChange={onOpenChange}
           title={title}
           content={content}

@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   FloatingPanel,
   FloatingPanelProvider,
-} from "~/builder/shared/floating-panel";
+} from "@webstudio-is/design-system";
 import {
   $breakpoints,
   $selectedBreakpointId,
@@ -38,16 +38,13 @@ $awareness.set({
 
 export const BackgroundContentStory = () => {
   const elementRef = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(true);
-
   return (
     <>
       <div ref={elementRef} style={{ marginLeft: "400px" }}></div>
 
       <FloatingPanelProvider container={elementRef}>
         <FloatingPanel
-          isOpen={isOpen}
-          onIsOpenChange={setIsOpen}
+          open
           title="Background"
           content={<BackgroundContent index={0} />}
         >

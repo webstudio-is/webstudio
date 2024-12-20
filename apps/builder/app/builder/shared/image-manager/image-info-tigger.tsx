@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
   SmallIconButton,
-  FloatingPanelPopover,
-  FloatingPanelPopoverTrigger,
-  FloatingPanelPopoverContent,
-  FloatingPanelPopoverTitle,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverTitle,
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import type { Asset } from "@webstudio-is/sdk";
@@ -26,8 +26,8 @@ export const ImageInfoTrigger = ({
 }) => {
   const [isInfoOpen, setInfoOpen] = useState(false);
   return (
-    <FloatingPanelPopover modal open={isInfoOpen} onOpenChange={setInfoOpen}>
-      <FloatingPanelPopoverTrigger asChild>
+    <Popover modal open={isInfoOpen} onOpenChange={setInfoOpen}>
+      <PopoverTrigger asChild>
         <SmallIconButton
           title="Options"
           onClick={() => setInfoOpen(true)}
@@ -47,9 +47,9 @@ export const ImageInfoTrigger = ({
           }}
           icon={<GearIcon />}
         />
-      </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent>
-        <FloatingPanelPopoverTitle>Asset Details</FloatingPanelPopoverTitle>
+      </PopoverTrigger>
+      <PopoverContent>
+        <PopoverTitle>Asset Details</PopoverTitle>
         <ImageInfo
           onDelete={(ids) => {
             setInfoOpen(false);
@@ -57,7 +57,7 @@ export const ImageInfoTrigger = ({
           }}
           asset={asset}
         />
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+      </PopoverContent>
+    </Popover>
   );
 };

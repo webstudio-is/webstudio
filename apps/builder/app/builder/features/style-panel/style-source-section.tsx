@@ -499,7 +499,7 @@ const DeleteConfirmationDialog = ({
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{`Delete "${token}" token from the project including all of its styles?`}</Text>
           <Flex direction="rowReverse" gap="2">
-            <DialogClose asChild>
+            <DialogClose>
               <Button
                 color="destructive"
                 onClick={() => {
@@ -509,7 +509,7 @@ const DeleteConfirmationDialog = ({
                 Delete
               </Button>
             </DialogClose>
-            <DialogClose asChild>
+            <DialogClose>
               <Button color="ghost">Cancel</Button>
             </DialogClose>
           </Flex>

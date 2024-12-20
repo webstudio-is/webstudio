@@ -6,6 +6,7 @@ import {
   IconButton,
   Separator,
   styled,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { PositionControl, SelectControl, TextControl } from "../../controls";
 import {
@@ -18,7 +19,6 @@ import {
 import { StyleSection } from "../../shared/style-section";
 import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { humanizeString } from "~/shared/string-utils";
 import { PropertyLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
@@ -43,6 +43,7 @@ const ObjectPosition = () => {
     <Flex justify="end">
       <FloatingPanel
         title="Object Position"
+        placement="bottom"
         content={
           <Flex css={{ padding: theme.panel.padding }}>
             <PositionControl property="objectPosition" styleDecl={styleDecl} />
