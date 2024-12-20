@@ -75,7 +75,7 @@
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "arrgv": "^1.0.2",
+    "args-tokenizer": "^0.1.0",
     "bcp-47": "^2.1.0",
     "change-case": "^5.4.4",
     "colord": "^2.9.3",
