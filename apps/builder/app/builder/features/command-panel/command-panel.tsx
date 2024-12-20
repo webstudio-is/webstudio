@@ -1,4 +1,4 @@
-import { atom, computed } from "nanostores";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
@@ -60,40 +60,15 @@ import {
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
-
-const $commandPanel = atom<
-  | undefined
-  | {
-      lastFocusedElement: null | HTMLElement;
-    }
->();
-
-export const openCommandPanel = () => {
-  const activeElement =
-    document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-  // store last focused element
-  $commandPanel.set({
-    lastFocusedElement: activeElement,
-  });
-};
-
-const closeCommandPanel = ({
-  restoreFocus = false,
-}: { restoreFocus?: boolean } = {}) => {
-  const commandPanel = $commandPanel.get();
-  $commandPanel.set(undefined);
-  // restore focus in the next frame
-  if (restoreFocus && commandPanel?.lastFocusedElement) {
-    requestAnimationFrame(() => {
-      commandPanel.lastFocusedElement?.focus();
-    });
-  }
-};
+import {
+  $commandContent,
+  $isCommandPanelOpen,
+  closeCommandPanel,
+} from "./command-state";
+import { $tokenOptions, TokenGroup, type TokenOption } from "./token-group";
 
 type ComponentOption = {
-  tokens: string[];
+  terms: string[];
   type: "component";
   component: string;
   label: string;
@@ -133,7 +108,7 @@ const $componentOptions = computed(
       }
       const label = getInstanceLabel({ component: name }, meta);
       componentOptions.push({
-        tokens: ["components", label, category],
+        terms: ["components", label, category],
         type: "component",
         component: name,
         label,
@@ -154,7 +129,7 @@ const $componentOptions = computed(
         componentMeta?.label ??
         getInstanceLabel({ component: name }, meta);
       componentOptions.push({
-        tokens: ["components", label, meta.category],
+        terms: ["components", label, meta.category],
         type: "component",
         component: name,
         label,
@@ -172,7 +147,7 @@ const $componentOptions = computed(
   }
 );
 
-const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
+const ComponentGroup = ({ options }: { options: ComponentOption[] }) => {
   return (
     <CommandGroup
       name="component"
@@ -216,7 +191,7 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
 };
 
 type TagOption = {
-  tokens: string[];
+  terms: string[];
   type: "tag";
   tag: string;
 };
@@ -253,7 +228,7 @@ const $tagOptions = computed(
       });
       if (isSatisfying) {
         tagOptions.push({
-          tokens: ["tags", tag, `<${tag}>`],
+          terms: ["tags", tag, `<${tag}>`],
           type: "tag",
           tag,
         });
@@ -313,7 +288,7 @@ const TagOptionsGroup = ({ options }: { options: TagOption[] }) => {
 };
 
 type BreakpointOption = {
-  tokens: string[];
+  terms: string[];
   type: "breakpoint";
   breakpoint: Breakpoint;
   shortcut: string;
@@ -334,7 +309,7 @@ const $breakpointOptions = computed(
       const width =
         (breakpoint.minWidth ?? breakpoint.maxWidth)?.toString() ?? "";
       breakpointOptions.push({
-        tokens: ["breakpoints", breakpoint.label, width],
+        terms: ["breakpoints", breakpoint.label, width],
         type: "breakpoint",
         breakpoint,
         shortcut: (index + 1).toString(),
@@ -355,11 +330,7 @@ const getBreakpointLabel = (breakpoint: Breakpoint) => {
   return `${breakpoint.label}: ${label}`;
 };
 
-const BreakpointOptionsGroup = ({
-  options,
-}: {
-  options: BreakpointOption[];
-}) => {
+const BreakpointGroup = ({ options }: { options: BreakpointOption[] }) => {
   return (
     <CommandGroup
       name="breakpoint"
@@ -388,7 +359,7 @@ const BreakpointOptionsGroup = ({
 };
 
 type PageOption = {
-  tokens: string[];
+  terms: string[];
   type: "page";
   page: Page;
 };
@@ -403,7 +374,7 @@ const $pageOptions = computed(
           continue;
         }
         pageOptions.push({
-          tokens: ["pages", page.name],
+          terms: ["pages", page.name],
           type: "page",
           page,
         });
@@ -413,7 +384,7 @@ const $pageOptions = computed(
   }
 );
 
-const PageOptionsGroup = ({ options }: { options: PageOption[] }) => {
+const PageGroup = ({ options }: { options: PageOption[] }) => {
   const action = useSelectedAction();
   return (
     <CommandGroup
@@ -448,7 +419,7 @@ const PageOptionsGroup = ({ options }: { options: PageOption[] }) => {
 };
 
 type ShortcutOption = {
-  tokens: string[];
+  terms: string[];
   type: "shortcut";
   name: string;
   label: string;
@@ -462,7 +433,7 @@ const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
       const label = meta.label ?? humanizeString(name);
       const keys = meta.defaultHotkeys?.[0]?.split("+");
       shortcutOptions.push({
-        tokens: ["shortcuts", "commands", label],
+        terms: ["shortcuts", "commands", label],
         type: "shortcut",
         name,
         label,
@@ -476,7 +447,7 @@ const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
   return shortcutOptions;
 });
 
-const ShortcutOptionsGroup = ({ options }: { options: ShortcutOption[] }) => {
+const ShortcutGroup = ({ options }: { options: ShortcutOption[] }) => {
   return (
     <CommandGroup
       name="shortcut"
@@ -508,19 +479,22 @@ const $options = computed(
     $pageOptions,
     $shortcutOptions,
     $tagOptions,
+    $tokenOptions,
   ],
   (
     componentOptions,
     breakpointOptions,
     pageOptions,
     commandOptions,
-    tagOptions
+    tagOptions,
+    tokenOptions
   ) => [
     ...componentOptions,
     ...breakpointOptions,
     ...pageOptions,
     ...commandOptions,
     ...tagOptions,
+    ...tokenOptions,
   ]
 );
 
@@ -533,7 +507,7 @@ const CommandDialogContent = () => {
   if (search.trim().length > 0) {
     for (const word of search.trim().split(/\s+/)) {
       matches = matchSorter(matches, word, {
-        keys: ["tokens"],
+        keys: ["terms"],
       });
     }
   }
@@ -547,7 +521,7 @@ const CommandDialogContent = () => {
             {Array.from(groups).map(([group, matches]) => {
               if (group === "component") {
                 return (
-                  <ComponentOptionsGroup
+                  <ComponentGroup
                     key={group}
                     options={matches as ComponentOption[]}
                   />
@@ -563,7 +537,7 @@ const CommandDialogContent = () => {
               }
               if (group === "breakpoint") {
                 return (
-                  <BreakpointOptionsGroup
+                  <BreakpointGroup
                     key={group}
                     options={matches as BreakpointOption[]}
                   />
@@ -571,18 +545,20 @@ const CommandDialogContent = () => {
               }
               if (group === "page") {
                 return (
-                  <PageOptionsGroup
-                    key={group}
-                    options={matches as PageOption[]}
-                  />
+                  <PageGroup key={group} options={matches as PageOption[]} />
                 );
               }
               if (group === "shortcut") {
                 return (
-                  <ShortcutOptionsGroup
+                  <ShortcutGroup
                     key={group}
                     options={matches as ShortcutOption[]}
                   />
+                );
+              }
+              if (group === "token") {
+                return (
+                  <TokenGroup key={group} options={matches as TokenOption[]} />
                 );
               }
               group satisfies never;
@@ -597,14 +573,15 @@ const CommandDialogContent = () => {
 };
 
 export const CommandPanel = () => {
-  const isOpen = useStore($commandPanel) !== undefined;
+  const isOpen = useStore($isCommandPanelOpen);
+  const commandContent = useStore($commandContent);
   return (
     <CommandDialog
       open={isOpen}
       onOpenChange={() => closeCommandPanel({ restoreFocus: true })}
     >
       <Command shouldFilter={false}>
-        <CommandDialogContent />
+        {commandContent ?? <CommandDialogContent />}
       </Command>
     </CommandDialog>
   );
