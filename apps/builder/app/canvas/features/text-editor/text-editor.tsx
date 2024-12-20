@@ -940,15 +940,16 @@ type ContextMenuParams = {
   cursorRect: DOMRect;
 };
 
-type ContextMenuPluginProps = {
+type RichTextContentPluginProps = {
   rootInstanceSelector: InstanceSelector;
   onOpen: (
     editorState: EditorState,
     params: undefined | ContextMenuParams
   ) => void;
+  onNext: (editorState: EditorState, params: HandleNextParams) => void;
 };
 
-const ContextMenuPlugin = (props: ContextMenuPluginProps) => {
+const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
   const [templates] = useState(() =>
     findTemplates(props.rootInstanceSelector, $instances.get())
   );
@@ -961,14 +962,15 @@ const ContextMenuPlugin = (props: ContextMenuPluginProps) => {
     return;
   }
 
-  return <ContextMenuPluginInternal {...props} templates={templates} />;
+  return <RichTextContentPluginInternal {...props} templates={templates} />;
 };
 
-const ContextMenuPluginInternal = ({
+const RichTextContentPluginInternal = ({
   rootInstanceSelector,
   onOpen,
   templates,
-}: ContextMenuPluginProps & {
+  onNext,
+}: RichTextContentPluginProps & {
   templates: [instance: Instance, instanceSelector: InstanceSelector][];
 }) => {
   const [editor] = useLexicalComposerContext();
@@ -1045,11 +1047,6 @@ const ContextMenuPluginInternal = ({
           return false;
         }
 
-        //if (!isSingleCursorSelection()) {
-        //  closeMenu();
-        //  return false;
-        //}
-
         const selection = $getSelection();
 
         if (!$isRangeSelection(selection)) {
@@ -1074,6 +1071,26 @@ const ContextMenuPluginInternal = ({
 
         if (!$isRangeSelection(selection)) {
           return false;
+        }
+
+        if (event.key === "Backspace" || event.key === "Delete") {
+          const rootNodeContent = $getRoot().getTextContent().trim();
+          // Delete current
+          if (rootNodeContent.length === 0) {
+            const blockChildSelector =
+              findBlockChildSelector(rootInstanceSelector);
+
+            if (blockChildSelector) {
+              onNext(editor.getEditorState(), { reason: "left" });
+
+              updateWebstudioData((data) => {
+                deleteInstanceMutable(data, rootInstanceSelector);
+              });
+
+              event.preventDefault();
+              return true;
+            }
+          }
         }
 
         if (menuState === "closed") {
@@ -1268,7 +1285,14 @@ const ContextMenuPluginInternal = ({
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
     };
-  }, [editor, handleOpen, preservedSelection, rootInstanceSelector, templates]);
+  }, [
+    editor,
+    handleOpen,
+    onNext,
+    preservedSelection,
+    rootInstanceSelector,
+    templates,
+  ]);
 
   return null;
 };
@@ -1592,9 +1616,10 @@ export const TextEditor = ({
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
-      <ContextMenuPlugin
+      <RichTextContentPlugin
         onOpen={handleContextMenuOpen}
         rootInstanceSelector={rootInstanceSelector}
+        onNext={handleNext}
       />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
