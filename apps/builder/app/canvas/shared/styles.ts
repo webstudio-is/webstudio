@@ -157,8 +157,7 @@ const subscribeContentEditModeHelperStyles = () => {
       const instances = $instances.get();
 
       findAllEditableInstanceSelector(
-        rootInstanceId,
-        [],
+        [rootInstanceId],
         instances,
         $registeredComponentMetas.get(),
         editableInstanceSelectors

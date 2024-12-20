@@ -12,6 +12,7 @@ import {
   $isPreviewMode,
   $isContentMode,
   $registeredComponentMetas,
+  findBlockSelector,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -37,7 +38,7 @@ import {
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-import { findBlockSelector } from "../features/workspace/canvas-tools/outline/block-instance-outline";
+
 import {
   findClosestNonTextualContainer,
   isTreeMatching,
@@ -229,6 +230,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: [
     "editInstanceText",
+    "newInstanceText",
     "formatBold",
     "formatItalic",
     "formatSuperscript",

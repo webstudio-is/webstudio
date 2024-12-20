@@ -37,6 +37,8 @@ import {
   KEY_DOWN_COMMAND,
   COMMAND_PRIORITY_NORMAL,
   type NodeKey,
+  $getNodeByKey,
+  SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -54,7 +56,7 @@ import {
   idAttribute,
   selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { colord } from "colord";
@@ -64,9 +66,13 @@ import {
   $blockChildOutline,
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
+  $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
+  $textEditorContextMenu,
+  execTextEditorContextMenuCommand,
+  findTemplates,
 } from "~/shared/nano-states";
 import {
   getElementByInstanceSelector,
@@ -170,7 +176,10 @@ const OnChangeOnBlurPlugin = ({
 
   useEffect(() => {
     const handleBlur = () => {
-      handleChange(editor.getEditorState());
+      // force read to get the latest state
+      editor.read(() => {
+        handleChange(editor.getEditorState());
+      });
     };
 
     // https://github.com/facebook/lexical/blob/867d449b2a6497ff9b1fbdbd70724c74a1044d8b/packages/lexical-react/src/LexicalNodeEventPlugin.ts#L59C12-L67C8
@@ -199,7 +208,7 @@ const LinkSelectionPlugin = ({
   registerNewLink: (key: NodeKey, instanceId: string) => void;
 }) => {
   const [editor] = useLexicalComposerContext();
-  const [preservedSelection] = useState($selectedInstanceSelector.get());
+  const [preservedSelection] = useState(rootInstanceSelector);
 
   useEffect(() => {
     if (!editor.isEditable()) {
@@ -209,6 +218,18 @@ const LinkSelectionPlugin = ({
     const removeUpdateListener = editor.registerUpdateListener(
       ({ editorState }) => {
         editorState.read(() => {
+          const selectedInstanceSelector = $selectedInstanceSelector.get();
+
+          if (selectedInstanceSelector === undefined) {
+            return;
+          }
+
+          if (
+            !isDescendantOrSelf(selectedInstanceSelector, preservedSelection)
+          ) {
+            return;
+          }
+
           const selection = $getSelection();
           if (!$isRangeSelection(selection)) {
             return false;
@@ -904,6 +925,278 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
   return null;
 };
 
+type ContextMenuParams = {
+  cursorRect: DOMRect;
+};
+
+type ContextMenuPluginProps = {
+  rootInstanceSelector: InstanceSelector;
+  onOpen: (
+    editorState: EditorState,
+    params: undefined | ContextMenuParams
+  ) => void;
+};
+
+const ContextMenuPlugin = (props: ContextMenuPluginProps) => {
+  const [hasTemplates] = useState(() => {
+    const templates = findTemplates(
+      props.rootInstanceSelector,
+      $instances.get()
+    );
+    if (templates === undefined) {
+      return false;
+    }
+
+    return templates.length > 0;
+  });
+
+  if (!hasTemplates) {
+    return null;
+  }
+
+  return <ContextMenuPluginInternal {...props} />;
+};
+
+const ContextMenuPluginInternal = ({
+  rootInstanceSelector,
+  onOpen,
+}: ContextMenuPluginProps) => {
+  const [editor] = useLexicalComposerContext();
+  const [preservedSelection] = useState(rootInstanceSelector);
+
+  const handleOpen = useEffectEvent(onOpen);
+
+  useEffect(() => {
+    if (!editor.isEditable()) {
+      return;
+    }
+
+    let menuState: "closed" | "opening" | "opened" = "closed";
+
+    let slashNodeKey: NodeKey | undefined = undefined;
+
+    const closeMenu = () => {
+      if (menuState === "closed") {
+        return;
+      }
+
+      menuState = "closed";
+
+      handleOpen(editor.getEditorState(), undefined);
+
+      if (slashNodeKey === undefined) {
+        return;
+      }
+
+      const node = $getNodeByKey(slashNodeKey);
+
+      if ($isTextNode(node)) {
+        node.setStyle("");
+      }
+
+      const selectedInstanceSelector = $selectedInstanceSelector.get();
+
+      const isSelectionInSameComponent = selectedInstanceSelector
+        ? isDescendantOrSelf(selectedInstanceSelector, preservedSelection)
+        : false;
+
+      if (!isSelectionInSameComponent) {
+        node?.remove();
+      }
+
+      // if selection changed, remove the slash node
+
+      const selection = $getSelection();
+
+      if (!$isRangeSelection(selection)) {
+        return;
+      }
+
+      selection.setStyle("");
+    };
+
+    const unsubscibeSelectionChange = editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        if (menuState !== "opened") {
+          return false;
+        }
+
+        if (!isSingleCursorSelection()) {
+          closeMenu();
+          return false;
+        }
+
+        const selection = $getSelection();
+
+        if (!$isRangeSelection(selection)) {
+          closeMenu();
+          return false;
+        }
+
+        if (selection.anchor.key !== slashNodeKey) {
+          closeMenu();
+          return false;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+
+    const unsubscibeKeyDown = editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event) => {
+        if (!isSingleCursorSelection()) {
+          return false;
+        }
+
+        const selection = $getSelection();
+
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        if (menuState === "opened") {
+          if (event.key === "Escape") {
+            closeMenu();
+            event.preventDefault();
+            return true;
+          }
+
+          if (event.key === " ") {
+            closeMenu();
+          }
+
+          if (event.key === "/") {
+            closeMenu();
+          }
+
+          if (event.key === "Enter") {
+            execTextEditorContextMenuCommand({
+              type: "enter",
+            });
+
+            event.preventDefault();
+            return true;
+          }
+
+          if (event.key === "ArrowUp") {
+            execTextEditorContextMenuCommand({
+              type: "selectPrevious",
+            });
+
+            event.preventDefault();
+            return true;
+          }
+
+          if (event.key === "ArrowDown") {
+            execTextEditorContextMenuCommand({
+              type: "selectNext",
+            });
+
+            event.preventDefault();
+            return true;
+          }
+        }
+
+        if (menuState === "closed") {
+          if (event.key !== "/") {
+            return false;
+          }
+
+          const slashNode = $createTextNode("/");
+          slashNodeKey = slashNode.getKey();
+          menuState = "opening";
+
+          slashNode.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+          selection.setStyle("background-color: rgba(127, 127, 127, 0.2);");
+          selection.insertNodes([slashNode]);
+
+          event.preventDefault();
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+
+    const closeMenuWithUpdate = () => {
+      editor.update(() => {
+        closeMenu();
+      });
+    };
+
+    const unsubscribeUpdateListener = editor.registerUpdateListener(
+      ({ editorState }) => {
+        if (menuState === "opened") {
+          editorState.read(() => {
+            if (slashNodeKey === undefined) {
+              closeMenu();
+              return;
+            }
+            const node = $getNodeByKey(slashNodeKey);
+
+            if (node === null) {
+              closeMenuWithUpdate();
+              return;
+            }
+            const content = node.getTextContent();
+
+            const filter = content.slice(1);
+
+            execTextEditorContextMenuCommand({
+              type: "filter",
+              value: filter,
+            });
+          });
+        }
+
+        if (menuState === "opening") {
+          editorState.read(() => {
+            if (slashNodeKey === undefined) {
+              closeMenu();
+              return;
+            }
+
+            const slashNode = editor.getElementByKey(slashNodeKey);
+
+            if (slashNode === null) {
+              closeMenu();
+              return;
+            }
+
+            const rect = slashNode.getBoundingClientRect();
+
+            menuState = "opened";
+
+            handleOpen(editor.getEditorState(), {
+              cursorRect: rect,
+            });
+          });
+        }
+      }
+    );
+
+    const unsubscribeBlurListener = editor.registerRootListener(
+      (rootElement, prevRootElement) => {
+        rootElement?.addEventListener("blur", closeMenuWithUpdate);
+        prevRootElement?.removeEventListener("blur", closeMenuWithUpdate);
+      }
+    );
+
+    return () => {
+      unsubscibeKeyDown();
+      unsubscribeUpdateListener();
+      unsubscibeSelectionChange();
+      unsubscribeBlurListener();
+    };
+  }, [editor, handleOpen, preservedSelection]);
+
+  return null;
+};
+
 const onError = (error: Error) => {
   throw error;
 };
@@ -1080,8 +1373,7 @@ export const TextEditor = ({
 
       const editableInstanceSelectors: InstanceSelector[] = [];
       findAllEditableInstanceSelector(
-        rootInstanceId,
-        [],
+        [rootInstanceId],
         instances,
         $registeredComponentMetas.get(),
         editableInstanceSelectors
@@ -1180,6 +1472,13 @@ export const TextEditor = ({
     [newLinkKeyToInstanceId]
   );
 
+  const handleContextMenuOpen = useCallback(
+    (_editorState: EditorState, params: undefined | ContextMenuParams) => {
+      $textEditorContextMenu.set(params);
+    },
+    []
+  );
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <RemoveParagaphsPlugin />
@@ -1207,6 +1506,10 @@ export const TextEditor = ({
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
+      <ContextMenuPlugin
+        onOpen={handleContextMenuOpen}
+        rootInstanceSelector={rootInstanceSelector}
+      />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
       <LinkSelectionPlugin
