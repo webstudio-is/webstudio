@@ -1070,7 +1070,7 @@ const ContextMenuPluginInternal = ({
         }
 
         if (menuState === "closed") {
-          if (event.key === "Enter") {
+          if (event.key === "Enter" && !event.shiftKey) {
             // Check if it pressed on the last line, last symbol
 
             const allowedComponents = ["Paragraph", "Text", "Heading"];
