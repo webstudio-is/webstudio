@@ -1473,7 +1473,7 @@ export const TextEditor = ({
     onError,
   };
 
-  const handleNext = useCallback(
+  const handleNext = useEffectEvent(
     (state: EditorState, args: HandleNextParams) => {
       const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
@@ -1554,8 +1554,7 @@ export const TextEditor = ({
 
         break;
       }
-    },
-    [handleChange, instances, rootInstanceSelector]
+    }
   );
 
   const handleAnyKeydown = useCallback((event: KeyboardEvent) => {
