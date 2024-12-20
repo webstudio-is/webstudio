@@ -7,6 +7,8 @@ import {
   $isContentMode,
   $modifierKeys,
   $registeredComponentMetas,
+  findBlockSelector,
+  findTemplates,
   type BlockChildOutline,
 } from "~/shared/nano-states";
 import {
@@ -34,161 +36,63 @@ import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 import { useRef, useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
-import type { Instance, Instances } from "@webstudio-is/sdk";
-import {
-  blockComponent,
-  blockTemplateComponent,
-} from "@webstudio-is/react-sdk";
+import type { InstanceSelector } from "~/shared/tree-utils";
+import type { Instance } from "@webstudio-is/sdk";
+
 import {
   deleteInstanceMutable,
-  extractWebstudioFragment,
-  findAvailableDataSources,
-  getWebstudioData,
-  insertInstanceChildrenMutable,
-  insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-import { shallowEqual } from "shallow-equal";
+
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
-import { selectInstance } from "~/shared/awareness";
 
-export const findBlockSelector = (
-  anchor: InstanceSelector,
-  instances: Instances
-) => {
-  if (anchor === undefined) {
-    return;
-  }
+import { insertTemplateAt } from "./block-utils";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
-  if (anchor.length === 0) {
-    return;
-  }
-
-  let blockInstanceSelector: InstanceSelector | undefined = undefined;
-
-  for (let i = 0; i < anchor.length; ++i) {
-    const instanceId = anchor[i];
-
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      return;
-    }
-
-    if (instance.component === blockComponent) {
-      blockInstanceSelector = anchor.slice(i);
-      break;
-    }
-  }
-
-  if (blockInstanceSelector === undefined) {
-    return;
-  }
-
-  return blockInstanceSelector;
-};
-
-const findTemplates = (anchor: InstanceSelector, instances: Instances) => {
-  const blockInstanceSelector = findBlockSelector(anchor, instances);
-  if (blockInstanceSelector === undefined) {
-    return;
-  }
-
-  const blockInstance = instances.get(blockInstanceSelector[0]);
-
-  if (blockInstance === undefined) {
-    return;
-  }
-
-  const templateInstanceId = blockInstance.children.find(
-    (child) =>
-      child.type === "id" &&
-      instances.get(child.value)?.component === blockTemplateComponent
-  )?.value;
-
-  if (templateInstanceId === undefined) {
-    return;
-  }
-
-  const templateInstance = instances.get(templateInstanceId);
-
-  if (templateInstance === undefined) {
-    return;
-  }
-
-  const result: [instance: Instance, instanceSelector: InstanceSelector][] =
-    templateInstance.children
-      .filter((child) => child.type === "id")
-      .map((child) => child.value)
-      .map((childId) => instances.get(childId))
-      .filter((child) => child !== undefined)
-      .map((child) => [
-        child,
-        [child.id, templateInstanceId, ...blockInstanceSelector],
-      ]);
-
-  return result;
-};
-
-const getInsertionIndex = (
-  anchor: InstanceSelector,
-  instances: Instances,
-  insertBefore: boolean = false
-) => {
-  const blockSelector = findBlockSelector(anchor, instances);
-  if (blockSelector === undefined) {
-    return;
-  }
-
-  const insertAtInitialPosition = shallowEqual(blockSelector, anchor);
-
-  const blockInstance = instances.get(blockSelector[0]);
-
-  if (blockInstance === undefined) {
-    return;
-  }
-
-  const index = blockInstance.children.findIndex((child) => {
-    if (child.type !== "id") {
-      return false;
-    }
-
-    if (insertAtInitialPosition) {
-      return instances.get(child.value)?.component === blockTemplateComponent;
-    }
-
-    return child.value === anchor[0];
-  });
-
-  if (index === -1) {
-    return;
-  }
-
-  // Independent of insertBefore, we always insert after the Templates instance
-  if (insertAtInitialPosition) {
-    return index + 1;
-  }
-
-  return insertBefore ? index : index + 1;
-};
-
-const TemplatesMenu = ({
+export const TemplatesMenu = ({
   onOpenChange,
   open,
   children,
   anchor,
+  triggerTooltipContent,
+  templates,
+  value,
+  onValueChangeComplete,
+  onValueChange,
+  modal,
+  inert,
+  preventFocusOnHover,
 }: {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   anchor: InstanceSelector;
+  triggerTooltipContent: JSX.Element;
+  templates: [instance: Instance, instanceSelector: InstanceSelector][];
+  value: InstanceSelector | undefined;
+  onValueChangeComplete: (value: InstanceSelector) => void;
+  onValueChange?: undefined | ((value: InstanceSelector | undefined) => void);
+  modal: boolean;
+  inert: boolean;
+  preventFocusOnHover: boolean;
 }) => {
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
   const modifierKeys = useStore($modifierKeys);
 
   const blockInstanceSelector = findBlockSelector(anchor, instances);
+
+  const handleValueChangeComplete = useEffectEvent((value: string) => {
+    const templateSelector = JSON.parse(value) as InstanceSelector;
+    onValueChangeComplete(templateSelector);
+  });
+
+  const handleValueChange = useEffectEvent(
+    (value: InstanceSelector | undefined) => {
+      onValueChange?.(value);
+    }
+  );
 
   if (blockInstanceSelector === undefined) {
     return;
@@ -203,8 +107,6 @@ const TemplatesMenu = ({
   // 1 child is Templates instance
   const hasChildren = blockInstance.children.length > 1;
 
-  const templates = findTemplates(anchor, instances);
-
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
     icon: <MetaIcon icon={metas.get(template.component)?.icon ?? BoxIcon} />,
@@ -213,8 +115,14 @@ const TemplatesMenu = ({
   }));
 
   return (
-    <DropdownMenu onOpenChange={onOpenChange} open={open} modal>
-      {children}
+    <DropdownMenu onOpenChange={onOpenChange} open={open} modal={modal}>
+      <Tooltip
+        content={triggerTooltipContent}
+        side="top"
+        disableHoverableContent
+      >
+        <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      </Tooltip>
       <DropdownMenuPortal>
         <DropdownMenuContent
           align="start"
@@ -222,104 +130,94 @@ const TemplatesMenu = ({
           collisionPadding={16}
           side="bottom"
           loop
+          // @todo remove inert after creation
+          {...(inert ? { inert: "" } : {})}
         >
-          <DropdownMenuRadioGroup
-            onValueChange={(value) => {
-              const insertBefore = modifierKeys.altKey;
-
-              const templateSelector = JSON.parse(value) as InstanceSelector;
-              const fragment = extractWebstudioFragment(
-                getWebstudioData(),
-                templateSelector[0]
-              );
-
-              const parentSelector = findBlockSelector(anchor, instances);
-
-              if (parentSelector === undefined) {
-                return;
-              }
-
-              const position = getInsertionIndex(
-                anchor,
-                instances,
-                insertBefore
-              );
-
-              if (position === undefined) {
-                return;
-              }
-
-              const target: DroppableTarget = {
-                parentSelector,
-                position,
-              };
-
-              updateWebstudioData((data) => {
-                const { newInstanceIds } = insertWebstudioFragmentCopy({
-                  data,
-                  fragment,
-                  availableDataSources: findAvailableDataSources(
-                    data.dataSources,
-                    data.instances,
-                    target.parentSelector
-                  ),
-                });
-                const newRootInstanceId = newInstanceIds.get(
-                  fragment.instances[0].id
-                );
-                if (newRootInstanceId === undefined) {
-                  return;
-                }
-                const children: Instance["children"] = [
-                  { type: "id", value: newRootInstanceId },
-                ];
-                insertInstanceChildrenMutable(data, children, target);
-
-                selectInstance([newRootInstanceId, ...target.parentSelector]);
-              });
-            }}
-          >
-            {menuItems?.map(({ icon, title, id, value }) => (
-              <DropdownMenuRadioItem
-                key={id}
-                value={JSON.stringify(value)}
-                {...{ [skipInertHandlersAttribute]: true }}
-                data-yyy
+          {templates.length > 0 ? (
+            <>
+              <DropdownMenuRadioGroup
+                value={value !== undefined ? JSON.stringify(value) : value}
+                onValueChange={handleValueChangeComplete}
               >
-                <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
-                  {icon}
-                  <Box>{title}</Box>
-                </Flex>
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-          <DropdownMenuSeparator />
+                {menuItems?.map(({ icon, title, id, value }) => (
+                  <DropdownMenuRadioItem
+                    onPointerEnter={() => {
+                      handleValueChange(value);
+                    }}
+                    onPointerMove={
+                      preventFocusOnHover
+                        ? (e) => {
+                            e.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onPointerLeave={
+                      preventFocusOnHover
+                        ? (e) => {
+                            handleValueChange(undefined);
+                            e.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onPointerDown={
+                      preventFocusOnHover
+                        ? (event) => {
+                            event.preventDefault();
+                          }
+                        : undefined
+                    }
+                    key={id}
+                    value={JSON.stringify(value)}
+                    {...{ [skipInertHandlersAttribute]: true }}
+                  >
+                    <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
+                      {icon}
+                      <Box>{title}</Box>
+                    </Flex>
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <div className={menuItemCss({ hint: true })}>
+                <Grid css={{ width: theme.spacing[25] }}>
+                  <Flex
+                    gap={1}
+                    css={{ display: hasChildren ? "none" : undefined }}
+                  >
+                    <Kbd value={["click"]} />
+                    <Text>to add before</Text>
+                  </Flex>
 
-          <div className={menuItemCss({ hint: true })}>
-            <Grid css={{ width: theme.spacing[25] }}>
-              <Flex gap={1} css={{ display: hasChildren ? "none" : undefined }}>
-                <Kbd value={["click"]} />
-                <Text>to add before</Text>
-              </Flex>
-
-              <Flex
-                gap={1}
-                css={{
-                  order: modifierKeys.altKey ? 2 : 0,
-                  display: hasChildren ? undefined : "none",
-                }}
-              >
-                <Kbd value={["click"]} />
-                <Text>to add after</Text>
-              </Flex>
-              <Flex
-                gap={1}
-                css={{ order: 1, display: hasChildren ? undefined : "none" }}
-              >
-                <Kbd value={["option", "click"]} /> <Text>to add before</Text>
-              </Flex>
-            </Grid>
-          </div>
+                  <Flex
+                    gap={1}
+                    css={{
+                      order: modifierKeys.altKey ? 2 : 0,
+                      display: hasChildren ? undefined : "none",
+                    }}
+                  >
+                    <Kbd value={["click"]} />
+                    <Text>to add after</Text>
+                  </Flex>
+                  <Flex
+                    gap={1}
+                    css={{
+                      order: 1,
+                      display: hasChildren ? undefined : "none",
+                    }}
+                  >
+                    <Kbd value={["option", "click"]} />{" "}
+                    <Text>to add before</Text>
+                  </Flex>
+                </Grid>
+              </div>
+            </>
+          ) : (
+            <div className={menuItemCss({ hint: true })}>
+              <Grid css={{ width: theme.spacing[25] }}>
+                <Text>No Results</Text>
+              </Grid>
+            </div>
+          )}
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
@@ -465,40 +363,46 @@ export const BlockChildHoveredInstanceOutline = () => {
               }
             }}
             anchor={outline.selector}
+            triggerTooltipContent={tooltipContent}
+            templates={templates}
+            onValueChangeComplete={(templateSelector) => {
+              const insertBefore = modifierKeys.altKey;
+              insertTemplateAt(
+                templateSelector,
+                outline.selector,
+                insertBefore
+              );
+            }}
+            value={undefined}
+            modal={true}
+            inert={false}
+            preventFocusOnHover={false}
           >
-            <Tooltip
-              content={tooltipContent}
-              side="top"
-              disableHoverableContent
+            <IconButton
+              variant={isAddMode ? "local" : "overwritten"}
+              onClick={() => {
+                if (isAddMode) {
+                  return;
+                }
+
+                updateWebstudioData((data) => {
+                  deleteInstanceMutable(data, outline.selector);
+                });
+
+                setButtonOutline(undefined);
+                $blockChildOutline.set(undefined);
+                $hoveredInstanceSelector.set(undefined);
+                $hoveredInstanceOutline.set(undefined);
+              }}
+              css={{
+                borderStyle: "solid",
+                borderColor: isAddMode
+                  ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
+                  : undefined,
+              }}
             >
-              <DropdownMenuTrigger asChild>
-                <IconButton
-                  variant={isAddMode ? "local" : "overwritten"}
-                  onClick={() => {
-                    if (isAddMode) {
-                      return;
-                    }
-
-                    updateWebstudioData((data) => {
-                      deleteInstanceMutable(data, outline.selector);
-                    });
-
-                    setButtonOutline(undefined);
-                    $blockChildOutline.set(undefined);
-                    $hoveredInstanceSelector.set(undefined);
-                    $hoveredInstanceOutline.set(undefined);
-                  }}
-                  css={{
-                    borderStyle: "solid",
-                    borderColor: isAddMode
-                      ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
-                      : undefined,
-                  }}
-                >
-                  {isAddMode ? <PlusIcon /> : <TrashIcon />}
-                </IconButton>
-              </DropdownMenuTrigger>
-            </Tooltip>
+              {isAddMode ? <PlusIcon /> : <TrashIcon />}
+            </IconButton>
           </TemplatesMenu>
         </Flex>
       </div>

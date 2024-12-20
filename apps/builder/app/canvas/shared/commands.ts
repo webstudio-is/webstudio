@@ -2,12 +2,16 @@ import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
-import { findClosestEditableInstanceSelector } from "~/shared/instance-utils";
+import {
+  findClosestEditableInstanceSelector,
+  findAllEditableInstanceSelector,
+} from "~/shared/instance-utils";
 import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
+  $textToolbar,
 } from "~/shared/nano-states";
 import {
   CLEAR_FORMAT_COMMAND,
@@ -16,30 +20,48 @@ import {
   hasSelectionFormat,
 } from "../features/text-editor/toolbar-connector";
 import { selectInstance } from "~/shared/awareness";
+import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
   externalCommands: ["clickCanvas"],
   commands: [
     {
-      name: "editInstanceText",
+      name: "newInstanceText",
       hidden: true,
-      defaultHotkeys: ["enter"],
-      // builder invokes command with custom hotkey setup
       disableHotkeyOutsideApp: true,
       handler: () => {
         const selectedInstanceSelector = $selectedInstanceSelector.get();
         if (selectedInstanceSelector === undefined) {
           return;
         }
-        const editableInstanceSelector = findClosestEditableInstanceSelector(
-          selectedInstanceSelector,
-          $instances.get(),
-          $registeredComponentMetas.get()
-        );
-        if (editableInstanceSelector === undefined) {
+
+        if (
+          isDescendantOrSelf(
+            $textEditingInstanceSelector.get()?.selector ?? [],
+            selectedInstanceSelector
+          )
+        ) {
+          // already in text editing mode
           return;
         }
+
+        const selectors: InstanceSelector[] = [];
+
+        findAllEditableInstanceSelector(
+          selectedInstanceSelector,
+          $instances.get(),
+          $registeredComponentMetas.get(),
+          selectors
+        );
+
+        if (selectors.length === 0) {
+          $textEditingInstanceSelector.set(undefined);
+          return;
+        }
+
+        const editableInstanceSelector = selectors[0];
+
         const element = getElementByInstanceSelector(editableInstanceSelector);
         if (element === undefined) {
           return;
@@ -48,6 +70,71 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // the canvas element may be unfocused, so it's important to focus the element on the canvas.
         element.focus();
         selectInstance(editableInstanceSelector);
+
+        $textEditingInstanceSelector.set({
+          selector: editableInstanceSelector,
+          reason: "enter",
+        });
+      },
+    },
+
+    {
+      name: "editInstanceText",
+      hidden: true,
+      defaultHotkeys: ["enter"],
+      disableHotkeyOnContentEditable: true,
+      // builder invokes command with custom hotkey setup
+      disableHotkeyOutsideApp: true,
+      handler: () => {
+        const selectedInstanceSelector = $selectedInstanceSelector.get();
+        if (selectedInstanceSelector === undefined) {
+          return;
+        }
+
+        if (
+          isDescendantOrSelf(
+            $textEditingInstanceSelector.get()?.selector ?? [],
+            selectedInstanceSelector
+          )
+        ) {
+          // already in text editing mode
+          return;
+        }
+
+        let editableInstanceSelector = findClosestEditableInstanceSelector(
+          selectedInstanceSelector,
+          $instances.get(),
+          $registeredComponentMetas.get()
+        );
+
+        if (editableInstanceSelector === undefined) {
+          const selectors: InstanceSelector[] = [];
+
+          findAllEditableInstanceSelector(
+            selectedInstanceSelector,
+            $instances.get(),
+            $registeredComponentMetas.get(),
+            selectors
+          );
+
+          if (selectors.length === 0) {
+            $textEditingInstanceSelector.set(undefined);
+            return;
+          }
+
+          editableInstanceSelector = selectors[0];
+        }
+
+        const element = getElementByInstanceSelector(editableInstanceSelector);
+        if (element === undefined) {
+          return;
+        }
+        // When an event is triggered from the Builder,
+        // the canvas element may be unfocused, so it's important to focus the element on the canvas.
+        element.focus();
+
+        selectInstance(editableInstanceSelector);
+
         $textEditingInstanceSelector.set({
           selector: editableInstanceSelector,
           reason: "enter",
@@ -64,16 +151,25 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         const selectedInstanceSelector = $selectedInstanceSelector.get();
         const textEditingInstanceSelector = $textEditingInstanceSelector.get();
-        if (selectedInstanceSelector === undefined) {
+        const textToolbar = $textToolbar.get();
+
+        // close text toolbar first without exiting text editing mode
+        if (textToolbar) {
+          $textToolbar.set(undefined);
           return;
         }
+
         // exit text editing mode first without unselecting instance
         if (textEditingInstanceSelector) {
           $textEditingInstanceSelector.set(undefined);
           return;
         }
-        // unselect both instance and style source
-        selectInstance(undefined);
+
+        if (selectedInstanceSelector) {
+          // unselect both instance and style source
+          selectInstance(undefined);
+          return;
+        }
       },
     },
 
