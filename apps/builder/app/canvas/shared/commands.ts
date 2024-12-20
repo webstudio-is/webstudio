@@ -146,6 +146,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "escapeSelection",
       hidden: true,
       defaultHotkeys: ["escape"],
+      disableHotkeyOnContentEditable: true,
       // reset selection for canvas, but not for the builder
       disableHotkeyOutsideApp: true,
       handler: () => {

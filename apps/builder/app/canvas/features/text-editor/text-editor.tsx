@@ -76,6 +76,7 @@ import {
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
+  findBlockChildSelector,
   findTemplates,
 } from "~/shared/nano-states";
 import {
@@ -1011,9 +1012,14 @@ const ContextMenuPluginInternal = ({
         const rootNodeContent = $getRoot().getTextContent().trim();
         // Delete current
         if (rootNodeContent.length === 0) {
-          updateWebstudioData((data) => {
-            deleteInstanceMutable(data, rootInstanceSelector);
-          });
+          const blockChildSelector =
+            findBlockChildSelector(rootInstanceSelector);
+
+          if (blockChildSelector) {
+            updateWebstudioData((data) => {
+              deleteInstanceMutable(data, rootInstanceSelector);
+            });
+          }
         }
       }
 
@@ -1035,10 +1041,10 @@ const ContextMenuPluginInternal = ({
           return false;
         }
 
-        if (!isSingleCursorSelection()) {
-          closeMenu();
-          return false;
-        }
+        //if (!isSingleCursorSelection()) {
+        //  closeMenu();
+        //  return false;
+        //}
 
         const selection = $getSelection();
 
@@ -1060,10 +1066,6 @@ const ContextMenuPluginInternal = ({
     const unsubscibeKeyDown = editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event) => {
-        if (!isSingleCursorSelection()) {
-          return false;
-        }
-
         const selection = $getSelection();
 
         if (!$isRangeSelection(selection)) {
@@ -1386,6 +1388,15 @@ export const TextEditor = ({
 
       setDataCollapsed(rootInstanceSelector[0], false);
     });
+
+    const textEditingSelector = $textEditingInstanceSelector.get()?.selector;
+    if (textEditingSelector === undefined) {
+      return;
+    }
+
+    if (shallowEqual(textEditingSelector, rootInstanceSelector)) {
+      $textEditingInstanceSelector.set(undefined);
+    }
   });
 
   useLayoutEffect(() => {
