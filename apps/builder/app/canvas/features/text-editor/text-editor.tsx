@@ -61,7 +61,11 @@ import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
+import {
+  deleteInstanceMutable,
+  findAllEditableInstanceSelector,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
 import {
   $blockChildOutline,
   $hoveredInstanceOutline,
@@ -86,6 +90,8 @@ import {
   selectInstance,
 } from "~/shared/awareness";
 import { shallowEqual } from "shallow-equal";
+import { insertTemplateAt } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import { emitCommand } from "~/canvas/shared/commands";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -938,29 +944,27 @@ type ContextMenuPluginProps = {
 };
 
 const ContextMenuPlugin = (props: ContextMenuPluginProps) => {
-  const [hasTemplates] = useState(() => {
-    const templates = findTemplates(
-      props.rootInstanceSelector,
-      $instances.get()
-    );
-    if (templates === undefined) {
-      return false;
-    }
-
-    return templates.length > 0;
-  });
-
-  if (!hasTemplates) {
-    return null;
+  const [templates] = useState(() =>
+    findTemplates(props.rootInstanceSelector, $instances.get())
+  );
+  if (templates === undefined) {
+    return;
   }
 
-  return <ContextMenuPluginInternal {...props} />;
+  if (templates.length === 0) {
+    return;
+  }
+
+  return <ContextMenuPluginInternal {...props} templates={templates} />;
 };
 
 const ContextMenuPluginInternal = ({
   rootInstanceSelector,
   onOpen,
-}: ContextMenuPluginProps) => {
+  templates,
+}: ContextMenuPluginProps & {
+  templates: [instance: Instance, instanceSelector: InstanceSelector][];
+}) => {
   const [editor] = useLexicalComposerContext();
   const [preservedSelection] = useState(rootInstanceSelector);
 
@@ -1002,6 +1006,14 @@ const ContextMenuPluginInternal = ({
 
       if (!isSelectionInSameComponent) {
         node?.remove();
+
+        const rootNodeContent = $getRoot().getTextContent().trim();
+        // Delete current
+        if (rootNodeContent.length === 0) {
+          updateWebstudioData((data) => {
+            deleteInstanceMutable(data, rootInstanceSelector);
+          });
+        }
       }
 
       // if selection changed, remove the slash node
@@ -1055,6 +1067,64 @@ const ContextMenuPluginInternal = ({
 
         if (!$isRangeSelection(selection)) {
           return false;
+        }
+
+        if (menuState === "closed") {
+          if (event.key === "Enter") {
+            // Check if it pressed on the last line, last symbol
+
+            const allowedComponents = ["Paragraph", "Text", "Heading"];
+
+            for (const component of allowedComponents) {
+              const templateSelector = templates.find(
+                ([instance]) => instance.component === component
+              )?.[1];
+
+              if (templateSelector === undefined) {
+                continue;
+              }
+
+              /*
+              @todo Split logic idea
+              // clone root node then
+
+              // getPreviousSibling
+              const removeNextSiblings = (node: LexicalNode) => {
+                let current: LexicalNode | null = node;
+                while (current) {
+                  const next = current.getNextSibling();
+                  if (next) {
+                    next.remove();
+                    continue;
+                  }
+                  // Move up to parent and continue removing siblings
+
+                  current = current.getParent();
+
+                  if ($isRootNode(current)) {
+                    break;
+                  }
+                }
+              };
+
+              const anchorNode = selection.anchor.getNode();
+              const anchorOffset = selection.anchor.offset;
+
+              if (!$isTextNode(anchorNode)) {
+                continue;
+              }
+              anchorNode.splitText(anchorOffset);
+              removeNextSiblings(anchorNode);
+
+              */
+
+              insertTemplateAt(templateSelector, rootInstanceSelector, false);
+              emitCommand("newInstanceText");
+
+              event.preventDefault();
+              return true;
+            }
+          }
         }
 
         if (menuState === "opened") {
