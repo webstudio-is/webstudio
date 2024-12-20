@@ -497,9 +497,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+k", "ctrl+k"],
       handler: () => {
         if ($isDesignMode.get()) {
-          return;
+          openCommandPanel();
         }
-        openCommandPanel();
       },
     },
   ],
