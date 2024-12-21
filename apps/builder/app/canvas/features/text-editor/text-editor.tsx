@@ -1528,6 +1528,8 @@ export const TextEditor = ({
         }
       );
 
+      console.log(currentIndex);
+
       if (currentIndex === -1) {
         return;
       }
@@ -1561,9 +1563,20 @@ export const TextEditor = ({
 
         const instance = instances.get(nextSelector[0]);
 
+        if (instance === undefined) {
+          continue;
+        }
+
+        // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
+        const componentsWithPseudoElementChildren = ["ListItem"];
+
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
-        if (instance?.children.length === 0) {
+        if (
+          !componentsWithPseudoElementChildren.includes(instance.component) &&
+          instance?.children.length === 0
+        ) {
           const elt = getElementByInstanceSelector(nextSelector);
+
           if (elt === undefined) {
             continue;
           }
