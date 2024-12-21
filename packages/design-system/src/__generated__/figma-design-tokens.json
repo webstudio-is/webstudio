@@ -397,7 +397,7 @@
         "description": "primary color, used in button"
       },
       "hover": {
-        "value": "#dfe3e6",
+        "value": "#efefef",
         "type": "color",
         "description": "hover color for toggle group button, icon button, toggle button, small icon button, small toggle button, nested select button, menu item large"
       },
@@ -412,7 +412,7 @@
         "description": "background color for menu and select menu"
       },
       "controls": {
-        "value": "#ffffff",
+        "value": "#f5f5f5",
         "type": "color",
         "description": "background color for text input, toggle group, input field, color input, select button, panel button, text-area, search field, checkbox, spacing, flex control"
       },
@@ -491,7 +491,7 @@
       },
       "preset": {
         "main": {
-          "value": "#e6e8eb",
+          "value": "#e6e6e6",
           "type": "color"
         },
         "hover": {
@@ -575,7 +575,7 @@
           "description": "color for the hidden current item in the navigator item component"
         },
         "menu-item-hover": {
-          "value": "#dfe3e6",
+          "value": "#efefef",
           "type": "color",
           "description": "The hover state on menu item components."
         }
@@ -819,7 +819,7 @@
     },
     "border": {
       "main": {
-        "value": "#d9d9d9",
+        "value": "#e6e6e6",
         "type": "color",
         "description": "color for separators, panel borders, preset borders, input fields, select buttons, panel buttons, text area, search field, menu, select menu, spacing controls,"
       },
@@ -1493,8 +1493,6 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": [
-      "global"
-    ]
+    "tokenSetOrder": ["global"]
   }
 }
