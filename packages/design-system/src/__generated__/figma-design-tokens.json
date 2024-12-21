@@ -387,7 +387,7 @@
     },
     "background": {
       "panel": {
-        "value": "#fff",
+        "value": "#f8f8f8",
         "type": "color",
         "description": "background color for all panels, titles, columns and rows."
       },
@@ -397,7 +397,7 @@
         "description": "primary color, used in button"
       },
       "hover": {
-        "value": "#dfe3e6",
+        "value": "#efefef",
         "type": "color",
         "description": "hover color for toggle group button, icon button, toggle button, small icon button, small toggle button, nested select button, menu item large"
       },
@@ -407,12 +407,12 @@
         "description": "color for active elements"
       },
       "menu": {
-        "value": "#fff",
+        "value": "#ededed",
         "type": "color",
         "description": "background color for menu and select menu"
       },
       "controls": {
-        "value": "#ffffff",
+        "value": "#f5f5f5",
         "type": "color",
         "description": "background color for text input, toggle group, input field, color input, select button, panel button, text-area, search field, checkbox, spacing, flex control"
       },
@@ -491,7 +491,7 @@
       },
       "preset": {
         "main": {
-          "value": "#e6e8eb",
+          "value": "#e6e6e6",
           "type": "color"
         },
         "hover": {
@@ -560,12 +560,12 @@
       },
       "item": {
         "current": {
-          "value": "#e1f0ff",
+          "value": "#096cff",
           "type": "color",
           "description": "color for current item in the navigator item, menu item, pages panel item components"
         },
         "current-child": {
-          "value": "{background.panel}",
+          "value": "#e1f0ff",
           "type": "color",
           "description": "color for child of current item in the navigator item, pages panel item components"
         },
@@ -575,7 +575,7 @@
           "description": "color for the hidden current item in the navigator item component"
         },
         "menu-item-hover": {
-          "value": "#dfe3e6",
+          "value": "#d3d3d3",
           "type": "color",
           "description": "The hover state on menu item components."
         }
@@ -611,7 +611,7 @@
       },
       "style-source": {
         "token": {
-          "value": "{foreground.reusable}",
+          "value": "#834df4",
           "type": "color",
           "description": "Style sources that are tokens"
         },
@@ -665,7 +665,7 @@
         }
       },
       "canvas": {
-        "value": "#eee",
+        "value": "#c7c7c7",
         "type": "color",
         "description": "The color of the Builder UI canvas area background."
       },
@@ -697,7 +697,7 @@
         }
       },
       "menu-hint": {
-        "value": "#efefef",
+        "value": "#dedede",
         "type": "color",
         "description": "For the background of the hint menu item."
       },
@@ -819,7 +819,7 @@
     },
     "border": {
       "main": {
-        "value": "#d9d9d9",
+        "value": "#c1c8cd",
         "type": "color",
         "description": "color for separators, panel borders, preset borders, input fields, select buttons, panel buttons, text area, search field, menu, select menu, spacing controls,"
       },
@@ -1093,10 +1093,6 @@
         "value": "#ff22ae",
         "type": "color",
         "description": "The inverse color of our primary blue, when we want a contrasting highlight."
-      },
-      "reusable": {
-        "value": "#834df4",
-        "type": "color"
       }
     },
     "Brand": {
