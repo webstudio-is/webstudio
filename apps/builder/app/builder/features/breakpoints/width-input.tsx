@@ -134,14 +134,13 @@ export const WidthInput = ({ min }: { min: number }) => {
       <Label htmlFor={id}>Width</Label>
       <InputField
         {...inputProps}
-        css={{ width: theme.spacing[19] }}
         id={id}
         suffix={
           <Text
             variant="unit"
             color="subtle"
             align="center"
-            css={{ width: theme.spacing[10] }}
+            css={{ paddingInline: theme.spacing[3] }}
           >
             PX
           </Text>
