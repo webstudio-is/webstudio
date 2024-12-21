@@ -575,12 +575,21 @@ const InitCursorPlugin = () => {
             if ($isTextNode(node)) {
               selection.anchor.set(node.getKey(), domOffset, "text");
               selection.focus.set(node.getKey(), domOffset, "text");
-            }
-            const normalizedSelection =
-              $normalizeSelection__EXPERIMENTAL(selection);
+              const normalizedSelection =
+                $normalizeSelection__EXPERIMENTAL(selection);
 
-            $setSelection(normalizedSelection);
-            return;
+              $setSelection(normalizedSelection);
+              return;
+            }
+          }
+
+          if (domNode instanceof Element) {
+            const rect = domNode.getBoundingClientRect();
+            if (mouseX > rect.right) {
+              const selection = $getRoot().selectEnd();
+              $setSelection(selection);
+              return;
+            }
           }
         }
       }
@@ -1527,8 +1536,6 @@ export const TextEditor = ({
           );
         }
       );
-
-      console.log(currentIndex);
 
       if (currentIndex === -1) {
         return;
