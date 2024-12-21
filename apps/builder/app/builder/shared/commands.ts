@@ -299,6 +299,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("publish");
       },
+      disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
     },
     {
       name: "openExportDialog",
@@ -306,6 +308,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("export");
       },
+      disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
     },
     {
       name: "toggleComponentsPanel",
