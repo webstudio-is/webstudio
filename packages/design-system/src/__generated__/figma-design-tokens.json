@@ -387,7 +387,7 @@
     },
     "background": {
       "panel": {
-        "value": "#fff",
+        "value": "#f8f8f8",
         "type": "color",
         "description": "background color for all panels, titles, columns and rows."
       },
@@ -407,7 +407,7 @@
         "description": "color for active elements"
       },
       "menu": {
-        "value": "#fff",
+        "value": "#ededed",
         "type": "color",
         "description": "background color for menu and select menu"
       },
