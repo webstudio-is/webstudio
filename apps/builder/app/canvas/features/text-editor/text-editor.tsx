@@ -92,7 +92,10 @@ import {
   selectInstance,
 } from "~/shared/awareness";
 import { shallowEqual } from "shallow-equal";
-import { insertTemplateAt } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import {
+  insertListItemAt,
+  insertTemplateAt,
+} from "~/builder/features/workspace/canvas-tools/outline/block-utils";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -572,12 +575,21 @@ const InitCursorPlugin = () => {
             if ($isTextNode(node)) {
               selection.anchor.set(node.getKey(), domOffset, "text");
               selection.focus.set(node.getKey(), domOffset, "text");
-            }
-            const normalizedSelection =
-              $normalizeSelection__EXPERIMENTAL(selection);
+              const normalizedSelection =
+                $normalizeSelection__EXPERIMENTAL(selection);
 
-            $setSelection(normalizedSelection);
-            return;
+              $setSelection(normalizedSelection);
+              return;
+            }
+          }
+
+          if (domNode instanceof Element) {
+            const rect = domNode.getBoundingClientRect();
+            if (mouseX > rect.right) {
+              const selection = $getRoot().selectEnd();
+              $setSelection(selection);
+              return;
+            }
           }
         }
       }
@@ -1075,8 +1087,23 @@ const RichTextContentPluginInternal = ({
 
         if (event.key === "Backspace" || event.key === "Delete") {
           const rootNodeContent = $getRoot().getTextContent().trim();
-          // Delete current
+
           if (rootNodeContent.length === 0) {
+            const currentInstance = $instances
+              .get()
+              .get(rootInstanceSelector[0]);
+
+            if (currentInstance?.component === "ListItem") {
+              onNext(editor.getEditorState(), { reason: "left" });
+
+              updateWebstudioData((data) => {
+                deleteInstanceMutable(data, rootInstanceSelector);
+              });
+
+              event.preventDefault();
+              return true;
+            }
+
             const blockChildSelector =
               findBlockChildSelector(rootInstanceSelector);
 
@@ -1084,7 +1111,7 @@ const RichTextContentPluginInternal = ({
               onNext(editor.getEditorState(), { reason: "left" });
 
               updateWebstudioData((data) => {
-                deleteInstanceMutable(data, rootInstanceSelector);
+                deleteInstanceMutable(data, blockChildSelector);
               });
 
               event.preventDefault();
@@ -1095,6 +1122,18 @@ const RichTextContentPluginInternal = ({
 
         if (menuState === "closed") {
           if (event.key === "Enter" && !event.shiftKey) {
+            // Custom logic if we are editing ListItem
+            const currentInstance = $instances
+              .get()
+              .get(rootInstanceSelector[0]);
+
+            if (currentInstance?.component === "ListItem") {
+              // Instead of creating block component we need to add a new ListItem
+              insertListItemAt(rootInstanceSelector);
+              event.preventDefault();
+              return true;
+            }
+
             // Check if it pressed on the last line, last symbol
 
             const allowedComponents = ["Paragraph", "Text", "Heading"];
@@ -1531,9 +1570,20 @@ export const TextEditor = ({
 
         const instance = instances.get(nextSelector[0]);
 
+        if (instance === undefined) {
+          continue;
+        }
+
+        // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
+        const componentsWithPseudoElementChildren = ["ListItem"];
+
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
-        if (instance?.children.length === 0) {
+        if (
+          !componentsWithPseudoElementChildren.includes(instance.component) &&
+          instance?.children.length === 0
+        ) {
           const elt = getElementByInstanceSelector(nextSelector);
+
           if (elt === undefined) {
             continue;
           }
