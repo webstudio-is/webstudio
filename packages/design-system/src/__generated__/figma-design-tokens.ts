@@ -403,7 +403,7 @@ export const color = {
   backgroundAlertNotification: "#fffbd1",
   backgroundInfoMain: "#0175dc",
   backgroundInfoNotification: "#e0f0ff",
-  backgroundPresetMain: "#e6e8eb",
+  backgroundPresetMain: "#e6e6e6",
   backgroundPresetHover: "#dfe3e6",
   backgroundLocalMain: "#e1f0ff",
   backgroundLocalHover: "#cee7fe",
