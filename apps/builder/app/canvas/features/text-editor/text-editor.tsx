@@ -92,7 +92,10 @@ import {
   selectInstance,
 } from "~/shared/awareness";
 import { shallowEqual } from "shallow-equal";
-import { insertTemplateAt } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import {
+  insertListItemAt,
+  insertTemplateAt,
+} from "~/builder/features/workspace/canvas-tools/outline/block-utils";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -1075,8 +1078,23 @@ const RichTextContentPluginInternal = ({
 
         if (event.key === "Backspace" || event.key === "Delete") {
           const rootNodeContent = $getRoot().getTextContent().trim();
-          // Delete current
+
           if (rootNodeContent.length === 0) {
+            const currentInstance = $instances
+              .get()
+              .get(rootInstanceSelector[0]);
+
+            if (currentInstance?.component === "ListItem") {
+              onNext(editor.getEditorState(), { reason: "left" });
+
+              updateWebstudioData((data) => {
+                deleteInstanceMutable(data, rootInstanceSelector);
+              });
+
+              event.preventDefault();
+              return true;
+            }
+
             const blockChildSelector =
               findBlockChildSelector(rootInstanceSelector);
 
@@ -1084,7 +1102,7 @@ const RichTextContentPluginInternal = ({
               onNext(editor.getEditorState(), { reason: "left" });
 
               updateWebstudioData((data) => {
-                deleteInstanceMutable(data, rootInstanceSelector);
+                deleteInstanceMutable(data, blockChildSelector);
               });
 
               event.preventDefault();
@@ -1095,6 +1113,18 @@ const RichTextContentPluginInternal = ({
 
         if (menuState === "closed") {
           if (event.key === "Enter" && !event.shiftKey) {
+            // Custom logic if we are editing ListItem
+            const currentInstance = $instances
+              .get()
+              .get(rootInstanceSelector[0]);
+
+            if (currentInstance?.component === "ListItem") {
+              // Instead of creating block component we need to add a new ListItem
+              insertListItemAt(rootInstanceSelector);
+              event.preventDefault();
+              return true;
+            }
+
             // Check if it pressed on the last line, last symbol
 
             const allowedComponents = ["Paragraph", "Text", "Heading"];
