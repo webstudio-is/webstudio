@@ -445,7 +445,7 @@ export const metaNavigationMenuList: WsComponentMeta = {
       component: { $eq: "NavigationMenu" },
     },
     {
-      relation: "child",
+      relation: "descendant",
       component: { $eq: "NavigationMenuItem" },
     },
   ],
@@ -458,7 +458,7 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   type: "container",
   icon: ListItemIcon,
   constraints: {
-    relation: "parent",
+    relation: "ancestor",
     component: { $eq: "NavigationMenuList" },
   },
   presetStyle,
