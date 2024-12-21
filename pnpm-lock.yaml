@@ -292,9 +292,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../../packages/trpc-interface
-      arrgv:
-        specifier: ^1.0.2
-        version: 1.0.2
+      args-tokenizer:
+        specifier: ^0.1.0
+        version: 0.1.0
       bcp-47:
         specifier: ^2.1.0
         version: 2.1.0
@@ -5111,6 +5111,9 @@ packages:
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
+  args-tokenizer@0.1.0:
+    resolution: {integrity: sha512-9yDBBeg+2WTmWXJMfdO3efV+VknAL2UlxS7Yxt5e/aYjMW3yDiQhGPuFg+wEuTGN3JxsRL/wjCg0qBDFklyXjw==}
+
   aria-hidden@1.1.3:
     resolution: {integrity: sha512-RhVWFtKH5BiGMycI72q2RAFMLQi8JP9bLuQXgR5a8Znp7P5KOIADSJeyfI8PCVxLEp067B2HbP5JIiI/PXIZeA==}
     engines: {node: '>=8.5.0'}
@@ -5126,10 +5129,6 @@ packages:
 
   array-flatten@1.1.1:
     resolution: {integrity: sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg==}
-
-  arrgv@1.0.2:
-    resolution: {integrity: sha512-a4eg4yhp7mmruZDQFqVMlxNRFGi/i1r87pt8SDHy0/I8PqSXoUTlWZRdAZo0VXgvEARcujbtTk8kiZRi1uDGRw==}
-    engines: {node: '>=8.0.0'}
 
   as-table@1.0.55:
     resolution: {integrity: sha512-xvsWESUJn0JN421Xb9MQw6AsMHRCUknCe0Wjlxvjud80mU4E6hQf1A6NzQKcYNmYw62MfzEtXc+badstZP3JpQ==}
@@ -12008,6 +12007,8 @@ snapshots:
 
   argparse@2.0.1: {}
 
+  args-tokenizer@0.1.0: {}
+
   aria-hidden@1.1.3:
     dependencies:
       tslib: 1.14.1
@@ -12026,8 +12027,6 @@ snapshots:
       is-array-buffer: 3.0.2
 
   array-flatten@1.1.1: {}
-
-  arrgv@1.0.2: {}
 
   as-table@1.0.55:
     dependencies:
