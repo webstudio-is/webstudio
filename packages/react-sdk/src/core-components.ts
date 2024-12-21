@@ -173,59 +173,204 @@ const blockMeta: WsComponentMeta = {
       props: [],
       children: [
         {
+          component: blockTemplateComponent,
           type: "instance",
           label: "Templates",
-          component: blockTemplateComponent,
           children: [
             {
-              type: "instance",
               component: "Paragraph",
+              type: "instance",
+              children: [],
+            },
+            {
+              component: "Heading",
+              type: "instance",
+              label: "Heading 1",
+              props: [
+                {
+                  name: "tag",
+                  type: "string",
+                  value: "h1",
+                },
+              ],
+              children: [],
+            },
+            {
+              component: "Heading",
+              type: "instance",
+              label: "Heading 2",
+              props: [
+                {
+                  name: "tag",
+                  type: "string",
+                  value: "h2",
+                },
+              ],
+              children: [],
+            },
+            {
+              component: "Heading",
+              type: "instance",
+              label: "Heading 3",
+              props: [
+                {
+                  name: "tag",
+                  type: "string",
+                  value: "h3",
+                },
+              ],
+              children: [],
+            },
+            {
+              component: "Heading",
+              type: "instance",
+              label: "Heading 4",
+              props: [
+                {
+                  name: "tag",
+                  type: "string",
+                  value: "h4",
+                },
+              ],
+              children: [],
+            },
+            {
+              component: "Heading",
+              type: "instance",
+              label: "Heading 5",
+              props: [
+                {
+                  name: "tag",
+                  type: "string",
+                  value: "h5",
+                },
+              ],
+              children: [],
+            },
+            {
+              component: "Heading",
+              type: "instance",
+              label: "Heading 6",
+              props: [
+                {
+                  name: "tag",
+                  type: "string",
+                  value: "h6",
+                },
+              ],
+              children: [],
+            },
+            {
+              component: "List",
+              type: "instance",
+              label: "List (Unordered)",
               children: [
                 {
-                  type: "text",
-                  value: "Paragraph text you can edit",
-                  placeholder: true,
+                  component: "ListItem",
+                  type: "instance",
+                  children: [{ type: "text", value: "list item you can edit" }],
+                },
+                {
+                  component: "ListItem",
+                  type: "instance",
+                  children: [{ type: "text", value: "list item you can edit" }],
+                },
+                {
+                  component: "ListItem",
+                  type: "instance",
+                  children: [{ type: "text", value: "list item you can edit" }],
                 },
               ],
             },
             {
-              type: "instance",
               component: "List",
-              children: [
+              type: "instance",
+              label: "List (Ordered)",
+              props: [
                 {
-                  type: "instance",
-                  component: "ListItem",
-                  children: [
-                    {
-                      type: "text",
-                      value: "List Item text you can edit",
-                      placeholder: true,
-                    },
-                  ],
-                },
-                {
-                  type: "instance",
-                  component: "ListItem",
-                  children: [
-                    {
-                      type: "text",
-                      value: "List Item text you can edit",
-                      placeholder: true,
-                    },
-                  ],
-                },
-                {
-                  type: "instance",
-                  component: "ListItem",
-                  children: [
-                    {
-                      type: "text",
-                      value: "List Item text you can edit",
-                      placeholder: true,
-                    },
-                  ],
+                  name: "ordered",
+                  type: "boolean",
+                  value: true,
                 },
               ],
+              children: [
+                {
+                  component: "ListItem",
+                  type: "instance",
+                  children: [{ type: "text", value: "list item you can edit" }],
+                },
+                {
+                  component: "ListItem",
+                  type: "instance",
+                  children: [{ type: "text", value: "list item you can edit" }],
+                },
+                {
+                  component: "ListItem",
+                  type: "instance",
+                  children: [{ type: "text", value: "list item you can edit" }],
+                },
+              ],
+            },
+            {
+              component: "Link",
+              type: "instance",
+              children: [],
+            },
+            {
+              component: "Image",
+              type: "instance",
+              styles: [
+                {
+                  property: "marginRight",
+                  value: {
+                    type: "keyword",
+                    value: "auto",
+                  },
+                },
+                {
+                  property: "marginLeft",
+                  value: {
+                    type: "keyword",
+                    value: "auto",
+                  },
+                },
+                {
+                  property: "width",
+                  value: {
+                    type: "unit",
+                    unit: "%",
+                    value: 100,
+                  },
+                },
+                {
+                  property: "height",
+                  value: {
+                    type: "keyword",
+                    value: "auto",
+                  },
+                },
+              ],
+              children: [],
+            },
+            {
+              component: "Separator",
+              type: "instance",
+              children: [],
+            },
+            {
+              component: "Blockquote",
+              type: "instance",
+              children: [],
+            },
+            {
+              component: "HtmlEmbed",
+              type: "instance",
+              children: [],
+            },
+            {
+              component: "CodeText",
+              type: "instance",
+              children: [],
             },
           ],
         },
