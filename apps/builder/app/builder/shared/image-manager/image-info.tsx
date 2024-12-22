@@ -50,13 +50,13 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
       {"width" in meta && "height" in meta ? (
         <Box css={{ padding: theme.panel.padding }}>
           <Grid columns={2} gap={2} align="center">
-            <Flex align="center" css={{ gap: theme.spacing[3] }}>
+            <Flex align="center" gap={1}>
               <SizeIcon />
               <Text variant="labelsSentenceCase">
                 {meta.width} x {meta.height}
               </Text>
             </Flex>{" "}
-            <Flex align="center" css={{ gap: theme.spacing[3] }}>
+            <Flex align="center" gap={1}>
               <AspectRatioIcon />
               <Text variant="labelsSentenceCase">
                 {getFormattedAspectRatio(meta)}
