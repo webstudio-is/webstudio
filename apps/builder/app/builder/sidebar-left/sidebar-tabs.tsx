@@ -34,19 +34,17 @@ const buttonStyle = css({
   outline: "none",
   alignItems: "center",
   justifyContent: "center",
-  color: theme.colors.foregroundSubtle,
+  color: theme.colors.foregroundMain,
   backgroundColor: theme.colors.backgroundPanel,
   border: "none",
   "&:focus-visible": triggerFocusRing,
   "@hover": {
     "&:hover": {
-      color: theme.colors.foregroundMain,
       backgroundColor: theme.colors.backgroundHover,
     },
   },
 
   '&[data-state="active"]': {
-    color: theme.colors.foregroundMain,
     backgroundColor: theme.colors.backgroundHover,
   },
 });

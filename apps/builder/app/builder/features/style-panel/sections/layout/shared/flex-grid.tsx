@@ -49,18 +49,14 @@ export const FlexGrid = () => {
     flexDirectionValue === "column" || flexDirectionValue === "column-reverse";
 
   let color = theme.colors.foregroundFlexUiMain;
-  let borderColor = theme.colors.foregroundFlexUiMain;
 
   if (styleValueSourceColor === "local") {
-    borderColor = theme.colors.borderLocalMain;
     color = theme.colors.foregroundLocalFlexUi;
   }
   if (styleValueSourceColor === "overwritten") {
-    borderColor = theme.colors.borderOverwrittenFlexUi;
     color = theme.colors.foregroundOverwrittenFlexUi;
   }
   if (styleValueSourceColor === "remote") {
-    borderColor = theme.colors.borderRemoteFlexUi;
     color = theme.colors.foregroundRemoteFlexUi;
   }
 
@@ -77,9 +73,8 @@ export const FlexGrid = () => {
     <Grid
       tabIndex={0}
       css={{
-        padding: theme.spacing[2],
+        padding: theme.spacing[3],
         borderRadius: theme.borderRadius[4],
-        outline: `1px solid ${borderColor}`,
         background: theme.colors.backgroundControls,
         alignItems: "center",
         gap: 0,
@@ -120,8 +115,7 @@ export const FlexGrid = () => {
                 minWidth: "auto",
                 color: theme.colors.foregroundFlexUiMain,
                 "&:hover": {
-                  // @todo not clear which token to use here
-                  background: theme.colors.backgroundHover,
+                  background: theme.colors.foregroundFlexUiHover,
                 },
                 "&:focus": {
                   background: "none",

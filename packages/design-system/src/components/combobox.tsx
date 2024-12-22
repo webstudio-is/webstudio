@@ -480,7 +480,9 @@ export const Combobox = <Item,>({
             color={color}
             suffix={
               suffix ?? (
-                <NestedInputButton {...combobox.getToggleButtonProps()} />
+                <Flex>
+                  <NestedInputButton {...combobox.getToggleButtonProps()} />
+                </Flex>
               )
             }
           />

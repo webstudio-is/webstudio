@@ -17,7 +17,7 @@ const borderWidth = 1;
 const gridStyle = css({
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
-  border: `${borderWidth}px solid ${theme.colors.borderMain}`,
+  border: `${borderWidth}px solid transparent`,
   background: theme.colors.backgroundControls,
   paddingTop: paddingY,
   paddingBottom: paddingY,
@@ -25,6 +25,9 @@ const gridStyle = css({
   resize: "vertical",
   overflow: "auto",
   width: "100%",
+  "&:hover": {
+    borderColor: theme.colors.borderMain,
+  },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
   },

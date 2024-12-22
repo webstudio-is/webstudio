@@ -18,6 +18,7 @@ import {
   Box,
   PopoverMenuItemRightSlot,
   Tooltip,
+  InputField,
 } from "@webstudio-is/design-system";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { BreakpointsPopoverToolbarButton } from "./breakpoints-popover-toolbar-button";
@@ -94,7 +95,12 @@ export const BreakpointsPopover = () => {
           <BreakpointsPopoverToolbarButton css={{ gap: theme.spacing[5] }} />
         </PopoverTrigger>
       </Tooltip>
-      <PopoverContent sideOffset={0} collisionPadding={4} align="start">
+      <PopoverContent
+        sideOffset={0}
+        collisionPadding={4}
+        align="start"
+        css={{ width: theme.spacing[30] }}
+      >
         {view === "confirmation" && breakpointToDelete && (
           <ConfirmationDialog
             breakpoint={breakpointToDelete}
@@ -115,17 +121,15 @@ export const BreakpointsPopover = () => {
         )}
         {view === "initial" && (
           <>
-            <Flex css={{ p: theme.panel.padding }} gap="3">
+            <Flex css={{ padding: theme.panel.padding }} gap="3">
               <WidthInput min={minCanvasWidth} />
               <Flex align="center" gap="2">
                 <Label>Scale</Label>
-                <Button
-                  color="neutral"
-                  css={{ width: theme.spacing[17] }}
+                <InputField
+                  value={`${Math.round(scale)}%`}
                   tabIndex={-1}
-                >
-                  {Math.round(scale)}%
-                </Button>
+                  readOnly
+                />
               </Flex>
             </Flex>
             <PopoverSeparator />

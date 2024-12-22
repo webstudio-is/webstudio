@@ -27,7 +27,7 @@ const Trapezoid = styled("div", {
 
 const TopBottom = styled(Trapezoid, {
   zIndex: 0,
-  backgroundColor: theme.colors.backgroundPanel,
+  backgroundColor: theme.colors.backgroundSpacingTopBottom,
 });
 
 const LeftRight = styled(Trapezoid, {
