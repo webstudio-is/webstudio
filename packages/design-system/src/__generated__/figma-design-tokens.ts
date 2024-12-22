@@ -394,7 +394,7 @@ export const color = {
   backgroundNeutralMain: "#d7dbdf",
   backgroundNeutralAccent: "#11181c",
   backgroundNeutralNotification: "#ffffff",
-  backgroundNeutralDark: "#7e868c",
+  backgroundNeutralDark: "#b2b2b2",
   backgroundDestructiveMain: "#dc2929",
   backgroundDestructiveNotification: "#ffe9e9",
   backgroundSuccessMain: "#00894a",

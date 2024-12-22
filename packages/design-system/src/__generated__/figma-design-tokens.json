@@ -438,7 +438,7 @@
           "description": "background color on neutral toast"
         },
         "dark": {
-          "value": "#7e868c",
+          "value": "#b2b2b2",
           "type": "color"
         }
       },
