@@ -98,11 +98,9 @@ export const CssFragmentEditorContent = ({
 };
 
 export const CssFragmentEditor = ({
-  title,
   content,
   onOpenChange,
 }: {
-  title?: ReactNode;
   content: ReactNode;
   onOpenChange?: (newOpen: boolean) => void;
 }) => {
@@ -112,7 +110,7 @@ export const CssFragmentEditor = ({
         {content}
         <EditorDialog
           onOpenChange={onOpenChange}
-          title={title}
+          title="CSS Value"
           content={content}
         >
           <EditorDialogButton />
