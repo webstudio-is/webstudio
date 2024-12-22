@@ -65,7 +65,7 @@ const dotStyle = css({
     borderRadius: "50%",
   },
   "&[data-selected=true], &:hover": {
-    background: theme.colors.backgroundHover,
+    background: theme.colors.foregroundGridControlsFlexHover,
     "&::before": {
       background: theme.colors.foregroundGridControlsDotHover,
     },

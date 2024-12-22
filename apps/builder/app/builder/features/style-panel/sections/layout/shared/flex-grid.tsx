@@ -77,9 +77,8 @@ export const FlexGrid = () => {
     <Grid
       tabIndex={0}
       css={{
-        padding: theme.spacing[2],
+        padding: theme.spacing[3],
         borderRadius: theme.borderRadius[4],
-        outline: `1px solid ${borderColor}`,
         background: theme.colors.backgroundControls,
         alignItems: "center",
         gap: 0,
@@ -120,8 +119,7 @@ export const FlexGrid = () => {
                 minWidth: "auto",
                 color: theme.colors.foregroundFlexUiMain,
                 "&:hover": {
-                  // @todo not clear which token to use here
-                  background: theme.colors.backgroundHover,
+                  background: theme.colors.foregroundFlexUiHover,
                 },
                 "&:focus": {
                   background: "none",

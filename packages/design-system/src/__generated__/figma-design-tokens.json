@@ -986,7 +986,7 @@
           "description": "color for flex control ui elements"
         },
         "hover": {
-          "value": "#96c7f2",
+          "value": "#e3e3e3",
           "type": "color",
           "description": "color for hovered state of flex control ui elements"
         }
@@ -1052,7 +1052,7 @@
           "type": "color"
         },
         "flex-hover": {
-          "value": "#96c7f2",
+          "value": "#e3e3e3",
           "type": "color",
           "description": "color for hovered state of flex control ui elements"
         }
