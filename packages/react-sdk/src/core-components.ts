@@ -150,8 +150,7 @@ const blockTemplatePropsMeta: WsComponentPropsMeta = {
 };
 
 const blockMeta: WsComponentMeta = {
-  category: "data",
-  order: 2,
+  category: "typography",
   type: "container",
   label: "Content Block",
   icon: EditIcon,
