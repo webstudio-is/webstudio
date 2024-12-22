@@ -24,6 +24,7 @@ export const componentCategories = [
   "media",
   "data",
   "forms",
+  "localization",
   "radix",
   "xml",
   "hidden",
