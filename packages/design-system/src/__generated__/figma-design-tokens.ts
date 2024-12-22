@@ -412,7 +412,7 @@ export const color = {
   backgroundInputSelected: "#b7d9f8",
   backgroundInputDisabled: "#f8f8f8",
   backgroundInputHighlight: "#b7d9f8",
-  backgroundButtonHover: "#ffffff17",
+  backgroundButtonHover: "#00000010",
   backgroundButtonPressed: "#0000001c",
   backgroundButtonDisabled: "#e9ebed",
   backgroundButtonDisabledDark: "#646464",

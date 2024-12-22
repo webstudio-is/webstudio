@@ -538,7 +538,7 @@
       },
       "button": {
         "hover": {
-          "value": "#ffffff17",
+          "value": "#00000010",
           "type": "color",
           "description": "transparent color to create the hover state for button"
         },
