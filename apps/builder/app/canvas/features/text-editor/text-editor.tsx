@@ -1127,7 +1127,11 @@ const RichTextContentPluginInternal = ({
               .get()
               .get(rootInstanceSelector[0]);
 
-            if (currentInstance?.component === "ListItem") {
+            const rootNodeContent = $getRoot().getTextContent().trim();
+            if (
+              currentInstance?.component === "ListItem" &&
+              rootNodeContent.length > 0
+            ) {
               // Instead of creating block component we need to add a new ListItem
               insertListItemAt(rootInstanceSelector);
               event.preventDefault();
@@ -1182,6 +1186,16 @@ const RichTextContentPluginInternal = ({
               */
 
               insertTemplateAt(templateSelector, rootInstanceSelector, false);
+
+              if (
+                currentInstance?.component === "ListItem" &&
+                rootNodeContent.length === 0
+              ) {
+                // Pressing Enter within an empty list item deletes the empty item
+                updateWebstudioData((data) => {
+                  deleteInstanceMutable(data, rootInstanceSelector);
+                });
+              }
 
               event.preventDefault();
               return true;
