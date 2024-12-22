@@ -20,7 +20,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "text",
+  category: "typography",
   type: "container",
   description:
     "A generic container for any text content that is not a heading or a link.",
