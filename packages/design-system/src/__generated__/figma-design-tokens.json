@@ -596,7 +596,7 @@
       },
       "spacing": {
         "top-bottom": {
-          "value": "#f1f3f5",
+          "value": "#f8f8f8",
           "type": "color"
         },
         "left-right": {
@@ -605,7 +605,7 @@
           "description": "Left and right padding and margin background colors for the Position section UI."
         },
         "hover": {
-          "value": "#d7dbdf",
+          "value": "#e3e3e3",
           "type": "color"
         }
       },
