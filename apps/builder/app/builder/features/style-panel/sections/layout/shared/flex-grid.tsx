@@ -49,18 +49,14 @@ export const FlexGrid = () => {
     flexDirectionValue === "column" || flexDirectionValue === "column-reverse";
 
   let color = theme.colors.foregroundFlexUiMain;
-  let borderColor = theme.colors.foregroundFlexUiMain;
 
   if (styleValueSourceColor === "local") {
-    borderColor = theme.colors.borderLocalMain;
     color = theme.colors.foregroundLocalFlexUi;
   }
   if (styleValueSourceColor === "overwritten") {
-    borderColor = theme.colors.borderOverwrittenFlexUi;
     color = theme.colors.foregroundOverwrittenFlexUi;
   }
   if (styleValueSourceColor === "remote") {
-    borderColor = theme.colors.borderRemoteFlexUi;
     color = theme.colors.foregroundRemoteFlexUi;
   }
 
