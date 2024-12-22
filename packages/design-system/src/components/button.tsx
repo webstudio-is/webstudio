@@ -54,10 +54,6 @@ const foregrounds: Record<ButtonColor, string> = {
   "dark-ghost": theme.colors.foregroundContrastMain,
 };
 
-// CSS supports multiple gradients as backgrounds but not multiple colors
-const backgroundColors = (base: string, overlay: string) =>
-  `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
-
 const perColorStyle = (variant: ButtonColor) => ({
   background:
     variant === "ghost" || variant === "dark-ghost"
@@ -73,10 +69,7 @@ const perColorStyle = (variant: ButtonColor) => ({
     background:
       variant === "gradient"
         ? `linear-gradient(${theme.colors.backgroundButtonHover}, ${theme.colors.backgroundButtonHover}), ${backgrounds[variant]}`
-        : backgroundColors(
-            backgrounds[variant],
-            theme.colors.backgroundButtonHover
-          ),
+        : `oklch(from ${backgrounds[variant]} l c h / 0.8)`,
   },
 
   "&[data-state=auto]:focus-visible, &[data-state=focus]": {
@@ -90,10 +83,7 @@ const perColorStyle = (variant: ButtonColor) => ({
     background:
       variant === "gradient"
         ? `linear-gradient(${theme.colors.backgroundButtonPressed}, ${theme.colors.backgroundButtonPressed}), ${backgrounds[variant]}`
-        : backgroundColors(
-            backgrounds[variant],
-            theme.colors.backgroundButtonPressed
-          ),
+        : `oklch(from ${backgrounds[variant]} l c h / 0.8)`,
   },
 
   "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
