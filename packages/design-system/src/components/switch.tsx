@@ -27,7 +27,7 @@ const switchStyle = css({
     position: "absolute",
     inset: padding,
     borderRadius: theme.borderRadius.pill,
-    backgroundColor: theme.colors.backgroundNeutralDark,
+    backgroundColor: theme.colors.backgroundControls,
   },
 
   "&[data-state=checked]:not([data-disabled]):before": {
