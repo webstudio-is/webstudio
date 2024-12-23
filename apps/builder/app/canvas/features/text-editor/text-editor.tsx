@@ -1093,8 +1093,18 @@ const RichTextContentPluginInternal = ({
             if (currentInstance?.component === "ListItem") {
               onNext(editor.getEditorState(), { reason: "left" });
 
+              const parentInstanceSelector = rootInstanceSelector.slice(1);
+              const parentInstance = $instances
+                .get()
+                .get(parentInstanceSelector[0]);
+
+              const isLastChild = parentInstance?.children.length === 1;
+
               updateWebstudioData((data) => {
-                deleteInstanceMutable(data, rootInstanceSelector);
+                deleteInstanceMutable(
+                  data,
+                  isLastChild ? parentInstanceSelector : rootInstanceSelector
+                );
               });
 
               event.preventDefault();
@@ -1187,9 +1197,19 @@ const RichTextContentPluginInternal = ({
                 currentInstance?.component === "ListItem" &&
                 $getRoot().getTextContentSize() === 0
               ) {
+                const parentInstanceSelector = rootInstanceSelector.slice(1);
+                const parentInstance = $instances
+                  .get()
+                  .get(parentInstanceSelector[0]);
+
+                const isLastChild = parentInstance?.children.length === 1;
+
                 // Pressing Enter within an empty list item deletes the empty item
                 updateWebstudioData((data) => {
-                  deleteInstanceMutable(data, rootInstanceSelector);
+                  deleteInstanceMutable(
+                    data,
+                    isLastChild ? parentInstanceSelector : rootInstanceSelector
+                  );
                 });
               }
 
