@@ -386,8 +386,11 @@ const getEditableComponentPlaceholder = (
 
   const isParagraph = instance.component === "Paragraph";
 
-  if (mode === "editing" && isParagraph && isContentBlockChild) {
-    return "Write something or press '/' for commands...";
+  if (isParagraph && isContentBlockChild) {
+    return mode === "editing"
+      ? "Write something or press '/' for commands..."
+      : // The paragraph contains only an "editing" placeholder within the content block.
+        undefined;
   }
 
   return label;
