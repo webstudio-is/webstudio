@@ -47,13 +47,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Link",
-      children: [
-        {
-          type: "text",
-          value: "Link text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };
