@@ -1027,9 +1027,8 @@ const RichTextContentPluginInternal = ({
       if (!isSelectionInSameComponent) {
         node?.remove();
 
-        const rootNodeContent = $getRoot().getTextContent().trim();
         // Delete current
-        if (rootNodeContent.length === 0) {
+        if ($getRoot().getTextContentSize() === 0) {
           const blockChildSelector =
             findBlockChildSelector(rootInstanceSelector);
 
@@ -1086,9 +1085,7 @@ const RichTextContentPluginInternal = ({
         }
 
         if (event.key === "Backspace" || event.key === "Delete") {
-          const rootNodeContent = $getRoot().getTextContent().trim();
-
-          if (rootNodeContent.length === 0) {
+          if ($getRoot().getTextContentSize() === 0) {
             const currentInstance = $instances
               .get()
               .get(rootInstanceSelector[0]);
@@ -1127,10 +1124,9 @@ const RichTextContentPluginInternal = ({
               .get()
               .get(rootInstanceSelector[0]);
 
-            const rootNodeContent = $getRoot().getTextContent().trim();
             if (
               currentInstance?.component === "ListItem" &&
-              rootNodeContent.length > 0
+              $getRoot().getTextContentSize() > 0
             ) {
               // Instead of creating block component we need to add a new ListItem
               insertListItemAt(rootInstanceSelector);
@@ -1189,7 +1185,7 @@ const RichTextContentPluginInternal = ({
 
               if (
                 currentInstance?.component === "ListItem" &&
-                rootNodeContent.length === 0
+                $getRoot().getTextContentSize() === 0
               ) {
                 // Pressing Enter within an empty list item deletes the empty item
                 updateWebstudioData((data) => {
