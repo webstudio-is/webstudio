@@ -61,6 +61,25 @@ export const mountStyles = () => {
   helpersSheet.render();
 };
 
+/*
+div[contenteditable]:has(p > br:only-child) {
+  background-color: red;
+}
+*/
+
+const globalHelperStyles = [
+  `:is(p, h1, h2, h3, h4, h5, h6)[${idAttribute}]:empty::before {
+    content: '\\200B';
+  }
+  `,
+
+  `:is(p, h1, h2, h3, h4, h5, h6)[${idAttribute}]:has(p:has(br:only-child))::before {
+    content: 'Jopa';
+    background: red;
+  }
+  `,
+];
+
 const helperStylesShared = [
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
@@ -108,6 +127,7 @@ const helperStylesShared = [
 //
 // In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
 const helperStyles = [
+  ...globalHelperStyles,
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;
@@ -117,6 +137,7 @@ const helperStyles = [
 
 // Find all editable elements and set cursor text inside
 const helperStylesContentEdit = [
+  ...globalHelperStyles,
   `[${idAttribute}] {
   user-select: none;
 }`,

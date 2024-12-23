@@ -1589,7 +1589,11 @@ export const TextEditor = ({
         }
 
         // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
-        const componentsWithPseudoElementChildren = ["ListItem"];
+        const componentsWithPseudoElementChildren = [
+          "ListItem",
+          "Paragraph",
+          "Heading",
+        ];
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
@@ -1671,7 +1675,6 @@ export const TextEditor = ({
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
-        placeholder={<></>}
       />
       <LinkPlugin />
 
