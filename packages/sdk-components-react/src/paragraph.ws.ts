@@ -29,13 +29,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Paragraph",
-      children: [
-        {
-          type: "text",
-          value: "Paragraph text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };

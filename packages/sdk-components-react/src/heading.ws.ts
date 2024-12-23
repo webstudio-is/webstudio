@@ -38,13 +38,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Heading",
-      children: [
-        {
-          type: "text",
-          value: "Heading text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };

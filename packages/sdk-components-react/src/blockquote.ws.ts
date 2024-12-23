@@ -72,13 +72,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Blockquote",
-      children: [
-        {
-          type: "text",
-          value: "Blockquote text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };

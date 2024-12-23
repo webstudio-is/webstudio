@@ -267,17 +267,7 @@ const blockMeta: WsComponentMeta = {
                 {
                   component: "ListItem",
                   type: "instance",
-                  children: [{ type: "text", value: "list item you can edit" }],
-                },
-                {
-                  component: "ListItem",
-                  type: "instance",
-                  children: [{ type: "text", value: "list item you can edit" }],
-                },
-                {
-                  component: "ListItem",
-                  type: "instance",
-                  children: [{ type: "text", value: "list item you can edit" }],
+                  children: [],
                 },
               ],
             },
@@ -296,17 +286,7 @@ const blockMeta: WsComponentMeta = {
                 {
                   component: "ListItem",
                   type: "instance",
-                  children: [{ type: "text", value: "list item you can edit" }],
-                },
-                {
-                  component: "ListItem",
-                  type: "instance",
-                  children: [{ type: "text", value: "list item you can edit" }],
-                },
-                {
-                  component: "ListItem",
-                  type: "instance",
-                  children: [{ type: "text", value: "list item you can edit" }],
+                  children: [],
                 },
               ],
             },
