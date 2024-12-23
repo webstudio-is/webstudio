@@ -13,10 +13,6 @@ const presetStyle = {
   a: [
     ...a,
     {
-      property: "minHeight",
-      value: { type: "unit", unit: "em", value: 1 },
-    },
-    {
       property: "display",
       value: { type: "keyword", value: "inline-block" },
     },

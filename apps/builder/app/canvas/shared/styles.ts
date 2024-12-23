@@ -11,10 +11,13 @@ import {
 import {
   collapsedAttribute,
   idAttribute,
+  editingPlaceholderVariable,
   addGlobalRules,
   createImageValueTransformer,
   descendantComponent,
   rootComponent,
+  editablePlaceholderVariable,
+  componentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   type TransformValue,
@@ -61,26 +64,43 @@ export const mountStyles = () => {
   helpersSheet.render();
 };
 
-/*
-div[contenteditable]:has(p > br:only-child) {
-  background-color: red;
-}
-*/
-
-const globalHelperStyles = [
-  `:is(p, h1, h2, h3, h4, h5, h6)[${idAttribute}]:empty::before {
-    content: '\\200B';
-  }
-  `,
-
-  `:is(p, h1, h2, h3, h4, h5, h6)[${idAttribute}]:has(p:has(br:only-child))::before {
-    content: 'Jopa';
-    background: red;
-  }
-  `,
+/**
+ * Opinionated list of non collapsible components in the builder
+ */
+export const editablePlaceholderComponents = [
+  "Paragraph",
+  "Heading",
+  "ListItem",
+  "Blockquote",
 ];
 
+const editablePlaceholderSelector = editablePlaceholderComponents
+  .map((component) => `[${componentAttribute}= "${component}"]`)
+  .join(", ");
+
 const helperStylesShared = [
+  // Display a placeholder text for elements that are editable but currently empty
+  `:is(${editablePlaceholderSelector}):empty::before {
+    content: var(${editablePlaceholderVariable}, '\\200B');
+    opacity: 0.3;
+  }
+  `,
+
+  // Display a placeholder text for elements that are editing but empty (Lexical adds p>br children)
+  `:is(${editablePlaceholderSelector})[contenteditable]:has(p:only-child > br:only-child) {
+    position: relative;
+    & > p:after {
+      content: var(${editingPlaceholderVariable});
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      min-width: 100px;
+      opacity: 0.3;
+    }
+  }
+  `,
+
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
     outline: 1px dashed rgba(0,0,0,0.7);
@@ -127,7 +147,6 @@ const helperStylesShared = [
 //
 // In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
 const helperStyles = [
-  ...globalHelperStyles,
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;
@@ -137,7 +156,6 @@ const helperStyles = [
 
 // Find all editable elements and set cursor text inside
 const helperStylesContentEdit = [
-  ...globalHelperStyles,
   `[${idAttribute}] {
   user-select: none;
 }`,
