@@ -72,6 +72,7 @@ export const editablePlaceholderComponents = [
   "Heading",
   "ListItem",
   "Blockquote",
+  "Link",
 ];
 
 const editablePlaceholderSelector = editablePlaceholderComponents
