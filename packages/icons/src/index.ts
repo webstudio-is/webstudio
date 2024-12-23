@@ -1,6 +1,5 @@
 export * from "./__generated__/components";
 export * from "./types";
-export * from "./trash";
 export * from "./size";
 export * from "./cross-circled-filled";
 export * from "./cross";

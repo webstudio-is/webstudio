@@ -33,7 +33,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { DeleteIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -290,7 +290,7 @@ const HeaderPair = ({
         </svg>
         <SmallIconButton
           variant="destructive"
-          icon={<DeleteIcon />}
+          icon={<TrashIcon />}
           onClick={onDelete}
         />
         <svg

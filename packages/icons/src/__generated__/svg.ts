@@ -150,7 +150,7 @@ export const DashIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
 
 export const DashedBorderIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.714 8H2M8.857 8H7.143M14 8h-1.714"/></svg>`;
 
-export const DeleteIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2 4h12M12.667 4v9.333c0 .667-.667 1.334-1.334 1.334H4.667c-.667 0-1.334-.667-1.334-1.334V4M5.333 4V2.667C5.333 2 6 1.333 6.667 1.333h2.666c.667 0 1.334.667 1.334 1.334V4M6.667 7.333v4M9.333 7.333v4"/></svg>`;
+export const TrashIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2 4h12M12.667 4v9.333c0 .667-.667 1.334-1.334 1.334H4.667c-.667 0-1.334-.667-1.334-1.334V4M5.333 4V2.667C5.333 2 6 1.333 6.667 1.333h2.666c.667 0 1.334.667 1.334 1.334V4M6.667 7.333v4M9.333 7.333v4"/></svg>`;
 
 export const DescriptionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.333 3.135a.47.47 0 0 0-.802-.332L4.275 5.058a.933.933 0 0 1-.664.275H2A.667.667 0 0 0 1.333 6v4a.667.667 0 0 0 .667.667h1.61a.934.934 0 0 1 .665.275l2.256 2.256a.47.47 0 0 0 .802-.333v-9.73ZM10.667 6a3.333 3.333 0 0 1 0 4M12.91 12.243a6 6 0 0 0 0-8.486"/></svg>`;
 

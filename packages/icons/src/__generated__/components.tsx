@@ -2190,7 +2190,7 @@ export const DashedBorderIcon: IconComponent = forwardRef(
 );
 DashedBorderIcon.displayName = "DashedBorderIcon";
 
-export const DeleteIcon: IconComponent = forwardRef(
+export const TrashIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
@@ -2215,7 +2215,7 @@ export const DeleteIcon: IconComponent = forwardRef(
     );
   }
 );
-DeleteIcon.displayName = "DeleteIcon";
+TrashIcon.displayName = "TrashIcon";
 
 export const DescriptionIcon: IconComponent = forwardRef(
   (
