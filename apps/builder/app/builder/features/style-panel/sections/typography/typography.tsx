@@ -13,8 +13,8 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
   CrossSmallIcon,
   EllipsesIcon,
-  TextDirectionLTRIcon,
-  TextDirectionRTLIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
   TextAlignCenterIcon,
   TextAlignJustifyIcon,
   TextAlignLeftIcon,
@@ -316,13 +316,13 @@ const TypographySectionAdvancedPopover = () => {
                 properties={["direction"]}
                 items={[
                   {
-                    child: <TextDirectionLTRIcon />,
+                    child: <ArrowRightIcon />,
                     description:
                       "Sets the text direction to left-to-right, which is the default for most languages.",
                     value: "ltr",
                   },
                   {
-                    child: <TextDirectionRTLIcon />,
+                    child: <ArrowLeftIcon />,
                     description:
                       "Sets the text direction to right-to-left, typically used for languages such as Arabic or Hebrew.",
                     value: "rtl",

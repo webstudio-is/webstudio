@@ -4,5 +4,3 @@ export * from "./cross-circled-filled";
 export * from "./cross";
 export * from "./cross-small";
 export * from "./text-hyphen";
-export * from "./text-direction-ltr";
-export * from "./text-direction-rtl";
