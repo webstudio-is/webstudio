@@ -5,7 +5,7 @@ import {
   Separator,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { CrossIcon } from "@webstudio-is/icons";
+import { XIcon } from "@webstudio-is/icons";
 import { CssPreview } from "./css-preview";
 import { NavigatorTree } from "./navigator-tree";
 import { $isDesignMode } from "~/shared/nano-states";
@@ -21,7 +21,7 @@ export const NavigatorPanel = ({ onClose }: { onClose: () => void }) => {
             <Button
               onClick={onClose}
               color="ghost"
-              prefix={<CrossIcon />}
+              prefix={<XIcon />}
               aria-label="Close panel"
             />
           </Tooltip>

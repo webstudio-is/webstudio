@@ -20,7 +20,7 @@ import {
   TextAlignLeftIcon,
   TextAlignRightIcon,
   TextCapitalizeIcon,
-  TextHyphenIcon,
+  MinusIcon,
   TextItalicIcon,
   TextLowercaseIcon,
   TextStrikethroughIcon,
@@ -346,7 +346,7 @@ const TypographySectionAdvancedPopover = () => {
                     value: "manual",
                   },
                   {
-                    child: <TextHyphenIcon />,
+                    child: <MinusIcon />,
                     description:
                       "Enables automatic hyphenation of words. The browser will hyphenate long words at appropriate points to fit within the width of their container.",
                     value: "auto",

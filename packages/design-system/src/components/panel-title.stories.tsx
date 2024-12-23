@@ -1,6 +1,6 @@
 import { PanelTitle, TitleSuffixSpacer } from "./panel-title";
 import { Button } from "./button";
-import { CrossIcon, CopyIcon } from "@webstudio-is/icons";
+import { XIcon, CopyIcon } from "@webstudio-is/icons";
 import { StoryGrid } from "./storybook";
 
 export default {
@@ -11,14 +11,14 @@ export const Demo = () => (
   <StoryGrid>
     <PanelTitle>Without buttons</PanelTitle>
 
-    <PanelTitle suffix={<Button prefix={<CrossIcon />} color="ghost" />}>
+    <PanelTitle suffix={<Button prefix={<XIcon />} color="ghost" />}>
       One icon button
     </PanelTitle>
 
     <PanelTitle
       suffix={
         <>
-          <Button prefix={<CrossIcon />} color="ghost" />
+          <Button prefix={<XIcon />} color="ghost" />
           <Button prefix={<CopyIcon />} color="ghost" />
         </>
       }
@@ -29,7 +29,7 @@ export const Demo = () => (
     <PanelTitle
       suffix={
         <>
-          <Button prefix={<CrossIcon />} color="ghost" />
+          <Button prefix={<XIcon />} color="ghost" />
           <Button prefix={<CopyIcon />} color="ghost" />
           <TitleSuffixSpacer />
           <Button>Button</Button>

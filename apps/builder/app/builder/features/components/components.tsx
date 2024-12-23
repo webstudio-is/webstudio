@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { CrossIcon } from "@webstudio-is/icons";
+import { XIcon } from "@webstudio-is/icons";
 import {
   type WsComponentMeta,
   blockComponent,
@@ -260,7 +260,7 @@ export const ComponentsPanel = ({
           <Tooltip content="Close panel" side="bottom">
             <Button
               color="ghost"
-              prefix={<CrossIcon />}
+              prefix={<XIcon />}
               aria-label="Close panel"
               onClick={onClose}
             />
