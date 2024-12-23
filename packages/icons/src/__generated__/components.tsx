@@ -2137,32 +2137,6 @@ export const DashBorderIcon: IconComponent = forwardRef(
 );
 DashBorderIcon.displayName = "DashBorderIcon";
 
-export const DashIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M3 8a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-DashIcon.displayName = "DashIcon";
-
 export const DashedBorderIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -2189,33 +2163,6 @@ export const DashedBorderIcon: IconComponent = forwardRef(
   }
 );
 DashedBorderIcon.displayName = "DashedBorderIcon";
-
-export const TrashIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M2 4h12M12.667 4v9.333c0 .667-.667 1.334-1.334 1.334H4.667c-.667 0-1.334-.667-1.334-1.334V4M5.333 4V2.667C5.333 2 6 1.333 6.667 1.333h2.666c.667 0 1.334.667 1.334 1.334V4M6.667 7.333v4M9.333 7.333v4"
-        />
-      </svg>
-    );
-  }
-);
-TrashIcon.displayName = "TrashIcon";
 
 export const DescriptionIcon: IconComponent = forwardRef(
   (
@@ -5515,6 +5462,33 @@ export const TooltipIcon: IconComponent = forwardRef(
   }
 );
 TooltipIcon.displayName = "TooltipIcon";
+
+export const TrashIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2 4h12M12.667 4v9.333c0 .667-.667 1.334-1.334 1.334H4.667c-.667 0-1.334-.667-1.334-1.334V4M5.333 4V2.667C5.333 2 6 1.333 6.667 1.333h2.666c.667 0 1.334.667 1.334 1.334V4M6.667 7.333v4M9.333 7.333v4"
+        />
+      </svg>
+    );
+  }
+);
+TrashIcon.displayName = "TrashIcon";
 
 export const TriggerIcon: IconComponent = forwardRef(
   (

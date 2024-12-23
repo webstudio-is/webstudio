@@ -146,11 +146,7 @@ export const CopyIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" vie
 
 export const DashBorderIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M3 8a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Z" clip-rule="evenodd"/></svg>`;
 
-export const DashIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M3 8a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Z" clip-rule="evenodd"/></svg>`;
-
 export const DashedBorderIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.714 8H2M8.857 8H7.143M14 8h-1.714"/></svg>`;
-
-export const TrashIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2 4h12M12.667 4v9.333c0 .667-.667 1.334-1.334 1.334H4.667c-.667 0-1.334-.667-1.334-1.334V4M5.333 4V2.667C5.333 2 6 1.333 6.667 1.333h2.666c.667 0 1.334.667 1.334 1.334V4M6.667 7.333v4M9.333 7.333v4"/></svg>`;
 
 export const DescriptionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.333 3.135a.47.47 0 0 0-.802-.332L4.275 5.058a.933.933 0 0 1-.664.275H2A.667.667 0 0 0 1.333 6v4a.667.667 0 0 0 .667.667h1.61a.934.934 0 0 1 .665.275l2.256 2.256a.47.47 0 0 0 .802-.333v-9.73ZM10.667 6a3.333 3.333 0 0 1 0 4M12.91 12.243a6 6 0 0 0 0-8.486"/></svg>`;
 
@@ -375,6 +371,8 @@ export const TextUppercaseIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="
 export const TextIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2.667 4.667v-2h10.666v2M6 13.333h4M8 2.667v10.666"/></svg>`;
 
 export const TooltipIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="M14 10a1.333 1.333 0 0 1-1.333 1.333h-8L2 14V3.333A1.333 1.333 0 0 1 3.333 2h9.334A1.333 1.333 0 0 1 14 3.333V10Z"/></svg>`;
+
+export const TrashIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2 4h12M12.667 4v9.333c0 .667-.667 1.334-1.334 1.334H4.667c-.667 0-1.334-.667-1.334-1.334V4M5.333 4V2.667C5.333 2 6 1.333 6.667 1.333h2.666c.667 0 1.334.667 1.334 1.334V4M6.667 7.333v4M9.333 7.333v4"/></svg>`;
 
 export const TriggerIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11.915 7.354v-.647a1.294 1.294 0 1 0-2.587 0"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.328 6.707V6.06a1.294 1.294 0 1 0-2.587 0v.647"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.74 6.383V2.826a1.293 1.293 0 1 0-2.586 0v6.467"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11.914 7.353a1.293 1.293 0 0 1 2.587 0v1.94a5.174 5.174 0 0 1-5.174 5.174H8.034c-1.81 0-2.91-.556-3.874-1.513l-2.328-2.328a1.293 1.293 0 0 1 1.83-1.824L4.8 9.94"/></svg>`;
 
