@@ -60,7 +60,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "text",
+  category: "typography",
   type: "container",
   description:
     "Use to style a quote from an external source like an article or book.",

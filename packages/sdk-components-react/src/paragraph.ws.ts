@@ -14,7 +14,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "text",
+  category: "typography",
   type: "container",
   description: "A container for multi-line text.",
   icon: TextAlignLeftIcon,
