@@ -5,23 +5,11 @@
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <g clip-path="url(#clip0_25_32)">
-    <path
-      d="M8.00004 14.6667C11.6819 14.6667 14.6667 11.6819 14.6667 8C14.6667 4.3181 11.6819 1.33333 8.00004 1.33333C4.31814 1.33333 1.33337 4.3181 1.33337 8C1.33337 11.6819 4.31814 14.6667 8.00004 14.6667Z"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M6 8L7.33333 9.33333L10 6.66667"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  </g>
-  <defs>
-    <clipPath id="clip0_25_32">
-      <rect width="16" height="16" fill="white" />
-    </clipPath>
-  </defs>
+  <rect x="2" y="2" width="12" height="12" rx="6" stroke="currentColor" />
+  <path
+    d="M5.99805 7.92767L7.38086 9.31048L10.0018 6.68952"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

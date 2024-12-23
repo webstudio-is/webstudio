@@ -193,86 +193,6 @@ export const ACStretchIcon: IconComponent = forwardRef(
 );
 ACStretchIcon.displayName = "ACStretchIcon";
 
-export const AIBaselineIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M4.5 3.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v8.4a.8.8 0 0 1-.8.8H5.3a.8.8 0 0 1-.8-.8V3.8Zm1 3.46V4h1v3.26h-1ZM11.5 10.2a.8.8 0 0 1-.8.8H9.3a.8.8 0 0 1-.8-.8V3.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4ZM9.5 4v3.26h1V4h-1Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M1.5 7.95c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-AIBaselineIcon.displayName = "AIBaselineIcon";
-
-export const AICenterIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="M4.5 3.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v8.4a.8.8 0 0 1-.8.8H5.3a.8.8 0 0 1-.8-.8V3.8ZM8.5 5.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v4.4a.8.8 0 0 1-.8.8H9.3a.8.8 0 0 1-.8-.8V5.8Z" />
-        <path
-          fillRule="evenodd"
-          d="M1.5 7.95c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-AICenterIcon.displayName = "AICenterIcon";
-
-export const AIEndIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="M13.732 14.4c.424 0 .768-.313.768-.7 0-.386-.344-.7-.768-.7H2.268c-.424 0-.768.313-.768.7 0 .387.344.7.768.7h11.464ZM10.7 12a.8.8 0 0 0 .8-.8V7.8a.8.8 0 0 0-.8-.8H9.3a.8.8 0 0 0-.8.8v3.4a.8.8 0 0 0 .8.8h1.4ZM6.7 12a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H5.3a.8.8 0 0 0-.8.8v6.4a.8.8 0 0 0 .8.8h1.4Z" />
-      </svg>
-    );
-  }
-);
-AIEndIcon.displayName = "AIEndIcon";
-
 export const AIStartIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -299,182 +219,6 @@ export const AIStartIcon: IconComponent = forwardRef(
   }
 );
 AIStartIcon.displayName = "AIStartIcon";
-
-export const AIStretchIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M1.5 2.3c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M4.5 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4a.8.8 0 0 1-.8.8H5.3a.8.8 0 0 1-.8-.8V4.8ZM8.5 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4a.8.8 0 0 1-.8.8H9.3a.8.8 0 0 1-.8-.8V4.8Z" />
-        <path
-          fillRule="evenodd"
-          d="M1.5 13.7c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-AIStretchIcon.displayName = "AIStretchIcon";
-
-export const ASBaselineIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M6.5 3.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8V12.2a.8.8 0 0 1-.8.8H7.3a.8.8 0 0 1-.8-.8V3.8Zm1 3.46V4h1v3.26h-1Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M1.5 7.95c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ASBaselineIcon.displayName = "ASBaselineIcon";
-
-export const ASCenterIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="M6.5 3.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v8.4a.8.8 0 0 1-.8.8H7.3a.8.8 0 0 1-.8-.8V3.8Z" />
-        <path
-          fillRule="evenodd"
-          d="M1.5 7.95c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ASCenterIcon.displayName = "ASCenterIcon";
-
-export const ASEndIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.2c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M9.5 11.6a.8.8 0 0 1-.8.8H7.3a.8.8 0 0 1-.8-.8V4.2a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v7.4Z" />
-      </svg>
-    );
-  }
-);
-ASEndIcon.displayName = "ASEndIcon";
-
-export const ASStartIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M1.5 1.8c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M6.5 4.4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v7.4a.8.8 0 0 1-.8.8H7.3a.8.8 0 0 1-.8-.8V4.4Z" />
-      </svg>
-    );
-  }
-);
-ASStartIcon.displayName = "ASStartIcon";
-
-export const ASStretchIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.2c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M9.5 11.7a.8.8 0 0 1-.8.8H7.3a.8.8 0 0 1-.8-.8V4.3a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v7.4Z" />
-        <path
-          fillRule="evenodd"
-          d="M14.5 1.8c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ASStretchIcon.displayName = "ASStretchIcon";
 
 export const AccordionIcon: IconComponent = forwardRef(
   (
@@ -720,6 +464,390 @@ export const AlertIcon: IconComponent = forwardRef(
 );
 AlertIcon.displayName = "AlertIcon";
 
+export const AlignBaselineIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 8h13M6.7 8.06v5.14a1.3 1.3 0 0 1-1.3 1.3H4.1a1.3 1.3 0 0 1-1.3-1.3V8.205M6.7 5.4V2.8a1.3 1.3 0 0 0-1.3-1.3H4.1a1.3 1.3 0 0 0-1.3 1.3v2.6M13.2 8.108v3.142a1.3 1.3 0 0 1-1.3 1.3h-1.3a1.3 1.3 0 0 1-1.3-1.3V8.108M13.2 5.4V2.8a1.3 1.3 0 0 0-1.3-1.3h-1.3a1.3 1.3 0 0 0-1.3 1.3v2.6"
+        />
+        <path
+          fill="currentColor"
+          d="M2.737 14.024V8.231h3.89v5.793h-3.89ZM9.44 12.085V8h3.89v4.085H9.44Z"
+        />
+      </svg>
+    );
+  }
+);
+AlignBaselineIcon.displayName = "AlignBaselineIcon";
+
+export const AlignCenterHorizontalIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 8h13M6.7 10.6v2.6a1.3 1.3 0 0 1-1.3 1.3H4.1a1.3 1.3 0 0 1-1.3-1.3v-2.6M6.7 5.4V2.8a1.3 1.3 0 0 0-1.3-1.3H4.1a1.3 1.3 0 0 0-1.3 1.3v2.6M13.2 10.6v.65a1.3 1.3 0 0 1-1.3 1.3h-1.3a1.3 1.3 0 0 1-1.3-1.3v-.65M9.3 5.4v-.65c0-.715.585-1.3 1.3-1.3h1.3a1.3 1.3 0 0 1 1.3 1.3v.65"
+        />
+      </svg>
+    );
+  }
+);
+AlignCenterHorizontalIcon.displayName = "AlignCenterHorizontalIcon";
+
+export const AlignEndHorizontalIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.4 1.5H4.1a1.3 1.3 0 0 0-1.3 1.3v7.8a1.3 1.3 0 0 0 1.3 1.3h1.3a1.3 1.3 0 0 0 1.3-1.3V2.8a1.3 1.3 0 0 0-1.3-1.3ZM11.9 6.05h-1.3a1.3 1.3 0 0 0-1.3 1.3v3.25a1.3 1.3 0 0 0 1.3 1.3h1.3a1.3 1.3 0 0 0 1.3-1.3V7.35a1.3 1.3 0 0 0-1.3-1.3ZM14.5 14.5h-13"
+        />
+      </svg>
+    );
+  }
+);
+AlignEndHorizontalIcon.displayName = "AlignEndHorizontalIcon";
+
+export const AlignHorizontalJustifyCenterIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.167 3.45H2.834c-.736 0-1.333.576-1.333 1.286v6.429c0 .71.597 1.285 1.333 1.285h1.333c.737 0 1.334-.575 1.334-1.285V4.736c0-.71-.597-1.286-1.334-1.286ZM13.166 4.75h-1.334c-.736 0-1.333.582-1.333 1.3v3.9c0 .718.597 1.3 1.333 1.3h1.334c.736 0 1.333-.582 1.333-1.3v-3.9c0-.718-.597-1.3-1.333-1.3ZM8 1.5v13"
+        />
+      </svg>
+    );
+  }
+);
+AlignHorizontalJustifyCenterIcon.displayName =
+  "AlignHorizontalJustifyCenterIcon";
+
+export const AlignHorizontalJustifyEndIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.1 3.45H2.8a1.3 1.3 0 0 0-1.3 1.3v6.5a1.3 1.3 0 0 0 1.3 1.3h1.3a1.3 1.3 0 0 0 1.3-1.3v-6.5a1.3 1.3 0 0 0-1.3-1.3ZM10.6 4.75H9.3A1.3 1.3 0 0 0 8 6.05v3.9a1.3 1.3 0 0 0 1.3 1.3h1.3a1.3 1.3 0 0 0 1.3-1.3v-3.9a1.3 1.3 0 0 0-1.3-1.3ZM14.5 1.5v13"
+        />
+      </svg>
+    );
+  }
+);
+AlignHorizontalJustifyEndIcon.displayName = "AlignHorizontalJustifyEndIcon";
+
+export const AlignHorizontalJustifyStartIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6.667 3.5H5.333C4.597 3.5 4 4.076 4 4.786v6.428c0 .71.597 1.286 1.333 1.286h1.334C7.403 12.5 8 11.924 8 11.214V4.786C8 4.076 7.403 3.5 6.667 3.5ZM13.333 4.833H12c-.736 0-1.333.627-1.333 1.4v4.2c0 .774.597 1.4 1.333 1.4h1.333c.737 0 1.334-.627 1.334-1.4v-4.2c0-.773-.597-1.4-1.334-1.4ZM1.333 1.5v13"
+        />
+      </svg>
+    );
+  }
+);
+AlignHorizontalJustifyStartIcon.displayName = "AlignHorizontalJustifyStartIcon";
+
+export const AlignHorizontalSpaceAroundIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.667 4.667H7.333C6.597 4.667 6 5.264 6 6v4c0 .736.597 1.333 1.333 1.333h1.334C9.403 11.333 10 10.736 10 10V6c0-.736-.597-1.333-1.333-1.333ZM2.667 14.667V1.333M13.333 14.667V1.333"
+        />
+      </svg>
+    );
+  }
+);
+AlignHorizontalSpaceAroundIcon.displayName = "AlignHorizontalSpaceAroundIcon";
+
+export const AlignHorizontalSpaceBetweenIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.667 3.333H3.333C2.597 3.333 2 3.93 2 4.667v6.666c0 .737.597 1.334 1.333 1.334h1.334c.736 0 1.333-.597 1.333-1.334V4.667c0-.737-.597-1.334-1.333-1.334ZM12.667 4.667h-1.334C10.597 4.667 10 5.264 10 6v4c0 .736.597 1.333 1.333 1.333h1.334c.736 0 1.333-.597 1.333-1.333V6c0-.736-.597-1.333-1.333-1.333ZM2 1.333v13.334M14 1.333v13.334"
+        />
+      </svg>
+    );
+  }
+);
+AlignHorizontalSpaceBetweenIcon.displayName = "AlignHorizontalSpaceBetweenIcon";
+
+export const AlignSelfBaselineIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6.048 8.269v3.634c0 .719.583 1.301 1.301 1.301H8.65c.719 0 1.302-.582 1.302-1.3V8.268m0-2.22V4.096c0-.719-.583-1.301-1.302-1.301h-1.3c-.72 0-1.302.582-1.302 1.3v1.952M1.503 8h13"
+        />
+        <path fill="currentColor" d="M6.04 12.755V8.48h3.776v4.275H6.039Z" />
+      </svg>
+    );
+  }
+);
+AlignSelfBaselineIcon.displayName = "AlignSelfBaselineIcon";
+
+export const AlignSelfCenterIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6.048 6.048V4.097c0-.719.583-1.301 1.301-1.301H8.65c.719 0 1.302.582 1.302 1.3v1.952m0 3.904v1.951c0 .719-.583 1.301-1.302 1.301h-1.3a1.301 1.301 0 0 1-1.302-1.3V9.951M1.503 8h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignSelfCenterIcon.displayName = "AlignSelfCenterIcon";
+
+export const AlignSelfEndIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="#000"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M7.35 11.903h1.3c.719 0 1.302-.582 1.302-1.3V2.795c0-.719-.583-1.301-1.302-1.301h-1.3c-.72 0-1.302.582-1.302 1.3v7.807c0 .719.583 1.301 1.301 1.301ZM1.503 14.505h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignSelfEndIcon.displayName = "AlignSelfEndIcon";
+
+export const AlignSelfStartIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.65 4.097h-1.3c-.719 0-1.302.582-1.302 1.3v7.807c0 .719.583 1.301 1.302 1.301h1.3c.72 0 1.302-.582 1.302-1.3V5.397c0-.719-.583-1.301-1.301-1.301ZM14.497 1.495h-13"
+        />
+      </svg>
+    );
+  }
+);
+AlignSelfStartIcon.displayName = "AlignSelfStartIcon";
+
+export const AlignSelfStretchIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.651 3.447h-1.3a1.3 1.3 0 0 0-1.3 1.3v6.5a1.3 1.3 0 0 0 1.3 1.299h1.3a1.3 1.3 0 0 0 1.3-1.3v-6.5a1.3 1.3 0 0 0-1.3-1.3ZM14.499 1.491h-13M14.501 14.509h-13"
+        />
+      </svg>
+    );
+  }
+);
+AlignSelfStretchIcon.displayName = "AlignSelfStretchIcon";
+
+export const AlignStartHorizontalIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.4 4.097H4.1c-.72 0-1.302.582-1.302 1.3v7.807c0 .719.583 1.301 1.301 1.301H5.4c.719 0 1.301-.582 1.301-1.3V5.397c0-.719-.582-1.301-1.3-1.301ZM11.906 4.097h-1.301c-.719 0-1.301.582-1.301 1.3v3.254c0 .718.582 1.3 1.3 1.3h1.302c.718 0 1.3-.582 1.3-1.3V5.398c0-.719-.582-1.301-1.3-1.301ZM14.497 1.495h-13"
+        />
+      </svg>
+    );
+  }
+);
+AlignStartHorizontalIcon.displayName = "AlignStartHorizontalIcon";
+
 export const ArrowDownIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -736,9 +864,10 @@ export const ArrowDownIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M3.434 8.434a.8.8 0 0 1 1.132 0L7.2 11.07V3a.8.8 0 1 1 1.6 0v8.069l2.634-2.635a.8.8 0 0 1 1.132 1.132l-4 4a.8.8 0 0 1-1.132 0l-4-4a.8.8 0 0 1 0-1.132Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 3.333v9.334M12.667 8 8 12.667 3.333 8"
         />
       </svg>
     );
@@ -762,9 +891,10 @@ export const ArrowLeftIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M7.566 3.434a.8.8 0 0 1 0 1.132L4.93 7.2H13a.8.8 0 0 1 0 1.6H4.931l2.635 2.634a.8.8 0 0 1-1.132 1.132l-4-4a.8.8 0 0 1 0-1.132l4-4a.8.8 0 0 1 1.132 0Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.667 8H3.333M8 3.333 3.333 8 8 12.667"
         />
       </svg>
     );
@@ -788,9 +918,10 @@ export const ArrowRightIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M8.434 12.566a.8.8 0 0 1 0-1.132L11.07 8.8H3a.8.8 0 1 1 0-1.6h8.069L8.434 4.566a.8.8 0 1 1 1.132-1.132l4 4a.8.8 0 0 1 0 1.132l-4 4a.8.8 0 0 1-1.132 0Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3.333 8h9.334M8 3.333 12.667 8 8 12.667"
         />
       </svg>
     );
@@ -814,9 +945,10 @@ export const ArrowUpIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M12.566 7.566a.8.8 0 0 1-1.132 0L8.8 4.93V13a.8.8 0 0 1-1.6 0V4.931L4.566 7.566a.8.8 0 1 1-1.132-1.132l4-4a.8.8 0 0 1 1.132 0l4 4a.8.8 0 0 1 0 1.132Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 12.667V3.333M3.333 8 8 3.333 12.667 8"
         />
       </svg>
     );
@@ -869,7 +1001,7 @@ export const AsteriskIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M8 4v8M11.464 6l-6.928 4M4.536 6l6.928 4"
+          d="M8 3.96v8.08M11.498 5.98l-6.996 4.04M4.502 5.98l6.996 4.04"
         />
       </svg>
     );
@@ -968,9 +1100,10 @@ export const BodyIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M5.173 1.35h5.654c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.164.32.229.663.26 1.037.029.36.029.802.029 1.34v5.653c0 .537 0 .98-.03 1.34-.03.373-.095.715-.259 1.036a2.65 2.65 0 0 1-1.158 1.158c-.32.164-.663.23-1.037.26-.36.03-.802.03-1.34.03H5.174c-.537 0-.98 0-1.34-.03-.373-.03-.715-.096-1.036-.26a2.65 2.65 0 0 1-1.158-1.158c-.164-.32-.23-.663-.26-1.036-.029-.36-.029-.803-.029-1.34V5.173c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.229 1.036-.26.36-.029.803-.029 1.34-.029ZM2.65 6.65v4.15c0 .57 0 .96.025 1.26.024.294.068.446.122.553.13.254.336.46.59.59.107.055.259.098.552.122.301.025.69.025 1.261.025h5.6c.57 0 .96 0 1.26-.025.294-.024.446-.067.553-.122.254-.13.46-.336.59-.59.054-.107.098-.259.122-.552.025-.301.025-.69.025-1.26V6.65H2.65Zm10.7-1.3H2.65V5.2c0-.57 0-.96.025-1.26.024-.294.068-.446.122-.553.13-.254.336-.46.59-.59.107-.054.259-.098.552-.122.301-.024.69-.025 1.261-.025h5.6c.57 0 .96 0 1.26.025.294.024.446.068.553.122.254.13.46.336.59.59.054.107.098.26.122.552.025.301.025.69.025 1.261v.15Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2ZM2 6h12"
         />
       </svg>
     );
@@ -1019,15 +1152,10 @@ export const BorderRadiusBottomLeftIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M1.997 5.318a.65.65 0 0 1-.646-.654c.005-.75.026-1.353.288-1.867a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.229 1.036-.26.36-.029.803-.029 1.34-.029h5.654c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.164.32.229.663.26 1.037.029.36.029.802.029 1.34v5.653c0 .537 0 .98-.03 1.34-.03.373-.095.715-.259 1.036a2.65 2.65 0 0 1-1.158 1.158c-.514.262-1.118.283-1.866.288a.65.65 0 1 1-.01-1.3c.807-.006 1.092-.047 1.286-.146.254-.13.46-.336.59-.59.054-.107.098-.259.122-.552.025-.301.025-.69.025-1.261V5.2c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.107-.054-.259-.098-.552-.122-.301-.024-.69-.025-1.261-.025H5.2c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.099.194-.14.48-.146 1.285a.65.65 0 0 1-.654.646Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M1.35 10.827V8.672a.65.65 0 1 1 1.3 0V10.8c0 .57 0 .96.025 1.26.024.294.068.446.122.553.13.254.336.46.59.59.107.054.26.098.552.122.301.024.69.025 1.261.025h2.136a.65.65 0 1 1 0 1.3H5.173c-.537 0-.98 0-1.34-.03-.373-.03-.715-.095-1.036-.259a2.65 2.65 0 0 1-1.158-1.158c-.163-.32-.229-.663-.26-1.037-.029-.36-.029-.802-.029-1.34Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.667 14H3.333A1.333 1.333 0 0 1 2 12.667v-2.334M9 14h3.667c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2H3.333C2.597 2 2 2.597 2 3.333v3.5"
         />
       </svg>
     );
@@ -1051,15 +1179,10 @@ export const BorderRadiusBottomRightIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M5.318 14.003a.65.65 0 0 1-.654.646c-.75-.005-1.353-.026-1.867-.288a2.65 2.65 0 0 1-1.158-1.158c-.164-.32-.229-.663-.26-1.036-.029-.36-.029-.803-.029-1.34V5.173c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.229 1.037-.26.36-.029.802-.029 1.34-.029h5.653c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.262.514.283 1.118.288 1.866a.65.65 0 1 1-1.3.01c-.006-.807-.047-1.092-.146-1.286a1.35 1.35 0 0 0-.59-.59c-.107-.054-.259-.098-.552-.122-.301-.024-.69-.025-1.261-.025H5.2c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.26-.122.552-.024.301-.025.69-.025 1.261v5.6c0 .57 0 .96.025 1.26.024.294.068.446.122.553.13.254.336.46.59.59.194.099.48.14 1.285.146a.65.65 0 0 1 .646.654Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M10.827 14.65H8.672a.65.65 0 1 1 0-1.3H10.8c.57 0 .96 0 1.26-.025.294-.024.446-.068.553-.122.254-.13.46-.336.59-.59.054-.107.098-.26.122-.552.024-.301.025-.69.025-1.261V8.664a.65.65 0 1 1 1.3 0v2.163c0 .537 0 .98-.03 1.34-.03.373-.095.715-.259 1.036a2.65 2.65 0 0 1-1.158 1.158c-.32.163-.663.229-1.037.26-.36.029-.802.029-1.34.029Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14 10.333v2.334c0 .736-.597 1.333-1.333 1.333h-2.334M14 7V3.333C14 2.597 13.403 2 12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h3.5"
         />
       </svg>
     );
@@ -1109,15 +1232,10 @@ export const BorderRadiusTopLeftIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M10.682 1.997a.65.65 0 0 1 .654-.646c.75.005 1.353.026 1.867.288.499.254.904.66 1.158 1.158.164.32.229.663.26 1.036.029.36.029.803.029 1.34v5.654c0 .537 0 .98-.03 1.34-.03.373-.095.715-.259 1.036-.254.499-.66.904-1.158 1.158-.32.164-.663.229-1.037.26-.36.029-.802.029-1.34.029H5.174c-.537 0-.98 0-1.34-.03-.373-.03-.715-.095-1.036-.259a2.65 2.65 0 0 1-1.158-1.158c-.262-.514-.283-1.118-.288-1.866a.65.65 0 0 1 1.3-.01c.006.806.047 1.092.146 1.286.13.254.336.46.59.59.107.054.259.098.552.122.301.024.69.025 1.261.025h5.6c.57 0 .96 0 1.26-.025.294-.024.446-.068.553-.122.254-.13.46-.336.59-.59.054-.107.098-.26.122-.552.024-.301.025-.69.025-1.261V5.2c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.194-.099-.48-.14-1.285-.146a.65.65 0 0 1-.646-.654Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M5.173 1.35h2.155a.65.65 0 1 1 0 1.3H5.2c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.26-.122.552-.024.301-.025.69-.025 1.261v2.136a.65.65 0 0 1-1.3 0V5.173c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.229 1.037-.26.36-.029.802-.029 1.34-.029Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2 5.667V3.333C2 2.597 2.597 2 3.333 2h2.334M2 9v3.667C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2h-3.5"
         />
       </svg>
     );
@@ -1141,15 +1259,10 @@ export const BorderRadiusTopRightIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M14.003 10.682a.65.65 0 0 1 .646.654c-.005.75-.026 1.353-.288 1.867a2.65 2.65 0 0 1-1.158 1.158c-.32.164-.663.229-1.037.26-.36.029-.802.029-1.34.029H5.174c-.537 0-.98 0-1.34-.03-.373-.03-.715-.095-1.036-.259a2.65 2.65 0 0 1-1.158-1.158c-.164-.32-.23-.663-.26-1.037-.029-.36-.029-.802-.029-1.34V5.174c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.514-.262 1.118-.283 1.866-.288a.65.65 0 0 1 .01 1.3c-.807.006-1.092.047-1.286.146a1.35 1.35 0 0 0-.59.59c-.054.107-.098.259-.122.552-.024.301-.025.69-.025 1.261v5.6c0 .57 0 .96.025 1.26.024.294.068.446.122.553.13.254.336.46.59.59.107.054.259.098.552.122.301.024.69.025 1.261.025h5.6c.57 0 .96 0 1.26-.025.294-.024.446-.068.553-.122.254-.13.46-.336.59-.59.099-.194.14-.48.146-1.285a.65.65 0 0 1 .654-.646Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M14.65 5.173v2.155a.65.65 0 1 1-1.3 0V5.2c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.107-.054-.259-.098-.552-.122-.301-.024-.69-.025-1.261-.025H8.664a.65.65 0 0 1 0-1.3h2.163c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.164.32.23.663.26 1.037.029.36.029.802.029 1.34Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10.333 2h2.334C13.403 2 14 2.597 14 3.333v2.334M7 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333v-3.5"
         />
       </svg>
     );
@@ -1173,9 +1286,10 @@ export const BorderRadiusIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M1.917 10.666a8.75 8.75 0 0 1 8.75-8.75h2.666a.75.75 0 0 1 0 1.5h-2.667a7.25 7.25 0 0 0-7.25 7.25v2.667a.75.75 0 0 1-1.5 0v-2.667Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2 4.667V3.333A1.333 1.333 0 0 1 3.333 2h1.334M11.333 2h1.334A1.333 1.333 0 0 1 14 3.333v1.334M14 11.333v1.334A1.333 1.333 0 0 1 12.667 14h-1.334M4.667 14H3.333A1.334 1.334 0 0 1 2 12.667v-1.334"
         />
       </svg>
     );
@@ -1199,15 +1313,10 @@ export const BorderWidthBottomIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M5.173 1.35h5.654c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.164.32.23.663.26 1.036.029.36.029.803.029 1.34v4.822a.65.65 0 1 1-1.3 0V5.2c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.107-.054-.259-.098-.552-.122-.301-.025-.69-.025-1.261-.025H5.2c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.259-.122.552-.024.301-.025.69-.025 1.261v4.795a.65.65 0 0 1-1.3 0V5.173c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.23 1.036-.26.36-.029.803-.029 1.34-.029Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M14.65 14a.65.65 0 0 1-.65.65H2a.65.65 0 1 1 0-1.3h12a.65.65 0 0 1 .65.65Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14 14H2m0-3.667v-7C2 2.597 2.597 2 3.333 2h9.334C13.403 2 14 2.597 14 3.333v7"
         />
       </svg>
     );
@@ -1257,15 +1366,10 @@ export const BorderWidthLeftIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M14.65 5.173v5.654c0 .537 0 .98-.03 1.34-.03.373-.095.715-.259 1.036a2.65 2.65 0 0 1-1.158 1.158c-.32.164-.663.229-1.037.26-.36.029-.802.029-1.34.029H6.005a.65.65 0 1 1 0-1.3H10.8c.57 0 .96 0 1.26-.025.294-.024.446-.068.553-.122.254-.13.46-.336.59-.59.054-.107.098-.26.122-.552.024-.301.025-.69.025-1.261V5.2c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.107-.054-.26-.098-.552-.122-.301-.025-.69-.025-1.261-.025H6.004a.65.65 0 0 1 0-1.3h4.823c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.163.32.229.663.26 1.036.029.36.029.803.029 1.34Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M2 14.65a.65.65 0 0 1-.65-.65V2a.65.65 0 0 1 1.3 0v12a.65.65 0 0 1-.65.65Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2 14V2m3.667 0h7C13.403 2 14 2.597 14 3.333v9.334c0 .736-.597 1.333-1.333 1.333h-7"
         />
       </svg>
     );
@@ -1289,15 +1393,10 @@ export const BorderWidthRightIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M1.35 10.827V5.173c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.23 1.036-.26.36-.03.803-.03 1.34-.03h4.822a.65.65 0 0 1 0 1.3H5.2c-.57 0-.96.001-1.26.026-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.259-.122.552-.025.301-.025.69-.025 1.26v5.6c0 .572 0 .96.025 1.262.024.293.068.445.122.552.13.254.336.46.59.59.107.054.259.098.552.122.301.024.69.025 1.26.025h4.796a.65.65 0 0 1 0 1.3H5.173c-.537 0-.98 0-1.34-.03-.373-.03-.715-.095-1.036-.259a2.65 2.65 0 0 1-1.158-1.158c-.164-.32-.23-.663-.26-1.037-.03-.36-.03-.802-.03-1.34Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M14 1.35a.65.65 0 0 1 .65.65v12a.65.65 0 1 1-1.3 0V2a.65.65 0 0 1 .65-.65Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14 2v12m-3.667 0h-7A1.333 1.333 0 0 1 2 12.667V3.333C2 2.597 2.597 2 3.333 2h7"
         />
       </svg>
     );
@@ -1321,15 +1420,10 @@ export const BorderWidthTopIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="#C1C8CD"
-          fillRule="evenodd"
-          d="M10.827 14.65H5.173c-.537 0-.98 0-1.34-.03-.373-.03-.715-.095-1.036-.259a2.65 2.65 0 0 1-1.158-1.158c-.164-.32-.23-.663-.26-1.037-.03-.36-.03-.802-.03-1.339V6.005a.65.65 0 0 1 1.3 0V10.8c0 .57.001.96.026 1.26.024.294.067.446.122.553.13.254.336.46.59.59.107.054.259.098.552.122.301.025.69.025 1.26.025h5.6c.572 0 .96 0 1.261-.025.294-.024.446-.068.553-.122.254-.13.46-.336.59-.59.054-.107.098-.259.122-.552.024-.301.025-.69.025-1.261V6.005a.65.65 0 1 1 1.3 0v4.822c0 .537 0 .98-.03 1.34-.03.373-.096.715-.259 1.036a2.65 2.65 0 0 1-1.158 1.158c-.32.164-.663.23-1.037.26-.36.029-.802.029-1.34.029Z"
-          clipRule="evenodd"
-        />
-        <path
-          fillRule="evenodd"
-          d="M1.35 2A.65.65 0 0 1 2 1.35h12a.65.65 0 1 1 0 1.3H2A.65.65 0 0 1 1.35 2Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2 2h12m0 3.667v7c0 .736-.597 1.333-1.333 1.333H3.333A1.333 1.333 0 0 1 2 12.667v-7"
         />
       </svg>
     );
@@ -1469,20 +1563,13 @@ export const CheckCircleIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <g
+        <rect width="12" height="12" x="2" y="2" stroke="currentColor" rx="6" />
+        <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          clipPath="url(#a)"
-        >
-          <path d="M8 14.667A6.667 6.667 0 1 0 8 1.333a6.667 6.667 0 0 0 0 13.334Z" />
-          <path d="m6 8 1.333 1.333L10 6.667" />
-        </g>
-        <defs>
-          <clipPath id="a">
-            <path fill="#fff" d="M0 0h16v16H0z" />
-          </clipPath>
-        </defs>
+          d="M5.998 7.928 7.381 9.31 10 6.69"
+        />
       </svg>
     );
   }
@@ -1956,20 +2043,18 @@ export const CopyIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <g
+        <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          clipPath="url(#a)"
-        >
-          <path d="M13.333 5.333H6.667c-.737 0-1.334.597-1.334 1.334v6.666c0 .737.597 1.334 1.334 1.334h6.666c.737 0 1.334-.597 1.334-1.334V6.667c0-.737-.597-1.334-1.334-1.334Z" />
-          <path d="M2.667 10.667c-.734 0-1.334-.6-1.334-1.334V2.667c0-.734.6-1.334 1.334-1.334h6.666c.734 0 1.334.6 1.334 1.334" />
-        </g>
-        <defs>
-          <clipPath id="a">
-            <path fill="#fff" d="M0 0h16v16H0z" />
-          </clipPath>
-        </defs>
+          d="M13.214 5.5H6.786c-.71 0-1.286.576-1.286 1.286v6.428c0 .71.576 1.286 1.286 1.286h6.428c.71 0 1.286-.576 1.286-1.286V6.786c0-.71-.576-1.286-1.286-1.286Z"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2.786 10.5A1.29 1.29 0 0 1 1.5 9.214V2.786A1.29 1.29 0 0 1 2.786 1.5h6.428A1.29 1.29 0 0 1 10.5 2.786"
+        />
       </svg>
     );
   }
@@ -2044,9 +2129,10 @@ export const DashedBorderIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M2 7.33A.33.33 0 0 1 2.33 7h2.007a.33.33 0 0 1 .33.33v1.34a.33.33 0 0 1-.33.33H2.33A.33.33 0 0 1 2 8.67V7.33ZM6.667 7.33a.33.33 0 0 1 .33-.33h2.006a.33.33 0 0 1 .33.33v1.34a.33.33 0 0 1-.33.33H6.997a.33.33 0 0 1-.33-.33V7.33ZM11.333 7.33a.33.33 0 0 1 .33-.33h2.007a.33.33 0 0 1 .33.33v1.34a.33.33 0 0 1-.33.33h-2.007a.33.33 0 0 1-.33-.33V7.33Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3.714 8H2M8.857 8H7.143M14 8h-1.714"
         />
       </svg>
     );
@@ -2234,9 +2320,10 @@ export const DottedBorderIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M1.52 8c0-.635.515-1.15 1.15-1.15h.01a1.15 1.15 0 1 1 0 2.3h-.01A1.15 1.15 0 0 1 1.52 8ZM12.18 8c0-.635.515-1.15 1.15-1.15h.01a1.15 1.15 0 0 1 0 2.3h-.01A1.15 1.15 0 0 1 12.18 8ZM5.073 8c0-.635.515-1.15 1.15-1.15h.01a1.15 1.15 0 0 1 0 2.3h-.01A1.15 1.15 0 0 1 5.073 8ZM8.627 8c0-.635.515-1.15 1.15-1.15h.01a1.15 1.15 0 0 1 0 2.3h-.01A1.15 1.15 0 0 1 8.627 8Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.464 8a.667.667 0 1 0 1.333 0 .667.667 0 0 0-1.333 0ZM9.202 8a.667.667 0 1 0 1.334 0 .667.667 0 0 0-1.334 0ZM12.94 8a.667.667 0 1 0 1.334 0 .667.667 0 0 0-1.333 0ZM1.726 8a.667.667 0 1 0 1.333 0 .667.667 0 0 0-1.333 0Z"
         />
       </svg>
     );
@@ -2409,7 +2496,7 @@ export const ExtensionIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 15 14"
+        viewBox="0 0 16 16"
         width={size}
         height={size}
         fill={fill}
@@ -2417,10 +2504,15 @@ export const ExtensionIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="currentColor"
-          fillRule="evenodd"
-          d="M8.714.072a.5.5 0 0 0-.5.5v5.142a.5.5 0 0 0 .5.5h5.142a.5.5 0 0 0 .5-.5V2.035A1.963 1.963 0 0 0 12.393.072h-3.68Zm.5 5.142V1.072h3.179a.963.963 0 0 1 .963.963v3.18H9.214Zm-7.071-1.57a.643.643 0 0 0-.643.642v3.5h4.142V3.643h-3.5Zm3.5 5.142H1.5v3.5c0 .354.288.642.643.642h3.5V8.786Zm4.5 4.142h-3.5V8.786h4.142v3.5a.643.643 0 0 1-.643.642Zm1.632-4.743a.5.5 0 0 0-.49-.4H6.642V3.144a.5.5 0 0 0-.5-.5h-4C1.236 2.643.5 3.38.5 4.286v8c0 .907.735 1.642 1.643 1.642h8c.906 0 1.642-.736 1.642-1.643v-4a.507.507 0 0 0-.01-.1Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M7.142 9.286h5.143m-5.143 0H2m5.142 0v4.713M12.285 9.286v4c0 .63-.512 1.142-1.143 1.142h-8A1.143 1.143 0 0 1 2 13.285v-8c0-.63.512-1.142 1.143-1.142h4v5.143"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinejoin="round"
+          d="M9.714 1.572v5.142h5.142V3.035a1.463 1.463 0 0 0-1.463-1.463h-3.68Z"
         />
       </svg>
     );
@@ -2470,7 +2562,12 @@ export const EyeconClosedIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M2.209 7.594a.55.55 0 0 1 .757.175 6.463 6.463 0 0 0 1.36 1.562A5.708 5.708 0 0 0 8 10.653c2.146 0 3.944-1.14 5.034-2.884a.55.55 0 0 1 .933.583c-.323.516-.702.99-1.13 1.41l.832.831a.55.55 0 1 1-.778.778l-.899-.898a6.815 6.815 0 0 1-1.889.954l.314 1.172a.55.55 0 0 1-1.062.284l-.323-1.206a6.992 6.992 0 0 1-2.063 0l-.323 1.206a.55.55 0 1 1-1.062-.284l.314-1.171a6.812 6.812 0 0 1-1.89-.955l-.897.898a.55.55 0 0 1-.778-.777l.83-.831a7.665 7.665 0 0 1-1.13-1.411.55.55 0 0 1 .176-.758Z" />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m10 12-.481-2.167M1.333 5.333a7.097 7.097 0 0 0 13.334 0M13.333 10l-1.15-1.367M2.667 10l1.15-1.367M6 12l.481-2.167"
+        />
       </svg>
     );
   }
@@ -2492,11 +2589,17 @@ export const EyeconOpenIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M8 9.849A1.849 1.849 0 1 0 8 6.15 1.849 1.849 0 0 0 8 9.85Z" />
         <path
-          fillRule="evenodd"
-          d="M2.132 8.458a.857.857 0 0 1 0-.915A6.927 6.927 0 0 1 8 4.303a6.927 6.927 0 0 1 5.868 3.24.857.857 0 0 1 0 .915A6.927 6.927 0 0 1 8 11.698a6.927 6.927 0 0 1-5.868-3.24ZM8 10.698A5.926 5.926 0 0 1 3.027 8 5.926 5.926 0 0 1 8 5.303 5.926 5.926 0 0 1 12.973 8 5.926 5.926 0 0 1 8 10.697Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.375 8.232a.667.667 0 0 1 0-.464 7.167 7.167 0 0 1 13.25 0 .666.666 0 0 1 0 .464 7.166 7.166 0 0 1-13.25 0Z"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
         />
       </svg>
     );
@@ -2520,8 +2623,16 @@ export const EyedropperIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          d="M10.724 2.002a2.315 2.315 0 0 1 3.274 3.274L11.393 7.88l.485.484a.65.65 0 0 1-.92.92l-.724-.725-5.436 5.436A1.978 1.978 0 0 1 2 11.2l5.437-5.436-.721-.721a.65.65 0 0 1 .92-.92l.483.485 2.605-2.605Zm-2.368 4.68L2.92 12.118a.678.678 0 0 0 .958.96L9.315 7.64l-.959-.959Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m1.502 14.498.65-.65h1.947L9.94 8.008"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2.151 13.849V11.9L7.993 6.06M9.94 4.113l2.207-2.207a1.377 1.377 0 0 1 1.947 1.947L11.887 6.06l.26.26A1.376 1.376 0 1 1 10.2 8.266L7.733 5.8a1.377 1.377 0 1 1 1.948-1.947l.26.26Z"
         />
       </svg>
     );
@@ -2675,7 +2786,12 @@ export const GapHorizontalIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M12.67 14.65h-.53c-.82 0-1.28 0-1.7-.22-.38-.19-.68-.49-.87-.87-.22-.42-.22-.88-.22-1.7V4.13c0-.82 0-1.28.22-1.7.19-.38.49-.68.87-.87.42-.22.88-.22 1.7-.22h.53c.36 0 .65.29.65.65 0 .36-.29.65-.65.65h-.53c-.58 0-.96 0-1.11.07-.13.07-.23.17-.3.3-.07.15-.07.53-.07 1.11v7.73c0 .58 0 .96.07 1.11.06.13.17.23.3.3.15.07.53.07 1.11.07h.53c.36 0 .65.29.65.65 0 .36-.29.65-.65.65v.02Zm-8.8 0h-.53c-.36 0-.65-.29-.65-.65 0-.36.29-.65.65-.65h.53c.58 0 .96 0 1.11-.07.13-.07.23-.17.3-.3.07-.15.07-.53.07-1.11V4.13c0-.58 0-.96-.07-1.11a.723.723 0 0 0-.3-.3c-.15-.07-.53-.07-1.11-.07h-.53c-.36 0-.65-.29-.65-.65 0-.36.29-.65.65-.65h.53c.82 0 1.28 0 1.7.22.38.19.67.49.87.87.22.42.22.88.22 1.7v7.73c0 .82 0 1.28-.22 1.7-.19.37-.49.67-.87.87-.42.22-.88.22-1.7.22v-.01Z" />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.667 2h-2v12h2M3.333 14h2V2h-2"
+        />
       </svg>
     );
   }
@@ -2697,7 +2813,12 @@ export const GapVerticalIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M14.65 3.335v.53c0 .82 0 1.28-.22 1.7-.19.38-.49.68-.87.87-.42.22-.88.22-1.7.22H4.13c-.82 0-1.28 0-1.7-.22-.38-.19-.68-.49-.87-.87-.22-.42-.22-.88-.22-1.7v-.53c0-.36.29-.65.65-.65.36 0 .65.29.65.65v.53c0 .58 0 .96.07 1.11.07.13.17.23.3.3.15.07.53.07 1.11.07h7.73c.58 0 .96 0 1.11-.07a.67.67 0 0 0 .3-.3c.07-.15.07-.53.07-1.11v-.53c0-.36.29-.65.65-.65.36 0 .65.29.65.65h.02Zm0 8.8v.53c0 .36-.29.65-.65.65-.36 0-.65-.29-.65-.65v-.53c0-.58 0-.96-.07-1.11a.723.723 0 0 0-.3-.3c-.15-.07-.53-.07-1.11-.07H4.13c-.58 0-.96 0-1.11.07-.13.07-.23.17-.3.3-.07.15-.07.53-.07 1.11v.53c0 .36-.29.65-.65.65-.36 0-.65-.29-.65-.65v-.53c0-.82 0-1.28.22-1.7.19-.38.49-.67.87-.87.42-.22.88-.22 1.7-.22h7.73c.82 0 1.28 0 1.7.22.37.19.67.49.87.87.22.42.22.88.22 1.7h-.01Z" />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14 12.667v-2H2v2M2 3.333v2h12v-2"
+        />
       </svg>
     );
   }
@@ -2919,20 +3040,18 @@ export const HelpIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <g
+        <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          clipPath="url(#a)"
-        >
-          <path d="M8 14.667A6.667 6.667 0 1 0 8 1.333a6.667 6.667 0 0 0 0 13.334Z" />
-          <path d="M6.06 6a2 2 0 0 1 3.887.667c0 1.333-2 2-2 2M8 11.333h.007" />
-        </g>
-        <defs>
-          <clipPath id="a">
-            <path fill="#fff" d="M0 0h16v16H0z" />
-          </clipPath>
-        </defs>
+          d="M6.057 6c.161-.446.48-.821.898-1.06a2.11 2.11 0 0 1 1.391-.248c.48.08.914.322 1.227.684.313.361.484.831.484 1.29 0 1.334-2.059 2-2.059 2"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM8 11.333h0"
+        />
       </svg>
     );
   }
@@ -3014,12 +3133,10 @@ export const InfoCircleIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          d="M8 13.35a5.35 5.35 0 1 0 0-10.7 5.35 5.35 0 0 0 0 10.7ZM14.65 8a6.65 6.65 0 1 1-13.3 0 6.65 6.65 0 0 1 13.3 0Z"
-          clipRule="evenodd"
-        />
-        <path
-          d="M8.8 4.913a.8.8 0 0 1-.8.8h-.009a.8.8 0 0 1 0-1.6H8a.8.8 0 0 1 .8.8ZM8 11.737a.65.65 0 0 1-.65-.65v-3.43a.65.65 0 1 1 1.3 0v3.43a.65.65 0 0 1-.65.65Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM8 10.602V8M8 5.397h.007"
         />
       </svg>
     );
@@ -3053,61 +3170,6 @@ export const ItemIcon: IconComponent = forwardRef(
   }
 );
 ItemIcon.displayName = "ItemIcon";
-
-export const JCCenterIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path d="M3.1 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4a.8.8 0 0 1-.8.8H3.9a.8.8 0 0 1-.8-.8V4.8Z" />
-        <path
-          fillRule="evenodd"
-          d="M8 1.5c.442 0 .8.344.8.768v11.464c0 .424-.358.768-.8.768-.442 0-.8-.344-.8-.768V2.268c0-.424.358-.768.8-.768Z"
-          clipRule="evenodd"
-        />
-        <path d="M9.9 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4a.8.8 0 0 1-.8.8h-1.4a.8.8 0 0 1-.8-.8V4.8Z" />
-      </svg>
-    );
-  }
-);
-JCCenterIcon.displayName = "JCCenterIcon";
-
-export const JCEndIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M13.8 14.5c-.442 0-.8-.344-.8-.768V2.268c0-.424.358-.768.8-.768.442 0 .8.344.8.768v11.464c0 .424-.358.768-.8.768Z"
-          clipRule="evenodd"
-        />
-        <path d="M12 11.2a.8.8 0 0 1-.8.8H9.8a.8.8 0 0 1-.8-.8V4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4ZM8 11.2a.8.8 0 0 1-.8.8H5.8a.8.8 0 0 1-.8-.8V4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4Z" />
-      </svg>
-    );
-  }
-);
-JCEndIcon.displayName = "JCEndIcon";
 
 export const JCSpaceAroundIcon: IconComponent = forwardRef(
   (
@@ -3172,33 +3234,6 @@ export const JCSpaceBetweenIcon: IconComponent = forwardRef(
   }
 );
 JCSpaceBetweenIcon.displayName = "JCSpaceBetweenIcon";
-
-export const JCStartIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M2.2 1.5c.442 0 .8.344.8.768v11.464c0 .424-.358.768-.8.768-.442 0-.8-.344-.8-.768V2.268c0-.424.358-.768.8-.768Z"
-          clipRule="evenodd"
-        />
-        <path d="M4 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4a.8.8 0 0 1-.8.8H4.8a.8.8 0 0 1-.8-.8V4.8ZM8 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4a.8.8 0 0 1-.8.8H8.8a.8.8 0 0 1-.8-.8V4.8Z" />
-      </svg>
-    );
-  }
-);
-JCStartIcon.displayName = "JCStartIcon";
 
 export const LabelIcon: IconComponent = forwardRef(
   (
@@ -3321,9 +3356,10 @@ export const LinkIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M11.94 4.059c-.712-.713-2.076-.71-3.054.269l-.807.807a.65.65 0 0 1-.92-.92l.808-.807c1.365-1.365 3.56-1.602 4.893-.268 1.334 1.333 1.096 3.528-.269 4.893l-.807.807a.65.65 0 1 1-.92-.919l.808-.807c.978-.979.982-2.342.269-3.055Zm-2.02 2.02a.65.65 0 0 1 0 .92L6.999 9.92a.65.65 0 1 1-.92-.919l2.923-2.923a.65.65 0 0 1 .92 0ZM5.136 7.16a.65.65 0 0 1 0 .92l-.808.807c-.978.978-.981 2.342-.269 3.055.713.712 2.077.71 3.055-.27l.808-.806a.65.65 0 1 1 .919.919l-.808.807c-1.365 1.365-3.56 1.602-4.893.269-1.333-1.334-1.096-3.528.269-4.893l.807-.808a.65.65 0 0 1 .92 0Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6 11.333H4.667a3.333 3.333 0 0 1 0-6.666H6M10 4.667h1.333a3.334 3.334 0 0 1 0 6.666H10M5.333 8h5.334"
         />
       </svg>
     );
@@ -3489,13 +3525,14 @@ export const LocalStyleIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="2"
-          d="M8 7.23a.77.77 0 1 0 0 1.54.77.77 0 0 0 0-1.54ZM7 8a1 1 0 1 1 2 0 1 1 0 0 1-2 0Z"
-          clipRule="evenodd"
+          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z"
         />
         <path
-          d="M8 3.65a4.35 4.35 0 1 0 0 8.7 4.35 4.35 0 0 0 0-8.7ZM2.35 8a5.65 5.65 0 1 1 11.3 0 5.65 5.65 0 0 1-11.3 0Z"
-          clipRule="evenodd"
+          fill="currentColor"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 9.333a1.333 1.333 0 1 0 0-2.666 1.333 1.333 0 0 0 0 2.666Z"
         />
       </svg>
     );
@@ -3648,9 +3685,10 @@ export const MinusIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M14 8a.75.75 0 0 1-.75.75H2.75a.75.75 0 0 1 0-1.5h10.5A.75.75 0 0 1 14 8Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3.333 8h9.334"
         />
       </svg>
     );
@@ -3722,7 +3760,30 @@ export const NoWrapIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M4 5.015a.98.98 0 0 1 .98.98v4.01a.98.98 0 0 1-.98.98H2.66a.98.98 0 0 1-.98-.98v-4.01a.98.98 0 0 1 .98-.98H4ZM8.67 5.015a.98.98 0 0 1 .98.98v4.01a.98.98 0 0 1-.98.98H7.33a.98.98 0 0 1-.98-.98v-4.01a.98.98 0 0 1 .98-.98h1.34ZM13.34 5.015a.98.98 0 0 1 .98.98v4.01a.98.98 0 0 1-.98.98H12a.98.98 0 0 1-.98-.98v-4.01a.98.98 0 0 1 .98-.98h1.34Z" />
+        <rect
+          width="2.94"
+          height="6"
+          x="2.03"
+          y="5"
+          fill="currentColor"
+          rx="1"
+        />
+        <rect
+          width="2.94"
+          height="6"
+          x="6.56"
+          y="5"
+          fill="currentColor"
+          rx="1"
+        />
+        <rect
+          width="2.94"
+          height="6"
+          x="11.03"
+          y="5"
+          fill="currentColor"
+          rx="1"
+        />
       </svg>
     );
   }
@@ -3744,20 +3805,18 @@ export const NotebookAndPenIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <g
+        <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          clipPath="url(#a)"
-        >
-          <path d="M8.933 1.333H4a1.333 1.333 0 0 0-1.333 1.334v10.666A1.333 1.333 0 0 0 4 14.667h8a1.333 1.333 0 0 0 1.333-1.334V8.4M1.333 4H4M1.333 6.667H4M1.333 9.333H4M1.333 12H4" />
-          <path d="M14.252 3.75a1.416 1.416 0 1 0-2.003-2.002L8.91 5.089a1.333 1.333 0 0 0-.337.57l-.558 1.913a.333.333 0 0 0 .413.413l1.914-.558c.215-.062.41-.178.569-.337l3.342-3.34Z" />
-        </g>
-        <defs>
-          <clipPath id="a">
-            <path fill="#fff" d="M0 0h16v16H0z" />
-          </clipPath>
-        </defs>
+          d="M8.933 1.5H4a1.35 1.35 0 0 0-.943.38c-.25.245-.39.575-.39.92v10.4c0 .345.14.676.39.92.25.243.59.38.943.38h8c.354 0 .693-.137.943-.38.25-.244.39-.575.39-.92V8.39M1.333 4.167H4M1.333 6.833H4M1.333 9.5H4M1.333 12.167H4"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14.252 3.917a1.416 1.416 0 1 0-2.003-2.002L8.91 5.256a1.333 1.333 0 0 0-.337.57l-.558 1.913a.333.333 0 0 0 .413.413l1.914-.558c.215-.063.41-.179.569-.337l3.342-3.34Z"
+        />
       </svg>
     );
   }
@@ -3804,11 +3863,18 @@ export const OrderFirstIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M2.324 3.35a.98.98 0 0 0-.98.98v7.34c0 .541.438.98.98.98h1.34a.98.98 0 0 0 .98-.98V4.33a.98.98 0 0 0-.98-.98h-1.34Z" />
         <path
-          fillRule="evenodd"
-          d="M6.657 4.016a.98.98 0 0 0-.98.98v6.008c0 .542.439.98.98.98h2.01a.98.98 0 0 0 .98-.98V4.996a.98.98 0 0 0-.98-.98h-2.01Zm.32 6.668V5.316h1.37v5.368h-1.37ZM11.66 4.016a.98.98 0 0 0-.98.98v6.008c0 .542.439.98.98.98h2.01a.98.98 0 0 0 .98-.98V4.996a.98.98 0 0 0-.98-.98h-2.01Zm.32 6.668V5.316h1.37v5.368h-1.37Z"
-          clipRule="evenodd"
+          fill="currentColor"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3.547 3.667h-.981c-.542 0-.982.403-.982.9v7.2c0 .497.44.9.982.9h.98c.543 0 .982-.403.982-.9v-7.2c0-.497-.44-.9-.981-.9Z"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.49 3.667h-.98c-.542 0-.982.403-.982.9v7.2c0 .497.44.9.981.9h.982c.542 0 .981-.403.981-.9v-7.2c0-.497-.44-.9-.981-.9ZM13.434 3.667h-.98c-.543 0-.982.403-.982.9v7.2c0 .497.44.9.981.9h.982c.541 0 .98-.403.98-.9v-7.2c0-.497-.439-.9-.98-.9Z"
         />
       </svg>
     );
@@ -3831,11 +3897,18 @@ export const OrderLastIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M13.67 3.35a.98.98 0 0 1 .98.98v7.34a.98.98 0 0 1-.98.98h-1.34a.98.98 0 0 1-.98-.98V4.33a.98.98 0 0 1 .98-.98h1.34Z" />
         <path
-          fillRule="evenodd"
-          d="M4.334 4.016a.98.98 0 0 1 .98.98v6.008a.98.98 0 0 1-.98.98h-2.01a.98.98 0 0 1-.98-.98V4.996a.98.98 0 0 1 .98-.98h2.01Zm-.32 6.668V5.316h-1.37v5.368h1.37ZM9.337 4.016a.98.98 0 0 1 .98.98v6.008a.98.98 0 0 1-.98.98h-2.01a.98.98 0 0 1-.98-.98V4.996a.98.98 0 0 1 .98-.98h2.01Zm-.32 6.668V5.316h-1.37v5.368h1.37Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3.547 3.667h-.981c-.542 0-.982.403-.982.9v7.2c0 .497.44.9.982.9h.98c.543 0 .982-.403.982-.9v-7.2c0-.497-.44-.9-.981-.9ZM8.49 3.667h-.98c-.542 0-.982.403-.982.9v7.2c0 .497.44.9.981.9h.982c.542 0 .981-.403.981-.9v-7.2c0-.497-.44-.9-.981-.9Z"
+        />
+        <path
+          fill="currentColor"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M13.434 3.667h-.98c-.543 0-.982.403-.982.9v7.2c0 .497.44.9.981.9h.982c.541 0 .98-.403.98-.9v-7.2c0-.497-.439-.9-.98-.9Z"
         />
       </svg>
     );
@@ -3884,10 +3957,16 @@ export const PageIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="currentColor"
-          fillRule="evenodd"
-          d="M4.333 1.5A1.833 1.833 0 0 0 2.5 3.333v10a1.833 1.833 0 0 0 1.833 1.834h7.5a1.833 1.833 0 0 0 1.834-1.834V5.333a.5.5 0 0 0-.147-.353l-3.333-3.334a.5.5 0 0 0-.354-.146h-5.5ZM12.126 5l-2.46-2.46v1.627A.833.833 0 0 0 10.5 5h1.626Zm-3.46-2.5H4.334a.833.833 0 0 0-.833.833v10a.833.833 0 0 0 .833.834h7.5a.833.833 0 0 0 .834-.834V6H10.5a1.833 1.833 0 0 1-1.833-1.833V2.5Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9.833 2h-5.5A1.333 1.333 0 0 0 3 3.333v10a1.333 1.333 0 0 0 1.333 1.334h7.5a1.333 1.333 0 0 0 1.334-1.334v-8L9.833 2Z"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9.167 2.5v1.667A1.333 1.333 0 0 0 10.5 5.5h2.667"
         />
       </svg>
     );
@@ -4274,6 +4353,33 @@ export const ScrollIcon: IconComponent = forwardRef(
 );
 ScrollIcon.displayName = "ScrollIcon";
 
+export const SearchIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M7.333 12.667A5.333 5.333 0 1 0 7.333 2a5.333 5.333 0 0 0 0 10.667ZM14 14l-2.867-2.867"
+        />
+      </svg>
+    );
+  }
+);
+SearchIcon.displayName = "SearchIcon";
+
 export const SectionLinkIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -4573,6 +4679,33 @@ export const StopIcon: IconComponent = forwardRef(
 );
 StopIcon.displayName = "StopIcon";
 
+export const StretchVerticalIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.4 4.097H4.1c-.72 0-1.302.582-1.302 1.3v7.807c0 .719.583 1.301 1.301 1.301H5.4c.719 0 1.301-.582 1.301-1.3V5.397c0-.719-.582-1.301-1.3-1.301ZM11.906 4.097h-1.301c-.719 0-1.301.582-1.301 1.3v3.254c0 .718.582 1.3 1.3 1.3h1.302c.718 0 1.3-.582 1.3-1.3V5.398c0-.719-.582-1.301-1.3-1.301ZM14.497 1.495h-13"
+        />
+      </svg>
+    );
+  }
+);
+StretchVerticalIcon.displayName = "StretchVerticalIcon";
+
 export const SubscriptIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -4738,6 +4871,60 @@ export const TerminalIcon: IconComponent = forwardRef(
 );
 TerminalIcon.displayName = "TerminalIcon";
 
+export const TextAlignCenterIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M2 3.5a.5.5 0 0 0 0 1h12a.5.5 0 0 0 0-1H2ZM4.167 8a.5.5 0 0 1 .5-.5h6.666a.5.5 0 0 1 0 1H4.667a.5.5 0 0 1-.5-.5Zm-1.334 4a.5.5 0 0 1 .5-.5h9.334a.5.5 0 0 1 0 1H3.333a.5.5 0 0 1-.5-.5Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+TextAlignCenterIcon.displayName = "TextAlignCenterIcon";
+
+export const TextAlignJustifyIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M2 3.5a.5.5 0 0 0 0 1h12a.5.5 0 0 0 0-1H2ZM1.5 8a.5.5 0 0 1 .5-.5h12a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5Zm0 4a.5.5 0 0 1 .5-.5h12a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+TextAlignJustifyIcon.displayName = "TextAlignJustifyIcon";
+
 export const TextAlignLeftIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -4754,15 +4941,70 @@ export const TextAlignLeftIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M1.85 4a.65.65 0 0 1 .65-.65h12a.65.65 0 1 1 0 1.3h-12A.65.65 0 0 1 1.85 4Zm0 4a.65.65 0 0 1 .65-.65h6a.65.65 0 0 1 0 1.3h-6A.65.65 0 0 1 1.85 8Zm0 4a.65.65 0 0 1 .65-.65h8a.65.65 0 1 1 0 1.3h-8a.65.65 0 0 1-.65-.65Z"
-          clipRule="evenodd"
+          stroke="#000"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10 8H2M11.333 12H2M14 4H2"
         />
       </svg>
     );
   }
 );
 TextAlignLeftIcon.displayName = "TextAlignLeftIcon";
+
+export const TextAlignRightIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M2 3.5a.5.5 0 0 0 0 1h12a.5.5 0 0 0 0-1H2ZM5.5 8a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5Zm-1.333 4a.5.5 0 0 1 .5-.5H14a.5.5 0 0 1 0 1H4.667a.5.5 0 0 1-.5-.5Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+TextAlignRightIcon.displayName = "TextAlignRightIcon";
+
+export const TextCapitalizeIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m2 10 2.667-5.333L7.333 10M2.667 8.667h4M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM14 6v4"
+        />
+      </svg>
+    );
+  }
+);
+TextCapitalizeIcon.displayName = "TextCapitalizeIcon";
 
 export const TextItalicIcon: IconComponent = forwardRef(
   (
@@ -4780,14 +5022,124 @@ export const TextItalicIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          d="M9.985 2.017H6.667a.65.65 0 0 0 0 1.3h2.395L5.55 12.683H3.333a.65.65 0 0 0 0 1.3h6a.65.65 0 1 0 0-1.3H6.938l3.513-9.366h2.216a.65.65 0 1 0 0-1.3H9.985Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.667 2.667h-6M9.333 13.333h-6M10 2.667 6 13.333"
         />
       </svg>
     );
   }
 );
 TextItalicIcon.displayName = "TextItalicIcon";
+
+export const TextLowercaseIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.667 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6.667 6v4M11.333 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM9.333 4.667V10"
+        />
+      </svg>
+    );
+  }
+);
+TextLowercaseIcon.displayName = "TextLowercaseIcon";
+
+export const TextStrikethroughIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10.667 2.667H6a2 2 0 0 0-1.887 2.666M9.333 8a2.667 2.667 0 1 1 0 5.333H4M2.667 8h10.666"
+        />
+      </svg>
+    );
+  }
+);
+TextStrikethroughIcon.displayName = "TextStrikethroughIcon";
+
+export const TextUnderlineIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4 2.667v4a4 4 0 0 0 8 0v-4M2.667 13.333h10.666"
+        />
+      </svg>
+    );
+  }
+);
+TextUnderlineIcon.displayName = "TextUnderlineIcon";
+
+export const TextUppercaseIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m2 10 2.667-5.333L7.333 10M2.667 8.667h4M10 7.333h3A1.333 1.333 0 1 1 13 10h-3V4.667h2.667a1.333 1.333 0 0 1 0 2.666"
+        />
+      </svg>
+    );
+  }
+);
+TextUppercaseIcon.displayName = "TextUppercaseIcon";
 
 export const TextIcon: IconComponent = forwardRef(
   (
@@ -4914,10 +5266,16 @@ export const UploadIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="currentColor"
-          fillRule="evenodd"
-          d="M3.315 4.642a4.852 4.852 0 0 1 9.37 0 3.801 3.801 0 0 1 1.277 6.868.65.65 0 0 1-.724-1.08 2.5 2.5 0 0 0-1.154-4.569.65.65 0 0 1-.581-.542 3.551 3.551 0 0 0-7.006 0 .65.65 0 0 1-.581.542 2.5 2.5 0 0 0-1.154 4.568.65.65 0 1 1-.724 1.08 3.801 3.801 0 0 1 1.276-6.868ZM7.35 9.57l-1.69 1.69a.65.65 0 0 1-.92-.919l2.8-2.8a.65.65 0 0 1 .92 0l2.8 2.8a.65.65 0 1 1-.92.92L8.65 9.57v4.73a.65.65 0 1 1-1.3 0V9.57Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 8.667V14M2.667 9.933a4.667 4.667 0 1 1 7.806-4.6h1.194a3 3 0 0 1 1.666 5.495"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.333 11.333 8 8.667l2.667 2.666"
         />
       </svg>
     );
@@ -5503,7 +5861,12 @@ export const XIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M9.142 7.081 13.609 2H12.55L8.671 6.412 5.573 2H2l4.685 6.672L2 14h1.059l4.096-4.66L10.427 14H14L9.141 7.081Zm-1.45 1.65-.475-.665L3.44 2.78h1.626l3.048 4.266.475.664 3.962 5.546h-1.626L7.692 8.73Z" />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.5 3 3 12.5M3 3l9.5 9.5"
+        />
       </svg>
     );
   }

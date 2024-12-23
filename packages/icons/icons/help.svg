@@ -5,29 +5,22 @@
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <g clip-path="url(#clip0_23_1165)">
-    <path
-      d="M7.99998 14.6667C11.6819 14.6667 14.6666 11.6819 14.6666 8C14.6666 4.3181 11.6819 1.33333 7.99998 1.33333C4.31808 1.33333 1.33331 4.3181 1.33331 8C1.33331 11.6819 4.31808 14.6667 7.99998 14.6667Z"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M6.06 6C6.21673 5.55444 6.5261 5.17874 6.9333 4.93942C7.3405 4.7001 7.81926 4.61262 8.28478 4.69247C8.7503 4.77232 9.17254 5.01435 9.47672 5.37568C9.78089 5.73702 9.94737 6.19435 9.94666 6.66666C9.94666 8 7.94666 8.66666 7.94666 8.66666"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M8 11.3333H8.00667"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  </g>
-  <defs>
-    <clipPath id="clip0_23_1165">
-      <rect width="16" height="16" fill="white" />
-    </clipPath>
-  </defs>
+  <path
+    d="M6.0567 6C6.21801 5.55444 6.53639 5.17874 6.95547 4.93942C7.37455 4.7001 7.86726 4.61262 8.34636 4.69247C8.82545 4.77232 9.26001 5.01435 9.57305 5.37568C9.88609 5.73702 10.0567 6.20703 10.0567 6.66666C10.0567 8 7.99838 8.66666 7.99838 8.66666"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5Z"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M8 11.3333H8.0001"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

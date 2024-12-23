@@ -6,19 +6,19 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M8 4V12"
+    d="M7.99988 3.96042V12.0396"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M11.464 6L4.53601 10"
+    d="M11.4983 5.98021L4.50171 10.0198"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M4.53601 6L11.464 10"
+    d="M4.50171 5.98021L11.4983 10.0198"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"

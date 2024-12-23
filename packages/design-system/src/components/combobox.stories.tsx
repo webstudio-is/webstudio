@@ -1,4 +1,4 @@
-import { MagnifyingGlassIcon } from "@webstudio-is/icons";
+import { SearchIcon } from "@webstudio-is/icons";
 import { useCallback, useState } from "react";
 import type {
   UseComboboxState,
@@ -76,7 +76,7 @@ export const Complex = () => {
           <InputField
             prefix={
               <Flex align="center">
-                <MagnifyingGlassIcon />
+                <SearchIcon />
               </Flex>
             }
             {...getInputProps({ value })}

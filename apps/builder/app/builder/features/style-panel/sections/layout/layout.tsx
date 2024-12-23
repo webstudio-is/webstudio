@@ -22,15 +22,15 @@ import {
   ArrowLeftIcon,
   ArrowDownIcon,
   ArrowUpIcon,
-  AICenterIcon,
-  JCCenterIcon,
+  AlignCenterHorizontalIcon,
+  AlignHorizontalJustifyCenterIcon,
   ACCenterIcon,
   AIStartIcon,
-  AIEndIcon,
-  AIBaselineIcon,
-  AIStretchIcon,
-  JCStartIcon,
-  JCEndIcon,
+  AlignEndHorizontalIcon,
+  AlignBaselineIcon,
+  StretchVerticalIcon,
+  AlignHorizontalJustifyStartIcon,
+  AlignHorizontalJustifyEndIcon,
   JCSpaceBetweenIcon,
   JCSpaceAroundIcon,
   ACStartIcon,
@@ -401,11 +401,23 @@ const LayoutSectionFlex = () => {
             <MenuControl
               property="alignItems"
               items={[
-                { name: "stretch", label: "Stretch", icon: AIStretchIcon },
-                { name: "baseline", label: "Baseline", icon: AIBaselineIcon },
-                { name: "center", label: "Center", icon: AICenterIcon },
+                {
+                  name: "stretch",
+                  label: "Stretch",
+                  icon: StretchVerticalIcon,
+                },
+                {
+                  name: "baseline",
+                  label: "Baseline",
+                  icon: AlignBaselineIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignCenterHorizontalIcon,
+                },
                 { name: "start", label: "Start", icon: AIStartIcon },
-                { name: "end", label: "End", icon: AIEndIcon },
+                { name: "end", label: "End", icon: AlignEndHorizontalIcon },
               ]}
             />
             <MenuControl
@@ -421,9 +433,21 @@ const LayoutSectionFlex = () => {
                   label: "Space Around",
                   icon: JCSpaceAroundIcon,
                 },
-                { name: "center", label: "Center", icon: JCCenterIcon },
-                { name: "start", label: "Start", icon: JCStartIcon },
-                { name: "end", label: "End", icon: JCEndIcon },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignHorizontalJustifyCenterIcon,
+                },
+                {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignHorizontalJustifyStartIcon,
+                },
+                {
+                  name: "end",
+                  label: "End",
+                  icon: AlignHorizontalJustifyEndIcon,
+                },
               ]}
             />
             {(flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse") && (

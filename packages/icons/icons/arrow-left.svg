@@ -1,5 +1,20 @@
-<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-<g id="icon/arrow left">
-<path id="vector" fill-rule="evenodd" clip-rule="evenodd" d="M7.5657 3.43433C7.87812 3.74675 7.87812 4.25328 7.5657 4.5657L4.93138 7.20001H13C13.4418 7.20001 13.8 7.55818 13.8 8.00001C13.8 8.44184 13.4418 8.80001 13 8.80001H4.93138L7.5657 11.4343C7.87812 11.7467 7.87812 12.2533 7.5657 12.5657C7.25328 12.8781 6.74675 12.8781 6.43433 12.5657L2.43433 8.5657C2.12191 8.25328 2.12191 7.74675 2.43433 7.43433L6.43433 3.43433C6.74675 3.12191 7.25328 3.12191 7.5657 3.43433Z" />
-</g>
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M12.6666 8H3.33329"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M8 3.33333L3.33333 8L8 12.6667"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>
