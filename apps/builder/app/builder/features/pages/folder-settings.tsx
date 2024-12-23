@@ -29,11 +29,7 @@ import {
   Separator,
   TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
-import {
-  ChevronDoubleLeftIcon,
-  TrashIcon,
-  HelpIcon,
-} from "@webstudio-is/icons";
+import { ChevronsLeftIcon, TrashIcon, HelpIcon } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
@@ -282,7 +278,7 @@ const NewFolderSettingsView = ({
               <Button
                 onClick={onClose}
                 aria-label="Cancel"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 color="ghost"
                 // Tab should go:
                 //   trought form fields -> create button -> cancel button
@@ -479,7 +475,7 @@ const FolderSettingsView = ({
             <Tooltip content="Close folder settings" side="bottom">
               <Button
                 color="ghost"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 onClick={onClose}
                 aria-label="Close folder settings"
                 tabIndex={2}

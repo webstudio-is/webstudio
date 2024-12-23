@@ -60,7 +60,7 @@ import {
   FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import {
-  ChevronDoubleLeftIcon,
+  ChevronsLeftIcon,
   CopyIcon,
   TrashIcon,
   HomeIcon,
@@ -1335,7 +1335,7 @@ const NewPageSettingsView = ({
               <Button
                 onClick={onClose}
                 aria-label="Cancel"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 color="ghost"
                 // Tab should go:
                 //   trought form fields -> create button -> cancel button
@@ -1697,7 +1697,7 @@ const PageSettingsView = ({
             <Tooltip content="Close page settings" side="bottom">
               <Button
                 color="ghost"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 onClick={onClose}
                 aria-label="Close page settings"
                 tabIndex={2}
