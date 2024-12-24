@@ -27,7 +27,7 @@ import {
   CopyIcon,
   EllipsesIcon,
   PlusIcon,
-  HelpIcon,
+  InfoCircleIcon,
 } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 import { useIds } from "../form-utils";
@@ -79,7 +79,7 @@ const Permission = ({
         {title}
       </Label>
       <Tooltip content={tooltipContent} variant="wrapped">
-        <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+        <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
     </Flex>
   );

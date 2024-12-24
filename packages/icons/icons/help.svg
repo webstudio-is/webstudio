@@ -11,12 +11,7 @@
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <path
-    d="M8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5Z"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+  <circle cx="8" cy="8" r="6.5" stroke="currentColor" />
   <path
     d="M8 11.3333H8.0001"
     stroke="currentColor"

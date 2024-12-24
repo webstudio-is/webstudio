@@ -7,19 +7,19 @@
 >
   <path
     d="M10 8H2"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
     d="M11.3333 12H2"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
     d="M14 4H2"
-    stroke="black"
+    stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />

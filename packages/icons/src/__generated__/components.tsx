@@ -162,9 +162,9 @@ export const AiIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M3.04 12.326a1.1 1.1 0 0 1-2.134-.534l1.513-6.05a3.663 3.663 0 0 1 7.108 0l1.159 4.634c.085.34.399.584.749.584a.78.78 0 0 0 .772-.773V4.06a1.1 1.1 0 0 1 2.2 0v6.128c0 1.618-1.355 2.973-2.972 2.973a2.996 2.996 0 0 1-2.883-2.25l-1.16-4.636a1.464 1.464 0 0 0-2.84 0L3.04 12.326Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          d="m1.5 12.588 1.735-6.94a2.94 2.94 0 0 1 5.705 0l1.33 5.315a2.165 2.165 0 0 0 2.083 1.625 2.17 2.17 0 0 0 2.147-2.147v-7.03"
         />
       </svg>
     );
@@ -1305,10 +1305,10 @@ export const BorderRadiusIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M2 4.667V3.333A1.333 1.333 0 0 1 3.333 2h1.334M11.333 2h1.334A1.333 1.333 0 0 1 14 3.333v1.334M14 11.333v1.334A1.333 1.333 0 0 1 12.667 14h-1.334M4.667 14H3.333A1.334 1.334 0 0 1 2 12.667v-1.334"
+          fill="#11181C"
+          fillRule="evenodd"
+          d="M1.917 10.666a8.75 8.75 0 0 1 8.75-8.75h2.666a.75.75 0 0 1 0 1.5h-2.667a7.25 7.25 0 0 0-7.25 7.25v2.667a.75.75 0 0 1-1.5 0v-2.667Z"
+          clipRule="evenodd"
         />
       </svg>
     );
@@ -2788,11 +2788,12 @@ export const HelpIcon: IconComponent = forwardRef(
           strokeLinejoin="round"
           d="M6.057 6c.161-.446.48-.821.898-1.06a2.11 2.11 0 0 1 1.391-.248c.48.08.914.322 1.227.684.313.361.484.831.484 1.29 0 1.334-2.059 2-2.059 2"
         />
+        <circle cx="8" cy="8" r="6.5" stroke="currentColor" />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM8 11.333h0"
+          d="M8 11.333h0"
         />
       </svg>
     );
@@ -2872,19 +2873,20 @@ export const InfoCircleIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
+        <circle cx="8" cy="8" r="6.5" stroke="currentColor" />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM8 11.516V7.853"
+          d="M8 11.516V7.853"
         />
         <rect
-          width="1.407"
-          height="1.407"
-          x="7.296"
+          width="1.4"
+          height="1.4"
+          x="7.3"
           y="4.484"
           fill="currentColor"
-          rx=".704"
+          rx=".7"
         />
       </svg>
     );
@@ -3467,7 +3469,14 @@ export const NavigationMenuIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2ZM9.333 6H10M12.667 6H14M2 6h1.333M6 6h.667"
+          d="M14 7v5.833c0 .645-.597 1.167-1.333 1.167H3.333C2.597 14 2 13.478 2 12.833V7"
+        />
+        <path
+          fill="currentColor"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10.978 2.003H2.6a.6.6 0 0 0-.6.6v1.4h11.971v-1.4a.6.6 0 0 0-.6-.6h-2.393Z"
         />
       </svg>
     );
@@ -4595,7 +4604,7 @@ export const TabsIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M2.667 13.333V4A1.333 1.333 0 0 1 4 2.667h8A1.333 1.333 0 0 1 13.333 4v9.333M14.667 13.333H1.333"
+          d="M9.75 5H13M9.75 5H7.401A1.684 1.684 0 0 1 6 4.25v0l-.5-.75-.5-.75L4.5 2m5.25 3-1-1.5-.5-.75-.5-.75M4.5 2H3v0a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 3 14h10v0a1.5 1.5 0 0 0 1.5-1.5v0-6A1.5 1.5 0 0 0 13 5v0M4.5 2h3.25m0 0h2.375v0c.547 0 1.057.273 1.36.728l.015.022.5.75L13 5"
         />
       </svg>
     );
@@ -4694,7 +4703,7 @@ export const TextAlignLeftIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          stroke="#000"
+          stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M10 8H2M11.333 12H2M14 4H2"
@@ -4841,7 +4850,14 @@ export const TextTruncateIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M14 11.944v-8.61A1.334 1.334 0 0 0 12.667 2H3.333A1.333 1.333 0 0 0 2 3.333v9.334A1.333 1.333 0 0 0 3.333 14h4.639M12.02 14h0M10.084 14h0M14 14h0"
+          d="M14 11V3.333A1.334 1.334 0 0 0 12.667 2H3.333A1.333 1.333 0 0 0 2 3.333v9.334A1.333 1.333 0 0 0 3.333 14H5.5"
+        />
+        <path
+          fill="currentColor"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 13.375a.375.375 0 1 0 .75 0 .375.375 0 0 0-.75 0ZM10.813 13.375a.375.375 0 1 0 .75 0 .375.375 0 0 0-.75 0ZM13.625 13.375a.375.375 0 1 0 .75 0 .375.375 0 0 0-.75 0Z"
         />
       </svg>
     );

@@ -29,7 +29,11 @@ import {
   Separator,
   TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
-import { ChevronsLeftIcon, TrashIcon, HelpIcon } from "@webstudio-is/icons";
+import {
+  ChevronsLeftIcon,
+  TrashIcon,
+  InfoCircleIcon,
+} from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
@@ -166,7 +170,7 @@ const FormFields = ({
                 content={"Slug will be used as part of the path to the page"}
                 variant="wrapped"
               >
-                <HelpIcon
+                <InfoCircleIcon
                   color={rawTheme.colors.foregroundSubtle}
                   tabIndex={0}
                 />

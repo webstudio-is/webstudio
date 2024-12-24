@@ -17,7 +17,7 @@ import {
   encodeDataSourceVariable,
 } from "@webstudio-is/sdk";
 import type { Prop, Asset } from "@webstudio-is/sdk";
-import { HelpIcon, MinusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, MinusIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,
   Label as BaseLabel,
@@ -145,7 +145,10 @@ export const Label = ({
           }
           variant="wrapped"
         >
-          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={0}
+          />
         </Tooltip>
       )}
     </Flex>

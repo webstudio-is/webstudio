@@ -5,12 +5,7 @@
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <path
-    d="M8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5Z"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+  <circle cx="8" cy="8" r="6.5" stroke="currentColor" />
   <path
     d="M8 11.5161V7.85314"
     stroke="currentColor"
@@ -18,11 +13,11 @@
     stroke-linejoin="round"
   />
   <rect
-    x="7.29626"
+    x="7.30005"
     y="4.48389"
-    width="1.40747"
-    height="1.40747"
-    rx="0.703735"
+    width="1.4"
+    height="1.4"
+    rx="0.7"
     fill="currentColor"
   />
 </svg>

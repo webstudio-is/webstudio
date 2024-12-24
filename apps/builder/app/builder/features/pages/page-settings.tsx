@@ -64,7 +64,7 @@ import {
   CopyIcon,
   TrashIcon,
   HomeIcon,
-  HelpIcon,
+  InfoCircleIcon,
   UploadIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
@@ -346,7 +346,10 @@ const PathField = ({
             content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
             variant="wrapped"
           >
-            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+            <InfoCircleIcon
+              color={rawTheme.colors.foregroundSubtle}
+              tabIndex={-1}
+            />
           </Tooltip>
         </Flex>
       ) : (
@@ -382,7 +385,10 @@ const PathField = ({
             }
             variant="wrapped"
           >
-            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+            <InfoCircleIcon
+              color={rawTheme.colors.foregroundSubtle}
+              tabIndex={-1}
+            />
           </Tooltip>
         </Flex>
       )}
@@ -432,7 +438,10 @@ const StatusField = ({
           }
           variant="wrapped"
         >
-          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={-1}
+          />
         </Tooltip>
       </Flex>
       <BindingControl>
@@ -493,7 +502,10 @@ const RedirectField = ({
           content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
           variant="wrapped"
         >
-          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={-1}
+          />
         </Tooltip>
       </Flex>
 
