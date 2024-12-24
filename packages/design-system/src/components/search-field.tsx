@@ -9,7 +9,7 @@ import {
   type KeyboardEventHandler,
   type FormEventHandler,
 } from "react";
-import { CrossCircledFilledIcon, SearchIcon } from "@webstudio-is/icons";
+import { XCircledFilledIcon, SearchIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { InputField } from "./input-field";
@@ -73,7 +73,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
             onClick={() => {
               handleCancel();
             }}
-            icon={<CrossCircledFilledIcon />}
+            icon={<XCircledFilledIcon />}
           />
         </Flex>
       }

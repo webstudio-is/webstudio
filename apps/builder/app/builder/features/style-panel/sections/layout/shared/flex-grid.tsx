@@ -143,7 +143,11 @@ export const FlexGrid = () => {
                 y,
                 justifyContent: justifyContentValue,
                 alignItems: alignItemsValue,
-              }) === false && <DotIcon />}
+              }) === false && (
+                <Box css={{ size: 16 }}>
+                  <DotIcon size={8} />
+                </Box>
+              )}
             </IconButton>
           </Flex>
         );

@@ -11,7 +11,7 @@ import {
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
-  CrossSmallIcon,
+  XSmallIcon,
   EllipsesIcon,
   ArrowRightIcon,
   ArrowLeftIcon,
@@ -168,7 +168,7 @@ const TypographySectionAdvanced = () => {
         properties={["textDecorationLine"]}
         items={[
           {
-            child: <CrossSmallIcon />,
+            child: <XSmallIcon />,
             description: "No decoration is applied to the text.",
             value: "none",
           },
@@ -189,7 +189,7 @@ const TypographySectionAdvanced = () => {
         properties={["textTransform"]}
         items={[
           {
-            child: <CrossSmallIcon />,
+            child: <XSmallIcon />,
             description:
               "No transformation is applied to the text. The text appears as it is.",
             value: "none",
@@ -219,7 +219,7 @@ const TypographySectionAdvanced = () => {
           properties={["fontStyle"]}
           items={[
             {
-              child: <CrossSmallIcon />,
+              child: <XSmallIcon />,
               description:
                 "The default value. The text appears in a normal, upright style.",
               value: "normal",
@@ -340,7 +340,7 @@ const TypographySectionAdvancedPopover = () => {
                 properties={["hyphens"]}
                 items={[
                   {
-                    child: <CrossSmallIcon />,
+                    child: <XSmallIcon />,
                     description:
                       "Disables hyphenation of words. Words will not be hyphenated even if they exceed the width of their container.",
                     value: "manual",
@@ -364,7 +364,7 @@ const TypographySectionAdvancedPopover = () => {
                 properties={["textOverflow"]}
                 items={[
                   {
-                    child: <CrossSmallIcon />,
+                    child: <XSmallIcon />,
                     description:
                       "The overflowing text is clipped and hidden without any indication.",
                     value: "clip",

@@ -5,7 +5,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { ChevronFilledRightIcon } from "@webstudio-is/icons";
+import { ChevronRightIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
@@ -95,7 +95,7 @@ export const DropdownMenuSubTrigger = forwardRef<
     {icon && <div className={menuItemIndicatorCss()}>{icon}</div>}
     {children}
     <DropdownMenuItemRightSlot>
-      <ChevronFilledRightIcon />
+      <ChevronRightIcon />
     </DropdownMenuItemRightSlot>
   </SubTriggerStyled>
 ));
