@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { matchSorter } from "match-sorter";
 import { useStore } from "@nanostores/react";
 import { XIcon } from "@webstudio-is/icons";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   type WsComponentMeta,
-  blockComponent,
   collectionComponent,
   componentCategories,
 } from "@webstudio-is/react-sdk";
@@ -30,58 +31,63 @@ import { dragItemAttribute, useDraggable } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import {
-  getMetaMaps,
-  type MetaByCategory,
-  type ComponentNamesByMeta,
-} from "./get-meta-maps";
-import {
   findClosestInsertable,
   getComponentTemplateData,
   getInstanceLabel,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { matchSorter } from "match-sorter";
-import { parseComponentName } from "@webstudio-is/sdk";
 import type { Publish } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/awareness";
+import { mapGroupBy } from "~/shared/shim";
+import { computed } from "nanostores";
 
-const matchComponents = (
-  metas: Array<WsComponentMeta>,
-  componentNamesByMeta: ComponentNamesByMeta,
-  search: string
-) => {
-  const getKey = (meta: WsComponentMeta) => {
-    if (meta.label) {
-      return meta.label.toLowerCase();
-    }
-    const component = componentNamesByMeta.get(meta);
-    if (component) {
-      const [_namespace, name] = parseComponentName(component);
-      return name.toLowerCase();
-    }
-    return "";
-  };
-
-  return matchSorter(metas, search, {
-    keys: [getKey],
-  });
+type Meta = {
+  name: string;
+  category: string;
+  order: undefined | number;
+  label: string;
+  description: undefined | string;
+  icon: string;
 };
+
+const $metas = computed([$registeredComponentMetas], (componentMetas) => {
+  const availableComponents = new Set<string>();
+  const metas: Meta[] = [];
+  for (const [name, componentMeta] of componentMetas) {
+    availableComponents.add(name);
+    metas.push({
+      name,
+      category: componentMeta.category ?? "hidden",
+      order: componentMeta.order,
+      label: getInstanceLabel({ component: name }, componentMeta),
+      description: componentMeta.description,
+      icon: componentMeta.icon,
+    });
+  }
+  const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
+  for (const meta of metasByCategory.values()) {
+    meta.sort((metaA, metaB) => {
+      return (
+        (metaA.order ?? Number.MAX_SAFE_INTEGER) -
+        (metaB.order ?? Number.MAX_SAFE_INTEGER)
+      );
+    });
+  }
+  return { metasByCategory, availableComponents };
+});
 
 type Groups = Array<{
   category: Exclude<WsComponentMeta["category"], undefined> | "found";
-  metas: Array<WsComponentMeta>;
+  metas: Array<Meta>;
 }>;
 
 const filterAndGroupComponents = ({
   documentType = "html",
-  metaByCategory,
-  componentNamesByMeta,
+  metasByCategory,
   search,
 }: {
   documentType?: "html" | "xml";
-  metaByCategory: MetaByCategory;
-  componentNamesByMeta: ComponentNamesByMeta;
+  metasByCategory: Map<string, Array<Meta>>;
   search: string;
 }): Groups => {
   const categories = componentCategories.filter((category) => {
@@ -109,42 +115,22 @@ const filterAndGroupComponents = ({
   });
 
   let groups: Groups = categories.map((category) => {
-    const metas = (metaByCategory.get(category) ?? []).filter((meta) => {
-      const component = componentNamesByMeta.get(meta);
-
-      if (component === undefined) {
-        return false;
-      }
-
+    const metas = (metasByCategory.get(category) ?? []).filter((meta) => {
       if (documentType === "xml" && meta.category === "data") {
-        return component === collectionComponent;
+        return meta.name === collectionComponent;
       }
-
-      if (component === "RemixForm" && isFeatureEnabled("filters") === false) {
-        return false;
-      }
-
-      if (component === "ContentEmbed" && isFeatureEnabled("cms") === false) {
-        return false;
-      }
-
-      if (
-        component === blockComponent &&
-        isFeatureEnabled("contentEditableMode") === false
-      ) {
-        return false;
-      }
-
       return true;
     });
 
     return { category, metas };
   });
 
-  if (search.length !== 0) {
-    let metas = groups.map((group) => group.metas).flat();
-    metas = matchComponents(metas, componentNamesByMeta, search);
-    groups = [{ category: "found", metas }];
+  if (search.length > 0) {
+    const metas = groups.map((group) => group.metas).flat();
+    const matched = matchSorter(metas, search, {
+      keys: ["label"],
+    });
+    groups = [{ category: "found", metas: matched }];
   }
 
   groups = groups.filter((group) => group.metas.length > 0);
@@ -152,19 +138,13 @@ const filterAndGroupComponents = ({
   return groups;
 };
 
-const findComponentIndex = (
-  groups: Groups,
-  componentNamesByMeta: ComponentNamesByMeta,
-  selectedComponent?: string
-) => {
+const findComponentIndex = (groups: Groups, selectedComponent?: string) => {
   if (selectedComponent === undefined) {
     return { index: -1, metas: groups[0].metas };
   }
 
   for (const { metas } of groups) {
-    const index = metas.findIndex((meta) => {
-      return componentNamesByMeta.get(meta) === selectedComponent;
-    });
+    const index = metas.findIndex((meta) => meta.name === selectedComponent);
     if (index === -1) {
       continue;
     }
@@ -181,12 +161,10 @@ export const ComponentsPanel = ({
   publish: Publish;
   onClose: () => void;
 }) => {
-  const metaByComponentName = useStore($registeredComponentMetas);
   const selectedPage = useStore($selectedPage);
   const [selectedComponent, setSelectedComponent] = useState<string>();
 
   const handleInsert = (component: string) => {
-    onClose();
     const fragment = getComponentTemplateData(component);
     if (fragment) {
       const insertable = findClosestInsertable(fragment);
@@ -194,6 +172,7 @@ export const ComponentsPanel = ({
         insertWebstudioFragmentAt(fragment, insertable);
       }
     }
+    onClose();
   };
 
   const resetSelectedComponent = () => {
@@ -204,7 +183,7 @@ export const ComponentsPanel = ({
     // When user didn't select a component but they have search input,
     // we want to always have the first component selected, so that user can just hit enter.
     if (selectedComponent === undefined && searchFieldProps.value) {
-      return componentNamesByMeta.get(groups[0].metas[0]);
+      return groups[0].metas[0].name;
     }
     return selectedComponent;
   };
@@ -221,35 +200,26 @@ export const ComponentsPanel = ({
         return;
       }
 
-      const { index, metas } = findComponentIndex(
-        groups,
-        componentNamesByMeta,
-        selectedComponent
-      );
+      const { index, metas } = findComponentIndex(groups, selectedComponent);
 
       const nextIndex = findNextListItemIndex(index, metas.length, direction);
-      const nextComponent = componentNamesByMeta.get(metas[nextIndex]);
-
+      const nextComponent = metas[nextIndex]?.name;
       if (nextComponent) {
         setSelectedComponent(nextComponent);
       }
     },
   });
 
-  const { metaByCategory, componentNamesByMeta } = useMemo(
-    () => getMetaMaps(metaByComponentName),
-    [metaByComponentName]
-  );
+  const { metasByCategory, availableComponents } = useStore($metas);
 
   const { dragCard, draggableContainerRef } = useDraggable({
     publish,
-    metaByComponentName,
+    availableComponents,
   });
 
   const groups = filterAndGroupComponents({
     documentType: selectedPage?.meta.documentType,
-    metaByCategory,
-    componentNamesByMeta,
+    metasByCategory,
     search: searchFieldProps.value,
   });
 
@@ -296,39 +266,27 @@ export const ComponentsPanel = ({
                   overflow: "auto",
                 }}
               >
-                {group.metas.map((meta: WsComponentMeta, index) => {
-                  const component = componentNamesByMeta.get(meta);
-
-                  if (component === undefined) {
-                    return;
-                  }
-
-                  return (
-                    <ListItem
-                      asChild
-                      state={
-                        component === getSelectedComponent()
-                          ? "selected"
-                          : undefined
-                      }
-                      index={index}
-                      key={component}
-                      onSelect={() => {
-                        handleInsert(component);
-                      }}
-                      onFocus={() => {
-                        setSelectedComponent(component);
-                      }}
-                    >
-                      <ComponentCard
-                        {...{ [dragItemAttribute]: component }}
-                        label={getInstanceLabel({ component }, meta)}
-                        description={meta.description}
-                        icon={<MetaIcon size="auto" icon={meta.icon} />}
-                      />
-                    </ListItem>
-                  );
-                })}
+                {group.metas.map((meta, index) => (
+                  <ListItem
+                    asChild
+                    state={
+                      meta.name === getSelectedComponent()
+                        ? "selected"
+                        : undefined
+                    }
+                    index={index}
+                    key={meta.name}
+                    onSelect={() => handleInsert(meta.name)}
+                    onFocus={() => setSelectedComponent(meta.name)}
+                  >
+                    <ComponentCard
+                      {...{ [dragItemAttribute]: meta.name }}
+                      label={meta.label}
+                      description={meta.description}
+                      icon={<MetaIcon size="auto" icon={meta.icon} />}
+                    />
+                  </ListItem>
+                ))}
                 {dragCard}
                 {group.metas.length === 0 && (
                   <Flex grow justify="center" css={{ py: theme.spacing[10] }}>

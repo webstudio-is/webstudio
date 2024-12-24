@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
 import type { Instance } from "@webstudio-is/sdk";
-import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   type Point,
   Flex,
@@ -73,7 +72,7 @@ const toCanvasCoordinates = (
 
 const elementToComponentName = (
   element: Element,
-  metaByComponentName: Map<string, WsComponentMeta>
+  availableComponents: Set<string>
 ) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
@@ -81,7 +80,7 @@ const elementToComponentName = (
 
   if (parentWithData instanceof HTMLElement) {
     const dragComponent = parentWithData.dataset.dragComponent as string;
-    if (metaByComponentName.has(dragComponent)) {
+    if (availableComponents.has(dragComponent)) {
       return dragComponent;
     }
   }
@@ -90,10 +89,10 @@ const elementToComponentName = (
 
 export const useDraggable = ({
   publish,
-  metaByComponentName,
+  availableComponents,
 }: {
   publish: Publish;
-  metaByComponentName: Map<string, WsComponentMeta>;
+  availableComponents: Set<string>;
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
@@ -104,7 +103,7 @@ export const useDraggable = ({
 
   const dragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
-      return elementToComponentName(element, metaByComponentName);
+      return elementToComponentName(element, availableComponents);
     },
     onStart({ data: componentName }) {
       setDragComponent(componentName);
