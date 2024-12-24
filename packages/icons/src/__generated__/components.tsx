@@ -4479,7 +4479,14 @@ export const StopIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <rect width="9" height="9" x="3.5" y="3.5" rx="1" />
+        <rect
+          width="9"
+          height="9"
+          x="3.5"
+          y="3.5"
+          stroke="currentColor"
+          rx="1"
+        />
       </svg>
     );
   }
