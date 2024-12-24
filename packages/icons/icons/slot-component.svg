@@ -30,25 +30,25 @@
     stroke-linejoin="round"
   />
   <path
-    d="M6.5 2H9.5"
+    d="M7 2H9"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M6.5 14H9.5"
+    d="M7 14H9"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M2 6.5V9.5"
+    d="M2 7V9"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M14 6.5V9.5"
+    d="M14 7V9"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
