@@ -6,51 +6,45 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M4 2H3.33333C2.97971 2 2.64057 2.14048 2.39052 2.39052C2.14048 2.64057 2 2.97971 2 3.33333V4"
+    d="M4.5 2H3.33333C2.97971 2 2.64057 2.14048 2.39052 2.39052C2.14048 2.64057 2 2.97971 2 3.33333V4.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M12 14L12.6667 14C13.0204 14 13.3595 13.8595 13.6096 13.6095C13.8596 13.3594 14.0001 13.0203 14.0001 12.6667L14 12"
+    d="M14 12.6667C14 12.688 13.9994 12.7093 13.9984 12.7305M11.5 14H12.6666C13.0202 14 13.3594 13.8595 13.6094 13.6095C13.8444 13.3745 13.9826 13.0609 13.9984 12.7305M13.9984 12.7305V11.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M2 12V12.6667C2 13.0203 2.14048 13.3594 2.39052 13.6095C2.64057 13.8595 2.97971 14 3.33333 14L4 14"
+    d="M2 11.5V12.6667C2 13.0203 2.14048 13.3594 2.39052 13.6095C2.64057 13.8595 2.97971 14 3.33333 14H4.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M6 2H6.66667"
+    d="M7 14H9"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M6 14H10"
+    d="M2 7V9"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M2 6V10.001"
+    d="M8.46143 4.76923H13.9999"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M14 9.33333V9.99999"
+    d="M11.2307 2V7.53846"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
-  />
-  <path
-    fill-rule="evenodd"
-    clip-rule="evenodd"
-    d="M11.7692 2C11.7692 1.72386 11.5454 1.5 11.2692 1.5C10.9931 1.5 10.7692 1.72386 10.7692 2V4.26923H8.5C8.22386 4.26923 8 4.49309 8 4.76923C8 5.04537 8.22386 5.26923 8.5 5.26923H10.7692V7.53846C10.7692 7.8146 10.9931 8.03846 11.2692 8.03846C11.5454 8.03846 11.7692 7.8146 11.7692 7.53846V5.26923H14.0385C14.3146 5.26923 14.5385 5.04537 14.5385 4.76923C14.5385 4.49309 14.3146 4.26923 14.0385 4.26923H11.7692V2Z"
-    fill="currentColor"
   />
 </svg>

@@ -41,13 +41,7 @@ export const AddTemplateInstanceIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M4 2h-.667A1.333 1.333 0 0 0 2 3.333V4M12 14h.667A1.334 1.334 0 0 0 14 12.667V12M2 12v.667A1.333 1.333 0 0 0 3.333 14H4M6 2h.667M6 14h4M2 6v4.001M14 9.333V10"
-        />
-        <path
-          fill="currentColor"
-          fillRule="evenodd"
-          d="M11.77 2a.5.5 0 1 0-1 0v2.27H8.5a.5.5 0 0 0 0 1h2.27v2.268a.5.5 0 0 0 1 0V5.27h2.269a.5.5 0 0 0 0-1h-2.27V2Z"
-          clipRule="evenodd"
+          d="M4.5 2H3.333A1.333 1.333 0 0 0 2 3.333V4.5M14 12.667c0 .021 0 .042-.002.063M11.5 14h1.167a1.333 1.333 0 0 0 1.331-1.27m0 0V11.5M2 11.5v1.167A1.333 1.333 0 0 0 3.333 14H4.5M7 14h2M2 7v2M8.461 4.77H14M11.23 2v5.538"
         />
       </svg>
     );
@@ -4479,7 +4473,7 @@ export const StopIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <rect width="9" height="9" x="3.5" y="3.5" rx="1" />
+        <rect width="9" height="9" x="3.5" y="3.5" fill="currentColor" rx="1" />
       </svg>
     );
   }
