@@ -3095,7 +3095,7 @@ export const LinkIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M6 11.333H4.667a3.333 3.333 0 0 1 0-6.666H6M10 4.667h1.333a3.334 3.334 0 0 1 0 6.666H10M5.333 8h5.334"
+          d="M8.943 11.771 8 12.714A3.333 3.333 0 0 1 3.286 8l.943-.943M7.057 4.229 8 3.286A3.333 3.333 0 1 1 12.714 8l-.943.943M6.114 9.886l3.772-3.772"
         />
       </svg>
     );
