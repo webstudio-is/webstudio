@@ -1,225 +1,6 @@
 import { forwardRef } from "react";
 import type { IconComponent } from "../types";
 
-export const ACCenterIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.3c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M10.75 5.5a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5V7a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V5.5ZM6.25 5.5a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5V7a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V5.5ZM1.75 5.5a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5V7a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V5.5ZM1.75 9a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V9Z" />
-        <path
-          fillRule="evenodd"
-          d="M14.5 1.7c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ACCenterIcon.displayName = "ACCenterIcon";
-
-export const ACEndIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.3c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M10.75 7a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V7ZM6.25 7a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V7ZM1.75 7a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V7ZM1.75 10.5a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5V12a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5v-1.5Z" />
-        <path
-          fillRule="evenodd"
-          d="M14.5 1.7c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ACEndIcon.displayName = "ACEndIcon";
-
-export const ACSpaceAroundIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.3c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M10.75 4.8a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4.8ZM6.25 4.8a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4.8ZM1.75 4.8a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4.8ZM1.75 9.7a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V9.7Z" />
-        <path
-          fillRule="evenodd"
-          d="M14.5 1.7c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ACSpaceAroundIcon.displayName = "ACSpaceAroundIcon";
-
-export const ACSpaceBetweenIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.3c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M10.75 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM6.25 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM1.75 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM1.75 10.5a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5V12a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5v-1.5Z" />
-        <path
-          fillRule="evenodd"
-          d="M14.5 1.7c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ACSpaceBetweenIcon.displayName = "ACSpaceBetweenIcon";
-
-export const ACStartIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.3c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M10.75 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM6.25 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM1.75 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM1.75 7.5a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5V9a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V7.5Z" />
-        <path
-          fillRule="evenodd"
-          d="M14.5 1.7c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ACStartIcon.displayName = "ACStartIcon";
-
-export const ACStretchIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14.5 14.3c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M10.75 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM6.25 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM1.75 4a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V4ZM1.75 9a.5.5 0 0 1 .5-.5h2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-2.5a.5.5 0 0 1-.5-.5V9Z" />
-        <path
-          fillRule="evenodd"
-          d="M14.5 1.7c0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7 0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-ACStretchIcon.displayName = "ACStretchIcon";
-
-export const AIStartIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M1.5 2.3c0-.387.344-.7.768-.7h11.464c.424 0 .768.313.768.7 0 .387-.344.7-.768.7H2.268c-.424 0-.768-.313-.768-.7Z"
-          clipRule="evenodd"
-        />
-        <path d="M4.5 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v6.4a.8.8 0 0 1-.8.8H5.3a.8.8 0 0 1-.8-.8V4.8ZM8.5 4.8a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v3.4a.8.8 0 0 1-.8.8H9.3a.8.8 0 0 1-.8-.8V4.8Z" />
-      </svg>
-    );
-  }
-);
-AIStartIcon.displayName = "AIStartIcon";
-
 export const AccordionIcon: IconComponent = forwardRef(
   (
     { color = "currentColor", fill = "none", size = 16, ...props },
@@ -512,6 +293,360 @@ export const AlignCenterHorizontalIcon: IconComponent = forwardRef(
   }
 );
 AlignCenterHorizontalIcon.displayName = "AlignCenterHorizontalIcon";
+
+export const AlignContentCenterIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="5.131"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="8.27"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="6.051"
+          y="5.131"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="10.602"
+          y="5.131"
+          fill="currentColor"
+          rx=".8"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 2.327h13M1.5 13.673h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignContentCenterIcon.displayName = "AlignContentCenterIcon";
+
+export const AlignContentEndIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="6.312"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="9.45"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="6.051"
+          y="6.312"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="10.602"
+          y="6.312"
+          fill="currentColor"
+          rx=".8"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 2.327h13M1.5 13.673h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignContentEndIcon.displayName = "AlignContentEndIcon";
+
+export const AlignContentSpaceAroundIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="4.528"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="8.873"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="6.051"
+          y="4.528"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="10.602"
+          y="4.528"
+          fill="currentColor"
+          rx=".8"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 2.327h13M1.5 13.673h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignContentSpaceAroundIcon.displayName = "AlignContentSpaceAroundIcon";
+
+export const AlignContentSpaceBetweenIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="3.952"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="9.45"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="6.051"
+          y="3.952"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="10.602"
+          y="3.952"
+          fill="currentColor"
+          rx=".8"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 2.327h13M1.5 13.673h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignContentSpaceBetweenIcon.displayName = "AlignContentSpaceBetweenIcon";
+
+export const AlignContentStartIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="3.956"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="1.5"
+          y="7.094"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="6.051"
+          y="3.956"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="2.598"
+          x="10.602"
+          y="3.956"
+          fill="currentColor"
+          rx=".8"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 2.327h13M1.5 13.673h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignContentStartIcon.displayName = "AlignContentStartIcon";
+
+export const AlignContentStretchIcon: IconComponent = forwardRef(
+  (
+    { color = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <rect
+          width="3.898"
+          height="3.683"
+          x="1.5"
+          y="4.053"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="3.683"
+          x="1.5"
+          y="8.386"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="3.764"
+          x="6.051"
+          y="3.931"
+          fill="currentColor"
+          rx=".8"
+        />
+        <rect
+          width="3.898"
+          height="3.764"
+          x="10.602"
+          y="3.931"
+          fill="currentColor"
+          rx=".8"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 2.327h13M1.5 13.673h13"
+        />
+      </svg>
+    );
+  }
+);
+AlignContentStretchIcon.displayName = "AlignContentStretchIcon";
 
 export const AlignEndHorizontalIcon: IconComponent = forwardRef(
   (
@@ -6114,8 +6249,30 @@ export const WrapIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path d="M4.98 2.33A.98.98 0 0 0 4 1.35H2.66a.98.98 0 0 0-.98.98v4.01c0 .541.439.98.98.98H4a.98.98 0 0 0 .98-.98V2.33ZM9.65 2.33a.98.98 0 0 0-.98-.98H7.33a.98.98 0 0 0-.98.98v4.01c0 .541.439.98.98.98h1.34a.98.98 0 0 0 .98-.98V2.33ZM4.98 9.67A.98.98 0 0 0 4 8.69H2.66a.98.98 0 0 0-.98.98v4.01c0 .54.439.98.98.98H4a.98.98 0 0 0 .98-.98V9.67Z" />
-        <path d="M11.687 3.902a.65.65 0 0 0-.407 1.234 3.022 3.022 0 0 1-.947 5.889H8.572L9.8 9.8a.65.65 0 0 0-.919-.92l-2.34 2.335a.65.65 0 0 0 0 .92l2.34 2.335a.65.65 0 1 0 .919-.92l-1.228-1.225h1.761a4.32 4.32 0 0 0 1.354-8.423Z" />
+        <rect
+          width="2.94"
+          height="6"
+          x="2.03"
+          y="5"
+          fill="currentColor"
+          rx="1"
+        />
+        <rect
+          width="2.94"
+          height="6"
+          x="6.56"
+          y="5"
+          fill="currentColor"
+          rx="1"
+        />
+        <rect
+          width="2.94"
+          height="6"
+          x="11.03"
+          y="5"
+          fill="currentColor"
+          rx="1"
+        />
       </svg>
     );
   }

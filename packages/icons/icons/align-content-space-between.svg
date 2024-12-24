@@ -1,0 +1,52 @@
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect
+    x="1.5"
+    y="3.95163"
+    width="3.89764"
+    height="2.59843"
+    rx="0.8"
+    fill="currentColor"
+  />
+  <rect
+    x="1.5"
+    y="9.45038"
+    width="3.89764"
+    height="2.59843"
+    rx="0.8"
+    fill="currentColor"
+  />
+  <rect
+    x="6.05078"
+    y="3.95163"
+    width="3.89764"
+    height="2.59843"
+    rx="0.8"
+    fill="currentColor"
+  />
+  <rect
+    x="10.6021"
+    y="3.95163"
+    width="3.89764"
+    height="2.59843"
+    rx="0.8"
+    fill="currentColor"
+  />
+  <path
+    d="M1.50002 2.32706L7.99989 2.32706L14.4998 2.32706"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M1.50026 13.6729L8.00013 13.6729L14.5 13.6729"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

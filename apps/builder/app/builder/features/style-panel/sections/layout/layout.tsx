@@ -24,20 +24,20 @@ import {
   ArrowUpIcon,
   AlignCenterHorizontalIcon,
   AlignHorizontalJustifyCenterIcon,
-  ACCenterIcon,
-  AIStartIcon,
+  AlignContentCenterIcon,
+  AlignStartHorizontalIcon,
   AlignEndHorizontalIcon,
   AlignBaselineIcon,
   StretchVerticalIcon,
   AlignHorizontalJustifyStartIcon,
   AlignHorizontalJustifyEndIcon,
-  JCSpaceBetweenIcon,
-  JCSpaceAroundIcon,
-  ACStartIcon,
-  ACEndIcon,
-  ACSpaceAroundIcon,
-  ACSpaceBetweenIcon,
-  ACStretchIcon,
+  AlignHorizontalSpaceBetweenIcon,
+  AlignHorizontalSpaceAroundIcon,
+  AlignContentStartIcon,
+  AlignContentEndIcon,
+  AlignContentSpaceAroundIcon,
+  AlignContentSpaceBetweenIcon,
+  AlignContentStretchIcon,
 } from "@webstudio-is/icons";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
@@ -416,7 +416,11 @@ const LayoutSectionFlex = () => {
                   label: "Center",
                   icon: AlignCenterHorizontalIcon,
                 },
-                { name: "start", label: "Start", icon: AIStartIcon },
+                {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignStartHorizontalIcon,
+                },
                 { name: "end", label: "End", icon: AlignEndHorizontalIcon },
               ]}
             />
@@ -426,12 +430,12 @@ const LayoutSectionFlex = () => {
                 {
                   name: "space-between",
                   label: "Space Between",
-                  icon: JCSpaceBetweenIcon,
+                  icon: AlignHorizontalSpaceBetweenIcon,
                 },
                 {
                   name: "space-around",
                   label: "Space Around",
-                  icon: JCSpaceAroundIcon,
+                  icon: AlignHorizontalSpaceAroundIcon,
                 },
                 {
                   name: "center",
@@ -457,17 +461,29 @@ const LayoutSectionFlex = () => {
                   {
                     name: "space-between",
                     label: "Space Between",
-                    icon: ACSpaceBetweenIcon,
+                    icon: AlignContentSpaceBetweenIcon,
                   },
                   {
                     name: "space-around",
                     label: "Space Around",
-                    icon: ACSpaceAroundIcon,
+                    icon: AlignContentSpaceAroundIcon,
                   },
-                  { name: "stretch", label: "Stretch", icon: ACStretchIcon },
-                  { name: "center", label: "Center", icon: ACCenterIcon },
-                  { name: "start", label: "Start", icon: ACStartIcon },
-                  { name: "end", label: "End", icon: ACEndIcon },
+                  {
+                    name: "stretch",
+                    label: "Stretch",
+                    icon: AlignContentStretchIcon,
+                  },
+                  {
+                    name: "center",
+                    label: "Center",
+                    icon: AlignContentCenterIcon,
+                  },
+                  {
+                    name: "start",
+                    label: "Start",
+                    icon: AlignContentStartIcon,
+                  },
+                  { name: "end", label: "End", icon: AlignContentEndIcon },
                 ]}
               />
             )}
