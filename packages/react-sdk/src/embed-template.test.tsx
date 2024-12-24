@@ -4,8 +4,6 @@ import { showAttribute } from "./props";
 
 const expectString = expect.any(String);
 
-const defaultBreakpointId = "base";
-
 test("generate data for embedding from instances and text", () => {
   expect(
     generateDataFromEmbedTemplate(
@@ -20,8 +18,7 @@ test("generate data for embedding from instances and text", () => {
           ],
         },
       ],
-      new Map(),
-      defaultBreakpointId
+      new Map()
     )
   ).toEqual({
     children: [
@@ -77,8 +74,7 @@ test("generate data for embedding from props", () => {
           ],
         },
       ],
-      new Map(),
-      defaultBreakpointId
+      new Map()
     )
   ).toEqual({
     children: [{ type: "id", value: expectString }],
@@ -130,35 +126,34 @@ test("generate data for embedding from props", () => {
 });
 
 test("generate data for embedding from styles", () => {
-  expect(
-    generateDataFromEmbedTemplate(
-      [
-        {
-          type: "instance",
-          component: "Box1",
-          styles: [
-            { property: "width", value: { type: "keyword", value: "auto" } },
-            { property: "height", value: { type: "keyword", value: "auto" } },
-          ],
-          children: [
-            {
-              type: "instance",
-              component: "Box2",
-              styles: [
-                {
-                  property: "color",
-                  value: { type: "keyword", value: "black" },
-                },
-              ],
-              children: [],
-            },
-          ],
-        },
-      ],
-      new Map(),
-      defaultBreakpointId
-    )
-  ).toEqual({
+  const fragment = generateDataFromEmbedTemplate(
+    [
+      {
+        type: "instance",
+        component: "Box1",
+        styles: [
+          { property: "width", value: { type: "keyword", value: "auto" } },
+          { property: "height", value: { type: "keyword", value: "auto" } },
+        ],
+        children: [
+          {
+            type: "instance",
+            component: "Box2",
+            styles: [
+              {
+                property: "color",
+                value: { type: "keyword", value: "black" },
+              },
+            ],
+            children: [],
+          },
+        ],
+      },
+    ],
+    new Map()
+  );
+  const baseBreakpointId = fragment.breakpoints[0].id;
+  expect(fragment).toEqual({
     children: [{ type: "id", value: expectString }],
     instances: [
       {
@@ -198,21 +193,21 @@ test("generate data for embedding from styles", () => {
     ],
     styles: [
       {
-        breakpointId: "base",
+        breakpointId: baseBreakpointId,
         styleSourceId: expectString,
         state: undefined,
         property: "width",
         value: { type: "keyword", value: "auto" },
       },
       {
-        breakpointId: "base",
+        breakpointId: baseBreakpointId,
         styleSourceId: expectString,
         state: undefined,
         property: "height",
         value: { type: "keyword", value: "auto" },
       },
       {
-        breakpointId: "base",
+        breakpointId: baseBreakpointId,
         styleSourceId: expectString,
         state: undefined,
         property: "color",
@@ -220,7 +215,12 @@ test("generate data for embedding from styles", () => {
       },
     ],
     assets: [],
-    breakpoints: [],
+    breakpoints: [
+      {
+        id: baseBreakpointId,
+        label: "",
+      },
+    ],
     resources: [],
   });
 });
@@ -257,8 +257,7 @@ test("generate data for embedding from props bound to data source variables", ()
           children: [],
         },
       ],
-      new Map(),
-      defaultBreakpointId
+      new Map()
     )
   ).toEqual({
     children: [
@@ -319,8 +318,7 @@ test("generate variables with aliases instead of reference name", () => {
           children: [],
         },
       ],
-      new Map(),
-      defaultBreakpointId
+      new Map()
     )
   ).toEqual({
     children: [{ type: "id", value: expectString }],
@@ -381,8 +379,7 @@ test("generate data for embedding from props with complex expressions", () => {
           children: [],
         },
       ],
-      new Map(),
-      defaultBreakpointId
+      new Map()
     )
   ).toEqual({
     children: [
@@ -474,8 +471,7 @@ test("generate data for embedding from action props", () => {
           ],
         },
       ],
-      new Map(),
-      defaultBreakpointId
+      new Map()
     )
   ).toEqual({
     children: [{ type: "id", value: expectString }],
@@ -566,8 +562,7 @@ test("generate data for embedding from parameter props", () => {
         children: [],
       },
     ],
-    new Map(),
-    defaultBreakpointId
+    new Map()
   );
   const instanceId = data.instances[0].id;
   const variableId = data.dataSources[0].id;
@@ -634,8 +629,7 @@ test("generate data for embedding from instance child bound to variables", () =>
           children: [{ type: "expression", value: "myValue" }],
         },
       ],
-      new Map(),
-      defaultBreakpointId
+      new Map()
     )
   ).toEqual({
     children: [{ type: "id", value: expectString }],

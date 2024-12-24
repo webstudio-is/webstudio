@@ -38,7 +38,7 @@ import {
   findClosestInsertable,
   getComponentTemplateData,
   getInstanceLabel,
-  insertTemplateData,
+  insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { matchSorter } from "match-sorter";
@@ -191,7 +191,7 @@ export const ComponentsPanel = ({
     if (fragment) {
       const insertable = findClosestInsertable(fragment);
       if (insertable) {
-        insertTemplateData(fragment, insertable);
+        insertWebstudioFragmentAt(fragment, insertable);
       }
     }
   };
