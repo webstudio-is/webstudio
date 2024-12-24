@@ -359,5 +359,4 @@ export const CommandIcon = styled("div", {
   width: theme.spacing[9],
   height: theme.spacing[9],
   placeSelf: "center",
-  color: theme.colors.foregroundSubtle,
 });

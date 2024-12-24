@@ -6,31 +6,12 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M1.33325 6.66667H5.33325V2.66667"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
+    d="M13.4444 1H2.55556C1.69645 1 1 1.69645 1 2.55556V13.4444C1 14.3036 1.69645 15 2.55556 15H13.4444C14.3036 15 15 14.3036 15 13.4444V2.55556C15 1.69645 14.3036 1 13.4444 1Z"
+    fill="#D2D2D2"
   />
   <path
-    d="M1.33325 2.66667L5.33325 6.66667"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M14 6.66667V4.66667C14 4.31304 13.8595 3.97391 13.6095 3.72386C13.3594 3.47381 13.0203 3.33333 12.6667 3.33333H8"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M2 9.33333V10.6667C2 11.0203 2.14048 11.3594 2.39052 11.6095C2.64057 11.8595 2.97971 12 3.33333 12H5.33333"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M14 9.33333H8.66667C8.29848 9.33333 8 9.63181 8 10V13.3333C8 13.7015 8.29848 14 8.66667 14H14C14.3682 14 14.6667 13.7015 14.6667 13.3333V10C14.6667 9.63181 14.3682 9.33333 14 9.33333Z"
+    d="M11.3335 5.66667H4.66675L4.66679 10.3333H11.3335V5.66667Z"
+    fill="white"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"

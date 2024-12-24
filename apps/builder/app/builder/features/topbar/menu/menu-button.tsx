@@ -4,7 +4,7 @@ import {
   rawTheme,
   ToolbarButton,
 } from "@webstudio-is/design-system";
-import { HamburgerMenuIcon, WebstudioIcon } from "@webstudio-is/icons";
+import { MenuIcon, WebstudioIcon } from "@webstudio-is/icons";
 
 const size = rawTheme.spacing[9];
 
@@ -56,7 +56,7 @@ export const MenuButton = () => {
             <WebstudioIcon size={22} />
           </span>
           <span className={faceStyle({ back: true })}>
-            <HamburgerMenuIcon size={22} />
+            <MenuIcon size={22} />
           </span>
         </span>
       </DropdownMenuTrigger>

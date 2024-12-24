@@ -14,7 +14,7 @@ import {
 } from "../../controls/toggle-group/toggle-group-control";
 import { TextControl } from "../../controls";
 import {
-  SmallXIcon,
+  XSmallIcon,
   AlignSelfStartIcon,
   AlignSelfEndIcon,
   AlignSelfCenterIcon,
@@ -69,7 +69,7 @@ const FlexChildSectionAlign = () => {
         properties={["alignSelf"]}
         items={[
           {
-            child: <SmallXIcon />,
+            child: <XSmallIcon />,
             description:
               "The element's alignment is determined by its parent's align-items property.",
             value: "auto",
@@ -131,7 +131,7 @@ const FlexChildSectionSizing = () => {
   );
   const items = [
     {
-      child: <SmallXIcon />,
+      child: <XSmallIcon />,
       description: "Don't grow or shrink",
       value: "none",
       codeLines: ["flex-grow: 0;", "flex-shrink: 0;"],
@@ -300,7 +300,7 @@ const FlexChildSectionOrder = () => {
   const selectedValue = toValue(order.cascadedValue);
   const items = [
     {
-      child: <SmallXIcon />,
+      child: <XSmallIcon />,
       description: "Don't change",
       value: "0",
       code: "order: 0;",

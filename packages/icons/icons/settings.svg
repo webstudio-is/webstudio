@@ -30,20 +30,20 @@
     stroke-linejoin="round"
   />
   <rect
-    x="1.98145"
-    y="9.0342"
-    width="3"
-    height="3"
-    rx="1.5"
+    x="2"
+    y="8.5342"
+    width="4"
+    height="4"
+    rx="2"
     fill="white"
     stroke="currentColor"
   />
   <rect
-    x="11.0186"
-    y="3.9658"
-    width="3"
-    height="3"
-    rx="1.5"
+    x="10.0962"
+    y="3.4658"
+    width="4"
+    height="4"
+    rx="2"
     fill="white"
     stroke="currentColor"
   />

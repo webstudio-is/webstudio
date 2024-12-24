@@ -18,25 +18,13 @@
     stroke-linejoin="round"
   />
   <path
-    d="M2 14.0039V3.5C2 3.10218 2.15804 2.72064 2.43934 2.43934C2.72064 2.15804 3.10218 2 3.5 2H12.5C12.8978 2 13.2794 2.15804 13.5607 2.43934C13.842 2.72064 14 3.10218 14 3.5V8.75"
+    d="M14 8.75V3.5C14 3.10218 13.842 2.72064 13.5607 2.43934C13.2794 2.15804 12.8978 2 12.5 2H3.5C3.10218 2 2.72064 2.15804 2.43934 2.43934C2.15804 2.72064 2 3.10218 2 3.5V8.75195V11.3779V12.6909V12.6909C2 13.4161 2.58785 14.0039 3.31299 14.0039H3.50112H5.00225H8.00449"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M12.3765 14.1679L13.9999 12.5444L12.3765 10.921"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M7.50604 10.921L5.88257 12.5444L7.50604 14.1679"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M10.7767 9.93214L9.10547 14.9431"
+    d="M11 14.3137L11 11.3137L12.5 12.837L14 11.3137L14 14.3137"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
