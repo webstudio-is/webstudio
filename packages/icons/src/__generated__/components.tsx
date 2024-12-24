@@ -1919,13 +1919,13 @@ export const ContentEmbedIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.191c0 .725.588 1.313 1.313 1.313h4.691"
+          d="M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.252c0 .69.56 1.25 1.25 1.25v0H6M12.817 13.698 14 12.515l-1.183-1.182"
         />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M11 14.314v-3l1.5 1.523 1.5-1.523v3"
+          d="m9.269 11.333-1.183 1.182 1.183 1.183M11.652 10.612l-1.218 3.651"
         />
       </svg>
     );
