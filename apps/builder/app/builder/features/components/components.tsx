@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { XIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -39,7 +40,6 @@ import {
 import type { Publish } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/awareness";
 import { mapGroupBy } from "~/shared/shim";
-import { computed } from "nanostores";
 
 type Meta = {
   name: string;
