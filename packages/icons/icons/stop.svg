@@ -4,5 +4,5 @@
   height="16"
   viewBox="0 0 16 16"
 >
-  <rect x="3.5" y="3.5" width="9" height="9" rx="1" stroke="currentColor" />
+  <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
 </svg>

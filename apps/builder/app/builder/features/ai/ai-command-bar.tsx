@@ -308,7 +308,7 @@ export const AiCommandBar = () => {
     aiButtonDisabled = true;
 
     recordButtonColor = "destructive";
-    recordButtonIcon = <StopIcon />;
+    recordButtonIcon = <StopIcon fill="white" />;
 
     aiButtonTooltip = undefined;
   }
