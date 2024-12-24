@@ -10,7 +10,7 @@ import {
 import {
   DiscordIcon,
   GithubIcon,
-  XIcon,
+  XLogoIcon,
   Youtube1cIcon,
   type IconComponent,
   WebstudioIcon,
@@ -88,7 +88,7 @@ const Resource = ({
       >
         <CardContent>
           <Flex align="center" justify="center">
-            <Icon className={resourceIconSyle({ css: { color } })} />
+            <Icon className={resourceIconSyle({ css: { fill: color } })} />
           </Flex>
         </CardContent>
         <CardFooter>
@@ -139,7 +139,7 @@ export const Resources = () => {
           <Resource
             href="https://x.com/getwebstudio"
             title="Follow on X"
-            Icon={XIcon}
+            Icon={XLogoIcon}
             color={theme.colors.foregroundMain}
           />
           <Resource

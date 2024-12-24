@@ -384,6 +384,8 @@ export const XAxisIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" vi
 
 export const XCircledFilledIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z"/><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" d="m5.333 10.667 5.334-5.334M10.667 10.667 5.333 5.333"/></svg>`;
 
+export const XLogoIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="#000" d="M9.142 7.081 13.609 2H12.55L8.671 6.412 5.573 2H2l4.685 6.672L2 14h1.059l4.096-4.66L10.427 14H14L9.141 7.081Zm-1.45 1.65-.475-.665L3.44 2.78h1.626l3.048 4.266.475.664 3.962 5.546h-1.626L7.692 8.73Z"/></svg>`;
+
 export const XSmallIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="m5.333 10.667 5.334-5.334M10.667 10.667 5.333 5.333"/></svg>`;
 
 export const XIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.5 3 3 12.5M3 3l9.5 9.5"/></svg>`;
