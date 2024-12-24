@@ -11,8 +11,8 @@ import { type CSS, css, theme, styled } from "../stitches.config";
 const checkboxStyle = css({
   all: "unset", // reset <button>
 
-  width: theme.spacing[9],
-  height: theme.spacing[9],
+  width: theme.spacing[7],
+  height: theme.spacing[7],
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20,10 +20,10 @@ const checkboxStyle = css({
   borderRadius: theme.borderRadius[3],
   color: theme.colors.foregroundMain,
   background: theme.colors.backgroundControls,
-  outline: `1px solid ${theme.colors.borderMain}`,
+  border: `1px solid ${theme.colors.borderMain}`,
 
   "&:focus-visible": {
-    outline: `1px solid ${theme.colors.borderFocus}`,
+    borderColor: theme.colors.borderFocus,
   },
 
   // [data-state] is needed to make selector specificity higher
