@@ -23,7 +23,8 @@ import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
 import {
   extractWebstudioFragment,
-  findTargetAndInsertFragment,
+  findClosestInsertable,
+  insertWebstudioFragmentAt,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { insertPageCopyMutable } from "~/shared/page-utils";
@@ -47,7 +48,10 @@ const insertSection = ({
   fragment.instances = fragment.instances.filter(
     (instance) => instance.component !== "Body"
   );
-  findTargetAndInsertFragment(fragment);
+  const insertable = findClosestInsertable(fragment);
+  if (insertable) {
+    insertWebstudioFragmentAt(fragment, insertable);
+  }
 };
 
 const insertPage = ({

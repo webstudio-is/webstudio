@@ -16,7 +16,7 @@ import {
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   getComponentTemplateData,
-  insertTemplateData,
+  insertWebstudioFragmentAt,
   reparentInstance,
 } from "~/shared/instance-utils";
 import {
@@ -323,7 +323,7 @@ export const useDragAndDrop = () => {
         if (templateData === undefined) {
           return;
         }
-        insertTemplateData(templateData, {
+        insertWebstudioFragmentAt(templateData, {
           parentSelector: dropTarget.itemSelector,
           position: dropTarget.indexWithinChildren,
         });

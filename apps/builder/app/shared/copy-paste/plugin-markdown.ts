@@ -7,7 +7,10 @@ import type {
   Instance,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
-import { findClosestInsertable, insertTemplateData } from "../instance-utils";
+import {
+  findClosestInsertable,
+  insertWebstudioFragmentAt,
+} from "../instance-utils";
 import { $breakpoints } from "../nano-states";
 import { isBaseBreakpoint } from "../breakpoints";
 import { denormalizeSrcProps } from "./asset-upload";
@@ -220,7 +223,7 @@ export const onPaste = async (clipboardData: string) => {
   if (insertable === undefined) {
     return false;
   }
-  insertTemplateData(fragment, insertable);
+  insertWebstudioFragmentAt(fragment, insertable);
   return true;
 };
 
