@@ -6,49 +6,49 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M4 2H3.33333C2.97971 2 2.64057 2.14048 2.39052 2.39052C2.14048 2.64057 2 2.97971 2 3.33333V4"
+    d="M4.5 2H3.33333C2.97971 2 2.64057 2.14048 2.39052 2.39052C2.14048 2.64057 2 2.97971 2 3.33333V4.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M14 4L14 3.33333C14 2.97971 13.8595 2.64057 13.6094 2.39052C13.3594 2.14048 13.0202 2 12.6666 2H12"
+    d="M14 4.5V3.33333C14 2.97971 13.8595 2.64057 13.6094 2.39052C13.3594 2.14048 13.0202 2 12.6666 2H11.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M14 12.6667C14 12.688 13.9994 12.7093 13.9984 12.7305M12 14L12.6666 14C13.0202 14 13.3594 13.8595 13.6094 13.6095C13.8444 13.3745 13.9826 13.0609 13.9984 12.7305M13.9984 12.7305L14 12"
+    d="M14 12.6667C14 12.688 13.9994 12.7093 13.9984 12.7305M11.5 14H12.6666C13.0202 14 13.3594 13.8595 13.6094 13.6095C13.8444 13.3745 13.9826 13.0609 13.9984 12.7305M13.9984 12.7305V11.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M2 12V12.6667C2 13.0203 2.14048 13.3594 2.39052 13.6095C2.64057 13.8595 2.97971 14 3.33333 14H4"
+    d="M2 11.5V12.6667C2 13.0203 2.14048 13.3594 2.39052 13.6095C2.64057 13.8595 2.97971 14 3.33333 14H4.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M6 2H10"
+    d="M6.5 2H9.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M6 14H10"
+    d="M6.5 14H9.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M2 6V10"
+    d="M2 6.5V9.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M14 6V10"
+    d="M14 6.5V9.5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
