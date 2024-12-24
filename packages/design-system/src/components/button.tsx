@@ -215,7 +215,7 @@ export const Button = forwardRef(
                 justify={"center"}
                 align={"center"}
               >
-                <LoadingDotsIcon size={28} fill="white" />
+                <LoadingDotsIcon size={28} fill="currentColor" />
               </Flex>
             )}
           </TextContainer>
