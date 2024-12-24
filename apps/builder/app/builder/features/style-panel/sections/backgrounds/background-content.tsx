@@ -9,7 +9,7 @@ import {
   RepeatGridIcon,
   RepeatColumnIcon,
   RepeatRowIcon,
-  CrossSmallIcon,
+  XSmallIcon,
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
@@ -63,7 +63,7 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
   const value = getRepeatedStyleItem(styleDecl, index);
   const items = [
     {
-      child: <CrossSmallIcon />,
+      child: <XSmallIcon />,
       description:
         "This value indicates that the background image will not be repeated and will appear only once.",
       value: "no-repeat",

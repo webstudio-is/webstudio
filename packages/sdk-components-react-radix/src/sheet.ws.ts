@@ -1,4 +1,4 @@
-import { HamburgerMenuIcon, LargeXIcon } from "@webstudio-is/icons/svg";
+import { MenuIcon, LargeXIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import * as tc from "./theme/tailwind-classes";
 import { getButtonStyles } from "./theme/styles";
@@ -15,7 +15,7 @@ export const meta: WsComponentMeta = {
   category: "radix",
   order: 1,
   type: "container",
-  icon: HamburgerMenuIcon,
+  icon: MenuIcon,
   stylable: false,
   description:
     "Displays content in a menu that slides out from the side of the screen, triggered by a button. Use this component for a typical mobile hamburger menu.",
@@ -44,7 +44,7 @@ export const meta: WsComponentMeta = {
                     {
                       type: "string",
                       name: "code",
-                      value: HamburgerMenuIcon,
+                      value: MenuIcon,
                     },
                   ],
                   children: [],

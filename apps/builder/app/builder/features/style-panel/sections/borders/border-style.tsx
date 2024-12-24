@@ -1,10 +1,10 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
 import {
-  DashBorderIcon,
+  MinusIcon,
   DashedBorderIcon,
   DottedBorderIcon,
-  SmallXIcon,
+  XSmallIcon,
 } from "@webstudio-is/icons";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import {
@@ -35,12 +35,12 @@ export const BorderStyle = () => {
           properties={properties}
           items={[
             {
-              child: <SmallXIcon />,
+              child: <XSmallIcon />,
               description: declarationDescriptions["borderBlockStyle:none"],
               value: "none",
             },
             {
-              child: <DashBorderIcon />,
+              child: <MinusIcon />,
               description: declarationDescriptions["borderBlockStyle:solid"],
               value: "solid",
             },

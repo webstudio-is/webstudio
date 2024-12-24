@@ -7,8 +7,8 @@ import {
   SectionTitleLabel,
   SectionTitleButton,
   Separator,
+  theme,
 } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Simplify } from "type-fest";

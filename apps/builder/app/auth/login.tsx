@@ -100,7 +100,7 @@ export const Login = ({
               <Form action={authPath({ provider: "github" })} method="post">
                 <BrandButton
                   disabled={isGithubEnabled === false}
-                  icon={<GithubIcon size={22} />}
+                  icon={<GithubIcon size={22} fill="currentColor" />}
                 >
                   Sign in with GitHub
                 </BrandButton>

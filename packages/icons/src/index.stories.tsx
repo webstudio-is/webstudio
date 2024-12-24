@@ -33,7 +33,7 @@ export const Icons = ({ testColor }: { testColor: boolean }): ReactNode => {
                   justifyContent: "center",
                 }}
               >
-                <Icon width="32" height="32" />
+                <Icon width="32" height="32" fill="black" color="black" />
                 <div
                   style={{
                     marginTop: 16,

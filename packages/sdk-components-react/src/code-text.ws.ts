@@ -1,4 +1,4 @@
-import { CodeTextIcon } from "@webstudio-is/icons/svg";
+import { BracesIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -44,7 +44,7 @@ export const meta: WsComponentMeta = {
   type: "embed",
   description:
     "Use this component when you want to display code as text on the page.",
-  icon: CodeTextIcon,
+  icon: BracesIcon,
   constraints: {
     relation: "ancestor",
     component: { $neq: "CodeText" },

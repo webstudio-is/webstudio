@@ -1,7 +1,7 @@
 import { IconButton, Text, Grid, theme } from "@webstudio-is/design-system";
 import {
   AspectRatioIcon,
-  DeleteIcon,
+  TrashIcon,
   DimensionsIcon,
   ImageIcon,
 } from "@webstudio-is/icons";
@@ -52,7 +52,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
         </Grid>
       </Grid>
       <IconButton onClick={onDelete}>
-        <DeleteIcon />
+        <TrashIcon />
       </IconButton>
     </Grid>
   );

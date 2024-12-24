@@ -1,4 +1,4 @@
-import { CrossIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { XIcon, SpinnerIcon } from "@webstudio-is/icons";
 import {
   Button,
   Flex,
@@ -46,7 +46,7 @@ export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
           <Tooltip content="Close panel" side="bottom">
             <Button
               color="ghost"
-              prefix={<CrossIcon />}
+              prefix={<XIcon />}
               aria-label="Close panel"
               onClick={onClose}
             />

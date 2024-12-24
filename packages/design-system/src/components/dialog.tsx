@@ -17,7 +17,7 @@ import { useDisableCanvasPointerEvents } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
 import { mergeRefs } from "@react-aria/utils";
 import { Button } from "./button";
-import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
+import { XIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { Separator } from "./separator";
 
 export const DialogTrigger = Primitive.Trigger;
@@ -74,7 +74,7 @@ export const DialogClose = forwardRef(
       {children ?? (
         <Button
           color="ghost"
-          prefix={<CrossIcon />}
+          prefix={<XIcon />}
           aria-label="Close"
           {...props}
           ref={ref}

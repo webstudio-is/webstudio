@@ -10,7 +10,7 @@ import { Separator } from "./separator";
 import { PanelTitle } from "./panel-title";
 import { Flex } from "./flex";
 import { Button } from "./button";
-import { CrossIcon } from "@webstudio-is/icons";
+import { XIcon } from "@webstudio-is/icons";
 
 export const Popover = Primitive.Root;
 
@@ -96,7 +96,7 @@ export const PopoverClose = forwardRef(
       {children ?? (
         <Button
           color="ghost"
-          prefix={<CrossIcon />}
+          prefix={<XIcon />}
           aria-label="Close"
           {...props}
           ref={ref}

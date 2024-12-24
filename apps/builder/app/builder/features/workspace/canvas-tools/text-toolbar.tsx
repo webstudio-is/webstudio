@@ -6,7 +6,7 @@ import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import {
   SuperscriptIcon,
   SubscriptIcon,
-  CrossSmallIcon,
+  XSmallIcon,
   BoldIcon,
   TextItalicIcon,
   LinkIcon,
@@ -132,7 +132,7 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
           disabled={isCleared}
           onClick={() => emitCommand("formatClear")}
         >
-          <CrossSmallIcon />
+          <XSmallIcon />
         </IconButton>
       </Tooltip>
 

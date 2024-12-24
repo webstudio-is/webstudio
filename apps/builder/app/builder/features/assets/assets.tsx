@@ -4,7 +4,7 @@ import {
   Separator,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { CrossIcon } from "@webstudio-is/icons";
+import { XIcon } from "@webstudio-is/icons";
 import { ImageManager } from "~/builder/shared/image-manager";
 
 export const AssetsPanel = ({ onClose }: { onClose: () => void }) => {
@@ -15,7 +15,7 @@ export const AssetsPanel = ({ onClose }: { onClose: () => void }) => {
           <Tooltip content="Close panel" side="bottom">
             <Button
               color="ghost"
-              prefix={<CrossIcon />}
+              prefix={<XIcon />}
               aria-label="Close panel"
               onClick={onClose}
             />

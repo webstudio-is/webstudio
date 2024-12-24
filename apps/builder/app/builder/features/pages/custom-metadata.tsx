@@ -10,7 +10,7 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
+import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { isLiteralExpression } from "@webstudio-is/sdk";
 import {
@@ -125,7 +125,7 @@ const MetadataItem = (props: {
 
         <SmallIconButton
           variant="destructive"
-          icon={<DeleteIcon />}
+          icon={<TrashIcon />}
           onClick={props.onDelete}
         />
 

@@ -12,7 +12,7 @@ import {
 import {
   CloudIcon,
   AspectRatioIcon,
-  SizeIcon,
+  DimensionsIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
 import type { Asset } from "@webstudio-is/sdk";
@@ -51,7 +51,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
         <Box css={{ padding: theme.panel.padding }}>
           <Grid columns={2} gap={2} align="center">
             <Flex align="center" gap={1}>
-              <SizeIcon />
+              <DimensionsIcon />
               <Text variant="labelsSentenceCase">
                 {meta.width} x {meta.height}
               </Text>

@@ -30,9 +30,9 @@ import {
   TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
 import {
-  ChevronDoubleLeftIcon,
+  ChevronsLeftIcon,
   TrashIcon,
-  HelpIcon,
+  InfoCircleIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { $pages } from "~/shared/nano-states";
@@ -170,7 +170,7 @@ const FormFields = ({
                 content={"Slug will be used as part of the path to the page"}
                 variant="wrapped"
               >
-                <HelpIcon
+                <InfoCircleIcon
                   color={rawTheme.colors.foregroundSubtle}
                   tabIndex={0}
                 />
@@ -282,7 +282,7 @@ const NewFolderSettingsView = ({
               <Button
                 onClick={onClose}
                 aria-label="Cancel"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 color="ghost"
                 // Tab should go:
                 //   trought form fields -> create button -> cancel button
@@ -479,7 +479,7 @@ const FolderSettingsView = ({
             <Tooltip content="Close folder settings" side="bottom">
               <Button
                 color="ghost"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 onClick={onClose}
                 aria-label="Close folder settings"
                 tabIndex={2}

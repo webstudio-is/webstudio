@@ -27,10 +27,10 @@ import {
   FloatingPanel,
 } from "@webstudio-is/design-system";
 import {
-  EyeconClosedIcon,
+  EyeClosedIcon,
   PlusIcon,
-  SubtractIcon,
-  EyeconOpenIcon,
+  MinusIcon,
+  EyeOpenIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
@@ -273,12 +273,12 @@ const TransformSection = ({
                   value: styleDecl.cascadedValue,
                 })
               }
-              icon={value.hidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
+              icon={value.hidden ? <EyeClosedIcon /> : <EyeOpenIcon />}
             />
             <SmallIconButton
               variant="destructive"
               tabIndex={-1}
-              icon={<SubtractIcon />}
+              icon={<MinusIcon />}
               onClick={() =>
                 handleDeleteTransformProperty({
                   panel,

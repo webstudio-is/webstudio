@@ -34,7 +34,7 @@ const buttonStyle = css({
   outline: "none",
   alignItems: "center",
   justifyContent: "center",
-  color: theme.colors.foregroundMain,
+  color: theme.colors.foregroundIconMain,
   backgroundColor: theme.colors.backgroundPanel,
   border: "none",
   "&:focus-visible": triggerFocusRing,

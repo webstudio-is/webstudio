@@ -22,7 +22,7 @@ import {
   DialogOverlay,
   DialogContent,
 } from "@radix-ui/react-dialog";
-import { MagnifyingGlassIcon } from "@webstudio-is/icons";
+import { SearchIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Text, textVariants } from "./text";
 import { Flex } from "./flex";
@@ -133,7 +133,7 @@ const CommandInputContainer = styled("div", {
   borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
 });
 
-const CommandInputIcon = styled(MagnifyingGlassIcon, {
+const CommandInputIcon = styled(SearchIcon, {
   gridColumn: "1 / 2",
   gridRow: "1 / 2",
   placeSelf: "center",
@@ -359,5 +359,4 @@ export const CommandIcon = styled("div", {
   width: theme.spacing[9],
   height: theme.spacing[9],
   placeSelf: "center",
-  color: theme.colors.foregroundSubtle,
 });

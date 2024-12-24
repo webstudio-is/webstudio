@@ -21,10 +21,7 @@ import {
   type ItemMode,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { autoScrollWindowForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import {
-  ChevronFilledDownIcon,
-  ChevronFilledRightIcon,
-} from "@webstudio-is/icons";
+import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Text } from "./text";
@@ -485,7 +482,11 @@ export const TreeNode = ({
           tabIndex={-1}
           onClick={(event) => onExpand?.(isExpanded === false, event.altKey)}
         >
-          {isExpanded ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />}
+          {isExpanded ? (
+            <ChevronDownIcon size="12" />
+          ) : (
+            <ChevronRightIcon size="12" />
+          )}
         </ExpandButton>
       )}
       {action && <ActionContainer data-tree-action>{action}</ActionContainer>}

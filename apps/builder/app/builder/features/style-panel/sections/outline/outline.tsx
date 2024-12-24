@@ -1,9 +1,9 @@
 import { Grid, theme } from "@webstudio-is/design-system";
 import {
-  DashBorderIcon,
+  MinusIcon,
   DashedBorderIcon,
   DottedBorderIcon,
-  SmallXIcon,
+  XSmallIcon,
 } from "@webstudio-is/icons";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
@@ -41,8 +41,8 @@ export const Section = () => {
           label="Style"
           properties={["outlineStyle"]}
           items={[
-            { child: <SmallXIcon />, value: "none" },
-            { child: <DashBorderIcon />, value: "solid" },
+            { child: <XSmallIcon />, value: "none" },
+            { child: <MinusIcon />, value: "solid" },
             { child: <DashedBorderIcon />, value: "dashed" },
             { child: <DottedBorderIcon />, value: "dotted" },
           ]}
