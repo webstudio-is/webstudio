@@ -1,5 +1,5 @@
 import type { ResourceRequest } from "@webstudio-is/sdk";
-import arrgv from "arrgv";
+import { tokenizeArgs } from "args-tokenizer";
 import { parse as parseArgs } from "ultraflag";
 
 /*
@@ -30,15 +30,7 @@ export type CurlRequest = Pick<
 >;
 
 export const parseCurl = (curl: string): undefined | CurlRequest => {
-  // remove backslash followed by newline
-  // https://github.com/astur/arrgv/issues/3
-  curl = curl.replaceAll(/\\(?=\s)/g, "");
-  let argv;
-  try {
-    argv = arrgv(curl);
-  } catch {
-    return;
-  }
+  const argv = tokenizeArgs(curl);
   if (argv.length === 0) {
     return;
   }

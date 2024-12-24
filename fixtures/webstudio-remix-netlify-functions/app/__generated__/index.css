@@ -82,7 +82,6 @@
     border-bottom-width: 1px;
     border-left-width: 1px;
     outline-width: 1px;
-    min-height: 1em;
     display: inline-block;
   }
   :where(img.w-image) {

@@ -80,10 +80,13 @@ const TextFieldContainer = styled("div", {
   alignItems: "center",
   backgroundColor: theme.colors.backgroundControls,
   gap: theme.spacing[2],
-  p: theme.spacing[2],
+  padding: theme.spacing[2],
   borderRadius: theme.borderRadius[4],
   minWidth: 0,
-  border: `1px solid ${theme.colors.borderMain}`,
+  border: `1px solid transparent`,
+  "&:hover": {
+    borderColor: theme.colors.borderMain,
+  },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
   },

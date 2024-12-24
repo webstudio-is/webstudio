@@ -14,7 +14,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "general",
+  category: "typography",
   type: "container",
   constraints: {
     // cannot use parent relation here
@@ -27,18 +27,12 @@ export const meta: WsComponentMeta = {
   icon: ListItemIcon,
   states: defaultStates,
   presetStyle,
-  order: 4,
+  order: 5,
   template: [
     {
       type: "instance",
       component: "ListItem",
-      children: [
-        {
-          type: "text",
-          value: "List Item text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };

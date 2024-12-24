@@ -111,6 +111,10 @@ export const Outline = ({
       Math.min(rect.left + rect.width, clampingRect.left + clampingRect.width) -
       Math.max(rect.left, clampingRect.left),
   };
+  const dynamicStyle = useDynamicStyle(outlineRect);
+  if (outlineRect.width <= 0 || outlineRect.height <= 0) {
+    return;
+  }
 
   const isLeftClamped = rect.left < outlineRect.left;
   const isTopClamped = rect.top < outlineRect.top;
@@ -120,8 +124,6 @@ export const Outline = ({
 
   const isBottomClamped =
     Math.round(rect.top + rect.height) > Math.round(clampingRect.height);
-
-  const dynamicStyle = useDynamicStyle(outlineRect);
 
   return (
     <>

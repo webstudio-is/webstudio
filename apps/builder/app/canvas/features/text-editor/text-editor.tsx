@@ -39,6 +39,7 @@ import {
   type NodeKey,
   $getNodeByKey,
   SELECTION_CHANGE_COMMAND,
+  $selectAll,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -61,7 +62,11 @@ import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { colord } from "colord";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
+import {
+  deleteInstanceMutable,
+  findAllEditableInstanceSelector,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
 import {
   $blockChildOutline,
   $hoveredInstanceOutline,
@@ -72,6 +77,7 @@ import {
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
+  findBlockChildSelector,
   findTemplates,
 } from "~/shared/nano-states";
 import {
@@ -86,6 +92,10 @@ import {
   selectInstance,
 } from "~/shared/awareness";
 import { shallowEqual } from "shallow-equal";
+import {
+  insertListItemAt,
+  insertTemplateAt,
+} from "~/builder/features/workspace/canvas-tools/outline/block-utils";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -565,12 +575,21 @@ const InitCursorPlugin = () => {
             if ($isTextNode(node)) {
               selection.anchor.set(node.getKey(), domOffset, "text");
               selection.focus.set(node.getKey(), domOffset, "text");
-            }
-            const normalizedSelection =
-              $normalizeSelection__EXPERIMENTAL(selection);
+              const normalizedSelection =
+                $normalizeSelection__EXPERIMENTAL(selection);
 
-            $setSelection(normalizedSelection);
-            return;
+              $setSelection(normalizedSelection);
+              return;
+            }
+          }
+
+          if (domNode instanceof Element) {
+            const rect = domNode.getBoundingClientRect();
+            if (mouseX > rect.right) {
+              const selection = $getRoot().selectEnd();
+              $setSelection(selection);
+              return;
+            }
           }
         }
       }
@@ -707,6 +726,10 @@ const InitCursorPlugin = () => {
           }
         }
 
+        return;
+      }
+      if (reason === "new") {
+        $selectAll();
         return;
       }
 
@@ -929,38 +952,39 @@ type ContextMenuParams = {
   cursorRect: DOMRect;
 };
 
-type ContextMenuPluginProps = {
+type RichTextContentPluginProps = {
   rootInstanceSelector: InstanceSelector;
   onOpen: (
     editorState: EditorState,
     params: undefined | ContextMenuParams
   ) => void;
+  onNext: (editorState: EditorState, params: HandleNextParams) => void;
 };
 
-const ContextMenuPlugin = (props: ContextMenuPluginProps) => {
-  const [hasTemplates] = useState(() => {
-    const templates = findTemplates(
-      props.rootInstanceSelector,
-      $instances.get()
-    );
-    if (templates === undefined) {
-      return false;
-    }
+const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
+  const [templates] = useState(() =>
+    findTemplates(props.rootInstanceSelector, $instances.get())
+  );
 
-    return templates.length > 0;
-  });
-
-  if (!hasTemplates) {
-    return null;
+  if (templates === undefined) {
+    return;
   }
 
-  return <ContextMenuPluginInternal {...props} />;
+  if (templates.length === 0) {
+    return;
+  }
+
+  return <RichTextContentPluginInternal {...props} templates={templates} />;
 };
 
-const ContextMenuPluginInternal = ({
+const RichTextContentPluginInternal = ({
   rootInstanceSelector,
   onOpen,
-}: ContextMenuPluginProps) => {
+  templates,
+  onNext,
+}: RichTextContentPluginProps & {
+  templates: [instance: Instance, instanceSelector: InstanceSelector][];
+}) => {
   const [editor] = useLexicalComposerContext();
   const [preservedSelection] = useState(rootInstanceSelector);
 
@@ -1002,6 +1026,18 @@ const ContextMenuPluginInternal = ({
 
       if (!isSelectionInSameComponent) {
         node?.remove();
+
+        // Delete current
+        if ($getRoot().getTextContentSize() === 0) {
+          const blockChildSelector =
+            findBlockChildSelector(rootInstanceSelector);
+
+          if (blockChildSelector) {
+            updateWebstudioData((data) => {
+              deleteInstanceMutable(data, rootInstanceSelector);
+            });
+          }
+        }
       }
 
       // if selection changed, remove the slash node
@@ -1019,11 +1055,6 @@ const ContextMenuPluginInternal = ({
       SELECTION_CHANGE_COMMAND,
       () => {
         if (menuState !== "opened") {
-          return false;
-        }
-
-        if (!isSingleCursorSelection()) {
-          closeMenu();
           return false;
         }
 
@@ -1047,14 +1078,145 @@ const ContextMenuPluginInternal = ({
     const unsubscibeKeyDown = editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event) => {
-        if (!isSingleCursorSelection()) {
-          return false;
-        }
-
         const selection = $getSelection();
 
         if (!$isRangeSelection(selection)) {
           return false;
+        }
+
+        if (event.key === "Backspace" || event.key === "Delete") {
+          if ($getRoot().getTextContentSize() === 0) {
+            const currentInstance = $instances
+              .get()
+              .get(rootInstanceSelector[0]);
+
+            if (currentInstance?.component === "ListItem") {
+              onNext(editor.getEditorState(), { reason: "left" });
+
+              const parentInstanceSelector = rootInstanceSelector.slice(1);
+              const parentInstance = $instances
+                .get()
+                .get(parentInstanceSelector[0]);
+
+              const isLastChild = parentInstance?.children.length === 1;
+
+              updateWebstudioData((data) => {
+                deleteInstanceMutable(
+                  data,
+                  isLastChild ? parentInstanceSelector : rootInstanceSelector
+                );
+              });
+
+              event.preventDefault();
+              return true;
+            }
+
+            const blockChildSelector =
+              findBlockChildSelector(rootInstanceSelector);
+
+            if (blockChildSelector) {
+              onNext(editor.getEditorState(), { reason: "left" });
+
+              updateWebstudioData((data) => {
+                deleteInstanceMutable(data, blockChildSelector);
+              });
+
+              event.preventDefault();
+              return true;
+            }
+          }
+        }
+
+        if (menuState === "closed") {
+          if (event.key === "Enter" && !event.shiftKey) {
+            // Custom logic if we are editing ListItem
+            const currentInstance = $instances
+              .get()
+              .get(rootInstanceSelector[0]);
+
+            if (
+              currentInstance?.component === "ListItem" &&
+              $getRoot().getTextContentSize() > 0
+            ) {
+              // Instead of creating block component we need to add a new ListItem
+              insertListItemAt(rootInstanceSelector);
+              event.preventDefault();
+              return true;
+            }
+
+            // Check if it pressed on the last line, last symbol
+
+            const allowedComponents = ["Paragraph", "Text", "Heading"];
+
+            for (const component of allowedComponents) {
+              const templateSelector = templates.find(
+                ([instance]) => instance.component === component
+              )?.[1];
+
+              if (templateSelector === undefined) {
+                continue;
+              }
+
+              /*
+              @todo Split logic idea
+              // clone root node then
+
+              // getPreviousSibling
+              const removeNextSiblings = (node: LexicalNode) => {
+                let current: LexicalNode | null = node;
+                while (current) {
+                  const next = current.getNextSibling();
+                  if (next) {
+                    next.remove();
+                    continue;
+                  }
+                  // Move up to parent and continue removing siblings
+
+                  current = current.getParent();
+
+                  if ($isRootNode(current)) {
+                    break;
+                  }
+                }
+              };
+
+              const anchorNode = selection.anchor.getNode();
+              const anchorOffset = selection.anchor.offset;
+
+              if (!$isTextNode(anchorNode)) {
+                continue;
+              }
+              anchorNode.splitText(anchorOffset);
+              removeNextSiblings(anchorNode);
+
+              */
+
+              insertTemplateAt(templateSelector, rootInstanceSelector, false);
+
+              if (
+                currentInstance?.component === "ListItem" &&
+                $getRoot().getTextContentSize() === 0
+              ) {
+                const parentInstanceSelector = rootInstanceSelector.slice(1);
+                const parentInstance = $instances
+                  .get()
+                  .get(parentInstanceSelector[0]);
+
+                const isLastChild = parentInstance?.children.length === 1;
+
+                // Pressing Enter within an empty list item deletes the empty item
+                updateWebstudioData((data) => {
+                  deleteInstanceMutable(
+                    data,
+                    isLastChild ? parentInstanceSelector : rootInstanceSelector
+                  );
+                });
+              }
+
+              event.preventDefault();
+              return true;
+            }
+          }
         }
 
         if (menuState === "opened") {
@@ -1192,7 +1354,14 @@ const ContextMenuPluginInternal = ({
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
     };
-  }, [editor, handleOpen, preservedSelection]);
+  }, [
+    editor,
+    handleOpen,
+    onNext,
+    preservedSelection,
+    rootInstanceSelector,
+    templates,
+  ]);
 
   return null;
 };
@@ -1282,13 +1451,14 @@ const AnyKeyDownPlugin = ({
 };
 
 export const TextEditor = ({
-  rootInstanceSelector,
+  rootInstanceSelector: rootInstanceSelectorUnstable,
   instances,
   contentEditable,
   editable,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
+  const [rootInstanceSelector] = useState(() => rootInstanceSelectorUnstable);
   // class names must be started with letter so we add a prefix
   const [paragraphClassName] = useState(() => `a${nanoid()}`);
   const [italicClassName] = useState(() => `a${nanoid()}`);
@@ -1314,6 +1484,15 @@ export const TextEditor = ({
 
       setDataCollapsed(rootInstanceSelector[0], false);
     });
+
+    const textEditingSelector = $textEditingInstanceSelector.get()?.selector;
+    if (textEditingSelector === undefined) {
+      return;
+    }
+
+    if (shallowEqual(textEditingSelector, rootInstanceSelector)) {
+      $textEditingInstanceSelector.set(undefined);
+    }
   });
 
   useLayoutEffect(() => {
@@ -1363,7 +1542,7 @@ export const TextEditor = ({
     onError,
   };
 
-  const handleNext = useCallback(
+  const handleNext = useEffectEvent(
     (state: EditorState, args: HandleNextParams) => {
       const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
@@ -1421,9 +1600,24 @@ export const TextEditor = ({
 
         const instance = instances.get(nextSelector[0]);
 
+        if (instance === undefined) {
+          continue;
+        }
+
+        // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
+        const componentsWithPseudoElementChildren = [
+          "ListItem",
+          "Paragraph",
+          "Heading",
+        ];
+
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
-        if (instance?.children.length === 0) {
+        if (
+          !componentsWithPseudoElementChildren.includes(instance.component) &&
+          instance?.children.length === 0
+        ) {
           const elt = getElementByInstanceSelector(nextSelector);
+
           if (elt === undefined) {
             continue;
           }
@@ -1444,8 +1638,7 @@ export const TextEditor = ({
 
         break;
       }
-    },
-    [handleChange, instances, rootInstanceSelector]
+    }
   );
 
   const handleAnyKeydown = useCallback((event: KeyboardEvent) => {
@@ -1498,7 +1691,6 @@ export const TextEditor = ({
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
-        placeholder={<></>}
       />
       <LinkPlugin />
 
@@ -1506,9 +1698,10 @@ export const TextEditor = ({
       <HistoryPlugin />
 
       <SwitchBlockPlugin onNext={handleNext} />
-      <ContextMenuPlugin
+      <RichTextContentPlugin
         onOpen={handleContextMenuOpen}
         rootInstanceSelector={rootInstanceSelector}
+        onNext={handleNext}
       />
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />

@@ -13,11 +13,7 @@ export const ConfirmationDialog = ({
   onAbort,
 }: ConfirmationDialogProps) => {
   return (
-    <Flex
-      gap="2"
-      direction="column"
-      css={{ px: theme.spacing[11], py: theme.spacing[5], width: 300 }}
-    >
+    <Flex gap="2" direction="column" css={{ padding: theme.spacing[5] }}>
       <Text>{`Are you sure you want to delete "${breakpoint.label}"?`}</Text>
       <Text>
         {`Deleting a breakpoint will also delete all styles associated with this

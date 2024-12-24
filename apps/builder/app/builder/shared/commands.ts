@@ -230,7 +230,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: [
     "editInstanceText",
-    "newInstanceText",
     "formatBold",
     "formatItalic",
     "formatSuperscript",
@@ -300,6 +299,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("publish");
       },
+      disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
     },
     {
       name: "openExportDialog",
@@ -307,6 +308,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("export");
       },
+      disableHotkeyOnFormTags: true,
+      disableHotkeyOnContentEditable: true,
     },
     {
       name: "toggleComponentsPanel",
@@ -498,7 +501,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       hidden: true,
       defaultHotkeys: ["meta+k", "ctrl+k"],
       handler: () => {
-        openCommandPanel();
+        if ($isDesignMode.get()) {
+          openCommandPanel();
+        }
       },
     },
   ],

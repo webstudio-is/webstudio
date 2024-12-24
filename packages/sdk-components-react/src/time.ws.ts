@@ -16,14 +16,13 @@ const presetStyle = {
 } satisfies PresetStyle<"time">;
 
 export const meta: WsComponentMeta = {
-  category: "data",
+  category: "localization",
   type: "container",
   description:
     "Converts machine-readable date and time to a human-readable format.",
   icon: CalendarIcon,
   states: defaultStates,
   presetStyle,
-  order: 5,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

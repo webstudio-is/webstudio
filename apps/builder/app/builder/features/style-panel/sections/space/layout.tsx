@@ -41,7 +41,7 @@ const emulateInnerStroke = ({
 });
 
 const ValueArea = styled("path", {
-  fill: theme.colors.backgroundPanel,
+  fill: theme.colors.backgroundSpacingTopBottom,
   variants: {
     side: {
       top: { cursor: "n-resize" },
@@ -55,7 +55,11 @@ const ValueArea = styled("path", {
         fill: theme.colors.backgroundSpacingLeftRight,
       },
     },
-    isActive: { true: { fill: theme.colors.backgroundSpacingHover } },
+    isActive: {
+      true: {
+        fill: theme.colors.backgroundSpacingHover,
+      },
+    },
   },
 });
 

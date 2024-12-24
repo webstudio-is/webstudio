@@ -11,10 +11,13 @@ import {
 import {
   collapsedAttribute,
   idAttribute,
+  editingPlaceholderVariable,
   addGlobalRules,
   createImageValueTransformer,
   descendantComponent,
   rootComponent,
+  editablePlaceholderVariable,
+  componentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   type TransformValue,
@@ -61,7 +64,44 @@ export const mountStyles = () => {
   helpersSheet.render();
 };
 
+/**
+ * Opinionated list of non collapsible components in the builder
+ */
+export const editablePlaceholderComponents = [
+  "Paragraph",
+  "Heading",
+  "ListItem",
+  "Blockquote",
+  "Link",
+];
+
+const editablePlaceholderSelector = editablePlaceholderComponents
+  .map((component) => `[${componentAttribute}= "${component}"]`)
+  .join(", ");
+
 const helperStylesShared = [
+  // Display a placeholder text for elements that are editable but currently empty
+  `:is(${editablePlaceholderSelector}):empty::before {
+    content: var(${editablePlaceholderVariable}, '\\200B');
+    opacity: 0.3;
+  }
+  `,
+
+  // Display a placeholder text for elements that are editing but empty (Lexical adds p>br children)
+  `:is(${editablePlaceholderSelector})[contenteditable]:has(p:only-child > br:only-child) {
+    position: relative;
+    & > p:after {
+      content: var(${editingPlaceholderVariable});
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      min-width: 100px;
+      opacity: 0.3;
+    }
+  }
+  `,
+
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
     outline: 1px dashed rgba(0,0,0,0.7);

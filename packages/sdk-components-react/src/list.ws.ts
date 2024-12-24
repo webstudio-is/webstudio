@@ -43,13 +43,13 @@ const presetStyle = {
 } satisfies PresetStyle<ListTag>;
 
 export const meta: WsComponentMeta = {
-  category: "general",
+  category: "typography",
   type: "container",
   description: "Groups content, like links in a menu or steps in a recipe.",
   icon: ListIcon,
   states: defaultStates,
   presetStyle,
-  order: 3,
+  order: 4,
   template: [
     {
       type: "instance",

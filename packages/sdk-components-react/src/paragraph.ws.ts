@@ -14,7 +14,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "text",
+  category: "typography",
   type: "container",
   description: "A container for multi-line text.",
   icon: TextAlignLeftIcon,
@@ -29,13 +29,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Paragraph",
-      children: [
-        {
-          type: "text",
-          value: "Paragraph text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };

@@ -22,7 +22,7 @@ const presetStyle = {
 } satisfies PresetStyle<HeadingTags>;
 
 export const meta: WsComponentMeta = {
-  category: "text",
+  category: "typography",
   type: "container",
   description:
     "Use HTML headings to structure and organize content. Use the Tag property in settings to change the heading level (h1-h6).",
@@ -38,13 +38,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Heading",
-      children: [
-        {
-          type: "text",
-          value: "Heading text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };

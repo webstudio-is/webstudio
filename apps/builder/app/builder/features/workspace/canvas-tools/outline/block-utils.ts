@@ -4,6 +4,7 @@ import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/awareness";
 import {
   extractWebstudioFragment,
+  findAllEditableInstanceSelector,
   findAvailableDataSources,
   getWebstudioData,
   insertInstanceChildrenMutable,
@@ -12,6 +13,8 @@ import {
 } from "~/shared/instance-utils";
 import {
   $instances,
+  $registeredComponentMetas,
+  $textEditingInstanceSelector,
   findBlockChildSelector,
   findBlockSelector,
 } from "~/shared/nano-states";
@@ -65,6 +68,75 @@ const getInsertionIndex = (
   return insertBefore ? index : index + 1;
 };
 
+export const insertListItemAt = (listItemSelector: InstanceSelector) => {
+  const instances = $instances.get();
+
+  const parentSelector = listItemSelector.slice(1);
+
+  const parentInstance = instances.get(parentSelector[0]);
+
+  if (parentInstance === undefined) {
+    return;
+  }
+
+  const position =
+    1 +
+    parentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === listItemSelector[0]
+    );
+
+  if (position === 0) {
+    return;
+  }
+
+  const target: DroppableTarget = {
+    parentSelector,
+    position,
+  };
+
+  const fragment = extractWebstudioFragment(
+    getWebstudioData(),
+    listItemSelector[0]
+  );
+
+  fragment.instances = structuredClone(fragment.instances);
+  fragment.instances.splice(1);
+  fragment.instances[0].children = [];
+
+  updateWebstudioData((data) => {
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableDataSources: findAvailableDataSources(
+        data.dataSources,
+        data.instances,
+        target.parentSelector
+      ),
+    });
+    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+    if (newRootInstanceId === undefined) {
+      return;
+    }
+    const children: Instance["children"] = [
+      { type: "id", value: newRootInstanceId },
+    ];
+
+    insertInstanceChildrenMutable(data, children, target);
+
+    const selectedInstanceSelector = [
+      newRootInstanceId,
+      ...target.parentSelector,
+    ];
+
+    $textEditingInstanceSelector.set({
+      selector: selectedInstanceSelector,
+      reason: "new",
+    });
+
+    selectInstance(selectedInstanceSelector);
+  });
+};
+
 export const insertTemplateAt = (
   templateSelector: InstanceSelector,
   anchor: InstanceSelector,
@@ -111,7 +183,33 @@ export const insertTemplateAt = (
     const children: Instance["children"] = [
       { type: "id", value: newRootInstanceId },
     ];
+
     insertInstanceChildrenMutable(data, children, target);
+
+    const selectedInstanceSelector = [
+      newRootInstanceId,
+      ...target.parentSelector,
+    ];
+
+    const selectors: InstanceSelector[] = [];
+
+    findAllEditableInstanceSelector(
+      selectedInstanceSelector,
+      data.instances,
+      $registeredComponentMetas.get(),
+      selectors
+    );
+
+    const editableInstanceSelector = selectors[0];
+
+    if (editableInstanceSelector) {
+      $textEditingInstanceSelector.set({
+        selector: editableInstanceSelector,
+        reason: "new",
+      });
+    } else {
+      $textEditingInstanceSelector.set(undefined);
+    }
 
     selectInstance([newRootInstanceId, ...target.parentSelector]);
   });

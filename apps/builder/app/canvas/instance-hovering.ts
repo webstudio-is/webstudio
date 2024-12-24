@@ -46,40 +46,48 @@ export const subscribeInstanceHovering = ({
     },
     eventOptions
   );
-  window.addEventListener(
-    "mousemove",
-    () => {
-      // We want the hover outline to appear only if a mouse or trackpad action caused it, not from keyboard navigation.
-      // Otherwise, when we leave the Lexical editor using the keyboard,
-      // the mouseover event triggers on elements created after Lexical loses focus.
-      // This causes an outline to appear on the element under the now-invisible mouse pointer
-      // (as the browser hides the pointer on blur), creating some visual distraction.
-      if (hoveredElement !== undefined) {
-        const instanceSelector = getInstanceSelectorFromElement(hoveredElement);
-        if (instanceSelector) {
-          if (updateOnMouseMove) {
-            $hoveredInstanceSelector.set(instanceSelector);
-            updateEditableChildOutline(instanceSelector);
-          } else {
-            const textSelector = $textEditingInstanceSelector.get()?.selector;
 
-            // We need to update the editable child's outline even if the mouseover event is not triggered.
-            // This can happen if the user enters text editing mode, presses any key, and then moves the mouse.
-            // In this case, the mouseover event does not occur, but we still need to show the editable child's outline.
-            if (
-              textSelector &&
-              isDescendantOrSelf(instanceSelector, textSelector) && // optimisation
-              $blockChildOutline.get() === undefined
-            ) {
-              updateEditableChildOutline(instanceSelector);
-            }
+  const updateEditableOutline = () => {
+    // We want the hover outline to appear only if a mouse or trackpad action caused it, not from keyboard navigation.
+    // Otherwise, when we leave the Lexical editor using the keyboard,
+    // the mouseover event triggers on elements created after Lexical loses focus.
+    // This causes an outline to appear on the element under the now-invisible mouse pointer
+    // (as the browser hides the pointer on blur), creating some visual distraction.
+    if (hoveredElement !== undefined) {
+      const instanceSelector = getInstanceSelectorFromElement(hoveredElement);
+      if (instanceSelector) {
+        if (updateOnMouseMove) {
+          $hoveredInstanceSelector.set(instanceSelector);
+          updateEditableChildOutline(instanceSelector);
+        } else {
+          const textSelector = $textEditingInstanceSelector.get()?.selector;
+
+          // We need to update the editable child's outline even if the mouseover event is not triggered.
+          // This can happen if the user enters text editing mode, presses any key, and then moves the mouse.
+          // In this case, the mouseover event does not occur, but we still need to show the editable child's outline.
+          if (
+            textSelector &&
+            isDescendantOrSelf(instanceSelector, textSelector) && // optimisation
+            $blockChildOutline.get() === undefined
+          ) {
+            updateEditableChildOutline(instanceSelector);
           }
         }
       }
-      updateOnMouseMove = false;
+    }
+    updateOnMouseMove = false;
+  };
+
+  window.addEventListener(
+    "click",
+    () => {
+      // Fixes the bug if initial editable instance is empty and has collapsed paddings
+      setTimeout(updateEditableOutline, 0);
     },
     eventOptions
   );
+
+  window.addEventListener("mousemove", updateEditableOutline, eventOptions);
 
   window.addEventListener(
     "mouseout",
