@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { createDebug } from "~/shared/debug";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -58,10 +58,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         `${builderUrl({ projectId, origin: url.origin })}builder-logout`
     );
 
-    return json({
+    return {
       redirectTo,
       logoutUrls,
-    });
+    };
   } catch (error) {
     if (error instanceof Response) {
       throw error;

@@ -1,4 +1,4 @@
-import { json } from "@remix-run/server-runtime";
+import { data } from "@remix-run/server-runtime";
 import { parsePages } from "@webstudio-is/project-build/index.server";
 import { getStaticSiteMapXml } from "@webstudio-is/sdk";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
@@ -32,7 +32,7 @@ export const loader = async ({ request }: { request: Request }) => {
     .single();
 
   if (buildResult.error) {
-    throw json({ message: buildResult.error.message }, { status: 404 });
+    throw data({ message: buildResult.error.message }, { status: 404 });
   }
 
   const build = buildResult.data;
@@ -41,5 +41,5 @@ export const loader = async ({ request }: { request: Request }) => {
 
   const siteMap = getStaticSiteMapXml(pages, build.updatedAt);
 
-  return json(siteMap);
+  return siteMap;
 };
