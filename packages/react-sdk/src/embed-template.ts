@@ -354,7 +354,6 @@ const createInstancesFromTemplate = (
 export const generateDataFromEmbedTemplate = (
   treeTemplate: WsEmbedTemplate,
   metas: Map<Instance["component"], WsComponentMeta>,
-  defaultBreakpointId: Breakpoint["id"],
   generateId: () => string = nanoid
 ): WebstudioFragment => {
   const instances: Instance[] = [];
@@ -363,6 +362,7 @@ export const generateDataFromEmbedTemplate = (
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styleSources: StyleSource[] = [];
   const styles: StyleDecl[] = [];
+  const baseBreakpointId = generateId();
 
   const children = createInstancesFromTemplate(
     treeTemplate,
@@ -373,9 +373,17 @@ export const generateDataFromEmbedTemplate = (
     styleSources,
     styles,
     metas,
-    defaultBreakpointId,
+    baseBreakpointId,
     generateId
   );
+  const breakpoints: Breakpoint[] = [];
+  // will be merged into project base breakpoint
+  if (styles.length > 0) {
+    breakpoints.push({
+      id: baseBreakpointId,
+      label: "",
+    });
+  }
 
   return {
     children,
@@ -385,8 +393,8 @@ export const generateDataFromEmbedTemplate = (
     styleSourceSelections,
     styleSources,
     styles,
+    breakpoints,
     assets: [],
-    breakpoints: [],
     resources: [],
   };
 };

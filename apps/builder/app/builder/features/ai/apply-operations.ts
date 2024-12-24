@@ -6,9 +6,10 @@ import { serverSyncStore } from "~/shared/sync";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
-  insertTemplateData,
+  insertWebstudioFragmentAt,
   isInstanceDetachable,
   updateWebstudioData,
+  type Insertable,
 } from "~/shared/instance-utils";
 import {
   $breakpoints,
@@ -19,7 +20,7 @@ import {
   $styleSources,
   $styles,
 } from "~/shared/nano-states";
-import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
+import type { InstanceSelector } from "~/shared/tree-utils";
 import { $selectedInstance } from "~/shared/awareness";
 
 export const applyOperations = (operations: operations.WsOperations) => {
@@ -45,18 +46,8 @@ export const applyOperations = (operations: operations.WsOperations) => {
 const insertTemplateByOp = (
   operation: operations.generateInsertTemplateWsOperation
 ) => {
-  const breakpoints = $breakpoints.get();
-  const breakpointValues = Array.from(breakpoints.values());
-  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
-  if (baseBreakpoint === undefined) {
-    return false;
-  }
   const metas = $registeredComponentMetas.get();
-  const templateData = generateDataFromEmbedTemplate(
-    operation.template,
-    metas,
-    baseBreakpoint.id
-  );
+  const templateData = generateDataFromEmbedTemplate(operation.template, metas);
 
   // @todo Find a way to avoid the workaround below, peharps improving the prompt.
   // Occasionally the LLM picks a component name or the entire data-ws-id attribute as the insertion point.
@@ -87,12 +78,11 @@ const insertTemplateByOp = (
       return;
     }
 
-    const dropTarget: DroppableTarget = {
+    const dropTarget: Insertable = {
       parentSelector: instanceSelector,
       position: operation.addAtIndex + 1,
     };
-
-    insertTemplateData(templateData, dropTarget);
+    insertWebstudioFragmentAt(templateData, dropTarget);
     return rootInstanceIds;
   }
 };

@@ -108,13 +108,11 @@ export const generateStories = async () => {
       continue;
     }
     const rootInstanceId = "root";
-    const baseBreakpointId = "base";
     let id = 0;
     const generateStableId = () => (++id).toString();
     const data = generateDataFromEmbedTemplate(
       meta.template,
       metas,
-      baseBreakpointId,
       generateStableId
     );
     const instances: Instances = new Map([
@@ -133,6 +131,9 @@ export const generateStories = async () => {
       ),
     ]);
     const props = new Map(data.props.map((prop) => [prop.id, prop]));
+    const breakpoints = new Map(
+      data.breakpoints.map((breakpoint) => [breakpoint.id, breakpoint])
+    );
     const components = new Set<Instance["component"]>();
     const usedMetas = new Map<Instance["component"], WsComponentMeta>();
     const bodyMeta = baseMetas.get("Body");
@@ -152,9 +153,7 @@ export const generateStories = async () => {
       instances,
       props,
       assets: new Map(),
-      breakpoints: new Map([
-        [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
-      ]),
+      breakpoints,
       styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
       styleSourceSelections: new Map(
         data.styleSourceSelections.map((item) => [item.instanceId, item])

@@ -39,7 +39,7 @@ import {
   findClosestInsertable,
   getComponentTemplateData,
   getInstanceLabel,
-  insertTemplateData,
+  insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
@@ -154,7 +154,7 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
               if (fragment) {
                 const insertable = findClosestInsertable(fragment);
                 if (insertable) {
-                  insertTemplateData(fragment, insertable);
+                  insertWebstudioFragmentAt(fragment, insertable);
                 }
               }
             }}

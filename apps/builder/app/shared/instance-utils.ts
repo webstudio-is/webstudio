@@ -51,13 +51,11 @@ import {
   type InstanceSelector,
   findLocalStyleSourcesWithinInstances,
   getAncestorInstanceSelector,
-  insertPropsCopyMutable,
   getReparentDropTargetMutable,
   getInstanceOrCreateFragmentIfNecessary,
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
-import { isBaseBreakpoint } from "./breakpoints";
 import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
@@ -157,7 +155,7 @@ const getLabelFromComponentName = (component: Instance["component"]) => {
 
 export const getInstanceLabel = (
   instance: { component: string; label?: string },
-  meta: WsComponentMeta
+  meta: { label?: string }
 ) => {
   return (
     instance.label ||
@@ -314,13 +312,11 @@ export const insertInstanceChildrenMutable = (
   }
 };
 
-export const findTargetAndInsertFragment = (fragment: WebstudioFragment) => {
-  let isSuccess = false;
-  const insertable = findClosestInsertable(fragment);
-  if (insertable === undefined) {
-    return isSuccess;
-  }
-
+export const insertWebstudioFragmentAt = (
+  fragment: WebstudioFragment,
+  insertable: Insertable
+) => {
+  let newRootInstanceId: undefined | Instance["id"];
   updateWebstudioData((data) => {
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
@@ -331,75 +327,18 @@ export const findTargetAndInsertFragment = (fragment: WebstudioFragment) => {
         insertable.parentSelector
       ),
     });
-    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+    newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {
-      isSuccess = false;
       return;
     }
     const children: Instance["children"] = [
       { type: "id", value: newRootInstanceId },
     ];
     insertInstanceChildrenMutable(data, children, insertable);
-    isSuccess = true;
   });
-
-  return isSuccess;
-};
-
-export const insertTemplateData = (
-  templateData: WebstudioFragment,
-  dropTarget: DroppableTarget
-) => {
-  const {
-    children,
-    instances: insertedInstances,
-    props: insertedProps,
-    dataSources: insertedDataSources,
-  } = templateData;
-  const rootInstanceId = insertedInstances[0].id;
-  updateWebstudioData((data) => {
-    const {
-      instances,
-      dataSources,
-      props,
-      styleSourceSelections,
-      styleSources,
-      styles,
-    } = data;
-    for (const instance of insertedInstances) {
-      instances.set(instance.id, instance);
-    }
-    insertInstanceChildrenMutable(data, children, dropTarget);
-    insertPropsCopyMutable(props, insertedProps, new Map());
-    for (const dataSource of insertedDataSources) {
-      dataSources.set(dataSource.id, dataSource);
-    }
-
-    // insert only new style sources and their styles to support
-    // embed template tokens which have persistent id
-    // so when user changes these styles and then again add component with token
-    // nothing breaks visually
-    const insertedStyleSources = new Set<StyleSource["id"]>();
-    for (const styleSource of templateData.styleSources) {
-      if (styleSources.has(styleSource.id) === false) {
-        insertedStyleSources.add(styleSource.id);
-        styleSources.set(styleSource.id, styleSource);
-      }
-    }
-    for (const styleDecl of templateData.styles) {
-      if (insertedStyleSources.has(styleDecl.styleSourceId)) {
-        styles.set(getStyleDeclKey(styleDecl), styleDecl);
-      }
-    }
-    for (const styleSourceSelection of templateData.styleSourceSelections) {
-      styleSourceSelections.set(
-        styleSourceSelection.instanceId,
-        styleSourceSelection
-      );
-    }
-  });
-
-  selectInstance([rootInstanceId, ...dropTarget.parentSelector]);
+  if (newRootInstanceId) {
+    selectInstance([newRootInstanceId, ...insertable.parentSelector]);
+  }
 };
 
 export const getComponentTemplateData = (component: string) => {
@@ -413,13 +352,7 @@ export const getComponentTemplateData = (component: string) => {
       children: [],
     },
   ];
-  const breakpoints = $breakpoints.get();
-  const breakpointValues = Array.from(breakpoints.values());
-  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
-  if (baseBreakpoint === undefined) {
-    return;
-  }
-  return generateDataFromEmbedTemplate(template, metas, baseBreakpoint.id);
+  return generateDataFromEmbedTemplate(template, metas);
 };
 
 export const reparentInstance = (
