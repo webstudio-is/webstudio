@@ -29,6 +29,9 @@ import {
   descendantComponent,
   blockComponent,
   blockTemplateComponent,
+  editingPlaceholderVariable,
+  WsComponentMeta,
+  editablePlaceholderVariable,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import {
@@ -37,6 +40,7 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
+  findBlockSelector,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -58,10 +62,14 @@ import {
 } from "~/canvas/elements";
 import { Block } from "../build-mode/block";
 import { BlockTemplate } from "../build-mode/block-template";
+import { getInstanceLabel } from "~/shared/instance-utils";
+import { editablePlaceholderComponents } from "~/canvas/shared/styles";
 
 const ContentEditable = ({
+  placeholder,
   renderComponentWithRef,
 }: {
+  placeholder: string | undefined;
   renderComponentWithRef: (
     elementRef: ForwardedRef<HTMLElement>
   ) => JSX.Element;
@@ -136,10 +144,17 @@ const ContentEditable = ({
     rootElement.style.removeProperty("white-space");
     rootElement.style.setProperty("white-space-collapse", "pre-wrap");
 
+    if (placeholder !== undefined) {
+      rootElement.style.setProperty(
+        editingPlaceholderVariable,
+        `'${placeholder.replaceAll("'", "\\'")}'`
+      );
+    }
+
     return () => {
       abortController.abort();
     };
-  }, [editor]);
+  }, [editor, placeholder]);
 
   return renderComponentWithRef(ref);
 };
@@ -348,12 +363,46 @@ const getTextContent = (instanceProps: Record<string, unknown>) => {
   return value as ReactNode;
 };
 
+const getEditableComponentPlaceholder = (
+  instanceSelector: InstanceSelector,
+  instances: Instances,
+  metas: Map<string, WsComponentMeta>,
+  mode: "editing" | "editable"
+) => {
+  const instance = instances.get(instanceSelector[0])!;
+
+  if (!editablePlaceholderComponents.includes(instance.component)) {
+    return;
+  }
+
+  const isContentBlockChild =
+    undefined !== findBlockSelector(instanceSelector, instances);
+
+  const meta = metas.get(instance.component);
+
+  const label = meta
+    ? getInstanceLabel(instance, meta)
+    : (instance.label ?? instance.component);
+
+  const isParagraph = instance.component === "Paragraph";
+
+  if (isParagraph && isContentBlockChild) {
+    return mode === "editing"
+      ? "Write something or press '/' for commands..."
+      : // The paragraph contains only an "editing" placeholder within the content block.
+        undefined;
+  }
+
+  return label;
+};
+
 export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
 
@@ -444,12 +493,29 @@ export const WebstudioComponentCanvas = forwardRef<
     Component = BlockTemplate;
   }
 
+  const placeholder = getEditableComponentPlaceholder(
+    instanceSelector,
+    instances,
+    metas,
+    "editable"
+  );
+
+  const mergedProps = mergeProps(restProps, instanceProps, "delete");
+
   const props: {
     [componentAttribute]: string;
     [idAttribute]: string;
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
-    ...mergeProps(restProps, instanceProps, "delete"),
+    ...mergedProps,
+    ...(placeholder !== undefined
+      ? {
+          style: {
+            ...mergedProps.style,
+            [editablePlaceholderVariable]: `'${placeholder.replaceAll("'", "\\'")}'`,
+          },
+        }
+      : null),
     // current props should override bypassed from parent
     // important for data-ws-* props
     tabIndex: 0,
@@ -487,6 +553,12 @@ export const WebstudioComponentCanvas = forwardRef<
       instances={instances}
       contentEditable={
         <ContentEditable
+          placeholder={getEditableComponentPlaceholder(
+            instanceSelector,
+            instances,
+            metas,
+            "editing"
+          )}
           renderComponentWithRef={(elementRef) => (
             <Component {...props} ref={mergeRefs(ref, elementRef)}>
               {initialContentEditableContent.current}

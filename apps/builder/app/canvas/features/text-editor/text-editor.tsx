@@ -1027,9 +1027,8 @@ const RichTextContentPluginInternal = ({
       if (!isSelectionInSameComponent) {
         node?.remove();
 
-        const rootNodeContent = $getRoot().getTextContent().trim();
         // Delete current
-        if (rootNodeContent.length === 0) {
+        if ($getRoot().getTextContentSize() === 0) {
           const blockChildSelector =
             findBlockChildSelector(rootInstanceSelector);
 
@@ -1086,9 +1085,7 @@ const RichTextContentPluginInternal = ({
         }
 
         if (event.key === "Backspace" || event.key === "Delete") {
-          const rootNodeContent = $getRoot().getTextContent().trim();
-
-          if (rootNodeContent.length === 0) {
+          if ($getRoot().getTextContentSize() === 0) {
             const currentInstance = $instances
               .get()
               .get(rootInstanceSelector[0]);
@@ -1096,8 +1093,18 @@ const RichTextContentPluginInternal = ({
             if (currentInstance?.component === "ListItem") {
               onNext(editor.getEditorState(), { reason: "left" });
 
+              const parentInstanceSelector = rootInstanceSelector.slice(1);
+              const parentInstance = $instances
+                .get()
+                .get(parentInstanceSelector[0]);
+
+              const isLastChild = parentInstance?.children.length === 1;
+
               updateWebstudioData((data) => {
-                deleteInstanceMutable(data, rootInstanceSelector);
+                deleteInstanceMutable(
+                  data,
+                  isLastChild ? parentInstanceSelector : rootInstanceSelector
+                );
               });
 
               event.preventDefault();
@@ -1127,10 +1134,9 @@ const RichTextContentPluginInternal = ({
               .get()
               .get(rootInstanceSelector[0]);
 
-            const rootNodeContent = $getRoot().getTextContent().trim();
             if (
               currentInstance?.component === "ListItem" &&
-              rootNodeContent.length > 0
+              $getRoot().getTextContentSize() > 0
             ) {
               // Instead of creating block component we need to add a new ListItem
               insertListItemAt(rootInstanceSelector);
@@ -1189,11 +1195,21 @@ const RichTextContentPluginInternal = ({
 
               if (
                 currentInstance?.component === "ListItem" &&
-                rootNodeContent.length === 0
+                $getRoot().getTextContentSize() === 0
               ) {
+                const parentInstanceSelector = rootInstanceSelector.slice(1);
+                const parentInstance = $instances
+                  .get()
+                  .get(parentInstanceSelector[0]);
+
+                const isLastChild = parentInstance?.children.length === 1;
+
                 // Pressing Enter within an empty list item deletes the empty item
                 updateWebstudioData((data) => {
-                  deleteInstanceMutable(data, rootInstanceSelector);
+                  deleteInstanceMutable(
+                    data,
+                    isLastChild ? parentInstanceSelector : rootInstanceSelector
+                  );
                 });
               }
 
@@ -1589,7 +1605,11 @@ export const TextEditor = ({
         }
 
         // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
-        const componentsWithPseudoElementChildren = ["ListItem"];
+        const componentsWithPseudoElementChildren = [
+          "ListItem",
+          "Paragraph",
+          "Heading",
+        ];
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
@@ -1671,7 +1691,6 @@ export const TextEditor = ({
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
-        placeholder={<></>}
       />
       <LinkPlugin />
 

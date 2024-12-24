@@ -13,10 +13,6 @@ const presetStyle = {
   a: [
     ...a,
     {
-      property: "minHeight",
-      value: { type: "unit", unit: "em", value: 1 },
-    },
-    {
       property: "display",
       value: { type: "keyword", value: "inline-block" },
     },
@@ -51,13 +47,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Link",
-      children: [
-        {
-          type: "text",
-          value: "Link text you can edit",
-          placeholder: true,
-        },
-      ],
+      children: [],
     },
   ],
 };

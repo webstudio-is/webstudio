@@ -25,6 +25,7 @@ import {
   $authPermit,
   $authToken,
   $authTokenPermissions,
+  $isDesignMode,
   $userPlanFeatures,
 } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
@@ -60,6 +61,7 @@ export const Menu = () => {
   const authPermit = useStore($authPermit);
   const authTokenPermission = useStore($authTokenPermissions);
   const authToken = useStore($authToken);
+  const isDesignMode = useStore($isDesignMode);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
@@ -240,12 +242,14 @@ export const Menu = () => {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onSelect={() => emitCommand("openCommandPanel")}>
-            Search & Commands
-            <DropdownMenuItemRightSlot>
-              <Kbd value={["cmd", "k"]} />
-            </DropdownMenuItemRightSlot>
-          </DropdownMenuItem>
+          {isDesignMode && (
+            <DropdownMenuItem onSelect={() => emitCommand("openCommandPanel")}>
+              Search & Commands
+              <DropdownMenuItemRightSlot>
+                <Kbd value={["cmd", "k"]} />
+              </DropdownMenuItemRightSlot>
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem
             onSelect={() => {
