@@ -8,11 +8,7 @@ import {
   type TupleValue,
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
-import {
-  EyeconClosedIcon,
-  EyeconOpenIcon,
-  SubtractIcon,
-} from "@webstudio-is/icons";
+import { EyeClosedIcon, EyeOpenIcon, MinusIcon } from "@webstudio-is/icons";
 import {
   CssValueListArrowFocus,
   CssValueListItem,
@@ -410,9 +406,7 @@ export const RepeatedStyle = (props: {
                       pressed={isHidden}
                       disabled={false === canBeChanged}
                       tabIndex={-1}
-                      icon={
-                        isHidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />
-                      }
+                      icon={isHidden ? <EyeClosedIcon /> : <EyeOpenIcon />}
                       onPressedChange={() =>
                         toggleRepeatedStyleItem(styles, index)
                       }
@@ -421,7 +415,7 @@ export const RepeatedStyle = (props: {
                       variant="destructive"
                       disabled={false === canBeChanged}
                       tabIndex={-1}
-                      icon={<SubtractIcon />}
+                      icon={<MinusIcon />}
                       onClick={() => deleteRepeatedStyleItem(styles, index)}
                     />
                   </>

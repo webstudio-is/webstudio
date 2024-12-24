@@ -3,7 +3,7 @@ import type { IconComponent } from "../types";
 
 export const AccordionIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -30,7 +30,7 @@ AccordionIcon.displayName = "AccordionIcon";
 
 export const AddTemplateInstanceIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -63,7 +63,7 @@ AddTemplateInstanceIcon.displayName = "AddTemplateInstanceIcon";
 
 export const AiLoadingIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -160,7 +160,7 @@ AiLoadingIcon.displayName = "AiLoadingIcon";
 
 export const AiIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -186,7 +186,7 @@ AiIcon.displayName = "AiIcon";
 
 export const AlertCircleIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -211,7 +211,7 @@ AlertCircleIcon.displayName = "AlertCircleIcon";
 
 export const AlertIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -238,7 +238,7 @@ AlertIcon.displayName = "AlertIcon";
 
 export const AlignBaselineIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -269,7 +269,7 @@ AlignBaselineIcon.displayName = "AlignBaselineIcon";
 
 export const AlignCenterHorizontalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -296,7 +296,7 @@ AlignCenterHorizontalIcon.displayName = "AlignCenterHorizontalIcon";
 
 export const AlignContentCenterIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -355,7 +355,7 @@ AlignContentCenterIcon.displayName = "AlignContentCenterIcon";
 
 export const AlignContentEndIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -414,7 +414,7 @@ AlignContentEndIcon.displayName = "AlignContentEndIcon";
 
 export const AlignContentSpaceAroundIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -473,7 +473,7 @@ AlignContentSpaceAroundIcon.displayName = "AlignContentSpaceAroundIcon";
 
 export const AlignContentSpaceBetweenIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -532,7 +532,7 @@ AlignContentSpaceBetweenIcon.displayName = "AlignContentSpaceBetweenIcon";
 
 export const AlignContentStartIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -591,7 +591,7 @@ AlignContentStartIcon.displayName = "AlignContentStartIcon";
 
 export const AlignContentStretchIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -650,7 +650,7 @@ AlignContentStretchIcon.displayName = "AlignContentStretchIcon";
 
 export const AlignEndHorizontalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -677,7 +677,7 @@ AlignEndHorizontalIcon.displayName = "AlignEndHorizontalIcon";
 
 export const AlignHorizontalJustifyCenterIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -705,7 +705,7 @@ AlignHorizontalJustifyCenterIcon.displayName =
 
 export const AlignHorizontalJustifyEndIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -732,7 +732,7 @@ AlignHorizontalJustifyEndIcon.displayName = "AlignHorizontalJustifyEndIcon";
 
 export const AlignHorizontalJustifyStartIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -759,7 +759,7 @@ AlignHorizontalJustifyStartIcon.displayName = "AlignHorizontalJustifyStartIcon";
 
 export const AlignHorizontalSpaceAroundIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -786,7 +786,7 @@ AlignHorizontalSpaceAroundIcon.displayName = "AlignHorizontalSpaceAroundIcon";
 
 export const AlignHorizontalSpaceBetweenIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -813,7 +813,7 @@ AlignHorizontalSpaceBetweenIcon.displayName = "AlignHorizontalSpaceBetweenIcon";
 
 export const AlignSelfBaselineIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -841,7 +841,7 @@ AlignSelfBaselineIcon.displayName = "AlignSelfBaselineIcon";
 
 export const AlignSelfCenterIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -868,7 +868,7 @@ AlignSelfCenterIcon.displayName = "AlignSelfCenterIcon";
 
 export const AlignSelfEndIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -895,7 +895,7 @@ AlignSelfEndIcon.displayName = "AlignSelfEndIcon";
 
 export const AlignSelfStartIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -922,7 +922,7 @@ AlignSelfStartIcon.displayName = "AlignSelfStartIcon";
 
 export const AlignSelfStretchIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -949,7 +949,7 @@ AlignSelfStretchIcon.displayName = "AlignSelfStretchIcon";
 
 export const AlignStartHorizontalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -976,7 +976,7 @@ AlignStartHorizontalIcon.displayName = "AlignStartHorizontalIcon";
 
 export const ArrowDownIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1003,7 +1003,7 @@ ArrowDownIcon.displayName = "ArrowDownIcon";
 
 export const ArrowLeftIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1030,7 +1030,7 @@ ArrowLeftIcon.displayName = "ArrowLeftIcon";
 
 export const ArrowRightIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1057,7 +1057,7 @@ ArrowRightIcon.displayName = "ArrowRightIcon";
 
 export const ArrowUpIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1084,7 +1084,7 @@ ArrowUpIcon.displayName = "ArrowUpIcon";
 
 export const AspectRatioIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1117,7 +1117,7 @@ AspectRatioIcon.displayName = "AspectRatioIcon";
 
 export const AsteriskIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1144,7 +1144,7 @@ AsteriskIcon.displayName = "AsteriskIcon";
 
 export const AttachmentIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1171,7 +1171,7 @@ AttachmentIcon.displayName = "AttachmentIcon";
 
 export const AutoScrollIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1204,7 +1204,7 @@ AutoScrollIcon.displayName = "AutoScrollIcon";
 
 export const BlockquoteIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1231,7 +1231,7 @@ BlockquoteIcon.displayName = "BlockquoteIcon";
 
 export const BodyIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1258,7 +1258,7 @@ BodyIcon.displayName = "BodyIcon";
 
 export const BoldIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1285,7 +1285,7 @@ BoldIcon.displayName = "BoldIcon";
 
 export const BorderRadiusBottomLeftIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1312,7 +1312,7 @@ BorderRadiusBottomLeftIcon.displayName = "BorderRadiusBottomLeftIcon";
 
 export const BorderRadiusBottomRightIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1339,7 +1339,7 @@ BorderRadiusBottomRightIcon.displayName = "BorderRadiusBottomRightIcon";
 
 export const BorderRadiusIndividualIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1353,9 +1353,10 @@ export const BorderRadiusIndividualIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fillRule="evenodd"
-          d="M5.173 1.35h.157a.65.65 0 0 1 0 1.3H5.2c-.57 0-.96 0-1.26.025-.294.024-.446.068-.553.122a1.35 1.35 0 0 0-.59.59c-.054.107-.098.259-.122.552-.024.301-.025.69-.025 1.261v.13a.65.65 0 0 1-1.3 0v-.157c0-.537 0-.98.03-1.34.03-.373.095-.715.259-1.036a2.65 2.65 0 0 1 1.158-1.158c.32-.164.663-.23 1.036-.26.36-.029.803-.029 1.34-.029Zm6.888 1.325c-.301-.025-.69-.025-1.261-.025h-.13a.65.65 0 1 1 0-1.3h.157c.537 0 .98 0 1.34.03.373.03.715.095 1.036.259.499.254.904.66 1.158 1.158.164.32.23.663.26 1.036.029.36.029.803.029 1.34v.157a.65.65 0 1 1-1.3 0V5.2c0-.57 0-.96-.025-1.26-.024-.294-.068-.446-.122-.553a1.35 1.35 0 0 0-.59-.59c-.107-.054-.259-.098-.552-.122ZM2 10.02a.65.65 0 0 1 .65.65v.13c0 .57 0 .96.025 1.26.024.294.068.446.122.553.13.254.336.46.59.59.107.054.259.098.552.122.301.025.69.025 1.261.025h.13a.65.65 0 1 1 0 1.3h-.157c-.537 0-.98 0-1.34-.03-.373-.03-.715-.095-1.036-.259a2.65 2.65 0 0 1-1.158-1.158c-.164-.32-.229-.663-.26-1.037-.029-.36-.029-.802-.029-1.34v-.156a.65.65 0 0 1 .65-.65Zm12 0a.65.65 0 0 1 .65.65v.157c0 .537 0 .98-.03 1.34-.03.373-.095.715-.259 1.036a2.65 2.65 0 0 1-1.158 1.158c-.32.164-.663.229-1.037.26-.36.029-.802.029-1.34.029h-.156a.65.65 0 1 1 0-1.3h.13c.57 0 .96 0 1.26-.025.294-.024.446-.068.553-.122.254-.13.46-.336.59-.59.054-.107.098-.26.122-.552.025-.301.025-.69.025-1.261v-.13a.65.65 0 0 1 .65-.65Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2 4.667V3.333A1.333 1.333 0 0 1 3.333 2h1.334M11.333 2h1.334A1.333 1.333 0 0 1 14 3.333v1.334M14 11.333v1.334A1.333 1.333 0 0 1 12.667 14h-1.334M4.667 14H3.333A1.334 1.334 0 0 1 2 12.667v-1.334"
         />
       </svg>
     );
@@ -1365,7 +1366,7 @@ BorderRadiusIndividualIcon.displayName = "BorderRadiusIndividualIcon";
 
 export const BorderRadiusTopLeftIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1392,7 +1393,7 @@ BorderRadiusTopLeftIcon.displayName = "BorderRadiusTopLeftIcon";
 
 export const BorderRadiusTopRightIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1419,7 +1420,7 @@ BorderRadiusTopRightIcon.displayName = "BorderRadiusTopRightIcon";
 
 export const BorderRadiusIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1446,7 +1447,7 @@ BorderRadiusIcon.displayName = "BorderRadiusIcon";
 
 export const BorderWidthBottomIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1473,7 +1474,7 @@ BorderWidthBottomIcon.displayName = "BorderWidthBottomIcon";
 
 export const BorderWidthIndividualIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1499,7 +1500,7 @@ BorderWidthIndividualIcon.displayName = "BorderWidthIndividualIcon";
 
 export const BorderWidthLeftIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1526,7 +1527,7 @@ BorderWidthLeftIcon.displayName = "BorderWidthLeftIcon";
 
 export const BorderWidthRightIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1553,7 +1554,7 @@ BorderWidthRightIcon.displayName = "BorderWidthRightIcon";
 
 export const BorderWidthTopIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1580,7 +1581,7 @@ BorderWidthTopIcon.displayName = "BorderWidthTopIcon";
 
 export const BoxIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1607,7 +1608,7 @@ BoxIcon.displayName = "BoxIcon";
 
 export const BracesIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1634,7 +1635,7 @@ BracesIcon.displayName = "BracesIcon";
 
 export const BugIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1673,7 +1674,7 @@ BugIcon.displayName = "BugIcon";
 
 export const ButtonElementIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1700,7 +1701,7 @@ ButtonElementIcon.displayName = "ButtonElementIcon";
 
 export const CalendarIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1733,7 +1734,7 @@ CalendarIcon.displayName = "CalendarIcon";
 
 export const CheckCircleIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1759,9 +1760,36 @@ export const CheckCircleIcon: IconComponent = forwardRef(
 );
 CheckCircleIcon.displayName = "CheckCircleIcon";
 
+export const CheckMarkSmallIcon: IconComponent = forwardRef(
+  (
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
+    forwardedRef
+  ) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.998 7.928 7.381 9.31 10 6.69"
+        />
+      </svg>
+    );
+  }
+);
+CheckMarkSmallIcon.displayName = "CheckMarkSmallIcon";
+
 export const CheckMarkIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1789,7 +1817,7 @@ CheckMarkIcon.displayName = "CheckMarkIcon";
 
 export const CheckboxCheckedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1822,7 +1850,7 @@ CheckboxCheckedIcon.displayName = "CheckboxCheckedIcon";
 
 export const ChevronDownIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1849,7 +1877,7 @@ ChevronDownIcon.displayName = "ChevronDownIcon";
 
 export const ChevronLeftIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1878,7 +1906,7 @@ ChevronLeftIcon.displayName = "ChevronLeftIcon";
 
 export const ChevronRightIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1905,7 +1933,7 @@ ChevronRightIcon.displayName = "ChevronRightIcon";
 
 export const ChevronUpIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1934,7 +1962,7 @@ ChevronUpIcon.displayName = "ChevronUpIcon";
 
 export const ChevronsLeftIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1961,7 +1989,7 @@ ChevronsLeftIcon.displayName = "ChevronsLeftIcon";
 
 export const CloudIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -1988,7 +2016,7 @@ CloudIcon.displayName = "CloudIcon";
 
 export const CollapsibleIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2015,7 +2043,7 @@ CollapsibleIcon.displayName = "CollapsibleIcon";
 
 export const CommitIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2042,7 +2070,7 @@ CommitIcon.displayName = "CommitIcon";
 
 export const ContentBlockIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2075,7 +2103,7 @@ ContentBlockIcon.displayName = "ContentBlockIcon";
 
 export const ContentEmbedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2108,7 +2136,7 @@ ContentEmbedIcon.displayName = "ContentEmbedIcon";
 
 export const ContentIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2135,7 +2163,7 @@ ContentIcon.displayName = "ContentIcon";
 
 export const CopyIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2168,7 +2196,7 @@ CopyIcon.displayName = "CopyIcon";
 
 export const DashedBorderIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2195,7 +2223,7 @@ DashedBorderIcon.displayName = "DashedBorderIcon";
 
 export const DescriptionIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2222,7 +2250,7 @@ DescriptionIcon.displayName = "DescriptionIcon";
 
 export const DialogIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2254,7 +2282,7 @@ DialogIcon.displayName = "DialogIcon";
 
 export const DimensionsIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2287,7 +2315,7 @@ DimensionsIcon.displayName = "DimensionsIcon";
 
 export const DiscordIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2310,7 +2338,7 @@ DiscordIcon.displayName = "DiscordIcon";
 
 export const DotIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2338,7 +2366,7 @@ DotIcon.displayName = "DotIcon";
 
 export const DottedBorderIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2365,7 +2393,7 @@ DottedBorderIcon.displayName = "DottedBorderIcon";
 
 export const DragHandleIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2392,7 +2420,7 @@ DragHandleIcon.displayName = "DragHandleIcon";
 
 export const DynamicPageIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2425,7 +2453,7 @@ DynamicPageIcon.displayName = "DynamicPageIcon";
 
 export const EllipsesIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2453,7 +2481,7 @@ EllipsesIcon.displayName = "EllipsesIcon";
 
 export const EmailIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2486,7 +2514,7 @@ EmailIcon.displayName = "EmailIcon";
 
 export const EmbedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2513,7 +2541,7 @@ EmbedIcon.displayName = "EmbedIcon";
 
 export const ExtensionIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2545,7 +2573,7 @@ ExtensionIcon.displayName = "ExtensionIcon";
 
 export const ExternalLinkIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2570,9 +2598,9 @@ export const ExternalLinkIcon: IconComponent = forwardRef(
 );
 ExternalLinkIcon.displayName = "ExternalLinkIcon";
 
-export const EyeconClosedIcon: IconComponent = forwardRef(
+export const EyeClosedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2595,11 +2623,11 @@ export const EyeconClosedIcon: IconComponent = forwardRef(
     );
   }
 );
-EyeconClosedIcon.displayName = "EyeconClosedIcon";
+EyeClosedIcon.displayName = "EyeClosedIcon";
 
-export const EyeconOpenIcon: IconComponent = forwardRef(
+export const EyeOpenIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2628,11 +2656,11 @@ export const EyeconOpenIcon: IconComponent = forwardRef(
     );
   }
 );
-EyeconOpenIcon.displayName = "EyeconOpenIcon";
+EyeOpenIcon.displayName = "EyeOpenIcon";
 
 export const EyedropperIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2665,7 +2693,7 @@ EyedropperIcon.displayName = "EyedropperIcon";
 
 export const FolderIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2692,7 +2720,7 @@ FolderIcon.displayName = "FolderIcon";
 
 export const FooterIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2719,7 +2747,7 @@ FooterIcon.displayName = "FooterIcon";
 
 export const FormTextAreaIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2752,7 +2780,7 @@ FormTextAreaIcon.displayName = "FormTextAreaIcon";
 
 export const FormTextFieldIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2779,7 +2807,7 @@ FormTextFieldIcon.displayName = "FormTextFieldIcon";
 
 export const FormIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2810,7 +2838,7 @@ FormIcon.displayName = "FormIcon";
 
 export const GapHorizontalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2837,7 +2865,7 @@ GapHorizontalIcon.displayName = "GapHorizontalIcon";
 
 export const GapVerticalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2864,7 +2892,7 @@ GapVerticalIcon.displayName = "GapVerticalIcon";
 
 export const GearIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2897,7 +2925,7 @@ GearIcon.displayName = "GearIcon";
 
 export const GithubIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2923,7 +2951,7 @@ GithubIcon.displayName = "GithubIcon";
 
 export const GoogleIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2960,7 +2988,7 @@ GoogleIcon.displayName = "GoogleIcon";
 
 export const GrowIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -2987,7 +3015,7 @@ GrowIcon.displayName = "GrowIcon";
 
 export const HeaderIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3014,7 +3042,7 @@ HeaderIcon.displayName = "HeaderIcon";
 
 export const HeadingIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3041,7 +3069,7 @@ HeadingIcon.displayName = "HeadingIcon";
 
 export const HelpIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3074,7 +3102,7 @@ HelpIcon.displayName = "HelpIcon";
 
 export const HomeIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3107,7 +3135,7 @@ HomeIcon.displayName = "HomeIcon";
 
 export const ImageIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3140,7 +3168,7 @@ ImageIcon.displayName = "ImageIcon";
 
 export const InfoCircleIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3157,7 +3185,15 @@ export const InfoCircleIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM8 10.602V8M8 5.397h.007"
+          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM8 11.516V7.853"
+        />
+        <rect
+          width="1.407"
+          height="1.407"
+          x="7.296"
+          y="4.484"
+          fill="currentColor"
+          rx=".704"
         />
       </svg>
     );
@@ -3167,7 +3203,7 @@ InfoCircleIcon.displayName = "InfoCircleIcon";
 
 export const ItemIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3194,7 +3230,7 @@ ItemIcon.displayName = "ItemIcon";
 
 export const JCSpaceAroundIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3226,7 +3262,7 @@ JCSpaceAroundIcon.displayName = "JCSpaceAroundIcon";
 
 export const JCSpaceBetweenIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3258,7 +3294,7 @@ JCSpaceBetweenIcon.displayName = "JCSpaceBetweenIcon";
 
 export const LabelIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3291,7 +3327,7 @@ LabelIcon.displayName = "LabelIcon";
 
 export const LargeXIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3318,7 +3354,7 @@ LargeXIcon.displayName = "LargeXIcon";
 
 export const Link2UnlinkedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3345,7 +3381,7 @@ Link2UnlinkedIcon.displayName = "Link2UnlinkedIcon";
 
 export const Link2Icon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3372,7 +3408,7 @@ Link2Icon.displayName = "Link2Icon";
 
 export const LinkIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3399,7 +3435,7 @@ LinkIcon.displayName = "LinkIcon";
 
 export const ListItemIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3426,7 +3462,7 @@ ListItemIcon.displayName = "ListItemIcon";
 
 export const ListViewIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3459,7 +3495,7 @@ ListViewIcon.displayName = "ListViewIcon";
 
 export const ListIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3498,7 +3534,7 @@ ListIcon.displayName = "ListIcon";
 
 export const LoadingDotsIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3545,7 +3581,7 @@ LoadingDotsIcon.displayName = "LoadingDotsIcon";
 
 export const LocalStyleIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3579,7 +3615,7 @@ LocalStyleIcon.displayName = "LocalStyleIcon";
 
 export const MarkdownEmbedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3612,7 +3648,7 @@ MarkdownEmbedIcon.displayName = "MarkdownEmbedIcon";
 
 export const MaximizeIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3639,7 +3675,7 @@ MaximizeIcon.displayName = "MaximizeIcon";
 
 export const MenuIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3666,7 +3702,7 @@ MenuIcon.displayName = "MenuIcon";
 
 export const MicOffIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3699,7 +3735,7 @@ MicOffIcon.displayName = "MicOffIcon";
 
 export const MicIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3732,7 +3768,7 @@ MicIcon.displayName = "MicIcon";
 
 export const MinimizeIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3759,7 +3795,7 @@ MinimizeIcon.displayName = "MinimizeIcon";
 
 export const MinusIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3786,7 +3822,7 @@ MinusIcon.displayName = "MinusIcon";
 
 export const NavigationMenuIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3813,7 +3849,7 @@ NavigationMenuIcon.displayName = "NavigationMenuIcon";
 
 export const NavigatorIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3840,7 +3876,7 @@ NavigatorIcon.displayName = "NavigatorIcon";
 
 export const NewFolderIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3867,7 +3903,7 @@ NewFolderIcon.displayName = "NewFolderIcon";
 
 export const NewPageIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3900,7 +3936,7 @@ NewPageIcon.displayName = "NewPageIcon";
 
 export const NoWrapIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3945,7 +3981,7 @@ NoWrapIcon.displayName = "NoWrapIcon";
 
 export const NotebookAndPenIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -3978,7 +4014,7 @@ NotebookAndPenIcon.displayName = "NotebookAndPenIcon";
 
 export const OfflineIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4010,7 +4046,7 @@ OfflineIcon.displayName = "OfflineIcon";
 
 export const OrderFirstIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4044,7 +4080,7 @@ OrderFirstIcon.displayName = "OrderFirstIcon";
 
 export const OrderLastIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4078,7 +4114,7 @@ OrderLastIcon.displayName = "OrderLastIcon";
 
 export const OverlayIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4103,7 +4139,7 @@ OverlayIcon.displayName = "OverlayIcon";
 
 export const PageIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4136,7 +4172,7 @@ PageIcon.displayName = "PageIcon";
 
 export const PaintBrushIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4163,7 +4199,7 @@ PaintBrushIcon.displayName = "PaintBrushIcon";
 
 export const PhoneIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4190,7 +4226,7 @@ PhoneIcon.displayName = "PhoneIcon";
 
 export const PlayIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4217,7 +4253,7 @@ PlayIcon.displayName = "PlayIcon";
 
 export const PluginIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4243,7 +4279,7 @@ PluginIcon.displayName = "PluginIcon";
 
 export const PlusIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4270,7 +4306,7 @@ PlusIcon.displayName = "PlusIcon";
 
 export const PopoverIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4303,7 +4339,7 @@ PopoverIcon.displayName = "PopoverIcon";
 
 export const RadioCheckedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4337,7 +4373,7 @@ RadioCheckedIcon.displayName = "RadioCheckedIcon";
 
 export const RadioGroupIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4376,7 +4412,7 @@ RadioGroupIcon.displayName = "RadioGroupIcon";
 
 export const RadioUncheckedIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4403,7 +4439,7 @@ RadioUncheckedIcon.displayName = "RadioUncheckedIcon";
 
 export const RefreshIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4430,7 +4466,7 @@ RefreshIcon.displayName = "RefreshIcon";
 
 export const RepeatColumnIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4457,7 +4493,7 @@ RepeatColumnIcon.displayName = "RepeatColumnIcon";
 
 export const RepeatGridIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4484,7 +4520,7 @@ RepeatGridIcon.displayName = "RepeatGridIcon";
 
 export const RepeatRowIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4511,7 +4547,7 @@ RepeatRowIcon.displayName = "RepeatRowIcon";
 
 export const ResetIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4537,7 +4573,7 @@ ResetIcon.displayName = "ResetIcon";
 
 export const ScrollIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4564,7 +4600,7 @@ ScrollIcon.displayName = "ScrollIcon";
 
 export const SearchIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4591,7 +4627,7 @@ SearchIcon.displayName = "SearchIcon";
 
 export const SectionLinkIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4624,7 +4660,7 @@ SectionLinkIcon.displayName = "SectionLinkIcon";
 
 export const SelectIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4657,7 +4693,7 @@ SelectIcon.displayName = "SelectIcon";
 
 export const SettingsIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4702,7 +4738,7 @@ SettingsIcon.displayName = "SettingsIcon";
 
 export const ShadowInsetIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4735,7 +4771,7 @@ ShadowInsetIcon.displayName = "ShadowInsetIcon";
 
 export const ShadowNormalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4768,7 +4804,7 @@ ShadowNormalIcon.displayName = "ShadowNormalIcon";
 
 export const ShrinkIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4795,7 +4831,7 @@ ShrinkIcon.displayName = "ShrinkIcon";
 
 export const SliderIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4831,7 +4867,7 @@ SliderIcon.displayName = "SliderIcon";
 
 export const SlotComponentIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4858,7 +4894,7 @@ SlotComponentIcon.displayName = "SlotComponentIcon";
 
 export const SpinnerIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4900,7 +4936,7 @@ SpinnerIcon.displayName = "SpinnerIcon";
 
 export const StopIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4922,7 +4958,7 @@ StopIcon.displayName = "StopIcon";
 
 export const StretchVerticalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4949,7 +4985,7 @@ StretchVerticalIcon.displayName = "StretchVerticalIcon";
 
 export const SubscriptIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -4974,35 +5010,9 @@ export const SubscriptIcon: IconComponent = forwardRef(
 );
 SubscriptIcon.displayName = "SubscriptIcon";
 
-export const SubtractIcon: IconComponent = forwardRef(
-  (
-    { color = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          fillRule="evenodd"
-          d="M14 8a.75.75 0 0 1-.75.75H2.75a.75.75 0 0 1 0-1.5h10.5A.75.75 0 0 1 14 8Z"
-          clipRule="evenodd"
-        />
-      </svg>
-    );
-  }
-);
-SubtractIcon.displayName = "SubtractIcon";
-
 export const SuperscriptIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5029,7 +5039,7 @@ SuperscriptIcon.displayName = "SuperscriptIcon";
 
 export const SwitchIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5063,7 +5073,7 @@ SwitchIcon.displayName = "SwitchIcon";
 
 export const TabsIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5090,7 +5100,7 @@ TabsIcon.displayName = "TabsIcon";
 
 export const TerminalIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5123,7 +5133,7 @@ TerminalIcon.displayName = "TerminalIcon";
 
 export const TextAlignCenterIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5150,7 +5160,7 @@ TextAlignCenterIcon.displayName = "TextAlignCenterIcon";
 
 export const TextAlignJustifyIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5177,7 +5187,7 @@ TextAlignJustifyIcon.displayName = "TextAlignJustifyIcon";
 
 export const TextAlignLeftIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5204,7 +5214,7 @@ TextAlignLeftIcon.displayName = "TextAlignLeftIcon";
 
 export const TextAlignRightIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5231,7 +5241,7 @@ TextAlignRightIcon.displayName = "TextAlignRightIcon";
 
 export const TextCapitalizeIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5258,7 +5268,7 @@ TextCapitalizeIcon.displayName = "TextCapitalizeIcon";
 
 export const TextItalicIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5285,7 +5295,7 @@ TextItalicIcon.displayName = "TextItalicIcon";
 
 export const TextLowercaseIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5312,7 +5322,7 @@ TextLowercaseIcon.displayName = "TextLowercaseIcon";
 
 export const TextStrikethroughIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5339,7 +5349,7 @@ TextStrikethroughIcon.displayName = "TextStrikethroughIcon";
 
 export const TextTruncateIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5366,7 +5376,7 @@ TextTruncateIcon.displayName = "TextTruncateIcon";
 
 export const TextUnderlineIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5393,7 +5403,7 @@ TextUnderlineIcon.displayName = "TextUnderlineIcon";
 
 export const TextUppercaseIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5420,7 +5430,7 @@ TextUppercaseIcon.displayName = "TextUppercaseIcon";
 
 export const TextIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5447,7 +5457,7 @@ TextIcon.displayName = "TextIcon";
 
 export const TooltipIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5474,7 +5484,7 @@ TooltipIcon.displayName = "TooltipIcon";
 
 export const TrashIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5501,7 +5511,7 @@ TrashIcon.displayName = "TrashIcon";
 
 export const TriggerIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5546,7 +5556,7 @@ TriggerIcon.displayName = "TriggerIcon";
 
 export const UpgradeIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5579,7 +5589,7 @@ UpgradeIcon.displayName = "UpgradeIcon";
 
 export const UploadIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5612,7 +5622,7 @@ UploadIcon.displayName = "UploadIcon";
 
 export const VideoIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5639,7 +5649,7 @@ VideoIcon.displayName = "VideoIcon";
 
 export const ViewportIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5665,7 +5675,7 @@ ViewportIcon.displayName = "ViewportIcon";
 
 export const VimeoIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5687,7 +5697,7 @@ VimeoIcon.displayName = "VimeoIcon";
 
 export const WebhookFormIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5726,7 +5736,7 @@ WebhookFormIcon.displayName = "WebhookFormIcon";
 
 export const Webstudio1cIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -5762,7 +5772,7 @@ Webstudio1cIcon.displayName = "Webstudio1cIcon";
 
 export const WebstudioIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6116,7 +6126,7 @@ WebstudioIcon.displayName = "WebstudioIcon";
 
 export const WrapIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6161,7 +6171,7 @@ WrapIcon.displayName = "WrapIcon";
 
 export const XAxisRotateIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6194,7 +6204,7 @@ XAxisRotateIcon.displayName = "XAxisRotateIcon";
 
 export const XAxisIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6227,7 +6237,7 @@ XAxisIcon.displayName = "XAxisIcon";
 
 export const XCircledFilledIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6261,7 +6271,7 @@ XCircledFilledIcon.displayName = "XCircledFilledIcon";
 
 export const XSmallIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6288,7 +6298,7 @@ XSmallIcon.displayName = "XSmallIcon";
 
 export const XIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6315,7 +6325,7 @@ XIcon.displayName = "XIcon";
 
 export const XmlIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6348,7 +6358,7 @@ XmlIcon.displayName = "XmlIcon";
 
 export const YAxisRotateIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6381,7 +6391,7 @@ YAxisRotateIcon.displayName = "YAxisRotateIcon";
 
 export const YAxisIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6414,7 +6424,7 @@ YAxisIcon.displayName = "YAxisIcon";
 
 export const Youtube1cIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6440,7 +6450,7 @@ Youtube1cIcon.displayName = "Youtube1cIcon";
 
 export const ZAxisRotateIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (
@@ -6473,7 +6483,7 @@ ZAxisRotateIcon.displayName = "ZAxisRotateIcon";
 
 export const ZAxisIcon: IconComponent = forwardRef(
   (
-    { color = "currentColor", fill = "none", size = 16, ...props },
+    { stroke = "currentColor", fill = "none", size = 16, ...props },
     forwardedRef
   ) => {
     return (

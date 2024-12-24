@@ -12,15 +12,17 @@
     stroke-linejoin="round"
   />
   <path
-    d="M8 10.6025V8"
+    d="M8 11.5161V7.85314"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <path
-    d="M8 5.39748H8.00667"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
+  <rect
+    x="7.29626"
+    y="4.48389"
+    width="1.40747"
+    height="1.40747"
+    rx="0.703735"
+    fill="currentColor"
   />
 </svg>
