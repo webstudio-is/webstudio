@@ -20,6 +20,7 @@ const checkboxStyle = css({
   borderRadius: theme.borderRadius[3],
   color: theme.colors.foregroundMain,
   background: theme.colors.backgroundControls,
+  outline: `1px solid ${theme.colors.borderMain}`,
 
   "&:focus-visible": {
     outline: `1px solid ${theme.colors.borderFocus}`,
