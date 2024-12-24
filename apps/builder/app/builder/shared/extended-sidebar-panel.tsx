@@ -11,7 +11,6 @@ const CollapsibleRoot = styled(Collapsible.Root, {
   bottom: 0,
   display: "flex",
   flexDirection: "column",
-  marginLeft: 1,
 });
 
 const CollapsibleContent = styled(Collapsible.Content, {
