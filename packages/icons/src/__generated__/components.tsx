@@ -2,10 +2,7 @@ import { forwardRef } from "react";
 import type { IconComponent } from "../types";
 
 export const AccordionIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -29,10 +26,7 @@ export const AccordionIcon: IconComponent = forwardRef(
 AccordionIcon.displayName = "AccordionIcon";
 
 export const AddTemplateInstanceIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -62,10 +56,7 @@ export const AddTemplateInstanceIcon: IconComponent = forwardRef(
 AddTemplateInstanceIcon.displayName = "AddTemplateInstanceIcon";
 
 export const AiLoadingIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -159,10 +150,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
 AiLoadingIcon.displayName = "AiLoadingIcon";
 
 export const AiIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -185,10 +173,7 @@ export const AiIcon: IconComponent = forwardRef(
 AiIcon.displayName = "AiIcon";
 
 export const AlertCircleIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -210,10 +195,7 @@ export const AlertCircleIcon: IconComponent = forwardRef(
 AlertCircleIcon.displayName = "AlertCircleIcon";
 
 export const AlertIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -237,10 +219,7 @@ export const AlertIcon: IconComponent = forwardRef(
 AlertIcon.displayName = "AlertIcon";
 
 export const AlignBaselineIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -268,10 +247,7 @@ export const AlignBaselineIcon: IconComponent = forwardRef(
 AlignBaselineIcon.displayName = "AlignBaselineIcon";
 
 export const AlignCenterHorizontalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -295,10 +271,7 @@ export const AlignCenterHorizontalIcon: IconComponent = forwardRef(
 AlignCenterHorizontalIcon.displayName = "AlignCenterHorizontalIcon";
 
 export const AlignContentCenterIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -354,10 +327,7 @@ export const AlignContentCenterIcon: IconComponent = forwardRef(
 AlignContentCenterIcon.displayName = "AlignContentCenterIcon";
 
 export const AlignContentEndIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -413,10 +383,7 @@ export const AlignContentEndIcon: IconComponent = forwardRef(
 AlignContentEndIcon.displayName = "AlignContentEndIcon";
 
 export const AlignContentSpaceAroundIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -472,10 +439,7 @@ export const AlignContentSpaceAroundIcon: IconComponent = forwardRef(
 AlignContentSpaceAroundIcon.displayName = "AlignContentSpaceAroundIcon";
 
 export const AlignContentSpaceBetweenIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -531,10 +495,7 @@ export const AlignContentSpaceBetweenIcon: IconComponent = forwardRef(
 AlignContentSpaceBetweenIcon.displayName = "AlignContentSpaceBetweenIcon";
 
 export const AlignContentStartIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -590,10 +551,7 @@ export const AlignContentStartIcon: IconComponent = forwardRef(
 AlignContentStartIcon.displayName = "AlignContentStartIcon";
 
 export const AlignContentStretchIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -649,10 +607,7 @@ export const AlignContentStretchIcon: IconComponent = forwardRef(
 AlignContentStretchIcon.displayName = "AlignContentStretchIcon";
 
 export const AlignEndHorizontalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -676,10 +631,7 @@ export const AlignEndHorizontalIcon: IconComponent = forwardRef(
 AlignEndHorizontalIcon.displayName = "AlignEndHorizontalIcon";
 
 export const AlignHorizontalJustifyCenterIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -704,10 +656,7 @@ AlignHorizontalJustifyCenterIcon.displayName =
   "AlignHorizontalJustifyCenterIcon";
 
 export const AlignHorizontalJustifyEndIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -731,10 +680,7 @@ export const AlignHorizontalJustifyEndIcon: IconComponent = forwardRef(
 AlignHorizontalJustifyEndIcon.displayName = "AlignHorizontalJustifyEndIcon";
 
 export const AlignHorizontalJustifyStartIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -758,10 +704,7 @@ export const AlignHorizontalJustifyStartIcon: IconComponent = forwardRef(
 AlignHorizontalJustifyStartIcon.displayName = "AlignHorizontalJustifyStartIcon";
 
 export const AlignHorizontalSpaceAroundIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -785,10 +728,7 @@ export const AlignHorizontalSpaceAroundIcon: IconComponent = forwardRef(
 AlignHorizontalSpaceAroundIcon.displayName = "AlignHorizontalSpaceAroundIcon";
 
 export const AlignHorizontalSpaceBetweenIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -812,10 +752,7 @@ export const AlignHorizontalSpaceBetweenIcon: IconComponent = forwardRef(
 AlignHorizontalSpaceBetweenIcon.displayName = "AlignHorizontalSpaceBetweenIcon";
 
 export const AlignSelfBaselineIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -840,10 +777,7 @@ export const AlignSelfBaselineIcon: IconComponent = forwardRef(
 AlignSelfBaselineIcon.displayName = "AlignSelfBaselineIcon";
 
 export const AlignSelfCenterIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -867,10 +801,7 @@ export const AlignSelfCenterIcon: IconComponent = forwardRef(
 AlignSelfCenterIcon.displayName = "AlignSelfCenterIcon";
 
 export const AlignSelfEndIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -894,10 +825,7 @@ export const AlignSelfEndIcon: IconComponent = forwardRef(
 AlignSelfEndIcon.displayName = "AlignSelfEndIcon";
 
 export const AlignSelfStartIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -921,10 +849,7 @@ export const AlignSelfStartIcon: IconComponent = forwardRef(
 AlignSelfStartIcon.displayName = "AlignSelfStartIcon";
 
 export const AlignSelfStretchIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -948,10 +873,7 @@ export const AlignSelfStretchIcon: IconComponent = forwardRef(
 AlignSelfStretchIcon.displayName = "AlignSelfStretchIcon";
 
 export const AlignStartHorizontalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -975,10 +897,7 @@ export const AlignStartHorizontalIcon: IconComponent = forwardRef(
 AlignStartHorizontalIcon.displayName = "AlignStartHorizontalIcon";
 
 export const ArrowDownIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1002,10 +921,7 @@ export const ArrowDownIcon: IconComponent = forwardRef(
 ArrowDownIcon.displayName = "ArrowDownIcon";
 
 export const ArrowLeftIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1029,10 +945,7 @@ export const ArrowLeftIcon: IconComponent = forwardRef(
 ArrowLeftIcon.displayName = "ArrowLeftIcon";
 
 export const ArrowRightIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1056,10 +969,7 @@ export const ArrowRightIcon: IconComponent = forwardRef(
 ArrowRightIcon.displayName = "ArrowRightIcon";
 
 export const ArrowUpIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1083,10 +993,7 @@ export const ArrowUpIcon: IconComponent = forwardRef(
 ArrowUpIcon.displayName = "ArrowUpIcon";
 
 export const AspectRatioIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1116,10 +1023,7 @@ export const AspectRatioIcon: IconComponent = forwardRef(
 AspectRatioIcon.displayName = "AspectRatioIcon";
 
 export const AsteriskIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1143,10 +1047,7 @@ export const AsteriskIcon: IconComponent = forwardRef(
 AsteriskIcon.displayName = "AsteriskIcon";
 
 export const AttachmentIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1170,10 +1071,7 @@ export const AttachmentIcon: IconComponent = forwardRef(
 AttachmentIcon.displayName = "AttachmentIcon";
 
 export const AutoScrollIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1203,10 +1101,7 @@ export const AutoScrollIcon: IconComponent = forwardRef(
 AutoScrollIcon.displayName = "AutoScrollIcon";
 
 export const BlockquoteIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1230,10 +1125,7 @@ export const BlockquoteIcon: IconComponent = forwardRef(
 BlockquoteIcon.displayName = "BlockquoteIcon";
 
 export const BodyIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1257,10 +1149,7 @@ export const BodyIcon: IconComponent = forwardRef(
 BodyIcon.displayName = "BodyIcon";
 
 export const BoldIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1284,10 +1173,7 @@ export const BoldIcon: IconComponent = forwardRef(
 BoldIcon.displayName = "BoldIcon";
 
 export const BorderRadiusBottomLeftIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1311,10 +1197,7 @@ export const BorderRadiusBottomLeftIcon: IconComponent = forwardRef(
 BorderRadiusBottomLeftIcon.displayName = "BorderRadiusBottomLeftIcon";
 
 export const BorderRadiusBottomRightIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1338,10 +1221,7 @@ export const BorderRadiusBottomRightIcon: IconComponent = forwardRef(
 BorderRadiusBottomRightIcon.displayName = "BorderRadiusBottomRightIcon";
 
 export const BorderRadiusIndividualIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1365,10 +1245,7 @@ export const BorderRadiusIndividualIcon: IconComponent = forwardRef(
 BorderRadiusIndividualIcon.displayName = "BorderRadiusIndividualIcon";
 
 export const BorderRadiusTopLeftIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1392,10 +1269,7 @@ export const BorderRadiusTopLeftIcon: IconComponent = forwardRef(
 BorderRadiusTopLeftIcon.displayName = "BorderRadiusTopLeftIcon";
 
 export const BorderRadiusTopRightIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1419,10 +1293,7 @@ export const BorderRadiusTopRightIcon: IconComponent = forwardRef(
 BorderRadiusTopRightIcon.displayName = "BorderRadiusTopRightIcon";
 
 export const BorderRadiusIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1446,10 +1317,7 @@ export const BorderRadiusIcon: IconComponent = forwardRef(
 BorderRadiusIcon.displayName = "BorderRadiusIcon";
 
 export const BorderWidthBottomIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1473,10 +1341,7 @@ export const BorderWidthBottomIcon: IconComponent = forwardRef(
 BorderWidthBottomIcon.displayName = "BorderWidthBottomIcon";
 
 export const BorderWidthIndividualIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1499,10 +1364,7 @@ export const BorderWidthIndividualIcon: IconComponent = forwardRef(
 BorderWidthIndividualIcon.displayName = "BorderWidthIndividualIcon";
 
 export const BorderWidthLeftIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1526,10 +1388,7 @@ export const BorderWidthLeftIcon: IconComponent = forwardRef(
 BorderWidthLeftIcon.displayName = "BorderWidthLeftIcon";
 
 export const BorderWidthRightIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1553,10 +1412,7 @@ export const BorderWidthRightIcon: IconComponent = forwardRef(
 BorderWidthRightIcon.displayName = "BorderWidthRightIcon";
 
 export const BorderWidthTopIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1580,10 +1436,7 @@ export const BorderWidthTopIcon: IconComponent = forwardRef(
 BorderWidthTopIcon.displayName = "BorderWidthTopIcon";
 
 export const BoxIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1594,12 +1447,7 @@ export const BoxIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z"
-        />
+        <path d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z" />
       </svg>
     );
   }
@@ -1607,10 +1455,7 @@ export const BoxIcon: IconComponent = forwardRef(
 BoxIcon.displayName = "BoxIcon";
 
 export const BracesIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1634,10 +1479,7 @@ export const BracesIcon: IconComponent = forwardRef(
 BracesIcon.displayName = "BracesIcon";
 
 export const BugIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1673,10 +1515,7 @@ export const BugIcon: IconComponent = forwardRef(
 BugIcon.displayName = "BugIcon";
 
 export const ButtonElementIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1700,10 +1539,7 @@ export const ButtonElementIcon: IconComponent = forwardRef(
 ButtonElementIcon.displayName = "ButtonElementIcon";
 
 export const CalendarIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1733,10 +1569,7 @@ export const CalendarIcon: IconComponent = forwardRef(
 CalendarIcon.displayName = "CalendarIcon";
 
 export const CheckCircleIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1761,10 +1594,7 @@ export const CheckCircleIcon: IconComponent = forwardRef(
 CheckCircleIcon.displayName = "CheckCircleIcon";
 
 export const CheckMarkSmallIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1788,10 +1618,7 @@ export const CheckMarkSmallIcon: IconComponent = forwardRef(
 CheckMarkSmallIcon.displayName = "CheckMarkSmallIcon";
 
 export const CheckMarkIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1816,10 +1643,7 @@ export const CheckMarkIcon: IconComponent = forwardRef(
 CheckMarkIcon.displayName = "CheckMarkIcon";
 
 export const CheckboxCheckedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1849,10 +1673,7 @@ export const CheckboxCheckedIcon: IconComponent = forwardRef(
 CheckboxCheckedIcon.displayName = "CheckboxCheckedIcon";
 
 export const ChevronDownIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1876,10 +1697,7 @@ export const ChevronDownIcon: IconComponent = forwardRef(
 ChevronDownIcon.displayName = "ChevronDownIcon";
 
 export const ChevronLeftIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1905,10 +1723,7 @@ export const ChevronLeftIcon: IconComponent = forwardRef(
 ChevronLeftIcon.displayName = "ChevronLeftIcon";
 
 export const ChevronRightIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1932,10 +1747,7 @@ export const ChevronRightIcon: IconComponent = forwardRef(
 ChevronRightIcon.displayName = "ChevronRightIcon";
 
 export const ChevronUpIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1961,10 +1773,7 @@ export const ChevronUpIcon: IconComponent = forwardRef(
 ChevronUpIcon.displayName = "ChevronUpIcon";
 
 export const ChevronsLeftIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -1988,10 +1797,7 @@ export const ChevronsLeftIcon: IconComponent = forwardRef(
 ChevronsLeftIcon.displayName = "ChevronsLeftIcon";
 
 export const CloudIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2015,10 +1821,7 @@ export const CloudIcon: IconComponent = forwardRef(
 CloudIcon.displayName = "CloudIcon";
 
 export const CollapsibleIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2042,10 +1845,7 @@ export const CollapsibleIcon: IconComponent = forwardRef(
 CollapsibleIcon.displayName = "CollapsibleIcon";
 
 export const CommitIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2069,10 +1869,7 @@ export const CommitIcon: IconComponent = forwardRef(
 CommitIcon.displayName = "CommitIcon";
 
 export const ContentBlockIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2102,10 +1899,7 @@ export const ContentBlockIcon: IconComponent = forwardRef(
 ContentBlockIcon.displayName = "ContentBlockIcon";
 
 export const ContentEmbedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2135,10 +1929,7 @@ export const ContentEmbedIcon: IconComponent = forwardRef(
 ContentEmbedIcon.displayName = "ContentEmbedIcon";
 
 export const ContentIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2162,10 +1953,7 @@ export const ContentIcon: IconComponent = forwardRef(
 ContentIcon.displayName = "ContentIcon";
 
 export const CopyIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2195,10 +1983,7 @@ export const CopyIcon: IconComponent = forwardRef(
 CopyIcon.displayName = "CopyIcon";
 
 export const DashedBorderIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2222,10 +2007,7 @@ export const DashedBorderIcon: IconComponent = forwardRef(
 DashedBorderIcon.displayName = "DashedBorderIcon";
 
 export const DescriptionIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2249,10 +2031,7 @@ export const DescriptionIcon: IconComponent = forwardRef(
 DescriptionIcon.displayName = "DescriptionIcon";
 
 export const DialogIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2281,10 +2060,7 @@ export const DialogIcon: IconComponent = forwardRef(
 DialogIcon.displayName = "DialogIcon";
 
 export const DimensionsIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2314,10 +2090,7 @@ export const DimensionsIcon: IconComponent = forwardRef(
 DimensionsIcon.displayName = "DimensionsIcon";
 
 export const DiscordIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2337,10 +2110,7 @@ export const DiscordIcon: IconComponent = forwardRef(
 DiscordIcon.displayName = "DiscordIcon";
 
 export const DotIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2365,10 +2135,7 @@ export const DotIcon: IconComponent = forwardRef(
 DotIcon.displayName = "DotIcon";
 
 export const DottedBorderIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2392,10 +2159,7 @@ export const DottedBorderIcon: IconComponent = forwardRef(
 DottedBorderIcon.displayName = "DottedBorderIcon";
 
 export const DragHandleIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2419,10 +2183,7 @@ export const DragHandleIcon: IconComponent = forwardRef(
 DragHandleIcon.displayName = "DragHandleIcon";
 
 export const DynamicPageIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2452,10 +2213,7 @@ export const DynamicPageIcon: IconComponent = forwardRef(
 DynamicPageIcon.displayName = "DynamicPageIcon";
 
 export const EllipsesIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2480,10 +2238,7 @@ export const EllipsesIcon: IconComponent = forwardRef(
 EllipsesIcon.displayName = "EllipsesIcon";
 
 export const EmailIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2513,10 +2268,7 @@ export const EmailIcon: IconComponent = forwardRef(
 EmailIcon.displayName = "EmailIcon";
 
 export const EmbedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2540,10 +2292,7 @@ export const EmbedIcon: IconComponent = forwardRef(
 EmbedIcon.displayName = "EmbedIcon";
 
 export const ExtensionIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2572,10 +2321,7 @@ export const ExtensionIcon: IconComponent = forwardRef(
 ExtensionIcon.displayName = "ExtensionIcon";
 
 export const ExternalLinkIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2599,10 +2345,7 @@ export const ExternalLinkIcon: IconComponent = forwardRef(
 ExternalLinkIcon.displayName = "ExternalLinkIcon";
 
 export const EyeClosedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2626,10 +2369,7 @@ export const EyeClosedIcon: IconComponent = forwardRef(
 EyeClosedIcon.displayName = "EyeClosedIcon";
 
 export const EyeOpenIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2659,10 +2399,7 @@ export const EyeOpenIcon: IconComponent = forwardRef(
 EyeOpenIcon.displayName = "EyeOpenIcon";
 
 export const EyedropperIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2692,10 +2429,7 @@ export const EyedropperIcon: IconComponent = forwardRef(
 EyedropperIcon.displayName = "EyedropperIcon";
 
 export const FolderIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2719,10 +2453,7 @@ export const FolderIcon: IconComponent = forwardRef(
 FolderIcon.displayName = "FolderIcon";
 
 export const FooterIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2746,10 +2477,7 @@ export const FooterIcon: IconComponent = forwardRef(
 FooterIcon.displayName = "FooterIcon";
 
 export const FormTextAreaIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2779,10 +2507,7 @@ export const FormTextAreaIcon: IconComponent = forwardRef(
 FormTextAreaIcon.displayName = "FormTextAreaIcon";
 
 export const FormTextFieldIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2806,10 +2531,7 @@ export const FormTextFieldIcon: IconComponent = forwardRef(
 FormTextFieldIcon.displayName = "FormTextFieldIcon";
 
 export const FormIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2837,10 +2559,7 @@ export const FormIcon: IconComponent = forwardRef(
 FormIcon.displayName = "FormIcon";
 
 export const GapHorizontalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2864,10 +2583,7 @@ export const GapHorizontalIcon: IconComponent = forwardRef(
 GapHorizontalIcon.displayName = "GapHorizontalIcon";
 
 export const GapVerticalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2891,10 +2607,7 @@ export const GapVerticalIcon: IconComponent = forwardRef(
 GapVerticalIcon.displayName = "GapVerticalIcon";
 
 export const GearIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2924,10 +2637,7 @@ export const GearIcon: IconComponent = forwardRef(
 GearIcon.displayName = "GearIcon";
 
 export const GithubIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2950,10 +2660,7 @@ export const GithubIcon: IconComponent = forwardRef(
 GithubIcon.displayName = "GithubIcon";
 
 export const GoogleIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2987,10 +2694,7 @@ export const GoogleIcon: IconComponent = forwardRef(
 GoogleIcon.displayName = "GoogleIcon";
 
 export const GrowIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3014,10 +2718,7 @@ export const GrowIcon: IconComponent = forwardRef(
 GrowIcon.displayName = "GrowIcon";
 
 export const HeaderIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3041,10 +2742,7 @@ export const HeaderIcon: IconComponent = forwardRef(
 HeaderIcon.displayName = "HeaderIcon";
 
 export const HeadingIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3068,10 +2766,7 @@ export const HeadingIcon: IconComponent = forwardRef(
 HeadingIcon.displayName = "HeadingIcon";
 
 export const HelpIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3101,10 +2796,7 @@ export const HelpIcon: IconComponent = forwardRef(
 HelpIcon.displayName = "HelpIcon";
 
 export const HomeIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3134,10 +2826,7 @@ export const HomeIcon: IconComponent = forwardRef(
 HomeIcon.displayName = "HomeIcon";
 
 export const ImageIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3167,10 +2856,7 @@ export const ImageIcon: IconComponent = forwardRef(
 ImageIcon.displayName = "ImageIcon";
 
 export const InfoCircleIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3202,10 +2888,7 @@ export const InfoCircleIcon: IconComponent = forwardRef(
 InfoCircleIcon.displayName = "InfoCircleIcon";
 
 export const ItemIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3229,10 +2912,7 @@ export const ItemIcon: IconComponent = forwardRef(
 ItemIcon.displayName = "ItemIcon";
 
 export const JCSpaceAroundIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3261,10 +2941,7 @@ export const JCSpaceAroundIcon: IconComponent = forwardRef(
 JCSpaceAroundIcon.displayName = "JCSpaceAroundIcon";
 
 export const JCSpaceBetweenIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3293,10 +2970,7 @@ export const JCSpaceBetweenIcon: IconComponent = forwardRef(
 JCSpaceBetweenIcon.displayName = "JCSpaceBetweenIcon";
 
 export const LabelIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3326,10 +3000,7 @@ export const LabelIcon: IconComponent = forwardRef(
 LabelIcon.displayName = "LabelIcon";
 
 export const LargeXIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3353,10 +3024,7 @@ export const LargeXIcon: IconComponent = forwardRef(
 LargeXIcon.displayName = "LargeXIcon";
 
 export const Link2UnlinkedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3380,10 +3048,7 @@ export const Link2UnlinkedIcon: IconComponent = forwardRef(
 Link2UnlinkedIcon.displayName = "Link2UnlinkedIcon";
 
 export const Link2Icon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3407,10 +3072,7 @@ export const Link2Icon: IconComponent = forwardRef(
 Link2Icon.displayName = "Link2Icon";
 
 export const LinkIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3434,10 +3096,7 @@ export const LinkIcon: IconComponent = forwardRef(
 LinkIcon.displayName = "LinkIcon";
 
 export const ListItemIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3461,10 +3120,7 @@ export const ListItemIcon: IconComponent = forwardRef(
 ListItemIcon.displayName = "ListItemIcon";
 
 export const ListViewIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3494,10 +3150,7 @@ export const ListViewIcon: IconComponent = forwardRef(
 ListViewIcon.displayName = "ListViewIcon";
 
 export const ListIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3533,10 +3186,7 @@ export const ListIcon: IconComponent = forwardRef(
 ListIcon.displayName = "ListIcon";
 
 export const LoadingDotsIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3580,10 +3230,7 @@ export const LoadingDotsIcon: IconComponent = forwardRef(
 LoadingDotsIcon.displayName = "LoadingDotsIcon";
 
 export const LocalStyleIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3614,10 +3261,7 @@ export const LocalStyleIcon: IconComponent = forwardRef(
 LocalStyleIcon.displayName = "LocalStyleIcon";
 
 export const MarkdownEmbedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3647,10 +3291,7 @@ export const MarkdownEmbedIcon: IconComponent = forwardRef(
 MarkdownEmbedIcon.displayName = "MarkdownEmbedIcon";
 
 export const MaximizeIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3674,10 +3315,7 @@ export const MaximizeIcon: IconComponent = forwardRef(
 MaximizeIcon.displayName = "MaximizeIcon";
 
 export const MenuIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3701,10 +3339,7 @@ export const MenuIcon: IconComponent = forwardRef(
 MenuIcon.displayName = "MenuIcon";
 
 export const MicOffIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3734,10 +3369,7 @@ export const MicOffIcon: IconComponent = forwardRef(
 MicOffIcon.displayName = "MicOffIcon";
 
 export const MicIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3767,10 +3399,7 @@ export const MicIcon: IconComponent = forwardRef(
 MicIcon.displayName = "MicIcon";
 
 export const MinimizeIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3794,10 +3423,7 @@ export const MinimizeIcon: IconComponent = forwardRef(
 MinimizeIcon.displayName = "MinimizeIcon";
 
 export const MinusIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3821,10 +3447,7 @@ export const MinusIcon: IconComponent = forwardRef(
 MinusIcon.displayName = "MinusIcon";
 
 export const NavigationMenuIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3848,10 +3471,7 @@ export const NavigationMenuIcon: IconComponent = forwardRef(
 NavigationMenuIcon.displayName = "NavigationMenuIcon";
 
 export const NavigatorIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3875,10 +3495,7 @@ export const NavigatorIcon: IconComponent = forwardRef(
 NavigatorIcon.displayName = "NavigatorIcon";
 
 export const NewFolderIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3902,10 +3519,7 @@ export const NewFolderIcon: IconComponent = forwardRef(
 NewFolderIcon.displayName = "NewFolderIcon";
 
 export const NewPageIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3935,10 +3549,7 @@ export const NewPageIcon: IconComponent = forwardRef(
 NewPageIcon.displayName = "NewPageIcon";
 
 export const NoWrapIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -3980,10 +3591,7 @@ export const NoWrapIcon: IconComponent = forwardRef(
 NoWrapIcon.displayName = "NoWrapIcon";
 
 export const NotebookAndPenIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4013,10 +3621,7 @@ export const NotebookAndPenIcon: IconComponent = forwardRef(
 NotebookAndPenIcon.displayName = "NotebookAndPenIcon";
 
 export const OfflineIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4045,10 +3650,7 @@ export const OfflineIcon: IconComponent = forwardRef(
 OfflineIcon.displayName = "OfflineIcon";
 
 export const OrderFirstIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4079,10 +3681,7 @@ export const OrderFirstIcon: IconComponent = forwardRef(
 OrderFirstIcon.displayName = "OrderFirstIcon";
 
 export const OrderLastIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4113,10 +3712,7 @@ export const OrderLastIcon: IconComponent = forwardRef(
 OrderLastIcon.displayName = "OrderLastIcon";
 
 export const OverlayIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4138,10 +3734,7 @@ export const OverlayIcon: IconComponent = forwardRef(
 OverlayIcon.displayName = "OverlayIcon";
 
 export const PageIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4171,10 +3764,7 @@ export const PageIcon: IconComponent = forwardRef(
 PageIcon.displayName = "PageIcon";
 
 export const PaintBrushIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4198,10 +3788,7 @@ export const PaintBrushIcon: IconComponent = forwardRef(
 PaintBrushIcon.displayName = "PaintBrushIcon";
 
 export const PhoneIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4225,10 +3812,7 @@ export const PhoneIcon: IconComponent = forwardRef(
 PhoneIcon.displayName = "PhoneIcon";
 
 export const PlayIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4252,10 +3836,7 @@ export const PlayIcon: IconComponent = forwardRef(
 PlayIcon.displayName = "PlayIcon";
 
 export const PluginIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4278,10 +3859,7 @@ export const PluginIcon: IconComponent = forwardRef(
 PluginIcon.displayName = "PluginIcon";
 
 export const PlusIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4305,10 +3883,7 @@ export const PlusIcon: IconComponent = forwardRef(
 PlusIcon.displayName = "PlusIcon";
 
 export const PopoverIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4338,10 +3913,7 @@ export const PopoverIcon: IconComponent = forwardRef(
 PopoverIcon.displayName = "PopoverIcon";
 
 export const RadioCheckedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4372,10 +3944,7 @@ export const RadioCheckedIcon: IconComponent = forwardRef(
 RadioCheckedIcon.displayName = "RadioCheckedIcon";
 
 export const RadioGroupIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4411,10 +3980,7 @@ export const RadioGroupIcon: IconComponent = forwardRef(
 RadioGroupIcon.displayName = "RadioGroupIcon";
 
 export const RadioUncheckedIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4438,10 +4004,7 @@ export const RadioUncheckedIcon: IconComponent = forwardRef(
 RadioUncheckedIcon.displayName = "RadioUncheckedIcon";
 
 export const RefreshIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4465,10 +4028,7 @@ export const RefreshIcon: IconComponent = forwardRef(
 RefreshIcon.displayName = "RefreshIcon";
 
 export const RepeatColumnIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4492,10 +4052,7 @@ export const RepeatColumnIcon: IconComponent = forwardRef(
 RepeatColumnIcon.displayName = "RepeatColumnIcon";
 
 export const RepeatGridIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4519,10 +4076,7 @@ export const RepeatGridIcon: IconComponent = forwardRef(
 RepeatGridIcon.displayName = "RepeatGridIcon";
 
 export const RepeatRowIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4546,10 +4100,7 @@ export const RepeatRowIcon: IconComponent = forwardRef(
 RepeatRowIcon.displayName = "RepeatRowIcon";
 
 export const ResetIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4572,10 +4123,7 @@ export const ResetIcon: IconComponent = forwardRef(
 ResetIcon.displayName = "ResetIcon";
 
 export const ScrollIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4599,10 +4147,7 @@ export const ScrollIcon: IconComponent = forwardRef(
 ScrollIcon.displayName = "ScrollIcon";
 
 export const SearchIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4626,10 +4171,7 @@ export const SearchIcon: IconComponent = forwardRef(
 SearchIcon.displayName = "SearchIcon";
 
 export const SectionLinkIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4659,10 +4201,7 @@ export const SectionLinkIcon: IconComponent = forwardRef(
 SectionLinkIcon.displayName = "SectionLinkIcon";
 
 export const SelectIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4692,10 +4231,7 @@ export const SelectIcon: IconComponent = forwardRef(
 SelectIcon.displayName = "SelectIcon";
 
 export const SettingsIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4737,10 +4273,7 @@ export const SettingsIcon: IconComponent = forwardRef(
 SettingsIcon.displayName = "SettingsIcon";
 
 export const ShadowInsetIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4770,10 +4303,7 @@ export const ShadowInsetIcon: IconComponent = forwardRef(
 ShadowInsetIcon.displayName = "ShadowInsetIcon";
 
 export const ShadowNormalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4803,10 +4333,7 @@ export const ShadowNormalIcon: IconComponent = forwardRef(
 ShadowNormalIcon.displayName = "ShadowNormalIcon";
 
 export const ShrinkIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4830,10 +4357,7 @@ export const ShrinkIcon: IconComponent = forwardRef(
 ShrinkIcon.displayName = "ShrinkIcon";
 
 export const SliderIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4866,10 +4390,7 @@ export const SliderIcon: IconComponent = forwardRef(
 SliderIcon.displayName = "SliderIcon";
 
 export const SlotComponentIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4893,10 +4414,7 @@ export const SlotComponentIcon: IconComponent = forwardRef(
 SlotComponentIcon.displayName = "SlotComponentIcon";
 
 export const SpinnerIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4935,10 +4453,7 @@ export const SpinnerIcon: IconComponent = forwardRef(
 SpinnerIcon.displayName = "SpinnerIcon";
 
 export const StopIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4957,10 +4472,7 @@ export const StopIcon: IconComponent = forwardRef(
 StopIcon.displayName = "StopIcon";
 
 export const StretchVerticalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -4984,10 +4496,7 @@ export const StretchVerticalIcon: IconComponent = forwardRef(
 StretchVerticalIcon.displayName = "StretchVerticalIcon";
 
 export const SubscriptIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5011,10 +4520,7 @@ export const SubscriptIcon: IconComponent = forwardRef(
 SubscriptIcon.displayName = "SubscriptIcon";
 
 export const SuperscriptIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5038,10 +4544,7 @@ export const SuperscriptIcon: IconComponent = forwardRef(
 SuperscriptIcon.displayName = "SuperscriptIcon";
 
 export const SwitchIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5072,10 +4575,7 @@ export const SwitchIcon: IconComponent = forwardRef(
 SwitchIcon.displayName = "SwitchIcon";
 
 export const TabsIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5099,10 +4599,7 @@ export const TabsIcon: IconComponent = forwardRef(
 TabsIcon.displayName = "TabsIcon";
 
 export const TerminalIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5132,10 +4629,7 @@ export const TerminalIcon: IconComponent = forwardRef(
 TerminalIcon.displayName = "TerminalIcon";
 
 export const TextAlignCenterIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5159,10 +4653,7 @@ export const TextAlignCenterIcon: IconComponent = forwardRef(
 TextAlignCenterIcon.displayName = "TextAlignCenterIcon";
 
 export const TextAlignJustifyIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5186,10 +4677,7 @@ export const TextAlignJustifyIcon: IconComponent = forwardRef(
 TextAlignJustifyIcon.displayName = "TextAlignJustifyIcon";
 
 export const TextAlignLeftIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5213,10 +4701,7 @@ export const TextAlignLeftIcon: IconComponent = forwardRef(
 TextAlignLeftIcon.displayName = "TextAlignLeftIcon";
 
 export const TextAlignRightIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5240,10 +4725,7 @@ export const TextAlignRightIcon: IconComponent = forwardRef(
 TextAlignRightIcon.displayName = "TextAlignRightIcon";
 
 export const TextCapitalizeIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5267,10 +4749,7 @@ export const TextCapitalizeIcon: IconComponent = forwardRef(
 TextCapitalizeIcon.displayName = "TextCapitalizeIcon";
 
 export const TextItalicIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5294,10 +4773,7 @@ export const TextItalicIcon: IconComponent = forwardRef(
 TextItalicIcon.displayName = "TextItalicIcon";
 
 export const TextLowercaseIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5321,10 +4797,7 @@ export const TextLowercaseIcon: IconComponent = forwardRef(
 TextLowercaseIcon.displayName = "TextLowercaseIcon";
 
 export const TextStrikethroughIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5348,10 +4821,7 @@ export const TextStrikethroughIcon: IconComponent = forwardRef(
 TextStrikethroughIcon.displayName = "TextStrikethroughIcon";
 
 export const TextTruncateIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5375,10 +4845,7 @@ export const TextTruncateIcon: IconComponent = forwardRef(
 TextTruncateIcon.displayName = "TextTruncateIcon";
 
 export const TextUnderlineIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5402,10 +4869,7 @@ export const TextUnderlineIcon: IconComponent = forwardRef(
 TextUnderlineIcon.displayName = "TextUnderlineIcon";
 
 export const TextUppercaseIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5429,10 +4893,7 @@ export const TextUppercaseIcon: IconComponent = forwardRef(
 TextUppercaseIcon.displayName = "TextUppercaseIcon";
 
 export const TextIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5456,10 +4917,7 @@ export const TextIcon: IconComponent = forwardRef(
 TextIcon.displayName = "TextIcon";
 
 export const TooltipIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5483,10 +4941,7 @@ export const TooltipIcon: IconComponent = forwardRef(
 TooltipIcon.displayName = "TooltipIcon";
 
 export const TrashIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5510,10 +4965,7 @@ export const TrashIcon: IconComponent = forwardRef(
 TrashIcon.displayName = "TrashIcon";
 
 export const TriggerIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5555,10 +5007,7 @@ export const TriggerIcon: IconComponent = forwardRef(
 TriggerIcon.displayName = "TriggerIcon";
 
 export const UpgradeIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5588,10 +5037,7 @@ export const UpgradeIcon: IconComponent = forwardRef(
 UpgradeIcon.displayName = "UpgradeIcon";
 
 export const UploadIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5621,10 +5067,7 @@ export const UploadIcon: IconComponent = forwardRef(
 UploadIcon.displayName = "UploadIcon";
 
 export const VideoIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5648,10 +5091,7 @@ export const VideoIcon: IconComponent = forwardRef(
 VideoIcon.displayName = "VideoIcon";
 
 export const ViewportIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5674,10 +5114,7 @@ export const ViewportIcon: IconComponent = forwardRef(
 ViewportIcon.displayName = "ViewportIcon";
 
 export const VimeoIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5696,10 +5133,7 @@ export const VimeoIcon: IconComponent = forwardRef(
 VimeoIcon.displayName = "VimeoIcon";
 
 export const WebhookFormIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5735,10 +5169,7 @@ export const WebhookFormIcon: IconComponent = forwardRef(
 WebhookFormIcon.displayName = "WebhookFormIcon";
 
 export const Webstudio1cIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -5771,10 +5202,7 @@ export const Webstudio1cIcon: IconComponent = forwardRef(
 Webstudio1cIcon.displayName = "Webstudio1cIcon";
 
 export const WebstudioIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6125,10 +5553,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
 WebstudioIcon.displayName = "WebstudioIcon";
 
 export const WrapIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6170,10 +5595,7 @@ export const WrapIcon: IconComponent = forwardRef(
 WrapIcon.displayName = "WrapIcon";
 
 export const XAxisRotateIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6203,10 +5625,7 @@ export const XAxisRotateIcon: IconComponent = forwardRef(
 XAxisRotateIcon.displayName = "XAxisRotateIcon";
 
 export const XAxisIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6236,10 +5655,7 @@ export const XAxisIcon: IconComponent = forwardRef(
 XAxisIcon.displayName = "XAxisIcon";
 
 export const XCircledFilledIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6270,10 +5686,7 @@ export const XCircledFilledIcon: IconComponent = forwardRef(
 XCircledFilledIcon.displayName = "XCircledFilledIcon";
 
 export const XSmallIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6297,10 +5710,7 @@ export const XSmallIcon: IconComponent = forwardRef(
 XSmallIcon.displayName = "XSmallIcon";
 
 export const XIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6324,10 +5734,7 @@ export const XIcon: IconComponent = forwardRef(
 XIcon.displayName = "XIcon";
 
 export const XmlIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6357,10 +5764,7 @@ export const XmlIcon: IconComponent = forwardRef(
 XmlIcon.displayName = "XmlIcon";
 
 export const YAxisRotateIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6390,10 +5794,7 @@ export const YAxisRotateIcon: IconComponent = forwardRef(
 YAxisRotateIcon.displayName = "YAxisRotateIcon";
 
 export const YAxisIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6423,10 +5824,7 @@ export const YAxisIcon: IconComponent = forwardRef(
 YAxisIcon.displayName = "YAxisIcon";
 
 export const Youtube1cIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6449,10 +5847,7 @@ export const Youtube1cIcon: IconComponent = forwardRef(
 Youtube1cIcon.displayName = "Youtube1cIcon";
 
 export const ZAxisRotateIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -6482,10 +5877,7 @@ export const ZAxisRotateIcon: IconComponent = forwardRef(
 ZAxisRotateIcon.displayName = "ZAxisRotateIcon";
 
 export const ZAxisIcon: IconComponent = forwardRef(
-  (
-    { stroke = "currentColor", fill = "none", size = 16, ...props },
-    forwardedRef
-  ) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"

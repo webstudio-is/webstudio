@@ -64,7 +64,7 @@ const generateComponentExport = (options: GenerateOptions) => {
   });
   return `
 export const ${options.exportName}: IconComponent = forwardRef(
-  ({ stroke = "currentColor", fill = "none", size = 16, ...props }, forwardedRef) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       ${jsx}
     );

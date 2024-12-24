@@ -94,7 +94,7 @@ export const BorderWidthRightIcon = `<svg xmlns="http://www.w3.org/2000/svg" fil
 
 export const BorderWidthTopIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2 2h12m0 3.667v7c0 .736-.597 1.333-1.333 1.333H3.333A1.333 1.333 0 0 1 2 12.667v-7"/></svg>`;
 
-export const BoxIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z"/></svg>`;
+export const BoxIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z"/></svg>`;
 
 export const BracesIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5.333 2h-.666a1.333 1.333 0 0 0-1.334 1.333v3.334A1.333 1.333 0 0 1 2 8a1.333 1.333 0 0 1 1.333 1.333v3.334c0 .733.6 1.333 1.334 1.333h.666M10.667 14h.666a1.333 1.333 0 0 0 1.334-1.333V9.333C12.667 8.6 13.267 8 14 8a1.333 1.333 0 0 1-1.333-1.333V3.333A1.333 1.333 0 0 0 11.333 2h-.666"/></svg>`;
 
