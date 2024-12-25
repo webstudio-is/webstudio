@@ -154,3 +154,5 @@ export const toggleActiveSidebarPanel = (panel: SidebarPanelName) => {
   const currentPanel = $activeSidebarPanel.get();
   setActiveSidebarPanel(panel === currentPanel ? "none" : panel);
 };
+
+export const $remoteDialog = atom<{ title: string; url: string } | undefined>();

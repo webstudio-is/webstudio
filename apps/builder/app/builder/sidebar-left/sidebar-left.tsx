@@ -19,7 +19,7 @@ import {
   PlusIcon,
   type IconComponent,
 } from "@webstudio-is/icons";
-import { HelpPopover } from "./help-popover";
+import { HelpPopover } from "../features/help-dialog";
 import { useStore } from "@nanostores/react";
 import {
   $activeSidebarPanel,

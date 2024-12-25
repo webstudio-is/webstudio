@@ -214,6 +214,8 @@ export const LabelIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" vi
 
 export const LargeXIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.5 3 3 12.5M3 3l9.5 9.5"/></svg>`;
 
+export const LifeBuoyIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" width="100%" height="100%" style="display: block;"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>`;
+
 export const Link2UnlinkedIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10 4.667h1.333a3.333 3.333 0 0 1 0 6.666H10m-4 0H4.667a3.333 3.333 0 0 1 0-6.666H6"/></svg>`;
 
 export const Link2Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6 11.333H4.667a3.333 3.333 0 0 1 0-6.666H6M10 4.667h1.333a3.334 3.334 0 0 1 0 6.666H10M5.333 8h5.334"/></svg>`;
