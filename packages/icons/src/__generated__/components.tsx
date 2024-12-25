@@ -936,13 +936,13 @@ export const AutoScrollIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M12.4 8V6.655A5.155 5.155 0 0 0 7.245 1.5v0A5.155 5.155 0 0 0 2.09 6.655V8a6.5 6.5 0 0 0 6.5 6.5h.224M10.89 12.922l1.51-3.02 1.51 3.02M11.268 12.167h2.264"
+          d="M13.782 6.492v3.016a5.782 5.782 0 1 1-11.564 0V6.492a5.782 5.782 0 0 1 11.564 0Z"
         />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="m5.245 5.988 2-2 2 2M7.245 11.524V3.988M9.245 10.092l-2 2-2-2"
+          d="M5.49 10.008 8 4.988l2.51 5.02M6.118 8.753h3.764"
         />
       </svg>
     );
@@ -963,10 +963,10 @@ export const BlockquoteIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M10.667 2a1.333 1.333 0 0 0-1.334 1.333v4a1.333 1.333 0 0 0 1.334 1.334.667.667 0 0 1 .666.666V10A1.333 1.333 0 0 1 10 11.333a.667.667 0 0 0-.667.667v1.333A.667.667 0 0 0 10 14a4 4 0 0 0 4-4V3.333A1.334 1.334 0 0 0 12.667 2h-2ZM3.333 2A1.333 1.333 0 0 0 2 3.333v4a1.333 1.333 0 0 0 1.333 1.334.667.667 0 0 1 .667.666V10a1.333 1.333 0 0 1-1.333 1.333A.667.667 0 0 0 2 12v1.333a.667.667 0 0 0 .667.667 4 4 0 0 0 4-4V3.333A1.333 1.333 0 0 0 5.333 2h-2Z"
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M6.142 8.5c-.056.516-.205.928-.465 1.293-.349.488-.933.943-1.9 1.427a.5.5 0 1 0 .447.894c1.032-.516 1.782-1.061 2.266-1.74.494-.691.677-1.47.677-2.374V5c0-.644-.523-1.167-1.167-1.167H3.333c-.644 0-1.166.523-1.166 1.167v2.333c0 .645.522 1.167 1.166 1.167h2.809ZM12.808 8.5c-.055.516-.204.928-.465 1.293-.348.488-.933.943-1.9 1.427a.5.5 0 1 0 .447.894c1.033-.516 1.782-1.061 2.267-1.74.494-.691.676-1.47.676-2.374V5c0-.644-.522-1.167-1.166-1.167H10c-.644 0-1.167.523-1.167 1.167v2.333c0 .645.523 1.167 1.167 1.167h2.808Z"
+          clipRule="evenodd"
         />
       </svg>
     );
@@ -4015,13 +4015,13 @@ export const ScrollIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M13.155 6.655v2.69a5.155 5.155 0 0 1-10.31 0v-2.69a5.155 5.155 0 0 1 10.31 0Z"
+          d="M13.782 6.492v3.016a5.782 5.782 0 1 1-11.564 0V6.492a5.782 5.782 0 0 1 11.564 0Z"
         />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="m6 6 2-2 2 2M8 11.536V4M10 10.104l-2 2-2-2"
+          d="M5.757 5.757 8 3.514l2.243 2.243M8 11.965V3.514M10.243 10.36 8 12.603 5.757 10.36"
         />
       </svg>
     );
@@ -4167,11 +4167,13 @@ export const ShadowInsetIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path
+        <rect
+          width="13"
+          height="13"
+          x="1.5"
+          y="1.5"
           stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 14.333a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z"
+          rx="6.5"
         />
         <path
           stroke="currentColor"
@@ -5471,7 +5473,7 @@ export const XAxisRotateIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
+        viewBox="0 0 16 17"
         width={size}
         height={size}
         fill={fill}
@@ -5482,13 +5484,13 @@ export const XAxisRotateIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M11.474 8c0 1.286-.203 2.543-.585 3.612-.382 1.07-.925 1.902-1.56 2.395-.634.492-1.333.62-2.007.37-.674-.251-1.293-.87-1.779-1.78s-.817-2.067-.95-3.329a11.855 11.855 0 0 1 .197-3.756c.263-1.188.708-2.203 1.28-2.918C6.64 1.88 7.313 1.5 8 1.5c.973 0 1.903.722 2.602 1.979l.872 1.633"
+          d="M9.473 12.528c-.579 1.944-1.563 3.222-2.681 3.222-1.78 0-3.223-3.246-3.223-7.25s1.442-7.25 3.223-7.25c1.78 0 3.222 3.246 3.222 7.25"
         />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M11.475 1.499V5.11h-1.93"
+          d="M7.597 6.083 10.014 8.5l2.417-2.417"
         />
       </svg>
     );
@@ -5662,7 +5664,7 @@ export const YAxisRotateIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
+        viewBox="0 0 16 17"
         width={size}
         height={size}
         fill={fill}
@@ -5673,13 +5675,13 @@ export const YAxisRotateIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M8 11.474c1.286 0 2.543-.203 3.612-.585 1.07-.382 1.902-.925 2.395-1.56.492-.634.62-1.333.37-2.007-.251-.674-.87-1.293-1.78-1.779s-2.067-.817-3.329-.95a11.855 11.855 0 0 0-3.756.197c-1.188.263-2.203.708-2.918 1.28C1.88 6.64 1.5 7.313 1.5 8c0 .973.722 1.903 1.979 2.602l1.633.872"
+          d="M12.028 9.973c1.944-.579 3.222-1.563 3.222-2.681 0-1.78-3.246-3.223-7.25-3.223S.75 5.511.75 7.292c0 1.78 3.246 3.222 7.25 3.222"
         />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M1.499 11.474H5.11v-1.93"
+          d="M5.583 8.097 8 10.514 5.583 12.93"
         />
       </svg>
     );
@@ -5745,7 +5747,7 @@ export const ZAxisRotateIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
+        viewBox="0 0 16 17"
         width={size}
         height={size}
         fill={fill}
@@ -5756,13 +5758,7 @@ export const ZAxisRotateIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M14 8a6 6 0 1 1-6-6c1.68 0 3.287.667 4.493 1.827L14 5.333"
-        />
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M14 2v3.333h-3.333"
+          d="M14 9.28a5.993 5.993 0 0 1-2.007 3.736 6.04 6.04 0 0 1-7.962-.024 5.98 5.98 0 0 1-.988-7.867A6.025 6.025 0 0 1 6.526 2.69a6.049 6.049 0 0 1 4.23.462 6.01 6.01 0 0 1 2.868 3.129M14 2.53v3.75h-3.766"
         />
       </svg>
     );
