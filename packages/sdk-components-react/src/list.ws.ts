@@ -43,7 +43,6 @@ const presetStyle = {
 } satisfies PresetStyle<ListTag>;
 
 export const meta: WsComponentMeta = {
-  category: "hidden",
   type: "container",
   icon: ListIcon,
   states: defaultStates,

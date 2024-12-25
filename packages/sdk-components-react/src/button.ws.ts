@@ -14,7 +14,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "hidden",
   icon: ButtonElementIcon,
   type: "container",
   constraints: {
