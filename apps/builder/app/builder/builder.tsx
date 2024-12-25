@@ -68,6 +68,7 @@ import {
 import { useInertHandlers } from "./shared/inert-handlers";
 import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
 import { SyncClient } from "~/shared/sync-client";
+import { RemoteDialog } from "./features/help/remote-dialog";
 
 registerContainers();
 
@@ -436,6 +437,7 @@ export const Builder = ({
         <Loading state={loadingState} />
         <BlockingAlerts />
         <CommandPanel />
+        <RemoteDialog />
       </div>
     </TooltipProvider>
   );
