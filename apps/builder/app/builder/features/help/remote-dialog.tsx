@@ -24,8 +24,10 @@ export const RemoteDialog = () => {
         $remoteDialog.set(undefined);
       }}
       modal={false}
+      draggable
+      resize="auto"
     >
-      <DialogContent draggable resize="auto" width={640} height={640}>
+      <DialogContent width={640} height={640}>
         <iframe
           src={options.url}
           style={{
