@@ -221,7 +221,6 @@ export const registerComponentLibrary = ({
   const nextTemplates = new Map(prevTemplates);
   for (const [componentName, meta] of Object.entries(templates)) {
     const { template, ...generatedMeta } = meta;
-    console.log(renderTemplate(template));
     nextTemplates.set(`${prefix}${componentName}`, {
       ...generatedMeta,
       template: renderTemplate(template),
