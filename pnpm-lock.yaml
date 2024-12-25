@@ -2009,6 +2009,12 @@ importers:
 
   packages/template:
     dependencies:
+      '@webstudio-is/css-data':
+        specifier: workspace:*
+        version: link:../css-data
+      '@webstudio-is/css-engine':
+        specifier: workspace:*
+        version: link:../css-engine
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk

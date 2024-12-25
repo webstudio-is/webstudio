@@ -1,11 +1,16 @@
 import { Fragment, type JSX, type ReactNode } from "react";
 import type {
+  Breakpoint,
   Instance,
   Instances,
   Prop,
   Props,
+  StyleDecl,
+  StyleSource,
+  StyleSourceSelection,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
+import type { TemplateStyleDecl } from "./css";
 
 export class ExpressionValue {
   value: string;
@@ -109,6 +114,10 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
   let lastId = -1;
   const instances: Instance[] = [];
   const props: Prop[] = [];
+  const breakpoints: Breakpoint[] = [];
+  const styleSources: StyleSource[] = [];
+  const styleSourceSelections: StyleSourceSelection[] = [];
+  const styles: StyleDecl[] = [];
   const ids = new Map<unknown, string>();
   const getId = (key: unknown) => {
     let id = ids.get(key);
@@ -119,10 +128,42 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
     }
     return id;
   };
+  // lazily create breakpoint
+  const getBreakpointId = () => {
+    if (breakpoints.length > 0) {
+      return breakpoints[0].id;
+    }
+    const breakpointId = "base";
+    breakpoints.push({
+      id: breakpointId,
+      label: "",
+    });
+    return breakpointId;
+  };
   const children = traverseJsx(root, (element, children) => {
     const instanceId = element.props?.["ws:id"] ?? getId(element);
     for (const [name, value] of Object.entries({ ...element.props })) {
       if (name === "ws:id" || name === "ws:label" || name === "children") {
+        continue;
+      }
+      if (name === "ws:style") {
+        const styleSourceId = `${instanceId}:${name}`;
+        styleSources.push({
+          type: "local",
+          id: styleSourceId,
+        });
+        styleSourceSelections.push({
+          instanceId,
+          values: [styleSourceId],
+        });
+        const localStyles = value as TemplateStyleDecl[];
+        for (const styleDecl of localStyles) {
+          styles.push({
+            breakpointId: getBreakpointId(),
+            styleSourceId,
+            ...styleDecl,
+          });
+        }
         continue;
       }
       const propId = `${instanceId}:${name}`;
@@ -190,13 +231,13 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
     children,
     instances,
     props,
+    breakpoints,
+    styleSources,
+    styleSourceSelections,
+    styles,
     assets: [],
     dataSources: [],
     resources: [],
-    breakpoints: [],
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: [],
   };
 };
 
@@ -219,6 +260,7 @@ type ComponentProps = Record<string, unknown> &
   Record<`${string}:expression`, string> & {
     "ws:id"?: string;
     "ws:label"?: string;
+    "ws:style"?: TemplateStyleDecl[];
     children?: ReactNode | ExpressionValue;
   };
 
