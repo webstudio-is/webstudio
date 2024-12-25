@@ -13,7 +13,6 @@ import {
   GithubIcon,
   LifeBuoyIcon,
   PageIcon,
-  Webstudio1cIcon,
   Youtube1cIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
