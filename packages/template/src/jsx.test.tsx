@@ -8,6 +8,7 @@ import {
   PlaceholderValue,
   renderTemplate,
 } from "./jsx";
+import { css } from "./css";
 
 test("render jsx into instances with generated id", () => {
   const { instances } = renderTemplate(
@@ -212,4 +213,81 @@ test("render placeholder value", () => {
       ],
     },
   ]);
+});
+
+test("generate local styles", () => {
+  const { breakpoints, styleSources, styleSourceSelections, styles } =
+    renderTemplate(
+      <$.Body
+        ws:style={css`
+          color: red;
+        `}
+      >
+        <$.Box
+          ws:style={css`
+            font-size: 10px;
+          `}
+        ></$.Box>
+      </$.Body>
+    );
+  expect(breakpoints).toEqual([{ id: "base", label: "" }]);
+  expect(styleSources).toEqual([
+    { id: "0:ws:style", type: "local" },
+    { id: "1:ws:style", type: "local" },
+  ]);
+  expect(styleSourceSelections).toEqual([
+    { instanceId: "0", values: ["0:ws:style"] },
+    { instanceId: "1", values: ["1:ws:style"] },
+  ]);
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      styleSourceId: "0:ws:style",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "1:ws:style",
+      property: "fontSize",
+      value: { type: "unit", unit: "px", value: 10 },
+    },
+  ]);
+});
+
+test("generate local styles with states", () => {
+  const { styles } = renderTemplate(
+    <$.Body
+      ws:style={css`
+        color: red;
+        &:hover {
+          color: blue;
+        }
+      `}
+    ></$.Body>
+  );
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      styleSourceId: "0:ws:style",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "0:ws:style",
+      state: ":hover",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    },
+  ]);
+});
+
+test("avoid generating style data without styles", () => {
+  const { breakpoints, styleSources, styleSourceSelections, styles } =
+    renderTemplate(<$.Body></$.Body>);
+  expect(breakpoints).toEqual([]);
+  expect(styleSources).toEqual([]);
+  expect(styleSourceSelections).toEqual([]);
+  expect(styles).toEqual([]);
 });
