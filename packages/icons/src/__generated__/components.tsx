@@ -738,7 +738,7 @@ export const AlignStartHorizontalIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M5.4 4.097H4.1c-.72 0-1.302.582-1.302 1.3v7.807c0 .719.583 1.301 1.301 1.301H5.4c.719 0 1.301-.582 1.301-1.3V5.397c0-.719-.582-1.301-1.3-1.301ZM11.906 4.097h-1.301c-.719 0-1.301.582-1.301 1.3v3.254c0 .718.582 1.3 1.3 1.3h1.302c.718 0 1.3-.582 1.3-1.3V5.398c0-.719-.582-1.301-1.3-1.301ZM14.497 1.495h-13"
+          d="M5.4 4.097H4.1c-.72 0-1.302.582-1.302 1.3v7.807c0 .719.583 1.301 1.301 1.301H5.4c.719 0 1.301-.582 1.301-1.3V5.397c0-.719-.582-1.301-1.3-1.301ZM11.906 4.097h-1.301c-.719 0-1.301.582-1.301 1.3v3.254c0 .718.582 1.3 1.3 1.3h1.302c.718 0 1.3-.582 1.3-1.3V5.398c0-.719-.582-1.301-1.3-1.301ZM1.5 2h13"
         />
       </svg>
     );
@@ -4129,12 +4129,12 @@ export const SettingsIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M14.015 5.466H9.348M9.348 5.466H2.015M14.015 10.8h-6M8.015 10.8h-6"
+          d="M13.987 6H9.32M13.932 6h-12M14 10.5H2"
         />
         <rect
           width="4"
           height="4"
-          x="2"
+          x="1.932"
           y="8.534"
           fill="#fff"
           stroke="currentColor"
@@ -4143,8 +4143,8 @@ export const SettingsIcon: IconComponent = forwardRef(
         <rect
           width="4"
           height="4"
-          x="10.096"
-          y="3.466"
+          x="10.068"
+          y="4"
           fill="#fff"
           stroke="currentColor"
           rx="2"
