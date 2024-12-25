@@ -30,7 +30,10 @@ import {
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import { $registeredComponentMetas } from "~/shared/nano-states";
+import {
+  $registeredComponentMetas,
+  $registeredTemplates,
+} from "~/shared/nano-states";
 import {
   findClosestInsertable,
   getComponentTemplateData,
@@ -50,31 +53,45 @@ type Meta = {
   icon: string;
 };
 
-const $metas = computed([$registeredComponentMetas], (componentMetas) => {
-  const availableComponents = new Set<string>();
-  const metas: Meta[] = [];
-  for (const [name, componentMeta] of componentMetas) {
-    availableComponents.add(name);
-    metas.push({
-      name,
-      category: componentMeta.category ?? "hidden",
-      order: componentMeta.order,
-      label: getInstanceLabel({ component: name }, componentMeta),
-      description: componentMeta.description,
-      icon: componentMeta.icon,
-    });
+const $metas = computed(
+  [$registeredComponentMetas, $registeredTemplates],
+  (componentMetas, templates) => {
+    const availableComponents = new Set<string>();
+    const metas: Meta[] = [];
+    for (const [name, componentMeta] of componentMetas) {
+      // only set available components from component meta
+      availableComponents.add(name);
+      metas.push({
+        name,
+        category: componentMeta.category ?? "hidden",
+        order: componentMeta.order,
+        label: getInstanceLabel({ component: name }, componentMeta),
+        description: componentMeta.description,
+        icon: componentMeta.icon,
+      });
+    }
+    for (const [name, templateMeta] of templates) {
+      metas.push({
+        name,
+        category: templateMeta.category ?? "hidden",
+        order: templateMeta.order,
+        label: getInstanceLabel({ component: name }, templateMeta),
+        description: templateMeta.description,
+        icon: templateMeta.icon ?? componentMetas.get(name)?.icon ?? "",
+      });
+    }
+    const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
+    for (const meta of metasByCategory.values()) {
+      meta.sort((metaA, metaB) => {
+        return (
+          (metaA.order ?? Number.MAX_SAFE_INTEGER) -
+          (metaB.order ?? Number.MAX_SAFE_INTEGER)
+        );
+      });
+    }
+    return { metasByCategory, availableComponents };
   }
-  const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
-  for (const meta of metasByCategory.values()) {
-    meta.sort((metaA, metaB) => {
-      return (
-        (metaA.order ?? Number.MAX_SAFE_INTEGER) -
-        (metaB.order ?? Number.MAX_SAFE_INTEGER)
-      );
-    });
-  }
-  return { metasByCategory, availableComponents };
-});
+);
 
 type Groups = Array<{
   category: Exclude<WsComponentMeta["category"], undefined> | "found";
