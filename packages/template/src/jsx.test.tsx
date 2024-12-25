@@ -5,6 +5,7 @@ import {
   ExpressionValue,
   PageValue,
   ParameterValue,
+  PlaceholderValue,
   renderTemplate,
 } from "./jsx";
 
@@ -193,6 +194,22 @@ test("render defined props", () => {
       name: "data-instance",
       type: "page",
       value: { pageId: "pageId", instanceId: "instanceId" },
+    },
+  ]);
+});
+
+test("render placeholder value", () => {
+  const { instances } = renderTemplate(
+    <$.Body>{new PlaceholderValue("Placeholder text")}</$.Body>
+  );
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "0",
+      component: "Body",
+      children: [
+        { type: "text", value: "Placeholder text", placeholder: true },
+      ],
     },
   ]);
 });

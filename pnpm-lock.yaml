@@ -1860,6 +1860,9 @@ importers:
       '@webstudio-is/generate-arg-types':
         specifier: workspace:*
         version: link:../generate-arg-types
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

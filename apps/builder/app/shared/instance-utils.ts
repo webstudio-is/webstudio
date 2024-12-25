@@ -45,6 +45,7 @@ import {
   $breakpoints,
   $pages,
   $resources,
+  $registeredTemplates,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -341,14 +342,21 @@ export const insertWebstudioFragmentAt = (
   }
 };
 
-export const getComponentTemplateData = (component: string) => {
+export const getComponentTemplateData = (
+  componentOrTemplate: string
+): WebstudioFragment => {
+  const templates = $registeredTemplates.get();
+  const templateMeta = templates.get(componentOrTemplate);
+  if (templateMeta) {
+    return templateMeta.template;
+  }
   const metas = $registeredComponentMetas.get();
-  const componentMeta = metas.get(component);
+  const componentMeta = metas.get(componentOrTemplate);
   // when template not specified fallback to template with the component
   const template = componentMeta?.template ?? [
     {
       type: "instance",
-      component,
+      component: componentOrTemplate,
       children: [],
     },
   ];
