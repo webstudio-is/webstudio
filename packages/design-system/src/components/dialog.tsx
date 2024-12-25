@@ -8,6 +8,8 @@ import {
   createContext,
   useContext,
   useState,
+  useCallback,
+  useEffect,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
@@ -130,10 +132,10 @@ const useDraggable = ({
   >(undefined);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
-  const draggableRef = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   const handleDragStart: DragEventHandler = (event) => {
-    const target = draggableRef.current;
+    const target = ref.current;
     if (target === null) {
       return;
     }
@@ -153,7 +155,7 @@ const useDraggable = ({
   };
 
   const handleDrag: DragEventHandler = (event) => {
-    const target = draggableRef.current;
+    const target = ref.current;
 
     if (
       event.pageX <= 0 ||
@@ -208,7 +210,58 @@ const useDraggable = ({
     onDrag: handleDrag,
     onDragEnd: enableCanvasPointerEvents,
     style,
-    draggableRef,
+    ref,
+  };
+};
+
+// This is needed to prevent pointer events on the iframe from interfering with dragging and resizing.
+const useSetPointerEvents = ({
+  resize,
+  draggable,
+}: {
+  resize?: "auto" | "none";
+  draggable?: boolean;
+}) => {
+  const [element, elementRef] = useState<HTMLDivElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const isActive = resize !== "none" || draggable === true;
+
+  const setPointerEvents = useCallback(
+    (value: string) => {
+      return () => {
+        // RAF is needed otherwise dragstart event won't fire because of pointer-events: none
+        requestAnimationFrame(() => {
+          if (element) {
+            element.style.pointerEvents = value;
+          }
+        });
+      };
+    },
+    [element]
+  );
+
+  useEffect(() => {
+    if (element === null || isActive === false) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      setPointerEvents("none")();
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setPointerEvents("auto")();
+      }, 500);
+    });
+    observer.observe(element);
+    return () => {
+      clearTimeout(timeoutRef.current);
+      observer.disconnect();
+    };
+  }, [element, setPointerEvents, isActive]);
+
+  return {
+    ref: elementRef,
+    onDragStartCapture: setPointerEvents("none"),
+    onDragEndCapture: setPointerEvents("auto"),
   };
 };
 
@@ -219,6 +272,7 @@ export const DialogContent = forwardRef(
       className,
       css,
       resize = "none",
+      draggable,
       width,
       height,
       x,
@@ -230,10 +284,11 @@ export const DialogContent = forwardRef(
       UseDraggableProps & {
         css?: CSS;
         resize?: "auto" | "none";
+        draggable?: boolean;
       },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
-    const { draggableRef, ...draggableProps } = useDraggable({
+    const { ref: draggableRef, ...draggableProps } = useDraggable({
       width,
       height,
       x,
@@ -242,14 +297,19 @@ export const DialogContent = forwardRef(
       minHeight,
     });
 
+    const { ref: pointerEventsRef, ...pointerEventsProps } =
+      useSetPointerEvents({ resize, draggable });
+
     return (
       <Primitive.Portal>
         <Primitive.Overlay className={overlayStyle()} />
         <Primitive.Content
           className={contentStyle({ className, css, resize })}
+          draggable={draggable}
           {...draggableProps}
+          {...pointerEventsProps}
           {...props}
-          ref={mergeRefs(forwardedRef, draggableRef)}
+          ref={mergeRefs(forwardedRef, draggableRef, pointerEventsRef)}
         >
           {children}
         </Primitive.Content>
