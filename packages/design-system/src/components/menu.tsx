@@ -174,7 +174,7 @@ const setIconStyle = css({
 });
 
 // Icon for the "checked" state from Figma
-export const MenuCheckedIcon = () => <CheckMarkIcon size={10} />;
+export const MenuCheckedIcon = () => <CheckMarkIcon size={12} />;
 
 // Icon for the "checked and set" state from Figma
 export const MenuCheckedAndSetIcon = () => (
