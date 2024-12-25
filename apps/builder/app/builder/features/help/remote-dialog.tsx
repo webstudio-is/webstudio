@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { $remoteDialog } from "../shared/nano-states";
+import { $remoteDialog } from "../../shared/nano-states";
 import {
   Dialog,
   DialogClose,

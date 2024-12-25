@@ -17,9 +17,9 @@ import {
   Youtube1cIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
-import { $remoteDialog } from "../shared/nano-states";
+import { $remoteDialog } from "../../shared/nano-states";
 
-export const HelpPopover = ({
+export const HelpCenter = ({
   children,
   side = "right",
   ...popoverProps
@@ -110,4 +110,4 @@ export const HelpPopover = ({
   );
 };
 
-HelpPopover.Trigger = PopoverTrigger;
+HelpCenter.Trigger = PopoverTrigger;
