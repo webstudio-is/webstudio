@@ -374,8 +374,6 @@ export const Builder = ({
                 />
               )}
             </Workspace>
-
-            {isDesignMode && <AiCommandBar />}
           </Main>
 
           <SidePanel gridArea="sidebar">
@@ -435,6 +433,7 @@ export const Builder = ({
           />
         </ChromeWrapper>
         <Loading state={loadingState} />
+        {isDesignMode && <AiCommandBar />}
         <BlockingAlerts />
         <CommandPanel />
         <RemoteDialog />
