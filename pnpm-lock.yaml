@@ -1715,9 +1715,6 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
-      '@webstudio-is/template':
-        specifier: workspace:*
-        version: link:../template
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -1734,6 +1731,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
