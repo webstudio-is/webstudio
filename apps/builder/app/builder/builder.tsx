@@ -432,8 +432,8 @@ export const Builder = ({
             }}
           />
         </ChromeWrapper>
-        <Loading state={loadingState} />
         {isDesignMode && <AiCommandBar />}
+        <Loading state={loadingState} />
         <BlockingAlerts />
         <CommandPanel />
         <RemoteDialog />
