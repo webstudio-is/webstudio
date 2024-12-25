@@ -3025,6 +3025,30 @@ export const LargeXIcon: IconComponent = forwardRef(
 );
 LargeXIcon.displayName = "LargeXIcon";
 
+export const LifeBuoyIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" />
+        <circle cx="12" cy="12" r="4" />
+      </svg>
+    );
+  }
+);
+LifeBuoyIcon.displayName = "LifeBuoyIcon";
+
 export const Link2UnlinkedIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

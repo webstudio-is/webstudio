@@ -11,10 +11,13 @@ import {
   BugIcon,
   DiscordIcon,
   GithubIcon,
+  LifeBuoyIcon,
+  PageIcon,
   Webstudio1cIcon,
   Youtube1cIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
+import { $remoteDialog } from "../shared/nano-states";
 
 export const HelpPopover = ({
   children,
@@ -42,19 +45,33 @@ export const HelpPopover = ({
           gap="2"
         >
           <Button
+            type="button"
+            prefix={<LifeBuoyIcon />}
+            css={{ justifyContent: "start" }}
+            color="ghost"
+            onClick={() => {
+              $remoteDialog.set({
+                title: "Support Hub",
+                url: "https://help.webstudio.is/",
+              });
+            }}
+          >
+            Support Hub
+          </Button>
+          <Button
             formAction="https://www.youtube.com/playlist"
             name="list"
             value="PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
             prefix={<Youtube1cIcon fill="currentColor" />}
-            color="destructive"
+            color="ghost"
             css={{ justifyContent: "start" }}
           >
             Learn with videos
           </Button>
           <Button
             formAction="https://docs.webstudio.is/"
-            prefix={<Webstudio1cIcon fill="currentColor" />}
-            color="gradient"
+            prefix={<PageIcon />}
+            color="ghost"
             css={{ justifyContent: "start" }}
           >
             Learn from docs
@@ -62,7 +79,7 @@ export const HelpPopover = ({
           <Button
             formAction="https://discord.gg/UNdyrDkq5r"
             prefix={<DiscordIcon fill="currentColor" />}
-            color="primary"
+            color="ghost"
             css={{ justifyContent: "start" }}
           >
             Join the Community
@@ -70,14 +87,14 @@ export const HelpPopover = ({
           <Button
             formAction="https://github.com/webstudio-is/webstudio-community/discussions"
             prefix={<GithubIcon fill="currentColor" />}
-            color="dark"
+            color="ghost"
             css={{ justifyContent: "start" }}
           >
             Discuss on GitHub
           </Button>
           <Button
             prefix={<BugIcon />}
-            color="dark"
+            color="ghost"
             onClick={() => {
               window.open(
                 "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"

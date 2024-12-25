@@ -204,7 +204,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       // Still possible create iframe without src attribute
       // Disable workers on builder
       "Content-Security-Policy",
-      `frame-src ${url.origin}/canvas https://app.goentri.com/; worker-src 'none'`
+      `frame-src ${url.origin}/canvas https://app.goentri.com/ https://help.webstudio.is/; worker-src 'none'`
     );
 
     return json(
