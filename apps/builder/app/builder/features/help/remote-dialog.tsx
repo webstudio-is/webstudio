@@ -13,7 +13,6 @@ import { ExternalLinkIcon } from "@webstudio-is/icons";
 
 export const RemoteDialog = () => {
   const options = useStore($remoteDialog);
-
   if (options === undefined) {
     return;
   }
@@ -25,11 +24,16 @@ export const RemoteDialog = () => {
         $remoteDialog.set(undefined);
       }}
       modal={false}
+      draggable
+      resize="auto"
     >
-      <DialogContent draggable resize="auto" width={640} height={640}>
+      <DialogContent width={640} height={640}>
         <iframe
           src={options.url}
-          style={{ border: 0, height: "100%" }}
+          style={{
+            border: 0,
+            height: "100%",
+          }}
         ></iframe>
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order

@@ -390,7 +390,7 @@ export const RepeatedStyle = (props: {
             >
               <CssValueListItem
                 id={id}
-                draggable={true}
+                draggable
                 active={dragItemId === id}
                 index={index}
                 label={<Label truncate>{itemLabel}</Label>}
