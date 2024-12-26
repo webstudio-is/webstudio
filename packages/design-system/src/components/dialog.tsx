@@ -142,8 +142,6 @@ const useDraggable = ({
         rect: Rect;
       }
   >(undefined);
-  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
-    useDisableCanvasPointerEvents();
   const ref = useRef<HTMLDivElement | null>(null);
 
   const handleDragStart: DragEventHandler = (event) => {
@@ -151,7 +149,6 @@ const useDraggable = ({
     if (target === null) {
       return;
     }
-    disableCanvasPointerEvents();
     if (placeholderImage) {
       event.dataTransfer.setDragImage(placeholderImage, 0, 0);
     }
@@ -220,7 +217,6 @@ const useDraggable = ({
   return {
     onDragStart: handleDragStart,
     onDrag: handleDrag,
-    onDragEnd: enableCanvasPointerEvents,
     style,
     ref,
   };
@@ -228,8 +224,14 @@ const useDraggable = ({
 
 // This is needed to prevent pointer events on the iframe from interfering with dragging and resizing.
 const useSetPointerEvents = () => {
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
+
   const setPointerEvents = (value: string) => {
     return () => {
+      value === "none"
+        ? disableCanvasPointerEvents()
+        : enableCanvasPointerEvents();
       // RAF is needed otherwise dragstart event won't fire because of pointer-events: none
       requestAnimationFrame(() => {
         if (element) {
