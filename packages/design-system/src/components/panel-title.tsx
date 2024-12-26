@@ -10,16 +10,14 @@ import {
   type Ref,
 } from "react";
 import { theme, styled, type CSS } from "../stitches.config";
-import { truncate } from "../utilities";
-import { textVariants } from "./text";
-import { Box } from "./box";
+import { Text } from "./text";
 
 type TitleProps = ComponentProps<"div"> & {
   suffix?: ReactNode;
   css?: CSS;
 };
 
-const Container = styled("div", textVariants.titles, {
+const Container = styled("div", {
   display: "flex",
   alignItems: "center",
   flexShrink: 0,
@@ -27,7 +25,6 @@ const Container = styled("div", textVariants.titles, {
   height: theme.spacing[15],
   paddingInline: theme.panel.paddingInline,
   paddingRight: theme.spacing[5],
-  color: theme.colors.foregroundMain,
 });
 
 const SuffixSlot = styled("div", {
@@ -48,7 +45,13 @@ export const PanelTitle = forwardRef(
     ref: Ref<HTMLDivElement>
   ) => (
     <Container className={className} css={css} {...rest} ref={ref}>
-      <Box css={truncate()}>{children}</Box>
+      {typeof children === "string" ? (
+        <Text variant="titles" truncate>
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
       {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
     </Container>
   )

@@ -43,54 +43,10 @@ const presetStyle = {
 } satisfies PresetStyle<ListTag>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
   type: "container",
-  description: "Groups content, like links in a menu or steps in a recipe.",
   icon: ListIcon,
   states: defaultStates,
   presetStyle,
-  order: 4,
-  template: [
-    {
-      type: "instance",
-      component: "List",
-      children: [
-        {
-          type: "instance",
-          component: "ListItem",
-          children: [
-            {
-              type: "text",
-              value: "List Item text you can edit",
-              placeholder: true,
-            },
-          ],
-        },
-        {
-          type: "instance",
-          component: "ListItem",
-          children: [
-            {
-              type: "text",
-              value: "List Item text you can edit",
-              placeholder: true,
-            },
-          ],
-        },
-        {
-          type: "instance",
-          component: "ListItem",
-          children: [
-            {
-              type: "text",
-              value: "List Item text you can edit",
-              placeholder: true,
-            },
-          ],
-        },
-      ],
-    },
-  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

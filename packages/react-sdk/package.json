@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
+    "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
@@ -33,7 +34,6 @@
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
-    "@webstudio-is/template": "workspace:*",
     "change-case": "^5.4.4",
     "html-tags": "^4.0.0",
     "nanoid": "^5.0.8"

@@ -41,9 +41,12 @@ export const ProjectSettingsView = ({
   const isDesignMode = useStore($isDesignMode);
 
   return (
-    <Dialog open={sections.has(currentSection!)} onOpenChange={onOpenChange}>
+    <Dialog
+      draggable
+      open={sections.has(currentSection!)}
+      onOpenChange={onOpenChange}
+    >
       <DialogContent
-        draggable
         css={{
           width: `calc(${leftPanelWidth} + ${rightPanelWidth})`,
           maxWidth: "none",

@@ -32,6 +32,11 @@
       "webstudio": "./src/hooks.ts",
       "types": "./lib/types/hooks.d.ts",
       "import": "./lib/hooks.js"
+    },
+    "./templates": {
+      "webstudio": "./src/templates.ts",
+      "types": "./lib/types/templates.d.ts",
+      "import": "./lib/templates.js"
     }
   },
   "scripts": {
@@ -60,6 +65,7 @@
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/generate-arg-types": "workspace:*",
+    "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",

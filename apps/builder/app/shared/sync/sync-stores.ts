@@ -47,6 +47,7 @@ import {
   $textToolbar,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
+  $registeredTemplates,
   $modifierKeys,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
@@ -167,6 +168,7 @@ export const createObjectPool = () => {
       "registeredComponentPropsMetas",
       $registeredComponentPropsMetas
     ),
+    new NanostoresSyncObject("registeredTemplates", $registeredTemplates),
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
   ]);
 };

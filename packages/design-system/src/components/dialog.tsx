@@ -13,12 +13,13 @@ import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
 import { Flex } from "./flex";
-import { useDisableCanvasPointerEvents } from "../utilities";
+import { useDisableCanvasPointerEvents, useResize } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
 import { mergeRefs } from "@react-aria/utils";
 import { Button } from "./button";
 import { XIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { Separator } from "./separator";
+import { Text } from "./text";
 
 export const DialogTrigger = Primitive.Trigger;
 
@@ -51,15 +52,28 @@ const panelStyle = css({
 const DialogContext = createContext<{
   isMaximized: boolean;
   setIsMaximized: (isMaximized: boolean) => void;
+  resize?: "auto" | "none";
+  draggable?: boolean;
 }>({
   isMaximized: false,
   setIsMaximized: () => {},
+  draggable: true,
+  resize: "none",
 });
 
-export const Dialog = (props: ComponentProps<typeof Primitive.Dialog>) => {
+export const Dialog = ({
+  resize,
+  draggable,
+  ...props
+}: ComponentProps<typeof Primitive.Dialog> & {
+  resize?: "auto" | "none";
+  draggable?: boolean;
+}) => {
   const [isMaximized, setIsMaximized] = useState(false);
   return (
-    <DialogContext.Provider value={{ isMaximized, setIsMaximized }}>
+    <DialogContext.Provider
+      value={{ isMaximized, setIsMaximized, resize, draggable }}
+    >
       <Primitive.Dialog {...props} />
     </DialogContext.Provider>
   );
@@ -128,16 +142,13 @@ const useDraggable = ({
         rect: Rect;
       }
   >(undefined);
-  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
-    useDisableCanvasPointerEvents();
-  const draggableRef = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   const handleDragStart: DragEventHandler = (event) => {
-    const target = draggableRef.current;
+    const target = ref.current;
     if (target === null) {
       return;
     }
-    disableCanvasPointerEvents();
     if (placeholderImage) {
       event.dataTransfer.setDragImage(placeholderImage, 0, 0);
     }
@@ -153,7 +164,7 @@ const useDraggable = ({
   };
 
   const handleDrag: DragEventHandler = (event) => {
-    const target = draggableRef.current;
+    const target = ref.current;
 
     if (
       event.pageX <= 0 ||
@@ -206,9 +217,45 @@ const useDraggable = ({
   return {
     onDragStart: handleDragStart,
     onDrag: handleDrag,
-    onDragEnd: enableCanvasPointerEvents,
     style,
-    draggableRef,
+    ref,
+  };
+};
+
+// This is needed to prevent pointer events on the iframe from interfering with dragging and resizing.
+const useSetPointerEvents = () => {
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
+
+  const setPointerEvents = (value: string) => {
+    return () => {
+      value === "none"
+        ? disableCanvasPointerEvents()
+        : enableCanvasPointerEvents();
+      // RAF is needed otherwise dragstart event won't fire because of pointer-events: none
+      requestAnimationFrame(() => {
+        if (element) {
+          element.style.pointerEvents = value;
+        }
+      });
+    };
+  };
+
+  const [element, ref] = useResize({
+    onResizeStart: setPointerEvents("none"),
+    onResizeEnd: setPointerEvents("auto"),
+  });
+
+  const { resize, draggable } = useContext(DialogContext);
+
+  if (resize === "none" && draggable !== true) {
+    return {};
+  }
+
+  return {
+    ref,
+    onDragStartCapture: setPointerEvents("none"),
+    onDragEndCapture: setPointerEvents("auto"),
   };
 };
 
@@ -218,7 +265,6 @@ export const DialogContent = forwardRef(
       children,
       className,
       css,
-      resize = "none",
       width,
       height,
       x,
@@ -229,11 +275,11 @@ export const DialogContent = forwardRef(
     }: ComponentProps<typeof Primitive.Content> &
       UseDraggableProps & {
         css?: CSS;
-        resize?: "auto" | "none";
       },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
-    const { draggableRef, ...draggableProps } = useDraggable({
+    const { resize } = useContext(DialogContext);
+    const { ref: draggableRef, ...draggableProps } = useDraggable({
       width,
       height,
       x,
@@ -242,14 +288,18 @@ export const DialogContent = forwardRef(
       minHeight,
     });
 
+    const { ref: pointerEventsRef, ...pointerEventsProps } =
+      useSetPointerEvents();
+
     return (
       <Primitive.Portal>
         <Primitive.Overlay className={overlayStyle()} />
         <Primitive.Content
           className={contentStyle({ className, css, resize })}
           {...draggableProps}
+          {...pointerEventsProps}
           {...props}
-          ref={mergeRefs(forwardedRef, draggableRef)}
+          ref={mergeRefs(forwardedRef, draggableRef, pointerEventsRef)}
         >
           {children}
         </Primitive.Content>
@@ -265,6 +315,13 @@ const titleSlotStyle = css({
   order: -1,
 });
 
+const titleStyle = css({
+  display: "flex",
+  flexGrow: 1,
+  height: "100%",
+  alignItems: "center",
+});
+
 export const DialogTitle = ({
   children,
   suffix,
@@ -272,27 +329,30 @@ export const DialogTitle = ({
 }: ComponentProps<typeof PanelTitle> & {
   suffix?: ReactNode;
   closeLabel?: string;
-}) => (
-  <div className={titleSlotStyle()}>
-    <PanelTitle {...rest} suffix={suffix ?? <DialogClose />}>
-      <Primitive.Title className={titleStyle()}>{children}</Primitive.Title>
-    </PanelTitle>
-    <Separator />
-  </div>
-);
+}) => {
+  const { draggable } = useContext(DialogContext);
+
+  return (
+    <div className={titleSlotStyle()}>
+      <PanelTitle {...rest} suffix={suffix ?? <DialogClose />}>
+        <Primitive.Title asChild>
+          <Text
+            draggable={draggable}
+            className={titleStyle()}
+            variant="titles"
+            truncate
+          >
+            {children}
+          </Text>
+        </Primitive.Title>
+      </PanelTitle>
+      <Separator />
+    </div>
+  );
+};
 
 export const DialogTitleActions = ({ children }: { children: ReactNode }) => {
-  return (
-    <Flex
-      gap="1"
-      onMouseDown={(event) => {
-        // Prevent dragging dialog
-        event.preventDefault();
-      }}
-    >
-      {children}
-    </Flex>
-  );
+  return <Flex gap="1">{children}</Flex>;
 };
 
 export const DialogActions = ({ children }: { children: ReactNode }) => {
@@ -344,9 +404,4 @@ const contentStyle = css(panelStyle, {
       },
     },
   },
-});
-
-const titleStyle = css({
-  // Resetting H2 styles (Primitive.Title is H2)
-  all: "unset",
 });

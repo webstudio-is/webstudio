@@ -142,21 +142,11 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
   return ref;
 };
 
-const useResize = () => {
+export const ResizeHandles = () => {
   const isResizing = useStore($isResizingCanvas);
   const leftRef = useScrub({ side: "left" });
   const rightRef = useScrub({ side: "right" });
   const state = isResizing ? "resizing" : "idle";
-
-  return {
-    state,
-    leftRef,
-    rightRef,
-  };
-};
-
-export const ResizeHandles = () => {
-  const { state, leftRef, rightRef } = useResize();
 
   return (
     <>

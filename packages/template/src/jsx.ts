@@ -1,5 +1,16 @@
 import { Fragment, type JSX, type ReactNode } from "react";
-import type { Instance, Instances, Prop, Props } from "@webstudio-is/sdk";
+import type {
+  Breakpoint,
+  Instance,
+  Instances,
+  Prop,
+  Props,
+  StyleDecl,
+  StyleSource,
+  StyleSourceSelection,
+  WebstudioFragment,
+} from "@webstudio-is/sdk";
+import type { TemplateStyleDecl } from "./css";
 
 export class ExpressionValue {
   value: string;
@@ -47,6 +58,13 @@ export class PageValue {
   }
 }
 
+export class PlaceholderValue {
+  value: string;
+  constructor(text: string) {
+    this.value = text;
+  }
+}
+
 const traverseJsx = (
   element: JSX.Element,
   callback: (
@@ -65,6 +83,9 @@ const traverseJsx = (
       if (typeof child === "string") {
         continue;
       }
+      if (child instanceof PlaceholderValue) {
+        continue;
+      }
       if (child instanceof ExpressionValue) {
         continue;
       }
@@ -78,6 +99,9 @@ const traverseJsx = (
     if (typeof child === "string") {
       continue;
     }
+    if (child instanceof PlaceholderValue) {
+      continue;
+    }
     if (child instanceof ExpressionValue) {
       continue;
     }
@@ -86,16 +110,14 @@ const traverseJsx = (
   return result;
 };
 
-type WebstudioTemplate = {
-  children: Instance["children"];
-  instances: Instance[];
-  props: Prop[];
-};
-
-export const renderTemplate = (root: JSX.Element): WebstudioTemplate => {
+export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
   let lastId = -1;
   const instances: Instance[] = [];
   const props: Prop[] = [];
+  const breakpoints: Breakpoint[] = [];
+  const styleSources: StyleSource[] = [];
+  const styleSourceSelections: StyleSourceSelection[] = [];
+  const styles: StyleDecl[] = [];
   const ids = new Map<unknown, string>();
   const getId = (key: unknown) => {
     let id = ids.get(key);
@@ -106,10 +128,42 @@ export const renderTemplate = (root: JSX.Element): WebstudioTemplate => {
     }
     return id;
   };
+  // lazily create breakpoint
+  const getBreakpointId = () => {
+    if (breakpoints.length > 0) {
+      return breakpoints[0].id;
+    }
+    const breakpointId = "base";
+    breakpoints.push({
+      id: breakpointId,
+      label: "",
+    });
+    return breakpointId;
+  };
   const children = traverseJsx(root, (element, children) => {
     const instanceId = element.props?.["ws:id"] ?? getId(element);
     for (const [name, value] of Object.entries({ ...element.props })) {
       if (name === "ws:id" || name === "ws:label" || name === "children") {
+        continue;
+      }
+      if (name === "ws:style") {
+        const styleSourceId = `${instanceId}:${name}`;
+        styleSources.push({
+          type: "local",
+          id: styleSourceId,
+        });
+        styleSourceSelections.push({
+          instanceId,
+          values: [styleSourceId],
+        });
+        const localStyles = value as TemplateStyleDecl[];
+        for (const styleDecl of localStyles) {
+          styles.push({
+            breakpointId: getBreakpointId(),
+            styleSourceId,
+            ...styleDecl,
+          });
+        }
         continue;
       }
       const propId = `${instanceId}:${name}`;
@@ -160,12 +214,14 @@ export const renderTemplate = (root: JSX.Element): WebstudioTemplate => {
       ...(element.props?.["ws:label"]
         ? { label: element.props?.["ws:label"] }
         : undefined),
-      children: children.map((child) =>
+      children: children.map((child): Instance["children"][number] =>
         typeof child === "string"
           ? { type: "text", value: child }
-          : child instanceof ExpressionValue
-            ? { type: "expression", value: child.value }
-            : { type: "id", value: child.props?.["ws:id"] ?? getId(child) }
+          : child instanceof PlaceholderValue
+            ? { type: "text", value: child.value, placeholder: true }
+            : child instanceof ExpressionValue
+              ? { type: "expression", value: child.value }
+              : { type: "id", value: child.props?.["ws:id"] ?? getId(child) }
       ),
     };
     instances.push(instance);
@@ -175,6 +231,13 @@ export const renderTemplate = (root: JSX.Element): WebstudioTemplate => {
     children,
     instances,
     props,
+    breakpoints,
+    styleSources,
+    styleSourceSelections,
+    styles,
+    assets: [],
+    dataSources: [],
+    resources: [],
   };
 };
 
@@ -197,6 +260,7 @@ type ComponentProps = Record<string, unknown> &
   Record<`${string}:expression`, string> & {
     "ws:id"?: string;
     "ws:label"?: string;
+    "ws:style"?: TemplateStyleDecl[];
     children?: ReactNode | ExpressionValue;
   };
 
