@@ -8,14 +8,12 @@ import {
   createContext,
   useContext,
   useState,
-  useCallback,
-  useEffect,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
 import { Flex } from "./flex";
-import { useDisableCanvasPointerEvents } from "../utilities";
+import { useDisableCanvasPointerEvents, useResize } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
 import { mergeRefs } from "@react-aria/utils";
 import { Button } from "./button";
@@ -230,45 +228,30 @@ const useDraggable = ({
 
 // This is needed to prevent pointer events on the iframe from interfering with dragging and resizing.
 const useSetPointerEvents = () => {
-  const { resize, draggable } = useContext(DialogContext);
-  const [element, elementRef] = useState<HTMLDivElement | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const isActive = resize !== "none" || draggable === true;
-
-  const setPointerEvents = useCallback(
-    (value: string) => {
-      return () => {
-        // RAF is needed otherwise dragstart event won't fire because of pointer-events: none
-        requestAnimationFrame(() => {
-          if (element) {
-            element.style.pointerEvents = value;
-          }
-        });
-      };
-    },
-    [element]
-  );
-
-  useEffect(() => {
-    if (element === null || isActive === false) {
-      return;
-    }
-    const observer = new ResizeObserver(() => {
-      setPointerEvents("none")();
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        setPointerEvents("auto")();
-      }, 500);
-    });
-    observer.observe(element);
+  const setPointerEvents = (value: string) => {
     return () => {
-      clearTimeout(timeoutRef.current);
-      observer.disconnect();
+      // RAF is needed otherwise dragstart event won't fire because of pointer-events: none
+      requestAnimationFrame(() => {
+        if (element) {
+          element.style.pointerEvents = value;
+        }
+      });
     };
-  }, [element, setPointerEvents, isActive]);
+  };
+
+  const [element, ref] = useResize({
+    onResizeStart: setPointerEvents("none"),
+    onResizeEnd: setPointerEvents("auto"),
+  });
+
+  const { resize, draggable } = useContext(DialogContext);
+
+  if (resize === "none" || draggable !== true) {
+    return {};
+  }
 
   return {
-    ref: elementRef,
+    ref,
     onDragStartCapture: setPointerEvents("none"),
     onDragEndCapture: setPointerEvents("auto"),
   };
