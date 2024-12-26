@@ -131,7 +131,7 @@
     "html-tags": "^4.0.0",
     "react-router-dom": "^6.28.0",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
-    "type-fest": "^4.28.0",
+    "type-fest": "^4.31.0",
     "typescript": "5.7.2",
     "vite": "^5.4.11",
     "vitest": "^2.1.8"
