@@ -936,13 +936,7 @@ export const AutoScrollIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M13.782 6.492v3.016a5.782 5.782 0 1 1-11.564 0V6.492a5.782 5.782 0 0 1 11.564 0Z"
-        />
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M5.49 10.008 8 4.988l2.51 5.02M6.118 8.753h3.764"
+          d="m5.502 10.5 2.5-5 2.5 5M6.126 9.25h3.75M2 14V2M14.003 14V2"
         />
       </svg>
     );
@@ -4015,13 +4009,7 @@ export const ScrollIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M13.782 6.492v3.016a5.782 5.782 0 1 1-11.564 0V6.492a5.782 5.782 0 0 1 11.564 0Z"
-        />
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M5.757 5.757 8 3.514l2.243 2.243M8 11.965V3.514M10.243 10.36 8 12.603 5.757 10.36"
+          d="M8 4v4M6 6l2-2 2 2M8 12V8M10 10l-2 2-2-2M2 14V2M14.003 14V2"
         />
       </svg>
     );

@@ -6,25 +6,37 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M13.7817 6.49171V7.99999V9.50827C13.7817 12.7014 11.1932 15.29 8 15.29C4.80683 15.29 2.21826 12.7014 2.21826 9.50828V7.99999V6.49171C2.21826 3.29855 4.80683 0.709976 8 0.709976C11.1932 0.709976 13.7817 3.29855 13.7817 6.49171Z"
+    d="M8 4L8 8"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M5.75705 5.75694L8.00015 3.51385L10.2432 5.75686"
+    d="M6 6L8 4L10 6"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M8 11.9652L8 3.51385"
+    d="M8 12L8 8"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M10.2431 10.3597L7.99997 12.6028L5.75696 10.3597"
+    d="M10 10L8 12L6 10"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M2 14V8V2"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M14.0034 14V8V2"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
