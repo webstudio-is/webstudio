@@ -405,6 +405,7 @@ const renderMenuItems = (props: {
                           ? rawTheme.colors.foregroundPrimary
                           : rawTheme.colors.foregroundIconMain
                       }
+                      size={12}
                     />
                   ) : props.item.states.includes(selector) ? (
                     <DotIcon color={rawTheme.colors.foregroundPrimary} />

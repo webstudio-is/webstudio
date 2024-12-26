@@ -5,14 +5,9 @@
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
+  <rect x="1.5" y="1.5" width="13" height="13" rx="6.5" stroke="currentColor" />
   <path
-    d="M8 14.3333C11.5899 14.3333 14.5 11.4232 14.5 7.83334C14.5 4.24348 11.5899 1.33334 8 1.33334C4.41015 1.33334 1.5 4.24348 1.5 7.83334C1.5 11.4232 4.41015 14.3333 8 14.3333Z"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M3.80396 7.83334C3.80396 5.51592 5.68259 3.63729 8 3.63729C10.3174 3.63729 12.196 5.51592 12.196 7.83334"
+    d="M3.80396 7.83334C3.80396 5.51593 5.68259 3.6373 8 3.6373C10.3174 3.6373 12.196 5.51593 12.196 7.83334"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
