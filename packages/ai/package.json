@@ -12,8 +12,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:^",
-    "fast-glob": "^3.3.2",
-    "type-fest": "^4.28.0"
+    "fast-glob": "^3.3.2"
   },
   "exports": {
     ".": {

@@ -11,7 +11,6 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "devDependencies": {
-    "@types/node": "^22.9.3",
     "@webstudio-is/tsconfig": "workspace:*"
   },
   "exports": {

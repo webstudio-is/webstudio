@@ -59,7 +59,6 @@
     "@remix-run/node": "^2.15.0",
     "@remix-run/react": "^2.15.0",
     "@remix-run/server-runtime": "^2.15.0",
-    "@types/node": "^22.9.3",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@types/yargs": "^17.0.33",
