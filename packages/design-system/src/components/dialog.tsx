@@ -246,7 +246,7 @@ const useSetPointerEvents = () => {
 
   const { resize, draggable } = useContext(DialogContext);
 
-  if (resize === "none" || draggable !== true) {
+  if (resize === "none" && draggable !== true) {
     return {};
   }
 
