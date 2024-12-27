@@ -1,3 +1,15 @@
+export { meta as ContentEmbed } from "./content-embed.template";
+export { meta as MarkdownEmbed } from "./markdown-embed.template";
+export { meta as Text } from "./text.template";
+export { meta as Heading } from "./heading.template";
+export { meta as Paragraph } from "./paragraph.template";
+export { meta as Link } from "./link.template";
 export { meta as Button } from "./button.template";
+export { meta as Blockquote } from "./blockquote.template";
 export { meta as List } from "./list.template";
+export { meta as ListItem } from "./list-item.template";
+export { meta as Label } from "./label.template";
+export { meta as RadioButton } from "./radio-button.template";
+export { meta as Checkbox } from "./checkbox.template";
 export { meta as Vimeo } from "./vimeo.template";
+export { meta as Select } from "./select.template";

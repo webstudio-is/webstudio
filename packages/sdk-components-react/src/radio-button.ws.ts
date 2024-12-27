@@ -20,18 +20,14 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
   constraints: {
     relation: "ancestor",
     component: { $nin: ["Button", "Link"] },
   },
   type: "control",
   label: "Radio",
-  description:
-    "Use within a form to allow your users to select a single option from a set of mutually exclusive choices. Group multiple radios by matching their “Name” properties.",
   icon: RadioCheckedIcon,
   presetStyle,
-  order: 5,
   states: [
     ...defaultStates,
     { selector: ":checked", label: "Checked" },
@@ -42,23 +38,6 @@ export const meta: WsComponentMeta = {
     //{ selector: ":enabled", label: "Enabled" },
     //{ selector: ":read-only", label: "Read Only" },
     //{ selector: ":read-write", label: "Read Write" },
-  ],
-  template: [
-    {
-      type: "instance",
-      component: "Label",
-      label: "Radio Field",
-      children: [
-        { type: "instance", component: "RadioButton", props: [], children: [] },
-        {
-          type: "instance",
-          component: "Text",
-          label: "Radio Label",
-          props: [{ type: "string", name: "tag", value: "span" }],
-          children: [{ type: "text", value: "Radio", placeholder: true }],
-        },
-      ],
-    },
   ],
 };
 

@@ -17,7 +17,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
   constraints: {
     relation: "ancestor",
     component: { $nin: ["Button", "Link"] },
@@ -27,14 +26,6 @@ export const meta: WsComponentMeta = {
   icon: LabelIcon,
   states: defaultStates,
   presetStyle,
-  order: 2,
-  template: [
-    {
-      type: "instance",
-      component: "Label",
-      children: [{ type: "text", value: "Form Label", placeholder: true }],
-    },
-  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

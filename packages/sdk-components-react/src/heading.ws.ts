@@ -22,10 +22,7 @@ const presetStyle = {
 } satisfies PresetStyle<HeadingTags>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
   type: "container",
-  description:
-    "Use HTML headings to structure and organize content. Use the Tag property in settings to change the heading level (h1-h6).",
   icon: HeadingIcon,
   constraints: {
     relation: "ancestor",
@@ -33,14 +30,6 @@ export const meta: WsComponentMeta = {
   },
   states: defaultStates,
   presetStyle,
-  order: 1,
-  template: [
-    {
-      type: "instance",
-      component: "Heading",
-      children: [],
-    },
-  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
