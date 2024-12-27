@@ -1,3 +1,4 @@
+import { useState, type KeyboardEvent, useEffect, useId } from "react";
 import { useStore } from "@nanostores/react";
 import { findApplicableMedia } from "@webstudio-is/css-engine";
 import {
@@ -7,7 +8,6 @@ import {
   Label,
   type NumericScrubValue,
   InputField,
-  useId,
   useScrub,
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
@@ -16,7 +16,6 @@ import {
   $selectedBreakpointId,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
-import { useState, type KeyboardEvent, useEffect } from "react";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 
 const useEnhancedInput = ({

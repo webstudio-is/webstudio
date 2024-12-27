@@ -1,5 +1,4 @@
-import { useId } from "@webstudio-is/design-system";
-import { useRef } from "react";
+import { useId, useRef } from "react";
 
 export const useIds = <FieldName extends string>(
   fieldNames: readonly FieldName[]

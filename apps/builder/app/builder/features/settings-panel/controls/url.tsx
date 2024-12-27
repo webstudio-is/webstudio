@@ -1,9 +1,8 @@
-import { type ReactNode, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useId, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import {
   theme,
-  useId,
   InputField,
   Flex,
   ToggleGroup,
