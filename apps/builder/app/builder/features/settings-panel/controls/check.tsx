@@ -1,5 +1,6 @@
+import { useId } from "react";
 import { useStore } from "@nanostores/react";
-import { Checkbox, CheckboxAndLabel, useId } from "@webstudio-is/design-system";
+import { Checkbox, CheckboxAndLabel } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,

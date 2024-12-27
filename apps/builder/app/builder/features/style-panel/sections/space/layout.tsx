@@ -1,5 +1,5 @@
-import { styled, useId } from "@webstudio-is/design-system";
-import { forwardRef } from "react";
+import { styled } from "@webstudio-is/design-system";
+import { forwardRef, useId } from "react";
 import type { ComponentProps, Ref } from "react";
 import type { HoverTarget, SpaceStyleProperty } from "./types";
 import { spaceProperties } from "./properties";

@@ -1,5 +1,6 @@
+import { useEffect, useId, useRef } from "react";
 import { useStore } from "@nanostores/react";
-import { useId, TextArea } from "@webstudio-is/design-system";
+import { TextArea } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,
@@ -14,7 +15,6 @@ import {
   useBindingState,
   humanizeAttribute,
 } from "../shared";
-import { useEffect, useRef } from "react";
 
 export const TextControl = ({
   meta,

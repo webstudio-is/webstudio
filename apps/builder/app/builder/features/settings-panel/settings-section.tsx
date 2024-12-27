@@ -1,6 +1,7 @@
+import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
-import { InputField, useId } from "@webstudio-is/design-system";
+import { InputField } from "@webstudio-is/design-system";
 import { $instances, $registeredComponentMetas } from "~/shared/nano-states";
 import { HorizontalLayout, Label, Row, useLocalValue } from "./shared";
 import { getInstanceLabel } from "~/shared/instance-utils";
