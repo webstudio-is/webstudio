@@ -32,12 +32,17 @@
       "webstudio": "./src/hooks.ts",
       "types": "./lib/types/hooks.d.ts",
       "import": "./lib/hooks.js"
+    },
+    "./templates": {
+      "webstudio": "./src/templates.ts",
+      "types": "./lib/types/templates.d.ts",
+      "import": "./lib/templates.js"
     }
   },
   "scripts": {
     "build": "vite build --config ../../vite.sdk-components.config.ts",
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts !./src/*.test.{ts,tsx}' -e asChild -e modal -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
-    "build:tailwind": "tsx scripts/generate-tailwind-theme.ts && prettier --write src/theme/__generated__",
+    "build:tailwind": "tsx --conditions=webstudio scripts/generate-tailwind-theme.ts && prettier --write src/theme/__generated__",
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc"
@@ -73,6 +78,7 @@
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:*",
+    "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",

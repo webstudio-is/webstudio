@@ -1921,6 +1921,9 @@ importers:
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../sdk-components-react
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
