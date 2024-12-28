@@ -14,7 +14,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
   type: "container",
   constraints: {
     // cannot use parent relation here
@@ -23,18 +22,9 @@ export const meta: WsComponentMeta = {
     relation: "ancestor",
     component: { $eq: "List" },
   },
-  description: "Adds a new item to an existing list.",
   icon: ListItemIcon,
   states: defaultStates,
   presetStyle,
-  order: 5,
-  template: [
-    {
-      type: "instance",
-      component: "ListItem",
-      children: [],
-    },
-  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

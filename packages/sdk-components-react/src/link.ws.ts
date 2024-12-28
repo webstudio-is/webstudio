@@ -20,17 +20,13 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "general",
   type: "container",
-  description:
-    "Use a link to send your users to another page, section, or resource. Configure links in the Settings panel.",
   icon: LinkIcon,
   constraints: {
     relation: "ancestor",
     component: { $nin: ["Button", "Link"] },
   },
   presetStyle,
-  order: 1,
   states: [
     ...defaultStates,
     {
@@ -41,13 +37,6 @@ export const meta: WsComponentMeta = {
       category: "component-states",
       selector: "[aria-current=page]",
       label: "Current page",
-    },
-  ],
-  template: [
-    {
-      type: "instance",
-      component: "Link",
-      children: [],
     },
   ],
 };
