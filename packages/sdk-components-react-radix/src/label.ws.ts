@@ -7,35 +7,16 @@ import {
 } from "@webstudio-is/react-sdk";
 import { label } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/label.props";
-import * as tc from "./theme/tailwind-classes";
 
 const presetStyle = {
   label,
 } satisfies PresetStyle<"label">;
 
 export const meta: WsComponentMeta = {
-  category: "radix",
-  order: 102,
   type: "container",
   icon: LabelIcon,
   presetStyle,
   states: defaultStates,
-  description:
-    "An accessible label to describe the purpose of an input. Match the “For” property on the label with the “ID” of the input to connect them.",
-  template: [
-    {
-      type: "instance",
-      component: "Label",
-      styles: [
-        // text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70
-        tc.text("sm"),
-        tc.font("medium"),
-        tc.leading("none"),
-        // We are not supporting peer like styles yet
-      ].flat(),
-      children: [{ type: "text", value: "Form Label", placeholder: true }],
-    },
-  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

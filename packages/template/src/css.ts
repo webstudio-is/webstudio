@@ -7,8 +7,11 @@ export type TemplateStyleDecl = {
   value: StyleValue;
 };
 
-export const css = (strings: TemplateStringsArray): TemplateStyleDecl[] => {
-  const cssString = `.styles{ ${strings.join()} }`;
+export const css = (
+  strings: TemplateStringsArray,
+  ...values: string[]
+): TemplateStyleDecl[] => {
+  const cssString = `.styles{ ${String.raw({ raw: strings }, ...values)} }`;
   const styles: TemplateStyleDecl[] = [];
   for (const { state, property, value } of parseCss(cssString)) {
     styles.push({ state, property, value });

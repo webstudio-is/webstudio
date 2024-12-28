@@ -17,6 +17,7 @@ import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/temp
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
+import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { ErrorMessage } from "~/shared/error";
 import { $publisher, publish } from "~/shared/pubsub";
@@ -244,7 +245,7 @@ export const Canvas = () => {
       metas: radixComponentMetas,
       propsMetas: radixComponentPropsMetas,
       hooks: radixComponentHooks,
-      templates: {},
+      templates: radixTemplates,
     });
   });
 
