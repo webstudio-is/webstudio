@@ -714,6 +714,40 @@ test("ignore unsupported at rules", () => {
   ]);
 });
 
+test("parse &:pseudo-classes as state", () => {
+  expect(
+    parseCss(`
+      &:hover {
+        color: red;
+      }
+   `)
+  ).toEqual([
+    {
+      selector: "",
+      state: ":hover",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ]);
+});
+
+test("parse &[attribute=selector] as state", () => {
+  expect(
+    parseCss(`
+      &[data-state=active] {
+        color: red;
+      }
+   `)
+  ).toEqual([
+    {
+      selector: "",
+      state: "[data-state=active]",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ]);
+});
+
 test("parse media query", () => {
   expect(parseMediaQuery(`(min-width: 768px)`)).toEqual({
     minWidth: 768,
