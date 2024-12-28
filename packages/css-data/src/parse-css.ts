@@ -169,8 +169,8 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
       }
       let selector: Selector | undefined = undefined;
       const children = node.children.toArray();
-      // @ts-ignore
-      let startsWithNesting = children[0]?.type === "NestingSelector";
+      // @ts-expect-error NestingSelector is not defined in type definitions
+      const startsWithNesting = children[0]?.type === "NestingSelector";
       for (let index = 0; index < children.length; index += 1) {
         const childNode = children[index];
         let name: string = "";
