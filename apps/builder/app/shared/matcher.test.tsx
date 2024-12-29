@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/template";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
+import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import type { Matcher } from "@webstudio-is/sdk";
 import {
@@ -15,6 +16,7 @@ import {
   isInstanceMatching,
   isTreeMatching,
   findClosestContainer,
+  isInstanceDetachable,
 } from "./matcher";
 
 const metas = new Map(Object.entries({ ...coreMetas, ...baseMetas }));
@@ -754,6 +756,65 @@ describe("is tree matching", () => {
         instanceSelector: ["box", "tabs", "body"],
       })
     ).toBeFalsy();
+  });
+});
+
+describe("is instance detachable", () => {
+  const metas = new Map(Object.entries({ ...baseMetas, ...radixMetas }));
+
+  test("allow deleting one of matching instances", () => {
+    expect(
+      isInstanceDetachable({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.Tabs ws:id="tabs">
+              <$.TabsList ws:id="list">
+                <$.TabsTrigger ws:id="trigger1"></$.TabsTrigger>
+                <$.TabsTrigger ws:id="trigger2"></$.TabsTrigger>
+              </$.TabsList>
+              <$.TabsContent ws:id="content1"></$.TabsContent>
+              <$.TabsContent ws:id="content2"></$.TabsContent>
+            </$.Tabs>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["trigger1", "list", "tabs", "body"],
+      })
+    ).toBeTruthy();
+  });
+
+  test("prevent deleting last matching instance", () => {
+    expect(
+      isInstanceDetachable({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.Tabs ws:id="tabs">
+              <$.TabsList ws:id="list">
+                <$.TabsTrigger ws:id="trigger1"></$.TabsTrigger>
+              </$.TabsList>
+              <$.TabsContent ws:id="content1"></$.TabsContent>
+            </$.Tabs>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["trigger1", "list", "tabs", "body"],
+      })
+    ).toBeFalsy();
+  });
+
+  test("allow deleting when siblings not matching", () => {
+    expect(
+      isInstanceDetachable({
+        ...renderJsx(
+          <$.Body ws:id="body">
+            <$.Tabs ws:id="tabs"></$.Tabs>
+            <$.Box ws:id="box"></$.Box>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["box", "body"],
+      })
+    ).toBeTruthy();
   });
 });
 

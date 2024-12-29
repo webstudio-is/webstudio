@@ -7,7 +7,6 @@ import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
   insertWebstudioFragmentAt,
-  isInstanceDetachable,
   updateWebstudioData,
   type Insertable,
 } from "~/shared/instance-utils";
@@ -22,6 +21,7 @@ import {
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $selectedInstance } from "~/shared/awareness";
+import { isInstanceDetachable } from "~/shared/matcher";
 
 export const applyOperations = (operations: operations.WsOperations) => {
   for (const operation of operations) {
@@ -96,8 +96,15 @@ const deleteInstanceByOp = (
     if (instanceSelector.length === 1) {
       return;
     }
+    const metas = $registeredComponentMetas.get();
     updateWebstudioData((data) => {
-      if (isInstanceDetachable(data.instances, instanceSelector) === false) {
+      if (
+        isInstanceDetachable({
+          metas,
+          instances: data.instances,
+          instanceSelector,
+        }) === false
+      ) {
         return;
       }
       deleteInstanceMutable(data, instanceSelector);

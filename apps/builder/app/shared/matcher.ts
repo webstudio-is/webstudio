@@ -234,6 +234,47 @@ export const isTreeMatching = ({
   return matches;
 };
 
+export const isInstanceDetachable = ({
+  instances,
+  metas,
+  instanceSelector,
+}: {
+  instances: Instances;
+  metas: Map<string, WsComponentMeta>;
+  instanceSelector: InstanceSelector;
+}) => {
+  const [instanceId, parentId] = instanceSelector;
+  const newInstances = new Map(instances);
+  // replace parent with the one without selected instance
+  let parentInstance = newInstances.get(parentId);
+  if (parentInstance) {
+    parentInstance = {
+      ...parentInstance,
+      children: parentInstance.children.filter(
+        (child) => child.type === "id" && child.value !== instanceId
+      ),
+    };
+    newInstances.set(parentInstance.id, parentInstance);
+  }
+  // skip self
+  for (let index = 1; index < instanceSelector.length; index += 1) {
+    const instance = newInstances.get(instanceSelector[index]);
+    if (instance === undefined) {
+      continue;
+    }
+    const meta = metas.get(instance.component);
+    const matches = isInstanceMatching({
+      instances: newInstances,
+      instanceSelector: instanceSelector.slice(index),
+      query: meta?.constraints,
+    });
+    if (matches === false) {
+      return false;
+    }
+  }
+  return true;
+};
+
 export const findClosestInstanceMatchingFragment = ({
   instances,
   metas,
