@@ -43,7 +43,8 @@ const tabsTriggerStyle = css`
   font-weight: ${weights.medium};
   transition: ${transition.all};
   &:focus-visible {
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
     box-shadow: ${boxShadow.ring};
   }
   &:disabled {

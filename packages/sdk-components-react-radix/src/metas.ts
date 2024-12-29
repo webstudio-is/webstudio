@@ -12,7 +12,6 @@ export {
   metaDialogTitle as DialogTitle,
   metaDialogDescription as DialogDescription,
 } from "./dialog.ws";
-export { meta as Sheet } from "./sheet.ws";
 export {
   metaPopover as Popover,
   metaPopoverTrigger as PopoverTrigger,
