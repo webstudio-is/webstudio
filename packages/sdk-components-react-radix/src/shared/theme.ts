@@ -59,6 +59,15 @@ export const weights = {
   black: "900",
 } as const;
 
+export const letterSpacing = {
+  tighter: "-0.05em",
+  tight: "-0.025em",
+  normal: "0em",
+  wide: "0.025em",
+  wider: "0.05em",
+  widest: "0.1em",
+} as const;
+
 export const spacing = {
   "0": "0px",
   "1": "0.25rem",
@@ -97,6 +106,11 @@ export const spacing = {
   "3.5": "0.875rem",
 } as const;
 
+export const width = {
+  ...spacing,
+  full: "100%",
+} as const;
+
 export const height = {
   ...spacing,
   auto: "auto",
@@ -121,6 +135,34 @@ export const height = {
   max: "max-content",
   fit: "fit-content",
 } as const;
+
+export const maxWidth = {
+  "0": "0rem",
+  xs: "20rem",
+  sm: "24rem",
+  md: "28rem",
+  lg: "32rem",
+  xl: "36rem",
+  "2xl": "42rem",
+  "3xl": "48rem",
+  "4xl": "56rem",
+  "5xl": "64rem",
+  "6xl": "72rem",
+  "7xl": "80rem",
+  full: "100%",
+  min: "min-content",
+  max: "max-content",
+  fit: "fit-content",
+  prose: "65ch",
+} as const;
+
+export const borderWidth = {
+  "0": "0px",
+  "2": "2px",
+  "4": "4px",
+  "8": "8px",
+  DEFAULT: "1px",
+};
 
 export const borderRadius = {
   none: "0px",
@@ -212,3 +254,24 @@ export const boxShadow = {
     `0 0 0 ${ringOffsetWidth[2]} ${colors.background}, ` +
     `0 0 0 calc(${ringWidth[2]} + ${ringOffsetWidth[2]}) ${colors.ring}`,
 } as const;
+
+export const zIndex = {
+  "0": "0",
+  "10": "10",
+  "20": "20",
+  "30": "30",
+  "40": "40",
+  "50": "50",
+} as const;
+
+export const blur = {
+  sm: "blur(0 1px 2px 0 rgb(0 0 0 / 0.05))",
+  DEFAULT:
+    "blur(0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1))",
+  md: "blur(0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1))",
+  lg: "blur(0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1))",
+  xl: "blur(0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1))",
+  "2xl": "blur(0 25px 50px -12px rgb(0 0 0 / 0.25))",
+  inner: "blur(inset 0 2px 4px 0 rgb(0 0 0 / 0.05))",
+  none: "blur(none)",
+};
