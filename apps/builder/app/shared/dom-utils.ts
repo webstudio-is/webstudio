@@ -310,6 +310,13 @@ const transformDOMRect = (rect: DOMRect, matrix: DOMMatrix) => {
   return new DOMRect(minX, minY, maxX - minX, maxY - minY);
 };
 
+/**
+ * We scroll using rectangle and anchor calculations because `scrollIntoView` does not work
+ * reliably for certain elements, such as those with `display: contents`.
+ * For these elements, we display a selected or hovered outline on the canvas using the
+ * bounding rectangles of their children or the selection range.
+ * Here, we ensure scrolling works for these elements as well.
+ */
 export const scrollIntoView = (anchor: Element, rect: DOMRect) => {
   const scrollParent = getScrollParent(anchor, true);
 
