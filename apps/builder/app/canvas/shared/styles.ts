@@ -88,9 +88,10 @@ const helperStylesShared = [
   `,
 
   // Display a placeholder text for elements that are editing but empty (Lexical adds p>br children)
-  `:is(${editablePlaceholderSelector})[contenteditable]:has(p:only-child > br:only-child) {
+  `:is(${editablePlaceholderSelector})[contenteditable] > p:only-child:has(br:only-child) {
     position: relative;
-    & > p:after {
+    display: block;
+    &:after {
       content: var(${editingPlaceholderVariable});
       position: absolute;
       left: 0;

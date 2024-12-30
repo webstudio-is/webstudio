@@ -96,6 +96,7 @@ import {
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import { editablePlaceholderComponents } from "~/canvas/shared/styles";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -1605,11 +1606,8 @@ export const TextEditor = ({
         }
 
         // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
-        const componentsWithPseudoElementChildren = [
-          "ListItem",
-          "Paragraph",
-          "Heading",
-        ];
+        const componentsWithPseudoElementChildren =
+          editablePlaceholderComponents;
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
