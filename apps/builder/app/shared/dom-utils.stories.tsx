@@ -7,7 +7,16 @@ export default {
 const handleClick = (selector: string) => {
   const elements = document.querySelectorAll(selector);
 
-  scrollIntoView(elements[0], elements[0].getBoundingClientRect());
+  const element = elements[0];
+  if (element === undefined) {
+    return;
+  }
+
+  if (false === element instanceof HTMLElement) {
+    return;
+  }
+
+  scrollIntoView(element, element.getBoundingClientRect());
 };
 
 const ToolbarStory = () => {
