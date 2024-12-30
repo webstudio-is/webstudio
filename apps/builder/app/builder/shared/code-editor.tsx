@@ -27,6 +27,7 @@ import {
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
+  foldGutterExtension,
   getMinMaxHeightVars,
 } from "./code-editor-base";
 
@@ -96,6 +97,11 @@ export const CodeEditor = forwardRef<
     return [];
   }, [lang]);
 
+  const dialogExtensions = useMemo(
+    () => [...extensions, foldGutterExtension],
+    [extensions]
+  );
+
   // prevent clicking on autocomplete options propagating to body
   // and closing dialogs and popovers
   useEffect(() => {
@@ -113,14 +119,19 @@ export const CodeEditor = forwardRef<
       document.removeEventListener("pointerdown", handlePointerDown, options);
     };
   }, []);
-  const content = (
-    <EditorContent {...editorContentProps} extensions={extensions} />
-  );
   return (
     <div className={wrapperStyle()} ref={ref}>
       <EditorDialogControl>
-        {content}
-        <EditorDialog title={title} content={content}>
+        {<EditorContent {...editorContentProps} extensions={extensions} />}
+        <EditorDialog
+          title={title}
+          content={
+            <EditorContent
+              {...editorContentProps}
+              extensions={dialogExtensions}
+            />
+          }
+        >
           <EditorDialogButton />
         </EditorDialog>
       </EditorDialogControl>
