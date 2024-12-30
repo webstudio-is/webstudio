@@ -2,7 +2,6 @@ import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "./tree-utils";
 import { getIsVisuallyHidden } from "./visually-hidden";
-import { getScrollParent } from "@react-aria/utils";
 
 export const getInstanceIdFromElement = (
   element: Element
@@ -307,13 +306,55 @@ const transformDOMRect = (rect: DOMRect, matrix: DOMMatrix) => {
 };
 
 /**
+ * `overflow: hidden` can be scrolled
+ */
+const isScrollable = (
+  node: HTMLElement,
+  checkForOverflow: boolean
+): boolean => {
+  if (!node) {
+    return false;
+  }
+  const style = window.getComputedStyle(node);
+
+  let isScrollable = /(auto|scroll|hidden)/.test(
+    style.overflow + style.overflowX + style.overflowY
+  );
+
+  if (isScrollable && checkForOverflow) {
+    isScrollable =
+      node.scrollHeight !== node.clientHeight ||
+      node.scrollWidth !== node.clientWidth;
+  }
+
+  return isScrollable;
+};
+
+const getScrollParent = (
+  node: HTMLElement,
+  checkForOverflow: boolean
+): HTMLElement | null => {
+  for (
+    let scrollableNode = node.parentElement;
+    scrollableNode !== null;
+    scrollableNode = scrollableNode.parentElement
+  ) {
+    if (isScrollable(scrollableNode, checkForOverflow)) {
+      return scrollableNode;
+    }
+  }
+
+  return document.documentElement;
+};
+
+/**
  * We scroll using rectangle and anchor calculations because `scrollIntoView` does not work
  * reliably for certain elements, such as those with `display: contents`.
  * For these elements, we display a selected or hovered outline on the canvas using the
  * bounding rectangles of their children or the selection range.
  * Here, we ensure scrolling works for these elements as well.
  */
-export const scrollIntoView = (anchor: Element, rect: DOMRect) => {
+export const scrollIntoView = (anchor: HTMLElement, rect: DOMRect) => {
   const scrollParent = getScrollParent(anchor, true);
 
   if (false === scrollParent instanceof HTMLElement) {
