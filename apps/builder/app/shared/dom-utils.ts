@@ -276,7 +276,6 @@ const getLocalToViewportMatrix = (container: Element): DOMMatrix => {
   const e = x1;
   const f = y1;
 
-  // Return a DOMMatrix
   return new DOMMatrix([a, b, c, d, e, f]);
 };
 
@@ -285,7 +284,6 @@ const getViewportToLocalMatrix = (container: Element): DOMMatrix => {
 };
 
 const transformDOMRect = (rect: DOMRect, matrix: DOMMatrix) => {
-  // Corners
   const topLeft = new DOMPoint(rect.x, rect.y).matrixTransform(matrix);
   const topRight = new DOMPoint(rect.x + rect.width, rect.y).matrixTransform(
     matrix
@@ -298,7 +296,6 @@ const transformDOMRect = (rect: DOMRect, matrix: DOMMatrix) => {
     rect.y + rect.height
   ).matrixTransform(matrix);
 
-  // Find min/max in each axis
   const xs = [topLeft.x, topRight.x, bottomLeft.x, bottomRight.x];
   const ys = [topLeft.y, topRight.y, bottomLeft.y, bottomRight.y];
   const minX = Math.min(...xs);
@@ -306,7 +303,6 @@ const transformDOMRect = (rect: DOMRect, matrix: DOMMatrix) => {
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
 
-  // Return the new bounding box as a DOMRect
   return new DOMRect(minX, minY, maxX - minX, maxY - minY);
 };
 
