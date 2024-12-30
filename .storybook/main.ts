@@ -19,7 +19,7 @@ export default {
         ...visualTestingStories,
         {
           directory: "../packages/css-engine",
-          titlePrefix: "Css Engine",
+          titlePrefix: "CSS Engine",
         },
         {
           directory: "../packages/image",
@@ -31,11 +31,11 @@ export default {
         },
         {
           directory: "../packages/sdk-components-react",
-          titlePrefix: "Sdk Components React",
+          titlePrefix: "SDK Components React",
         },
         {
           directory: "../packages/sdk-components-react-radix",
-          titlePrefix: "Sdk Components React Radix",
+          titlePrefix: "SDK Components React Radix",
         },
       ],
   framework: {
@@ -53,7 +53,7 @@ export default {
       define: {
         ...config.define,
         // storybook use "util" package internally which is bundled with stories
-        // and gives and error that process is undefined
+        // and gives an error that process is undefined
         "process.env.NODE_DEBUG": "undefined",
         "process.env.IS_STROYBOOK": "true",
       },
