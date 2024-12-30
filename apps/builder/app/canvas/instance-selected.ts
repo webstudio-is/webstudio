@@ -20,6 +20,8 @@ import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
   getAllElementsByInstanceSelector,
+  scrollIntoView,
+  hasDoNotTrackMutationRecord,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
@@ -127,26 +129,10 @@ const subscribeSelectedInstance = (
 
   const updateScroll = () => {
     const bbox = getAllElementsBoundingBox(visibleElements);
-
-    // Adds a small amount of space around the element after scrolling
-    const topScrollMargin = 16;
-
-    if (bbox.top < 0 || bbox.bottom > window.innerHeight) {
-      const moveToTopDelta = bbox.top - topScrollMargin;
-      const moveToBottomDelta =
-        bbox.bottom - window.innerHeight + topScrollMargin;
-
-      // scrollTo is used because scrollIntoView does not work with elements that have display:contents, etc.
-      // Here, we can be confident that if the outline can be calculated, we can scroll to it.
-      window.scrollTo({
-        top:
-          window.scrollY +
-          (Math.abs(moveToTopDelta) < Math.abs(moveToBottomDelta)
-            ? moveToTopDelta
-            : moveToBottomDelta),
-        behavior: "smooth",
-      });
+    if (visibleElements.length === 0) {
+      return;
     }
+    scrollIntoView(visibleElements[0], bbox);
   };
 
   const updateElements = () => {
@@ -285,6 +271,10 @@ const subscribeSelectedInstance = (
   const resizeObserver = new ResizeObserver(update);
 
   const mutationHandler: MutationCallback = (mutationRecords) => {
+    if (hasDoNotTrackMutationRecord(mutationRecords)) {
+      return;
+    }
+
     if (hasCollapsedMutationRecord(mutationRecords)) {
       return;
     }

@@ -92,10 +92,10 @@ export const subscribeInstanceHovering = ({
   window.addEventListener(
     "mouseout",
     () => {
-      mouseOutTimeoutId = setTimeout(() => {
-        updateOnMouseMove = false;
-        hoveredElement = undefined;
+      updateOnMouseMove = false;
+      hoveredElement = undefined;
 
+      mouseOutTimeoutId = setTimeout(() => {
         $blockChildOutline.set(undefined);
         $hoveredInstanceSelector.set(undefined);
         $hoveredInstanceOutline.set(undefined);

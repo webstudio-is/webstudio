@@ -216,3 +216,177 @@ export const getAllElementsBoundingBox = (
     width: right - left,
   });
 };
+
+const doNotTrackMutationAttribute = "data-ws-do-not-track-mutation";
+
+export const hasDoNotTrackMutationAttribute = (element: Element) => {
+  return element.hasAttribute(doNotTrackMutationAttribute);
+};
+
+export const hasDoNotTrackMutationRecord = (
+  mutationRecords: MutationRecord[]
+) => {
+  return mutationRecords.some((record) =>
+    record.type === "childList"
+      ? [...record.addedNodes.values()].some(
+          (node) =>
+            node instanceof Element &&
+            node.hasAttribute(doNotTrackMutationAttribute)
+        )
+      : false
+  );
+};
+
+/**
+ * Get a DOMMatrix mapping the container's local coords to viewport coords.
+ * This uses one test DIV (width=100, height=100) placed at (0,0) in container space.
+ */
+const getLocalToViewportMatrix = (container: Element): DOMMatrix => {
+  const rectSize = 100;
+
+  const testDiv = document.createElement("div");
+  Object.assign(testDiv.style, {
+    position: "absolute",
+    left: "0px",
+    top: "0px",
+    width: `${rectSize}px`,
+    height: `${rectSize}px`,
+    pointerEvents: "none",
+    background: "transparent",
+    visibility: "hidden",
+  });
+  container.appendChild(testDiv);
+  testDiv.setAttribute(doNotTrackMutationAttribute, "true");
+
+  const { left, top, width, height } = testDiv.getBoundingClientRect();
+  container.removeChild(testDiv);
+
+  const x1 = left;
+  const y1 = top;
+  const x2 = left + width;
+  const y2 = top;
+  const x3 = left;
+  const y3 = top + height;
+
+  const a = (x2 - x1) / rectSize;
+  const b = (y2 - y1) / rectSize;
+  const c = (x3 - x1) / rectSize;
+  const d = (y3 - y1) / rectSize;
+  const e = x1;
+  const f = y1;
+
+  return new DOMMatrix([a, b, c, d, e, f]);
+};
+
+const getViewportToLocalMatrix = (container: Element): DOMMatrix => {
+  return getLocalToViewportMatrix(container).inverse();
+};
+
+const transformDOMRect = (rect: DOMRect, matrix: DOMMatrix) => {
+  const topLeft = new DOMPoint(rect.x, rect.y).matrixTransform(matrix);
+  const topRight = new DOMPoint(rect.x + rect.width, rect.y).matrixTransform(
+    matrix
+  );
+  const bottomLeft = new DOMPoint(rect.x, rect.y + rect.height).matrixTransform(
+    matrix
+  );
+  const bottomRight = new DOMPoint(
+    rect.x + rect.width,
+    rect.y + rect.height
+  ).matrixTransform(matrix);
+
+  const xs = [topLeft.x, topRight.x, bottomLeft.x, bottomRight.x];
+  const ys = [topLeft.y, topRight.y, bottomLeft.y, bottomRight.y];
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return new DOMRect(minX, minY, maxX - minX, maxY - minY);
+};
+
+/**
+ * `overflow: hidden` can be scrolled
+ */
+const isScrollable = (
+  node: HTMLElement,
+  checkForOverflow: boolean
+): boolean => {
+  if (!node) {
+    return false;
+  }
+  const style = window.getComputedStyle(node);
+
+  let isScrollable = /(auto|scroll|hidden)/.test(
+    style.overflow + style.overflowX + style.overflowY
+  );
+
+  if (isScrollable && checkForOverflow) {
+    isScrollable =
+      node.scrollHeight !== node.clientHeight ||
+      node.scrollWidth !== node.clientWidth;
+  }
+
+  return isScrollable;
+};
+
+const getScrollParent = (
+  node: HTMLElement,
+  checkForOverflow: boolean
+): HTMLElement | null => {
+  for (
+    let scrollableNode = node.parentElement;
+    scrollableNode !== null;
+    scrollableNode = scrollableNode.parentElement
+  ) {
+    if (isScrollable(scrollableNode, checkForOverflow)) {
+      return scrollableNode;
+    }
+  }
+
+  return document.documentElement;
+};
+
+/**
+ * We scroll using rectangle and anchor calculations because `scrollIntoView` does not work
+ * reliably for certain elements, such as those with `display: contents`.
+ * For these elements, we display a selected or hovered outline on the canvas using the
+ * bounding rectangles of their children or the selection range.
+ * Here, we ensure scrolling works for these elements as well.
+ */
+export const scrollIntoView = (anchor: HTMLElement, rect: DOMRect) => {
+  const scrollParent = getScrollParent(anchor, true);
+
+  if (false === scrollParent instanceof HTMLElement) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const savedPosition = (scrollParent as HTMLElement).style.position;
+    (scrollParent as HTMLElement).style.position = "relative";
+
+    const matrix = getViewportToLocalMatrix(scrollParent);
+
+    const transformedRect = transformDOMRect(rect, matrix);
+
+    const scrollDiv = document.createElement("div");
+
+    Object.assign(scrollDiv.style, {
+      position: "absolute",
+      left: `${transformedRect.left}px`,
+      top: `${transformedRect.top}px`,
+      width: `${transformedRect.width}px`,
+      height: `${transformedRect.height}px`,
+      pointerEvents: "none",
+      background: "transparent",
+      scrollMargin: "20px",
+    });
+    scrollParent.appendChild(scrollDiv);
+
+    scrollDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    scrollParent.removeChild(scrollDiv);
+
+    (scrollParent as HTMLElement).style.position = savedPosition;
+  });
+};
