@@ -218,7 +218,7 @@ export const getAllElementsBoundingBox = (
   });
 };
 
-const doNotTrackMutationAttribute = "data-do-not-track-mutation";
+const doNotTrackMutationAttribute = "data-ws-do-not-track-mutation";
 
 export const hasDoNotTrackMutationAttribute = (element: Element) => {
   return element.hasAttribute(doNotTrackMutationAttribute);
