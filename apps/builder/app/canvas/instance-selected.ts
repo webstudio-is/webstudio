@@ -129,6 +129,9 @@ const subscribeSelectedInstance = (
 
   const updateScroll = () => {
     const bbox = getAllElementsBoundingBox(visibleElements);
+    if (visibleElements.length === 0) {
+      return;
+    }
     scrollIntoView(visibleElements[0], bbox);
   };
 
