@@ -56,9 +56,10 @@
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "await-interaction-response": "^0.0.2",
     "colord": "^2.9.3",
-    "micromark": "^4.0.0",
-    "await-interaction-response": "^0.0.2"
+    "micromark": "^4.0.1",
+    "micromark-extension-gfm-table": "^2.1.0"
   },
   "devDependencies": {
     "@testing-library/react": "^14.2.2",

@@ -61,6 +61,10 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />
       <ws.descendant ws:label="List Item" selector=" li" />
       <ws.descendant ws:label="Separator" selector=" hr" />
+      <ws.descendant ws:label="Table" selector=" table" />
+      <ws.descendant ws:label="Table Row" selector=" tr" />
+      <ws.descendant ws:label="Table Header Cell" selector=" th" />
+      <ws.descendant ws:label="Table Cell" selector=" td" />
     </$.MarkdownEmbed>
   ),
 };
