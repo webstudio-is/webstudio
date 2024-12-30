@@ -262,12 +262,12 @@ const getLocalToViewportMatrix = (container: Element): DOMMatrix => {
   const { left, top, width, height } = testDiv.getBoundingClientRect();
   container.removeChild(testDiv);
 
-  const x1 = left,
-    y1 = top;
-  const x2 = left + width,
-    y2 = top;
-  const x3 = left,
-    y3 = top + height;
+  const x1 = left;
+  const y1 = top;
+  const x2 = left + width;
+  const y2 = top;
+  const x3 = left;
+  const y3 = top + height;
 
   const a = (x2 - x1) / rectSize;
   const b = (y2 - y1) / rectSize;
