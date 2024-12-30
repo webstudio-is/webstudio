@@ -78,13 +78,15 @@ export const getCsrfTokenAndCookie = async (
     const csrfTokenLength = 16;
     const array = new Uint8Array(csrfTokenLength);
     crypto.getRandomValues(array);
-    const token = toBase64Url(array);
+    const token = toBase64Url(array.buffer);
 
     csrfSession.set("hash", hash);
     csrfSession.set("token", token);
     sessionCreateCookieValue =
       await csrfSessionStorage.commitSession(csrfSession);
   }
+
+  console.log("sessionCreateCookieValue", sessionCreateCookieValue);
 
   return [csrfSession.get("token"), sessionCreateCookieValue];
 };

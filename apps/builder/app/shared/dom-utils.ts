@@ -2,6 +2,7 @@ import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "./tree-utils";
 import { getIsVisuallyHidden } from "./visually-hidden";
+import { getScrollParent } from "@react-aria/utils";
 
 export const getInstanceIdFromElement = (
   element: Element
@@ -214,5 +215,134 @@ export const getAllElementsBoundingBox = (
     y: top,
     height: bottom - top,
     width: right - left,
+  });
+};
+
+const doNotTrackMutationAttribute = "data-do-not-track-mutation";
+
+export const hasDoNotTrackMutationAttribute = (element: Element) => {
+  return element.hasAttribute(doNotTrackMutationAttribute);
+};
+
+export const hasDoNotTrackMutationRecord = (
+  mutationRecords: MutationRecord[]
+) => {
+  return mutationRecords.some((record) =>
+    record.type === "childList"
+      ? [...record.addedNodes.values()].some(
+          (node) =>
+            node instanceof Element &&
+            node.hasAttribute(doNotTrackMutationAttribute)
+        )
+      : false
+  );
+};
+
+/**
+ * Get a DOMMatrix mapping the container's local coords to viewport coords.
+ * This uses one test DIV (width=100, height=100) placed at (0,0) in container space.
+ */
+const getLocalToViewportMatrix = (container: Element): DOMMatrix => {
+  const rectSize = 100;
+
+  const testDiv = document.createElement("div");
+  Object.assign(testDiv.style, {
+    position: "absolute",
+    left: "0px",
+    top: "0px",
+    width: `${rectSize}px`,
+    height: `${rectSize}px`,
+    pointerEvents: "none",
+    background: "transparent",
+    visibility: "hidden",
+  });
+  container.appendChild(testDiv);
+  testDiv.setAttribute(doNotTrackMutationAttribute, "true");
+
+  const { left, top, width, height } = testDiv.getBoundingClientRect();
+  container.removeChild(testDiv);
+
+  const x1 = left,
+    y1 = top;
+  const x2 = left + width,
+    y2 = top;
+  const x3 = left,
+    y3 = top + height;
+
+  const a = (x2 - x1) / rectSize;
+  const b = (y2 - y1) / rectSize;
+  const c = (x3 - x1) / rectSize;
+  const d = (y3 - y1) / rectSize;
+  const e = x1;
+  const f = y1;
+
+  // Return a DOMMatrix
+  return new DOMMatrix([a, b, c, d, e, f]);
+};
+
+const getViewportToLocalMatrix = (container: Element): DOMMatrix => {
+  return getLocalToViewportMatrix(container).inverse();
+};
+
+const transformDOMRect = (rect: DOMRect, matrix: DOMMatrix) => {
+  // Corners
+  const topLeft = new DOMPoint(rect.x, rect.y).matrixTransform(matrix);
+  const topRight = new DOMPoint(rect.x + rect.width, rect.y).matrixTransform(
+    matrix
+  );
+  const bottomLeft = new DOMPoint(rect.x, rect.y + rect.height).matrixTransform(
+    matrix
+  );
+  const bottomRight = new DOMPoint(
+    rect.x + rect.width,
+    rect.y + rect.height
+  ).matrixTransform(matrix);
+
+  // Find min/max in each axis
+  const xs = [topLeft.x, topRight.x, bottomLeft.x, bottomRight.x];
+  const ys = [topLeft.y, topRight.y, bottomLeft.y, bottomRight.y];
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  // Return the new bounding box as a DOMRect
+  return new DOMRect(minX, minY, maxX - minX, maxY - minY);
+};
+
+export const scrollIntoView = (anchor: Element, rect: DOMRect) => {
+  const scrollParent = getScrollParent(anchor, true);
+
+  if (false === scrollParent instanceof HTMLElement) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const savedPosition = (scrollParent as HTMLElement).style.position;
+    (scrollParent as HTMLElement).style.position = "relative";
+
+    const matrix = getViewportToLocalMatrix(scrollParent);
+
+    const transformedRect = transformDOMRect(rect, matrix);
+
+    const scrollDiv = document.createElement("div");
+
+    Object.assign(scrollDiv.style, {
+      position: "absolute",
+      left: `${transformedRect.left}px`,
+      top: `${transformedRect.top}px`,
+      width: `${transformedRect.width}px`,
+      height: `${transformedRect.height}px`,
+      pointerEvents: "none",
+      background: "transparent",
+      scrollMargin: "20px",
+    });
+    scrollParent.appendChild(scrollDiv);
+
+    scrollDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    scrollParent.removeChild(scrollDiv);
+
+    (scrollParent as HTMLElement).style.position = savedPosition;
   });
 };
