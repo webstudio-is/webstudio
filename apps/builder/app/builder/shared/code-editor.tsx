@@ -122,7 +122,7 @@ export const CodeEditor = forwardRef<
   return (
     <div className={wrapperStyle()} ref={ref}>
       <EditorDialogControl>
-        {<EditorContent {...editorContentProps} extensions={extensions} />}
+        <EditorContent {...editorContentProps} extensions={extensions} />
         <EditorDialog
           title={title}
           content={

@@ -28,6 +28,28 @@ const htmlSample = `
 <img src="${imagePlaceholderDataUrl}">
 <blockquote>Capture attention with a powerful quote.</blockquote>
 <p>Using <code>console.log("Hello World");</code> will log to the console.</p>
+<table>
+  <tr>
+    <th>Header 1</th>
+    <th>Header 2</th>
+    <th>Header 3</th>
+  </tr>
+  <tr>
+    <td>Cell 1.1</td>
+    <td>Cell 1.2</td>
+    <td>Cell 1.3</td>
+  </tr>
+  <tr>
+    <td>Cell 2.1</td>
+    <td>Cell 2.2</td>
+    <td>Cell 2.3</td>
+  </tr>
+  <tr>
+    <td>Cell 3.1</td>
+    <td>Cell 3.2</td>
+    <td>Cell 3.3</td>
+  </tr>
+</table>
 `.trim();
 
 export const meta: TemplateMeta = {
@@ -54,6 +76,10 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />
       <ws.descendant ws:label="List Item" selector=" li" />
       <ws.descendant ws:label="Separator" selector=" hr" />
+      <ws.descendant ws:label="Table" selector=" table" />
+      <ws.descendant ws:label="Table Row" selector=" tr" />
+      <ws.descendant ws:label="Table Header Cell" selector=" th" />
+      <ws.descendant ws:label="Table Cell" selector=" td" />
     </$.HtmlEmbed>
   ),
 };

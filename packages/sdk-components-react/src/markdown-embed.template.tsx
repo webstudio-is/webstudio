@@ -37,6 +37,12 @@ Any elements that were not used above are used below.
 > Capture attention with a powerful quote.
 
 Using \`console.log("Hello World");\` will log to the console.
+
+| Header 1   | Header 2   | Header 3   |
+|------------|------------|------------|
+| Cell 1.1   | Cell 1.2   | Cell 1.3   |
+| Cell 2.1   | Cell 2.2   | Cell 2.3   |
+| Cell 3.1   | Cell 3.2   | Cell 3.3   |
 `.trim();
 
 export const meta: TemplateMeta = {
@@ -61,6 +67,10 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />
       <ws.descendant ws:label="List Item" selector=" li" />
       <ws.descendant ws:label="Separator" selector=" hr" />
+      <ws.descendant ws:label="Table" selector=" table" />
+      <ws.descendant ws:label="Table Row" selector=" tr" />
+      <ws.descendant ws:label="Table Header Cell" selector=" th" />
+      <ws.descendant ws:label="Table Cell" selector=" td" />
     </$.MarkdownEmbed>
   ),
 };
