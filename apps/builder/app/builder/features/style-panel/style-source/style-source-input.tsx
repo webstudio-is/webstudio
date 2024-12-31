@@ -32,6 +32,7 @@ import {
   styled,
   ComboboxScrollArea,
   InputField,
+  Flex,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import {
@@ -104,7 +105,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     label: string;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
-    renderStyleSourceMenuItems: (item: Item) => ReactNode;
+    renderStyleSourceMenuItems: (item: Item, hasStyles: boolean) => ReactNode;
     onChangeItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
     onSelectItem?: (itemSelector: ItemSelector) => void;
@@ -228,7 +229,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         return (
           <StyleSourceControl
             key={item.id}
-            menuItems={renderStyleSourceMenuItems(item)}
+            menuItems={renderStyleSourceMenuItems(item, hasStyles(item.id))}
             id={item.id}
             selected={item.id === selectedItemSelector?.styleSourceId}
             state={
@@ -343,6 +344,7 @@ const markAddedValues = <Item extends IntermediateItem>(
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
+  hasStyles: boolean;
   states: ComponentState[];
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
@@ -356,7 +358,14 @@ const renderMenuItems = (props: {
 }) => {
   return (
     <>
-      <DropdownMenuLabel>{props.item.label}</DropdownMenuLabel>
+      <DropdownMenuLabel>
+        <Flex gap="1" justify="between" align="center">
+          {props.item.label}
+          {props.hasStyles && (
+            <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
+          )}
+        </Flex>
+      </DropdownMenuLabel>
       {props.item.source !== "local" && (
         <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
           Rename
@@ -427,7 +436,7 @@ const renderMenuItems = (props: {
                 withIndicator={true}
                 icon={
                   props.item.id === props.selectedItemSelector?.styleSourceId &&
-                  selector === props.selectedItemSelector.state ? (
+                  selector === props.selectedItemSelector.state && (
                     <CheckMarkIcon
                       color={
                         props.item.states.includes(selector)
@@ -436,9 +445,7 @@ const renderMenuItems = (props: {
                       }
                       size={12}
                     />
-                  ) : props.item.states.includes(selector) ? (
-                    <DotIcon color={rawTheme.colors.foregroundPrimary} />
-                  ) : null
+                  )
                 }
                 onSelect={() =>
                   props.onSelect?.({
@@ -451,7 +458,15 @@ const renderMenuItems = (props: {
                   })
                 }
               >
-                {label}
+                <Flex justify="between" align="center" grow>
+                  {label}
+                  {props.item.states.includes(selector) && (
+                    <DotIcon
+                      size="12"
+                      color={rawTheme.colors.foregroundPrimary}
+                    />
+                  )}
+                </Flex>
               </DropdownMenuItem>
             ))}
           </Fragment>
@@ -540,10 +555,11 @@ export const StyleSourceInput = (
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
             error={props.error}
-            renderStyleSourceMenuItems={(item) =>
+            renderStyleSourceMenuItems={(item, hasStyles) =>
               renderMenuItems({
                 selectedItemSelector: props.selectedItemSelector,
                 item,
+                hasStyles,
                 states,
                 onSelect: props.onSelectItem,
                 onDuplicate: props.onDuplicateItem,
