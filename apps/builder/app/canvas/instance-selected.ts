@@ -1,9 +1,8 @@
-import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
-import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
+import { type Instance } from "@webstudio-is/sdk";
+import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   $isResizingCanvas,
-  $selectedInstanceIntanceToTag,
   $selectedInstanceRenderState,
   $stylesIndex,
   $instances,
@@ -13,7 +12,6 @@ import {
   $selectedInstanceStates,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import htmlTags, { type HtmlTags } from "html-tags";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
@@ -31,9 +29,6 @@ import type { InstanceSelector } from "~/shared/tree-utils";
 import { shallowEqual } from "shallow-equal";
 import warnOnce from "warn-once";
 
-const isHtmlTag = (tag: string): tag is HtmlTags =>
-  htmlTags.includes(tag as HtmlTags);
-
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
   $selectedInstanceOutline.set({
     instanceId,
@@ -43,36 +38,6 @@ const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
 
 const hideOutline = () => {
   $selectedInstanceOutline.set(undefined);
-};
-
-export const getElementAndAncestorInstanceTags = (
-  instanceSelector: Readonly<InstanceSelector>
-) => {
-  const elements = getAllElementsByInstanceSelector(instanceSelector);
-
-  if (elements.length === 0) {
-    return;
-  }
-
-  const [element] = elements;
-
-  const instanceToTag = new Map<Instance["id"], HtmlTags>([
-    [ROOT_INSTANCE_ID, "html"],
-  ]);
-  for (
-    let ancestorOrSelf: HTMLElement | null = element;
-    ancestorOrSelf !== null;
-    ancestorOrSelf = ancestorOrSelf.parentElement
-  ) {
-    const tagName = ancestorOrSelf.tagName.toLowerCase();
-    const instanceId = ancestorOrSelf.getAttribute(idAttribute);
-
-    if (isHtmlTag(tagName) && instanceId !== null) {
-      instanceToTag.set(instanceId, tagName);
-    }
-  }
-
-  return instanceToTag;
 };
 
 const subscribeSelectedInstance = (
@@ -147,21 +112,6 @@ const subscribeSelectedInstance = (
     }
 
     const [element] = elements;
-    // trigger style recomputing every time instance styles are changed
-
-    // Map self and ancestor instance ids to tag names
-    const instanceToTag = getElementAndAncestorInstanceTags(
-      selectedInstanceSelector
-    );
-
-    if (
-      !shallowEqual(
-        [...($selectedInstanceIntanceToTag.get()?.entries() ?? [])].flat(),
-        [...(instanceToTag?.entries() ?? [])].flat()
-      )
-    ) {
-      // $selectedInstanceIntanceToTag.set(instanceToTag);
-    }
 
     const availableStates = new Set<string>();
     const instanceStyleSourceIds = new Set(

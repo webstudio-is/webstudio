@@ -9,6 +9,8 @@ import {
 import { rootComponent } from "@webstudio-is/react-sdk";
 import { $pages } from "./nano-states/pages";
 import { $instances, $selectedInstanceSelector } from "./nano-states/instances";
+import { canvasApi } from "./canvas-api";
+import { $selectedInstanceIntanceToTag } from "./nano-states";
 
 type Awareness = {
   pageId: Page["id"];
@@ -139,6 +141,11 @@ export const selectInstance = (
 ) => {
   const awareness = $awareness.get();
   if (awareness) {
+    const instanceToTag =
+      canvasApi.getElementAndAncestorInstanceTags(instanceSelector);
+
+    $selectedInstanceIntanceToTag.set(instanceToTag);
+
     $awareness.set({
       pageId: awareness.pageId,
       instanceSelector,

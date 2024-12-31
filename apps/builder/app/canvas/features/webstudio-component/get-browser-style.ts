@@ -4,6 +4,12 @@ import { properties, units } from "@webstudio-is/css-data";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
+import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
+import { idAttribute } from "@webstudio-is/react-sdk";
+import htmlTags, { type HtmlTags } from "html-tags";
+
+const isHtmlTag = (tag: string): tag is HtmlTags =>
+  htmlTags.includes(tag as HtmlTags);
 
 const unitsList = Object.values(units).flat();
 const unitRegex = new RegExp(`${unitsList.join("|")}`);
@@ -148,4 +154,38 @@ export const calculateUnitSizes = (
     rem, // 1rem in pixels
     px: 1, // always 1, simplifies conversions and types, i.e valueTo = valueFrom * unitSizes[from] / unitSizes[to]
   };
+};
+
+export const getElementAndAncestorInstanceTags = (
+  instanceSelector: Readonly<InstanceSelector> | undefined
+) => {
+  if (instanceSelector === undefined) {
+    return;
+  }
+
+  const elements = getAllElementsByInstanceSelector(instanceSelector);
+
+  if (elements.length === 0) {
+    return;
+  }
+
+  const [element] = elements;
+
+  const instanceToTag = new Map<Instance["id"], HtmlTags>([
+    [ROOT_INSTANCE_ID, "html"],
+  ]);
+  for (
+    let ancestorOrSelf: HTMLElement | null = element;
+    ancestorOrSelf !== null;
+    ancestorOrSelf = ancestorOrSelf.parentElement
+  ) {
+    const tagName = ancestorOrSelf.tagName.toLowerCase();
+    const instanceId = ancestorOrSelf.getAttribute(idAttribute);
+
+    if (isHtmlTag(tagName) && instanceId !== null) {
+      instanceToTag.set(instanceId, tagName);
+    }
+  }
+
+  return instanceToTag;
 };
