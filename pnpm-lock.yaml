@@ -1945,9 +1945,6 @@ importers:
 
   packages/sdk-components-react-remix:
     dependencies:
-      '@webstudio-is/icons':
-        specifier: workspace:*
-        version: link:../icons
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
@@ -1967,9 +1964,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
-      '@webstudio-is/generate-arg-types':
-        specifier: workspace:*
-        version: link:../generate-arg-types
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -1982,9 +1976,6 @@ importers:
 
   packages/sdk-components-react-router:
     dependencies:
-      '@webstudio-is/icons':
-        specifier: workspace:*
-        version: link:../icons
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
@@ -1998,18 +1989,12 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
     devDependencies:
-      '@types/node':
-        specifier: ^22.9.3
-        version: 22.9.3
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
-      '@webstudio-is/generate-arg-types':
-        specifier: workspace:*
-        version: link:../generate-arg-types
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
