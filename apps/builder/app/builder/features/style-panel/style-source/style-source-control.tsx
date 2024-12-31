@@ -241,7 +241,7 @@ const StyleSourceState = styled(Text, {
   },
 });
 
-const StyleSourceHasStylesIndicator = styled("div", {
+const NoStylesDot = styled("div", {
   position: "absolute",
   top: 4,
   right: 2,
@@ -336,9 +336,7 @@ export const StyleSourceControl = ({
               children
             )}
           </StyleSourceButton>
-          {stateLabel === undefined && hasStyles === false && (
-            <StyleSourceHasStylesIndicator />
-          )}
+          {stateLabel === undefined && hasStyles === false && <NoStylesDot />}
         </Flex>
         {stateLabel !== undefined && (
           <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
