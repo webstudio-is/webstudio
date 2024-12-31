@@ -1,6 +1,9 @@
 import type { Style, StyleValue, Unit } from "@webstudio-is/css-engine";
 import { keywordValues } from "@webstudio-is/css-data";
 import { properties, units } from "@webstudio-is/css-data";
+import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
+import type { InstanceSelector } from "~/shared/tree-utils";
+import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 
 const unitsList = Object.values(units).flat();
 const unitRegex = new RegExp(`${unitsList.join("|")}`);
@@ -52,8 +55,23 @@ const parseValue = (
   };
 };
 
-export const getBrowserStyle = (element?: Element): Style => {
+export const getBrowserStyle = (
+  instanceSelector: InstanceSelector | undefined
+): Style => {
   const browserStyle: Style = {};
+
+  if (instanceSelector === undefined) {
+    return browserStyle;
+  }
+
+  const elements = getAllElementsByInstanceSelector(instanceSelector);
+
+  if (elements.length === 0) {
+    return browserStyle;
+  }
+
+  const element = elements[0];
+
   if (element === undefined) {
     return browserStyle;
   }
@@ -68,4 +86,66 @@ export const getBrowserStyle = (element?: Element): Style => {
     browserStyle[knownProperty] = parseValue(knownProperty, computedValue);
   }
   return browserStyle;
+};
+
+// Init with some defaults to avoid undefined
+const defaultUnitSizes: UnitSizes = {
+  ch: 8,
+  vw: 3.2,
+  vh: 4.8,
+  em: 16,
+  rem: 16,
+  px: 1,
+};
+
+export const calculateUnitSizes = (
+  instanceSelector: InstanceSelector | undefined
+): UnitSizes => {
+  if (instanceSelector === undefined) {
+    return defaultUnitSizes;
+  }
+
+  const elements = getAllElementsByInstanceSelector(instanceSelector);
+
+  if (elements.length === 0) {
+    return defaultUnitSizes;
+  }
+
+  const element = elements[0];
+
+  if (element === undefined) {
+    return defaultUnitSizes;
+  }
+
+  // Based on this https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions/8876069#8876069
+  // this is crossbrowser way to get viewport sizes vw vh in px
+  const vw =
+    Math.max(document.documentElement.clientWidth, window.innerWidth) / 100;
+  const vh =
+    Math.max(document.documentElement.clientHeight, window.innerHeight) / 100;
+
+  // em in px is equal to current computed style for font size
+  const em = Number.parseFloat(getComputedStyle(element).fontSize);
+
+  // rem in px is equal to root computed style for font size
+  const rem = Number.parseFloat(
+    getComputedStyle(document.documentElement).fontSize
+  );
+
+  // we create a node with 1ch width, measure it in px and remove it
+  const node = document.createElement("div");
+  node.style.width = "1ch";
+  node.style.position = "absolute";
+  element.appendChild(node);
+  const ch = Number.parseFloat(getComputedStyle(node).width);
+  element.removeChild(node);
+
+  return {
+    ch, // 1ch in pixels
+    vw, // 1vw in pixels
+    vh, // 1vh in pixels
+    em, // 1em in pixels
+    rem, // 1rem in pixels
+    px: 1, // always 1, simplifies conversions and types, i.e valueTo = valueFrom * unitSizes[from] / unitSizes[to]
+  };
 };

@@ -15,7 +15,6 @@ import type {
   StyleSources,
   StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import type { Style } from "@webstudio-is/css-engine";
 import type { Project } from "@webstudio-is/project";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
@@ -23,7 +22,6 @@ import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { HtmlTags } from "html-tags";
 import { $selectedInstanceSelector } from "./instances";
-import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Simplify } from "type-fest";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
@@ -146,18 +144,6 @@ export type UploadingFileData = Simplify<
 >;
 
 export const $uploadingFilesDataStore = atom<UploadingFileData[]>([]);
-
-export const $selectedInstanceBrowserStyle = atom<undefined | Style>();
-
-// Init with some defaults to avoid undefined
-export const $selectedInstanceUnitSizes = atom<UnitSizes>({
-  ch: 8,
-  vw: 3.2,
-  vh: 4.8,
-  em: 16,
-  rem: 16,
-  px: 1,
-});
 
 /**
  * instanceId => tagName store for selected instance and its ancestors

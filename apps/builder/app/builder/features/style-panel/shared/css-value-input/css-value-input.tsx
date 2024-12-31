@@ -44,10 +44,6 @@ import {
   isValidDeclaration,
   properties,
 } from "@webstudio-is/css-data";
-import {
-  $selectedInstanceBrowserStyle,
-  $selectedInstanceUnitSizes,
-} from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
@@ -58,6 +54,8 @@ import {
   isComplexValue,
   ValueEditorDialog,
 } from "./value-editor-dialog";
+import { canvasApi } from "~/shared/canvas-api";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -569,7 +567,8 @@ export const CssValueInput = ({
         return;
       }
 
-      const unitSizes = $selectedInstanceUnitSizes.get();
+      const selectedInstanceSelector = $selectedInstanceSelector.get();
+      const unitSizes = canvasApi.calculateUnitSizes(selectedInstanceSelector);
 
       // Value not edited by the user, we need to convert it to the new unit
       if (value.type === "unit") {
@@ -592,7 +591,10 @@ export const CssValueInput = ({
 
       // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        const browserStyle = $selectedInstanceBrowserStyle.get();
+        const browserStyle = canvasApi.getBrowserStyle(
+          selectedInstanceSelector
+        );
+
         const browserPropertyValue = browserStyle?.[property];
         const propertyValue =
           browserPropertyValue?.type === "unit"

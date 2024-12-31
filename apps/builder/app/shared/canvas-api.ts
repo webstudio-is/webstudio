@@ -6,6 +6,10 @@ import invariant from "tiny-invariant";
 import { $canvasIframeState } from "./nano-states";
 import { getElementAndAncestorInstanceTags } from "~/canvas/instance-selected";
 import { detectSupportedFontWeights } from "~/canvas/shared/font-weight-support";
+import {
+  getBrowserStyle,
+  calculateUnitSizes,
+} from "~/canvas/features/webstudio-component/get-browser-style";
 
 const apiWindowNamespace = "__webstudio__$__canvasApi";
 
@@ -17,6 +21,8 @@ const _canvasApi = {
   monitorForExternal,
   getElementAndAncestorInstanceTags,
   detectSupportedFontWeights,
+  getBrowserStyle,
+  calculateUnitSizes,
 };
 
 declare global {

@@ -3,9 +3,7 @@ import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   $isResizingCanvas,
-  $selectedInstanceBrowserStyle,
   $selectedInstanceIntanceToTag,
-  $selectedInstanceUnitSizes,
   $selectedInstanceRenderState,
   $stylesIndex,
   $instances,
@@ -25,12 +23,10 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
-import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import {
   hasCollapsedMutationRecord,
   setDataCollapsed,
 } from "~/canvas/collapsed";
-import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { shallowEqual } from "shallow-equal";
 import warnOnce from "warn-once";
@@ -47,40 +43,6 @@ const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
 
 const hideOutline = () => {
   $selectedInstanceOutline.set(undefined);
-};
-
-const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
-  // Based on this https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions/8876069#8876069
-  // this is crossbrowser way to get viewport sizes vw vh in px
-  const vw =
-    Math.max(document.documentElement.clientWidth, window.innerWidth) / 100;
-  const vh =
-    Math.max(document.documentElement.clientHeight, window.innerHeight) / 100;
-
-  // em in px is equal to current computed style for font size
-  const em = Number.parseFloat(getComputedStyle(element).fontSize);
-
-  // rem in px is equal to root computed style for font size
-  const rem = Number.parseFloat(
-    getComputedStyle(document.documentElement).fontSize
-  );
-
-  // we create a node with 1ch width, measure it in px and remove it
-  const node = document.createElement("div");
-  node.style.width = "1ch";
-  node.style.position = "absolute";
-  element.appendChild(node);
-  const ch = Number.parseFloat(getComputedStyle(node).width);
-  element.removeChild(node);
-
-  return {
-    ch, // 1ch in pixels
-    vw, // 1vw in pixels
-    vh, // 1vh in pixels
-    em, // 1em in pixels
-    rem, // 1rem in pixels
-    px: 1, // always 1, simplifies conversions and types, i.e valueTo = valueFrom * unitSizes[from] / unitSizes[to]
-  };
 };
 
 export const getElementAndAncestorInstanceTags = (
@@ -186,7 +148,6 @@ const subscribeSelectedInstance = (
 
     const [element] = elements;
     // trigger style recomputing every time instance styles are changed
-    $selectedInstanceBrowserStyle.set(getBrowserStyle(element));
 
     // Map self and ancestor instance ids to tag names
     const instanceToTag = getElementAndAncestorInstanceTags(
@@ -199,11 +160,8 @@ const subscribeSelectedInstance = (
         [...(instanceToTag?.entries() ?? [])].flat()
       )
     ) {
-      $selectedInstanceIntanceToTag.set(instanceToTag);
+      // $selectedInstanceIntanceToTag.set(instanceToTag);
     }
-
-    const unitSizes = calculateUnitSizes(element);
-    $selectedInstanceUnitSizes.set(unitSizes);
 
     const availableStates = new Set<string>();
     const instanceStyleSourceIds = new Set(
