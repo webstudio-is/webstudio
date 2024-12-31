@@ -59,11 +59,11 @@ import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
 import { $definedStyles } from "../shared/model";
-import type { StyleDecl } from "@webstudio-is/sdk";
+import type { StyleDecl, StyleSource } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 
 type IntermediateItem = {
-  id: string;
+  id: StyleSource["id"];
   label: string;
   disabled: boolean;
   source: ItemSource;
@@ -72,7 +72,7 @@ type IntermediateItem = {
 };
 
 export type ItemSelector = {
-  styleSourceId: IntermediateItem["id"];
+  styleSourceId: StyleSource["id"];
   state?: string;
 };
 
@@ -117,14 +117,14 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
 
 // Returns true if style source has defined styles including on the states.
 const getHasStylesMap = <Item extends IntermediateItem>(
-  values: Array<Item>,
+  styleSourceItems: Array<Item>,
   definedStyles: Set<Partial<StyleDecl>>
 ) => {
   const map = new Map<Item["id"], boolean>();
-  for (const item of values) {
+  for (const item of styleSourceItems) {
+    // Style source has styles on states.
     if (item.states.length > 0) {
       map.set(item.id, true);
-      break;
     }
     for (const style of definedStyles) {
       if (item.id === style.styleSourceId) {
