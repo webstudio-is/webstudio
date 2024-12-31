@@ -32,8 +32,6 @@ export const StylePanel = () => {
   const display = useParentComputedStyleDecl("display");
   const displayValue = toValue(display.computedValue);
 
-  console.log("render");
-
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.
   // See <SelectedInstanceConnector> for more details.
