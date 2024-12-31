@@ -66,6 +66,10 @@ export const getBrowserStyle = (
 ): Style => {
   const browserStyle: Style = {};
 
+  if (process.env.NODE_ENV === "test") {
+    return browserStyle;
+  }
+
   if (instanceSelector === undefined) {
     return browserStyle;
   }
@@ -107,6 +111,10 @@ const defaultUnitSizes: UnitSizes = {
 export const calculateUnitSizes = (
   instanceSelector: InstanceSelector | undefined
 ): UnitSizes => {
+  if (process.env.NODE_ENV === "test") {
+    return defaultUnitSizes;
+  }
+
   if (instanceSelector === undefined) {
     return defaultUnitSizes;
   }
@@ -159,21 +167,26 @@ export const calculateUnitSizes = (
 export const getElementAndAncestorInstanceTags = (
   instanceSelector: Readonly<InstanceSelector> | undefined
 ) => {
+  const instanceToTag = new Map<Instance["id"], HtmlTags>([
+    [ROOT_INSTANCE_ID, "html"],
+  ]);
+
+  if (process.env.NODE_ENV === "test") {
+    return instanceToTag;
+  }
+
   if (instanceSelector === undefined) {
-    return;
+    return instanceToTag;
   }
 
   const elements = getAllElementsByInstanceSelector(instanceSelector);
 
   if (elements.length === 0) {
-    return;
+    return instanceToTag;
   }
 
   const [element] = elements;
 
-  const instanceToTag = new Map<Instance["id"], HtmlTags>([
-    [ROOT_INSTANCE_ID, "html"],
-  ]);
   for (
     let ancestorOrSelf: HTMLElement | null = element;
     ancestorOrSelf !== null;
