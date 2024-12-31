@@ -33,6 +33,7 @@ import {
   ComboboxScrollArea,
   InputField,
   Flex,
+  Text,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import {
@@ -358,7 +359,9 @@ const renderMenuItems = (props: {
     <>
       <DropdownMenuLabel>
         <Flex gap="1" justify="between" align="center">
-          {props.item.label}
+          <Text css={{ fontWeight: "bold" }} truncate>
+            {props.item.label}
+          </Text>
           {props.hasStyles && (
             <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
           )}
