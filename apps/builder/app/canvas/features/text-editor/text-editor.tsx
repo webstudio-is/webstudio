@@ -180,16 +180,25 @@ const CaretColorPlugin = () => {
 const OnChangeOnBlurPlugin = ({
   onChange,
 }: {
-  onChange: (editorState: EditorState) => void;
+  onChange: (editorState: EditorState, reason: "blur" | "unmount") => void;
 }) => {
   const [editor] = useLexicalComposerContext();
   const handleChange = useEffectEvent(onChange);
+  useEffect(
+    () => () => {
+      // Safari and FF support as no blur event is triggered in some cases
+      editor.read(() => {
+        handleChange(editor.getEditorState(), "unmount");
+      });
+    },
+    [editor, handleChange]
+  );
 
   useEffect(() => {
     const handleBlur = () => {
       // force read to get the latest state
       editor.read(() => {
-        handleChange(editor.getEditorState());
+        handleChange(editor.getEditorState(), "blur");
       });
     };
 
@@ -1286,6 +1295,10 @@ const RichTextContentPluginInternal = ({
     );
 
     const closeMenuWithUpdate = () => {
+      if (menuState === "closed") {
+        return;
+      }
+
       editor.update(() => {
         closeMenu();
       });
@@ -1354,6 +1367,8 @@ const RichTextContentPluginInternal = ({
       unsubscribeUpdateListener();
       unsubscibeSelectionChange();
       unsubscribeBlurListener();
+      // Safari and FF support as no blur event is triggered in some cases
+      closeMenuWithUpdate();
     };
   }, [
     editor,
@@ -1466,35 +1481,39 @@ export const TextEditor = ({
   const lastSavedStateJsonRef = useRef<SerializedEditorState | null>(null);
   const [newLinkKeyToInstanceId] = useState(() => new Map());
 
-  const handleChange = useEffectEvent((editorState: EditorState) => {
-    editorState.read(() => {
-      const treeRootInstance = instances.get(rootInstanceSelector[0]);
-      if (treeRootInstance) {
-        const jsonState = editorState.toJSON();
-        if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
-          setDataCollapsed(rootInstanceSelector[0], false);
-          return;
+  const handleChange = useEffectEvent(
+    (editorState: EditorState, reason: "blur" | "unmount" | "next") => {
+      editorState.read(() => {
+        const treeRootInstance = instances.get(rootInstanceSelector[0]);
+        if (treeRootInstance) {
+          const jsonState = editorState.toJSON();
+          if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
+            setDataCollapsed(rootInstanceSelector[0], false);
+            return;
+          }
+
+          onChange(
+            $convertToUpdates(treeRootInstance, refs, newLinkKeyToInstanceId)
+          );
+          newLinkKeyToInstanceId.clear();
+          lastSavedStateJsonRef.current = jsonState;
         }
 
-        onChange(
-          $convertToUpdates(treeRootInstance, refs, newLinkKeyToInstanceId)
-        );
-        newLinkKeyToInstanceId.clear();
-        lastSavedStateJsonRef.current = jsonState;
+        setDataCollapsed(rootInstanceSelector[0], false);
+      });
+
+      const textEditingSelector = $textEditingInstanceSelector.get()?.selector;
+      if (textEditingSelector === undefined) {
+        return;
       }
 
-      setDataCollapsed(rootInstanceSelector[0], false);
-    });
-
-    const textEditingSelector = $textEditingInstanceSelector.get()?.selector;
-    if (textEditingSelector === undefined) {
-      return;
+      if (reason === "blur") {
+        if (shallowEqual(textEditingSelector, rootInstanceSelector)) {
+          $textEditingInstanceSelector.set(undefined);
+        }
+      }
     }
-
-    if (shallowEqual(textEditingSelector, rootInstanceSelector)) {
-      $textEditingInstanceSelector.set(undefined);
-    }
-  });
+  );
 
   useLayoutEffect(() => {
     const sheet = createRegularStyleSheet({ name: "text-editor" });
@@ -1625,7 +1644,7 @@ export const TextEditor = ({
           }
         }
 
-        handleChange(state);
+        handleChange(state, "next");
 
         $textEditingInstanceSelector.set({
           selector: nextSelector,
