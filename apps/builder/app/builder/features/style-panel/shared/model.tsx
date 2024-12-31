@@ -1,4 +1,5 @@
 import { useMemo, useRef } from "react";
+import type { HtmlTags } from "html-tags";
 import { computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { properties } from "@webstudio-is/css-data";
@@ -22,9 +23,9 @@ import { rootComponent, WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   $breakpoints,
   $instances,
+  $propsIndex,
   $registeredComponentMetas,
   $selectedBreakpoint,
-  $selectedInstanceIntanceToTag,
   $selectedInstanceStates,
   $selectedOrLastStyleSourceSelector,
   $styles,
@@ -56,6 +57,38 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   }
   return presetStyles;
 });
+
+export const $instanceTags = computed(
+  [$registeredComponentMetas, $selectedInstancePath, $propsIndex],
+  (metas, instancePath, propsIndex) => {
+    const instanceTags = new Map<Instance["id"], HtmlTags>();
+    if (instancePath === undefined) {
+      return instanceTags;
+    }
+    for (const { instance } of instancePath) {
+      const meta = metas.get(instance.component);
+      if (meta === undefined) {
+        continue;
+      }
+      const tags = Object.keys(meta.presetStyle ?? {}) as HtmlTags[];
+      if (tags.length > 0) {
+        // take first tag from preset
+        let currentTag = tags[0];
+        // when more than one tag is defined in preset look for specific one in props
+        if (tags.length > 1) {
+          const props = propsIndex.propsByInstanceId.get(instance.id);
+          // @todo rewrite adhoc solution when ws:tag is supported
+          const tagProp = props?.find((prop) => prop.name === "tag");
+          if (tagProp) {
+            currentTag = tagProp.value as HtmlTags;
+          }
+        }
+        instanceTags.set(instance.id, currentTag);
+      }
+    }
+    return instanceTags;
+  }
+);
 
 const $instanceComponents = computed($selectedInstancePath, (instancePath) => {
   const instanceComponents = new Map<Instance["id"], Instance["component"]>([
@@ -204,7 +237,7 @@ const $model = computed(
     $styles,
     $styleSourceSelections,
     $presetStyles,
-    $selectedInstanceIntanceToTag,
+    $instanceTags,
     $instanceComponents,
     $matchingBreakpoints,
     $selectedInstanceStates,
@@ -222,7 +255,7 @@ const $model = computed(
       styles,
       styleSourceSelections,
       presetStyles,
-      instanceTags: instanceTags ?? new Map(),
+      instanceTags,
       instanceComponents,
       matchingBreakpoints,
       matchingStates,

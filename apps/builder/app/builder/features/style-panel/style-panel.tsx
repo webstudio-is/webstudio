@@ -10,19 +10,18 @@ import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { StyleSourcesSection } from "./style-source-section";
 import { $selectedInstanceRenderState } from "~/shared/nano-states";
-import { $selectedInstanceIntanceToTag } from "~/shared/nano-states";
 import { sections } from "./sections";
 import { toValue } from "@webstudio-is/css-engine";
-import { useParentComputedStyleDecl } from "./shared/model";
+import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
 import { $selectedInstance } from "~/shared/awareness";
 
 const $selectedInstanceTag = computed(
-  [$selectedInstance, $selectedInstanceIntanceToTag],
-  (selectedInstance, instanceToTag) => {
-    if (selectedInstance === undefined || instanceToTag === undefined) {
+  [$selectedInstance, $instanceTags],
+  (selectedInstance, instanceTags) => {
+    if (selectedInstance === undefined) {
       return;
     }
-    return instanceToTag.get(selectedInstance.id);
+    return instanceTags.get(selectedInstance.id);
   }
 );
 
