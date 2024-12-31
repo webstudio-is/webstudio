@@ -336,7 +336,9 @@ export const StyleSourceControl = ({
               children
             )}
           </StyleSourceButton>
-          {stateLabel === undefined && hasStyles === false && <NoStylesDot />}
+          {stateLabel === undefined &&
+            hasStyles === false &&
+            isEditing === false && <NoStylesDot />}
         </Flex>
         {stateLabel !== undefined && (
           <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
