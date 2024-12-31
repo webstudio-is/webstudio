@@ -28,6 +28,28 @@ const htmlSample = `
 <img src="${imagePlaceholderDataUrl}">
 <blockquote>Capture attention with a powerful quote.</blockquote>
 <p>Using <code>console.log("Hello World");</code> will log to the console.</p>
+<table>
+  <tr>
+    <th>Header 1</th>
+    <th>Header 2</th>
+    <th>Header 3</th>
+  </tr>
+  <tr>
+    <td>Cell 1.1</td>
+    <td>Cell 1.2</td>
+    <td>Cell 1.3</td>
+  </tr>
+  <tr>
+    <td>Cell 2.1</td>
+    <td>Cell 2.2</td>
+    <td>Cell 2.3</td>
+  </tr>
+  <tr>
+    <td>Cell 3.1</td>
+    <td>Cell 3.2</td>
+    <td>Cell 3.3</td>
+  </tr>
+</table>
 `.trim();
 
 export const meta: TemplateMeta = {
