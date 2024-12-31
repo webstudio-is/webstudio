@@ -58,6 +58,9 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
+import { $definedStyles } from "../shared/model";
+import type { StyleDecl } from "@webstudio-is/sdk";
+import { useStore } from "@nanostores/react";
 
 type IntermediateItem = {
   id: string;
@@ -112,6 +115,27 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     error?: StyleSourceError;
   };
 
+// Returns true if style source has defined styles including on the states.
+const getHasStylesMap = <Item extends IntermediateItem>(
+  values: Array<Item>,
+  definedStyles: Set<Partial<StyleDecl>>
+) => {
+  const map = new Map<Item["id"], boolean>();
+  for (const item of values) {
+    if (item.states.length > 0) {
+      map.set(item.id, true);
+      break;
+    }
+    for (const style of definedStyles) {
+      if (item.id === style.styleSourceId) {
+        map.set(item.id, true);
+        break;
+      }
+    }
+  }
+  return map;
+};
+
 const TextFieldBase: ForwardRefRenderFunction<
   HTMLDivElement,
   TextFieldBaseWrapperProps<IntermediateItem>
@@ -152,6 +176,16 @@ const TextFieldBase: ForwardRefRenderFunction<
     internalInputRef.current?.focus();
   }, [internalInputRef]);
 
+  const definedStyles = useStore($definedStyles);
+
+  const hasStyles = useCallback(
+    (styleSourceId: string) => {
+      const hasStylesMap = getHasStylesMap(value, definedStyles);
+      return hasStylesMap.get(styleSourceId) ?? false;
+    },
+    [value, definedStyles]
+  );
+
   return (
     <TextFieldContainer
       {...focusWithinProps}
@@ -191,47 +225,50 @@ const TextFieldBase: ForwardRefRenderFunction<
           aria-label="New Style Source Input"
         />
       )}
-      {value.map((item) => (
-        <StyleSourceControl
-          key={item.id}
-          menuItems={renderStyleSourceMenuItems(item)}
-          id={item.id}
-          selected={item.id === selectedItemSelector?.styleSourceId}
-          state={
-            item.id === selectedItemSelector?.styleSourceId
-              ? selectedItemSelector.state
-              : undefined
-          }
-          stateLabel={
-            item.id === selectedItemSelector?.styleSourceId
-              ? states.find(
-                  (state) => state.selector === selectedItemSelector.state
-                )?.label
-              : undefined
-          }
-          error={item.id === error?.id ? error : undefined}
-          disabled={item.disabled}
-          isDragging={item.id === dragItemId}
-          isEditing={item.id === editingItemId}
-          source={item.source}
-          onChangeEditing={(isEditing) => {
-            onEditItem?.(isEditing ? item.id : undefined);
-          }}
-          onSelect={() => onSelectItem?.({ styleSourceId: item.id })}
-          onChangeValue={(label) => {
-            onEditItem?.();
-            onChangeItem?.({ ...item, label });
-          }}
-        >
-          {item.source === "local" ? (
-            <Flex align="center" justify="center">
-              <LocalStyleIcon />
-            </Flex>
-          ) : (
-            item.label
-          )}
-        </StyleSourceControl>
-      ))}
+      {value.map((item) => {
+        return (
+          <StyleSourceControl
+            key={item.id}
+            menuItems={renderStyleSourceMenuItems(item)}
+            id={item.id}
+            selected={item.id === selectedItemSelector?.styleSourceId}
+            state={
+              item.id === selectedItemSelector?.styleSourceId
+                ? selectedItemSelector.state
+                : undefined
+            }
+            stateLabel={
+              item.id === selectedItemSelector?.styleSourceId
+                ? states.find(
+                    (state) => state.selector === selectedItemSelector.state
+                  )?.label
+                : undefined
+            }
+            error={item.id === error?.id ? error : undefined}
+            disabled={item.disabled}
+            isDragging={item.id === dragItemId}
+            isEditing={item.id === editingItemId}
+            hasStyles={hasStyles(item.id)}
+            source={item.source}
+            onChangeEditing={(isEditing) => {
+              onEditItem?.(isEditing ? item.id : undefined);
+            }}
+            onSelect={() => onSelectItem?.({ styleSourceId: item.id })}
+            onChangeValue={(label) => {
+              onEditItem?.();
+              onChangeItem?.({ ...item, label });
+            }}
+          >
+            {item.source === "local" ? (
+              <Flex align="center" justify="center">
+                <LocalStyleIcon />
+              </Flex>
+            ) : (
+              item.label
+            )}
+          </StyleSourceControl>
+        );
+      })}
       {placementIndicator}
     </TextFieldContainer>
   );

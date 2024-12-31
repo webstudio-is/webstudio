@@ -241,6 +241,16 @@ const StyleSourceState = styled(Text, {
   },
 });
 
+const StyleSourceHasStylesIndicator = styled("div", {
+  position: "absolute",
+  top: 4,
+  right: 2,
+  width: 4,
+  height: 4,
+  borderRadius: "50%",
+  background: "white",
+});
+
 const errors = {
   minlength: "Token must be at least 1 character long",
   duplicate: "Token already exists",
@@ -262,6 +272,7 @@ type StyleSourceControlProps = {
   disabled: boolean;
   isEditing: boolean;
   isDragging: boolean;
+  hasStyles: boolean;
   source: ItemSource;
   onSelect: () => void;
   onChangeValue: (value: string) => void;
@@ -278,6 +289,7 @@ export const StyleSourceControl = ({
   disabled,
   isEditing,
   isDragging,
+  hasStyles,
   source,
   children,
   onChangeValue,
@@ -285,7 +297,6 @@ export const StyleSourceControl = ({
   onSelect,
 }: StyleSourceControlProps) => {
   const showMenu = isEditing === false && isDragging === false;
-
   return (
     <Tooltip
       content={error ? errors[error.type] : ""}
@@ -300,7 +311,14 @@ export const StyleSourceControl = ({
         role="button"
         hasError={error !== undefined}
       >
-        <Flex grow css={{ py: theme.spacing[2], px: theme.spacing[3] }}>
+        <Flex
+          grow
+          css={{
+            position: "relative",
+            paddingBlock: theme.spacing[3],
+            paddingInline: theme.spacing[4],
+          }}
+        >
           <StyleSourceButton
             disabled={disabled || isEditing}
             isEditing={isEditing}
@@ -318,6 +336,9 @@ export const StyleSourceControl = ({
               children
             )}
           </StyleSourceButton>
+          {stateLabel === undefined && hasStyles === false && (
+            <StyleSourceHasStylesIndicator />
+          )}
         </Flex>
         {stateLabel !== undefined && (
           <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
