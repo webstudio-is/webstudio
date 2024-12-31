@@ -16,7 +16,6 @@ import {
   $selectedInstanceSelector,
   $selectedInstanceBrowserStyle,
   $selectedInstanceUnitSizes,
-  $selectedInstanceIntanceToTag,
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
   $authTokenPermissions,
@@ -101,10 +100,6 @@ export const createObjectPool = () => {
     new NanostoresSyncObject(
       "selectedInstanceBrowserStyle",
       $selectedInstanceBrowserStyle
-    ),
-    new NanostoresSyncObject(
-      "selectedInstanceIntanceToTag",
-      $selectedInstanceIntanceToTag
     ),
     new NanostoresSyncObject(
       "selectedInstanceUnitSizes",
