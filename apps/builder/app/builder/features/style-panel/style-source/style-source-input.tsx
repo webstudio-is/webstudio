@@ -30,11 +30,10 @@ import {
   rawTheme,
   theme,
   styled,
-  Flex,
   ComboboxScrollArea,
   InputField,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, DotIcon, LocalStyleIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import {
   forwardRef,
   useState,
@@ -237,6 +236,7 @@ const TextFieldBase: ForwardRefRenderFunction<
                 ? selectedItemSelector.state
                 : undefined
             }
+            label={item.label}
             stateLabel={
               item.id === selectedItemSelector?.styleSourceId
                 ? states.find(
@@ -258,15 +258,7 @@ const TextFieldBase: ForwardRefRenderFunction<
               onEditItem?.();
               onChangeItem?.({ ...item, label });
             }}
-          >
-            {item.source === "local" ? (
-              <Flex align="center" justify="center">
-                <LocalStyleIcon />
-              </Flex>
-            ) : (
-              item.label
-            )}
-          </StyleSourceControl>
+          />
         );
       })}
       {placementIndicator}

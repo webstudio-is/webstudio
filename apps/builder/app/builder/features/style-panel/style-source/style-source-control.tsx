@@ -10,7 +10,7 @@ import {
   Flex,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
+import { ChevronDownIcon, LocalStyleIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
@@ -241,14 +241,17 @@ const StyleSourceState = styled(Text, {
   },
 });
 
-const NoStylesDot = styled("div", {
-  position: "absolute",
-  top: 4,
-  right: 2,
-  width: 4,
-  height: 4,
-  borderRadius: "50%",
-  background: "white",
+const LocalStyle = styled(LocalStyleIcon, {
+  variants: {
+    hasStyles: {
+      true: {},
+      false: {
+        "& [fill]": {
+          display: "none",
+        },
+      },
+    },
+  },
 });
 
 const errors = {
@@ -264,7 +267,7 @@ export type StyleSourceError = {
 type StyleSourceControlProps = {
   id: StyleSource["id"];
   error?: StyleSourceError;
-  children: ReactNode;
+  label: string;
   menuItems: ReactNode;
   selected: boolean;
   state: undefined | string;
@@ -291,7 +294,7 @@ export const StyleSourceControl = ({
   isDragging,
   hasStyles,
   source,
-  children,
+  label,
   onChangeValue,
   onChangeEditing,
   onSelect,
@@ -325,20 +328,24 @@ export const StyleSourceControl = ({
             onClick={onSelect}
             tabIndex={-1}
           >
-            {typeof children === "string" ? (
-              <EditableText
-                isEditing={isEditing}
-                onChangeEditing={onChangeEditing}
-                onChangeValue={onChangeValue}
-                value={children}
-              />
-            ) : (
-              children
-            )}
+            <Flex align="center" justify="center" gap="1">
+              {source === "local" ? (
+                <LocalStyle hasStyles={hasStyles} />
+              ) : (
+                <>
+                  <EditableText
+                    isEditing={isEditing}
+                    onChangeEditing={onChangeEditing}
+                    onChangeValue={onChangeValue}
+                    value={label}
+                  />
+                  {hasStyles === false && isEditing === false && (
+                    <LocalStyle hasStyles={hasStyles} />
+                  )}
+                </>
+              )}
+            </Flex>
           </StyleSourceButton>
-          {stateLabel === undefined &&
-            hasStyles === false &&
-            isEditing === false && <NoStylesDot />}
         </Flex>
         {stateLabel !== undefined && (
           <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
