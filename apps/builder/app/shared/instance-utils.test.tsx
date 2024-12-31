@@ -7,7 +7,13 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/template";
+import {
+  $,
+  ws,
+  renderJsx,
+  ExpressionValue,
+  renderTemplate,
+} from "@webstudio-is/template";
 import { parseCss } from "@webstudio-is/css-data";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
@@ -40,6 +46,7 @@ import {
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
+  insertWebstudioFragmentAt,
 } from "./instance-utils";
 import {
   $assets,
@@ -431,6 +438,40 @@ describe("insert instance children", () => {
           value: "span",
         },
       ])
+    );
+  });
+});
+
+describe("insert webstudio fragment at", () => {
+  test("insert multiple instances", () => {
+    $instances.set(renderJsx(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $breakpoints.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $props.set(new Map());
+    $assets.set(new Map());
+    insertWebstudioFragmentAt(
+      renderTemplate(
+        <>
+          <$.Heading ws:id="headingId"></$.Heading>
+          <$.Paragraph ws:id="paragraphId"></$.Paragraph>
+        </>
+      ),
+      {
+        parentSelector: ["bodyId"],
+        position: "end",
+      }
+    );
+    expect($instances.get()).toEqual(
+      renderJsx(
+        <$.Body ws:id="bodyId">
+          <$.Heading ws:id={expect.any(String)}></$.Heading>
+          <$.Paragraph ws:id={expect.any(String)}></$.Paragraph>
+        </$.Body>
+      ).instances
     );
   });
 });

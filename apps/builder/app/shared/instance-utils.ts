@@ -317,7 +317,7 @@ export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
   insertable: Insertable
 ) => {
-  let newRootInstanceId: undefined | Instance["id"];
+  let children: undefined | Instance["children"];
   updateWebstudioData((data) => {
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
@@ -328,17 +328,19 @@ export const insertWebstudioFragmentAt = (
         insertable.parentSelector
       ),
     });
-    newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const children: Instance["children"] = [
-      { type: "id", value: newRootInstanceId },
-    ];
+    children = fragment.children.map((child) => {
+      if (child.type === "id") {
+        return {
+          type: "id",
+          value: newInstanceIds.get(child.value) ?? child.value,
+        };
+      }
+      return child;
+    });
     insertInstanceChildrenMutable(data, children, insertable);
   });
-  if (newRootInstanceId) {
-    selectInstance([newRootInstanceId, ...insertable.parentSelector]);
+  if (children?.[0].type === "id") {
+    selectInstance([children[0].value, ...insertable.parentSelector]);
   }
 };
 
