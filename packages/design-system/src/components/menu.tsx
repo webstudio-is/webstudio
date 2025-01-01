@@ -24,12 +24,14 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import type { ComponentProps } from "react";
+import { truncate } from "../utilities";
 
 export const labelCss = css(textVariants.titles, {
   color: theme.colors.foregroundMain,
   mx: theme.spacing[3],
   padding: theme.spacing[3],
   order: 1,
+  ...truncate(),
 });
 
 const indicatorSize = theme.spacing[9];

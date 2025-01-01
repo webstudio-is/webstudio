@@ -3111,37 +3111,6 @@ export const LoadingDotsIcon: IconComponent = forwardRef(
 );
 LoadingDotsIcon.displayName = "LoadingDotsIcon";
 
-export const LocalStyleIcon: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z"
-        />
-        <path
-          fill="currentColor"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 9.333a1.333 1.333 0 1 0 0-2.666 1.333 1.333 0 0 0 0 2.666Z"
-        />
-      </svg>
-    );
-  }
-);
-LocalStyleIcon.displayName = "LocalStyleIcon";
-
 export const MarkdownEmbedIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

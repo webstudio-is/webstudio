@@ -335,7 +335,7 @@ const $componentStates = computed(
 );
 
 type StyleSourceInputItem = {
-  id: string;
+  id: StyleSource["id"];
   label: string;
   disabled: boolean;
   source: ItemSource;
