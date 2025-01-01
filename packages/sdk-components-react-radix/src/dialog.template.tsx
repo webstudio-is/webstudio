@@ -25,6 +25,14 @@ import {
 } from "./shared/theme";
 import { getButtonStyle } from "./shared/styles";
 
+/**
+ * Styles source without animations:
+ * https://github.com/shadcn-ui/ui/blob/main/apps/www/registry/default/ui/dialog.tsx
+ *
+ * Attributions
+ * MIT License
+ * Copyright (c) 2023 shadcn
+ **/
 export const meta: TemplateMeta = {
   category: "radix",
   description:

@@ -126,14 +126,6 @@ export const metaDialogClose: WsComponentMeta = {
   },
 };
 
-/**
- * Styles source without animations:
- * https://github.com/shadcn-ui/ui/blob/main/apps/www/registry/default/ui/dialog.tsx
- *
- * Attributions
- * MIT License
- * Copyright (c) 2023 shadcn
- **/
 export const metaDialog: WsComponentMeta = {
   type: "container",
   constraints: [
