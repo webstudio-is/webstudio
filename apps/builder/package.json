@@ -90,7 +90,7 @@
     "isbot": "^5.1.19",
     "lexical": "^0.21.0",
     "match-sorter": "^8.0.0",
-    "mdast-util-from-markdown": "^2.0.1",
+    "mdast-util-from-markdown": "^2.0.2",
     "mdast-util-gfm": "^3.0.0",
     "micromark-extension-gfm": "^3.0.0",
     "nanoevents": "^9.1.0",
