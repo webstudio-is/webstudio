@@ -39,7 +39,6 @@ export const metaAccordion: WsComponentMeta = {
 };
 
 export const metaAccordionItem: WsComponentMeta = {
-  category: "hidden",
   type: "container",
   label: "Item",
   icon: ItemIcon,
@@ -62,7 +61,6 @@ export const metaAccordionItem: WsComponentMeta = {
 };
 
 export const metaAccordionHeader: WsComponentMeta = {
-  category: "hidden",
   type: "container",
   label: "Item Header",
   icon: HeaderIcon,
@@ -82,7 +80,6 @@ export const metaAccordionHeader: WsComponentMeta = {
 };
 
 export const metaAccordionTrigger: WsComponentMeta = {
-  category: "hidden",
   type: "container",
   label: "Item Trigger",
   icon: TriggerIcon,
@@ -104,7 +101,6 @@ export const metaAccordionTrigger: WsComponentMeta = {
 };
 
 export const metaAccordionContent: WsComponentMeta = {
-  category: "hidden",
   type: "container",
   label: "Item Content",
   icon: ContentIcon,
