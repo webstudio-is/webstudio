@@ -4,9 +4,10 @@ import type { WebstudioFragment } from "@webstudio-is/sdk";
 export const templateCategories = [
   "general",
   "typography",
-  "data",
   "media",
+  "data",
   "forms",
+  "localization",
   "radix",
   "xml",
   "hidden",
