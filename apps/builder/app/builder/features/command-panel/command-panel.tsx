@@ -5,7 +5,6 @@ import { matchSorter } from "match-sorter";
 import {
   collectionComponent,
   componentCategories,
-  WsComponentMeta,
 } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
@@ -27,11 +26,13 @@ import {
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
+import type { TemplateMeta } from "@webstudio-is/template";
 import {
   $breakpoints,
   $editingPageId,
   $pages,
   $registeredComponentMetas,
+  $registeredTemplates,
   $selectedBreakpoint,
   $selectedBreakpointId,
 } from "~/shared/nano-states";
@@ -83,33 +84,35 @@ const closeCommandPanel = ({
   }
 };
 
-const getMetaScore = (meta: WsComponentMeta) => {
+type ComponentOption = {
+  tokens: string[];
+  type: "component";
+  component: string;
+  label: string;
+  category: TemplateMeta["category"];
+  icon: string;
+  order: undefined | number;
+};
+
+const getComponentScore = (meta: ComponentOption) => {
   const categoryScore = componentCategories.indexOf(meta.category ?? "hidden");
   const componentScore = meta.order ?? Number.MAX_SAFE_INTEGER;
   // shift category
   return categoryScore * 1000 + componentScore;
 };
 
-type ComponentOption = {
-  tokens: string[];
-  type: "component";
-  component: string;
-  label: string;
-  meta: WsComponentMeta;
-};
-
 const $componentOptions = computed(
-  [$registeredComponentMetas, $selectedPage],
-  (metas, selectedPage) => {
+  [$registeredComponentMetas, $registeredTemplates, $selectedPage],
+  (metas, templates, selectedPage) => {
     const componentOptions: ComponentOption[] = [];
-    for (const [component, meta] of metas) {
+    for (const [name, meta] of metas) {
       const category = meta.category ?? "hidden";
       if (category === "hidden" || category === "internal") {
         continue;
       }
       // show only xml category and collection component in xml documents
       if (selectedPage?.meta.documentType === "xml") {
-        if (category !== "xml" && component !== collectionComponent) {
+        if (category !== "xml" && name !== collectionComponent) {
           continue;
         }
       } else {
@@ -118,18 +121,35 @@ const $componentOptions = computed(
           continue;
         }
       }
-      const label = getInstanceLabel({ component }, meta);
+      const label = getInstanceLabel({ component: name }, meta);
       componentOptions.push({
         tokens: ["components", label, category],
         type: "component",
-        component,
+        component: name,
         label,
-        meta,
+        category,
+        icon: meta.icon,
+        order: meta.order,
+      });
+    }
+    for (const [name, meta] of templates) {
+      const label = getInstanceLabel({ component: name }, meta);
+      if (meta.category === "hidden" || meta.category === "internal") {
+        continue;
+      }
+      componentOptions.push({
+        tokens: ["components", label, meta.category],
+        type: "component",
+        component: name,
+        label,
+        category: meta.category,
+        icon: meta.icon ?? metas.get(name)?.icon ?? "",
+        order: meta.order,
       });
     }
     componentOptions.sort(
-      ({ meta: leftMeta }, { meta: rightMeta }) =>
-        getMetaScore(leftMeta) - getMetaScore(rightMeta)
+      (leftOption, rightOption) =>
+        getComponentScore(leftOption) - getComponentScore(rightOption)
     );
     return componentOptions;
   }
@@ -142,7 +162,7 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
       heading={<CommandGroupHeading>Components</CommandGroupHeading>}
       actions={["add"]}
     >
-      {options.map(({ component, label, meta }) => {
+      {options.map(({ component, label, category, icon }) => {
         return (
           <CommandItem
             key={component}
@@ -161,12 +181,12 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
           >
             <Flex gap={2}>
               <CommandIcon
-                dangerouslySetInnerHTML={{ __html: meta.icon }}
+                dangerouslySetInnerHTML={{ __html: icon }}
               ></CommandIcon>
               <Text variant="labelsTitleCase">
                 {label}{" "}
                 <Text as="span" color="moreSubtle">
-                  {humanizeString(meta.category ?? "")}
+                  {humanizeString(category)}
                 </Text>
               </Text>
             </Flex>
