@@ -10,7 +10,7 @@ import {
   Flex,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon, LocalStyleIcon } from "@webstudio-is/icons";
+import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
@@ -241,18 +241,27 @@ const StyleSourceState = styled(Text, {
   },
 });
 
-const LocalStyle = styled(LocalStyleIcon, {
-  variants: {
-    hasStyles: {
-      true: {},
-      false: {
-        "& [fill]": {
-          display: "none",
-        },
-      },
-    },
-  },
-});
+const LocalStyleIcon = ({ size = 16, showDot = true }) => {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} fill="none">
+      <path
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z"
+      />
+      {showDot && (
+        <path
+          fill="currentColor"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 9.333a1.333 1.333 0 1 0 0-2.666 1.333 1.333 0 0 0 0 2.666Z"
+        />
+      )}
+    </svg>
+  );
+};
 
 const errors = {
   minlength: "Token must be at least 1 character long",
@@ -330,7 +339,7 @@ export const StyleSourceControl = ({
           >
             <Flex align="center" justify="center" gap="1">
               {source === "local" ? (
-                <LocalStyle hasStyles={hasStyles} />
+                <LocalStyleIcon showDot={hasStyles} />
               ) : (
                 <>
                   <EditableText
@@ -340,7 +349,7 @@ export const StyleSourceControl = ({
                     value={label}
                   />
                   {hasStyles === false && isEditing === false && (
-                    <LocalStyle hasStyles={hasStyles} />
+                    <LocalStyleIcon showDot={hasStyles} />
                   )}
                 </>
               )}
