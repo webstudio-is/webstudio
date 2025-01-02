@@ -87,12 +87,14 @@ const parseHtml = (value: string) => {
 
 // The problem is to identify broken HTML and because browser is flexible and always tries to fix it we never
 // know if something is actually broken.
-// 1. Parse the HTML using DOM
-// 2. Get HTML via innerHTML
-// 3. Compare the original HTML with innerHTML
-// 4. We try to minimize the amount of false positives by removing
+// 1. Parse potential SVG with XML parser and serialize
+// 2. Compare the original SVG with resulting value
+// 3. Parse the HTML using DOM parser and serialize
+// 4. Compare the original HTML with resulting value
+// 5. We try to minimize the amount of false positives by removing
 //    - different amount of whitespace
 //    - unifying `boolean=""` is the same as `boolean`
+//    - xmlns attirbute which is always reordered first
 const validateHtml = (value: string): Error | undefined => {
   const clean = (value: string) => {
     return (
