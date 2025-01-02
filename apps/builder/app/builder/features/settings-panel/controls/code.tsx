@@ -67,6 +67,24 @@ const ErrorInfo = ({
 
 type Error = { message: string; value: string; expected: string };
 
+/**
+ * Use DOMParser in xml mode to parse potential svg
+ */
+const parseSvg = (value: string) => {
+  let doc = new DOMParser().parseFromString(value, "application/xml");
+  let errorNode = doc.querySelector("parsererror");
+  if (errorNode) {
+    return "";
+  }
+  return doc.documentElement.outerHTML;
+};
+
+const parseHtml = (value: string) => {
+  const div = document.createElement("div");
+  div.innerHTML = value;
+  return div.innerHTML;
+};
+
 // The problem is to identify broken HTML and because browser is flexible and always tries to fix it we never
 // know if something is actually broken.
 // 1. Parse the HTML using DOM
@@ -76,21 +94,29 @@ type Error = { message: string; value: string; expected: string };
 //    - different amount of whitespace
 //    - unifying `boolean=""` is the same as `boolean`
 const validateHtml = (value: string): Error | undefined => {
-  const div = document.createElement("div");
-  div.innerHTML = value;
-  const expected = div.innerHTML;
   const clean = (value: string) => {
     return (
       value
         // Compare without whitespace to avoid false positives
-        .replace(/\s/g, "")
+        .replaceAll(/\s/g, "")
         // normalize boolean attributes by turning `boolean=""` into `boolean`
-        .replace('=""', "")
+        .replaceAll('=""', "")
+        // namespace attribute is always reordered first
+        .replaceAll('xmlns="http://www.w3.org/2000/svg"', "")
     );
   };
-  if (clean(value) !== clean(expected)) {
-    return { message: "Invalid HTML detected", value, expected };
+  // in many cases svg is valid xml so serialize in xml mode first
+  // to avoid false positive of auto closing svg tags, for example
+  // <path /> -> <path></path>
+  const xml = parseSvg(value);
+  if (clean(xml) === clean(value)) {
+    return;
   }
+  const html = parseHtml(value);
+  if (clean(html) === clean(value)) {
+    return;
+  }
+  return { message: "Invalid HTML detected", value, expected: html ?? "" };
 };
 
 export const CodeControl = ({
