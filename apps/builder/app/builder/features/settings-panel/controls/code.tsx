@@ -71,8 +71,8 @@ type Error = { message: string; value: string; expected: string };
  * Use DOMParser in xml mode to parse potential svg
  */
 const parseSvg = (value: string) => {
-  let doc = new DOMParser().parseFromString(value, "application/xml");
-  let errorNode = doc.querySelector("parsererror");
+  const doc = new DOMParser().parseFromString(value, "application/xml");
+  const errorNode = doc.querySelector("parsererror");
   if (errorNode) {
     return "";
   }
