@@ -130,12 +130,12 @@ const ChangeProjectDomain = ({
         <Grid flow="column" align="center">
           <Tooltip content={error !== undefined ? error : statusText}>
             <Flex
-              align={"center"}
-              justify={"center"}
+              align="center"
+              justify="center"
               css={{
                 cursor: "pointer",
-                width: theme.spacing[12],
-                height: theme.spacing[12],
+                width: theme.sizes.controlHeight,
+                height: theme.sizes.controlHeight,
                 color:
                   error !== undefined || status === "FAILED"
                     ? theme.colors.foregroundDestructive
