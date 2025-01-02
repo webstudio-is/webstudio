@@ -6,3 +6,5 @@ export { meta as Switch } from "./switch.template";
 export { meta as Checkbox } from "./checkbox.template";
 export { meta as Collapsible } from "./collapsible.template";
 export { meta as Accordion } from "./accordion.template";
+export { meta as Tooltip } from "./tooltip.template";
+export { meta as Popover } from "./popover.template";
