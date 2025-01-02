@@ -13,9 +13,11 @@ import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
 import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
+import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/templates";
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
+import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { ErrorMessage } from "~/shared/error";
 import { $publisher, publish } from "~/shared/pubsub";
@@ -218,12 +220,14 @@ export const Canvas = () => {
       components: {},
       metas: coreMetas,
       propsMetas: corePropsMetas,
+      templates: {},
     });
     registerComponentLibrary({
       components: baseComponents,
       metas: baseComponentMetas,
       propsMetas: baseComponentPropsMetas,
       hooks: baseComponentHooks,
+      templates: baseComponentTemplates,
     });
     registerComponentLibrary({
       components: {
@@ -233,6 +237,7 @@ export const Canvas = () => {
       },
       metas: {},
       propsMetas: {},
+      templates: {},
     });
     registerComponentLibrary({
       namespace: "@webstudio-is/sdk-components-react-radix",
@@ -240,6 +245,7 @@ export const Canvas = () => {
       metas: radixComponentMetas,
       propsMetas: radixComponentPropsMetas,
       hooks: radixComponentHooks,
+      templates: radixTemplates,
     });
   });
 

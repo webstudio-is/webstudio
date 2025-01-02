@@ -15,6 +15,7 @@ export default defineConfig({
         "src/metas.ts",
         "src/props.ts",
         "src/hooks.ts",
+        "src/templates.ts",
       ],
       formats: ["es"],
     },

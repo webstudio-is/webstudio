@@ -1,10 +1,9 @@
-import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
-import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/sdk";
+import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   $isResizingCanvas,
   $selectedInstanceBrowserStyle,
-  $selectedInstanceIntanceToTag,
   $selectedInstanceUnitSizes,
   $selectedInstanceRenderState,
   $stylesIndex,
@@ -15,11 +14,12 @@ import {
   $selectedInstanceStates,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import htmlTags, { type HtmlTags } from "html-tags";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
   getAllElementsByInstanceSelector,
+  scrollIntoView,
+  hasDoNotTrackMutationRecord,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
@@ -32,9 +32,6 @@ import { getBrowserStyle } from "./features/webstudio-component/get-browser-styl
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { shallowEqual } from "shallow-equal";
 import warnOnce from "warn-once";
-
-const isHtmlTag = (tag: string): tag is HtmlTags =>
-  htmlTags.includes(tag as HtmlTags);
 
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
   $selectedInstanceOutline.set({
@@ -81,36 +78,6 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
   };
 };
 
-export const getElementAndAncestorInstanceTags = (
-  instanceSelector: Readonly<InstanceSelector>
-) => {
-  const elements = getAllElementsByInstanceSelector(instanceSelector);
-
-  if (elements.length === 0) {
-    return;
-  }
-
-  const [element] = elements;
-
-  const instanceToTag = new Map<Instance["id"], HtmlTags>([
-    [ROOT_INSTANCE_ID, "html"],
-  ]);
-  for (
-    let ancestorOrSelf: HTMLElement | null = element;
-    ancestorOrSelf !== null;
-    ancestorOrSelf = ancestorOrSelf.parentElement
-  ) {
-    const tagName = ancestorOrSelf.tagName.toLowerCase();
-    const instanceId = ancestorOrSelf.getAttribute(idAttribute);
-
-    if (isHtmlTag(tagName) && instanceId !== null) {
-      instanceToTag.set(instanceId, tagName);
-    }
-  }
-
-  return instanceToTag;
-};
-
 const subscribeSelectedInstance = (
   selectedInstanceSelector: Readonly<InstanceSelector>,
   debounceEffect: (callback: () => void) => void
@@ -127,26 +94,10 @@ const subscribeSelectedInstance = (
 
   const updateScroll = () => {
     const bbox = getAllElementsBoundingBox(visibleElements);
-
-    // Adds a small amount of space around the element after scrolling
-    const topScrollMargin = 16;
-
-    if (bbox.top < 0 || bbox.bottom > window.innerHeight) {
-      const moveToTopDelta = bbox.top - topScrollMargin;
-      const moveToBottomDelta =
-        bbox.bottom - window.innerHeight + topScrollMargin;
-
-      // scrollTo is used because scrollIntoView does not work with elements that have display:contents, etc.
-      // Here, we can be confident that if the outline can be calculated, we can scroll to it.
-      window.scrollTo({
-        top:
-          window.scrollY +
-          (Math.abs(moveToTopDelta) < Math.abs(moveToBottomDelta)
-            ? moveToTopDelta
-            : moveToBottomDelta),
-        behavior: "smooth",
-      });
+    if (visibleElements.length === 0) {
+      return;
     }
+    scrollIntoView(visibleElements[0], bbox);
   };
 
   const updateElements = () => {
@@ -201,20 +152,6 @@ const subscribeSelectedInstance = (
     const [element] = elements;
     // trigger style recomputing every time instance styles are changed
     $selectedInstanceBrowserStyle.set(getBrowserStyle(element));
-
-    // Map self and ancestor instance ids to tag names
-    const instanceToTag = getElementAndAncestorInstanceTags(
-      selectedInstanceSelector
-    );
-
-    if (
-      !shallowEqual(
-        [...($selectedInstanceIntanceToTag.get()?.entries() ?? [])].flat(),
-        [...(instanceToTag?.entries() ?? [])].flat()
-      )
-    ) {
-      $selectedInstanceIntanceToTag.set(instanceToTag);
-    }
 
     const unitSizes = calculateUnitSizes(element);
     $selectedInstanceUnitSizes.set(unitSizes);
@@ -285,6 +222,10 @@ const subscribeSelectedInstance = (
   const resizeObserver = new ResizeObserver(update);
 
   const mutationHandler: MutationCallback = (mutationRecords) => {
+    if (hasDoNotTrackMutationRecord(mutationRecords)) {
+      return;
+    }
+
     if (hasCollapsedMutationRecord(mutationRecords)) {
       return;
     }

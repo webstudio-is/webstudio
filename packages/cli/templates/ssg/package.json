@@ -15,7 +15,7 @@
     "@webstudio-is/sdk": "0.0.0-webstudio-version",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "vike": "^0.4.206"
+    "vike": "^0.4.210"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",

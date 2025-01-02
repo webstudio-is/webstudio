@@ -314,14 +314,12 @@ const BindingButton = forwardRef<
             data-variant={error ? "error" : variant}
           >
             <DotIcon
-              size={14}
-              fill="white"
-              style={{ display: `var(--dot-display)` }}
+              size={7}
+              style={{ display: `var(--dot-display)`, color: "white" }}
             />
             <PlusIcon
-              size={10}
-              fill="white"
-              style={{ display: `var(--plus-display)` }}
+              size={8}
+              style={{ display: `var(--plus-display)`, color: "white" }}
             />
           </Box>
         }

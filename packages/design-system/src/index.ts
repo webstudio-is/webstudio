@@ -70,8 +70,6 @@ export * from "./components/pro-badge";
 
 // No need to align
 
-export { useId } from "@radix-ui/react-id";
-export * as Portal from "@radix-ui/react-portal";
 export { Box } from "./components/box";
 export { Flex } from "./components/flex";
 export { Grid } from "./components/grid";

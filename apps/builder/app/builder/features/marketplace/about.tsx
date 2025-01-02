@@ -11,7 +11,7 @@ import {
   truncate,
 } from "@webstudio-is/design-system";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import { ChevronDoubleLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
+import { ChevronsLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import { builderUrl } from "~/shared/router-utils";
 
 export const About = ({
@@ -35,7 +35,7 @@ export const About = ({
             <Button
               onClick={onClose}
               aria-label="Close"
-              prefix={<ChevronDoubleLeftIcon />}
+              prefix={<ChevronsLeftIcon />}
               color="ghost"
               // Tab should go:
               //   trought form fields -> create button -> cancel button

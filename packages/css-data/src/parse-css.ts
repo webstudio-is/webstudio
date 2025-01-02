@@ -168,7 +168,11 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
         continue;
       }
       let selector: Selector | undefined = undefined;
-      for (const childNode of node.children) {
+      const children = node.children.toArray();
+      // @ts-expect-error NestingSelector is not defined in type definitions
+      const startsWithNesting = children[0]?.type === "NestingSelector";
+      for (let index = 0; index < children.length; index += 1) {
+        const childNode = children[index];
         let name: string = "";
         let state: string | undefined;
         switch (childNode.type) {
@@ -179,7 +183,12 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
             name = `.${childNode.name}`;
             break;
           case "AttributeSelector":
-            name = csstree.generate(childNode);
+            // for example &[data-state=active]
+            if (startsWithNesting && index === 1 && children.length === 2) {
+              state = csstree.generate(childNode);
+            } else {
+              name = csstree.generate(childNode);
+            }
             break;
           case "PseudoClassSelector": {
             // First pseudo selector is not a state but an element selector, e.g. :root

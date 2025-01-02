@@ -1,3 +1,56 @@
-<svg width="16" height="16" viewBox="0 0 16 16"  xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M8.00233 0.679901C8.36131 0.679901 8.65233 0.970917 8.65233 1.3299L8.65232 3.76426L9.5638 2.85278C9.81764 2.59894 10.2292 2.59894 10.483 2.85278C10.7369 3.10662 10.7369 3.51818 10.483 3.77202L8.46194 5.79312C8.34004 5.91501 8.17471 5.9835 8.00232 5.9835C7.82993 5.9835 7.6646 5.91501 7.5427 5.79312L5.52161 3.77202C5.26777 3.51818 5.26777 3.10662 5.52161 2.85278C5.77545 2.59894 6.18701 2.59894 6.44085 2.85278L7.35232 3.76426L7.35233 1.3299C7.35233 0.970915 7.64334 0.679901 8.00233 0.679901ZM1.34998 8C1.34998 7.64102 1.64099 7.35 1.99998 7.35H14C14.359 7.35 14.65 7.64102 14.65 8C14.65 8.35898 14.359 8.65 14 8.65H1.99998C1.64099 8.65 1.34998 8.35898 1.34998 8ZM7.54035 10.2031C7.7942 9.94925 8.20575 9.94925 8.45959 10.2031L10.4819 12.2254C10.7358 12.4793 10.7358 12.8908 10.4819 13.1447C10.2281 13.3985 9.81652 13.3985 9.56268 13.1447L8.64997 12.2319L8.64996 14.674C8.64996 15.0329 8.35894 15.3239 7.99996 15.3239C7.64097 15.3239 7.34996 15.0329 7.34996 14.6739L7.34997 12.232L6.43727 13.1447C6.18343 13.3985 5.77187 13.3985 5.51803 13.1447C5.26419 12.8908 5.26419 12.4793 5.51803 12.2254L7.54035 10.2031Z" />
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M8 14.6667V10.6667"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M8 5.33333V1.33333"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M2.5 8H1.5"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M6.5 8H5.5"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M10.5 8H9.5"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M14.5 8H13.5"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M10 12.6667L8 10.6667L6 12.6667"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M10 3.33333L8 5.33333L6 3.33333"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

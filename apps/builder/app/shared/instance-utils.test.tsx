@@ -7,7 +7,13 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, ws, renderJsx, ExpressionValue } from "@webstudio-is/template";
+import {
+  $,
+  ws,
+  renderJsx,
+  ExpressionValue,
+  renderTemplate,
+} from "@webstudio-is/template";
 import { parseCss } from "@webstudio-is/css-data";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
@@ -33,7 +39,6 @@ import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   findClosestEditableInstanceSelector,
-  insertTemplateData,
   deleteInstanceMutable,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
@@ -41,6 +46,7 @@ import {
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
+  insertWebstudioFragmentAt,
 } from "./instance-utils";
 import {
   $assets,
@@ -436,188 +442,38 @@ describe("insert instance children", () => {
   });
 });
 
-test("insert template data with instances", () => {
-  $instances.set(toMap([createInstance("body", "Body", [])]));
-  $styleSourceSelections.set(new Map());
-  $styleSources.set(toMap([{ type: "token", id: "1", name: "Zero" }]));
-  $styles.set(
-    new Map([
-      [
-        "1:base:color:",
-        {
-          breakpointId: "base",
-          styleSourceId: "1",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-        },
-      ],
-    ])
-  );
-  insertTemplateData(
-    {
-      children: [{ type: "id", value: "box" }],
-      instances: [createInstance("box", "Box", [])],
-      props: [],
-      dataSources: [],
-      styleSourceSelections: [],
-      styleSources: [],
-      styles: [],
-      assets: [],
-      resources: [],
-      breakpoints: [],
-    },
-    { parentSelector: ["body"], position: "end" }
-  );
-  expect($instances.get()).toEqual(
-    toMap<Instance>([
-      createInstance("body", "Body", [{ type: "id", value: "box" }]),
-      createInstance("box", "Box", []),
-    ])
-  );
-});
-
-test("insert template inside text-only instance should wrap the text into Text instance", () => {
-  $instances.set(
-    toMap([
-      createInstance("body", "Body", [
-        {
-          type: "id",
-          value: "heading",
-        },
-      ]),
-      createInstance("heading", "Heading", [
-        { type: "text", value: "Heading text" },
-      ]),
-    ])
-  );
-  insertTemplateData(
-    {
-      children: [{ type: "id", value: "box" }],
-      instances: [createInstance("box", "Box", [])],
-      props: [],
-      dataSources: [],
-      styleSourceSelections: [],
-      styleSources: [],
-      styles: [],
-      assets: [],
-      resources: [],
-      breakpoints: [],
-    },
-    { parentSelector: ["heading", "body"], position: "end" }
-  );
-
-  expect($instances.get()).toEqual(
-    toMap<Instance>([
-      createInstance("body", "Body", [
-        {
-          type: "id",
-          value: "heading",
-        },
-      ]),
-      createInstance("heading", "Heading", [
-        {
-          type: "id",
-          value: expect.not.stringMatching("text") as unknown as string,
-        },
-        { type: "id", value: "box" },
-      ]),
-      createInstance(
-        expect.not.stringMatching("text") as unknown as string,
-        "Text",
-        [{ type: "text", value: "Heading text" }]
+describe("insert webstudio fragment at", () => {
+  test("insert multiple instances", () => {
+    $instances.set(renderJsx(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $breakpoints.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $props.set(new Map());
+    $assets.set(new Map());
+    insertWebstudioFragmentAt(
+      renderTemplate(
+        <>
+          <$.Heading ws:id="headingId"></$.Heading>
+          <$.Paragraph ws:id="paragraphId"></$.Paragraph>
+        </>
       ),
-      createInstance("box", "Box", []),
-    ])
-  );
-});
-
-test("insert template data with only new style sources", () => {
-  $instances.set(new Map([createInstancePair("body", "Body", [])]));
-  $styleSourceSelections.set(new Map());
-  $styleSources.set(new Map([["1", { type: "token", id: "1", name: "Zero" }]]));
-  $styles.set(
-    new Map([
-      [
-        "1:base:color:",
-        {
-          breakpointId: "base",
-          styleSourceId: "1",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-        },
-      ],
-    ])
-  );
-  insertTemplateData(
-    {
-      children: [{ type: "id", value: "box1" }],
-      instances: [
-        { type: "instance", id: "box1", component: "Box", children: [] },
-      ],
-      props: [],
-      dataSources: [],
-      styleSourceSelections: [{ instanceId: "box1", values: ["1", "2"] }],
-      styleSources: [
-        { type: "token", id: "1", name: "One" },
-        { type: "token", id: "2", name: "Two" },
-      ],
-      styles: [
-        {
-          breakpointId: "base",
-          styleSourceId: "1",
-          property: "color",
-          value: { type: "keyword", value: "black" },
-        },
-        {
-          breakpointId: "base",
-          styleSourceId: "1",
-          property: "backgroundColor",
-          value: { type: "keyword", value: "purple" },
-        },
-        {
-          breakpointId: "base",
-          styleSourceId: "2",
-          property: "color",
-          value: { type: "keyword", value: "green" },
-        },
-      ],
-      assets: [],
-      resources: [],
-      breakpoints: [],
-    },
-    { parentSelector: ["body"], position: "end" }
-  );
-  expect($styleSourceSelections.get()).toEqual(
-    new Map([["box1", { instanceId: "box1", values: ["1", "2"] }]])
-  );
-  expect($styleSources.get()).toEqual(
-    new Map([
-      ["1", { type: "token", id: "1", name: "Zero" }],
-      ["2", { type: "token", id: "2", name: "Two" }],
-    ])
-  );
-  expect($styles.get()).toEqual(
-    new Map([
-      [
-        "1:base:color:",
-        {
-          breakpointId: "base",
-          styleSourceId: "1",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-        },
-      ],
-      [
-        "2:base:color:",
-        {
-          breakpointId: "base",
-          styleSourceId: "2",
-          property: "color",
-          value: { type: "keyword", value: "green" },
-        },
-      ],
-    ])
-  );
+      {
+        parentSelector: ["bodyId"],
+        position: "end",
+      }
+    );
+    expect($instances.get()).toEqual(
+      renderJsx(
+        <$.Body ws:id="bodyId">
+          <$.Heading ws:id={expect.any(String)}></$.Heading>
+          <$.Paragraph ws:id={expect.any(String)}></$.Paragraph>
+        </$.Body>
+      ).instances
+    );
+  });
 });
 
 describe("reparent instance", () => {

@@ -9,7 +9,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { AlertIcon, BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
+import { AlertIcon, AsteriskIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
 import {
   $selectedBreakpoint,
@@ -172,13 +172,9 @@ export const BreakpointsSelector = ({
                   }}
                   value={breakpoint.id}
                 >
-                  {breakpoint.minWidth ??
-                    breakpoint.maxWidth ??
-                    (breakpoint.id === selectedBreakpoint.id ? (
-                      <BpStarOnIcon size={22} />
-                    ) : (
-                      <BpStarOffIcon size={22} />
-                    ))}
+                  {breakpoint.minWidth ?? breakpoint.maxWidth ?? (
+                    <AsteriskIcon size={22} />
+                  )}
                 </ToolbarToggleItem>
               </Tooltip>
             );

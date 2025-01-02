@@ -56,7 +56,7 @@ const generateComponentExport = (options: GenerateOptions) => {
     svgProps: {
       width: "{size}",
       height: "{size}",
-      fill: "{color}",
+      fill: "{fill}",
       "{...props}": null,
       ref: "{forwardedRef}",
     },
@@ -64,7 +64,7 @@ const generateComponentExport = (options: GenerateOptions) => {
   });
   return `
 export const ${options.exportName}: IconComponent = forwardRef(
-  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
       ${jsx}
     );

@@ -16,7 +16,6 @@ import {
   $selectedInstanceSelector,
   $selectedInstanceBrowserStyle,
   $selectedInstanceUnitSizes,
-  $selectedInstanceIntanceToTag,
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
   $authTokenPermissions,
@@ -47,6 +46,7 @@ import {
   $textToolbar,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
+  $registeredTemplates,
   $modifierKeys,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
@@ -100,10 +100,6 @@ export const createObjectPool = () => {
     new NanostoresSyncObject(
       "selectedInstanceBrowserStyle",
       $selectedInstanceBrowserStyle
-    ),
-    new NanostoresSyncObject(
-      "selectedInstanceIntanceToTag",
-      $selectedInstanceIntanceToTag
     ),
     new NanostoresSyncObject(
       "selectedInstanceUnitSizes",
@@ -167,6 +163,7 @@ export const createObjectPool = () => {
       "registeredComponentPropsMetas",
       $registeredComponentPropsMetas
     ),
+    new NanostoresSyncObject("registeredTemplates", $registeredTemplates),
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
   ]);
 };

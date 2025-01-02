@@ -21,7 +21,6 @@ import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
-import type { HtmlTags } from "html-tags";
 import { $selectedInstanceSelector } from "./instances";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Simplify } from "type-fest";
@@ -158,13 +157,6 @@ export const $selectedInstanceUnitSizes = atom<UnitSizes>({
   rem: 16,
   px: 1,
 });
-
-/**
- * instanceId => tagName store for selected instance and its ancestors
- */
-export const $selectedInstanceIntanceToTag = atom<
-  undefined | Map<Instance["id"], HtmlTags>
->();
 
 /**
  * pending means: previous selected instance unmounted,

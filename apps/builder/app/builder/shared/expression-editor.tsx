@@ -39,6 +39,7 @@ import {
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
+  foldGutterExtension,
   type EditorApi,
 } from "./code-editor-base";
 
@@ -518,7 +519,7 @@ export const ExpressionEditor = ({
 // by spliting into separate component which is invoked
 // only when dialog content is rendered
 const ValuePreviewEditor = ({ value }: { value: unknown }) => {
-  const extensions = useMemo(() => [javascript({})], []);
+  const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
   return (
     <EditorContent
       readOnly={true}

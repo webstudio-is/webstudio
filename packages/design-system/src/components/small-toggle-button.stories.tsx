@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { EyeconOpenIcon, EyeconClosedIcon } from "@webstudio-is/icons";
+import { EyeOpenIcon, EyeClosedIcon } from "@webstudio-is/icons";
 import {
   SmallToggleButton,
   smallToggleButtonVariants,
@@ -14,7 +14,7 @@ export const Demo = ({
   <>
     <StorySection title="Configurable">
       <SmallToggleButton
-        icon={pressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
+        icon={pressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
         {...rest}
       />
     </StorySection>
@@ -40,9 +40,7 @@ export const Demo = ({
               <SmallToggleButton
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
-                icon={
-                  defaultPressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />
-                }
+                icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
                 defaultPressed={defaultPressed}
                 variant={variant}
               />
@@ -52,9 +50,7 @@ export const Demo = ({
               <SmallToggleButton
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
-                icon={
-                  defaultPressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />
-                }
+                icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
                 defaultPressed={defaultPressed}
                 variant={variant}
                 disabled
@@ -86,9 +82,7 @@ export const Demo = ({
               <SmallToggleButton
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
-                icon={
-                  defaultPressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />
-                }
+                icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
                 defaultPressed={defaultPressed}
                 variant={variant}
                 focused
@@ -98,9 +92,7 @@ export const Demo = ({
               <SmallToggleButton
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
-                icon={
-                  defaultPressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />
-                }
+                icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
                 defaultPressed={defaultPressed}
                 variant={variant}
                 focused

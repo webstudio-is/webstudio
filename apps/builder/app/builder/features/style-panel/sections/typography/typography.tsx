@@ -11,16 +11,16 @@ import {
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
-  CrossSmallIcon,
+  XSmallIcon,
   EllipsesIcon,
-  TextDirectionLTRIcon,
-  TextDirectionRTLIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
   TextAlignCenterIcon,
   TextAlignJustifyIcon,
   TextAlignLeftIcon,
   TextAlignRightIcon,
   TextCapitalizeIcon,
-  TextHyphenIcon,
+  MinusIcon,
   TextItalicIcon,
   TextLowercaseIcon,
   TextStrikethroughIcon,
@@ -168,7 +168,7 @@ const TypographySectionAdvanced = () => {
         properties={["textDecorationLine"]}
         items={[
           {
-            child: <CrossSmallIcon />,
+            child: <XSmallIcon />,
             description: "No decoration is applied to the text.",
             value: "none",
           },
@@ -189,7 +189,7 @@ const TypographySectionAdvanced = () => {
         properties={["textTransform"]}
         items={[
           {
-            child: <CrossSmallIcon />,
+            child: <XSmallIcon />,
             description:
               "No transformation is applied to the text. The text appears as it is.",
             value: "none",
@@ -219,7 +219,7 @@ const TypographySectionAdvanced = () => {
           properties={["fontStyle"]}
           items={[
             {
-              child: <CrossSmallIcon />,
+              child: <XSmallIcon />,
               description:
                 "The default value. The text appears in a normal, upright style.",
               value: "normal",
@@ -316,13 +316,13 @@ const TypographySectionAdvancedPopover = () => {
                 properties={["direction"]}
                 items={[
                   {
-                    child: <TextDirectionLTRIcon />,
+                    child: <ArrowRightIcon />,
                     description:
                       "Sets the text direction to left-to-right, which is the default for most languages.",
                     value: "ltr",
                   },
                   {
-                    child: <TextDirectionRTLIcon />,
+                    child: <ArrowLeftIcon />,
                     description:
                       "Sets the text direction to right-to-left, typically used for languages such as Arabic or Hebrew.",
                     value: "rtl",
@@ -340,13 +340,13 @@ const TypographySectionAdvancedPopover = () => {
                 properties={["hyphens"]}
                 items={[
                   {
-                    child: <CrossSmallIcon />,
+                    child: <XSmallIcon />,
                     description:
                       "Disables hyphenation of words. Words will not be hyphenated even if they exceed the width of their container.",
                     value: "manual",
                   },
                   {
-                    child: <TextHyphenIcon />,
+                    child: <MinusIcon />,
                     description:
                       "Enables automatic hyphenation of words. The browser will hyphenate long words at appropriate points to fit within the width of their container.",
                     value: "auto",
@@ -364,7 +364,7 @@ const TypographySectionAdvancedPopover = () => {
                 properties={["textOverflow"]}
                 items={[
                   {
-                    child: <CrossSmallIcon />,
+                    child: <XSmallIcon />,
                     description:
                       "The overflowing text is clipped and hidden without any indication.",
                     value: "clip",

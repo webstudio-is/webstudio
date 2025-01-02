@@ -52,7 +52,7 @@ type FloatingPanelProps = {
   content: ReactNode;
   children: ReactNode;
   maximizable?: boolean;
-  resize?: ComponentProps<typeof DialogContent>["resize"];
+  resize?: ComponentProps<typeof Dialog>["resize"];
   width?: number;
   height?: number;
   // - bottom - below the trigger button
@@ -134,13 +134,17 @@ export const FloatingPanel = ({
   useLayoutEffect(calcPosition, [calcPosition]);
 
   return (
-    <Dialog open={open} modal={false} onOpenChange={onOpenChange}>
+    <Dialog
+      draggable
+      resize={resize}
+      open={open}
+      modal={false}
+      onOpenChange={onOpenChange}
+    >
       <DialogTrigger asChild ref={triggerRef}>
         {children}
       </DialogTrigger>
       <DialogContent
-        draggable
-        resize={resize}
         className={contentStyle()}
         width={width}
         height={height}

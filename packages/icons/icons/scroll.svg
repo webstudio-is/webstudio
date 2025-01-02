@@ -1,8 +1,44 @@
-<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-<path d="M10.9531 5.39896C10.9531 5.13495 10.7337 4.92094 10.4631 4.92094C10.1925 4.92094 9.97318 5.13495 9.97318 5.39896V9.40795L8.69278 8.15876C8.50143 7.97209 8.1912 7.97209 7.99986 8.15876C7.80852 8.34544 7.80852 8.64811 7.99986 8.83478L10.1167 10.9C10.308 11.0867 10.6183 11.0867 10.8096 10.9L12.9264 8.83478C13.1178 8.64811 13.1178 8.34544 12.9264 8.15876C12.7351 7.97209 12.4249 7.97209 12.2335 8.15876L10.9531 9.40795V5.39896Z" />
-<path fill-rule="evenodd" clip-rule="evenodd" d="M1.93994 12.7C1.93994 13.0038 2.21678 13.25 2.55827 13.25H13.4516C13.7931 13.25 14.0699 13.0038 14.0699 12.7C14.0699 12.3962 13.7931 12.15 13.4516 12.15H2.55827C2.21678 12.15 1.93994 12.3962 1.93994 12.7Z" />
-<path fill-rule="evenodd" clip-rule="evenodd" d="M1.93994 3.3C1.93994 3.60376 2.21678 3.85 2.55827 3.85H13.4516C13.7931 3.85 14.0699 3.60376 14.0699 3.3C14.0699 2.99624 13.7931 2.75 13.4516 2.75H2.55827C2.21678 2.75 1.93994 2.99624 1.93994 3.3Z" />
-<path fill-rule="evenodd" clip-rule="evenodd" d="M1.93994 5.65C1.93994 5.95376 2.20067 6.2 2.52229 6.2L6.31759 6.2C6.63921 6.2 6.89994 5.95375 6.89994 5.65C6.89994 5.34624 6.63921 5.1 6.31759 5.1L2.52229 5.1C2.20067 5.1 1.93994 5.34624 1.93994 5.65Z" />
-<path fill-rule="evenodd" clip-rule="evenodd" d="M1.93994 10.35C1.93994 10.6538 2.20067 10.9 2.52229 10.9H6.31759C6.63921 10.9 6.89994 10.6538 6.89994 10.35C6.89994 10.0462 6.63921 9.79999 6.31759 9.79999L2.52229 9.8C2.20067 9.8 1.93994 10.0462 1.93994 10.35Z" />
-<path fill-rule="evenodd" clip-rule="evenodd" d="M1.93994 8C1.93994 8.30375 2.20067 8.55 2.52229 8.55L6.31759 8.55C6.63921 8.55 6.89994 8.30375 6.89994 8C6.89994 7.69624 6.63921 7.45 6.31759 7.45L2.52229 7.45C2.20067 7.45 1.93994 7.69624 1.93994 8Z" />
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M8 4L8 8"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M6 6L8 4L10 6"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M8 12L8 8"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M10 10L8 12L6 10"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M2 14V8V2"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M14.0034 14V8V2"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

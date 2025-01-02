@@ -9,17 +9,14 @@ import {
   type KeyboardEventHandler,
   type FormEventHandler,
 } from "react";
-import {
-  CrossCircledFilledIcon,
-  MagnifyingGlassIcon,
-} from "@webstudio-is/icons";
+import { XCircledFilledIcon, SearchIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { Flex } from "./flex";
 
-const SearchIcon = styled(MagnifyingGlassIcon, {
+const SearchIconStyled = styled(SearchIcon, {
   // need to center icon vertically
   display: "block",
   color: theme.colors.foregroundSubtle,
@@ -65,7 +62,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
       type="text"
       value={value}
       inputRef={inputRef}
-      prefix={<SearchIcon />}
+      prefix={<SearchIconStyled />}
       suffix={
         <Flex align="center" css={{ padding: theme.spacing[2] }}>
           <AbortButton
@@ -76,7 +73,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
             onClick={() => {
               handleCancel();
             }}
-            icon={<CrossCircledFilledIcon />}
+            icon={<XCircledFilledIcon />}
           />
         </Flex>
       }

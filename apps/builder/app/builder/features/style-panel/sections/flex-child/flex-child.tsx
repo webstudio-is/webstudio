@@ -14,12 +14,12 @@ import {
 } from "../../controls/toggle-group/toggle-group-control";
 import { TextControl } from "../../controls";
 import {
-  SmallXIcon,
-  ASStartIcon,
-  ASEndIcon,
-  ASCenterIcon,
-  ASBaselineIcon,
-  ASStretchIcon,
+  XSmallIcon,
+  AlignSelfStartIcon,
+  AlignSelfEndIcon,
+  AlignSelfCenterIcon,
+  AlignSelfBaselineIcon,
+  AlignSelfStretchIcon,
   ShrinkIcon,
   GrowIcon,
   OrderFirstIcon,
@@ -69,35 +69,35 @@ const FlexChildSectionAlign = () => {
         properties={["alignSelf"]}
         items={[
           {
-            child: <SmallXIcon />,
+            child: <XSmallIcon />,
             description:
               "The element's alignment is determined by its parent's align-items property.",
             value: "auto",
           },
           {
-            child: <ASStartIcon />,
+            child: <AlignSelfStartIcon />,
             description:
               "The element is aligned at the start of the cross axis.",
             value: "flex-start",
           },
           {
-            child: <ASEndIcon />,
+            child: <AlignSelfEndIcon />,
             description: "The element is aligned at the end of the cross axis.",
             value: "flex-end",
           },
           {
-            child: <ASCenterIcon />,
+            child: <AlignSelfCenterIcon />,
             description: "The element is centered along the cross axis.",
             value: "center",
           },
           {
-            child: <ASStretchIcon />,
+            child: <AlignSelfStretchIcon />,
             description:
               "The element is stretched to fill the entire cross axis.",
             value: "stretch",
           },
           {
-            child: <ASBaselineIcon />,
+            child: <AlignSelfBaselineIcon />,
             description:
               "The element is aligned to the baseline of the parent.",
             value: "baseline",
@@ -131,7 +131,7 @@ const FlexChildSectionSizing = () => {
   );
   const items = [
     {
-      child: <SmallXIcon />,
+      child: <XSmallIcon />,
       description: "Don't grow or shrink",
       value: "none",
       codeLines: ["flex-grow: 0;", "flex-shrink: 0;"],
@@ -300,7 +300,7 @@ const FlexChildSectionOrder = () => {
   const selectedValue = toValue(order.cascadedValue);
   const items = [
     {
-      child: <SmallXIcon />,
+      child: <XSmallIcon />,
       description: "Don't change",
       value: "0",
       code: "order: 0;",

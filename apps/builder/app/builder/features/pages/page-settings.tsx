@@ -60,11 +60,11 @@ import {
   FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import {
-  ChevronDoubleLeftIcon,
+  ChevronsLeftIcon,
   CopyIcon,
   TrashIcon,
   HomeIcon,
-  HelpIcon,
+  InfoCircleIcon,
   UploadIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
@@ -346,7 +346,10 @@ const PathField = ({
             content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
             variant="wrapped"
           >
-            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+            <InfoCircleIcon
+              color={rawTheme.colors.foregroundSubtle}
+              tabIndex={-1}
+            />
           </Tooltip>
         </Flex>
       ) : (
@@ -382,7 +385,10 @@ const PathField = ({
             }
             variant="wrapped"
           >
-            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+            <InfoCircleIcon
+              color={rawTheme.colors.foregroundSubtle}
+              tabIndex={-1}
+            />
           </Tooltip>
         </Flex>
       )}
@@ -432,7 +438,10 @@ const StatusField = ({
           }
           variant="wrapped"
         >
-          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={-1}
+          />
         </Tooltip>
       </Flex>
       <BindingControl>
@@ -493,7 +502,10 @@ const RedirectField = ({
           content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
           variant="wrapped"
         >
-          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={-1}
+          />
         </Tooltip>
       </Flex>
 
@@ -1335,7 +1347,7 @@ const NewPageSettingsView = ({
               <Button
                 onClick={onClose}
                 aria-label="Cancel"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 color="ghost"
                 // Tab should go:
                 //   trought form fields -> create button -> cancel button
@@ -1697,7 +1709,7 @@ const PageSettingsView = ({
             <Tooltip content="Close page settings" side="bottom">
               <Button
                 color="ghost"
-                prefix={<ChevronDoubleLeftIcon />}
+                prefix={<ChevronsLeftIcon />}
                 onClick={onClose}
                 aria-label="Close page settings"
                 tabIndex={2}

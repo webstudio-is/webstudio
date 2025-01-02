@@ -25,7 +25,7 @@ import {
   historyKeymap,
   indentWithTab,
 } from "@codemirror/commands";
-import { syntaxHighlighting } from "@codemirror/language";
+import { foldGutter, syntaxHighlighting } from "@codemirror/language";
 import {
   theme,
   textVariants,
@@ -40,6 +40,7 @@ import {
   FloatingPanel,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
+import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons/svg";
 import { solarizedLight } from "./code-highlight";
 
 // This undocumented flag is required to keep contenteditable fields editable after the first activation of EditorView.
@@ -121,6 +122,10 @@ const editorContentStyle = css({
     textDecoration: "underline wavy red",
     backgroundColor: "rgba(255, 0, 0, 0.1)",
   },
+  ".cm-gutters": {
+    backgroundColor: "transparent",
+    border: 0,
+  },
 });
 
 const shortcutStyle = css({
@@ -187,6 +192,17 @@ const keyBindings = [
   ...historyKeymap,
   indentWithTab,
 ];
+
+export const foldGutterExtension = foldGutter({
+  markerDOM: (isOpen) => {
+    const div = document.createElement("div");
+    div.style.width = "16px";
+    div.style.height = "16px";
+    div.style.cursor = "pointer";
+    div.innerHTML = isOpen ? ChevronDownIcon : ChevronRightIcon;
+    return div;
+  },
+});
 
 export type EditorApi = {
   replaceSelection: (string: string) => void;

@@ -335,7 +335,7 @@ export const AiCommandBar = () => {
     <Box
       css={{
         position: "absolute",
-        bottom: theme.spacing[11],
+        bottom: "5%",
         left: 0,
         right: 0,
         height: 0,

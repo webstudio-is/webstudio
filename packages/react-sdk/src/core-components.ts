@@ -1,5 +1,5 @@
 import {
-  EditIcon,
+  ContentBlockIcon,
   ListViewIcon,
   PaintBrushIcon,
   SettingsIcon,
@@ -153,7 +153,7 @@ const blockMeta: WsComponentMeta = {
   category: "typography",
   type: "container",
   label: "Content Block",
-  icon: EditIcon,
+  icon: ContentBlockIcon,
   constraints: [
     {
       relation: "ancestor",

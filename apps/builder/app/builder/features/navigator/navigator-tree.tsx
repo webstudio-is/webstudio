@@ -29,8 +29,8 @@ import {
 } from "@webstudio-is/react-sdk";
 import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import {
-  EyeconClosedIcon,
-  EyeconOpenIcon,
+  EyeClosedIcon,
+  EyeOpenIcon,
   InfoCircleIcon,
 } from "@webstudio-is/icons";
 import {
@@ -318,7 +318,7 @@ const ShowToggle = ({
         tabIndex={-1}
         aria-label="Show"
         onClick={toggleShow}
-        icon={value ? <EyeconOpenIcon /> : <EyeconClosedIcon />}
+        icon={value ? <EyeOpenIcon /> : <EyeClosedIcon />}
       />
     </Tooltip>
   );

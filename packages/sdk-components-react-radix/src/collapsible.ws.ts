@@ -14,15 +14,12 @@ import {
   propsCollapsibleContent,
   propsCollapsibleTrigger,
 } from "./__generated__/collapsible.props";
-import { getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
 } satisfies PresetStyle<"div">;
 
 export const metaCollapsible: WsComponentMeta = {
-  category: "radix",
-  order: 5,
   type: "container",
   constraints: [
     {
@@ -36,56 +33,9 @@ export const metaCollapsible: WsComponentMeta = {
   ],
   presetStyle,
   icon: CollapsibleIcon,
-  description:
-    "An interactive component which expands and collapses some content, triggered by a button.",
-  template: [
-    {
-      type: "instance",
-      component: "Collapsible",
-      props: [],
-      children: [
-        {
-          type: "instance",
-          component: "CollapsibleTrigger",
-          children: [
-            {
-              type: "instance",
-              component: "Button",
-              styles: getButtonStyles("outline"),
-              children: [
-                {
-                  type: "text",
-                  value: "Click to toggle content",
-                  placeholder: true,
-                },
-              ],
-            },
-          ],
-        },
-        {
-          type: "instance",
-          component: "CollapsibleContent",
-          children: [
-            {
-              type: "instance",
-              component: "Text",
-              children: [
-                {
-                  type: "text",
-                  value: "Collapsible Content",
-                  placeholder: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
 };
 
 export const metaCollapsibleTrigger: WsComponentMeta = {
-  category: "hidden",
   type: "container",
   icon: TriggerIcon,
   stylable: false,
@@ -96,7 +46,6 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
 };
 
 export const metaCollapsibleContent: WsComponentMeta = {
-  category: "hidden",
   type: "container",
   presetStyle,
   icon: ContentIcon,

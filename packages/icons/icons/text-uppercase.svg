@@ -1,0 +1,26 @@
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M1.49915 10.8112L4.31035 5.18879L7.12156 10.8112"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M2.2019 9.40561H6.41871"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M9.93274 8H13.0953C13.4681 8 13.8257 8.14809 14.0893 8.41169C14.3529 8.67529 14.501 9.03281 14.501 9.4056C14.501 9.77839 14.3529 10.1359 14.0893 10.3995C13.8257 10.6631 13.4681 10.8112 13.0953 10.8112H9.93274V5.18879H12.7439C13.1167 5.18879 13.4743 5.33688 13.7379 5.60048C14.0015 5.86409 14.1495 6.22161 14.1495 6.5944C14.1495 6.96719 14.0015 7.32471 13.7379 7.58831C13.4743 7.85191 13.1167 8 12.7439 8"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

@@ -17,11 +17,10 @@
   },
   "devDependencies": {
     "@types/css-tree": "^2.3.1",
-    "@types/node": "^22.9.3",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "mdn-data": "2.8.0",
-    "type-fest": "^4.28.0",
+    "type-fest": "^4.31.0",
     "vitest": "^2.1.8",
     "zod": "^3.22.4"
   },

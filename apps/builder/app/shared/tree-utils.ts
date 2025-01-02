@@ -350,29 +350,3 @@ export const findLocalStyleSourcesWithinInstances = (
 
   return subtreeLocalStyleSourceIds;
 };
-
-export const insertPropsCopyMutable = (
-  props: Props,
-  copiedProps: Prop[],
-  copiedInstanceIds: Map<Instance["id"], Instance["id"]>
-) => {
-  for (const prop of copiedProps) {
-    const newInstanceId = copiedInstanceIds.get(prop.instanceId);
-    // insert without changes when instance does not have new id
-    if (newInstanceId === undefined) {
-      // prevent overriding shared props if already exist
-      if (props.has(prop.id) === false) {
-        props.set(prop.id, prop);
-      }
-      continue;
-    }
-
-    // copy prop before inserting
-    const newPropId = nanoid();
-    props.set(newPropId, {
-      ...prop,
-      id: newPropId,
-      instanceId: newInstanceId,
-    });
-  }
-};

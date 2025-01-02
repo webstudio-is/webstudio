@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTitle,
 } from "@webstudio-is/design-system";
-import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
+import { GearIcon } from "@webstudio-is/icons";
 import type { Asset } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
 import { ImageInfo } from "./image-info";
@@ -35,15 +35,17 @@ export const ImageInfoTrigger = ({
           css={{
             visibility: `var(${triggerVisibilityVar}, hidden)`,
             position: "absolute",
-            color: theme.colors.foregroundSubtle,
+            color: theme.colors.backgroundIconSubtle,
             top: theme.spacing[3],
             right: theme.spacing[3],
             cursor: "pointer",
             transition: "opacity 100ms ease",
-            "&:hover": {
-              color: theme.colors.foregroundMain,
+            "& svg": {
+              fill: `oklch(from ${theme.colors.white} l c h / 0.9)`,
             },
-            ...gearIconCssVars({ fill: "transparent" }),
+            "&:hover": {
+              color: theme.colors.foregroundIconMain,
+            },
           }}
           icon={<GearIcon />}
         />

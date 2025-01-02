@@ -6,18 +6,21 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    fill-rule="evenodd"
-    clip-rule="evenodd"
-    d="M4.00018 11.35C4.00018 10.991 4.29119 10.7 4.65018 10.7L14.0171 10.7C14.3761 10.7 14.6671 10.991 14.6671 11.35C14.6671 11.709 14.3761 12 14.0171 12L4.65018 12C4.29119 12 4.00018 11.709 4.00018 11.35Z"
+    d="M4.5 8H15"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
   />
   <path
-    fill-rule="evenodd"
-    clip-rule="evenodd"
-    d="M4.00018 7.89551C4.00018 7.53652 4.29119 7.24551 4.65018 7.24551L14.0171 7.24551C14.3761 7.24551 14.6671 7.53652 14.6671 7.89551C14.6671 8.25449 14.3761 8.54551 14.0171 8.54551L4.65018 8.54551C4.29119 8.54551 4.00018 8.25449 4.00018 7.89551Z"
+    d="M1 4.5H11.5"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
   />
   <path
-    fill-rule="evenodd"
-    clip-rule="evenodd"
-    d="M1.33359 4.44103C1.33359 4.08205 1.6246 3.79103 1.98359 3.79103L11.3505 3.79103C11.7095 3.79103 12.0005 4.08205 12.0005 4.44103C12.0005 4.80002 11.7095 5.09103 11.3505 5.09103L1.98359 5.09103C1.6246 5.09103 1.33359 4.80002 1.33359 4.44103Z"
+    d="M4.5 11.5H15"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
   />
 </svg>

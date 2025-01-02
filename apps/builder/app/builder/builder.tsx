@@ -68,6 +68,7 @@ import {
 import { useInertHandlers } from "./shared/inert-handlers";
 import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
 import { SyncClient } from "~/shared/sync-client";
+import { RemoteDialog } from "./features/help/remote-dialog";
 
 registerContainers();
 
@@ -373,8 +374,6 @@ export const Builder = ({
                 />
               )}
             </Workspace>
-
-            {isDesignMode && <AiCommandBar />}
           </Main>
 
           <SidePanel gridArea="sidebar">
@@ -433,9 +432,11 @@ export const Builder = ({
             }}
           />
         </ChromeWrapper>
+        {isDesignMode && <AiCommandBar />}
         <Loading state={loadingState} />
         <BlockingAlerts />
         <CommandPanel />
+        <RemoteDialog />
       </div>
     </TooltipProvider>
   );

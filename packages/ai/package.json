@@ -12,8 +12,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:^",
-    "fast-glob": "^3.3.2",
-    "type-fest": "^4.28.0"
+    "fast-glob": "^3.3.2"
   },
   "exports": {
     ".": {
@@ -32,7 +31,7 @@
     "@webstudio-is/sdk": "workspace:*",
     "ai": "^2.2.12",
     "escape-string-regexp": "^5.0.0",
-    "mdast-util-from-markdown": "^2.0.1",
+    "mdast-util-from-markdown": "^2.0.2",
     "openai": "^4.8.0",
     "unist-util-visit-parents": "^6.0.1",
     "zod": "^3.22.4",

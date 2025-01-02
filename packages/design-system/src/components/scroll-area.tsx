@@ -11,40 +11,10 @@ const ScrollAreaRoot = styled(Root, {
 });
 
 const ScrollAreaThumb = styled(Thumb, {
+  position: "relative",
   boxSizing: "border-box",
   background: theme.colors.foregroundScrollBar,
   borderRadius: theme.spacing[4],
-  // increase target size for touch devices https://www.w3.org/WAI/WCAG21/Understanding/target-size.html
-
-  position: "relative",
-
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "100%",
-    height: "100%",
-  },
-
-  variants: {
-    orientation: {
-      vertical: {
-        "&::before": {
-          minWidth: 16,
-          minHeight: 44,
-        },
-      },
-      horizontal: {
-        minHeight: "100%",
-        "&::before": {
-          minWidth: 44,
-          minHeight: 16,
-        },
-      },
-    },
-  },
 });
 
 const ScrollAreaScrollbar = styled(Scrollbar, {
@@ -124,12 +94,12 @@ export const ScrollArea = forwardRef(
         </Viewport>
         {(direction === "vertical" || direction === "both") && (
           <ScrollAreaScrollbar orientation="vertical" direction={direction}>
-            <ScrollAreaThumb orientation="vertical" />
+            <ScrollAreaThumb />
           </ScrollAreaScrollbar>
         )}
         {(direction === "horizontal" || direction === "both") && (
           <ScrollAreaScrollbar orientation="horizontal" direction={direction}>
-            <ScrollAreaThumb orientation="horizontal" />
+            <ScrollAreaThumb />
           </ScrollAreaScrollbar>
         )}
       </ScrollAreaRoot>

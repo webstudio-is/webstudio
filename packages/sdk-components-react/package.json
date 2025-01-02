@@ -32,6 +32,11 @@
       "webstudio": "./src/hooks.ts",
       "types": "./lib/types/hooks.d.ts",
       "import": "./lib/hooks.js"
+    },
+    "./templates": {
+      "webstudio": "./src/templates.ts",
+      "types": "./lib/types/templates.d.ts",
+      "import": "./lib/templates.js"
     }
   },
   "scripts": {
@@ -51,15 +56,17 @@
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "await-interaction-response": "^0.0.2",
     "colord": "^2.9.3",
-    "micromark": "^4.0.0",
-    "await-interaction-response": "^0.0.2"
+    "micromark": "^4.0.1",
+    "micromark-extension-gfm-table": "^2.1.0"
   },
   "devDependencies": {
     "@testing-library/react": "^14.2.2",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/generate-arg-types": "workspace:*",
+    "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",

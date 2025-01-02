@@ -17,7 +17,7 @@ import {
   encodeDataSourceVariable,
 } from "@webstudio-is/sdk";
 import type { Prop, Asset } from "@webstudio-is/sdk";
-import { HelpIcon, SubtractIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, MinusIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,
   Label as BaseLabel,
@@ -71,7 +71,7 @@ export type ControlProps<Control> = {
 };
 
 export const RemovePropButton = (props: { onClick: () => void }) => (
-  <SmallIconButton icon={<SubtractIcon />} variant="destructive" {...props} />
+  <SmallIconButton icon={<MinusIcon />} variant="destructive" {...props} />
 );
 
 const SimpleLabel = ({
@@ -145,7 +145,10 @@ export const Label = ({
           }
           variant="wrapped"
         >
-          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={0}
+          />
         </Tooltip>
       )}
     </Flex>

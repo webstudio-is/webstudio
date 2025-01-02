@@ -12,7 +12,6 @@ import {
   Switch,
   theme,
   Tooltip,
-  useId,
   Collapsible,
   keyframes,
   Text,
@@ -27,9 +26,15 @@ import {
   CopyIcon,
   EllipsesIcon,
   PlusIcon,
-  HelpIcon,
+  InfoCircleIcon,
 } from "@webstudio-is/icons";
-import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
+import {
+  Fragment,
+  useId,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { useIds } from "../form-utils";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -79,7 +84,7 @@ const Permission = ({
         {title}
       </Label>
       <Tooltip content={tooltipContent} variant="wrapped">
-        <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+        <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
     </Flex>
   );

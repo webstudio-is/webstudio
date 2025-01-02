@@ -6,19 +6,17 @@ import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import {
   SuperscriptIcon,
   SubscriptIcon,
-  CrossSmallIcon,
+  XSmallIcon,
   BoldIcon,
   TextItalicIcon,
   LinkIcon,
   PaintBrushIcon,
 } from "@webstudio-is/icons";
-import {
-  $selectedInstanceIntanceToTag,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { type TextToolbarState, $textToolbar } from "~/shared/nano-states";
 import { $scale } from "~/builder/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
+import { $instanceTags } from "../../style-panel/shared/model";
 
 const getRectForRelativeRect = (
   parent: DOMRect,
@@ -39,16 +37,13 @@ const getRectForRelativeRect = (
 };
 
 const $isWithinLink = computed(
-  [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
-  (selectedInstanceSelector, selectedInstanceIntanceToTag) => {
-    if (
-      selectedInstanceSelector === undefined ||
-      selectedInstanceIntanceToTag === undefined
-    ) {
+  [$selectedInstanceSelector, $instanceTags],
+  (selectedInstanceSelector, instanceTags) => {
+    if (selectedInstanceSelector === undefined) {
       return false;
     }
     for (const instanceId of selectedInstanceSelector) {
-      const tag = selectedInstanceIntanceToTag.get(instanceId);
+      const tag = instanceTags.get(instanceId);
       if (tag === "a") {
         return true;
       }
@@ -132,7 +127,7 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
           disabled={isCleared}
           onClick={() => emitCommand("formatClear")}
         >
-          <CrossSmallIcon />
+          <XSmallIcon />
         </IconButton>
       </Tooltip>
 

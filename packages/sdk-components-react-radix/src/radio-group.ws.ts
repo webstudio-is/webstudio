@@ -1,7 +1,7 @@
 import {
   ItemIcon,
-  RadioCheckedIcon,
-  RadioDotIcon,
+  RadioGroupIcon,
+  DotIcon,
   TriggerIcon,
 } from "@webstudio-is/icons/svg";
 import {
@@ -65,7 +65,7 @@ const createRadioGroupItem = ({
                 {
                   type: "string",
                   name: "code",
-                  value: RadioDotIcon,
+                  value: DotIcon,
                 },
               ],
               children: [],
@@ -92,7 +92,7 @@ export const metaRadioGroup: WsComponentMeta = {
   },
   description:
     "A set of checkable buttons—known as radio buttons—where no more than one of the buttons can be checked at a time.",
-  icon: RadioCheckedIcon,
+  icon: RadioGroupIcon,
   states: [
     ...defaultStates,
     {

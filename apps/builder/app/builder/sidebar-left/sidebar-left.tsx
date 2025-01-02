@@ -19,7 +19,7 @@ import {
   PlusIcon,
   type IconComponent,
 } from "@webstudio-is/icons";
-import { HelpPopover } from "./help-popover";
+import { HelpCenter } from "../features/help/help-center";
 import { useStore } from "@nanostores/react";
 import {
   $activeSidebarPanel,
@@ -70,16 +70,16 @@ const AiTabTrigger = () => {
 const HelpTabTrigger = () => {
   const [helpIsOpen, setHelpIsOpen] = useState(false);
   return (
-    <HelpPopover onOpenChange={setHelpIsOpen}>
-      <HelpPopover.Trigger asChild>
+    <HelpCenter onOpenChange={setHelpIsOpen}>
+      <HelpCenter.Trigger asChild>
         <SidebarButton
           label="Learn Webstudio or ask for help"
           data-state={helpIsOpen ? "active" : undefined}
         >
           <HelpIcon size={rawTheme.spacing[10]} />
         </SidebarButton>
-      </HelpPopover.Trigger>
-    </HelpPopover>
+      </HelpCenter.Trigger>
+    </HelpCenter>
   );
 };
 

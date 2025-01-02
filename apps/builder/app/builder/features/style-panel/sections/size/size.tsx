@@ -10,8 +10,8 @@ import {
 } from "@webstudio-is/design-system";
 import { PositionControl, SelectControl, TextControl } from "../../controls";
 import {
-  EyeconOpenIcon,
-  EyeconClosedIcon,
+  EyeOpenIcon,
+  EyeClosedIcon,
   ScrollIcon,
   AutoScrollIcon,
   EllipsesIcon,
@@ -115,13 +115,13 @@ export const Section = () => {
           properties={["overflowX", "overflowY"]}
           items={[
             {
-              child: <EyeconOpenIcon />,
+              child: <EyeOpenIcon />,
               description:
                 "Content is fully visible and extends beyond the container if it exceeds its size.",
               value: "visible",
             },
             {
-              child: <EyeconClosedIcon />,
+              child: <EyeClosedIcon />,
               description:
                 "Content that exceeds the container's size is clipped and hidden without scrollbars.",
               value: "hidden",

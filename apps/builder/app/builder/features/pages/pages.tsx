@@ -23,7 +23,7 @@ import {
   NewPageIcon,
   PageIcon,
   DynamicPageIcon,
-  CrossIcon,
+  XIcon,
 } from "@webstudio-is/icons";
 import { ExtendedPanel } from "../../shared/extended-sidebar-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
@@ -558,7 +558,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
             <Tooltip content="Close panel" side="bottom">
               <Button
                 color="ghost"
-                prefix={<CrossIcon />}
+                prefix={<XIcon />}
                 aria-label="Close panel"
                 onClick={onClose}
               />

@@ -56,7 +56,7 @@ export const CollapsibleDomainSection = ({
             </Box>
           }
         >
-          <Grid flow={"column"} align="center" justify={"start"}>
+          <Grid gap="1" flow="column" align="center" justify="start">
             {prefix}
             <Label truncate>{title}</Label>
           </Grid>
