@@ -23,7 +23,7 @@ export const meta: TemplateMeta = {
     "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
   order: 101,
   template: (
-    <$.Label
+    <radix.Label
       ws:label="Checkbox Field"
       ws:style={css`
         display: flex;
@@ -72,6 +72,6 @@ export const meta: TemplateMeta = {
       <$.Text ws:label="Checkbox Label" tag="span">
         {new PlaceholderValue("Checkbox")}
       </$.Text>
-    </$.Label>
+    </radix.Label>
   ),
 };
