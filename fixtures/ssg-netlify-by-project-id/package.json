@@ -10,7 +10,7 @@
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-8a7358b1-7de3-459d-b7b1-56dddfb6ce1e-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=f55154e6-36b9-4920-bc81-3095cc88f8ff'",
     "fixtures:sync": "pnpm cli sync && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "rm -rf pages && pnpm cli build --template ssg-netlify --template internal --preview && prettier --write ."
+    "fixtures:build": "rm -rf pages && pnpm cli build --template ssg-netlify --template internal && prettier --write ."
   },
   "engines": {
     "node": ">=20.0.0"

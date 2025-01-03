@@ -2331,5 +2331,6 @@
     "email": "hello@webstudio.is"
   },
   "projectDomain": "webstudio-custom-template-cochj",
-  "projectTitle": "webstudio-custom-template"
+  "projectTitle": "webstudio-custom-template",
+  "origin": "https://main.development.webstudio.is"
 }

@@ -55,6 +55,7 @@ export const sync = async (
       seviceToken: options.authToken,
       origin: options.origin,
     });
+    project.origin = options.origin;
   } else {
     const globalConfigText = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
     const globalConfig = jsonToGlobalConfig(JSON.parse(globalConfigText));
@@ -100,6 +101,7 @@ export const sync = async (
               authToken: token,
               origin,
             });
+      project.origin = origin;
     } catch (error) {
       // catch errors about unpublished project
       syncing.stop((error as Error).message, 2);
