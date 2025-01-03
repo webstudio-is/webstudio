@@ -112,6 +112,8 @@ export const CheckMarkIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none
 
 export const CheckboxCheckedIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m6 8.238 1.383 1.383L10.003 7"/></svg>`;
 
+export const ChevronBigUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="#11181C" d="m7.54 5.053-4.553 5.463a.6.6 0 0 0 .46.984h9.105a.6.6 0 0 0 .461-.984L8.461 5.053a.6.6 0 0 0-.922 0Z"/></svg>`;
+
 export const ChevronDownIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>`;
 
 export const ChevronLeftIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="m9.256 4.499-3.512 3.5 3.512 3.502"/></svg>`;
