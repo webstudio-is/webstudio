@@ -529,6 +529,7 @@ export const props: Record<string, PropMeta> = {
   },
   nonce: { required: false, control: "text", type: "string" },
   optimize: {
+    description: "Optimize the image for enhanced performance.",
     required: false,
     control: "boolean",
     type: "boolean",

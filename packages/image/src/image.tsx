@@ -9,6 +9,7 @@ const defaultTag = "img";
 
 type ImageProps = ComponentProps<typeof defaultTag> & {
   quality?: number;
+  /** Optimize the image for enhanced performance. */
   optimize?: boolean;
   loader: ImageLoader;
 };

@@ -41,7 +41,7 @@
   },
   "scripts": {
     "build": "vite build --config ../../vite.sdk-components.config.ts",
-    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts' && prettier --write \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts !./src/*.ws.ts !./src/*.template.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc"
