@@ -35,6 +35,7 @@ export default defineConfig({
     conditions: ["webstudio"],
   },
   build: {
+    minify: false,
     lib: {
       entry: ["src/cli.ts"],
       formats: ["es"],
