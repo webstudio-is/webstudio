@@ -62,24 +62,7 @@ export const useUnitSelect = ({
     return [isOpen, undefined];
   }
 
-  const select = (
-    <UnitSelect
-      value={unitOrKeywordValue}
-      label={unit ?? nestedSelectButtonUnitless}
-      options={options}
-      open={isOpen}
-      onCloseAutoFocus={onCloseAutoFocus}
-      onOpenChange={setIsOpen}
-      onChange={(option) => {
-        if (option.type === "keyword") {
-          onChange({ type: "keyword", value: option.id });
-          return;
-        }
-
-        onChange({ type: "unit", value: option.id });
-      }}
-    />
-  );
+  const select = <div />;
 
   return [isOpen, select];
 };
