@@ -146,12 +146,12 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
   return (
     <Tooltip content={text}>
       <Flex
-        align={"center"}
-        justify={"center"}
+        align="center"
+        justify="center"
         css={{
           cursor: "pointer",
-          width: theme.spacing[12],
-          height: theme.spacing[12],
+          width: theme.sizes.controlHeight,
+          height: theme.sizes.controlHeight,
           color: props.isLoading
             ? theme.colors.foregroundDisabled
             : isVerifiedActive
