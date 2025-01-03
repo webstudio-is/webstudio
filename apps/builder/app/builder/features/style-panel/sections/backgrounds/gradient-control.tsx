@@ -279,11 +279,22 @@ const SliderThumb = styled(Thumb, {
   position: "absolute",
   top: `-${theme.spacing[11]}`,
   translate: "-9px",
+  outline: `3px solid ${theme.colors.borderFocus}`,
+  borderRadius: theme.borderRadius[3],
+  "&::before": {
+    content: "''",
+    position: "absolute",
+    borderLeft: "5px solid transparent",
+    borderRight: "5px solid transparent",
+    borderTop: `5px solid ${theme.colors.borderFocus}`,
+    bottom: -7,
+    marginLeft: "50%",
+    transform: "translateX(-50%)",
+    borderRadius: 1,
+  },
 });
 
 const SliderThumbTrigger = styled(Box, {
-  width: theme.spacing[9],
-  height: theme.spacing[9],
-  border: `1px solid ${theme.colors.borderMain}`,
-  borderRadius: theme.borderRadius[3],
+  width: theme.spacing[7],
+  height: theme.spacing[7],
 });
