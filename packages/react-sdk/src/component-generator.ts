@@ -212,6 +212,7 @@ export const generateJsxElement = ({
       continue;
     }
     if (instance.component === collectionComponent) {
+      throw Error("fail");
       if (prop.name === "data") {
         collectionDataValue = propValue;
       }
