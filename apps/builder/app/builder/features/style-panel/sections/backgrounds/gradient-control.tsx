@@ -7,9 +7,9 @@ import {
   type ParsedGradient,
 } from "@webstudio-is/css-data";
 import { styled, theme, Flex, Box } from "@webstudio-is/design-system";
-import { ChevronBigUpIcon } from "@webstudio-is/icons";
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
+import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 
 extend([mixPlugin]);
 
@@ -240,7 +240,7 @@ export const GradientControl = (props: GradientControlProps) => {
                 top: theme.spacing[9],
               }}
             >
-              <ChevronBigUpIcon color={theme.colors.borderMain} />
+              <ChevronFilledUpIcon />
             </Flex>
           );
         })}
