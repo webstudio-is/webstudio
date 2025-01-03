@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import pkg from "./package.json";
 
-// @todo
 const isExternal = (id: string, importer: string | undefined) => {
   if (id.startsWith("@webstudio-is/")) {
     return false;
