@@ -427,7 +427,6 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    defaultValue: false,
   },
   className: { required: false, control: "text", type: "string" },
   color: {

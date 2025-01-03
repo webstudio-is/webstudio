@@ -400,5 +400,8 @@ export const humanizeAttribute = (string: string) => {
   if (string === "className") {
     return "Class";
   }
+  if (string === "htmlFor") {
+    return "For";
+  }
   return humanizeString(string);
 };

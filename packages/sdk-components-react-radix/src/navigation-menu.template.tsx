@@ -76,7 +76,7 @@ const components = [
 ];
 
 const createMenuContentItem = (props: (typeof components)[number]) => (
-  <radix.NavigationMenuLink>
+  <radix.NavigationMenuLink key={props.title}>
     <$.Link
       href={`https://ui.shadcn.com${props.href}`}
       // block select-none space-y-1 rounded-md p-3 leading-none

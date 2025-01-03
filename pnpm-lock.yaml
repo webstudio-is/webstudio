@@ -1008,27 +1008,15 @@ importers:
       '@clack/prompts':
         specifier: ^0.7.0
         version: 0.7.0
-      '@webstudio-is/http-client':
-        specifier: workspace:*
-        version: link:../http-client
-      '@webstudio-is/image':
-        specifier: workspace:*
-        version: link:../image
-      '@webstudio-is/react-sdk':
-        specifier: workspace:*
-        version: link:../react-sdk
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../sdk
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../sdk-components-react
-      '@webstudio-is/sdk-components-react-radix':
-        specifier: workspace:*
-        version: link:../sdk-components-react-radix
-      '@webstudio-is/sdk-components-react-remix':
-        specifier: workspace:*
-        version: link:../sdk-components-react-remix
+      '@emotion/hash':
+        specifier: ^0.9.2
+        version: 0.9.2
+      acorn:
+        specifier: ^8.14.0
+        version: 8.14.0
+      acorn-walk:
+        specifier: ^8.3.4
+        version: 8.3.4
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -1038,6 +1026,9 @@ importers:
       env-paths:
         specifier: ^3.0.0
         version: 3.0.0
+      nanoid:
+        specifier: ^5.0.8
+        version: 5.0.8
       p-limit:
         specifier: ^4.0.0
         version: 4.0.0
@@ -1047,12 +1038,18 @@ importers:
       picocolors:
         specifier: ^1.1.0
         version: 1.1.0
-      strip-indent:
-        specifier: ^4.0.0
-        version: 4.0.0
+      react:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318
+      reserved-identifiers:
+        specifier: ^1.0.0
+        version: 1.0.0
       tinyexec:
         specifier: ^0.3.1
         version: 0.3.1
+      warn-once:
+        specifier: ^0.1.1
+        version: 0.1.1
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -1096,15 +1093,33 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.3.4(vite@5.4.11(@types/node@22.10.2))
+      '@webstudio-is/http-client':
+        specifier: workspace:*
+        version: link:../http-client
+      '@webstudio-is/image':
+        specifier: workspace:*
+        version: link:../image
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: workspace:*
+        version: link:../sdk-components-react-radix
+      '@webstudio-is/sdk-components-react-remix':
+        specifier: workspace:*
+        version: link:../sdk-components-react-remix
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       prettier:
         specifier: 3.4.2
         version: 3.4.2
-      react:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
@@ -1757,9 +1772,6 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
       html-tags:
-        specifier: ^4.0.0
-        version: 4.0.0
-      strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
       vitest:

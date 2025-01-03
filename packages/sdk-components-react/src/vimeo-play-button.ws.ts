@@ -7,7 +7,7 @@ import {
 import { props } from "./__generated__/vimeo-play-button.props";
 import { ButtonElementIcon } from "@webstudio-is/icons/svg";
 import { button } from "@webstudio-is/sdk/normalize.css";
-import { defaultTag } from "./vimeo-play-button";
+import type { defaultTag } from "./vimeo-play-button";
 
 const presetStyle = {
   button,

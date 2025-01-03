@@ -23,6 +23,12 @@ export const propsSelect: Record<string, PropMeta> = {
     type: "boolean",
     description: "Indicates whether the user can interact with the element.",
   },
+  form: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Indicates the form that is the owner of the element.",
+  },
   name: {
     required: false,
     control: "text",
