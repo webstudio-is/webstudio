@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { ChevronDownIcon } from "@webstudio-is/icons/svg";
 import {
   $,
   css,
@@ -19,8 +21,6 @@ import {
   weights,
   width,
 } from "./shared/theme";
-import { ChevronDownIcon } from "@webstudio-is/icons/svg";
-import type { ReactNode } from "react";
 
 const components = [
   {
