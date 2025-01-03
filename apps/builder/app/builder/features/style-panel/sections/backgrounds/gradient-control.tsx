@@ -277,7 +277,6 @@ const SliderRange = styled(Range, {
 const SliderThumb = styled(Thumb, {
   display: "block",
   transform: `translateY(calc(-1 * ${theme.spacing[9]} - 10px))`,
-  cursor: "move",
   outline: `3px solid ${theme.colors.borderFocus}`,
   borderRadius: theme.borderRadius[5],
   outlineOffset: -3,
