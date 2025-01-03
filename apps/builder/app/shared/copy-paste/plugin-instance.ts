@@ -8,19 +8,23 @@ import {
   WebstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/sdk";
-import { $selectedInstanceSelector, $instances } from "../nano-states";
+import {
+  $selectedInstanceSelector,
+  $instances,
+  $registeredComponentMetas,
+} from "../nano-states";
 import type { InstanceSelector, DroppableTarget } from "../tree-utils";
 import {
   deleteInstanceMutable,
   findAvailableDataSources,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  isInstanceDetachable,
   updateWebstudioData,
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
 } from "../instance-utils";
+import { isInstanceDetachable } from "../matcher";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -30,9 +34,10 @@ const InstanceData = WebstudioFragment.extend({
 
 type InstanceData = z.infer<typeof InstanceData>;
 
-const getTreeData = (targetInstanceSelector: InstanceSelector) => {
+const getTreeData = (instanceSelector: InstanceSelector) => {
   const instances = $instances.get();
-  if (isInstanceDetachable(instances, targetInstanceSelector) === false) {
+  const metas = $registeredComponentMetas.get();
+  if (isInstanceDetachable({ metas, instances, instanceSelector }) === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
@@ -40,14 +45,14 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   }
 
   // @todo tell user they can't copy or cut root
-  if (targetInstanceSelector.length === 1) {
+  if (instanceSelector.length === 1) {
     return;
   }
 
-  const [targetInstanceId] = targetInstanceSelector;
+  const [targetInstanceId] = instanceSelector;
 
   return {
-    instanceSelector: targetInstanceSelector,
+    instanceSelector,
     ...extractWebstudioFragment(getWebstudioData(), targetInstanceId),
   };
 };
