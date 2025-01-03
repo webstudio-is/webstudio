@@ -8,6 +8,8 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
+  useCallback,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
@@ -120,8 +122,16 @@ type Point = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rect = Point & Size;
 
+const centeredContent = {
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "100vw",
+  height: "100vh",
+} as const;
+
 type UseDraggableProps = {
-  isMaximized?: boolean;
+  isMaximized: boolean;
   minWidth?: number;
   minHeight?: number;
 } & Partial<Rect>;
@@ -133,8 +143,8 @@ const useDraggable = ({
   height,
   minHeight,
   minWidth,
+  isMaximized,
 }: UseDraggableProps) => {
-  const { isMaximized } = useContext(DialogContext);
   const initialDataRef = useRef<
     | undefined
     | {
@@ -143,6 +153,40 @@ const useDraggable = ({
       }
   >(undefined);
   const ref = useRef<HTMLDivElement | null>(null);
+
+  const calcStyle = useCallback(() => {
+    const style: CSSProperties = isMaximized
+      ? centeredContent
+      : {
+          ...centeredContent,
+          width,
+          height,
+        };
+
+    if (minWidth !== undefined) {
+      style.minWidth = minWidth;
+    }
+    if (minHeight !== undefined) {
+      style.minHeight = minHeight;
+    }
+
+    if (isMaximized === false) {
+      if (x !== undefined) {
+        style.left = x;
+        style.transform = "none";
+      }
+      if (y !== undefined) {
+        style.top = y;
+        style.transform = "none";
+      }
+    }
+    return style;
+  }, [x, y, width, height, isMaximized, minWidth, minHeight]);
+  const [style, setStyle] = useState(calcStyle());
+
+  useEffect(() => {
+    setStyle(calcStyle());
+  }, [calcStyle]);
 
   const handleDragStart: DragEventHandler = (event) => {
     const target = ref.current;
@@ -186,37 +230,23 @@ const useDraggable = ({
     target.style.top = `${top}px`;
   };
 
-  const style: CSSProperties = isMaximized
-    ? {
-        ...centeredContent,
-        width: "100vw",
-        height: "100vh",
-      }
-    : {
-        ...centeredContent,
-        width,
-        height,
-      };
+  const handleDragEnd: DragEventHandler = () => {
+    const target = ref.current;
+    if (target === null) {
+      return;
+    }
+    setStyle({
+      ...style,
+      transform: target.style.transform,
+      top: target.style.top,
+      left: target.style.left,
+    });
+  };
 
-  if (minWidth !== undefined) {
-    style.minWidth = minWidth;
-  }
-  if (minHeight !== undefined) {
-    style.minHeight = minHeight;
-  }
-  if (isMaximized === false) {
-    if (x !== undefined) {
-      style.left = x;
-      delete style.transform;
-    }
-    if (y !== undefined) {
-      style.top = y;
-      delete style.transform;
-    }
-  }
   return {
     onDragStart: handleDragStart,
     onDrag: handleDrag,
+    onDragEnd: handleDragEnd,
     style,
     ref,
   };
@@ -259,7 +289,7 @@ const useSetPointerEvents = () => {
   };
 };
 
-export const DialogContent = forwardRef(
+const ContentContainer = forwardRef(
   (
     {
       children,
@@ -273,12 +303,12 @@ export const DialogContent = forwardRef(
       minHeight,
       ...props
     }: ComponentProps<typeof Primitive.Content> &
-      UseDraggableProps & {
+      Partial<UseDraggableProps> & {
         css?: CSS;
       },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
-    const { resize } = useContext(DialogContext);
+    const { resize, isMaximized } = useContext(DialogContext);
     const { ref: draggableRef, ...draggableProps } = useDraggable({
       width,
       height,
@@ -286,23 +316,36 @@ export const DialogContent = forwardRef(
       y,
       minWidth,
       minHeight,
+      isMaximized,
     });
 
     const { ref: pointerEventsRef, ...pointerEventsProps } =
       useSetPointerEvents();
 
     return (
+      <Primitive.Content
+        className={contentStyle({ className, css, resize })}
+        {...draggableProps}
+        {...pointerEventsProps}
+        {...props}
+        ref={mergeRefs(forwardedRef, draggableRef, pointerEventsRef)}
+      >
+        {children}
+      </Primitive.Content>
+    );
+  }
+);
+ContentContainer.displayName = "ContentContainer";
+
+export const DialogContent = forwardRef(
+  (
+    props: ComponentProps<typeof ContentContainer>,
+    forwardedRef: Ref<HTMLDivElement>
+  ) => {
+    return (
       <Primitive.Portal>
         <Primitive.Overlay className={overlayStyle()} />
-        <Primitive.Content
-          className={contentStyle({ className, css, resize })}
-          {...draggableProps}
-          {...pointerEventsProps}
-          {...props}
-          ref={mergeRefs(forwardedRef, draggableRef, pointerEventsRef)}
-        >
-          {children}
-        </Primitive.Content>
+        <ContentContainer {...props} ref={forwardedRef} />
       </Primitive.Portal>
     );
   }
@@ -377,12 +420,6 @@ const overlayStyle = css({
   position: "fixed",
   inset: 0,
 });
-
-const centeredContent: CSSProperties = {
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-};
 
 const contentStyle = css(panelStyle, {
   position: "fixed",
