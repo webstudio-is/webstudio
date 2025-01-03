@@ -114,11 +114,13 @@ export const CheckboxCheckedIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill
 
 export const ChevronDownIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>`;
 
+export const ChevronFilledUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" d="M13 11 8 5l-5 6"/></svg>`;
+
 export const ChevronLeftIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="m9.256 4.499-3.512 3.5 3.512 3.502"/></svg>`;
 
 export const ChevronRightIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m6 12 4-4-4-4"/></svg>`;
 
-export const ChevronUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="m11.501 9.256-3.5-3.512-3.502 3.512"/></svg>`;
+export const ChevronUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12 10 8 6l-4 4"/></svg>`;
 
 export const ChevronsLeftIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="M7.069 12.656 2.413 8l4.656-4.656M13.587 12.656 8.931 8l4.656-4.656"/></svg>`;
 

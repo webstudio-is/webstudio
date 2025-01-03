@@ -1546,6 +1546,25 @@ export const ChevronDownIcon: IconComponent = forwardRef(
 );
 ChevronDownIcon.displayName = "ChevronDownIcon";
 
+export const ChevronFilledUpIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path fill="currentColor" d="M13 11 8 5l-5 6" />
+      </svg>
+    );
+  }
+);
+ChevronFilledUpIcon.displayName = "ChevronFilledUpIcon";
+
 export const ChevronLeftIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -1609,12 +1628,10 @@ export const ChevronUpIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="none"
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="1.3"
-          d="m11.501 9.256-3.5-3.512-3.502 3.512"
+          d="M12 10 8 6l-4 4"
         />
       </svg>
     );

@@ -12,13 +12,13 @@ import namesPlugin from "colord/plugins/names";
 
 extend([namesPlugin]);
 
-interface GradientStop {
+export interface GradientStop {
   color?: RgbValue;
   position?: UnitValue;
   hint?: UnitValue;
 }
 
-interface ParsedGradient {
+export interface ParsedGradient {
   angle?: UnitValue;
   sideOrCorner?: KeywordValue;
   stops: GradientStop[];
@@ -182,7 +182,7 @@ const getColor = (
 };
 
 export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
-  const direction = parsed.angle || parsed.sideOrCorner;
+  const direction = parsed?.angle || parsed?.sideOrCorner;
   const stops = parsed.stops
     .map((stop: GradientStop) => {
       let result = toValue(stop.color);
