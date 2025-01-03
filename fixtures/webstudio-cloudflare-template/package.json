@@ -4,7 +4,7 @@
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-d845c167-ea07-4875-b08d-83e97c09dcce-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
     "fixtures:sync": "pnpm cli sync --buildId a2e8de30-03d5-4514-a3a6-406b3266a3af && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "pnpm cli build --template cloudflare --template saas-helpers --template internal --preview && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
+    "fixtures:build": "pnpm cli build --template cloudflare --template saas-helpers --template internal && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
     "build": "remix vite:build",
     "dev": "remix vite:dev",
     "typecheck": "tsc",

@@ -5110,5 +5110,6 @@
     "email": "hello@webstudio.is"
   },
   "projectDomain": "webstudio-fixture-project-a-0su3o",
-  "projectTitle": "webstudio-fixture-project-a"
+  "projectTitle": "webstudio-fixture-project-a",
+  "origin": "https://main.development.webstudio.is"
 }
