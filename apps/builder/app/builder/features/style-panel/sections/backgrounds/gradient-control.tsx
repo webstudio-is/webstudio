@@ -253,7 +253,7 @@ const SliderRoot = styled(Slider, {
   position: "relative",
   width: "100%",
   height: theme.spacing[9],
-  border: `1px solid ${theme.colors.borderInfo}`,
+  border: `1px solid ${theme.colors.borderMain}`,
   borderRadius: theme.borderRadius[3],
   touchAction: "none",
   userSelect: "none",
@@ -284,6 +284,6 @@ const SliderThumb = styled(Thumb, {
 const SliderThumbTrigger = styled(Box, {
   width: theme.spacing[9],
   height: theme.spacing[9],
-  border: `1px solid ${theme.colors.borderInfo}`,
+  border: `1px solid ${theme.colors.borderMain}`,
   borderRadius: theme.borderRadius[3],
 });
