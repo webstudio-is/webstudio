@@ -11,7 +11,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
-import { buttonReset } from "./theme/styles";
+import { buttonReset } from "./shared/preset-styles";
 import {
   propsTabs,
   propsTabsList,

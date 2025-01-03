@@ -5,7 +5,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
-import { buttonReset } from "./theme/styles";
+import { buttonReset } from "./shared/preset-styles";
 import { propsSwitch, propsSwitchThumb } from "./__generated__/switch.props";
 
 export const metaSwitch: WsComponentMeta = {
