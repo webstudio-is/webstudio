@@ -180,8 +180,7 @@ export const GradientControl = (props: GradientControlProps) => {
     <Flex
       align="end"
       css={{
-        width: theme.spacing[28],
-        height: theme.spacing[14],
+        height: theme.spacing[18],
       }}
     >
       <SliderRoot
@@ -197,8 +196,8 @@ export const GradientControl = (props: GradientControlProps) => {
         onMouseMove={handleMouseEnter}
         onMouseLeave={() => setIsHoveredOnStop(false)}
       >
-        <Track asChild>
-          <SliderRange asChild />
+        <Track>
+          <SliderRange />
         </Track>
         {stops.map((stop, index) => {
           if (stop.color === undefined || stop.position === undefined) {
@@ -276,25 +275,26 @@ const SliderRange = styled(Range, {
 });
 
 const SliderThumb = styled(Thumb, {
-  position: "absolute",
-  top: `-${theme.spacing[11]}`,
-  translate: "-9px",
+  display: "block",
+  transform: `translateY(calc(-1 * ${theme.spacing[9]} - 10px))`,
+  cursor: "move",
   outline: `3px solid ${theme.colors.borderFocus}`,
-  borderRadius: theme.borderRadius[3],
+  borderRadius: theme.borderRadius[5],
+  outlineOffset: -3,
+
   "&::before": {
     content: "''",
     position: "absolute",
     borderLeft: "5px solid transparent",
     borderRight: "5px solid transparent",
     borderTop: `5px solid ${theme.colors.borderFocus}`,
-    bottom: -7,
+    bottom: -5,
     marginLeft: "50%",
     transform: "translateX(-50%)",
-    borderRadius: 1,
   },
 });
 
 const SliderThumbTrigger = styled(Box, {
-  width: theme.spacing[7],
-  height: theme.spacing[7],
+  width: theme.spacing[10],
+  height: theme.spacing[10],
 });
