@@ -440,6 +440,10 @@ const getBuilderDropTarget = (
 };
 
 const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
+  // forbid moving root instance
+  if (instanceSelector.length === 1) {
+    return false;
+  }
   if ($isContentMode.get()) {
     const parentId = instanceSelector[1];
     const parentInstance = $instances.get().get(parentId);
