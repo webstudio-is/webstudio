@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
@@ -251,14 +251,26 @@ export const PropertyLabel = ({
     batch.publish();
   };
   const styleConfig = styleConfigByName(properties[0]);
+  const preventCloseRef = useRef(false);
 
   return (
     <Flex align="center">
       <Tooltip
         open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
+        onOpenChange={(isOpen) => {
+          if (isOpen === false && preventCloseRef.current) {
+            return;
+          }
+          setIsOpen(isOpen);
+        }}
+        onPointerDown={() => {
+          // Prevent closing tooltip on content click.
+          // Can't use preventDefault() because it will prevent selecting code for copy/paste.
+          preventCloseRef.current = true;
+          requestAnimationFrame(() => {
+            preventCloseRef.current = false;
+          });
+        }}
         triggerProps={{
           onClick: (event) => {
             if (event.altKey) {
