@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "0ff71ecc-db91-41d0-ba52-26d2fc6c196d",
+    "id": "63389378-e2a2-4e25-8c98-3e408bcfc4c4",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 396,
-    "createdAt": "2024-12-05T12:47:15.161+00:00",
-    "updatedAt": "2024-12-05T12:47:15.161+00:00",
+    "version": 401,
+    "createdAt": "2025-01-04T10:58:00.47+00:00",
+    "updatedAt": "2025-01-04T10:58:00.47+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -2867,6 +2867,16 @@
           "type": "string",
           "value": "1733402818245"
         }
+      ],
+      [
+        "wb8XS5grnnYTgGAotvCfZ",
+        {
+          "id": "wb8XS5grnnYTgGAotvCfZ",
+          "instanceId": "WCz4oAOyt2V-prz3LIAes",
+          "name": "tag",
+          "type": "string",
+          "value": "link"
+        }
       ]
     ],
     "dataSources": [
@@ -4354,6 +4364,10 @@
             {
               "type": "id",
               "value": "wLYkMGH-OJP4SnFB4F-bs"
+            },
+            {
+              "type": "id",
+              "value": "WCz4oAOyt2V-prz3LIAes"
             }
           ]
         }
@@ -4841,6 +4855,20 @@
           "id": "NBRETFGlP8H6t_1ZLbJ5J",
           "component": "XmlTime",
           "children": []
+        }
+      ],
+      [
+        "WCz4oAOyt2V-prz3LIAes",
+        {
+          "type": "instance",
+          "id": "WCz4oAOyt2V-prz3LIAes",
+          "component": "XmlNode",
+          "children": [
+            {
+              "type": "text",
+              "value": "https://webstudio.is"
+            }
+          ]
         }
       ]
     ],
