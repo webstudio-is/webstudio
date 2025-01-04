@@ -5,6 +5,7 @@ import {
   showAttribute,
   textContentAttribute,
   collectionComponent,
+  descendantComponent,
 } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
@@ -195,19 +196,32 @@ export const usePropsLogic = ({
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
-  const systemProps: PropAndMeta[] = systemPropsMeta.map(({ name, meta }) => {
-    let saved = getAndDelete<Prop>(unprocessedSaved, name);
-    if (saved === undefined && meta.defaultValue !== undefined) {
-      saved = getStartingProp(instance.id, meta, name);
-    }
-    getAndDelete(unprocessedKnown, name);
-    initialPropsNames.delete(name);
-    return {
-      prop: saved,
-      propName: name,
-      meta,
-    };
-  });
+  const systemProps: PropAndMeta[] = systemPropsMeta
+    .filter(({ name }) => {
+      // descendant component is not actually rendered
+      // but affects styling of nested elements
+      // hiding descendant does not hide nested elements and confuse users
+      if (
+        instance.component === descendantComponent &&
+        name === showAttribute
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .map(({ name, meta }) => {
+      let saved = getAndDelete<Prop>(unprocessedSaved, name);
+      if (saved === undefined && meta.defaultValue !== undefined) {
+        saved = getStartingProp(instance.id, meta, name);
+      }
+      getAndDelete(unprocessedKnown, name);
+      initialPropsNames.delete(name);
+      return {
+        prop: saved,
+        propName: name,
+        meta,
+      };
+    });
 
   const canHaveTextContent =
     instanceMeta?.type === "container" &&
