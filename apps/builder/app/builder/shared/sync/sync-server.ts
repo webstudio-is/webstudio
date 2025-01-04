@@ -304,10 +304,19 @@ export class ServerSyncStorage implements SyncStorage {
   }
   subscribe(setState: (state: unknown) => void, signal: AbortSignal) {
     const projectId = $project.get()?.id ?? "";
-    loadBuilderData({ projectId, signal }).then((data) => {
-      const serverData = new Map(Object.entries(data));
-      setState(new Map([["server", serverData]]));
-    });
+    loadBuilderData({ projectId, signal })
+      .then((data) => {
+        const serverData = new Map(Object.entries(data));
+        setState(new Map([["server", serverData]]));
+      })
+      .catch((err) => {
+        if (err instanceof Error) {
+          console.error(err);
+          return;
+        }
+
+        // Abort error do nothing
+      });
   }
 }
 
