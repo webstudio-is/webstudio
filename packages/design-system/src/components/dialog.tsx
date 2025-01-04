@@ -10,6 +10,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  type RefObject,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, type CSS } from "../stitches.config";
@@ -145,7 +146,13 @@ const useDraggable = ({
   minWidth,
   isMaximized,
 }: UseDraggableProps) => {
-  const initialDataRef = useRef<
+  const initialRectRef = useRef({
+    width,
+    height,
+    x,
+    y,
+  });
+  const initialDragDataRef = useRef<
     | undefined
     | {
         point: Point;
@@ -159,8 +166,8 @@ const useDraggable = ({
       ? centeredContent
       : {
           ...centeredContent,
-          width,
-          height,
+          width: initialRectRef.current.width,
+          height: initialRectRef.current.height,
         };
 
     if (minWidth !== undefined) {
@@ -171,17 +178,17 @@ const useDraggable = ({
     }
 
     if (isMaximized === false) {
-      if (x !== undefined) {
-        style.left = x;
+      if (initialRectRef.current.x !== undefined) {
+        style.left = initialRectRef.current.x;
         style.transform = "none";
       }
-      if (y !== undefined) {
-        style.top = y;
+      if (initialRectRef.current.y !== undefined) {
+        style.top = initialRectRef.current.y;
         style.transform = "none";
       }
     }
     return style;
-  }, [x, y, width, height, isMaximized, minWidth, minHeight]);
+  }, [initialRectRef, isMaximized, minWidth, minHeight]);
   const [style, setStyle] = useState(calcStyle());
 
   useEffect(() => {
@@ -201,7 +208,7 @@ const useDraggable = ({
     target.style.left = `${rect.x}px`;
     target.style.top = `${rect.y}px`;
     target.style.transform = "none";
-    initialDataRef.current = {
+    initialDragDataRef.current = {
       point: { x: event.pageX, y: event.pageY },
       rect,
     };
@@ -213,12 +220,12 @@ const useDraggable = ({
     if (
       event.pageX <= 0 ||
       event.pageY <= 0 ||
-      initialDataRef.current === undefined ||
+      initialDragDataRef.current === undefined ||
       target === null
     ) {
       return;
     }
-    const { rect, point } = initialDataRef.current;
+    const { rect, point } = initialDragDataRef.current;
     const movementX = point.x - event.pageX;
     const movementY = point.y - event.pageY;
     let left = Math.max(rect.x - movementX, 0);
@@ -253,40 +260,26 @@ const useDraggable = ({
 };
 
 // This is needed to prevent pointer events on the iframe from interfering with dragging and resizing.
-const useSetPointerEvents = () => {
+const useSetPointerEvents = (elementRef: RefObject<HTMLElement | null>) => {
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const setPointerEvents = (value: string) => {
-    return () => {
-      value === "none"
-        ? disableCanvasPointerEvents()
-        : enableCanvasPointerEvents();
-      // RAF is needed otherwise dragstart event won't fire because of pointer-events: none
-      requestAnimationFrame(() => {
-        if (element) {
-          element.style.pointerEvents = value;
-        }
-      });
-    };
-  };
-
-  const [element, ref] = useResize({
-    onResizeStart: setPointerEvents("none"),
-    onResizeEnd: setPointerEvents("auto"),
-  });
-
-  const { resize, draggable } = useContext(DialogContext);
-
-  if (resize === "none" && draggable !== true) {
-    return {};
-  }
-
-  return {
-    ref,
-    onDragStartCapture: setPointerEvents("none"),
-    onDragEndCapture: setPointerEvents("auto"),
-  };
+  return useCallback(
+    (value: string) => {
+      return () => {
+        value === "none"
+          ? disableCanvasPointerEvents()
+          : enableCanvasPointerEvents();
+        // RAF is needed otherwise dragstart event won't fire because of pointer-events: none
+        requestAnimationFrame(() => {
+          if (elementRef.current) {
+            elementRef.current.style.pointerEvents = value;
+          }
+        });
+      };
+    },
+    [elementRef, enableCanvasPointerEvents, disableCanvasPointerEvents]
+  );
 };
 
 const ContentContainer = forwardRef(
@@ -309,7 +302,7 @@ const ContentContainer = forwardRef(
     forwardedRef: Ref<HTMLDivElement>
   ) => {
     const { resize, isMaximized } = useContext(DialogContext);
-    const { ref: draggableRef, ...draggableProps } = useDraggable({
+    const { ref, ...draggableProps } = useDraggable({
       width,
       height,
       x,
@@ -318,17 +311,21 @@ const ContentContainer = forwardRef(
       minHeight,
       isMaximized,
     });
+    const setPointerEvents = useSetPointerEvents(ref);
 
-    const { ref: pointerEventsRef, ...pointerEventsProps } =
-      useSetPointerEvents();
+    const [_, setElement] = useResize({
+      onResizeStart: setPointerEvents?.("none"),
+      onResizeEnd: setPointerEvents?.("auto"),
+    });
 
     return (
       <Primitive.Content
         className={contentStyle({ className, css, resize })}
+        onDragStartCapture={setPointerEvents("none")}
+        onDragEndCapture={setPointerEvents("auto")}
         {...draggableProps}
-        {...pointerEventsProps}
         {...props}
-        ref={mergeRefs(forwardedRef, draggableRef, pointerEventsRef)}
+        ref={mergeRefs(forwardedRef, ref, setElement)}
       >
         {children}
       </Primitive.Content>
