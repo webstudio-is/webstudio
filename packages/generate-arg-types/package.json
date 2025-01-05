@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@webstudio-is/html-data": "workspace:*",
-    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "fast-glob": "^3.3.2",
     "react-docgen-typescript": "^2.2.2",
     "typescript": "5.7.2",

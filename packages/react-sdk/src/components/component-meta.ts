@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { HtmlTags } from "html-tags";
-import { Matchers } from "@webstudio-is/sdk";
-import { PropMeta } from "../prop-meta";
+import { Matchers, PropMeta } from "@webstudio-is/sdk";
 import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "../embed-template";
 
 export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<

@@ -101,7 +101,7 @@ type CustomDescriptionsType = {
       continue;
     }
 
-    let fileContent = `import type { PropMeta } from "@webstudio-is/react-sdk";\n`;
+    let fileContent = `import type { PropMeta } from "@webstudio-is/sdk";\n`;
 
     if (componentDocs.length === 1) {
       const argTypes = propsToArgTypes(
