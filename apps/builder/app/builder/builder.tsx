@@ -351,6 +351,7 @@ export const Builder = ({
 
   const inertHandlers = useInertHandlers();
 
+  console.log("navigatorLayout", navigatorLayout);
   return (
     <TooltipProvider>
       <div
@@ -376,7 +377,12 @@ export const Builder = ({
             </Workspace>
           </Main>
 
-          <SidePanel gridArea="sidebar">
+          <SidePanel
+            gridArea="sidebar"
+            css={{
+              order: navigatorLayout === "docked" ? 1 : undefined,
+            }}
+          >
             <SidebarLeft publish={publish} />
           </SidePanel>
           <SidePanel
