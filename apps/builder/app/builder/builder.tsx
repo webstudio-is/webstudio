@@ -351,7 +351,6 @@ export const Builder = ({
 
   const inertHandlers = useInertHandlers();
 
-  console.log("navigatorLayout", navigatorLayout);
   return (
     <TooltipProvider>
       <div
