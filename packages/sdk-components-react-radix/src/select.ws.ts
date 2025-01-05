@@ -12,7 +12,7 @@ import type {
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
 import {
   propsSelect,

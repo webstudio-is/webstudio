@@ -3,10 +3,10 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
-import { props } from "./__generated__/vimeo-spinner.props";
+} from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { BoxIcon } from "@webstudio-is/icons/svg";
+import { props } from "./__generated__/vimeo-spinner.props";
 
 const presetStyle = {
   div,

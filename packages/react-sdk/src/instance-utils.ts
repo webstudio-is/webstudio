@@ -1,5 +1,4 @@
-import type { Instance, Instances } from "@webstudio-is/sdk";
-import type { WsComponentMeta } from "./components/component-meta";
+import type { Instance, Instances, WsComponentMeta } from "@webstudio-is/sdk";
 
 export type IndexesWithinAncestors = Map<Instance["id"], number>;
 

@@ -1,10 +1,6 @@
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "vitest";
-import {
-  portalComponent,
-  collectionComponent,
-  type WsComponentMeta,
-} from "@webstudio-is/react-sdk";
+import { portalComponent, collectionComponent } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
@@ -34,6 +30,7 @@ import type {
   StyleSourceSelections,
   WebstudioData,
   WebstudioFragment,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";

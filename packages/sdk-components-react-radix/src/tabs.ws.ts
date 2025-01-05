@@ -9,7 +9,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
 import { buttonReset } from "./shared/preset-styles";
 import {

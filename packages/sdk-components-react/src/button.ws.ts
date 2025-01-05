@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/button.props";
 import type { defaultTag } from "./button";

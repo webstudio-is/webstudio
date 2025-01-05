@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { WsEmbedTemplate, idAttribute } from "@webstudio-is/react-sdk";
+import { WsEmbedTemplate } from "@webstudio-is/sdk";
+import { idAttribute } from "@webstudio-is/react-sdk";
 
 // Currently this operation is used is a separate LLM call after the main one has returned an insert-instance operation. This is to produce better results.
 // Effectively the aiOperation from this module is not used. The separate chain will call the LLM and we use the resulting completion to construct an aiOperation by hand

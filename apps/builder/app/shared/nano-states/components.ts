@@ -4,15 +4,17 @@ import type { ExoticComponent } from "react";
 import { atom, computed } from "nanostores";
 import {
   type AnyComponent,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
   type Hook,
   type HookContext,
   namespaceMeta,
   getIndexesWithinAncestors,
   type InstanceData,
 } from "@webstudio-is/react-sdk";
-import type { Instance } from "@webstudio-is/sdk";
+import type {
+  Instance,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $memoryProps, $props } from "./misc";
 import { $instances } from "./instances";

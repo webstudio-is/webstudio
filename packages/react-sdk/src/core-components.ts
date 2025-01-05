@@ -6,10 +6,7 @@ import {
   AddTemplateInstanceIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "@webstudio-is/sdk/normalize.css";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "./components/component-meta";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 
 export const rootComponent = "ws:root";
 
