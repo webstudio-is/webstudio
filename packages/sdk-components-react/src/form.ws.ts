@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { form } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";

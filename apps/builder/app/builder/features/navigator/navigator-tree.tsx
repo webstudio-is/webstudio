@@ -24,11 +24,14 @@ import {
   blockComponent,
   rootComponent,
   showAttribute,
-  WsComponentMeta,
   blockTemplateComponent,
   descendantComponent,
 } from "@webstudio-is/react-sdk";
-import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
+import {
+  ROOT_INSTANCE_ID,
+  type Instance,
+  type WsComponentMeta,
+} from "@webstudio-is/sdk";
 import {
   EyeClosedIcon,
   EyeOpenIcon,

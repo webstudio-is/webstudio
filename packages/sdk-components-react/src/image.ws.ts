@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { img } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./image";
 import { props } from "./__generated__/image.props";

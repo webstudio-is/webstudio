@@ -28,7 +28,6 @@
   "sideEffects": false,
   "dependencies": {
     "@webstudio-is/css-data": "workspace:*",
-    "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "acorn": "^8.14.0",
     "acorn-jsx": "^5.3.2",

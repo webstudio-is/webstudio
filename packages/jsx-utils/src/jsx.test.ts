@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { EmbedTemplateProp, WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { EmbedTemplateProp, WsEmbedTemplate } from "@webstudio-is/sdk";
 import { jsxToWSEmbedTemplate } from "./jsx";
 import { traverseTemplate } from "./traverse-template";
 

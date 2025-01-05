@@ -7,8 +7,7 @@ import {
 } from "@webstudio-is/template";
 import { coreMetas } from "@webstudio-is/react-sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
-import type { WsComponentMeta } from "@webstudio-is/react-sdk";
-import type { Matcher } from "@webstudio-is/sdk";
+import type { Matcher, WsComponentMeta } from "@webstudio-is/sdk";
 import {
   findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,

@@ -48,7 +48,7 @@ import {
   useCallback,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { type ComponentState, stateCategories } from "@webstudio-is/react-sdk";
+import { type ComponentState, stateCategories } from "@webstudio-is/sdk";
 import {
   type ItemSource,
   type StyleSourceError,

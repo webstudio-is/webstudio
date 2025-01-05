@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { WsEmbedTemplate } from "@webstudio-is/sdk";
 
 export const name = "template-generator";
 

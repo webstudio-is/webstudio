@@ -1,9 +1,9 @@
 import { ItemIcon } from "@webstudio-is/icons/svg";
-import {
-  type PresetStyle,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "@webstudio-is/sdk";
 
 import type { defaultTag } from "./option";
 import { props } from "./__generated__/option.props";

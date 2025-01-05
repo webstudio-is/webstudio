@@ -18,8 +18,9 @@ import {
   type Breakpoint,
   type Instance,
   type StyleDecl,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { rootComponent, WsComponentMeta } from "@webstudio-is/react-sdk";
+import { rootComponent } from "@webstudio-is/react-sdk";
 import {
   $breakpoints,
   $instances,

@@ -2,10 +2,7 @@ import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
-import {
-  collectionComponent,
-  componentCategories,
-} from "@webstudio-is/react-sdk";
+import { collectionComponent } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Command,
@@ -25,6 +22,7 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
+import { componentCategories } from "@webstudio-is/sdk";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
 import type { TemplateMeta } from "@webstudio-is/template";
 import {

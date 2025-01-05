@@ -20,7 +20,6 @@ import {
   generateWebstudioComponent,
   getIndexesWithinAncestors,
   type Params,
-  type WsComponentMeta,
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
@@ -37,6 +36,7 @@ import type {
   FontAsset,
   ImageAsset,
   Resource,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   createScope,
