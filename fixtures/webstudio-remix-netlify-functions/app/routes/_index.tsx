@@ -205,7 +205,7 @@ export const links: LinksFunction = () => {
     result.push({
       rel: "icon",
       href: imageLoader({
-        src: favIconAsset.name,
+        src: `${assetBaseUrl}${favIconAsset.name}`,
         // width,height must be multiple of 48 https://developers.google.com/search/docs/appearance/favicon-in-search
         width: 144,
         height: 144,
