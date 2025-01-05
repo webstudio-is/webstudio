@@ -138,27 +138,24 @@ type UseDraggableProps = {
 } & Partial<Rect>;
 
 const useDraggable = ({
-  x,
-  y,
   width,
   height,
   minHeight,
   minWidth,
   isMaximized,
+  ...props
 }: UseDraggableProps) => {
-  const initialRectRef = useRef({
-    width,
-    height,
-    x,
-    y,
-  });
-  const initialDragDataRef = useRef<
+  const [x, setX] = useState(props.x);
+  const [y, setY] = useState(props.y);
+
+  const lastDragDataRef = useRef<
     | undefined
     | {
         point: Point;
         rect: Rect;
       }
   >(undefined);
+
   const ref = useRef<HTMLDivElement | null>(null);
 
   const calcStyle = useCallback(() => {
@@ -166,8 +163,8 @@ const useDraggable = ({
       ? centeredContent
       : {
           ...centeredContent,
-          width: initialRectRef.current.width,
-          height: initialRectRef.current.height,
+          width,
+          height,
         };
 
     if (minWidth !== undefined) {
@@ -178,22 +175,34 @@ const useDraggable = ({
     }
 
     if (isMaximized === false) {
-      if (initialRectRef.current.x !== undefined) {
-        style.left = initialRectRef.current.x;
+      if (x !== undefined) {
+        style.left = x;
         style.transform = "none";
       }
-      if (initialRectRef.current.y !== undefined) {
-        style.top = initialRectRef.current.y;
+      if (y !== undefined) {
+        style.top = y;
         style.transform = "none";
       }
     }
     return style;
-  }, [initialRectRef, isMaximized, minWidth, minHeight]);
+  }, [x, y, width, height, isMaximized, minWidth, minHeight]);
+
   const [style, setStyle] = useState(calcStyle());
 
   useEffect(() => {
     setStyle(calcStyle());
   }, [calcStyle]);
+
+  useEffect(() => {
+    if (lastDragDataRef.current) {
+      // Until user draggs, we need component props to define the position, because floating panel needs to adjust it after rendering.
+      // We don't want to use the props x/y value after user has dragged manually. At this point position is defined
+      // by drag interaction and props can't override it, otherwise position will jump for unpredictable reasons, e.g. when parent decides to update.
+      return;
+    }
+    setX(props.x);
+    setY(props.y);
+  }, [props.x, props.y]);
 
   const handleDragStart: DragEventHandler = (event) => {
     const target = ref.current;
@@ -208,7 +217,7 @@ const useDraggable = ({
     target.style.left = `${rect.x}px`;
     target.style.top = `${rect.y}px`;
     target.style.transform = "none";
-    initialDragDataRef.current = {
+    lastDragDataRef.current = {
       point: { x: event.pageX, y: event.pageY },
       rect,
     };
@@ -220,12 +229,12 @@ const useDraggable = ({
     if (
       event.pageX <= 0 ||
       event.pageY <= 0 ||
-      initialDragDataRef.current === undefined ||
+      lastDragDataRef.current === undefined ||
       target === null
     ) {
       return;
     }
-    const { rect, point } = initialDragDataRef.current;
+    const { rect, point } = lastDragDataRef.current;
     const movementX = point.x - event.pageX;
     const movementY = point.y - event.pageY;
     let left = Math.max(rect.x - movementX, 0);
@@ -242,12 +251,9 @@ const useDraggable = ({
     if (target === null) {
       return;
     }
-    setStyle({
-      ...style,
-      transform: target.style.transform,
-      top: target.style.top,
-      left: target.style.left,
-    });
+    const rect = target.getBoundingClientRect();
+    setX(rect.x);
+    setY(rect.y);
   };
 
   return {
