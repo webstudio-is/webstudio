@@ -148,26 +148,22 @@ export const createCommandsEmitter = <CommandName extends string>({
         ) {
           continue;
         }
-        const element = event.target as HTMLElement;
-        const isOnInputLikeControl =
-          ["input", "select", "textarea"].includes(
-            element.tagName.toLowerCase()
-          ) ||
-          element.isContentEditable ||
-          // Detect Radix select, dropdown and co.
-          element.getAttribute("role") === "option";
+
         const { disableOnInputLikeControls } = commandMeta;
 
-        // in some cases hotkey override default behavior
-        // on form tags and contentEditable
-        // though still proceed when default behavior is prevented
-        // this hack makes hotkeys work on canvas instances of input etc.
-        if (
-          isOnInputLikeControl &&
-          disableOnInputLikeControls &&
-          event.defaultPrevented === false
-        ) {
-          continue;
+        if (disableOnInputLikeControls) {
+          const element = event.target as HTMLElement;
+          const isOnInputLikeControl =
+            ["input", "select", "textarea"].includes(
+              element.tagName.toLowerCase()
+            ) ||
+            element.isContentEditable ||
+            // Detect Radix select, dropdown and co.
+            element.getAttribute("role") === "option";
+
+          if (isOnInputLikeControl) {
+            continue;
+          }
         }
 
         emitted = true;
