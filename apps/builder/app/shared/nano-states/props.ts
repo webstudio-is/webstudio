@@ -718,7 +718,12 @@ export const subscribeResources = () => {
         cacheByKeys.set(cacheKey, undefined);
       }
 
-      const result = await loadResources(Array.from(missing.values()));
+      const missingValues = Array.from(missing.values());
+      if (missingValues.length === 0) {
+        return;
+      }
+
+      const result = await loadResources(missingValues);
       const newResourceValues = new Map();
       for (const request of computedResources) {
         const cacheKey = JSON.stringify(request);

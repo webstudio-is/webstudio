@@ -12,8 +12,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { div, h3, button } from "@webstudio-is/sdk/normalize.css";
-import * as tc from "./theme/tailwind-classes";
-import { buttonReset } from "./theme/styles";
+import { buttonReset } from "./shared/preset-styles";
 import {
   propsAccordion,
   propsAccordionItem,
@@ -75,7 +74,17 @@ export const metaAccordionHeader: WsComponentMeta = {
     },
   ],
   presetStyle: {
-    h3: [h3, tc.my(0)].flat(),
+    h3: [
+      ...h3,
+      {
+        property: "marginTop",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "marginBottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
   },
 };
 

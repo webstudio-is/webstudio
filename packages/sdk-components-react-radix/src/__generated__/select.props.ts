@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/sdk";
 
 export const propsSelect: Record<string, PropMeta> = {
   autoComplete: {
@@ -22,6 +22,12 @@ export const propsSelect: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description: "Indicates whether the user can interact with the element.",
+  },
+  form: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Indicates the form that is the owner of the element.",
   },
   name: {
     required: false,

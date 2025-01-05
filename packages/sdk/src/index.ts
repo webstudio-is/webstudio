@@ -10,6 +10,7 @@ export * from "./schema/style-source-selections";
 export * from "./schema/styles";
 export * from "./schema/deployment";
 export * from "./schema/webstudio";
+export * from "./schema/prop-meta";
 
 export * from "./instances-utils";
 export * from "./page-utils";

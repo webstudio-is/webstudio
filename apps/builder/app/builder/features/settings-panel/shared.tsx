@@ -11,12 +11,11 @@ import {
   type ComponentProps,
 } from "react";
 import equal from "fast-deep-equal";
-import type { PropMeta } from "@webstudio-is/react-sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
 } from "@webstudio-is/sdk";
-import type { Prop, Asset } from "@webstudio-is/sdk";
+import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
 import { InfoCircleIcon, MinusIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,
@@ -399,6 +398,9 @@ export const humanizeAttribute = (string: string) => {
   }
   if (string === "className") {
     return "Class";
+  }
+  if (string === "htmlFor") {
+    return "For";
   }
   return humanizeString(string);
 };

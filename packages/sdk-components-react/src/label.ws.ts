@@ -29,12 +29,6 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props: {
-    ...props,
-    htmlFor: {
-      ...props.htmlFor,
-      label: "For",
-    },
-  },
+  props,
   initialProps: ["id", "className", "htmlFor"],
 };

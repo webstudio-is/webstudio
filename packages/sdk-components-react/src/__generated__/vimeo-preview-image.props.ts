@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
@@ -527,7 +527,12 @@ export const props: Record<string, PropMeta> = {
       "Determines whether the image will load as soon as possible (Eager), or when it scrolls into view (Lazy). Lazy loading is a great option for pages with many images because it can significantly reduce the time it takes for the page to load initially.",
   },
   nonce: { required: false, control: "text", type: "string" },
-  optimize: { required: false, control: "boolean", type: "boolean" },
+  optimize: {
+    description: "Optimize the image for enhanced performance.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   quality: { required: false, control: "number", type: "number" },

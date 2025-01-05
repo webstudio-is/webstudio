@@ -76,6 +76,7 @@ const Page = ({ system: system }: { system: any }) => {
             href={"custom-en-location"}
           />
           <XmlNode tag={"title"}>{"Hello"}</XmlNode>
+          <XmlNode tag={"link"}>{"https://webstudio.is"}</XmlNode>
         </XmlNode>
       </XmlNode>
     </Body>

@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
@@ -529,6 +529,7 @@ export const props: Record<string, PropMeta> = {
   },
   nonce: { required: false, control: "text", type: "string" },
   optimize: {
+    description: "Optimize the image for enhanced performance.",
     required: false,
     control: "boolean",
     type: "boolean",

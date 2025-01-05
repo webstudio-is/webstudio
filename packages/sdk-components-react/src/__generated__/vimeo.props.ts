@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
@@ -427,7 +427,6 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    defaultValue: false,
   },
   className: { required: false, control: "text", type: "string" },
   color: {

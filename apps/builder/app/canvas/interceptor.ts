@@ -59,7 +59,7 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
         }
       }
       const search = Object.fromEntries(pageHref.searchParams);
-      $selectedPageHash.set(pageHref.hash);
+      $selectedPageHash.set({ hash: pageHref.hash });
       selectPage(page.id);
       updateSystem(page, { params, search });
       savePathInHistory(page.id, pageHref.pathname);

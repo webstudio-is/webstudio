@@ -1,4 +1,7 @@
-import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import {
+  ReactSdkContext,
+  xmlNodeTagSuffix,
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Children,
   createElement,
@@ -33,21 +36,26 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       .filter(([key]) => key !== "tabIndex")
       .filter(([, value]) => typeof value !== "function");
 
+    const elementName = tag
+      // Must start from letter or underscore
+      .replace(/^[^\p{L}_]+/u, "")
+      // Clear all non letter, number, underscore, dot, and dash
+      .replaceAll(/[^\p{L}\p{N}\-._:]+/gu, "")
+      .trim();
+
     if (renderer === undefined) {
       const attrProps = Object.fromEntries(attributeEntries);
-      return createElement(tag, attrProps, children);
+      return createElement(
+        `${elementName}${xmlNodeTagSuffix}`,
+        attrProps,
+        children
+      );
     }
 
     const childrenArray = Children.toArray(children);
     const isTextChild =
       childrenArray.length > 0 &&
       childrenArray.every((child) => typeof child === "string");
-
-    const elementName = tag
-      // Must start from letter or underscore
-      .replace(/^[^\p{L}_]+/u, "")
-      // Clear all non letter, number, underscore, dot, and dash
-      .replaceAll(/[^\p{L}\p{N}\-._:]+/gu, "");
 
     const attributes = attributeEntries.map(
       ([key, value]) => `${key}=${JSON.stringify(value)}`

@@ -12,16 +12,10 @@ type CommandMeta<CommandName extends string> = {
   /** listen hotkeys only locally without sharing with other apps */
   disableHotkeyOutsideApp?: boolean;
   /**
-   * input, select and textarea will not invoke command when hotkey is hit
+   * input, select and textarea, content editable and role=option used in Radix will not invoke command when hotkey is hit
    * with the exception when default event behavior is prevented
    **/
-  disableHotkeyOnFormTags?: boolean;
-  /**
-   * element with contenteditable=true will not invoke command
-   * when hotkey is hit with the exception when default
-   * event behavior is prevented
-   **/
-  disableHotkeyOnContentEditable?: boolean;
+  disableOnInputLikeControls?: boolean;
   /**
    * hide the command in cmd+k panel
    */
@@ -154,31 +148,24 @@ export const createCommandsEmitter = <CommandName extends string>({
         ) {
           continue;
         }
-        const element = event.target as HTMLElement;
-        const tagName = element.tagName.toLowerCase();
-        const isOnFormTags = ["input", "select", "textarea"].includes(tagName);
-        const isOnContentEditable = element.isContentEditable;
-        const { disableHotkeyOnFormTags, disableHotkeyOnContentEditable } =
-          commandMeta;
-        // in some cases hotkey override default behavior
-        // on form tags and contentEditable
-        // though still proceed when default behavior is prevented
-        // this hack makes hotkeys work on canvas instances of input etc.
-        if (
-          isOnFormTags &&
-          disableHotkeyOnFormTags &&
-          event.defaultPrevented === false
-        ) {
-          continue;
+
+        const { disableOnInputLikeControls } = commandMeta;
+
+        if (disableOnInputLikeControls) {
+          const element = event.target as HTMLElement;
+          const isOnInputLikeControl =
+            ["input", "select", "textarea"].includes(
+              element.tagName.toLowerCase()
+            ) ||
+            element.isContentEditable ||
+            // Detect Radix select, dropdown and co.
+            element.getAttribute("role") === "option";
+
+          if (isOnInputLikeControl) {
+            continue;
+          }
         }
-        if (
-          isOnContentEditable &&
-          disableHotkeyOnContentEditable
-          // editors usually manage history in controlled way
-          // so do not check if event is prevented
-        ) {
-          continue;
-        }
+
         emitted = true;
         if (commandMeta.preventDefault === false) {
           preventDefault = false;

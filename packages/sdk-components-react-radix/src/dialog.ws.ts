@@ -23,7 +23,7 @@ import {
   propsDialogTitle,
   propsDialogDescription,
 } from "./__generated__/dialog.props";
-import { buttonReset } from "./theme/styles";
+import { buttonReset } from "./shared/preset-styles";
 
 const presetStyle = {
   div,

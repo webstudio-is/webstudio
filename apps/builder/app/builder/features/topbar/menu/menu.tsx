@@ -140,7 +140,9 @@ export const Menu = () => {
           </DropdownMenuItem>
 
           */}
-          <DropdownMenuItem onSelect={() => emitCommand("deleteInstance")}>
+          <DropdownMenuItem
+            onSelect={() => emitCommand("deleteInstanceBuilder")}
+          >
             Delete
             <DropdownMenuItemRightSlot>
               <Kbd value={["backspace"]} />

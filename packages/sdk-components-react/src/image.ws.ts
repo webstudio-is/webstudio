@@ -45,24 +45,16 @@ export const meta: WsComponentMeta = {
   order: 0,
 };
 
-// Automatically generated props don't have the right control.
-export const propsOverrides = {
-  src: {
-    type: "string",
-    control: "file",
-    label: "Source",
-    required: false,
-  },
-} as const;
-
-const optimize = props.optimize;
-optimize.description = "Optimize the image for enhanced performance.";
-
 export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
-    ...propsOverrides,
-    optimize,
+    // Automatically generated props don't have the right control.
+    src: {
+      type: "string",
+      control: "file",
+      label: "Source",
+      required: false,
+    },
   },
   initialProps: [
     "id",

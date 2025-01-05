@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/sdk";
 
 export const propsTabs: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
@@ -579,10 +579,11 @@ export const propsTabs: Record<string, PropMeta> = {
     options: ["on", "off"],
   },
   value: {
-    description: "The value for the selected tab, if controlled",
     required: false,
     control: "text",
     type: "string",
+    description:
+      "Defines a default value which will be displayed in the element on pageload.",
   },
   vocab: { required: false, control: "text", type: "string" },
 };

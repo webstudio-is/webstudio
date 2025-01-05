@@ -212,10 +212,6 @@ const importFrom = (importee: string, importer: string) => {
 
 export const prebuild = async (options: {
   /**
-   * Use preview (opensource) version of the project
-   **/
-  preview: boolean;
-  /**
    * Do we need download assets
    **/
   assets: boolean;
@@ -434,19 +430,7 @@ export const prebuild = async (options: {
   const assetsToDownload: Promise<void>[] = [];
 
   if (options.assets === true) {
-    const appDomain = options.preview ? "wstd.work" : "wstd.io";
-    const domain =
-      siteData.build.deployment?.assetsDomain ??
-      // fallback to project domain should not be used since 2025-01-01 (for now is used for backward compatibility)
-      (siteData.build.deployment?.destination !== "static"
-        ? siteData.build.deployment?.projectDomain
-        : undefined);
-
-    if (domain === undefined) {
-      throw new Error(`Project domain is missing from the project data`);
-    }
-
-    const assetOrigin = `https://${domain}.${appDomain}`;
+    const assetOrigin = siteData.origin;
 
     for (const asset of siteData.assets) {
       if (asset.type === "image") {

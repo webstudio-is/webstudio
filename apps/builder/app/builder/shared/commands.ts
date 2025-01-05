@@ -51,8 +51,7 @@ const makeBreakpointCommand = <CommandName extends string>(
   name,
   hidden: true,
   defaultHotkeys: [`${number}`],
-  disableHotkeyOnFormTags: true,
-  disableHotkeyOnContentEditable: true,
+  disableOnInputLikeControls: true,
   handler: () => {
     selectBreakpointByOrder(number);
   },
@@ -60,7 +59,6 @@ const makeBreakpointCommand = <CommandName extends string>(
 
 export const deleteSelectedInstance = () => {
   if ($isPreviewMode.get()) {
-    builderApi.toast.info("Deleting is not allowed in preview mode.");
     return;
   }
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
@@ -299,8 +297,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("publish");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "openExportDialog",
@@ -308,8 +305,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("export");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "toggleComponentsPanel",
@@ -323,8 +319,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         toggleActiveSidebarPanel("components");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "toggleNavigatorPanel",
@@ -332,8 +327,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         toggleActiveSidebarPanel("navigator");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "openStylePanel",
@@ -347,8 +341,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         $activeInspectorPanel.set("style");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "openSettingsPanel",
@@ -356,8 +349,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $activeInspectorPanel.set("settings");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     makeBreakpointCommand("selectBreakpoint1", 1),
     makeBreakpointCommand("selectBreakpoint2", 2),
@@ -373,25 +365,21 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "toggleAiCommandBar",
       defaultHotkeys: ["space"],
-      disableHotkeyOnContentEditable: true,
       // this disables hotkey for inputs on style panel
       // but still work for input on canvas which call event.preventDefault() in keydown handler
-      disableHotkeyOnFormTags: true,
+      disableOnInputLikeControls: true,
       handler: () => {
         $isAiCommandBarVisible.set($isAiCommandBarVisible.get() === false);
       },
     },
     */
 
-    // instances
-
     {
-      name: "deleteInstance",
+      name: "deleteInstanceBuilder",
       defaultHotkeys: ["backspace", "delete"],
-      disableHotkeyOnContentEditable: true,
-      // this disables hotkey for inputs on style panel
-      // but still work for input on canvas which call event.preventDefault() in keydown handler
-      disableHotkeyOnFormTags: true,
+      // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
+      disableHotkeyOutsideApp: true,
+      disableOnInputLikeControls: true,
       handler: deleteSelectedInstance,
     },
     {
@@ -479,8 +467,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "undo",
       // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
-      disableHotkeyOnContentEditable: true,
-      disableHotkeyOnFormTags: true,
+      disableOnInputLikeControls: true,
       handler: () => {
         serverSyncStore.undo();
       },
@@ -489,8 +476,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "redo",
       // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
-      disableHotkeyOnContentEditable: true,
-      disableHotkeyOnFormTags: true,
+      disableOnInputLikeControls: true,
       handler: () => {
         serverSyncStore.redo();
       },
