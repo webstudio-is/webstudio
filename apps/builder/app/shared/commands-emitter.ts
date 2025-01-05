@@ -148,18 +148,22 @@ export const createCommandsEmitter = <CommandName extends string>({
         ) {
           continue;
         }
-        const element = event.target as HTMLElement;
-        const isOnInputLikeControl =
-          ["input", "select", "textarea"].includes(
-            element.tagName.toLowerCase()
-          ) ||
-          element.isContentEditable ||
-          // Detect Radix select, dropdown and co.
-          element.getAttribute("role") === "option";
+
         const { disableOnInputLikeControls } = commandMeta;
 
-        if (isOnInputLikeControl && disableOnInputLikeControls) {
-          continue;
+        if (disableOnInputLikeControls) {
+          const element = event.target as HTMLElement;
+          const isOnInputLikeControl =
+            ["input", "select", "textarea"].includes(
+              element.tagName.toLowerCase()
+            ) ||
+            element.isContentEditable ||
+            // Detect Radix select, dropdown and co.
+            element.getAttribute("role") === "option";
+
+          if (isOnInputLikeControl) {
+            continue;
+          }
         }
 
         emitted = true;
