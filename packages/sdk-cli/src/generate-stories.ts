@@ -5,12 +5,12 @@ import {
   type Instances,
   type Instance,
   type Scope,
+  type WsComponentMeta,
   createScope,
   parseComponentName,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import {
-  type WsComponentMeta,
   generateCss,
   generateDataFromEmbedTemplate,
   generateWebstudioComponent,
