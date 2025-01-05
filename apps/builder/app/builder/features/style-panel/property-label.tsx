@@ -251,26 +251,12 @@ export const PropertyLabel = ({
     batch.publish();
   };
   const styleConfig = styleConfigByName(properties[0]);
-  const preventCloseRef = useRef(false);
 
   return (
     <Flex align="center">
       <Tooltip
         open={isOpen}
-        onOpenChange={(isOpen) => {
-          if (isOpen === false && preventCloseRef.current) {
-            return;
-          }
-          setIsOpen(isOpen);
-        }}
-        onPointerDown={() => {
-          // Prevent closing tooltip on content click.
-          // Can't use preventDefault() because it will prevent selecting code for copy/paste.
-          preventCloseRef.current = true;
-          requestAnimationFrame(() => {
-            preventCloseRef.current = false;
-          });
-        }}
+        onOpenChange={setIsOpen}
         triggerProps={{
           onClick: (event) => {
             if (event.altKey) {
