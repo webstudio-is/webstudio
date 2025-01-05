@@ -158,15 +158,7 @@ export const createCommandsEmitter = <CommandName extends string>({
           element.getAttribute("role") === "option";
         const { disableOnInputLikeControls } = commandMeta;
 
-        // in some cases hotkey override default behavior
-        // on form tags and contentEditable
-        // though still proceed when default behavior is prevented
-        // this hack makes hotkeys work on canvas instances of input etc.
-        if (
-          isOnInputLikeControl &&
-          disableOnInputLikeControls &&
-          event.defaultPrevented === false
-        ) {
+        if (isOnInputLikeControl && disableOnInputLikeControls) {
           continue;
         }
 

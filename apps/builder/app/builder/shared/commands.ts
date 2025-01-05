@@ -59,7 +59,6 @@ const makeBreakpointCommand = <CommandName extends string>(
 
 export const deleteSelectedInstance = () => {
   if ($isPreviewMode.get()) {
-    builderApi.toast.info("Deleting is not allowed in preview mode.");
     return;
   }
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
@@ -375,13 +374,11 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     */
 
-    // instances
-
     {
-      name: "deleteInstance",
+      name: "deleteInstanceBuilder",
       defaultHotkeys: ["backspace", "delete"],
-      // this disables hotkey for inputs on style panel
-      // but still work for input on canvas which call event.preventDefault() in keydown handler
+      // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
+      disableHotkeyOutsideApp: true,
       disableOnInputLikeControls: true,
       handler: deleteSelectedInstance,
     },
