@@ -24,12 +24,9 @@ export const imageLoader = (props) => {
   }
 
   // https://vercel.com/blog/build-your-own-web-framework#automatic-image-optimization
-  return (
-    "/_vercel/image?url=" +
-    encodeURIComponent(props.src) +
-    "&w=" +
-    props.width +
-    "&q=" +
-    props.quality
-  );
+  const searchParams = new URLSearchParams();
+  searchParams.set("url", props.src);
+  searchParams.set("w", props.width.toString());
+  searchParams.set("q", props.quality.toString());
+  return `/_vercel/image?${searchParams}`;
 };

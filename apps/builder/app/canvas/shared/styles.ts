@@ -20,6 +20,7 @@ import {
   componentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
+  StyleValue,
   type TransformValue,
   type VarValue,
   createRegularStyleSheet,
@@ -32,6 +33,7 @@ import {
   $instances,
   $props,
   $registeredComponentMetas,
+  $selectedInstanceSelector,
   $selectedStyleState,
   $styleSourceSelections,
   $styles,
@@ -43,6 +45,8 @@ import { canvasApi } from "~/shared/canvas-api";
 import { $selectedInstance, $selectedPage } from "~/shared/awareness";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { getVisibleElementsByInstanceSelector } from "~/shared/dom-utils";
+import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const stateSheet = createRegularStyleSheet({ name: "state-styles" });
@@ -280,7 +284,8 @@ const getEphemeralProperty = (styleDecl: StyleDecl) => {
 // between all token usages
 const toVarValue = (
   styleDecl: StyleDecl,
-  transformValue: TransformValue
+  transformValue: TransformValue,
+  fallback?: StyleValue
 ): undefined | VarValue => {
   return {
     type: "var",
@@ -288,7 +293,9 @@ const toVarValue = (
     // escape complex selectors in state like ":hover"
     // setProperty and removeProperty escape automatically
     value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
-    fallback: toVarFallback(styleDecl.value, transformValue),
+    fallback: fallback
+      ? toVarFallback(fallback, transformValue)
+      : toVarFallback(styleDecl.value, transformValue),
   };
 };
 
@@ -580,32 +587,34 @@ const subscribeStateStyles = () => {
 
 const subscribeEphemeralStyle = () => {
   // track custom properties added on previous ephemeral update
-  const appliedEphemeralDeclarations = new Map<string, StyleDecl>();
+  const appliedEphemeralDeclarations = new Map<
+    string,
+    [StyleDecl, HTMLElement[]]
+  >();
 
   return $ephemeralStyles.subscribe((ephemeralStyles) => {
     const instance = $selectedInstance.get();
-    if (instance === undefined) {
+    const instanceSelector = $selectedInstanceSelector.get();
+
+    if (instance === undefined || instanceSelector === undefined) {
       return;
     }
 
     // reset ephemeral styles
     if (ephemeralStyles.length === 0) {
       canvasApi.resetInert();
-      for (const styleDecl of appliedEphemeralDeclarations.values()) {
-        // prematurely apply last known ephemeral update to user stylesheet
-        // to avoid lag because of delay between deleting ephemeral style
-        // and sending style patch (and rendering)
-        const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
-        mixinRule.setDeclaration({
-          breakpoint: styleDecl.breakpointId,
-          selector: styleDecl.state ?? "",
-          property: styleDecl.property,
-          value:
-            toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
-        });
+
+      for (const [
+        styleDecl,
+        elements,
+      ] of appliedEphemeralDeclarations.values()) {
         document.documentElement.style.removeProperty(
           getEphemeralProperty(styleDecl)
         );
+
+        for (const element of elements) {
+          element.style.removeProperty(getEphemeralProperty(styleDecl));
+        }
       }
       userSheet.setTransformer($transformValue.get());
       userSheet.render();
@@ -617,29 +626,50 @@ const subscribeEphemeralStyle = () => {
       canvasApi.setInert();
       const selector = `[${idAttribute}="${instance.id}"]`;
       const rule = userSheet.addNestingRule(selector);
-      let ephemetalSheetUpdated = false;
+      let ephemeralSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
         // update custom property
         document.documentElement.style.setProperty(
           getEphemeralProperty(styleDecl),
           toValue(styleDecl.value, $transformValue.get())
         );
-        // render temporary rule for instance with var()
-        // rendered with "all" breakpoint and without state
-        // to reflect changes in canvas without user interaction
+
+        // We need to apply the custom property to the selected element as well.
+        // Otherwise, variables defined on it will not be visible on documentElement.
+        const elements = getVisibleElementsByInstanceSelector(instanceSelector);
+        for (const element of elements) {
+          element.style.setProperty(
+            getEphemeralProperty(styleDecl),
+            toValue(styleDecl.value, $transformValue.get())
+          );
+        }
+
+        // Lazily add a rule to the user stylesheet (it might not be created yet if no styles have been added to the instance property).
         const styleDeclKey = getStyleDeclKey(styleDecl);
         if (appliedEphemeralDeclarations.has(styleDeclKey) === false) {
-          ephemetalSheetUpdated = true;
+          ephemeralSheetUpdated = true;
+
           const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
+
+          // Use the actual style value as a fallback (non-ephemeral); see the “Lazy” comment above.
+          const computedStyleDecl = createComputedStyleDeclStore(
+            styleDecl.property
+          ).get();
+
+          const value =
+            toVarValue(
+              styleDecl,
+              $transformValue.get(),
+              computedStyleDecl.cascadedValue
+            ) ?? computedStyleDecl.cascadedValue;
+
           mixinRule.setDeclaration({
             breakpoint: styleDecl.breakpointId,
             selector: styleDecl.state ?? "",
             property: styleDecl.property,
-            value:
-              toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
+            value,
           });
-          // add local style source when missing to support
-          // ephemeral styles on newly created instances
+
           rule.addMixin(styleDecl.styleSourceId);
 
           // temporary render var() in state sheet as well
@@ -650,15 +680,14 @@ const subscribeEphemeralStyle = () => {
               // render without state
               selector: "",
               property: styleDecl.property,
-              value:
-                toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
+              value,
             });
           }
         }
-        appliedEphemeralDeclarations.set(styleDeclKey, styleDecl);
+        appliedEphemeralDeclarations.set(styleDeclKey, [styleDecl, elements]);
       }
       // avoid stylesheet rerendering on every ephemeral update
-      if (ephemetalSheetUpdated) {
+      if (ephemeralSheetUpdated) {
         userSheet.render();
         stateSheet.render();
       }

@@ -24,12 +24,13 @@ export const imageLoader = (props) => {
   }
 
   // https://docs.netlify.com/image-cdn/overview/
-  return (
-    "/.netlify/images?url=" +
-    encodeURIComponent(props.src) +
-    "&w=" +
-    props.width +
-    "&q=" +
-    props.quality
-  );
+  const searchParams = new URLSearchParams();
+  searchParams.set("url", props.src);
+  searchParams.set("w", props.width.toString());
+  if (props.height) {
+    searchParams.set("h", props.height.toString());
+  }
+  searchParams.set("q", props.quality.toString());
+  // fit=contain by default
+  return `/.netlify/images?${searchParams}`;
 };

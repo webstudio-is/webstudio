@@ -6,7 +6,7 @@
     "typecheck": "tsc",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-cddc1d44-af37-4cb6-a430-d300cf6f932d-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'",
-    "fixtures:sync": "pnpm cli sync --buildId 0ff71ecc-db91-41d0-ba52-26d2fc6c196d && pnpm prettier --write ./.webstudio/",
+    "fixtures:sync": "pnpm cli sync --buildId 63389378-e2a2-4e25-8c98-3e408bcfc4c4 && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "pnpm cli build --template vercel --template internal && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "private": true,

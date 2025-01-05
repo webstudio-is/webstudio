@@ -21,11 +21,21 @@ import {
 } from "../features/text-editor/toolbar-connector";
 import { selectInstance } from "~/shared/awareness";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
+import { deleteSelectedInstance } from "~/builder/shared/commands";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
   externalCommands: ["clickCanvas"],
   commands: [
+    {
+      name: "deleteInstanceCanvas",
+      defaultHotkeys: ["backspace", "delete"],
+      disableHotkeyOutsideApp: true,
+      // We are not disabling "Backspace" or "Delete" on the canvas. This is the main reason we have separate functions: deleteInstanceCanvas and deleteInstanceBuilder.
+      disableOnInputLikeControls: false,
+      handler: deleteSelectedInstance,
+    },
+
     {
       name: "editInstanceText",
       hidden: true,

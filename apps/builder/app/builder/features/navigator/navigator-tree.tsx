@@ -26,6 +26,7 @@ import {
   showAttribute,
   WsComponentMeta,
   blockTemplateComponent,
+  descendantComponent,
 } from "@webstudio-is/react-sdk";
 import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import {
@@ -281,22 +282,28 @@ const handleExpand = (item: TreeItem, isExpanded: boolean, all: boolean) => {
 };
 
 const ShowToggle = ({
-  instanceId,
+  instance,
   value,
 }: {
-  instanceId: Instance["id"];
+  instance: Instance;
   value: boolean;
 }) => {
+  // descendant component is not actually rendered
+  // but affects styling of nested elements
+  // hiding descendant does not hide nested elements and confuse users
+  if (instance.component === descendantComponent) {
+    return;
+  }
   const toggleShow = () => {
     const newValue = value === false;
     serverSyncStore.createTransaction([$props], (props) => {
       const { propsByInstanceId } = $propsIndex.get();
-      const instanceProps = propsByInstanceId.get(instanceId);
+      const instanceProps = propsByInstanceId.get(instance.id);
       let showProp = instanceProps?.find((prop) => prop.name === showAttribute);
       if (showProp === undefined) {
         showProp = {
           id: nanoid(),
-          instanceId,
+          instanceId: instance.id,
           name: showAttribute,
           type: "boolean",
           value: newValue,
@@ -660,9 +667,7 @@ export const NavigatorTree = () => {
                     }
                   },
                 }}
-                action={
-                  <ShowToggle instanceId={item.instance.id} value={show} />
-                }
+                action={<ShowToggle instance={item.instance} value={show} />}
               >
                 <TreeNodeContent
                   meta={meta}

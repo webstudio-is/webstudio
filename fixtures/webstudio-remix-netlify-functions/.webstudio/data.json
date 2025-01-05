@@ -1,14 +1,14 @@
 {
   "build": {
-    "id": "a2e8de30-03d5-4514-a3a6-406b3266a3af",
+    "id": "f565d527-32e7-4731-bc71-aca9e9574587",
     "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
-    "version": 38,
-    "createdAt": "2024-07-29T12:50:07.515+00:00",
-    "updatedAt": "2024-07-29T12:50:07.515+00:00",
+    "version": 43,
+    "createdAt": "2025-01-04T11:01:50.091+00:00",
+    "updatedAt": "2025-01-04T11:01:50.091+00:00",
     "pages": {
       "meta": {
         "siteName": "",
-        "faviconAssetId": "",
+        "faviconAssetId": "d0974db9300c1a3b0fb8b291dd9fabd45ad136478908394280af2f7087e3aecd",
         "code": ""
       },
       "homePage": {
@@ -408,8 +408,10 @@
       ]
     ],
     "deployment": {
-      "domains": [],
-      "projectDomain": "cli-basic-test-d0osr"
+      "destination": "saas",
+      "domains": ["cli-basic-test-d0osr"],
+      "assetsDomain": "cli-basic-test-d0osr",
+      "excludeWstdDomainFromSearch": false
     }
   },
   "page": {

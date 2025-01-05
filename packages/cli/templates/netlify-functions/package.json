@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "netlify serve"
+    "start": "npx netlify-cli serve"
   },
   "dependencies": {
     "@netlify/functions": "^2.8.2",
