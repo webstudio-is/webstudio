@@ -51,7 +51,9 @@ jobs:
         run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
 
       - name: Prepare for diffing
-        run: find . -type f -path "./fixtures/*/.webstudio/data.json" -exec sed 's|"origin": ".*"|"origin": "https://main.development.webstudio.is"|g' {} +
+        shell: bash
+        run: |
+          find . -type f -path "./fixtures/*/.webstudio/data.json" -exec sed -i 's|"origin": ".*"|"origin": "https://main.development.webstudio.is"|g' {} +
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
