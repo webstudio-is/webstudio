@@ -376,7 +376,12 @@ export const Builder = ({
             </Workspace>
           </Main>
 
-          <SidePanel gridArea="sidebar">
+          <SidePanel
+            gridArea="sidebar"
+            css={{
+              order: navigatorLayout === "docked" ? 1 : undefined,
+            }}
+          >
             <SidebarLeft publish={publish} />
           </SidePanel>
           <SidePanel
