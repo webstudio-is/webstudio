@@ -1,6 +1,6 @@
 // this module should not rely on "template" and other unpublished packages
 import type { StyleProperty, Unit } from "@webstudio-is/css-engine";
-import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
+import type { EmbedTemplateStyleDecl } from "@webstudio-is/sdk";
 
 const unit = (property: StyleProperty, value: number, unit: Unit) => ({
   property,

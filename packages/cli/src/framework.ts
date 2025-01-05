@@ -1,4 +1,4 @@
-import type { WsComponentMeta } from "@webstudio-is/react-sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 
 type FrameworkComponentEntry = {
   source: string;

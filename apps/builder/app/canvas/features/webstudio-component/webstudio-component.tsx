@@ -14,7 +14,12 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRefs } from "@react-aria/utils";
-import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
+import type {
+  Instance,
+  Instances,
+  Prop,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
   idAttribute,
@@ -30,7 +35,6 @@ import {
   blockComponent,
   blockTemplateComponent,
   editingPlaceholderVariable,
-  WsComponentMeta,
   editablePlaceholderVariable,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";

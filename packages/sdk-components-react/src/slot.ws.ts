@@ -1,8 +1,5 @@
 import { SlotComponentIcon } from "@webstudio-is/icons/svg";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 
 export const meta: WsComponentMeta = {
   category: "general",

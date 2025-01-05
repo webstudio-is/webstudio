@@ -3,7 +3,7 @@ import type {
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { props } from "./__generated__/html-embed.props";
 
 const presetStyle = {

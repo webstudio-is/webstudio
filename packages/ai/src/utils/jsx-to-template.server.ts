@@ -4,7 +4,7 @@ import {
   tailwindToWebstudio,
   traverseTemplate,
 } from "@webstudio-is/jsx-utils";
-import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { WsEmbedTemplate } from "@webstudio-is/sdk";
 
 export const jsxToTemplate = async (jsx: string) => {
   const template = await jsxToWSEmbedTemplate(jsx);

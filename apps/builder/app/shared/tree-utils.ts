@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
-import {
+import { shallowEqual } from "shallow-equal";
+import type {
   Instance,
   Instances,
   Prop,
@@ -8,13 +9,10 @@ import {
   Styles,
   StyleSource,
   StyleSourceSelection,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
-import {
-  collectionComponent,
-  type WsComponentMeta,
-} from "@webstudio-is/react-sdk";
-import { shallowEqual } from "shallow-equal";
+import { collectionComponent } from "@webstudio-is/react-sdk";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots

@@ -1,9 +1,9 @@
 import { PopoverIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
-import {
-  type PresetStyle,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import {
   propsPopover,

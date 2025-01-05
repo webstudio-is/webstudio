@@ -1,4 +1,4 @@
-import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { WsEmbedTemplate } from "@webstudio-is/sdk";
 
 type ElementType<T> = T extends (infer U)[] ? U : never;
 

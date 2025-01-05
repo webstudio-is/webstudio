@@ -6,9 +6,9 @@ import {
   type MatcherOperation,
   type MatcherRelation,
   type WebstudioFragment,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "./tree-utils";
-import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
 const isNegated = (operation?: MatcherOperation) => {
   return operation?.$neq !== undefined || operation?.$nin !== undefined;

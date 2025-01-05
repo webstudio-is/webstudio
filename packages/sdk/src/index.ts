@@ -11,6 +11,8 @@ export * from "./schema/styles";
 export * from "./schema/deployment";
 export * from "./schema/webstudio";
 export * from "./schema/prop-meta";
+export * from "./schema/embed-template";
+export * from "./schema/component-meta";
 
 export * from "./instances-utils";
 export * from "./page-utils";

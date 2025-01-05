@@ -1,8 +1,5 @@
 import { MarkdownEmbedIcon } from "@webstudio-is/icons/svg";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/markdown-embed.props";
 
 export const meta: WsComponentMeta = {
