@@ -51,6 +51,7 @@ jobs:
         run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
 
       - name: Prepare for diffing
+        shell: bash
         run: |
           find . -type f -path "./fixtures/*/.webstudio/data.json" -exec sed -i 's|"origin": ".*"|"origin": "https://main.development.webstudio.is"|g' {} +
 
