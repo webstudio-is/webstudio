@@ -36,7 +36,7 @@ const setPageStateFromUrl = () => {
     findPageByIdOrPath(searchParams.get("pageId") ?? "", pages)?.id ??
     pages.homePage.id;
 
-  $selectedPageHash.set(searchParams.get("pageHash") ?? "");
+  $selectedPageHash.set({ hash: searchParams.get("pageHash") ?? "" });
   selectPage(pageId);
 };
 
@@ -94,7 +94,7 @@ export const useSyncPageUrl = () => {
     // Do not navigate on popstate change
     if (
       searchParamsPageId === page.id &&
-      searchParamsPageHash === pageHash &&
+      searchParamsPageHash === pageHash.hash &&
       searParamsMode === builderMode
     ) {
       return;
@@ -104,7 +104,7 @@ export const useSyncPageUrl = () => {
       builderPath({
         pageId: page.id === pages.homePage.id ? undefined : page.id,
         authToken: $authToken.get(),
-        pageHash: pageHash === "" ? undefined : pageHash,
+        pageHash: pageHash.hash === "" ? undefined : pageHash.hash,
         mode: builderMode === "design" ? undefined : builderMode,
       })
     );
@@ -118,13 +118,13 @@ export const useHashLinkSync = () => {
   const pageHash = useStore($selectedPageHash);
 
   useEffect(() => {
-    if (pageHash === "") {
+    if (pageHash.hash === "") {
       // native browser behavior is to do nothing if hash is empty
       // remix scroll to top, we emulate native
       return;
     }
 
-    let elementId = decodeURIComponent(pageHash);
+    let elementId = decodeURIComponent(pageHash.hash);
     if (elementId.startsWith("#")) {
       elementId = elementId.slice(1);
     }
@@ -134,6 +134,7 @@ export const useHashLinkSync = () => {
     if (element !== null) {
       element.scrollIntoView();
     }
+
     // Remix scroll to top if element not found
     // browser do nothing
   }, [pageHash]);
