@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
-import type { Instance, Prop } from "@webstudio-is/sdk";
+import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
 import {
-  type PropMeta,
   showAttribute,
   textContentAttribute,
   collectionComponent,

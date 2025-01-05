@@ -2,7 +2,6 @@ export * from "./remix";
 export * from "./css/index";
 export * from "./core-components";
 export * from "./components/components-utils";
-export { PropMeta } from "./prop-meta";
 export {
   type WsComponentPropsMeta,
   type ComponentState,
