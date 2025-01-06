@@ -257,8 +257,6 @@ export const PropertyLabel = ({
       <Tooltip
         open={isOpen}
         onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
         triggerProps={{
           onClick: (event) => {
             if (event.altKey) {
