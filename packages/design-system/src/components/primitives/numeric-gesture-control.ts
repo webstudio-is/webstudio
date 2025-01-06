@@ -108,30 +108,37 @@ const preventContextMenu = () => {
   };
 };
 
-const scrubTimeout = 300;
+const scrubTimeout = 150;
 
-const addScrubUi = (direction: NumericScrubDirection) => {
+const addScrubUi = () => {
   const className = scrubUI();
-
-  const cursorClassNames = cursorUI({ direction }).toString().split(" ");
-
   const timerId = setTimeout(() => {
     // Fixes Safari hovers during scrubbing
     window.document.documentElement.setAttribute("inert", "true");
-
-    for (const cursorClassName of cursorClassNames) {
-      window.document.documentElement.classList.add(cursorClassName);
-    }
   }, scrubTimeout);
 
   window.document.documentElement.classList.add(className);
 
   return () => {
+    clearTimeout(timerId);
     window.document.documentElement.classList.remove(className);
+    window.document.documentElement.removeAttribute("inert");
+  };
+};
+
+const addCursorUI = (direction: NumericScrubDirection) => {
+  const cursorClassNames = cursorUI({ direction }).toString().split(" ");
+
+  const timerId = setTimeout(() => {
+    for (const cursorClassName of cursorClassNames) {
+      window.document.documentElement.classList.add(cursorClassName);
+    }
+  }, scrubTimeout);
+
+  return () => {
     for (const cursorClassName of cursorClassNames) {
       window.document.documentElement.classList.remove(cursorClassName);
     }
-    window.document.documentElement.removeAttribute("inert");
     clearTimeout(timerId);
   };
 };
@@ -171,23 +178,26 @@ export const numericScrubControl = (
   };
 
   const cleanup = () => {
-    requestAnimationFrame(() => {
-      for (const task of [...cleanupTasks.reverse()]) {
-        task();
-      }
+    for (const task of [...cleanupTasks.reverse()]) {
+      task();
+    }
 
-      if (state.status === "scrubbing") {
-        state.status = "idle";
-        onStatusChange?.("idle");
-      }
-    });
+    if (state.status === "scrubbing") {
+      state.status = "idle";
+      onStatusChange?.("idle");
+    }
   };
+
+  let disposeCursorUI: () => void | undefined;
 
   // Called on ESC key press or in cases of third-party pointer lock exit.
   const handlePointerLockChange = () => {
     if (document.pointerLockElement !== targetNode) {
       cleanup();
+      return;
     }
+
+    disposeCursorUI?.();
   };
 
   // Cannot define `event:` as PointerEvent,
@@ -237,11 +247,13 @@ export const numericScrubControl = (
         onStart?.();
         state.value = getInitialValue();
 
-        disposeOnCleanup(() => addScrubUi(options.direction ?? "horizontal"));
-
         disposeOnCleanup(() =>
           requestPointerLock(state, mouseState, event, targetNode)
         );
+        disposeOnCleanup(() => addScrubUi());
+
+        disposeCursorUI = addCursorUI(options.direction ?? "horizontal");
+        disposeOnCleanup(() => disposeCursorUI);
 
         disposeOnCleanup(() => {
           const abortController = new AbortController();

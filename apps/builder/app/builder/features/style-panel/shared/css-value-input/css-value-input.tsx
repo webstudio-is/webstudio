@@ -212,8 +212,12 @@ const useScrub = ({
 
         // Returning focus that we've moved above
         scrubRef.current?.removeAttribute("tabindex");
-        inputRef.current?.focus();
-        inputRef.current?.select();
+
+        // Otherwise selectionchange event can be triggered after 300-1000ms after focus
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        });
       },
       shouldHandleEvent,
     });
@@ -832,7 +836,7 @@ export const CssValueInput = ({
     inputRef.current.addEventListener(
       "selectionchange",
       () => {
-        if (Date.now() - focusTime < 50) {
+        if (Date.now() - focusTime < 150) {
           inputRef.current?.select();
         }
       },
