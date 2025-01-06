@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
