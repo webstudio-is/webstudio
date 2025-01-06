@@ -52,7 +52,7 @@ const panelStyle = css({
 const DialogContext = createContext<{
   isMaximized: boolean;
   setIsMaximized: (isMaximized: boolean) => void;
-  resize?: "auto" | "none";
+  resize?: "both" | "none";
   draggable?: boolean;
 }>({
   isMaximized: false,
@@ -66,7 +66,7 @@ export const Dialog = ({
   draggable,
   ...props
 }: ComponentProps<typeof Primitive.Dialog> & {
-  resize?: "auto" | "none";
+  resize?: "both" | "none";
   draggable?: boolean;
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -396,8 +396,8 @@ const contentStyle = css(panelStyle, {
   overflow: "hidden",
   variants: {
     resize: {
-      auto: {
-        resize: "auto",
+      both: {
+        resize: "both",
       },
       none: {
         resize: "none",
