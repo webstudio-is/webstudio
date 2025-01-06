@@ -92,13 +92,14 @@ const initPlugins = ({
   plugins: Array<Plugin>;
   signal: AbortSignal;
 }) => {
-  const handleCopy = async (event: ClipboardEvent) => {
+  const handleCopy = (event: ClipboardEvent) => {
     if (validateClipboardEvent(event) === false) {
       return;
     }
 
     for (const { mimeType = defaultMimeType, onCopy } of plugins) {
-      const data = await onCopy?.();
+      const data = onCopy?.();
+
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();
