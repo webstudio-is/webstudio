@@ -368,13 +368,12 @@ const getTextContent = (instanceProps: Record<string, unknown>) => {
 };
 
 const getEditableComponentPlaceholder = (
+  instance: Instance,
   instanceSelector: InstanceSelector,
   instances: Instances,
   metas: Map<string, WsComponentMeta>,
   mode: "editing" | "editable"
 ) => {
-  const instance = instances.get(instanceSelector[0])!;
-
   if (!editablePlaceholderComponents.includes(instance.component)) {
     return;
   }
@@ -498,6 +497,7 @@ export const WebstudioComponentCanvas = forwardRef<
   }
 
   const placeholder = getEditableComponentPlaceholder(
+    instance,
     instanceSelector,
     instances,
     metas,
@@ -558,6 +558,7 @@ export const WebstudioComponentCanvas = forwardRef<
       contentEditable={
         <ContentEditable
           placeholder={getEditableComponentPlaceholder(
+            instance,
             instanceSelector,
             instances,
             metas,
