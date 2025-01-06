@@ -28,11 +28,13 @@ const cursorUI = css({
   variants: {
     direction: {
       horizontal: {
+        cursor: "ew-resize!important",
         "*": {
           cursor: "ew-resize!important",
         },
       },
       vertical: {
+        cursor: "ns-resize!important",
         "*": {
           cursor: "ns-resize!important",
         },
@@ -114,6 +116,9 @@ const addScrubUi = (direction: NumericScrubDirection) => {
   const cursorClassNames = cursorUI({ direction }).toString().split(" ");
 
   const timerId = setTimeout(() => {
+    // Fixes Safari hovers during scrubbing
+    window.document.documentElement.setAttribute("inert", "true");
+
     for (const cursorClassName of cursorClassNames) {
       window.document.documentElement.classList.add(cursorClassName);
     }
@@ -126,6 +131,7 @@ const addScrubUi = (direction: NumericScrubDirection) => {
     for (const cursorClassName of cursorClassNames) {
       window.document.documentElement.classList.remove(cursorClassName);
     }
+    window.document.documentElement.removeAttribute("inert");
     clearTimeout(timerId);
   };
 };
@@ -230,6 +236,9 @@ export const numericScrubControl = (
 
         onStart?.();
         state.value = getInitialValue();
+
+        disposeOnCleanup(() => addScrubUi(options.direction ?? "horizontal"));
+
         disposeOnCleanup(() =>
           requestPointerLock(state, mouseState, event, targetNode)
         );
@@ -247,12 +256,25 @@ export const numericScrubControl = (
             handlePointerLockChange,
             eventOptions
           );
+
+          targetNode.addEventListener(
+            "click",
+            (event) => {
+              // Prevent the click event from firing during scrubbing
+              // Resolves issues with margin scrubbing and opening inputs after scrubbing
+              // Fixes unintended click events triggered during canvas resizing
+              if (state.status === "scrubbing") {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+              }
+            },
+            eventOptions
+          );
+
           return () => {
             abortController.abort();
           };
         });
-
-        disposeOnCleanup(() => addScrubUi(options.direction ?? "horizontal"));
 
         // Pointer event will stop firing on touch after ~300ms because browser starts scrolling the page.
         // restoreUserSelect = setRootStyle(targetNode, "user-select", "none");
@@ -438,6 +460,7 @@ const requestPointerLock = (
           state.cursor.remove();
           state.cursor = undefined;
         }
+
         targetNode.ownerDocument.exitPointerLock();
         clearTimeout(timerId);
       };
