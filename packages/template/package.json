@@ -19,6 +19,7 @@
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318"
   },
   "devDependencies": {

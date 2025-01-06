@@ -68,13 +68,17 @@ const $metas = computed(
       });
     }
     for (const [name, templateMeta] of templates) {
+      const componentMeta = componentMetas.get(name);
       metas.push({
         name,
         category: templateMeta.category ?? "hidden",
         order: templateMeta.order,
-        label: getInstanceLabel({ component: name }, templateMeta),
+        label:
+          templateMeta.label ??
+          componentMeta?.label ??
+          getInstanceLabel({ component: name }, templateMeta),
         description: templateMeta.description,
-        icon: templateMeta.icon ?? componentMetas.get(name)?.icon ?? "",
+        icon: templateMeta.icon ?? componentMeta?.icon ?? "",
       });
     }
     const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
