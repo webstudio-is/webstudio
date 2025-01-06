@@ -156,15 +156,34 @@ const helperStyles = [
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;
+    /* Safari */
+    -webkit-user-select: none;
+    cursor: default;
   }`,
+  `
+  [${idAttribute}][contenteditable] {
+    /* Safari */
+    cursor: initial;
+  }
+  `,
+
   ...helperStylesShared,
 ];
 
 // Find all editable elements and set cursor text inside
 const helperStylesContentEdit = [
   `[${idAttribute}] {
-  user-select: none;
-}`,
+    user-select: none;
+    /* Safari */
+    -webkit-user-select: none;
+    cursor: default;
+  }`,
+  `
+  [${idAttribute}][contenteditable] {
+    /* Safari */
+    cursor: initial;
+  }
+  `,
   ...helperStylesShared,
 ];
 
