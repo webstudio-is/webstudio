@@ -241,7 +241,6 @@
     border-bottom-width: 1px;
     border-left-width: 1px;
     outline-width: 1px;
-    min-height: 20px;
   }
   :where(label.w-input-label) {
     box-sizing: border-box;
