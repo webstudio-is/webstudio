@@ -299,12 +299,12 @@ test("avoid generating style data without styles", () => {
 test("render variable used in prop expression", () => {
   const count = new Variable("count", 1);
   const { props, dataSources } = renderTemplate(
-    <$.Body ws:id="bodyId" data-count={expression`${count}`}></$.Body>
+    <$.Body ws:id="body" data-count={expression`${count}`}></$.Body>
   );
   expect(props).toEqual([
     {
-      id: "bodyId:data-count",
-      instanceId: "bodyId",
+      id: "body:data-count",
+      instanceId: "body",
       name: "data-count",
       type: "expression",
       value: "$ws$dataSource$0",
@@ -314,6 +314,7 @@ test("render variable used in prop expression", () => {
     {
       type: "variable",
       id: "0",
+      scopeInstanceId: "body",
       name: "count",
       value: { type: "number", value: 1 },
     },
@@ -337,6 +338,7 @@ test("render variable used in child expression", () => {
     {
       type: "variable",
       id: "0",
+      scopeInstanceId: "body",
       name: "count",
       value: { type: "number", value: 1 },
     },
@@ -365,12 +367,14 @@ test("compose expression from multiple variables", () => {
     {
       type: "variable",
       id: "0",
+      scopeInstanceId: "body",
       name: "count",
       value: { type: "number", value: 1 },
     },
     {
       type: "variable",
       id: "1",
+      scopeInstanceId: "body",
       name: "step",
       value: { type: "number", value: 2 },
     },
@@ -404,6 +408,7 @@ test("preserve same variable on multiple instances", () => {
     {
       type: "variable",
       id: "0",
+      scopeInstanceId: "body",
       name: "count",
       value: { type: "number", value: 1 },
     },
@@ -414,22 +419,22 @@ test("render variable inside of action", () => {
   const count = new Variable("count", 1);
   const { props, dataSources } = renderTemplate(
     <$.Body
-      ws:id="bodyId"
+      ws:id="body"
       data-count={expression`${count}`}
       onInc={new ActionValue(["step"], expression`${count} = ${count} + step`)}
     ></$.Body>
   );
   expect(props).toEqual([
     {
-      id: "bodyId:data-count",
-      instanceId: "bodyId",
+      id: "body:data-count",
+      instanceId: "body",
       name: "data-count",
       type: "expression",
       value: "$ws$dataSource$0",
     },
     {
-      id: "bodyId:onInc",
-      instanceId: "bodyId",
+      id: "body:onInc",
+      instanceId: "body",
       name: "onInc",
       type: "action",
       value: [
@@ -445,6 +450,7 @@ test("render variable inside of action", () => {
     {
       type: "variable",
       id: "0",
+      scopeInstanceId: "body",
       name: "count",
       value: { type: "number", value: 1 },
     },
