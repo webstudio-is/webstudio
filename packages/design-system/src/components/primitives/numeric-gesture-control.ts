@@ -442,7 +442,7 @@ const requestPointerLock = (
                 </g>
               </svg>`,
                 "application/xml"
-              ).documentElement as unknown as SVGElement);
+              ).documentElement as Element as SVGElement);
 
             cursorNode.style.filter = `drop-shadow(${
               state.direction === "horizontal" ? "0 1px" : "1px 0"
