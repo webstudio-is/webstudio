@@ -15,6 +15,20 @@
  */
 
 import { clamp } from "@react-aria/utils";
+import { css } from "../../stitches.config";
+
+const scrubUI = css({
+  "*": {
+    userSelect: "none!important",
+    touchAction: "none!important",
+  },
+});
+
+const cursorUI = css({
+  "*": {
+    cursor: "ew-resize!important",
+  },
+});
 
 export type NumericScrubDirection = "horizontal" | "vertical";
 
@@ -82,6 +96,22 @@ const preventContextMenu = () => {
   };
 };
 
+const addScrubUi = () => {
+  const className = scrubUI();
+  const cursorClassName = cursorUI();
+  const timerId = setTimeout(() => {
+    window.document.documentElement.classList.add(cursorClassName);
+  }, 300);
+
+  window.document.documentElement.classList.add(className);
+
+  return () => {
+    window.document.documentElement.classList.remove(className);
+    clearTimeout(timerId);
+    window.document.documentElement.classList.remove(cursorClassName);
+  };
+};
+
 export const numericScrubControl = (
   targetNode: HTMLElement | SVGElement,
   options: NumericScrubOptions
@@ -97,7 +127,7 @@ export const numericScrubControl = (
     onStatusChange,
     shouldHandleEvent,
   } = options;
-  const eventNames = ["pointerup", "pointerdown"] as const;
+
   const state: NumericScrubState = {
     // We will read value lazyly in a moment it will be used to avoid having outdated value
     value: -1,
@@ -108,8 +138,8 @@ export const numericScrubControl = (
   };
 
   let exitPointerLock: (() => void) | undefined = undefined;
-  let restoreUserSelect: (() => void) | undefined = undefined;
   let restoreContextMenu: (() => void) | undefined = undefined;
+  let restoreUi: (() => void) | undefined = undefined;
 
   const cleanup = () => {
     targetNode.removeEventListener("pointermove", handleEvent);
@@ -122,10 +152,10 @@ export const numericScrubControl = (
     clearTimeout(state.timerId);
     exitPointerLock?.();
     exitPointerLock = undefined;
-    restoreUserSelect?.();
-    restoreUserSelect = undefined;
     restoreContextMenu?.();
     restoreContextMenu = undefined;
+    restoreUi?.();
+    restoreUi = undefined;
   };
 
   // Cannot define `event:` as PointerEvent,
@@ -142,9 +172,11 @@ export const numericScrubControl = (
 
     switch (type) {
       case "pointerup": {
-        const shouldComponentUpdate =
-          Boolean(state.cursor) && state.status === "scrubbing";
+        const shouldComponentUpdate = state.status === "scrubbing";
+        console.log("pointerup");
+
         cleanup();
+
         if (shouldComponentUpdate) {
           onValueChange?.({
             type: "scrubend",
@@ -153,6 +185,7 @@ export const numericScrubControl = (
             preventDefault: () => event.preventDefault(),
           });
         }
+
         break;
       }
       case "pointerdown": {
@@ -167,16 +200,20 @@ export const numericScrubControl = (
           break;
         }
 
+        console.log("pointerdown");
+
         onStart?.();
         state.value = getInitialValue();
-        state.timerId = setTimeout(async () => {
-          exitPointerLock?.();
-          exitPointerLock = await requestPointerLock(state, event, targetNode);
-        }, 150);
+        // state.timerId = setTimeout(async () => {
+        exitPointerLock?.();
+        exitPointerLock = requestPointerLock(state, event, targetNode);
+        // }, 150);
 
         targetNode.addEventListener("pointermove", handleEvent);
+        restoreUi = addScrubUi();
+
         // Pointer event will stop firing on touch after ~300ms because browser starts scrolling the page.
-        restoreUserSelect = setRootStyle(targetNode, "user-select", "none");
+        // restoreUserSelect = setRootStyle(targetNode, "user-select", "none");
         // In chrome mobile touch simulation, you will get the context menu because tapping and holding
         // results in a right click.
         restoreContextMenu = preventContextMenu();
@@ -229,56 +266,65 @@ export const numericScrubControl = (
         }
         break;
       }
+      case "pointercancel": {
+        console.log("pointercancel");
+        cleanup();
+        break;
+      }
+      case "gotpointercapture": {
+        console.log("gotpointercapture");
+        break;
+      }
+      case "lostpointercapture": {
+        console.log("lostpointercapture");
+        cleanup();
+        break;
+      }
     }
   };
 
+  const abortController = new AbortController();
+  const eventOptions = { signal: abortController.signal };
+
+  const eventNames = [
+    "pointerup",
+    "pointerdown",
+    "pontercancel",
+    "gotpointercapture",
+    "lostpointercapture",
+  ] as const;
   eventNames.forEach((eventName) =>
-    targetNode.addEventListener(eventName, handleEvent)
+    targetNode.addEventListener(eventName, handleEvent, eventOptions)
+  );
+
+  // Prevents dragging of the input content
+  // Dragging breaks the setPointerCapture
+  targetNode.addEventListener(
+    "dragstart",
+    (event) => {
+      event.preventDefault();
+    },
+    eventOptions
   );
 
   return () => {
-    eventNames.forEach((eventName) =>
-      targetNode.removeEventListener(eventName, handleEvent)
-    );
+    abortController.abort();
     cleanup();
   };
 };
 
 // If the same property was set while its already in a temporal state, something is wrong with
 // the logic on call-site and we need to inform the developer.
-const rootStyleTracker = new Map<string, boolean>();
+// const rootStyleTracker = new Map<string, boolean>();
 
-const setRootStyle = (
-  targetNode: HTMLElement | SVGElement,
-  property: string,
-  value: string
-) => {
-  if (rootStyleTracker.has(property)) {
-    throw new Error(
-      "setRootStyle is called while the property is already in a temporal state."
-    );
-  }
-  const root = targetNode.ownerDocument.documentElement;
-  const originalValue = root.style.getPropertyValue(property);
-  root.style.setProperty(property, value);
-  rootStyleTracker.set(property, true);
-  return () => {
-    rootStyleTracker.delete(property);
-    if (originalValue) {
-      root.style.setProperty(property, originalValue);
-      return;
-    }
-    root.style.removeProperty(property);
-  };
-};
-
-const requestPointerLock = async (
+const requestPointerLock = (
   state: NumericScrubState,
   event: PointerEvent,
   targetNode: HTMLElement | SVGElement
 ) => {
   // After ~0.3 seconds starts touch events as page scrolling.
-  const restoreTouchAction = setRootStyle(targetNode, "touch-action", "none");
+  // const restoreTouchAction = setRootStyle(targetNode, "touch-action", "none");
+
   // The pointer lock api nukes the cursor on requestng a pointer lock,
   // creating and managing the visual que of the cursor is thus left to the author
   // we create and append an svg that serves as the visual que of where the cursor currently is
@@ -290,10 +336,10 @@ const requestPointerLock = async (
     // based on https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock is async
     try {
       // unadjustedMovement is a chromium only feature, fixes random movementX|Y jumps on windows
-      await targetNode.requestPointerLock({ unadjustedMovement: true });
+      //await targetNode.requestPointerLock({ unadjustedMovement: true });
     } catch {
       // Some platforms may not support unadjusted movement.
-      await targetNode.requestPointerLock();
+      // await targetNode.requestPointerLock();
     }
 
     const cursorNode = (targetNode.ownerDocument.querySelector(
@@ -325,27 +371,35 @@ const requestPointerLock = async (
         state.cursor.remove();
         state.cursor = undefined;
       }
-      restoreTouchAction();
+      // restoreTouchAction();
       targetNode.ownerDocument.exitPointerLock();
     };
   }
 
   const { pointerId } = event;
+  /*
   const restoreCursor = setRootStyle(
     targetNode,
     "cursor",
     state.direction === "horizontal" ? "ew-resize" : "ns-resize"
   );
+  */
+
+  // Fixes an issue where setPointerCapture disrupts the input cursor if the input has a selection.
+  // To reproduce: click into the input and observe that everything is selected.
+  // Then click again and notice the cursor is not placed correctly.
+  window.getSelection()?.removeAllRanges();
   targetNode.setPointerCapture(pointerId);
+  console.log("setPointerCapture", targetNode.hasPointerCapture(pointerId));
 
   return () => {
-    restoreCursor();
-    restoreTouchAction();
+    // restoreCursor();
+    // restoreTouchAction();
     targetNode.releasePointerCapture(pointerId);
   };
 };
 
-const shouldUsePointerLock = "chrome" in globalThis;
+const shouldUsePointerLock = false; //  "chrome" in globalThis;
 
 // When the value is outside of the range make it come back to the range from the other side
 //   |        | . -> | .      |

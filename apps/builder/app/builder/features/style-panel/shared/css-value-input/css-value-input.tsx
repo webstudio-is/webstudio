@@ -817,6 +817,73 @@ export const CssValueInput = ({
     return () => abort("unmount");
   }, [abort]);
 
+  useEffect(() => {
+    if (inputRef.current === null) {
+      return;
+    }
+
+    const abortController = new AbortController();
+
+    const options = {
+      signal: abortController.signal,
+    };
+
+    let focusValue = null;
+    let focusTime = 0;
+    inputRef.current.addEventListener(
+      "selectionchange",
+      () => {
+        if (Date.now() - focusTime < 50) {
+          console.log("select");
+          inputRef.current?.select();
+        }
+      },
+      options
+    );
+    inputRef.current.addEventListener(
+      "focus",
+      () => {
+        if (inputRef.current === null) {
+          return;
+        }
+        focusValue = inputRef.current.value;
+        focusTime = Date.now();
+      },
+      options
+    );
+    /*
+    inputRef.current.addEventListener(
+      "pointermove",
+      () => {
+        if (Date.now() - focusTime < 200) {
+          console.log("move");
+          inputRef.current?.select();
+          requestAnimationFrame(() => {
+            inputRef.current?.select();
+          });
+        }
+      },
+      options
+    );
+    inputRef.current.addEventListener(
+      "pointerup",
+      () => {
+        if (Date.now() - focusTime < 200) {
+          inputRef.current?.select();
+          requestAnimationFrame(() => {
+            inputRef.current?.select();
+          });
+        }
+      },
+      options
+    );
+    */
+
+    return () => {
+      abortController.abort();
+    };
+  }, [inputRef]);
+
   const inputPropsHandleKeyDown = composeEventHandlers(
     composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
@@ -863,7 +930,7 @@ export const CssValueInput = ({
                 // We are setting the value on focus because we might have removed the var() from the value,
                 // but once focused, we need to show the full value
                 event.target.value = itemToString(value);
-                event.target.select();
+                // event.target.select();
               }
             }}
             autoFocus={autoFocus}

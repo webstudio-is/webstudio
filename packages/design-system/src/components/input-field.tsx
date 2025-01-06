@@ -89,6 +89,7 @@ const containerStyle = css({
   },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
+    outline: "none",
   },
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
@@ -99,6 +100,7 @@ const containerStyle = css({
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
     backgroundColor: theme.colors.backgroundInputDisabled,
   },
+
   variants: {
     variant: {
       chromeless: {
