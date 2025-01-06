@@ -1,11 +1,8 @@
-import { meta as baseMeta } from "./form.ws";
-import {
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-  showAttribute,
-} from "@webstudio-is/react-sdk";
-import { props } from "./__generated__/webhook-form.props";
 import { WebhookFormIcon } from "@webstudio-is/icons/svg";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import { showAttribute } from "@webstudio-is/react-sdk";
+import { props } from "./__generated__/webhook-form.props";
+import { meta as baseMeta } from "./form.ws";
 
 export const meta: WsComponentMeta = {
   ...baseMeta,

@@ -5,7 +5,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { h1, h2, h3, h4, h5, h6 } from "@webstudio-is/sdk/normalize.css";
 import type { Heading } from "./heading";
 import { props } from "./__generated__/heading.props";

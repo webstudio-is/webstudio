@@ -1,7 +1,4 @@
-import {
-  WsEmbedTemplate,
-  type EmbedTemplateProp,
-} from "@webstudio-is/react-sdk";
+import { WsEmbedTemplate, type EmbedTemplateProp } from "@webstudio-is/sdk";
 import JSON5 from "json5";
 import type { JsonObject } from "type-fest";
 import type { JSXElement, JSXOpeningElement, JSXText } from "./parser";

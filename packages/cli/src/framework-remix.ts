@@ -1,10 +1,7 @@
 import { join } from "node:path";
 import { readFile, rm } from "node:fs/promises";
-import {
-  generateRemixRoute,
-  namespaceMeta,
-  WsComponentMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
+import { generateRemixRoute, namespaceMeta } from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";

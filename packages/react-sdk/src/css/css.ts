@@ -15,8 +15,8 @@ import {
   type Props,
   type StyleSourceSelections,
   type Styles,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import type { WsComponentMeta } from "../components/component-meta";
 import { descendantComponent, rootComponent } from "../core-components";
 import { addGlobalRules } from "./global-rules";
 import { kebabCase } from "change-case";

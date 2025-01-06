@@ -12,9 +12,13 @@ import {
   getIndexesWithinAncestors,
   idAttribute,
   componentAttribute,
-  type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
-import { Instance, createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
+import {
+  type WsEmbedTemplate,
+  Instance,
+  createScope,
+  findTreeInstanceIds,
+} from "@webstudio-is/sdk";
 import { computed } from "nanostores";
 import {
   $dataSources,

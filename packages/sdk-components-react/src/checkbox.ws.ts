@@ -4,7 +4,7 @@ import {
   type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { checkbox } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./checkbox";
 import { props } from "./__generated__/checkbox.props";

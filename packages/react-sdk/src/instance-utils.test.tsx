@@ -1,7 +1,6 @@
 import { test, expect } from "vitest";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, WsComponentMeta } from "@webstudio-is/sdk";
 import { getIndexesWithinAncestors } from "./instance-utils";
-import type { WsComponentMeta } from ".";
 
 const getIdValuePair = <T extends { id: string }>(item: T) =>
   [item.id, item] as const;

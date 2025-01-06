@@ -1,8 +1,6 @@
 import { z } from "zod";
-import {
-  WsEmbedTemplate,
-  generateDataFromEmbedTemplate,
-} from "@webstudio-is/react-sdk";
+import { WsEmbedTemplate } from "@webstudio-is/sdk";
+import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import { $registeredComponentMetas } from "../nano-states";
 import {
   findClosestInsertable,

@@ -7,7 +7,7 @@ import type {
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import {
   propsCollapsible,
