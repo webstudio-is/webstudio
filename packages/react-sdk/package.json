@@ -36,7 +36,7 @@
     "@webstudio-is/sdk": "workspace:*",
     "change-case": "^5.4.4",
     "html-tags": "^4.0.0",
-    "nanoid": "^5.0.8"
+    "nanoid": "^5.0.9"
   },
   "exports": {
     ".": {
