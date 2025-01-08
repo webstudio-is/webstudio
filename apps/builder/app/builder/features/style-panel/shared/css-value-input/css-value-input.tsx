@@ -212,8 +212,12 @@ const useScrub = ({
 
         // Returning focus that we've moved above
         scrubRef.current?.removeAttribute("tabindex");
-        inputRef.current?.focus();
-        inputRef.current?.select();
+
+        // Otherwise selectionchange event can be triggered after 300-1000ms after focus
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        });
       },
       shouldHandleEvent,
     });
@@ -817,6 +821,44 @@ export const CssValueInput = ({
     return () => abort("unmount");
   }, [abort]);
 
+  useEffect(() => {
+    if (inputRef.current === null) {
+      return;
+    }
+
+    const abortController = new AbortController();
+
+    const options = {
+      signal: abortController.signal,
+    };
+
+    let focusTime = 0;
+    inputRef.current.addEventListener(
+      "selectionchange",
+      () => {
+        if (Date.now() - focusTime < 150) {
+          inputRef.current?.select();
+        }
+      },
+      options
+    );
+    inputRef.current.addEventListener(
+      "focus",
+      () => {
+        if (inputRef.current === null) {
+          return;
+        }
+
+        focusTime = Date.now();
+      },
+      options
+    );
+
+    return () => {
+      abortController.abort();
+    };
+  }, [inputRef]);
+
   const inputPropsHandleKeyDown = composeEventHandlers(
     composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
@@ -863,7 +905,6 @@ export const CssValueInput = ({
                 // We are setting the value on focus because we might have removed the var() from the value,
                 // but once focused, we need to show the full value
                 event.target.value = itemToString(value);
-                event.target.select();
               }
             }}
             autoFocus={autoFocus}

@@ -24,7 +24,6 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
-  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -41,6 +40,7 @@ import { builderApi } from "~/shared/builder-api";
 
 import {
   findClosestNonTextualContainer,
+  isInstanceDetachable,
   isTreeMatching,
 } from "~/shared/matcher";
 
@@ -73,7 +73,14 @@ export const deleteSelectedInstance = () => {
   const [selectedItem, parentItem] = instancePath;
   const selectedInstanceSelector = selectedItem.instanceSelector;
   const instances = $instances.get();
-  if (isInstanceDetachable(instances, selectedInstanceSelector) === false) {
+  const metas = $registeredComponentMetas.get();
+  if (
+    isInstanceDetachable({
+      metas,
+      instances,
+      instanceSelector: selectedInstanceSelector,
+    }) === false
+  ) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );

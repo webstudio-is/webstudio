@@ -462,7 +462,7 @@ export const EditorDialog = ({
       height={height}
       placement={placement}
       maximizable
-      resize="auto"
+      resize="both"
       content={
         <Grid
           align="stretch"

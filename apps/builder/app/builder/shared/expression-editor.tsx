@@ -550,7 +550,7 @@ export const ValuePreviewDialog = ({
       onOpenChange={onOpenChange}
       title={title}
       content={<ValuePreviewEditor value={value} />}
-      resize="auto"
+      resize="both"
     >
       {children}
     </EditorDialog>

@@ -1,4 +1,4 @@
-import type { Ref, ComponentProps, ReactNode } from "react";
+import type { Ref, ComponentProps, ReactNode, MouseEventHandler } from "react";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import {
   autoUpdate,
@@ -75,6 +75,7 @@ export const Tooltip = forwardRef(
         onOpenChange?.(open);
       },
     });
+    const preventCloseRef = useRef(false);
 
     /**
      * When the mouse leaves Tooltip.Content and hovers over an iframe, the Radix Tooltip stays open.
@@ -89,11 +90,17 @@ export const Tooltip = forwardRef(
      *
      * The simpler solution with fewer side effects is to close the tooltip on mouse leave.
      */
-    const handleMouseEnterComposed: React.MouseEventHandler<HTMLDivElement> = (
-      event
-    ) => {
+    const handleMouseLeave: MouseEventHandler<HTMLDivElement> = (event) => {
       setOpen(false);
       props.onMouseLeave?.(event);
+    };
+
+    const handleOpenChange = (open: boolean) => {
+      if (open === false && preventCloseRef.current) {
+        return;
+      }
+
+      setOpen(open);
     };
 
     // There's no way to prevent a rendered trigger from opening.
@@ -104,7 +111,7 @@ export const Tooltip = forwardRef(
       <TooltipPrimitive.Root
         open={open}
         defaultOpen={defaultOpen}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         delayDuration={delayDuration}
         disableHoverableContent={disableHoverableContent}
       >
@@ -149,7 +156,16 @@ export const Tooltip = forwardRef(
               collisionPadding={8}
               arrowPadding={8}
               {...props}
-              onMouseLeave={handleMouseEnterComposed}
+              onMouseLeave={handleMouseLeave}
+              onPointerDown={() => {
+                // Allows clicking on links or selecting text inside the tooltip.
+                // Prevent closing tooltip on content click.
+                // Can't use preventDefault() because it will prevent selecting code for copy/paste.
+                preventCloseRef.current = true;
+                requestAnimationFrame(() => {
+                  preventCloseRef.current = false;
+                });
+              }}
             >
               {typeof content === "string" ? <Text>{content}</Text> : content}
               <Box css={{ color: "transparent" }}>

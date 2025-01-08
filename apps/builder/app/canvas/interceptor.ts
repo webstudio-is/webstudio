@@ -24,13 +24,14 @@ const isAbsoluteUrl = (href: string) => {
 };
 
 const getSelectedPagePathname = () => {
+  const pages = $pages.get();
   const page = $selectedPage.get();
   const dataSourceVariables = $dataSourceVariables.get();
-  if (page) {
+  if (page && pages) {
     const system = dataSourceVariables.get(page.systemDataSourceId) as
       | undefined
       | System;
-    const tokens = tokenizePathnamePattern(page.path);
+    const tokens = tokenizePathnamePattern(getPagePath(page.id, pages));
     return compilePathnamePattern(tokens, system?.params ?? {});
   }
 };
