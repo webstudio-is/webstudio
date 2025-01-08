@@ -33,7 +33,10 @@ type VimeoPlayerOptions = {
   autopause?: boolean;
   /** Whether to enable the browser to enter picture-in-picture mode automatically when switching tabs or windows, where supported. */
   autopip?: boolean;
-  /** Whether to start playback of the video automatically. This feature might not work on all devices. */
+  /**
+   * Whether to start playback of the video automatically. This feature might not work on all devices.
+   * Some browsers require the `muted` parameter to be set to `true` for autoplay to work.
+   * */
   autoplay?: boolean;
   /** Whether to display the video owner's name. */
   byline?: boolean;

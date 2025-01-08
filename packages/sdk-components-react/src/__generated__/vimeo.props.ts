@@ -414,7 +414,7 @@ export const props: Record<string, PropMeta> = {
   },
   autoplay: {
     description:
-      "Whether to start playback of the video automatically. This feature might not work on all devices.",
+      "Whether to start playback of the video automatically. This feature might not work on all devices.\nSome browsers require the `muted` parameter to be set to `true` for autoplay to work.",
     required: false,
     control: "boolean",
     type: "boolean",
