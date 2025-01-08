@@ -337,6 +337,7 @@ type PlayerProps = Pick<
   status: PlayerStatus;
   renderer: ContextType<typeof ReactSdkContext>["renderer"];
   previewImageUrl?: URL;
+  privacyEnhancedMode: boolean;
   onStatusChange: (status: PlayerStatus) => void;
   onPreviewImageUrlChange: (url?: URL) => void;
 };
@@ -349,6 +350,7 @@ const Player = ({
   autoplay,
   renderer,
   showPreview,
+  privacyEnhancedMode,
   onStatusChange,
   onPreviewImageUrlChange,
 }: PlayerProps) => {
@@ -396,6 +398,7 @@ const Player = ({
         transition: "opacity 1s",
         border: "none",
       }}
+      sandbox={privacyEnhancedMode ? "allow-scripts" : undefined}
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
@@ -471,6 +474,7 @@ export const YouTube = forwardRef<Ref, Props>(
                 status={status}
                 onStatusChange={setStatus}
                 onPreviewImageUrlChange={setPreviewImageUrl}
+                privacyEnhancedMode={privacyEnhancedMode ?? true}
               />
             </>
           )}
