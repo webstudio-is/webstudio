@@ -36,7 +36,7 @@ const initialProps: Array<keyof ComponentProps<typeof YouTube>> = [
   "showRelatedVideos",
   "keyboard",
   "loop",
-  "playsinline",
+  "inline",
   "allowFullscreen",
   "showCaptions",
   "showAnnotations",

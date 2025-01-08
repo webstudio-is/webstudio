@@ -49,7 +49,7 @@ type YouTubePlayerParameters = {
    * Whether to play inline on mobile (not fullscreen).
    * @default false
    */
-  playsinline?: boolean;
+  inline?: boolean;
 
   /**
    * Whether to allow fullscreen mode.
@@ -194,8 +194,8 @@ const getVideoUrl = (options: YouTubePlayerOptions) => {
         parameters.loop = options.loop ? "1" : "0";
         break;
 
-      case "playsinline":
-        parameters.playsinline = options.playsinline ? "1" : "0";
+      case "inline":
+        parameters.playsinline = options.inline ? "1" : "0";
         break;
 
       case "allowFullscreen":
