@@ -543,7 +543,7 @@ export const props: Record<string, PropMeta> = {
     type: "string",
   },
   listId: {
-    description: "ID of the playlist to load.",
+    description: "ID of the playlist to load.\nOriginal parameter: `list`",
     required: false,
     control: "text",
     type: "string",
@@ -586,6 +586,14 @@ export const props: Record<string, PropMeta> = {
     type: "string",
   },
   prefix: { required: false, control: "text", type: "string" },
+  privacyEnhancedMode: {
+    description:
+      "The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.\nhttps://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
   referrer: {
