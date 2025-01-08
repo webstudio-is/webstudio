@@ -1,4 +1,3 @@
-import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -15,16 +14,9 @@ import {
 } from "../components";
 
 const Component = () => {
-  let [selectValue, set$selectValue] = useVariableState<any>("");
   return (
     <Box className={"w-box"}>
-      <Select
-        value={selectValue}
-        onValueChange={(value: any) => {
-          selectValue = value;
-          set$selectValue(selectValue);
-        }}
-      >
+      <Select>
         <SelectTrigger className={"w-select-trigger w-select-trigger-1"}>
           <SelectValue placeholder={"Theme"} className={"w-value"} />
         </SelectTrigger>
@@ -37,7 +29,7 @@ const Component = () => {
               <SelectItemIndicator className={"w-indicator w-indicator-1"}>
                 <HtmlEmbed
                   code={
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
+                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.091" d="m13.636 3.667-8 8L2 8.03"/></svg>'
                   }
                   className={"w-html-embed"}
                 />
@@ -53,7 +45,7 @@ const Component = () => {
               <SelectItemIndicator className={"w-indicator w-indicator-2"}>
                 <HtmlEmbed
                   code={
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
+                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.091" d="m13.636 3.667-8 8L2 8.03"/></svg>'
                   }
                   className={"w-html-embed"}
                 />
@@ -69,7 +61,7 @@ const Component = () => {
               <SelectItemIndicator className={"w-indicator w-indicator-3"}>
                 <HtmlEmbed
                   code={
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
+                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.091" d="m13.636 3.667-8 8L2 8.03"/></svg>'
                   }
                   className={"w-html-embed"}
                 />
@@ -96,16 +88,6 @@ const Story = {
         <style>
           {`
 @media all {
-  :where(body.w-body) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    margin: 0
-  }
   :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -186,6 +168,43 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
+  :where(div.w-html-embed) {
+    display: contents;
+    white-space: normal;
+    white-space-collapse: collapse
+  }
+  :where(div.w-select-content) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
+  :where(div.w-select-item) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
+  :where(span.w-indicator) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
+  :where(span.w-item-text) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
   :where(button.w-select-trigger) {
     font-family: inherit;
     font-size: 100%;
@@ -210,42 +229,7 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-select-content) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
   :where(div.w-select-viewport) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(div.w-select-item) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(span.w-indicator) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(div.w-html-embed) {
-    display: contents
-  }
-  :where(span.w-item-text) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -260,16 +244,16 @@ const Story = {
     height: 2.5rem;
     width: 100%;
     align-items: center;
-    justify-content: space-between;
+    justify-content: between;
     border-top-left-radius: 0.375rem;
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
     border-bottom-left-radius: 0.375rem;
-    background-color: rgba(255, 255, 255, 0.8);
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    background-color: rgba(255, 255, 255, 1);
     padding-top: 0.5rem;
+    padding-right: 0.75rem;
     padding-bottom: 0.5rem;
+    padding-left: 0.75rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
     border: 1px solid rgba(226, 232, 240, 1)
@@ -281,10 +265,9 @@ const Story = {
     cursor: not-allowed;
     opacity: 0.5
   }
-  .w-select-trigger-1:focus {
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
-    outline: 2px solid transparent
+  .w-select-trigger-1:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    outline: medium none currentcolor
   }
   .w-select-content-1 {
     position: relative;
@@ -320,16 +303,15 @@ const Story = {
     border-bottom-right-radius: 0.375rem;
     border-bottom-left-radius: 0.375rem;
     padding-top: 0.375rem;
+    padding-right: 0.5rem;
     padding-bottom: 0.375rem;
     padding-left: 2rem;
-    padding-right: 0.5rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    outline-offset: 2px;
-    outline: 2px solid transparent
+    outline: medium none currentcolor
   }
   .w-select-item-1:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-select-item-1[data-disabled] {
@@ -358,16 +340,15 @@ const Story = {
     border-bottom-right-radius: 0.375rem;
     border-bottom-left-radius: 0.375rem;
     padding-top: 0.375rem;
+    padding-right: 0.5rem;
     padding-bottom: 0.375rem;
     padding-left: 2rem;
-    padding-right: 0.5rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    outline-offset: 2px;
-    outline: 2px solid transparent
+    outline: medium none currentcolor
   }
   .w-select-item-2:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-select-item-2[data-disabled] {
@@ -396,16 +377,15 @@ const Story = {
     border-bottom-right-radius: 0.375rem;
     border-bottom-left-radius: 0.375rem;
     padding-top: 0.375rem;
+    padding-right: 0.5rem;
     padding-bottom: 0.375rem;
     padding-left: 2rem;
-    padding-right: 0.5rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    outline-offset: 2px;
-    outline: 2px solid transparent
+    outline: medium none currentcolor
   }
   .w-select-item-3:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-select-item-3[data-disabled] {

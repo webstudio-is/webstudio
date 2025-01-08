@@ -1,24 +1,25 @@
+import { cwd } from "node:process";
 import { dirname, join } from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { kebabCase } from "change-case";
 import {
   type Instances,
   type Instance,
   type Scope,
-  type WsComponentMeta,
   createScope,
   parseComponentName,
   getStyleDeclKey,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   generateCss,
-  generateDataFromEmbedTemplate,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
+  namespaceMeta,
 } from "@webstudio-is/react-sdk";
-import * as baseMetasExports from "@webstudio-is/sdk-components-react/metas";
+import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
 
-const baseMetas = new Map(Object.entries(baseMetasExports));
+const BASE_NAMESPACE = "@webstudio-is/sdk-components-react";
 
 const generateComponentImports = ({
   scope,
@@ -33,19 +34,13 @@ const generateComponentImports = ({
     string,
     Set<[shortName: string, componentName: string]>
   >();
-  const BASE_NAMESPACE = "@webstudio-is/sdk-components-react";
 
   for (const component of components) {
     const parsed = parseComponentName(component);
-    let [namespace] = parsed;
+    let [namespace = BASE_NAMESPACE] = parsed;
     const [_namespace, shortName] = parsed;
-    if (namespace === undefined) {
-      // use base as fallback namespace and consider remix overrides
-      if (metas.has(shortName)) {
-        namespace = "../components";
-      } else {
-        namespace = BASE_NAMESPACE;
-      }
+    if (metas.has(shortName)) {
+      namespace = "../components";
     }
     if (namespaces.has(namespace) === false) {
       namespaces.set(
@@ -61,7 +56,7 @@ const generateComponentImports = ({
     const specifiers = Array.from(componentsSet)
       .map(
         ([shortName, component]) =>
-          `${component} as ${scope.getName(component, shortName)}`
+          `${shortName} as ${scope.getName(component, shortName)}`
       )
       .join(", ");
     componentImports += `import { ${specifiers} } from "${namespace}";\n`;
@@ -96,25 +91,22 @@ export { Story as ${name} }
 `;
 
 export const generateStories = async () => {
-  const metasModule = join(process.cwd(), "src/metas.ts");
+  const packageFile = await readFile(join(cwd(), "package.json"), "utf8");
+  const packageJson = JSON.parse(packageFile);
+  const templatesModule = join(cwd(), "src/templates.ts");
+  const templates = new Map<string, TemplateMeta>(
+    Object.entries(await import(templatesModule))
+  );
+  const metasModule = join(cwd(), "src/metas.ts");
   const metas = new Map<string, WsComponentMeta>(
     Object.entries(await import(metasModule))
   );
-  const storiesDir = join(dirname(metasModule), "__generated__");
+  const storiesDir = join(dirname(templatesModule), "__generated__");
   await mkdir(storiesDir, { recursive: true });
 
-  for (const [name, meta] of metas) {
-    if (meta.template === undefined) {
-      continue;
-    }
+  for (const [name, meta] of templates) {
     const rootInstanceId = "root";
-    let id = 0;
-    const generateStableId = () => (++id).toString();
-    const data = generateDataFromEmbedTemplate(
-      meta.template,
-      metas,
-      generateStableId
-    );
+    const data = renderTemplate(meta.template);
     const instances: Instances = new Map([
       [
         rootInstanceId,
@@ -125,30 +117,48 @@ export const generateStories = async () => {
           children: data.children,
         },
       ],
-      ...data.instances.map(
-        (instance) =>
-          [instance.id, instance] satisfies [Instance["id"], Instance]
-      ),
+      ...data.instances.map((instance) => [instance.id, instance] as const),
     ]);
     const props = new Map(data.props.map((prop) => [prop.id, prop]));
     const breakpoints = new Map(
       data.breakpoints.map((breakpoint) => [breakpoint.id, breakpoint])
     );
     const components = new Set<Instance["component"]>();
-    const usedMetas = new Map<Instance["component"], WsComponentMeta>();
-    const bodyMeta = baseMetas.get("Body");
-    // add body styles for stories
-    if (bodyMeta) {
-      usedMetas.set("Body", bodyMeta);
-    }
+    const namespaces: string[] = [];
     for (const instance of instances.values()) {
+      const [namespace = BASE_NAMESPACE] = parseComponentName(
+        instance.component
+      );
       components.add(instance.component);
-      const meta =
-        metas.get(instance.component) ?? baseMetas.get(instance.component);
-      if (meta) {
-        usedMetas.set(instance.component, meta);
+      namespaces.push(namespace);
+    }
+    const usedMetas = new Map<string, WsComponentMeta>();
+    for (const namespace of namespaces) {
+      let namespaceMetas;
+      if (namespace === packageJson.name) {
+        namespaceMetas = metas;
+      } else {
+        const metasUrl = import.meta.resolve(
+          `${namespace}/metas`,
+          templatesModule
+        );
+        namespaceMetas = new Map(Object.entries(await import(metasUrl)));
+      }
+      for (let [name, meta] of namespaceMetas) {
+        if (namespace !== BASE_NAMESPACE) {
+          name = `${namespace}:${name}`;
+          meta = namespaceMeta(
+            meta as WsComponentMeta,
+            namespace,
+            new Set(metas.keys())
+          );
+        }
+        if (components.has(name)) {
+          usedMetas.set(name, meta as WsComponentMeta);
+        }
       }
     }
+
     const { cssText, classes } = generateCss({
       instances,
       props,

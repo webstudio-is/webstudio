@@ -26,7 +26,7 @@ const Component = () => {
               <Box className={"w-box w-icon-container"}>
                 <HtmlEmbed
                   code={
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
+                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>'
                   }
                   className={"w-html-embed"}
                 />
@@ -44,7 +44,7 @@ const Component = () => {
               <Box className={"w-box w-icon-container-1"}>
                 <HtmlEmbed
                   code={
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
+                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>'
                   }
                   className={"w-html-embed"}
                 />
@@ -64,7 +64,7 @@ const Component = () => {
               <Box className={"w-box w-icon-container-2"}>
                 <HtmlEmbed
                   code={
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
+                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>'
                   }
                   className={"w-html-embed"}
                 />
@@ -93,16 +93,6 @@ const Story = {
         <style>
           {`
 @media all {
-  :where(body.w-body) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    margin: 0
-  }
   :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -183,6 +173,20 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
+  :where(div.w-html-embed) {
+    display: contents;
+    white-space: normal;
+    white-space-collapse: collapse
+  }
+  :where(div.w-text) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em
+  }
   :where(div.w-accordion) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -191,7 +195,7 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-item) {
+  :where(div.w-item-content) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -209,6 +213,14 @@ const Story = {
     margin-top: 0px;
     margin-bottom: 0px
   }
+  :where(div.w-item) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
   :where(button.w-item-trigger) {
     font-family: inherit;
     font-size: 100%;
@@ -220,26 +232,6 @@ const Story = {
     border: 0px solid rgba(226, 232, 240, 1);
     margin: 0;
     padding: 0px
-  }
-  :where(div.w-text) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 1em
-  }
-  :where(div.w-html-embed) {
-    display: contents
-  }
-  :where(div.w-item-content) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
   }
 }
 @media all {
@@ -253,34 +245,43 @@ const Story = {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
-    flex-basis: 0%;
+    flex-basis: 0;
     align-items: center;
-    justify-content: space-between;
+    justify-content: between;
     padding-top: 1rem;
+    padding-right: 0;
     padding-bottom: 1rem;
+    padding-left: 0;
     font-weight: 500;
     --accordion-trigger-icon-transform: 0deg
   }
   .w-item-trigger-1:hover {
     text-decoration-line: underline
   }
-  .w-item-trigger-1[data-state=open] {
+  .w-item-trigger-1[data-state="open"] {
     --accordion-trigger-icon-transform: 180deg
   }
   .w-icon-container {
-    rotate: var(--accordion-trigger-icon-transform);
+    rotate: --accordion-trigger-icon-transform;
     height: 1rem;
     width: 1rem;
-    flex-grow: 0;
+    flex-shrink: 0;
     transition-property: all;
+    transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms
+    transition-delay: 0s;
+    transition-behavior: normal
   }
   .w-item-content-1 {
     overflow-x: hidden;
     overflow-y: hidden;
     font-size: 0.875rem;
     line-height: 1.25rem;
+    transition-property: all;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: 0s;
+    transition-behavior: normal;
     padding-bottom: 1rem
   }
   .w-item-2 {
@@ -293,34 +294,43 @@ const Story = {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
-    flex-basis: 0%;
+    flex-basis: 0;
     align-items: center;
-    justify-content: space-between;
+    justify-content: between;
     padding-top: 1rem;
+    padding-right: 0;
     padding-bottom: 1rem;
+    padding-left: 0;
     font-weight: 500;
     --accordion-trigger-icon-transform: 0deg
   }
   .w-item-trigger-2:hover {
     text-decoration-line: underline
   }
-  .w-item-trigger-2[data-state=open] {
+  .w-item-trigger-2[data-state="open"] {
     --accordion-trigger-icon-transform: 180deg
   }
   .w-icon-container-1 {
-    rotate: var(--accordion-trigger-icon-transform);
+    rotate: --accordion-trigger-icon-transform;
     height: 1rem;
     width: 1rem;
-    flex-grow: 0;
+    flex-shrink: 0;
     transition-property: all;
+    transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms
+    transition-delay: 0s;
+    transition-behavior: normal
   }
   .w-item-content-2 {
     overflow-x: hidden;
     overflow-y: hidden;
     font-size: 0.875rem;
     line-height: 1.25rem;
+    transition-property: all;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: 0s;
+    transition-behavior: normal;
     padding-bottom: 1rem
   }
   .w-item-3 {
@@ -333,34 +343,43 @@ const Story = {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
-    flex-basis: 0%;
+    flex-basis: 0;
     align-items: center;
-    justify-content: space-between;
+    justify-content: between;
     padding-top: 1rem;
+    padding-right: 0;
     padding-bottom: 1rem;
+    padding-left: 0;
     font-weight: 500;
     --accordion-trigger-icon-transform: 0deg
   }
   .w-item-trigger-3:hover {
     text-decoration-line: underline
   }
-  .w-item-trigger-3[data-state=open] {
+  .w-item-trigger-3[data-state="open"] {
     --accordion-trigger-icon-transform: 180deg
   }
   .w-icon-container-2 {
-    rotate: var(--accordion-trigger-icon-transform);
+    rotate: --accordion-trigger-icon-transform;
     height: 1rem;
     width: 1rem;
-    flex-grow: 0;
+    flex-shrink: 0;
     transition-property: all;
+    transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms
+    transition-delay: 0s;
+    transition-behavior: normal
   }
   .w-item-content-3 {
     overflow-x: hidden;
     overflow-y: hidden;
     font-size: 0.875rem;
     line-height: 1.25rem;
+    transition-property: all;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: 0s;
+    transition-behavior: normal;
     padding-bottom: 1rem
   }
 }

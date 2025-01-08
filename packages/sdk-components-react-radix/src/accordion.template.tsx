@@ -50,22 +50,22 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
             }
           `}
         >
-          {new PlaceholderValue(triggerText)}
+          <$.Text>{new PlaceholderValue(triggerText)}</$.Text>
+          <$.Box
+            ws:label="Icon Container"
+            // h-4 w-4 shrink-0 transition-transform duration-200
+            ws:style={css`
+              rotate: --accordion-trigger-icon-transform;
+              height: ${height[4]};
+              width: ${width[4]};
+              flex-shrink: 0;
+              transition: ${transition.all};
+              transition-duration: 200ms;
+            `}
+          >
+            <$.HtmlEmbed ws:label="Chevron Icon" code={ChevronDownIcon} />
+          </$.Box>
         </radix.AccordionTrigger>
-        <$.Box
-          ws:label="Icon Container"
-          // h-4 w-4 shrink-0 transition-transform duration-200
-          ws:style={css`
-            rotate: --accordion-trigger-icon-transform;
-            height: ${height[4]};
-            width: ${width[4]};
-            flex-shrink: 0;
-            transition: ${transition.all};
-            transition-duration: 200ms;
-          `}
-        >
-          <$.HtmlEmbed ws:label="Chevron Icon" code={ChevronDownIcon} />
-        </$.Box>
       </radix.AccordionHeader>
       <radix.AccordionContent
         // overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down
