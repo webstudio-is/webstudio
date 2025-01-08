@@ -160,7 +160,10 @@ export const generateCss = ({
     let descendantSuffix = "";
     // render selector component as descendant selector
     const instance = instances.get(instanceId);
-    if (instance?.component === descendantComponent) {
+    if (instance === undefined) {
+      continue;
+    }
+    if (instance.component === descendantComponent) {
       const parentId = parentIdByInstanceId.get(instanceId);
       const descendantSelector = descendantSelectorByInstanceId.get(instanceId);
       if (parentId && descendantSelector) {
@@ -168,9 +171,9 @@ export const generateCss = ({
         instanceId = parentId;
       }
     }
-    const meta = instance ? componentMetas.get(instance.component) : undefined;
-    const baseName =
-      instance?.label ?? meta?.label ?? instance?.component ?? instanceId;
+    const meta = componentMetas.get(instance.component);
+    const [_namespace, shortName] = parseComponentName(instance.component);
+    const baseName = instance.label ?? meta?.label ?? shortName;
     const className = `w-${scope.getName(instanceId, baseName)}`;
     if (atomic === false) {
       let classList = classes.get(instanceId);

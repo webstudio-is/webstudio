@@ -11,7 +11,7 @@ export const Checkbox = forwardRef<
   // radix checked has complex named type which cannot be parsed
   // cast to boolean
   Omit<ComponentPropsWithRef<typeof Root>, "checked" | "defaultChecked"> & {
-    checked: boolean;
+    checked?: boolean;
     defaultChecked?: boolean;
   }
 >(({ checked, defaultChecked, ...props }, ref) => {

@@ -1,4 +1,3 @@
-import { useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -12,17 +11,9 @@ import {
 } from "../components";
 
 const Component = () => {
-  let [radioGroupValue, set$radioGroupValue] = useVariableState<any>("");
   return (
     <Box className={"w-box"}>
-      <RadioGroup
-        value={radioGroupValue}
-        onValueChange={(value: any) => {
-          radioGroupValue = value;
-          set$radioGroupValue(radioGroupValue);
-        }}
-        className={"w-radio-group w-radio-group-1"}
-      >
+      <RadioGroup className={"w-radio-group w-radio-group-1"}>
         <Label className={"w-label w-label-1"}>
           <RadioGroupItem
             value={"default"}
@@ -31,7 +22,7 @@ const Component = () => {
             <RadioGroupIndicator className={"w-radio-group-indicator"}>
               <HtmlEmbed
                 code={
-                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
+                  '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>'
                 }
                 className={"w-html-embed"}
               />
@@ -47,7 +38,7 @@ const Component = () => {
             <RadioGroupIndicator className={"w-radio-group-indicator"}>
               <HtmlEmbed
                 code={
-                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
+                  '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>'
                 }
                 className={"w-html-embed"}
               />
@@ -63,7 +54,7 @@ const Component = () => {
             <RadioGroupIndicator className={"w-radio-group-indicator"}>
               <HtmlEmbed
                 code={
-                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
+                  '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>'
                 }
                 className={"w-html-embed"}
               />
@@ -87,16 +78,6 @@ const Story = {
         <style>
           {`
 @media all {
-  :where(body.w-body) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    margin: 0
-  }
   :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -177,6 +158,28 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
+  :where(div.w-html-embed) {
+    display: contents;
+    white-space: normal;
+    white-space-collapse: collapse
+  }
+  :where(div.w-text) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em
+  }
+  :where(label.w-label) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
   :where(div.w-radio-group) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -185,7 +188,7 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(label.w-label) {
+  :where(span.w-radio-group-indicator) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -205,26 +208,6 @@ const Story = {
     margin: 0;
     padding: 0px
   }
-  :where(span.w-radio-group-indicator) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(div.w-html-embed) {
-    display: contents
-  }
-  :where(div.w-text) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 1em
-  }
 }
 @media all {
   .w-radio-group-1 {
@@ -240,7 +223,7 @@ const Story = {
     column-gap: 0.5rem
   }
   .w-radio-group-item-1 {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1/1;
     height: 1rem;
     width: 1rem;
     border-top-left-radius: 9999px;
@@ -255,9 +238,8 @@ const Story = {
     opacity: 0.5
   }
   .w-radio-group-item-1:focus-visible {
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
-    outline: 2px solid transparent
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    outline: medium none currentcolor
   }
   .w-label-2 {
     display: flex;
@@ -266,7 +248,7 @@ const Story = {
     column-gap: 0.5rem
   }
   .w-radio-group-item-2 {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1/1;
     height: 1rem;
     width: 1rem;
     border-top-left-radius: 9999px;
@@ -281,9 +263,8 @@ const Story = {
     opacity: 0.5
   }
   .w-radio-group-item-2:focus-visible {
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
-    outline: 2px solid transparent
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    outline: medium none currentcolor
   }
   .w-label-3 {
     display: flex;
@@ -292,7 +273,7 @@ const Story = {
     column-gap: 0.5rem
   }
   .w-radio-group-item-3 {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1/1;
     height: 1rem;
     width: 1rem;
     border-top-left-radius: 9999px;
@@ -307,9 +288,8 @@ const Story = {
     opacity: 0.5
   }
   .w-radio-group-item-3:focus-visible {
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
-    outline: 2px solid transparent
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    outline: medium none currentcolor
   }
 }
       `}

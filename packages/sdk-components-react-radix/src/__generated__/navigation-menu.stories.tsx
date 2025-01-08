@@ -28,7 +28,7 @@ const Component = () => {
                 <Box className={"w-box w-icon-container"}>
                   <HtmlEmbed
                     code={
-                      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
+                      '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>'
                     }
                     className={"w-html-embed"}
                   />
@@ -94,7 +94,7 @@ const Component = () => {
                 <Box className={"w-box w-icon-container-1"}>
                   <HtmlEmbed
                     code={
-                      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
+                      '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>'
                     }
                     className={"w-html-embed"}
                   />
@@ -218,16 +218,6 @@ const Story = {
         <style>
           {`
 @media all {
-  :where(body.w-body) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    margin: 0
-  }
   :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -308,38 +298,6 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(div.w-navigation-menu) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(div.w-menu-list) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(div.w-menu-item) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(div.w-menu-trigger) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
   :where(button.w-button) {
     font-family: inherit;
     font-size: 100%;
@@ -356,6 +314,28 @@ const Story = {
     text-transform: none;
     margin: 0
   }
+  :where(div.w-html-embed) {
+    display: contents;
+    white-space: normal;
+    white-space-collapse: collapse
+  }
+  :where(a.w-link) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    display: inline-block
+  }
+  :where(p.w-paragraph) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
   :where(div.w-text) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -365,10 +345,23 @@ const Story = {
     outline-width: 1px;
     min-height: 1em
   }
-  :where(div.w-html-embed) {
-    display: contents
+  :where(div.w-navigation-menu) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
   }
   :where(div.w-menu-content) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
+  :where(div.w-menu-item) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -384,17 +377,15 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
-  :where(a.w-link) {
+  :where(div.w-menu-list) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 1em;
-    display: inline-block
+    outline-width: 1px
   }
-  :where(p.w-paragraph) {
+  :where(div.w-menu-trigger) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -420,20 +411,20 @@ const Story = {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
-    flex-basis: 0%;
+    flex-basis: 0;
     list-style-type: none;
     align-items: center;
     justify-content: center;
     row-gap: 0.25rem;
     column-gap: 0.25rem;
-    margin: 0px;
-    padding: 0px
+    margin: 0;
+    padding: 0
   }
   .w-button-1 {
-    background-color: transparent;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    background-color: transparent;
     border-top-left-radius: 0.375rem;
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
@@ -441,12 +432,13 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.25rem;
     font-weight: 500;
-    color: currentColor;
-    height: 2.5rem;
-    padding-left: 0.75rem;
+    height: 2.25rem;
+    padding-top: 0;
     padding-right: 0.75rem;
+    padding-bottom: 0;
+    padding-left: 0.75rem;
     --navigation-menu-trigger-icon-transform: 0deg;
-    border: 0px solid rgba(226, 232, 240, 1)
+    border: 0 solid rgba(226, 232, 240, 1)
   }
   .w-button-1:disabled {
     pointer-events: none;
@@ -454,14 +446,14 @@ const Story = {
   }
   .w-button-1:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
   .w-button-1:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
-  .w-button-1[data-state=open] {
+  .w-button-1[data-state="open"] {
     --navigation-menu-trigger-icon-transform: 180deg
   }
   .w-icon-container {
@@ -469,15 +461,17 @@ const Story = {
     rotate: var(--navigation-menu-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
-    flex-grow: 0;
+    flex-shrink: 0;
     transition-property: all;
+    transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms
+    transition-delay: 0s;
+    transition-behavior: normal
   }
   .w-menu-content-1 {
-    left: 0px;
-    top: 0px;
-    position: absolute;
+    left: 0;
+    top: 0;
+    positon: absolute;
     width: max-content;
     padding: 1rem
   }
@@ -517,22 +511,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-1:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-1:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-1 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-1 {
     overflow-x: hidden;
@@ -543,7 +536,7 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-link-2 {
     color: inherit;
@@ -559,22 +552,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-2:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-2:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-2 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-2 {
     overflow-x: hidden;
@@ -585,7 +577,7 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-link-3 {
     color: inherit;
@@ -601,22 +593,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-3:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-3:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-3 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-3 {
     overflow-x: hidden;
@@ -627,13 +618,13 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-button-2 {
-    background-color: transparent;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    background-color: transparent;
     border-top-left-radius: 0.375rem;
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
@@ -641,12 +632,13 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.25rem;
     font-weight: 500;
-    color: currentColor;
-    height: 2.5rem;
-    padding-left: 0.75rem;
+    height: 2.25rem;
+    padding-top: 0;
     padding-right: 0.75rem;
+    padding-bottom: 0;
+    padding-left: 0.75rem;
     --navigation-menu-trigger-icon-transform: 0deg;
-    border: 0px solid rgba(226, 232, 240, 1)
+    border: 0 solid rgba(226, 232, 240, 1)
   }
   .w-button-2:disabled {
     pointer-events: none;
@@ -654,14 +646,14 @@ const Story = {
   }
   .w-button-2:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
   .w-button-2:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
-  .w-button-2[data-state=open] {
+  .w-button-2[data-state="open"] {
     --navigation-menu-trigger-icon-transform: 180deg
   }
   .w-icon-container-1 {
@@ -669,23 +661,24 @@ const Story = {
     rotate: var(--navigation-menu-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
-    flex-grow: 0;
+    flex-shrink: 0;
     transition-property: all;
+    transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms
+    transition-delay: 0s;
+    transition-behavior: normal
   }
   .w-menu-content-2 {
-    left: 0px;
-    top: 0px;
-    position: absolute;
+    left: 0;
+    top: 0;
+    positon: absolute;
     width: max-content;
     padding: 1rem
   }
   .w-content-1 {
     display: flex;
     row-gap: 1rem;
-    column-gap: 1rem;
-    padding: 0px
+    column-gap: 1rem
   }
   .w-flex-column-1 {
     width: 16rem;
@@ -708,22 +701,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-4:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-4:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-4 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-4 {
     overflow-x: hidden;
@@ -734,7 +726,7 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-link-5 {
     color: inherit;
@@ -750,22 +742,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-5:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-5:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-5 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-5 {
     overflow-x: hidden;
@@ -776,7 +767,7 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-link-6 {
     color: inherit;
@@ -792,22 +783,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-6:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-6:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-6 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-6 {
     overflow-x: hidden;
@@ -818,7 +808,7 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-flex-column-2 {
     width: 16rem;
@@ -841,22 +831,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-7:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-7:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-7 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-7 {
     overflow-x: hidden;
@@ -867,7 +856,7 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-link-8 {
     color: inherit;
@@ -883,22 +872,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-8:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-8:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-8 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-8 {
     overflow-x: hidden;
@@ -909,7 +897,7 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-link-9 {
     color: inherit;
@@ -925,22 +913,21 @@ const Story = {
     border-bottom-left-radius: 0.375rem;
     line-height: 1;
     text-decoration-line: none;
-    outline-offset: 2px;
-    outline: 2px solid transparent;
+    outline: medium none currentcolor;
     padding: 0.75rem
   }
   .w-link-9:focus {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-link-9:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-text-9 {
     font-size: 0.875rem;
-    line-height: 1;
-    font-weight: 500
+    font-weight: 500;
+    line-height: 1
   }
   .w-paragraph-9 {
     overflow-x: hidden;
@@ -951,13 +938,13 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.375;
     color: rgba(100, 116, 139, 1);
-    margin: 0px
+    margin: 0
   }
   .w-link-10 {
-    background-color: transparent;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    background-color: transparent;
     border-top-left-radius: 0.375rem;
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
@@ -965,12 +952,14 @@ const Story = {
     font-size: 0.875rem;
     line-height: 1.25rem;
     font-weight: 500;
-    color: currentColor;
-    height: 2.5rem;
-    padding-left: 0.75rem;
+    height: 2.25rem;
+    padding-top: 0;
     padding-right: 0.75rem;
+    padding-bottom: 0;
+    padding-left: 0.75rem;
     text-decoration-line: none;
-    border: 0px solid rgba(226, 232, 240, 1)
+    color: currentcolor;
+    border: 0 solid rgba(226, 232, 240, 1)
   }
   .w-link-10:disabled {
     pointer-events: none;
@@ -978,16 +967,16 @@ const Story = {
   }
   .w-link-10:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
   .w-link-10:hover {
-    background-color: rgba(241, 245, 249, 0.9);
+    background-color: rgba(241, 245, 249, 1);
     color: rgba(15, 23, 42, 1)
   }
   .w-viewport-container {
     position: absolute;
-    left: 0px;
+    left: 0;
     top: 100%;
     display: flex;
     justify-content: center

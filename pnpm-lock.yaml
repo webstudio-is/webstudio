@@ -1783,9 +1783,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:^
         version: link:../sdk
-      '@webstudio-is/sdk-components-react':
+      '@webstudio-is/template':
         specifier: workspace:^
-        version: link:../sdk-components-react
+        version: link:../template
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
