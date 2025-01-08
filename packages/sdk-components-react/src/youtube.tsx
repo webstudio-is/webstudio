@@ -398,7 +398,11 @@ const Player = ({
         transition: "opacity 1s",
         border: "none",
       }}
-      sandbox={privacyEnhancedMode ? "allow-scripts" : undefined}
+      sandbox={
+        privacyEnhancedMode
+          ? "allow-same-origin allow-scripts allow-forms"
+          : undefined
+      }
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
