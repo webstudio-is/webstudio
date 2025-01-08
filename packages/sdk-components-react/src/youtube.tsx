@@ -185,7 +185,9 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
 
   const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
 
-  const parameters: Record<string, string | undefined> = {};
+  const parameters: Record<string, string | undefined> = {
+    mute: "1",
+  };
 
   for (const optionsKey of optionsKeys) {
     switch (optionsKey) {
