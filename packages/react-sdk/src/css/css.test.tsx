@@ -21,9 +21,8 @@ const generateAllCss = (config: Omit<CssConfig, "atomic">) => {
 
 test("generate css for one instance with two tokens", () => {
   const { cssText, atomicCssText, atomicClasses } = generateAllCss({
+    ...renderJsx(<$.Box ws:id="box"></$.Box>),
     assets: new Map(),
-    instances: new Map(),
-    props: new Map(),
     breakpoints: toMap<Breakpoint>([{ id: "base", label: "" }]),
     styleSourceSelections: new Map([
       ["box", { instanceId: "box", values: ["token", "local"] }],
