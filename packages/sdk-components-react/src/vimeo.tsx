@@ -250,6 +250,7 @@ type PlayerProps = Pick<
   "loading" | "autoplay" | "showPreview"
 > & {
   videoUrl: string;
+  title: string | undefined;
   status: PlayerStatus;
   renderer: ContextType<typeof ReactSdkContext>["renderer"];
   previewImageUrl?: URL;
@@ -258,6 +259,7 @@ type PlayerProps = Pick<
 };
 
 const Player = ({
+  title,
   status,
   loading,
   videoUrl,
@@ -307,6 +309,7 @@ const Player = ({
 
   return (
     <iframe
+      title={title}
       src={videoUrl}
       loading={loading}
       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;"
@@ -339,7 +342,14 @@ export const VimeoContext = createContext<{
 const defaultTag = "div";
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof VimeoOptions> &
-  VimeoOptions;
+  VimeoOptions & {
+    /**
+     * The `title` attribute for the iframe.
+     * Improves accessibility by providing a brief description of the video content for screen readers.
+     * Example: "Video about web development tips".
+     */
+    title?: string | undefined;
+  };
 type Ref = ElementRef<typeof defaultTag>;
 
 export const Vimeo = forwardRef<Ref, Props>(
@@ -425,6 +435,7 @@ export const Vimeo = forwardRef<Ref, Props>(
             <>
               {children}
               <Player
+                title={rest.title}
                 autoplay={autoplay}
                 videoUrl={videoUrl}
                 previewImageUrl={previewImageUrl}

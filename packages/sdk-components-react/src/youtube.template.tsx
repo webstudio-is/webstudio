@@ -8,6 +8,7 @@ export const meta: TemplateMeta = {
     "Add a video to your page that is hosted on Vimeo. Paste a Vimeo URL and configure the video in the Settings tab.",
   template: (
     <$.YouTube
+      ws:label="YouTube"
       ws:style={css`
         position: relative;
         aspect-ratio: 640/360;
@@ -26,6 +27,7 @@ export const meta: TemplateMeta = {
         `}
         alt="Vimeo video preview image"
         sizes="100vw"
+        optimize={true}
       />
       <$.VimeoSpinner
         ws:label="Spinner"

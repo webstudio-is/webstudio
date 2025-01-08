@@ -405,7 +405,8 @@ export const props: Record<string, PropMeta> = {
       "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
   autoplay: {
-    description: "Whether the video should autoplay.",
+    description:
+      "Whether the video should autoplay.\nSome browsers require the `muted` parameter to be set to `true` for autoplay to work.",
     required: false,
     control: "boolean",
     type: "boolean",
@@ -549,11 +550,11 @@ export const props: Record<string, PropMeta> = {
     type: "string",
   },
   listType: {
-    description:
-      "Type of playlist to load (`playlist`, `search`, or `user_uploads`).",
+    description: "Type of playlist to load.",
     required: false,
-    control: "text",
+    control: "radio",
     type: "string",
+    options: ["playlist", "user_uploads"],
   },
   loading: {
     description: "Loading strategy for iframe",
@@ -565,6 +566,14 @@ export const props: Record<string, PropMeta> = {
   },
   loop: {
     description: "Whether the video should loop continuously.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  muted: {
+    description:
+      "Whether the video should start muted.\nUseful for enabling autoplay in browsers that require videos to be muted.\nOriginal parameter: `mute`",
     required: false,
     control: "boolean",
     type: "boolean",
@@ -690,11 +699,11 @@ export const props: Record<string, PropMeta> = {
       "Overrides the browser's default tab order and follows the one specified instead.",
   },
   title: {
+    description:
+      'The `title` attribute for the iframe.\nImproves accessibility by providing a brief description of the video content for screen readers.\nExample: "Video about web development tips".',
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Text to be displayed in a tooltip when hovering over the element.",
   },
   translate: {
     required: false,

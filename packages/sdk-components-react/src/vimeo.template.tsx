@@ -25,6 +25,7 @@ export const meta: TemplateMeta = {
         `}
         alt="Vimeo video preview image"
         sizes="100vw"
+        optimize={true}
       />
       <$.VimeoSpinner
         ws:label="Spinner"

@@ -17,9 +17,17 @@ import { VimeoContext } from "./vimeo";
 type YouTubePlayerParameters = {
   /**
    * Whether the video should autoplay.
+   * Some browsers require the `muted` parameter to be set to `true` for autoplay to work.
    * @default false
    */
   autoplay?: boolean;
+  /**
+   * Whether the video should start muted.
+   * Useful for enabling autoplay in browsers that require videos to be muted.
+   * Original parameter: `mute`
+   *@default false
+   */
+  muted?: boolean;
 
   /**
    * Whether to show player controls.
@@ -99,9 +107,9 @@ type YouTubePlayerParameters = {
   referrer?: string;
 
   /**
-   * Type of playlist to load (`playlist`, `search`, or `user_uploads`).
+   * Type of playlist to load.
    */
-  listType?: string;
+  listType?: "playlist" | "user_uploads";
 
   /**
    * ID of the playlist to load.
@@ -185,14 +193,20 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
 
   const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
 
-  const parameters: Record<string, string | undefined> = {
-    mute: "1",
-  };
+  const parameters: Record<string, string | undefined> = {};
 
   for (const optionsKey of optionsKeys) {
     switch (optionsKey) {
       case "autoplay":
         parameters.autoplay = options.autoplay ? "1" : "0";
+        // Mute video if autoplay is enabled and muted is not touched
+        if (options.autoplay && options.muted === undefined) {
+          parameters.mute = "1";
+        }
+        break;
+
+      case "muted":
+        parameters.mute = options.muted ? "1" : "0";
         break;
 
       case "showControls":
@@ -209,7 +223,7 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
 
       case "loop":
         parameters.loop = options.loop ? "1" : "0";
-        if ((options.playlist ?? "").trim() !== "") {
+        if (options.loop && (options.playlist ?? "").trim() === "") {
           parameters.playlist = videoId;
         }
 
@@ -335,7 +349,7 @@ type PlayerProps = Pick<
   "loading" | "autoplay" | "showPreview"
 > & {
   videoUrl: string;
-
+  title: string | undefined;
   status: PlayerStatus;
   renderer: ContextType<typeof ReactSdkContext>["renderer"];
   previewImageUrl?: URL;
@@ -344,6 +358,7 @@ type PlayerProps = Pick<
 };
 
 const Player = ({
+  title,
   status,
   loading,
   videoUrl,
@@ -386,6 +401,7 @@ const Player = ({
 
   return (
     <iframe
+      title={title}
       src={videoUrl}
       loading={loading}
       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
@@ -412,7 +428,14 @@ type Props = Omit<
   ComponentProps<typeof defaultTag>,
   keyof YouTubePlayerOptions
 > &
-  YouTubePlayerOptions;
+  YouTubePlayerOptions & {
+    /**
+     * The `title` attribute for the iframe.
+     * Improves accessibility by providing a brief description of the video content for screen readers.
+     * Example: "Video about web development tips".
+     */
+    title?: string | undefined;
+  };
 type Ref = ElementRef<typeof defaultTag>;
 
 export const YouTube = forwardRef<Ref, Props>(
@@ -464,6 +487,7 @@ export const YouTube = forwardRef<Ref, Props>(
             <>
               {children}
               <Player
+                title={rest.title}
                 autoplay={autoplay}
                 videoUrl={videoUrl}
                 previewImageUrl={previewImageUrl}
