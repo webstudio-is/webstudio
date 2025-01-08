@@ -22,13 +22,6 @@ type YouTubePlayerParameters = {
   autoplay?: boolean;
 
   /**
-   * The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.
-   * https://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode
-   * @default true
-   */
-  privacyEnhancedMode?: boolean;
-
-  /**
    * Whether to show player controls.
    * @default true
    */
@@ -150,6 +143,12 @@ type YouTubePlayerOptions = {
   /** The YouTube video URL or ID */
   url?: string;
   showPreview?: boolean;
+  /**
+   * The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.
+   * https://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode
+   * @default true
+   */
+  privacyEnhancedMode?: boolean;
 } & YouTubePlayerParameters & {
     /** Loading strategy for iframe */
     loading?: "eager" | "lazy";
@@ -176,16 +175,13 @@ const getVideoId = (url?: string) => {
   }
 };
 
-const getVideoUrl = (options: YouTubePlayerOptions) => {
+const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
   const videoId = getVideoId(options.url);
   if (!videoId) {
     return;
   }
 
-  const privacyEnhancedMode = options.privacyEnhancedMode ?? true;
-  const url = new URL(
-    `${privacyEnhancedMode ? PLAYER_PRIVACY_ENHANVED_MODE_CDN : PLAYER_ORIGINAL_CDN}/embed/${videoId}`
-  );
+  const url = new URL(`${videoUrlOrigin}/embed/${videoId}`);
 
   const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
 
@@ -300,11 +296,19 @@ const preconnect = (url: string) => {
 
 let warmed = false;
 
-const warmConnections = () => {
+const warmConnections = (videoUrl: string) => {
   if (warmed || window.matchMedia("(hover: none)").matches) {
     return;
   }
-  preconnect(PLAYER_CDN);
+
+  try {
+    const videoUrlObject = new URL(videoUrl);
+
+    preconnect(videoUrlObject.origin);
+  } catch {
+    // Ignore invalid URL
+  }
+
   preconnect(IMAGE_CDN);
   warmed = true;
 };
@@ -329,6 +333,7 @@ type PlayerProps = Pick<
   "loading" | "autoplay" | "showPreview"
 > & {
   videoUrl: string;
+
   status: PlayerStatus;
   renderer: ContextType<typeof ReactSdkContext>["renderer"];
   previewImageUrl?: URL;
@@ -357,9 +362,9 @@ const Player = ({
 
   useEffect(() => {
     if (renderer !== "canvas") {
-      warmConnections();
+      warmConnections(videoUrl);
     }
-  }, [renderer]);
+  }, [renderer, videoUrl]);
 
   useEffect(() => {
     const videoId = getVideoId(videoUrl);
@@ -410,18 +415,33 @@ type Ref = ElementRef<typeof defaultTag>;
 
 export const YouTube = forwardRef<Ref, Props>(
   (
-    { url, loading = "lazy", autoplay, showPreview, children, ...rest },
+    {
+      url,
+      loading = "lazy",
+      autoplay,
+      showPreview,
+      children,
+      privacyEnhancedMode,
+      ...rest
+    },
     ref
   ) => {
     const [status, setStatus] = useState<PlayerStatus>("initial");
     const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
     const { renderer } = useContext(ReactSdkContext);
 
-    const videoUrl = getVideoUrl({
-      ...rest,
-      url,
-      autoplay: true,
-    });
+    const videoUrlOrigin =
+      (privacyEnhancedMode ?? true)
+        ? PLAYER_PRIVACY_ENHANVED_MODE_CDN
+        : PLAYER_ORIGINAL_CDN;
+    const videoUrl = getVideoUrl(
+      {
+        ...rest,
+        url,
+        autoplay: true,
+      },
+      videoUrlOrigin
+    );
 
     return (
       <VimeoContext.Provider
